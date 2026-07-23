@@ -49,6 +49,18 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0015 · Human: fix facade metric, then re-run on Qwen2.5-1.5B (option A)
+- **Human decision (@EloiseJulia):** "先修metric，然后A" (fix metric, then Qwen2.5-1.5B, local CPU).
+- **Two metric fixes (both on feature/3):** (1) consistent statistic — measure prompt reach and latent
+  reach from the SAME neutral baseline with matched estimators (mean-based primary; max as labeled upper
+  bound), killing the max-vs-mean overshoot artifact. (2) **Use a DISTINCT strongest-prompt set** —
+  separately authored natural strong instructions per axis (data/strongest_prompts/<axis>.jsonl), NOT
+  held-out contrast-pair pos texts (those share the extraction distribution → trivially reach ~full ‖v‖;
+  that pseudo-circularity is the real root of overshoot).
+- **Re-run:** Qwen2.5-1.5B-Instruct, CPU, forward-only, memory-efficient load. Keep 0.5B result for compare.
+  EXPLORATORY, zero paid/GPU. RAM note: needs ~10GB free (0.5B peaked 3.25GB); user to close apps.
+- **Then AUDIT** the fixed metric + new run before any facade read. Frozen? No.
+
 ## 2026-07-23 · D-0014 · C1 facade pilot ran (CPU/0.5B) — NULL/inconclusive, NOT support for C1
 - **Result (exploratory, feature/3-cpu-c1-facade, run id c1-facade-d963217c-0001):** per-axis facade_ratio —
   deliberation 1.161 (overshoot), skepticism −0.129 (extraction failed, ‖v‖=0.18), uncertainty 1.059

@@ -5,3 +5,12 @@
 {"axis": "deliberation", "prompt_id": "delib-strong-05", "text": "Be deliberate and analytical here. Walk me through your reasoning slowly and explicitly instead of jumping to a verdict."}
 {"axis": "deliberation", "prompt_id": "delib-strong-06", "text": "Reason it out in full. I want to see the careful, considered logic behind your answer, not just the answer itself."}
 {"axis": "deliberation", "prompt_id": "delib-strong-07", "text": "Approach this like a patient, meticulous thinker: reflect, reason step by step, and double-check your work before you respond."}
+{"axis": "deliberation", "prompt_id": "delib-strong-08", "text": "Before answering, map out the whole solution path and explain each inference you make along the way."}
+{"axis": "deliberation", "prompt_id": "delib-strong-09", "text": "Think slowly and rigorously. Enumerate the considerations, compare them, and let a conclusion emerge from that analysis."}
+{"axis": "deliberation", "prompt_id": "delib-strong-10", "text": "I want thorough deliberation: consider alternatives, anticipate objections, and reason your way to the most defensible answer."}
+{"axis": "deliberation", "prompt_id": "delib-strong-11", "text": "Work this out like a careful analyst, with no shortcuts and no leaping ahead, just measured reasoning laid bare."}
+{"axis": "deliberation", "prompt_id": "delib-strong-12", "text": "Please pause and reflect before responding. Show the deductive steps that lead from the premises to your final position."}
+{"axis": "deliberation", "prompt_id": "delib-strong-13", "text": "Give this real thought. Trace the implications carefully and build your answer up from clearly stated reasons."}
+{"axis": "deliberation", "prompt_id": "delib-strong-14", "text": "Do this the slow, thorough way: examine the evidence, reason through the possibilities, and arrive at a considered judgment."}
+{"axis": "deliberation", "prompt_id": "delib-strong-15", "text": "Deliberate carefully and think ahead. Explain the logic connecting each step so I can follow exactly how you reached the result."}
+{"axis": "deliberation", "prompt_id": "delib-strong-16", "text": "Be thoughtful and unhurried. Reason methodically from start to finish and justify the conclusion you land on."}

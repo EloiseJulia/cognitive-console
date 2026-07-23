@@ -80,7 +80,13 @@ if str(_REPO / "src") not in sys.path:
     sys.path.insert(0, str(_REPO / "src"))
 
 from cognitive_console.activations.provider import HFActivationProvider
-from cognitive_console.steering.extract import extract_caa
+from cognitive_console.steering.extract import (
+    extract_caa,
+    layer_diagnostics,
+    mean_difference_vector,
+    min_layer_for_depth,
+    select_nondegenerate_layer,
+)
 from cognitive_console.metrics import project_scalar, random_null_baseline, same_origin_facade
 from cognitive_console.analysis.routing import (
     RoutingInputs,
@@ -206,6 +212,9 @@ def make_split(pair_ids: List[str], n_extraction: int, seed: int) -> Split:
 class AxisResult:
     axis: str
     chosen_layer: int
+    stable_layer_found: bool           # a non-degenerate layer exists (D-0019)
+    unstable_reason: str               # "" if stable; else why no layer qualifies
+    min_layer_scanned: int             # depth-floor cutoff for the scan
     neutral_proj: float                # mean neutral projection on û = SHARED ORIGIN
     # --- PRIMARY (corrected, same-origin, scale-free, alpha-free -- see D-0016) --
     prompt_reach: float                # <mean(strong) - neutral_mean, û>
@@ -223,6 +232,13 @@ class AxisResult:
                                        # û above the random-direction null (metric is
                                        # only meaningful if the pole itself reaches)
     pole_null_p95: float               # random-direction null p95 on the pole displacement
+    # --- ROBUSTNESS (D-0019): top-k non-degenerate layers + multi-seed CI --------
+    top_k_layers: List[Dict[str, object]]   # per non-degenerate candidate layer:
+                                            # layer, separation, pole_reach,
+                                            # facade_ratio, ci_lo/hi, extraction_success
+    seed_robustness: List[Dict[str, object]]  # facade_ratio + CI at chosen layer
+                                              # under multiple RNG seeds
+    seed_stable: bool                  # all seeds agree on facade_gap_holds_ci
     # --- Clearly-labelled UPPER BOUND (single strongest prompt), same-origin ----
     prompt_reach_max: float            # MAX same-origin reach over the strong set
     strongest_prompt_id: str
@@ -236,13 +252,15 @@ class AxisResult:
     sanity_signal_z: float             # (|prompt_reach| - null_mean)/null_std
     sanity_null_p95: float
     # --- EXPLORATORY read (thresholds NOT frozen; c1_signal is data-derived) ----
-    c1_signal: bool                    # extraction_success AND ratio>0 AND CI upper<1
+    c1_signal: bool                    # stable AND extraction_success AND ratio>0 AND CI upper<1
     n_strongest: int
     strongest_file_hash: str
     n_extraction: int
     n_probe: int
     extraction_separation: float       # Cohen's d at chosen layer (extraction set)
     per_layer_separation: Dict[str, float]
+    per_layer_pole_reach: Dict[str, float]
+    per_layer_pole_null_p95: Dict[str, float]
     extraction_ids: List[str]
     probe_ids: List[str]
     split_hash: str
@@ -252,6 +270,14 @@ class AxisResult:
         return asdict(self)
 
 
+def _unit_direction(pos_acts: np.ndarray, neg_acts: np.ndarray) -> Tuple[np.ndarray, float]:
+    """Return (unit CAA direction, ||v||) for one layer's extraction acts."""
+    v = mean_difference_vector(pos_acts, neg_acts)
+    norm = float(np.linalg.norm(v))
+    unit = v / norm if norm > 1e-12 else np.zeros_like(v)
+    return unit, norm
+
+
 def analyze_axis(
     provider: HFActivationProvider,
     axis: str,
@@ -259,64 +285,126 @@ def analyze_axis(
     n_extraction: int,
     seed: int,
     n_null: int,
+    top_layer: int,
+    min_depth_frac: float = 0.2,
+    top_k: int = 3,
+    seeds: Optional[List[int]] = None,
     n_boot: int = 2000,
     ci_level: float = 0.95,
 ) -> AxisResult:
+    if seeds is None:
+        seeds = [seed, seed + 1, seed + 2]
     pairs = load_axis_pairs(axis)
     pair_ids = list(pairs.pos.keys())
     split = make_split(pair_ids, n_extraction=n_extraction, seed=seed)
 
     ext_pos = [pairs.pos[p] for p in split.extraction_ids]
     ext_neg = [pairs.neg[p] for p in split.extraction_ids]
-
-    # Step 2: CAA extraction + layer scan on the EXTRACTION set only. The layer is
-    # chosen by Cohen's-d separation on the extraction set, never on the probe set
-    # or on the (separate) strongest-prompt set -> no circular layer selection.
-    caa = extract_caa(provider, axis, ext_pos, ext_neg, layers=scan_layers)
-    layer = caa.layer
-    v = np.asarray(caa.vector, dtype=np.float64)
-    unit = np.asarray(caa.direction, dtype=np.float64)
-    v_norm = float(np.linalg.norm(v))  # SUPERSEDED latent_reach (neg-pole -> pos-pole)
-
-    # Step 3: neutral baseline projection on û at the chosen layer. This mean is
-    # the SHARED ORIGIN for BOTH prompt_reach and pole_reach (audit BLOCKER-2).
     neutral_texts = load_neutral_prompts()
-    neutral_acts = provider.get_activations(neutral_texts, layer)
-    neutral_projs = np.array(
-        [project_scalar(a, unit) for a in neutral_acts], dtype=np.float64
-    )
-    neutral_proj = float(neutral_projs.mean())
-    neutral_mean_act = np.asarray(neutral_acts, dtype=np.float64).mean(axis=0)
-
-    # Step 4: pole_reach = the model's ACHIEVABLE positive-pole displacement,
-    # measured from the SAME neutral origin, projected on û. This replaces the old
-    # ||v|| denominator (which was measured neg-pole -> pos-pole and implicitly at
-    # steering coefficient alpha=1 -> audit BLOCKER-1). It uses the EXTRACTION-set
-    # POS activations only, so it stays on the same disjoint split as the vector.
-    pos_acts = provider.get_activations(ext_pos, layer)
-    pos_projs = np.array([project_scalar(a, unit) for a in pos_acts], dtype=np.float64)
-
-    # Step 5: prompt reach on the SEPARATELY-AUTHORED strongest-prompt set (FIX 2).
-    # These instructions are NOT from the contrast-pair distribution used to build
-    # v, so they cannot trivially project onto û at ~full pole (no pseudo-circularity).
     strongest = load_strongest_prompts(axis)
-    strong_acts = provider.get_activations(strongest.texts, layer)
-    strong_projs = np.array(
-        [project_scalar(a, unit) for a in strong_acts], dtype=np.float64
-    )
 
-    # PRIMARY (corrected headline): same-origin scale-free reach fraction with a
-    # bootstrap CI over the strong-prompt set and a leave-one-neutral-out band.
-    so = same_origin_facade(
-        strong_projs=strong_projs,
-        pos_projs=pos_projs,
-        neutral_projs=neutral_projs,
-        n_boot=n_boot,
-        seed=seed,
-        ci_level=ci_level,
+    # ---- Full per-layer scan (D-0019): the layer is chosen on the EXTRACTION set
+    # ---- only, but now by a NON-DEGENERATE rule, not bare Cohen's-d. For every
+    # ---- scan layer we compute (a) pos/neg separation, (b) the unit direction û,
+    # ---- and (c) pole_reach = <mean(pos) - mean(neutral), û> plus its random-null
+    # ---- p95, so degenerate shallow/lexical layers (high separation but pole not
+    # ---- separated from neutral along û) are excluded from selection.
+    per_layer_sep: Dict[int, float] = {}
+    per_layer_pole_reach: Dict[int, float] = {}
+    per_layer_pole_null: Dict[int, float] = {}
+    per_layer_unit: Dict[int, np.ndarray] = {}
+    per_layer_vnorm: Dict[int, float] = {}
+    for ell in scan_layers:
+        pos_acts = provider.get_activations(ext_pos, ell).astype(np.float64)
+        neg_acts = provider.get_activations(ext_neg, ell).astype(np.float64)
+        diag = layer_diagnostics(pos_acts, neg_acts, ell)
+        unit, vnorm = _unit_direction(pos_acts, neg_acts)
+        neutral_acts = provider.get_activations(neutral_texts, ell).astype(np.float64)
+        neutral_mean_act = neutral_acts.mean(axis=0)
+        pole_disp = pos_acts.mean(axis=0) - neutral_mean_act
+        pole_reach_ell = float(np.dot(pole_disp, unit)) if vnorm > 1e-12 else 0.0
+        null_pole = random_null_baseline(pole_disp, n_samples=n_null, seed=seed)
+        per_layer_sep[ell] = float(diag.separation)
+        per_layer_pole_reach[ell] = pole_reach_ell
+        per_layer_pole_null[ell] = float(np.percentile(null_pole, 95))
+        per_layer_unit[ell] = unit
+        per_layer_vnorm[ell] = vnorm
+
+    min_layer = min_layer_for_depth(top_layer, min_depth_frac)
+    sel = select_nondegenerate_layer(
+        per_layer_sep, per_layer_pole_reach, per_layer_pole_null,
+        min_layer=min_layer, top_k=top_k,
     )
+    stable = sel.has_stable_layer
+
+    if stable:
+        layer = int(sel.chosen)
+        unstable_reason = ""
+    else:
+        # HONEST fallback: no non-degenerate layer exists. We still report numbers
+        # at the max-separation layer (so the failure is inspectable) but flag the
+        # axis UNSTABLE and force c1_signal False — we do NOT p-hack a facade.
+        layer = max(scan_layers, key=lambda e: (per_layer_sep[e], -e))
+        best_cand = sel.candidates[layer]
+        unstable_reason = (
+            f"no non-degenerate layer (min_layer={min_layer}); "
+            f"max-sep layer {layer}: {best_cand.reject_reason or 'degenerate'}"
+        )
+
+    unit = per_layer_unit[layer]
+    v_norm = per_layer_vnorm[layer]
+
+    # ---- Facade metric at a given layer under a given RNG seed (all cached acts).
+    def _facade_at(ell: int, seed_: int):
+        u = per_layer_unit[ell]
+        neutral_acts = provider.get_activations(neutral_texts, ell).astype(np.float64)
+        pos_acts = provider.get_activations(ext_pos, ell).astype(np.float64)
+        strong_acts = provider.get_activations(strongest.texts, ell).astype(np.float64)
+        neutral_projs = np.array([project_scalar(a, u) for a in neutral_acts])
+        pos_projs = np.array([project_scalar(a, u) for a in pos_acts])
+        strong_projs = np.array([project_scalar(a, u) for a in strong_acts])
+        so = same_origin_facade(
+            strong_projs=strong_projs, pos_projs=pos_projs, neutral_projs=neutral_projs,
+            n_boot=n_boot, seed=seed_, ci_level=ci_level,
+        )
+        return so, neutral_projs, pos_projs, strong_projs, strong_acts
+
+    # PRIMARY (chosen layer, primary seed).
+    so, neutral_projs, pos_projs, strong_projs, strong_acts = _facade_at(layer, seeds[0])
+    neutral_proj = float(neutral_projs.mean())
+    neutral_mean_act = provider.get_activations(neutral_texts, layer).astype(np.float64).mean(axis=0)
     prompt_reach = so.prompt_reach
     pole_reach = so.pole_reach
+
+    # ROBUSTNESS 1 — multi-seed CI at the chosen layer (seed-stability of the CI).
+    seed_rows: List[Dict[str, object]] = []
+    for s in seeds:
+        so_s, *_ = _facade_at(layer, s)
+        seed_rows.append({
+            "seed": int(s),
+            "facade_ratio": float(so_s.facade_ratio),
+            "ci_lo": float(so_s.ci_lo),
+            "ci_hi": float(so_s.ci_hi),
+            "ci_upper_below_1": bool(so_s.ci_hi < 1.0),
+        })
+    seed_stable = len({r["ci_upper_below_1"] for r in seed_rows}) == 1
+
+    # ROBUSTNESS 2 — facade_ratio across the top-k non-degenerate candidate layers
+    # (primary seed). Empty when the axis is unstable (no candidate qualifies).
+    top_k_rows: List[Dict[str, object]] = []
+    for ell in sel.ranked:
+        so_k, *_ = _facade_at(ell, seeds[0])
+        cand = sel.candidates[ell]
+        top_k_rows.append({
+            "layer": int(ell),
+            "separation": float(cand.separation),
+            "pole_reach": float(cand.pole_reach),
+            "facade_ratio": float(so_k.facade_ratio),
+            "ci_lo": float(so_k.ci_lo),
+            "ci_hi": float(so_k.ci_hi),
+            "ci_upper_below_1": bool(so_k.ci_hi < 1.0),
+            "extraction_success": True,  # non-degenerate by construction
+        })
 
     # UPPER BOUND (clearly labelled, NOT the headline): the single strongest prompt.
     reaches = strong_projs - neutral_proj
@@ -333,7 +421,7 @@ def analyze_axis(
 
     # SANITY (labelled, NOT headline): does the prompt displacement clear a random
     # direction null? Trivial in high-dim (audit MAJOR-3) -> demoted from headline.
-    mean_displacement = strong_acts.astype(np.float64).mean(axis=0) - neutral_mean_act
+    mean_displacement = strong_acts.mean(axis=0) - neutral_mean_act
     null_mean_dist = random_null_baseline(mean_displacement, n_samples=n_null, seed=seed)
     sanity_null_p95 = float(np.percentile(null_mean_dist, 95))
     nm_mean, nm_std = float(null_mean_dist.mean()), float(null_mean_dist.std())
@@ -342,26 +430,29 @@ def analyze_axis(
         float((abs(prompt_reach) - nm_mean) / nm_std) if nm_std > 1e-12 else float("nan")
     )
 
-    # EXTRACTION-SUCCESS: the metric is only meaningful if the positive pole itself
-    # displaces from neutral along û beyond chance. Null on the pole displacement.
-    pole_displacement = pos_acts.astype(np.float64).mean(axis=0) - neutral_mean_act
-    null_pole_dist = random_null_baseline(pole_displacement, n_samples=n_null, seed=seed)
-    pole_null_p95 = float(np.percentile(null_pole_dist, 95))
-    extraction_success = bool(pole_reach > 0.0 and abs(pole_reach) > pole_null_p95)
+    # EXTRACTION-SUCCESS at the chosen layer (pole clears the null from neutral).
+    pole_null_p95 = per_layer_pole_null[layer]
+    extraction_success = bool(stable and pole_reach > 0.0 and abs(pole_reach) > pole_null_p95)
 
     # EXPLORATORY data-derived read (thresholds NOT frozen): a facade genuinely
-    # holds only when the pole is reachable (extraction_success), the prompt points
-    # the RIGHT way (ratio > 0), and the bootstrap CI upper bound is below 1.
+    # holds only when a NON-DEGENERATE layer exists (stable), the pole is reachable
+    # (extraction_success), the prompt points the RIGHT way (ratio > 0), and the
+    # bootstrap CI upper bound is below 1.
     facade_gap_holds_ci = bool(so.ci_hi < 1.0)
-    c1_signal = bool(extraction_success and so.facade_ratio > 0.0 and facade_gap_holds_ci)
+    c1_signal = bool(
+        stable and extraction_success and so.facade_ratio > 0.0 and facade_gap_holds_ci
+    )
 
-    per_layer_sep = {
-        str(ell): float(d.separation) for ell, d in sorted(caa.per_layer.items())
-    }
+    per_layer_sep_out = {str(e): float(per_layer_sep[e]) for e in sorted(per_layer_sep)}
+    per_layer_pole_out = {str(e): float(per_layer_pole_reach[e]) for e in sorted(per_layer_pole_reach)}
+    per_layer_null_out = {str(e): float(per_layer_pole_null[e]) for e in sorted(per_layer_pole_null)}
 
     return AxisResult(
         axis=axis,
         chosen_layer=int(layer),
+        stable_layer_found=bool(stable),
+        unstable_reason=unstable_reason,
+        min_layer_scanned=int(min_layer),
         neutral_proj=neutral_proj,
         prompt_reach=prompt_reach,
         pole_reach=pole_reach,
@@ -374,6 +465,9 @@ def analyze_axis(
         facade_gap_holds_ci=facade_gap_holds_ci,
         extraction_success=extraction_success,
         pole_null_p95=pole_null_p95,
+        top_k_layers=top_k_rows,
+        seed_robustness=seed_rows,
+        seed_stable=bool(seed_stable),
         prompt_reach_max=prompt_reach_max,
         strongest_prompt_id=strongest_id,
         facade_ratio_max=float(facade_ratio_max),
@@ -388,8 +482,10 @@ def analyze_axis(
         strongest_file_hash=strongest.file_hash,
         n_extraction=len(split.extraction_ids),
         n_probe=len(split.probe_ids),
-        extraction_separation=float(caa.per_layer[layer].separation),
-        per_layer_separation=per_layer_sep,
+        extraction_separation=float(per_layer_sep[layer]),
+        per_layer_separation=per_layer_sep_out,
+        per_layer_pole_reach=per_layer_pole_out,
+        per_layer_pole_null_p95=per_layer_null_out,
         extraction_ids=split.extraction_ids,
         probe_ids=split.probe_ids,
         split_hash=split.hash(),
@@ -477,8 +573,13 @@ def run(
     ram_floor_mb: float = 450.0,
     n_boot: int = 2000,
     ci_level: float = 0.95,
+    min_depth_frac: float = 0.2,
+    top_k: int = 3,
+    seeds: Optional[List[int]] = None,
 ) -> Dict[str, object]:
     t0 = time.time()
+    if seeds is None:
+        seeds = [seed, seed + 1, seed + 2]
     # Guard the whole memory-heavy phase (model load + all forwards). We only stop
     # the watchdog once every axis is analyzed and activations are cached/pooled.
     watchdog_stop = start_ram_watchdog(ram_floor_mb)
@@ -513,14 +614,17 @@ def run(
         ta = time.time()
         res = analyze_axis(
             provider, axis, scan_layers, n_extraction, seed, n_null,
+            top_layer=top, min_depth_frac=min_depth_frac, top_k=top_k, seeds=seeds,
             n_boot=n_boot, ci_level=ci_level,
         )
         results.append(res)
+        stab = "stable" if res.stable_layer_found else "UNSTABLE"
         print(
-            f"[c1] axis={axis:<24} layer={res.chosen_layer:>3} "
+            f"[c1] axis={axis:<24} layer={res.chosen_layer:>3}({stab}) "
             f"prompt_reach={res.prompt_reach:7.3f} pole_reach={res.pole_reach:7.3f} "
             f"ratio={res.facade_ratio:6.3f} CI=[{res.facade_ratio_ci_lo:.3f},{res.facade_ratio_ci_hi:.3f}] "
-            f"extract_ok={res.extraction_success} c1={res.c1_signal}  ({time.time()-ta:.1f}s)",
+            f"extract_ok={res.extraction_success} seed_stable={res.seed_stable} "
+            f"c1={res.c1_signal}  ({time.time()-ta:.1f}s)",
             flush=True,
         )
 
@@ -572,11 +676,18 @@ def run(
         "platform": platform.platform(),
         "n_boot": n_boot,
         "ci_level": ci_level,
+        "min_depth_frac": min_depth_frac,
+        "min_layer_scanned": min_layer_for_depth(top, min_depth_frac),
+        "top_k_layers": top_k,
+        "seeds": list(seeds),
         "axes": [r.to_row() for r in results],
         "aggregate": {
             "n_axes": n_axes,
             "facade_support_fraction": support_fraction,
             "n_axes_facade_holds_ci": int(sum(r.c1_signal for r in results)),
+            "n_axes_stable_layer": int(sum(r.stable_layer_found for r in results)),
+            "n_axes_unstable": int(sum(not r.stable_layer_found for r in results)),
+            "n_axes_seed_stable": int(sum(r.seed_stable for r in results)),
             "max_facade_ratio_observed": max_ratio,
             "extraction_success_all": bool(all(r.extraction_success for r in results)),
         },
@@ -617,31 +728,79 @@ def _write_results(payload: Dict[str, object], out_dir: Path, seed: int) -> Tupl
                  f"true_full_compute={payload['wall_clock_is_true_full_compute']})   "
                  f"peak RSS: {payload['peak_rss_mb']} MB")
     lines.append(f"- bootstrap: n_boot={payload['n_boot']}  CI level={payload['ci_level']}")
+    lines.append(f"- layer selection (D-0019): NON-DEGENERATE rule — depth floor "
+                 f"min_layer={payload['min_layer_scanned']} (>= {payload['min_depth_frac']*100:.0f}% of depth), "
+                 f"pole_reach > 0 above random-null p95, positive pos/neg separation. "
+                 f"top_k={payload['top_k_layers']} candidate layers, seeds={payload['seeds']}.")
     lines.append(f"- valid_for_paper: **{payload['valid_for_paper']}**\n")
     lines.append(
         "## Per-axis facade gap — CORRECTED same-origin, scale-free, alpha-free metric (D-0016)\n"
     )
     lines.append(
         "facade_ratio = prompt_reach / pole_reach, both measured as on-axis "
-        "displacement from the SAME neutral origin projected on û. A facade "
-        "genuinely HOLDS only when extraction succeeded AND the bootstrap CI "
-        "upper bound is < 1 (number reported; NO frozen verdict).\n"
+        "displacement from the SAME neutral origin projected on û, at the chosen "
+        "NON-DEGENERATE layer (D-0019). A facade genuinely HOLDS only when a stable "
+        "layer exists AND extraction succeeded AND the bootstrap CI upper bound is "
+        "< 1 (number reported; NO frozen verdict). An UNSTABLE axis has no "
+        "non-degenerate layer at this model — reported honestly, NOT forced.\n"
     )
     lines.append(
-        "| axis | layer | prompt_reach | pole_reach | facade_ratio | 95% CI | "
-        "leave-1-neutral band | extract ok? | CI upper<1? | C1 signal |"
+        "| axis | layer | stable? | prompt_reach | pole_reach | facade_ratio | 95% CI | "
+        "leave-1-neutral band | extract ok? | seed-stable? | CI upper<1? | C1 signal |"
     )
-    lines.append("|---|---|---|---|---|---|---|---|---|---|")
+    lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|")
     for r in payload["axes"]:  # type: ignore[index]
         lines.append(
-            f"| {r['axis']} | {r['chosen_layer']} | {r['prompt_reach']:.3f} | "
+            f"| {r['axis']} | {r['chosen_layer']} | "
+            f"{'yes' if r['stable_layer_found'] else 'UNSTABLE'} | {r['prompt_reach']:.3f} | "
             f"{r['pole_reach']:.3f} | {r['facade_ratio']:.3f} | "
             f"[{r['facade_ratio_ci_lo']:.3f}, {r['facade_ratio_ci_hi']:.3f}] | "
             f"[{r['facade_ratio_loo_min']:.3f}, {r['facade_ratio_loo_max']:.3f}] | "
             f"{'yes' if r['extraction_success'] else 'NO'} | "
+            f"{'yes' if r['seed_stable'] else 'no'} | "
             f"{'yes' if r['facade_gap_holds_ci'] else 'no'} | "
             f"{'YES' if r['c1_signal'] else 'no'} |"
         )
+    lines.append("")
+    # Honest note for any unstable axis.
+    unstable = [r for r in payload["axes"] if not r["stable_layer_found"]]  # type: ignore[index]
+    if unstable:
+        lines.append("### Unstable axes (HONEST — no facade forced)\n")
+        for r in unstable:
+            lines.append(f"- **{r['axis']}**: {r['unstable_reason']}")
+        lines.append("")
+    lines.append("## ROBUSTNESS 1 — facade_ratio across top-k NON-DEGENERATE candidate layers (D-0019)\n")
+    lines.append(
+        "Shows whether the facade gap holds across NEARBY valid layers (not a "
+        "single-layer artifact). Unstable axes have no candidates.\n"
+    )
+    lines.append("| axis | layer | separation | pole_reach | facade_ratio | 95% CI | CI upper<1? |")
+    lines.append("|---|---|---|---|---|---|---|")
+    for r in payload["axes"]:  # type: ignore[index]
+        if not r["top_k_layers"]:
+            lines.append(f"| {r['axis']} | — (unstable) | — | — | — | — | — |")
+            continue
+        for c in r["top_k_layers"]:
+            lines.append(
+                f"| {r['axis']} | {c['layer']} | {c['separation']:.3f} | {c['pole_reach']:.3f} | "
+                f"{c['facade_ratio']:.3f} | [{c['ci_lo']:.3f}, {c['ci_hi']:.3f}] | "
+                f"{'yes' if c['ci_upper_below_1'] else 'no'} |"
+            )
+    lines.append("")
+    lines.append("## ROBUSTNESS 2 — facade_ratio + CI at the chosen layer under multiple RNG seeds (D-0019)\n")
+    lines.append(
+        "The bootstrap/null seed should not move the verdict. `seed-stable` = all "
+        "seeds agree on whether the CI upper bound is < 1.\n"
+    )
+    lines.append("| axis | seed | facade_ratio | 95% CI | CI upper<1? |")
+    lines.append("|---|---|---|---|---|")
+    for r in payload["axes"]:  # type: ignore[index]
+        for s in r["seed_robustness"]:
+            lines.append(
+                f"| {r['axis']} | {s['seed']} | {s['facade_ratio']:.3f} | "
+                f"[{s['ci_lo']:.3f}, {s['ci_hi']:.3f}] | "
+                f"{'yes' if s['ci_upper_below_1'] else 'no'} |"
+            )
     lines.append("")
     lines.append("## SUPERSEDED old ||v||-based ratio (denominator artifact, see D-0016) — for comparison only\n")
     lines.append(
@@ -671,9 +830,12 @@ def _write_results(payload: Dict[str, object], out_dir: Path, seed: int) -> Tupl
     agg = payload["aggregate"]  # type: ignore[index]
     lines.append("")
     lines.append("## Aggregate\n")
-    lines.append(f"- axes where a facade genuinely holds (extract ok AND CI upper<1): "
+    lines.append(f"- axes where a facade genuinely holds (stable layer AND extract ok AND CI upper<1): "
                  f"{agg['n_axes_facade_holds_ci']}/{agg['n_axes']} "
                  f"({agg['facade_support_fraction']*100:.0f}%)")
+    lines.append(f"- axes with a stable (non-degenerate) layer: {agg['n_axes_stable_layer']}/{agg['n_axes']} "
+                 f"(unstable: {agg['n_axes_unstable']})")
+    lines.append(f"- axes seed-stable (verdict invariant across seeds): {agg['n_axes_seed_stable']}/{agg['n_axes']}")
     lines.append(f"- max same-origin facade_ratio observed: {agg['max_facade_ratio_observed']:.3f}")
     lines.append(f"- extraction succeeded on all axes: {agg['extraction_success_all']}")
     lines.append("")
@@ -724,6 +886,10 @@ def _register(payload: Dict[str, object], out_dir: Path, json_path: Path, seed: 
         "seed": seed,
         "n_null": payload["n_null"],
         "n_extraction": payload["n_extraction_pairs"],
+        "min_depth_frac": payload["min_depth_frac"],
+        "min_layer_scanned": payload["min_layer_scanned"],
+        "top_k_layers": payload["top_k_layers"],
+        "seeds": payload["seeds"],
     }
     cfg_hash = config_hash(cfg)
     data_hashes = {
@@ -747,6 +913,8 @@ def _register(payload: Dict[str, object], out_dir: Path, json_path: Path, seed: 
             "facade_ratio_vnorm_mean_SUPERSEDED": r["facade_ratio_vnorm_mean_SUPERSEDED"],
             "extraction_success": r["extraction_success"],
             "facade_gap_holds_ci": r["facade_gap_holds_ci"],
+            "stable_layer_found": r["stable_layer_found"],
+            "seed_stable": r["seed_stable"],
             "c1_signal": r["c1_signal"],
         }
         for r in axis_rows
@@ -799,7 +967,13 @@ def _register(payload: Dict[str, object], out_dir: Path, json_path: Path, seed: 
             "leave-one-neutral-out band reported. above-null demoted to a labelled "
             "sanity field (MAJOR-3). FIX2 retained: strongest-prompt reach on a "
             "SEPARATELY-authored instruction set, distinct in kind from the contrast "
-            f"pairs. Wall-clock {payload['wall_clock_seconds']}s recorded as TRUE "
+            "pairs (expanded 7->16/axis, D-0019, to tighten the CI). STRENGTHENED "
+            "(D-0019): NON-DEGENERATE layer selection (depth floor + pole_reach above "
+            "random-null p95 + positive separation) replaces bare Cohen's-d, which had "
+            "picked a degenerate shallow layer for focus; facade_ratio reported across "
+            "top-k candidate layers and under multiple RNG seeds for robustness; an "
+            "axis with no non-degenerate layer is reported UNSTABLE, not forced. "
+            f"Wall-clock {payload['wall_clock_seconds']}s recorded as TRUE "
             f"full-compute (cache_was_cold={payload['cache_was_cold']}, MINOR-6). "
             "Registered in a run-local registry (docs/ untouched by task scope)."
         ),
@@ -835,14 +1009,22 @@ def main(argv: Optional[List[str]] = None) -> int:
                     help="bootstrap resamples for the facade_ratio CI")
     ap.add_argument("--ci-level", type=float, default=0.95,
                     help="bootstrap CI level for the facade_ratio")
+    ap.add_argument("--min-depth-frac", type=float, default=0.2,
+                    help="depth floor for layer selection (fraction of network depth)")
+    ap.add_argument("--top-k", type=int, default=3,
+                    help="report facade_ratio across the top-k non-degenerate layers")
+    ap.add_argument("--seeds", type=int, nargs="*", default=None,
+                    help="RNG seeds for the multi-seed CI robustness check "
+                         "(default: seed, seed+1, seed+2)")
     ap.add_argument("--ram-floor-mb", type=float, default=450.0,
                     help="hard-abort the run if system-available RAM drops below this")
     ap.add_argument(
         "--out-dir",
-        default=str(_REPO / "results" / "c1_facade_1p5b_v2_2026-07-23"),
+        default=str(_REPO / "results" / "c1_facade_1p5b_strengthened_2026-07-23"),
     )
     args = ap.parse_args(argv)
 
+    seeds = args.seeds if args.seeds else [args.seed, args.seed + 1, args.seed + 2]
     out_dir = Path(args.out_dir)
     payload = run(
         model=args.model,
@@ -856,6 +1038,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         ram_floor_mb=args.ram_floor_mb,
         n_boot=args.n_boot,
         ci_level=args.ci_level,
+        min_depth_frac=args.min_depth_frac,
+        top_k=args.top_k,
+        seeds=seeds,
     )
     json_path, summary_path = _write_results(payload, out_dir, args.seed)
     exp_id = _register(payload, out_dir, json_path, args.seed)

@@ -5,3 +5,12 @@
 {"axis": "skepticism", "prompt_id": "skep-strong-05", "text": "Treat every statement as a hypothesis to be tested, not a fact. Where is the proof, and what would make this false?"}
 {"axis": "skepticism", "prompt_id": "skep-strong-06", "text": "Be suspicious and rigorous. Interrogate the sources, distrust confident-sounding claims, and verify before you agree with anything."}
 {"axis": "skepticism", "prompt_id": "skep-strong-07", "text": "Challenge me. Assume I could be mistaken, dissect my argument critically, and tell me exactly where it breaks down."}
+{"axis": "skepticism", "prompt_id": "skep-strong-08", "text": "Doubt first, agree later. Demand justification for each step and expose anything that rests on shaky ground."}
+{"axis": "skepticism", "prompt_id": "skep-strong-09", "text": "Be a tough skeptic here: look for what is missing, what is assumed, and what conveniently goes unproven."}
+{"axis": "skepticism", "prompt_id": "skep-strong-10", "text": "Do not just accept my framing. Attack the weak points, test the logic, and flag any leap that is not earned."}
+{"axis": "skepticism", "prompt_id": "skep-strong-11", "text": "Pressure-test everything I say. If a claim cannot withstand hard scrutiny, say so and explain why."}
+{"axis": "skepticism", "prompt_id": "skep-strong-12", "text": "Approach this adversarially. Hunt for errors, unstated premises, and evidence that would contradict the conclusion."}
+{"axis": "skepticism", "prompt_id": "skep-strong-13", "text": "Withhold agreement until it is warranted. Cross-examine each assertion and demand the reasoning behind it."}
+{"axis": "skepticism", "prompt_id": "skep-strong-14", "text": "Be relentlessly critical. Ask what could be wrong, what is unverified, and whether the argument actually follows."}
+{"axis": "skepticism", "prompt_id": "skep-strong-15", "text": "Trust nothing by default. Probe the claims, weigh the counterevidence, and only concede a point once it truly checks out."}
+{"axis": "skepticism", "prompt_id": "skep-strong-16", "text": "Interrogate this hard. Separate what is demonstrated from what is merely asserted, and reject anything unsupported."}

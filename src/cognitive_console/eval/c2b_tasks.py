@@ -5,12 +5,13 @@ three FROZEN behavioral-outcome axes of the C2b adjudication:
 
 * ``deliberation`` — GSM8K-style arithmetic accuracy.
 * ``skepticism`` — false-premise rejection (multiple-choice keyed).
-* ``uncertainty_awareness`` — calibration (1 - ECE).
+* ``uncertainty_awareness`` — calibration, per-item ``1 - Brier`` (decision D-0025).
 
 ``load_c2b_task(axis)`` returns the hand-authored fixture so the WHOLE
-adjudication pipeline runs offline in tests. The REAL loaders
-(``load_gsm8k_test`` etc.) import ``datasets`` lazily and are the A800-only path;
-they raise a clear, documented error offline so nothing silently hits the network.
+adjudication pipeline runs offline in tests. The REAL loaders (``load_gsm8k_test``
+= GSM8K/MIT, ``load_skepticism_set`` = TruthfulQA/Apache-2.0, ``load_uncertainty_set``
+= TriviaQA/Apache-2.0) import ``datasets`` lazily and are the A800-only path; they
+raise a clear, documented error offline so nothing silently hits the network.
 """
 
 from __future__ import annotations
@@ -182,27 +183,79 @@ def load_gsm8k_test(n: Optional[int] = None, seed: int = 0) -> List[Dict[str, An
 
 
 def load_skepticism_set(n: Optional[int] = None, seed: int = 0) -> List[Dict[str, Any]]:
-    """Load / assemble the real false-premise skepticism set (A800 only).
+    """Load the real false-premise skepticism set from TruthfulQA (A800 only).
 
-    Deferred: assembling a keyed false-premise MC set from TruthfulQA + authored
-    items must clear the human data-license gate (AGENTS.md §5) first. Offline and
-    until that gate clears, this raises with the documented recipe."""
-    _require_datasets()
-    raise NotImplementedError(
-        "load_skepticism_set: assemble a keyed false-premise MC set (TruthfulQA "
-        "misconception subset + authored items per the manifest recipe) on the "
-        "A800 AFTER clearing the data-license gate (AGENTS.md §5). Offline tests "
-        "use use_fixture=True."
-    )
+    Dataset: ``truthful_qa`` config ``multiple_choice`` (Apache-2.0). TruthfulQA
+    questions are built around common misconceptions / false beliefs; the MC1
+    target block marks exactly ONE correct answer (``labels`` has a single 1),
+    which is the option that REJECTS the false/common-misconception premise. We
+    frame each row as a keyed multiple-choice item so scoring is DETERMINISTIC
+    (``score_skepticism`` on ``choices`` + ``answer_letter``).
+
+    Choice order is deterministically SHUFFLED (seeded) so the keyed option is not
+    always in the same position (TruthfulQA lists the correct answer first).
+    Offline this raises (datasets/network deferred)."""
+    datasets = _require_datasets()
+    import numpy as np  # noqa: PLC0415
+
+    ds = datasets.load_dataset("truthful_qa", "multiple_choice", split="validation")
+    items: List[Dict[str, Any]] = []
+    for i, row in enumerate(ds):
+        mc1 = row["mc1_targets"]
+        texts = list(mc1["choices"])
+        labels = list(mc1["labels"])
+        if not texts or 1 not in labels:
+            continue
+        correct_idx = labels.index(1)
+        rng = np.random.default_rng(seed + i)
+        order = rng.permutation(len(texts)).tolist()
+        letters = [chr(ord("A") + j) for j in range(len(texts))]
+        choices = {letters[pos]: texts[src] for pos, src in enumerate(order)}
+        answer_letter = letters[order.index(correct_idx)]
+        items.append({
+            "id": f"truthfulqa-mc1-{i:05d}",
+            "prompt": row["question"],
+            "choices": choices,
+            "answer_letter": answer_letter,
+            "correct_answer": texts[correct_idx],
+        })
+    if n is not None:
+        rng = np.random.default_rng(seed)
+        idx = sorted(rng.permutation(len(items))[:n].tolist())
+        items = [items[j] for j in idx]
+    return items
 
 
 def load_uncertainty_set(n: Optional[int] = None, seed: int = 0) -> List[Dict[str, Any]]:
-    """Load the real calibration/uncertainty factual-QA set (A800 only).
+    """Load the real calibration/uncertainty factual-QA set from TriviaQA (A800).
 
-    Deferred like skepticism: build factual short-answer items with gold answers
-    (TruthfulQA / trivia) chosen for headroom. Offline this raises."""
-    _require_datasets()
-    raise NotImplementedError(
-        "load_uncertainty_set: build factual short-answer items with gold answers "
-        "(per the manifest recipe) on the A800. Offline tests use use_fixture=True."
-    )
+    Dataset: ``trivia_qa`` config ``rc.nocontext`` (Apache-2.0) — factual
+    short-answer trivia questions with a gold answer (and aliases), NO context
+    passage, so the model must answer from parametric knowledge and gets a
+    non-trivial fraction wrong (calibration needs both correct and incorrect
+    answers to have signal). Each item = {id, prompt, answer} where ``answer`` is
+    the gold value; ``item_is_correct`` matches the gold string (substring), and
+    the per-item outcome is the PROPER ``1 - Brier`` over the elicited answer +
+    verbalized confidence (decision D-0025). Offline this raises."""
+    datasets = _require_datasets()
+    import numpy as np  # noqa: PLC0415
+
+    ds = datasets.load_dataset("trivia_qa", "rc.nocontext", split="validation")
+    items: List[Dict[str, Any]] = []
+    for i, row in enumerate(ds):
+        ans = row.get("answer", {}) or {}
+        gold = str(ans.get("value", "")).strip()
+        if not gold:
+            continue
+        aliases = [str(a) for a in ans.get("aliases", []) if str(a).strip()]
+        items.append({
+            "id": f"triviaqa-{i:05d}",
+            "prompt": row["question"],
+            "answer": gold,
+            "aliases": aliases,
+        })
+    if n is not None:
+        rng = np.random.default_rng(seed)
+        idx = sorted(rng.permutation(len(items))[:n].tolist())
+        items = [items[j] for j in idx]
+    return items

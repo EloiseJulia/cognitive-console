@@ -30,6 +30,7 @@ deterministic answer-key scorers in ``eval.scorers``. No torch here.
 from __future__ import annotations
 
 import abc
+import hashlib
 from dataclasses import dataclass, field, asdict
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
@@ -50,6 +51,11 @@ N_ITEMS_BY_AXIS: Dict[str, int] = {
     "uncertainty_awareness": 80,
 }
 COHERENCE_MAX_RATIO: float = 1.5
+# Small additive floor on the degeneracy-scale so the gate ceiling does NOT
+# collapse to an exact "== 0" test when the unsteered baseline degeneracy is 0
+# (a mildly-repetitive-but-coherent cell must not be spuriously discarded). The
+# gate stays conservative: ceiling = 1.5 * baseline + COHERENCE_EPS_FLOOR.
+COHERENCE_EPS_FLOOR: float = 0.02  # on the [0,1] degeneracy-score scale
 BOOTSTRAP_B: int = 10000
 FAMILYWISE_ALPHA: float = 0.05
 N_AXES: int = 3
@@ -253,7 +259,7 @@ def score_sample_outcome(axis: str, item: Dict, text: str) -> float:
         conf = _scorers.parse_confidence(text)
         if conf is None:
             conf = 0.5  # no stated confidence -> maximally uninformative prior
-        return _scorers.per_item_calibration_score(correct, conf)
+        return _scorers.per_item_brier(correct, conf)
     raise ValueError(f"unknown axis {axis!r}")
 
 
@@ -268,13 +274,21 @@ class BackendOutcomeSampler(OutcomeSampler):
     """
 
     def __init__(self, gen_backend: GenBackend, max_new_tokens: int = 256,
-                 do_sample: bool = True, temperature: float = 0.7):
+                 do_sample: bool = True, temperature: float = 0.7,
+                 seed: int = 0):
         if not isinstance(gen_backend, GenBackend):
             raise TypeError("gen_backend must be a GenBackend")
         self.gen = gen_backend
         self.max_new_tokens = int(max_new_tokens)
         self.do_sample = bool(do_sample)
         self.temperature = float(temperature)
+        self.seed = int(seed)
+
+    def _call_seed(self, axis: str, item: Dict, alpha: float, j: int) -> int:
+        """Deterministic per-(item, sample-index) torch seed derived from the run
+        seed, so re-runs reproduce every sampled generation (item-clustered)."""
+        key = f"{self.seed}|{axis}|{item.get('id')}|{float(alpha):.6f}|{j}"
+        return int(hashlib.sha256(key.encode("utf-8")).hexdigest(), 16) % (2 ** 31)
 
     def sample(self, axis: str, item: Dict, instruction: str, alpha: float,
                k: int, direction: np.ndarray, layer: int) -> SampleBatch:
@@ -282,12 +296,14 @@ class BackendOutcomeSampler(OutcomeSampler):
         steer = SteerConfig(direction=direction, alpha=float(alpha), layer=int(layer))
         outcomes: List[float] = []
         degens: List[float] = []
-        for _ in range(int(k)):
+        for j in range(int(k)):
+            call_seed = self._call_seed(axis, item, alpha, j)
             try:
                 out = self.gen.generate(text_input, steer, self.max_new_tokens,
-                                        do_sample=self.do_sample, temperature=self.temperature)
+                                        do_sample=self.do_sample,
+                                        temperature=self.temperature, seed=call_seed)
             except TypeError:
-                # Synthetic backends ignore sampling kwargs.
+                # Synthetic/deterministic backends ignore sampling/seed kwargs.
                 out = self.gen.generate(text_input, steer, self.max_new_tokens)
             outcomes.append(score_sample_outcome(axis, item, out))
             degens.append(_scorers.degeneracy_score(out))
@@ -363,7 +379,7 @@ def select_on_dev(
     _, base_deg, _ = _channel_item_outcomes(
         sampler, spec.axis, dev_items, spec.neutral_prompt, 0.0, k, spec.direction, spec.layer)
     baseline_degeneracy = float(base_deg.mean())
-    gate_ceiling = coherence_max_ratio * baseline_degeneracy
+    gate_ceiling = coherence_max_ratio * baseline_degeneracy + COHERENCE_EPS_FLOOR
 
     # --- α grid on DEV steer-only (neutral prompt, coherence-gated) ---
     grid_rows: List[Dict[str, object]] = []
@@ -488,7 +504,8 @@ def adjudicate_axis(
 
     test_baseline_deg = float(base_deg_test.mean())
     test_steer_deg = float(steer_deg.mean())
-    coherence_ok = test_steer_deg <= coherence_max_ratio * test_baseline_deg + 1e-12
+    coherence_ok = (test_steer_deg
+                    <= coherence_max_ratio * test_baseline_deg + COHERENCE_EPS_FLOOR + 1e-12)
 
     passed = axis_pass(ci.point, ci.ci_lo, ci.ci_hi, coherence_ok, delta=delta)
 
@@ -537,8 +554,9 @@ def _descriptive(axis: str, test_items: Sequence[Dict],
     d: Dict[str, object] = {}
     if axis in CALIBRATION_OUTCOME_AXES:
         d["set_ece_note"] = (
-            "Per-item outcome is 1-|correct-conf| (prereg-ambiguity resolution "
-            "flagged for Manager); binned set ECE is descriptive only."
+            "Per-item outcome is the PROPER 1 - Brier = 1 - (conf - correct)**2 "
+            "(decision D-0025; delta on this scale); the binned set ECE is "
+            "DESCRIPTIVE only and is NOT part of the gate."
         )
     return d
 
@@ -569,6 +587,7 @@ def frozen_params_dict() -> Dict[str, object]:
         "k_samples": K_SAMPLES,
         "n_items_by_axis": dict(N_ITEMS_BY_AXIS),
         "coherence_max_ratio": COHERENCE_MAX_RATIO,
+        "coherence_eps_floor": COHERENCE_EPS_FLOOR,
         "bootstrap_b": BOOTSTRAP_B,
         "familywise_alpha": FAMILYWISE_ALPHA,
         "n_axes": N_AXES,

@@ -147,14 +147,14 @@ def synthetic_sampler_factory(use_fixture: bool, n_items: Optional[int]):
     return factory
 
 
-def hf_sampler_factory(model: str, max_new_tokens: int, temperature: float):
+def hf_sampler_factory(model: str, max_new_tokens: int, temperature: float, seed: int):
     from cognitive_console.steering.generate import SteeredHFBackend
     device, dtype = p0._pick_device(), p0._pick_dtype()
-    backend = SteeredHFBackend(model, device=device, dtype=dtype)
+    backend = SteeredHFBackend(model, device=device, dtype=dtype, seed=seed)
 
     def factory(axis: str):
         return BackendOutcomeSampler(backend, max_new_tokens=max_new_tokens,
-                                     do_sample=True, temperature=temperature)
+                                     do_sample=True, temperature=temperature, seed=seed)
     return factory
 
 
@@ -222,6 +222,7 @@ def register(report: adj.AdjudicationReport, out_dir: Path, json_path: Path,
         "axes": [r.axis for r in report.axis_results],
         "frozen_params": report.frozen_params,
         "seed": seed,
+        "torch_seed": seed,  # base torch seed; per-(item,sample) seeds derived from it
     }
     cfg_hash = config_hash(cfg)
     summary_metrics = {
@@ -237,6 +238,7 @@ def register(report: adj.AdjudicationReport, out_dir: Path, json_path: Path,
     }
     summary_metrics["_verdict"] = report.verdict
     summary_metrics["_axis_passes"] = report.axis_passes
+    summary_metrics["_torch_seed"] = seed
 
     valid_for_paper = bool(meta.get("valid_for_paper", False))
     run_type = str(meta.get("run_type", "exploratory"))
@@ -287,6 +289,9 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--n-strong", type=int, default=DEFAULT_N_STRONG)
     ap.add_argument("--n-extraction", type=int, default=28)
     ap.add_argument("--bootstrap-b", type=int, default=adj.BOOTSTRAP_B)
+    ap.add_argument("--allow-underpowered", action="store_true",
+                    help="permit --bootstrap-b < frozen 10000 (prereg §5). OFF by "
+                         "default: the confirmatory run HARD-FAILS if underpowered.")
     ap.add_argument("--max-new-tokens", type=int, default=256)
     ap.add_argument("--temperature", type=float, default=0.7)
     ap.add_argument("--seed", type=int, default=20260723)
@@ -304,8 +309,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     axes = list(args.axes)
 
     if args.bootstrap_b < 10000:
+        if not args.allow_underpowered:
+            raise SystemExit(
+                f"[c2b-adj] FATAL: --bootstrap-b {args.bootstrap_b} < frozen 10000 "
+                f"(prereg §5). The confirmatory run requires B>=10000. Pass "
+                f"--allow-underpowered to override for a smoke/debug run only.")
         print(f"[c2b-adj] WARNING: --bootstrap-b {args.bootstrap_b} < frozen 10000 "
-              f"(prereg §5). Use >=10000 for the real adjudication.", flush=True)
+              f"(prereg §5) but --allow-underpowered was passed; NOT valid for the "
+              f"confirmatory adjudication.", flush=True)
 
     out_dir = Path(args.out_dir) if args.out_dir else (
         _REPO / "results" / f"c2b_adjudication_{args.backend}_{date.today().isoformat()}")
@@ -335,7 +346,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         usage_mid = check_disk_budget(guard_paths, args.disk_budget_gb,
                                       args.disk_ceiling_gb, raise_on_over=True)
         print(f"[c2b-adj] disk post-C1 (model loaded): {usage_mid.message}", flush=True)
-        sampler_for_axis = hf_sampler_factory(model, args.max_new_tokens, args.temperature)
+        sampler_for_axis = hf_sampler_factory(model, args.max_new_tokens,
+                                              args.temperature, args.seed)
         hardware = f"{p0._pick_device()}-{p0._pick_dtype()}"
         meta_extra = {"backend": "hf", **hf_meta}
 

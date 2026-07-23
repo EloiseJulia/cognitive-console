@@ -74,10 +74,24 @@ def test_score_uncertainty_uses_answer_key():
     assert e > 0.0  # overconfident on the wrong one
 
 
-def test_per_item_calibration_score():
-    assert S.per_item_calibration_score(1, 0.9) == pytest.approx(0.9)
-    assert S.per_item_calibration_score(0, 0.9) == pytest.approx(0.1)
-    assert S.per_item_calibration_score(1, 1.0) == pytest.approx(1.0)
+def test_per_item_brier_is_the_frozen_uncertainty_metric():
+    # PROPER per-item 1 - Brier = 1 - (conf - correct)^2 (decision D-0025).
+    # perfectly-calibrated confident-correct item -> 1.0
+    assert S.per_item_brier(1, 1.0) == pytest.approx(1.0)
+    # overconfident-wrong item -> near 0
+    assert S.per_item_brier(0, 1.0) == pytest.approx(0.0, abs=1e-9)
+    assert S.per_item_brier(0, 0.9) == pytest.approx(0.19)
+    # maximally-uncertain item -> 0.75 regardless of correctness
+    assert S.per_item_brier(1, 0.5) == pytest.approx(0.75)
+    assert S.per_item_brier(0, 0.5) == pytest.approx(0.75)
+    # calibrated low-confidence correct beats overconfident wrong (proper rule)
+    assert S.per_item_brier(1, 0.9) == pytest.approx(0.99)
+
+
+def test_improper_l1_calibration_metric_is_gone():
+    # The audit-rejected improper per-item metric 1 - |correct - conf| must be
+    # removed entirely (FIX 1).
+    assert not hasattr(S, "per_item_calibration_score")
 
 
 # --- parsing + degeneracy --------------------------------------------------- #

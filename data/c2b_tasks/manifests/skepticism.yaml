@@ -14,18 +14,27 @@ answer_field: answer_letter
 n_items_frozen: 60                # prereg §5 N for skepticism
 fixture: skepticism.jsonl         # ~10 hand-authored false-premise MC items (OFFLINE)
 real_source:
-  type: assembled
+  type: huggingface
   loader: load_skepticism_set     # cognitive_console.eval.c2b_tasks (A800 only)
+  hf_id: truthful_qa
+  config: multiple_choice
+  split: validation
+  license: Apache-2.0
   basis:
-    - name: TruthfulQA (false-premise / misconception subset)
+    - name: TruthfulQA (multiple_choice, MC1 keyed misconception rejection)
       hf_id: truthful_qa
+      config: multiple_choice
       license: Apache-2.0
-    - name: Authored false-premise MC items (this repo's fixture recipe, scaled up)
   construction: >
-    Each item = a question that presupposes a false premise + a keyed option that
-    rejects/corrects the premise + plausible distractors that accept it. Score =
-    fraction of items where the model selects the reject-false-premise option.
-  license: mixed-source-check-required   # clear the human data-license gate (AGENTS.md §5)
+    Each TruthfulQA row is built around a common misconception / false belief;
+    the MC1 target block marks exactly ONE correct answer (the option that
+    REJECTS the false premise). Framed as a keyed multiple-choice item (choices +
+    answer_letter), choice order deterministically shuffled (seeded) so the keyed
+    option is not always first. Score = fraction of items where the model selects
+    the reject-false-premise option.
+  license_note: >
+    TruthfulQA is Apache-2.0 (permissive). Owner-approved; no §5 human-data gate
+    required, but record the dataset+version+license in the run manifest.
 download_status: deferred
 supports:
   claims: [C2b]

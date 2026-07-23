@@ -15,11 +15,17 @@ outcome scorers:
   option is keyed) when the item supplies choices; otherwise rule-based detection
   of a correction.
 * ``score_uncertainty(items, answers, confidences) -> ECE`` — binned Expected
-  Calibration Error over the test items (outcome reported as ``1 - ECE``).
+  Calibration Error over the test items, reported DESCRIPTIVELY only (NOT in the
+  gate; see decision D-0025).
+* ``per_item_brier(correct, confidence) -> [0,1]`` — the PROPER per-item
+  uncertainty OUTCOME ``1 - (conf - correct)**2`` fed to the paired ITEM-cluster
+  bootstrap (decision D-0025 clarifies the uncertainty axis metric is per-item
+  ``1 - Brier``; δ=0.05 is on this scale). This REPLACES the improper per-item
+  L1 metric ``1 - |correct - conf|``, which was removed.
 
 All scorers are pure Python (no torch, no network) so the whole pipeline is
-offline-testable. Higher deliberation/skepticism scores and higher ``1 - ECE``
-mean a better OUTCOME on that axis.
+offline-testable. Higher deliberation/skepticism scores and higher per-item
+``1 - Brier`` mean a better OUTCOME on that axis.
 """
 
 from __future__ import annotations
@@ -245,16 +251,26 @@ def score_uncertainty(items: Sequence[Item], answers: Sequence[str],
     return ece(correct, confidences, n_bins=n_bins)
 
 
-def per_item_calibration_score(correct: int, confidence: float) -> float:
-    """Per-item calibration OUTCOME in [0, 1]: ``1 - |correct - confidence|``.
+def per_item_brier(correct: int, confidence: float) -> float:
+    """Per-item uncertainty OUTCOME in [0, 1]: the PROPER ``1 - Brier`` score.
 
-    This is the per-item quantity the paired ITEM-cluster bootstrap consumes for
-    the uncertainty axis (§4 operates on per-item differences). Its mean over a
-    set equals ``1 - mean|correct - conf|`` (the unbinned calibration score), the
-    per-item analogue of ``1 - ECE``. The binned set ECE (``score_uncertainty``)
-    is reported descriptively alongside. See prereg §5 (δ in ``1 - ECE`` units).
+    ``1 - (confidence - correct)**2`` where ``confidence`` in [0, 1] is the
+    model's verbalized confidence and ``correct`` in {0, 1} is whether the answer
+    matched the key. This is the FROZEN per-item quantity the paired ITEM-cluster
+    bootstrap consumes for the uncertainty axis (decision D-0025; δ=0.05 is on
+    this ``1 - Brier`` scale). It is a strictly PROPER scoring rule, unlike the
+    removed L1 metric ``1 - |correct - conf|``:
+
+    * a perfectly-calibrated confident-correct item (correct=1, conf=1.0) -> 1.0;
+    * an overconfident-wrong item (correct=0, conf=1.0) -> 0.0;
+    * a maximally-uncertain item (conf=0.5) -> 0.75 regardless of correctness.
+
+    The binned set ECE (``score_uncertainty`` / ``ece``) is reported DESCRIPTIVELY
+    alongside and is NOT part of the gate (prereg §4/§5 + D-0025).
     """
-    return float(1.0 - abs(float(correct) - float(confidence)))
+    c = float(correct)
+    p = float(confidence)
+    return float(1.0 - (p - c) ** 2)
 
 
 # --------------------------------------------------------------------------- #

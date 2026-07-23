@@ -286,15 +286,32 @@ class SteeredHFBackend(GenBackend):
         device: str = "cpu",
         dtype: str = "float32",
         max_length: int = 512,
+        seed: Optional[int] = None,
     ) -> None:
         self.model_name = model_name
         self.device = device
         self.dtype = dtype
         self.max_length = int(max_length)
+        self.seed = None if seed is None else int(seed)
         self._model = None
         self._tokenizer = None
         self._config = None
         self._layers = None  # the decoder-block module list
+
+    def _seed_torch(self, seed: Optional[int]) -> None:
+        """Deterministically seed torch (global + all CUDA devices) from ``seed``.
+
+        Sampled generation (``do_sample=True``) draws from torch's global RNG, so
+        without seeding the k samples (and the whole verdict) are non-reproducible.
+        Seeding before each generate call makes every (item, sample) reproducible
+        across re-runs with the same run ``--seed`` (prereg reproducibility)."""
+        if seed is None:
+            return
+        import torch
+
+        torch.manual_seed(int(seed))
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(int(seed))
 
     # -- lazy load --------------------------------------------------------
     def _ensure_loaded(self):
@@ -323,6 +340,8 @@ class SteeredHFBackend(GenBackend):
         model.eval()
         self._model = model
         self._layers = self._locate_decoder_layers(model)
+        # Seed torch once at load so even an unseeded per-call path is reproducible.
+        self._seed_torch(self.seed)
 
     @staticmethod
     def _locate_decoder_layers(model):
@@ -382,10 +401,15 @@ class SteeredHFBackend(GenBackend):
         max_new_tokens: int = 128,
         do_sample: bool = False,
         temperature: float = 1.0,
+        seed: Optional[int] = None,
     ) -> str:
         import torch
 
         self._ensure_loaded()
+        # Per-call deterministic seed (e.g. keyed on item + sample index) so re-
+        # runs with the same run seed reproduce every sampled generation. Falls
+        # back to the load-time seed when no per-call seed is supplied.
+        self._seed_torch(seed if seed is not None else self.seed)
         messages = [{"role": "user", "content": prompt}]
         text = self._tokenizer.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=True

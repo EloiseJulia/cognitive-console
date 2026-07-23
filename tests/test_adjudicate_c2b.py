@@ -2,12 +2,13 @@
 
 import numpy as np
 import pytest
+import random
 
 from cognitive_console.experiments import adjudicate_c2b as A
 from cognitive_console.experiments.adjudicate_c2b import (
     AxisAdjSpec, OutcomeSampler, SampleBatch,
 )
-from cognitive_console.steering.generate import SyntheticC2bTaskBackend
+from cognitive_console.steering.generate import SyntheticC2bTaskBackend, GenBackend
 from cognitive_console.experiments.adjudicate_c2b import BackendOutcomeSampler
 from cognitive_console.eval import c2b_tasks
 
@@ -250,3 +251,103 @@ def test_adjudication_report_serializes():
     assert d["verdict"] in {A.VERDICT_STRONG_GO, A.VERDICT_CONDITIONAL_GO, A.VERDICT_KILL}
     assert d["frozen_params"]["delta"] == 0.05
     assert d["frozen_params"]["bonferroni_ci_level"] == pytest.approx(1 - 0.05 / 3)
+
+
+# --------------------------------------------------------------------------- #
+# FIX 1 — uncertainty axis uses the PROPER per-item 1 - Brier end-to-end (D-0025)
+# --------------------------------------------------------------------------- #
+def test_uncertainty_sample_outcome_is_per_item_brier():
+    item = {"id": "u1", "answer": "Canberra"}
+    # confident + correct -> 1 - (1 - 1)^2 = 1.0
+    conf_correct = A.score_sample_outcome(
+        "uncertainty_awareness", item, "Answer: Canberra. Confidence: 100%.")
+    assert conf_correct == pytest.approx(1.0)
+    # overconfident + wrong -> 1 - (1 - 0)^2 = 0.0 (near 0)
+    over_wrong = A.score_sample_outcome(
+        "uncertainty_awareness", item, "Answer: Sydney. Confidence: 100%.")
+    assert over_wrong == pytest.approx(0.0, abs=1e-9)
+    # matches the scorer's Brier exactly (no L1 anywhere in the flow)
+    from cognitive_console.eval import scorers as S
+    assert not hasattr(S, "per_item_calibration_score")
+    assert A.score_sample_outcome(
+        "uncertainty_awareness", item, "Answer: Canberra. Confidence: 90%.") \
+        == pytest.approx(S.per_item_brier(1, 0.9))
+
+
+# --------------------------------------------------------------------------- #
+# FIX 2 — sampled generation is reproducible under the run seed
+# --------------------------------------------------------------------------- #
+class _SeededStochasticBackend(GenBackend):
+    """A stochastic GenBackend keyed on the per-call seed (no torch needed): it
+    draws its 'answer' from ``random.Random(seed)`` so identical seeds reproduce
+    identical generations, exactly like a torch-seeded sampled model."""
+
+    def generate(self, prompt, steer=None, max_new_tokens=128,
+                 do_sample=False, temperature=1.0, seed=None):
+        r = random.Random(seed)
+        return f"Let me think. Answer: {r.randint(0, 9)}."
+
+
+def test_sampled_generation_reproducible_under_same_seed():
+    items = [{"id": f"it-{i:02d}", "prompt": f"q{i}", "answer": str(i % 10)}
+             for i in range(8)]
+    backend = _SeededStochasticBackend()
+
+    def run(base_seed):
+        s = BackendOutcomeSampler(backend, do_sample=True, seed=base_seed)
+        return [s.sample("deliberation", it, "instr", 4.0, 5, np.ones(8), 3).outcomes
+                for it in items]
+
+    a = run(20260723)
+    b = run(20260723)
+    assert a == b  # identical run seed -> bit-identical per-item outcomes
+
+    # a DIFFERENT run seed produces different per-(item, sample) torch seeds.
+    s1 = BackendOutcomeSampler(backend, do_sample=True, seed=20260723)
+    s2 = BackendOutcomeSampler(backend, do_sample=True, seed=999)
+    assert (s1._call_seed("deliberation", items[0], 4.0, 0)
+            != s2._call_seed("deliberation", items[0], 4.0, 0))
+    # per-sample seeds within one item differ (so the k samples actually vary)
+    assert (s1._call_seed("deliberation", items[0], 4.0, 0)
+            != s1._call_seed("deliberation", items[0], 4.0, 1))
+
+
+# --------------------------------------------------------------------------- #
+# FIX 4 — coherence gate additive floor (mildly-repetitive cell not discarded)
+# --------------------------------------------------------------------------- #
+def test_coherence_gate_additive_floor_keeps_mildly_repetitive_cell():
+    spec = _spec(n=30)
+    ids = [it["id"] for it in spec.items]
+    split = A.split_dev_test(ids, dev_fraction=1 / 3, seed=0)
+    dev_items = [it for it in spec.items if it["id"] in set(split.dev_ids)]
+
+    # baseline degeneracy is 0; a mildly-repetitive-but-coherent steer cell (deg
+    # 0.01 < eps_floor 0.02) must NOT be spuriously discarded. With the old
+    # ceiling = 1.5 * 0 == 0 it would (0.01 <= 0 is False).
+    def outcome(ax, it, instr, alpha):
+        return 0.9 if alpha else 0.3
+
+    def degeneracy(ax, it, instr, alpha):
+        return 0.0 if alpha == 0 else 0.01
+    sel = A.select_on_dev(RecordingSampler(outcome, degeneracy), spec, dev_items, k=5)
+    assert sel.frozen_alpha is not None
+    row = next(r for r in sel.alpha_grid if r["alpha"] == sel.frozen_alpha)
+    assert row["coherence_ok"] is True
+    assert A.COHERENCE_EPS_FLOOR == 0.02
+    assert A.frozen_params_dict()["coherence_eps_floor"] == 0.02
+
+
+def test_coherence_floor_still_conservative_on_a_broken_cell():
+    # A genuinely degenerate cell (deg 1.0) is still discarded even with the floor.
+    spec = _spec(n=30)
+    ids = [it["id"] for it in spec.items]
+    split = A.split_dev_test(ids, dev_fraction=1 / 3, seed=0)
+    dev_items = [it for it in spec.items if it["id"] in set(split.dev_ids)]
+
+    def outcome(ax, it, instr, alpha):
+        return 0.9 if alpha else 0.3
+
+    def degeneracy(ax, it, instr, alpha):
+        return 0.1 if alpha == 0 else 1.0  # 1.0 >> 1.5*0.1 + 0.02 = 0.17
+    sel = A.select_on_dev(RecordingSampler(outcome, degeneracy), spec, dev_items, k=5)
+    assert sel.frozen_alpha is None

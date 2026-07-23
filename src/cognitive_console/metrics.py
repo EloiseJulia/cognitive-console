@@ -89,6 +89,145 @@ def facade_ratio(prompt_projection: float, vector_projection: float) -> float:
     return float(prompt_projection / vector_projection)
 
 
+# --------------------------------------------------------------------------- #
+# Same-origin, scale-free "reach fraction" (Claim C1, corrected — see D-0016)
+# --------------------------------------------------------------------------- #
+# The original facade_ratio above divides prompt_reach (measured from a NEUTRAL
+# origin) by ||v|| = ||mean(pos)-mean(neg)|| (a neg-pole->pos-pole displacement
+# that also silently bakes in the CAA steering coefficient alpha=1). That mixes
+# two different origins and an arbitrary alpha, so the ratio is a metric-
+# construction artifact rather than an achievable-range fraction (audit
+# BLOCKER-1 alpha dependence, BLOCKER-2 origin mismatch).
+#
+# The corrected metric measures BOTH the prompt displacement and the achievable
+# on-axis displacement from the SAME neutral origin, projected on the SAME unit
+# direction û, and takes NO steering coefficient:
+#
+#   prompt_reach = <mean(strong-prompt act) - neutral_mean_act, û>
+#   pole_reach   = <mean(EXTRACTION-POS act) - neutral_mean_act, û>
+#   facade_ratio = prompt_reach / pole_reach
+#
+# Scale-free (û is unit-norm, both reaches in the same activation units) and
+# alpha-independent (pole_reach is the model's own positive-pole displacement,
+# not alpha*||v||). Interpretation:
+#   0 < ratio << 1  -> genuine facade (prompt points right way, only part-way)
+#   ratio ~= 1 or >1 -> NO facade (prompt reaches as far as the pole)
+#   ratio < 0        -> prompt goes the WRONG way along the axis.
+#
+# These helpers operate on SCALAR projection arrays (activations already dotted
+# onto û), so they are pure, fast, and model-independent for unit testing.
+
+
+def reach_fraction(prompt_reach: float, pole_reach: float) -> float:
+    """Same-origin scale-free facade ratio: prompt_reach / pole_reach.
+
+    Both reaches are signed on-axis displacements from the SAME neutral origin.
+    Raises if the achievable pole displacement is ~0 (ratio undefined — the
+    positive pole is not separated from neutral along û, so there is no range to
+    take a fraction of)."""
+    if abs(pole_reach) < _EPS:
+        raise ValueError("pole_reach is ~0; reach_fraction undefined")
+    return float(prompt_reach / pole_reach)
+
+
+@dataclass(frozen=True)
+class SameOriginFacadeResult:
+    prompt_reach: float             # <mean(strong) - neutral_mean, û>
+    pole_reach: float               # <mean(extraction-POS) - neutral_mean, û>
+    facade_ratio: float             # prompt_reach / pole_reach (SAME origin, alpha-free)
+    ci_lo: float                    # bootstrap CI lower bound (resample strong set)
+    ci_hi: float                    # bootstrap CI upper bound
+    ci_level: float                 # e.g. 0.95
+    loo_min: float                  # leave-one-neutral-out ratio band (min)
+    loo_max: float                  # leave-one-neutral-out ratio band (max)
+    n_strong: int
+    n_neutral: int
+    n_boot: int
+    seed: int
+
+    def to_dict(self) -> Dict:
+        return asdict(self)
+
+
+def same_origin_facade(
+    strong_projs,
+    pos_projs,
+    neutral_projs,
+    n_boot: int = 2000,
+    seed: int = 0,
+    ci_level: float = 0.95,
+) -> SameOriginFacadeResult:
+    """Corrected C1 facade metric from SCALAR projections onto û.
+
+    Parameters
+    ----------
+    strong_projs  : per-strong-prompt scalar projections onto û (len ~7).
+    pos_projs     : per-EXTRACTION-POS scalar projections onto û (the positive
+                    pole the model can actually reach on this axis).
+    neutral_projs : per-neutral-prompt scalar projections onto û (the shared
+                    origin for BOTH prompt_reach and pole_reach).
+
+    Returns a SameOriginFacadeResult with the point estimate, a bootstrap 95% CI
+    over the strong-prompt set, and a leave-one-neutral-out sensitivity band.
+    """
+    strong = _as_vector(strong_projs)
+    pos = _as_vector(pos_projs)
+    neutral = _as_vector(neutral_projs)
+    if n_boot <= 0:
+        raise ValueError("n_boot must be positive")
+    if not (0.0 < ci_level < 1.0):
+        raise ValueError("ci_level must be in (0, 1)")
+
+    neutral_origin = float(neutral.mean())
+    pole_proj = float(pos.mean())
+    prompt_reach = float(strong.mean()) - neutral_origin
+    pole_reach = pole_proj - neutral_origin
+    ratio = reach_fraction(prompt_reach, pole_reach)
+
+    # Bootstrap 95% CI by resampling the strong-prompt set (pole_reach is the
+    # fixed achievable range; the sampling uncertainty is in the prompt reach).
+    rng = np.random.default_rng(seed)
+    n = strong.size
+    idx = rng.integers(0, n, size=(n_boot, n))
+    boot_prompt_reach = strong[idx].mean(axis=1) - neutral_origin
+    boot_ratios = boot_prompt_reach / pole_reach
+    lo_pct = 100.0 * (1.0 - ci_level) / 2.0
+    hi_pct = 100.0 * (1.0 + ci_level) / 2.0
+    ci_lo = float(np.percentile(boot_ratios, lo_pct))
+    ci_hi = float(np.percentile(boot_ratios, hi_pct))
+
+    # Leave-one-neutral-out: dropping a neutral shifts the shared origin, which
+    # moves BOTH numerator and denominator. Report the band so neutral-set
+    # sensitivity is visible (audit MINOR-7).
+    loo_ratios = []
+    if neutral.size > 1:
+        for i in range(neutral.size):
+            origin_i = float(np.delete(neutral, i).mean())
+            pr_i = float(strong.mean()) - origin_i
+            pole_i = pole_proj - origin_i
+            if abs(pole_i) >= _EPS:
+                loo_ratios.append(pr_i / pole_i)
+    if not loo_ratios:
+        loo_ratios = [ratio]
+    loo_min = float(min(loo_ratios))
+    loo_max = float(max(loo_ratios))
+
+    return SameOriginFacadeResult(
+        prompt_reach=prompt_reach,
+        pole_reach=pole_reach,
+        facade_ratio=ratio,
+        ci_lo=ci_lo,
+        ci_hi=ci_hi,
+        ci_level=float(ci_level),
+        loo_min=loo_min,
+        loo_max=loo_max,
+        n_strong=int(n),
+        n_neutral=int(neutral.size),
+        n_boot=int(n_boot),
+        seed=int(seed),
+    )
+
+
 @dataclass(frozen=True)
 class FacadeResult:
     prompt_projection: float

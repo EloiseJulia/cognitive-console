@@ -38,20 +38,23 @@ SEPARATELY-authored strongest-prompt set, an honest baseline, and a null:
 4. NEUTRAL baseline. Every prompt reach is measured RELATIVE to axis-agnostic
    neutral instructions, so we credit the prompt only with the *displacement it
    adds beyond a content-free instruction*.
-5. CONSISTENT estimators from the SAME baseline (FIX 1). latent_reach = ||v||
-   (one scalar). The PRIMARY prompt_reach is the MEAN over the strongest-prompt
-   set of (project_scalar(act, û) - neutral_proj); prompt_reach_max (the max) is
-   reported as a clearly-labelled UPPER BOUND, not the headline. The prior pilot
-   compared the MAX prompt reach against ||v|| with the neutral baseline near the
-   negative pole, so facade_ratio >= 1 was near-structural (max >= mean).
-6. NULL. The prompt displacement must clear the p95 of projecting that same
-   displacement onto random unit directions (metrics.random_null_baseline).
+5. CONSISTENT estimators from the SAME neutral origin (CORRECTED, D-0016).
+   pole_reach = <mean(EXTRACTION-POS act) − neutral_mean_act, û> is the model's
+   ACHIEVABLE positive-pole displacement, measured from the SAME neutral origin
+   as the prompt and taking NO steering coefficient alpha. prompt_reach =
+   <mean(strong-prompt act) − neutral_mean_act, û>. This replaces the earlier
+   ||v|| denominator (neg-pole→pos-pole displacement implicitly at alpha=1),
+   which mixed origins and baked in an arbitrary alpha (audit BLOCKER-1/2). The
+   old ||v||-based ratio is retained per-axis, clearly marked SUPERSEDED.
+6. NULL. above-null is DEMOTED to a labelled sanity field (trivial in high-dim,
+   audit MAJOR-3); extraction_success requires the positive pole itself to clear
+   the random-direction null from the neutral origin.
 
-facade_ratio_mean = prompt_reach_mean / ||v||  (signed) -- HEADLINE.
-facade_ratio_max  = prompt_reach_max  / ||v||  (signed) -- upper bound.
-EXPLORATORY read (thresholds NOT frozen): a facade gap looks real when
-0 < facade_ratio_mean well below 1 AND the mean displacement clears the null. We
-report the numbers; we do NOT hard-code a frozen verdict.
+facade_ratio = prompt_reach / pole_reach  (same-origin, scale-free, alpha-free) — HEADLINE.
+A bootstrap 95% CI (resampling the strong-prompt set) and a leave-one-neutral-out
+band are reported. EXPLORATORY read (thresholds NOT frozen): a facade holds when
+0 < facade_ratio and the CI upper bound is meaningfully < 1. We report the
+numbers; we do NOT hard-code a frozen verdict.
 """
 
 from __future__ import annotations
@@ -78,7 +81,7 @@ if str(_REPO / "src") not in sys.path:
 
 from cognitive_console.activations.provider import HFActivationProvider
 from cognitive_console.steering.extract import extract_caa
-from cognitive_console.metrics import project_scalar, random_null_baseline
+from cognitive_console.metrics import project_scalar, random_null_baseline, same_origin_facade
 from cognitive_console.analysis.routing import (
     RoutingInputs,
     RoutingThresholds,
@@ -203,27 +206,38 @@ def make_split(pair_ids: List[str], n_extraction: int, seed: int) -> Split:
 class AxisResult:
     axis: str
     chosen_layer: int
-    vector_norm: float                 # ||v|| = latent_reach (displacement adding
-                                       # the CAA vector produces along û; one scalar)
-    neutral_proj: float                # mean neutral projection on û (baseline)
-    # --- PRIMARY (mean-based) estimators, measured from the SAME neutral baseline
-    prompt_reach_mean: float           # MEAN over strongest-prompt set of (proj - neutral_proj)
-    facade_ratio_mean: float           # prompt_reach_mean / ||v||  (signed) -- HEADLINE
-    above_null_mean: bool              # |prompt_reach_mean| > null p95 (mean displacement)
-    null_p95_mean: float
-    signal_z_mean: float               # (|prompt_reach_mean| - null_mean)/null_std
-    # --- Clearly-labelled UPPER BOUND (max-based) estimators
-    prompt_reach_max: float            # MAX over strongest-prompt set (upper bound, NOT headline)
-    strongest_prompt_id: str           # which strongest-prompt attained the max
-    facade_ratio_max: float            # prompt_reach_max / ||v||  (signed)
-    above_null_max: bool               # |prompt_reach_max| > null p95 (max displacement)
-    null_p95_max: float
-    signal_z_max: float
-    # --- EXPLORATORY read (thresholds are placeholders; NO frozen verdict)
-    facade_gap_positive: bool          # 0 < facade_ratio_mean (prompt pushes right way)
-    facade_below_latent: bool          # facade_ratio_mean < 1 (falls short of latent)
-    c1_signal: bool                    # positive AND below latent AND above null (mean-based)
-    n_strongest: int                   # size of the strongest-prompt set
+    neutral_proj: float                # mean neutral projection on û = SHARED ORIGIN
+    # --- PRIMARY (corrected, same-origin, scale-free, alpha-free -- see D-0016) --
+    prompt_reach: float                # <mean(strong) - neutral_mean, û>
+    pole_reach: float                  # <mean(EXTRACTION-POS) - neutral_mean, û>:
+                                       # the model's ACHIEVABLE positive-pole
+                                       # displacement from the SAME neutral origin
+    facade_ratio: float                # prompt_reach / pole_reach  -- HEADLINE
+    facade_ratio_ci_lo: float          # bootstrap 95% CI over strong-prompt set
+    facade_ratio_ci_hi: float
+    facade_ratio_ci_level: float
+    facade_ratio_loo_min: float        # leave-one-neutral-out band (neutral sensitivity)
+    facade_ratio_loo_max: float
+    facade_gap_holds_ci: bool          # CI upper bound < 1 (facade genuinely holds)
+    extraction_success: bool           # positive pole is separated from neutral along
+                                       # û above the random-direction null (metric is
+                                       # only meaningful if the pole itself reaches)
+    pole_null_p95: float               # random-direction null p95 on the pole displacement
+    # --- Clearly-labelled UPPER BOUND (single strongest prompt), same-origin ----
+    prompt_reach_max: float            # MAX same-origin reach over the strong set
+    strongest_prompt_id: str
+    facade_ratio_max: float            # prompt_reach_max / pole_reach (upper bound)
+    # --- SUPERSEDED old ||v||-based ratio (denominator artifact; kept for compare)
+    vector_norm_SUPERSEDED: float      # ||v|| = ||mean(pos)-mean(neg)|| (neg->pos pole)
+    facade_ratio_vnorm_mean_SUPERSEDED: float   # old headline = prompt_reach / ||v||
+    facade_ratio_vnorm_max_SUPERSEDED: float
+    # --- Labelled SANITY fields (NOT headline; trivial in high-dim, audit MAJOR-3)
+    sanity_above_null: bool            # |prompt_reach| > null p95 (mean displacement)
+    sanity_signal_z: float             # (|prompt_reach| - null_mean)/null_std
+    sanity_null_p95: float
+    # --- EXPLORATORY read (thresholds NOT frozen; c1_signal is data-derived) ----
+    c1_signal: bool                    # extraction_success AND ratio>0 AND CI upper<1
+    n_strongest: int
     strongest_file_hash: str
     n_extraction: int
     n_probe: int
@@ -245,6 +259,8 @@ def analyze_axis(
     n_extraction: int,
     seed: int,
     n_null: int,
+    n_boot: int = 2000,
+    ci_level: float = 0.95,
 ) -> AxisResult:
     pairs = load_axis_pairs(axis)
     pair_ids = list(pairs.pos.keys())
@@ -260,10 +276,10 @@ def analyze_axis(
     layer = caa.layer
     v = np.asarray(caa.vector, dtype=np.float64)
     unit = np.asarray(caa.direction, dtype=np.float64)
-    v_norm = float(np.linalg.norm(v))  # latent_reach
+    v_norm = float(np.linalg.norm(v))  # SUPERSEDED latent_reach (neg-pole -> pos-pole)
 
-    # Step 3: neutral baseline projection on û at the chosen layer. Every prompt
-    # reach below is measured as displacement FROM this same neutral baseline.
+    # Step 3: neutral baseline projection on û at the chosen layer. This mean is
+    # the SHARED ORIGIN for BOTH prompt_reach and pole_reach (audit BLOCKER-2).
     neutral_texts = load_neutral_prompts()
     neutral_acts = provider.get_activations(neutral_texts, layer)
     neutral_projs = np.array(
@@ -272,51 +288,72 @@ def analyze_axis(
     neutral_proj = float(neutral_projs.mean())
     neutral_mean_act = np.asarray(neutral_acts, dtype=np.float64).mean(axis=0)
 
+    # Step 4: pole_reach = the model's ACHIEVABLE positive-pole displacement,
+    # measured from the SAME neutral origin, projected on û. This replaces the old
+    # ||v|| denominator (which was measured neg-pole -> pos-pole and implicitly at
+    # steering coefficient alpha=1 -> audit BLOCKER-1). It uses the EXTRACTION-set
+    # POS activations only, so it stays on the same disjoint split as the vector.
+    pos_acts = provider.get_activations(ext_pos, layer)
+    pos_projs = np.array([project_scalar(a, unit) for a in pos_acts], dtype=np.float64)
+
     # Step 5: prompt reach on the SEPARATELY-AUTHORED strongest-prompt set (FIX 2).
     # These instructions are NOT from the contrast-pair distribution used to build
-    # v, so they cannot trivially project onto û at ~full ||v|| (no pseudo-circularity).
+    # v, so they cannot trivially project onto û at ~full pole (no pseudo-circularity).
     strongest = load_strongest_prompts(axis)
     strong_acts = provider.get_activations(strongest.texts, layer)
-    reaches = np.array(
-        [project_scalar(a, unit) - neutral_proj for a in strong_acts], dtype=np.float64
+    strong_projs = np.array(
+        [project_scalar(a, unit) for a in strong_acts], dtype=np.float64
     )
 
-    # PRIMARY (headline): mean reach over the strongest-prompt set (FIX 1 -- a
-    # consistent estimator vs the same neutral baseline as latent_reach=||v||).
-    prompt_reach_mean = float(reaches.mean())
-    facade_ratio_mean = prompt_reach_mean / v_norm if v_norm > 1e-12 else float("nan")
+    # PRIMARY (corrected headline): same-origin scale-free reach fraction with a
+    # bootstrap CI over the strong-prompt set and a leave-one-neutral-out band.
+    so = same_origin_facade(
+        strong_projs=strong_projs,
+        pos_projs=pos_projs,
+        neutral_projs=neutral_projs,
+        n_boot=n_boot,
+        seed=seed,
+        ci_level=ci_level,
+    )
+    prompt_reach = so.prompt_reach
+    pole_reach = so.pole_reach
 
     # UPPER BOUND (clearly labelled, NOT the headline): the single strongest prompt.
+    reaches = strong_projs - neutral_proj
     max_idx = int(np.argmax(reaches))
     prompt_reach_max = float(reaches[max_idx])
     strongest_id = strongest.ids[max_idx]
-    facade_ratio_max = prompt_reach_max / v_norm if v_norm > 1e-12 else float("nan")
+    facade_ratio_max = (
+        prompt_reach_max / pole_reach if abs(pole_reach) > 1e-12 else float("nan")
+    )
 
-    # Step 6: random-direction null on the actual displacement each estimator moved.
-    # Mean-based null uses the MEAN displacement (proj of it == prompt_reach_mean).
+    # SUPERSEDED old ||v||-based ratios, retained for a direct comparison only.
+    facade_ratio_vnorm_mean = prompt_reach / v_norm if v_norm > 1e-12 else float("nan")
+    facade_ratio_vnorm_max = prompt_reach_max / v_norm if v_norm > 1e-12 else float("nan")
+
+    # SANITY (labelled, NOT headline): does the prompt displacement clear a random
+    # direction null? Trivial in high-dim (audit MAJOR-3) -> demoted from headline.
     mean_displacement = strong_acts.astype(np.float64).mean(axis=0) - neutral_mean_act
     null_mean_dist = random_null_baseline(mean_displacement, n_samples=n_null, seed=seed)
-    null_p95_mean = float(np.percentile(null_mean_dist, 95))
+    sanity_null_p95 = float(np.percentile(null_mean_dist, 95))
     nm_mean, nm_std = float(null_mean_dist.mean()), float(null_mean_dist.std())
-    above_null_mean = bool(abs(prompt_reach_mean) > null_p95_mean)
-    signal_z_mean = (
-        float((abs(prompt_reach_mean) - nm_mean) / nm_std) if nm_std > 1e-12 else float("nan")
+    sanity_above_null = bool(abs(prompt_reach) > sanity_null_p95)
+    sanity_signal_z = (
+        float((abs(prompt_reach) - nm_mean) / nm_std) if nm_std > 1e-12 else float("nan")
     )
 
-    # Max-based null uses the single strongest prompt's displacement.
-    max_displacement = np.asarray(strong_acts[max_idx], dtype=np.float64) - neutral_mean_act
-    null_max_dist = random_null_baseline(max_displacement, n_samples=n_null, seed=seed)
-    null_p95_max = float(np.percentile(null_max_dist, 95))
-    nx_mean, nx_std = float(null_max_dist.mean()), float(null_max_dist.std())
-    above_null_max = bool(abs(prompt_reach_max) > null_p95_max)
-    signal_z_max = (
-        float((abs(prompt_reach_max) - nx_mean) / nx_std) if nx_std > 1e-12 else float("nan")
-    )
+    # EXTRACTION-SUCCESS: the metric is only meaningful if the positive pole itself
+    # displaces from neutral along û beyond chance. Null on the pole displacement.
+    pole_displacement = pos_acts.astype(np.float64).mean(axis=0) - neutral_mean_act
+    null_pole_dist = random_null_baseline(pole_displacement, n_samples=n_null, seed=seed)
+    pole_null_p95 = float(np.percentile(null_pole_dist, 95))
+    extraction_success = bool(pole_reach > 0.0 and abs(pole_reach) > pole_null_p95)
 
-    # EXPLORATORY read on the PRIMARY (mean-based) ratio (thresholds NOT frozen).
-    facade_positive = facade_ratio_mean > 0
-    facade_below = facade_ratio_mean < 1.0
-    c1_signal = bool(facade_positive and facade_below and above_null_mean)
+    # EXPLORATORY data-derived read (thresholds NOT frozen): a facade genuinely
+    # holds only when the pole is reachable (extraction_success), the prompt points
+    # the RIGHT way (ratio > 0), and the bootstrap CI upper bound is below 1.
+    facade_gap_holds_ci = bool(so.ci_hi < 1.0)
+    c1_signal = bool(extraction_success and so.facade_ratio > 0.0 and facade_gap_holds_ci)
 
     per_layer_sep = {
         str(ell): float(d.separation) for ell, d in sorted(caa.per_layer.items())
@@ -325,21 +362,27 @@ def analyze_axis(
     return AxisResult(
         axis=axis,
         chosen_layer=int(layer),
-        vector_norm=v_norm,
         neutral_proj=neutral_proj,
-        prompt_reach_mean=prompt_reach_mean,
-        facade_ratio_mean=float(facade_ratio_mean),
-        above_null_mean=above_null_mean,
-        null_p95_mean=null_p95_mean,
-        signal_z_mean=signal_z_mean,
+        prompt_reach=prompt_reach,
+        pole_reach=pole_reach,
+        facade_ratio=so.facade_ratio,
+        facade_ratio_ci_lo=so.ci_lo,
+        facade_ratio_ci_hi=so.ci_hi,
+        facade_ratio_ci_level=so.ci_level,
+        facade_ratio_loo_min=so.loo_min,
+        facade_ratio_loo_max=so.loo_max,
+        facade_gap_holds_ci=facade_gap_holds_ci,
+        extraction_success=extraction_success,
+        pole_null_p95=pole_null_p95,
         prompt_reach_max=prompt_reach_max,
         strongest_prompt_id=strongest_id,
         facade_ratio_max=float(facade_ratio_max),
-        above_null_max=above_null_max,
-        null_p95_max=null_p95_max,
-        signal_z_max=signal_z_max,
-        facade_gap_positive=bool(facade_positive),
-        facade_below_latent=bool(facade_below),
+        vector_norm_SUPERSEDED=v_norm,
+        facade_ratio_vnorm_mean_SUPERSEDED=float(facade_ratio_vnorm_mean),
+        facade_ratio_vnorm_max_SUPERSEDED=float(facade_ratio_vnorm_max),
+        sanity_above_null=sanity_above_null,
+        sanity_signal_z=sanity_signal_z,
+        sanity_null_p95=sanity_null_p95,
         c1_signal=c1_signal,
         n_strongest=len(strongest.texts),
         strongest_file_hash=strongest.file_hash,
@@ -432,6 +475,8 @@ def run(
     out_dir: Path,
     max_scan_layers: Optional[int] = None,
     ram_floor_mb: float = 450.0,
+    n_boot: int = 2000,
+    ci_level: float = 0.95,
 ) -> Dict[str, object]:
     t0 = time.time()
     # Guard the whole memory-heavy phase (model load + all forwards). We only stop
@@ -442,6 +487,10 @@ def run(
         print(f"[c1] system-available RAM at start: {avail0:.0f} MB "
               f"(watchdog floor {ram_floor_mb:.0f} MB)", flush=True)
     cache_dir = out_dir / "activations" / "cache"
+    # Honest wall-clock (audit MINOR-6): if the activation cache is already warm,
+    # the measured wall-clock UNDER-reports the true full-compute cost. Record
+    # whether the cache was cold so the registry can qualify the number.
+    cache_was_cold = not (cache_dir.exists() and any(cache_dir.iterdir()))
     provider = HFActivationProvider(
         model, device="cpu", dtype="float32", cache_dir=str(cache_dir)
     )
@@ -463,14 +512,15 @@ def run(
     for axis in axes:
         ta = time.time()
         res = analyze_axis(
-            provider, axis, scan_layers, n_extraction, seed, n_null
+            provider, axis, scan_layers, n_extraction, seed, n_null,
+            n_boot=n_boot, ci_level=ci_level,
         )
         results.append(res)
         print(
             f"[c1] axis={axis:<24} layer={res.chosen_layer:>3} "
-            f"||v||={res.vector_norm:8.3f} reach_mean={res.prompt_reach_mean:8.3f} "
-            f"ratio_mean={res.facade_ratio_mean:6.3f} ratio_max={res.facade_ratio_max:6.3f} "
-            f"above_null={res.above_null_mean} c1={res.c1_signal}  ({time.time()-ta:.1f}s)",
+            f"prompt_reach={res.prompt_reach:7.3f} pole_reach={res.pole_reach:7.3f} "
+            f"ratio={res.facade_ratio:6.3f} CI=[{res.facade_ratio_ci_lo:.3f},{res.facade_ratio_ci_hi:.3f}] "
+            f"extract_ok={res.extraction_success} c1={res.c1_signal}  ({time.time()-ta:.1f}s)",
             flush=True,
         )
 
@@ -478,16 +528,18 @@ def run(
     watchdog_stop.set()
 
     # ---- EXPLORATORY Go/No-Go routing (thresholds NOT frozen) --------------
+    # Fed with the CORRECTED same-origin facade_ratio (see D-0016). facade_holds
+    # per axis = extraction_success AND ratio>0 AND CI upper bound < 1.
     n_axes = len(results)
     support_fraction = sum(r.c1_signal for r in results) / n_axes if n_axes else 0.0
     finite_ratios = [
-        r.facade_ratio_mean for r in results if np.isfinite(r.facade_ratio_mean)
+        r.facade_ratio for r in results if np.isfinite(r.facade_ratio)
     ]
     max_ratio = max(finite_ratios) if finite_ratios else float("nan")
     routing_inputs = RoutingInputs(
         facade_support_fraction=support_fraction,
         max_facade_ratio_observed=max_ratio if np.isfinite(max_ratio) else 0.0,
-        prompt_above_null=all(r.above_null_mean for r in results) if results else False,
+        prompt_above_null=all(r.extraction_success for r in results) if results else False,
         # C1-only pilot: the downstream AC4/5/8 signals are NOT measured here.
         # Set to False and label the routing EXPLORATORY (see 'routing_caveat').
         blind_eval_above_chance=False,
@@ -514,14 +566,19 @@ def run(
         "hidden_dim": int(provider.hidden_dim),
         "generated_at": utcnow(),
         "wall_clock_seconds": round(wall_clock, 2),
+        "cache_was_cold": bool(cache_was_cold),
+        "wall_clock_is_true_full_compute": bool(cache_was_cold),
         "peak_rss_mb": round(peak_rss, 1) if peak_rss else None,
         "platform": platform.platform(),
+        "n_boot": n_boot,
+        "ci_level": ci_level,
         "axes": [r.to_row() for r in results],
         "aggregate": {
             "n_axes": n_axes,
             "facade_support_fraction": support_fraction,
-            "max_facade_ratio_mean_observed": max_ratio,
-            "prompt_above_null_all": bool(all(r.above_null_mean for r in results)),
+            "n_axes_facade_holds_ci": int(sum(r.c1_signal for r in results)),
+            "max_facade_ratio_observed": max_ratio,
+            "extraction_success_all": bool(all(r.extraction_success for r in results)),
         },
         "routing_EXPLORATORY": routing.to_dict(),
         "routing_caveat": (
@@ -529,7 +586,14 @@ def run(
             "does NOT measure blind-eval (AC4), transfer/composition (AC5), or the "
             "behavioral prompt-search ceiling (AC8). Those routing gates are set "
             "False here by construction, so the route is NOT a real Go/No-Go — the "
-            "meaningful signal is the per-axis facade_ratio + above_null."
+            "meaningful signal is the per-axis same-origin facade_ratio + its CI."
+        ),
+        "metric_note": (
+            "facade_ratio is the CORRECTED same-origin, scale-free, alpha-free "
+            "reach fraction (D-0016): prompt_reach / pole_reach, both measured as "
+            "on-axis displacement from the SAME neutral origin projected on û. The "
+            "old ||v||-based ratio (facade_ratio_vnorm_*_SUPERSEDED) is retained "
+            "per-axis for comparison only — it mixed origins and baked in alpha=1."
         ),
     }
     return payload
@@ -548,49 +612,89 @@ def _write_results(payload: Dict[str, object], out_dir: Path, seed: int) -> Tupl
     lines.append(f"- seed: {seed}   n_null: {payload['n_null']}   "
                  f"hidden_dim: {payload['hidden_dim']}")
     lines.append(f"- scan layers: {payload['scan_layers']}")
-    lines.append(f"- wall-clock: {payload['wall_clock_seconds']}s   "
+    lines.append(f"- wall-clock: {payload['wall_clock_seconds']}s "
+                 f"(cache_was_cold={payload['cache_was_cold']}, "
+                 f"true_full_compute={payload['wall_clock_is_true_full_compute']})   "
                  f"peak RSS: {payload['peak_rss_mb']} MB")
+    lines.append(f"- bootstrap: n_boot={payload['n_boot']}  CI level={payload['ci_level']}")
     lines.append(f"- valid_for_paper: **{payload['valid_for_paper']}**\n")
-    lines.append("## Per-axis facade gap  (PRIMARY = mean-based; max = labelled UPPER BOUND)\n")
     lines.append(
-        "| axis | layer | \\|\\|v\\|\\| (latent_reach) | neutral_proj | "
-        "prompt_reach_mean | facade_ratio_mean | above_null(mean) | signal_z(mean) | "
-        "prompt_reach_max | facade_ratio_max | above_null(max) | C1 signal | ext_sep | n_strong |"
+        "## Per-axis facade gap — CORRECTED same-origin, scale-free, alpha-free metric (D-0016)\n"
     )
-    lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
+    lines.append(
+        "facade_ratio = prompt_reach / pole_reach, both measured as on-axis "
+        "displacement from the SAME neutral origin projected on û. A facade "
+        "genuinely HOLDS only when extraction succeeded AND the bootstrap CI "
+        "upper bound is < 1 (number reported; NO frozen verdict).\n"
+    )
+    lines.append(
+        "| axis | layer | prompt_reach | pole_reach | facade_ratio | 95% CI | "
+        "leave-1-neutral band | extract ok? | CI upper<1? | C1 signal |"
+    )
+    lines.append("|---|---|---|---|---|---|---|---|---|---|")
     for r in payload["axes"]:  # type: ignore[index]
         lines.append(
-            f"| {r['axis']} | {r['chosen_layer']} | {r['vector_norm']:.2f} | "
-            f"{r['neutral_proj']:.2f} | {r['prompt_reach_mean']:.2f} | "
-            f"{r['facade_ratio_mean']:.3f} | {r['above_null_mean']} | {r['signal_z_mean']:.2f} | "
-            f"{r['prompt_reach_max']:.2f} | {r['facade_ratio_max']:.3f} | {r['above_null_max']} | "
-            f"{'YES' if r['c1_signal'] else 'no'} | {r['extraction_separation']:.2f} | "
-            f"{r['n_strongest']} |"
+            f"| {r['axis']} | {r['chosen_layer']} | {r['prompt_reach']:.3f} | "
+            f"{r['pole_reach']:.3f} | {r['facade_ratio']:.3f} | "
+            f"[{r['facade_ratio_ci_lo']:.3f}, {r['facade_ratio_ci_hi']:.3f}] | "
+            f"[{r['facade_ratio_loo_min']:.3f}, {r['facade_ratio_loo_max']:.3f}] | "
+            f"{'yes' if r['extraction_success'] else 'NO'} | "
+            f"{'yes' if r['facade_gap_holds_ci'] else 'no'} | "
+            f"{'YES' if r['c1_signal'] else 'no'} |"
+        )
+    lines.append("")
+    lines.append("## SUPERSEDED old ||v||-based ratio (denominator artifact, see D-0016) — for comparison only\n")
+    lines.append(
+        "| axis | ||v|| (SUPERSEDED) | old facade_ratio (prompt_reach/||v||) | "
+        "new facade_ratio (prompt_reach/pole_reach) | flips verdict? |"
+    )
+    lines.append("|---|---|---|---|---|")
+    for r in payload["axes"]:  # type: ignore[index]
+        old = r["facade_ratio_vnorm_mean_SUPERSEDED"]
+        new = r["facade_ratio"]
+        # "flip" = old said facade (0<old<1) but new says none (>=1 / <=0), or vice-versa
+        old_facade = 0.0 < old < 1.0
+        new_facade = bool(r["c1_signal"])
+        flip = "YES" if old_facade != new_facade else "no"
+        lines.append(
+            f"| {r['axis']} | {r['vector_norm_SUPERSEDED']:.3f} | {old:.3f} | {new:.3f} | {flip} |"
+        )
+    lines.append("")
+    lines.append("## Sanity (labelled — NOT headline; trivial in high-dim, audit MAJOR-3)\n")
+    lines.append("| axis | prompt_reach above random-null? | signal_z | pole above-null p95 |")
+    lines.append("|---|---|---|---|")
+    for r in payload["axes"]:  # type: ignore[index]
+        lines.append(
+            f"| {r['axis']} | {r['sanity_above_null']} | {r['sanity_signal_z']:.2f} | "
+            f"{r['pole_null_p95']:.3f} |"
         )
     agg = payload["aggregate"]  # type: ignore[index]
     lines.append("")
     lines.append("## Aggregate\n")
-    lines.append(f"- axes with a C1 signal (mean-based): "
-                 f"{agg['facade_support_fraction']*100:.0f}% "
-                 f"({int(round(agg['facade_support_fraction']*agg['n_axes']))}/{agg['n_axes']})")
-    lines.append(f"- max facade_ratio_mean observed: {agg['max_facade_ratio_mean_observed']:.3f}")
-    lines.append(f"- all axes above null (mean-based): {agg['prompt_above_null_all']}")
+    lines.append(f"- axes where a facade genuinely holds (extract ok AND CI upper<1): "
+                 f"{agg['n_axes_facade_holds_ci']}/{agg['n_axes']} "
+                 f"({agg['facade_support_fraction']*100:.0f}%)")
+    lines.append(f"- max same-origin facade_ratio observed: {agg['max_facade_ratio_observed']:.3f}")
+    lines.append(f"- extraction succeeded on all axes: {agg['extraction_success_all']}")
     lines.append("")
     lines.append("## Routing (EXPLORATORY — not a real Go/No-Go)\n")
     lines.append(f"- route: `{payload['routing_EXPLORATORY']['route']}`  "  # type: ignore[index]
                  f"verdict: `{payload['routing_EXPLORATORY']['verdict']}`")
     lines.append(f"- {payload['routing_caveat']}")
     lines.append("")
-    lines.append("## How to read facade_ratio\n")
+    lines.append("## How to read facade_ratio (CORRECTED, D-0016)\n")
     lines.append(
-        "- `latent_reach = ||v||` — the displacement adding the CAA vector produces along û.\n"
-        "- **PRIMARY** `prompt_reach_mean = MEAN` over the separately-authored strongest-prompt "
-        "set of `project_scalar(act, û) − neutral_proj`, from the SAME neutral baseline.\n"
-        "- **UPPER BOUND (not headline)** `prompt_reach_max = MAX` over that set.\n"
-        "- `facade_ratio_{mean,max} = prompt_reach_{mean,max} / ||v||` (signed). ~1 => the prompt "
-        "reaches as far as the latent vector (NO facade). 0 < ratio << 1 AND above null => a "
-        "semantic-facade gap (prompt points the right way but falls short). < 0 => the prompt "
-        "pushes the WRONG way along the axis (evidence against a clean prompt->latent map).\n"
+        "- `pole_reach = <mean(EXTRACTION-POS act) − neutral_mean_act, û>` — the model's "
+        "ACHIEVABLE positive-pole displacement from the SAME neutral origin (NO steering "
+        "coefficient alpha; replaces the old ||v|| denominator).\n"
+        "- `prompt_reach = <mean(strong-prompt act) − neutral_mean_act, û>` — the strongest "
+        "readable prompt's displacement from the SAME origin.\n"
+        "- `facade_ratio = prompt_reach / pole_reach` (scale-free, alpha-free, same-origin). "
+        "0 < ratio << 1 AND CI upper<1 => genuine facade (prompt points right way, only "
+        "part-way to the pole). ratio ~= 1 or >1 => NO facade. ratio < 0 => prompt goes the "
+        "WRONG way.\n"
+        "- A facade 'holds' only if the bootstrap CI upper bound is meaningfully < 1 — we "
+        "report the number and do NOT hard-code a frozen verdict.\n"
         "- The strongest-prompt set is DISTINCT IN KIND from the contrast pairs used to build v "
         "(guarded in tests/test_leakage.py), so the ratio is not inflated by pseudo-circularity."
     )
@@ -633,18 +737,32 @@ def _register(payload: Dict[str, object], out_dir: Path, json_path: Path, seed: 
     summary_metrics = {
         r["axis"]: {
             "chosen_layer": r["chosen_layer"],
-            "vector_norm": r["vector_norm"],
-            "prompt_reach_mean": r["prompt_reach_mean"],
-            "prompt_reach_max": r["prompt_reach_max"],
-            "facade_ratio_mean": r["facade_ratio_mean"],
-            "facade_ratio_max": r["facade_ratio_max"],
-            "above_null_mean": r["above_null_mean"],
-            "above_null_max": r["above_null_max"],
+            "prompt_reach": r["prompt_reach"],
+            "pole_reach": r["pole_reach"],
+            "facade_ratio": r["facade_ratio"],
+            "facade_ratio_ci_lo": r["facade_ratio_ci_lo"],
+            "facade_ratio_ci_hi": r["facade_ratio_ci_hi"],
+            "facade_ratio_loo_min": r["facade_ratio_loo_min"],
+            "facade_ratio_loo_max": r["facade_ratio_loo_max"],
+            "facade_ratio_vnorm_mean_SUPERSEDED": r["facade_ratio_vnorm_mean_SUPERSEDED"],
+            "extraction_success": r["extraction_success"],
+            "facade_gap_holds_ci": r["facade_gap_holds_ci"],
             "c1_signal": r["c1_signal"],
         }
         for r in axis_rows
     }
     summary_metrics["_aggregate"] = payload["aggregate"]
+
+    # Honest wall-clock (audit MINOR-6): record the TRUE full-compute seconds and
+    # flag whether the activation cache was cold (a warm-cache run under-reports).
+    raw_metrics = {
+        "wall_clock_seconds": payload["wall_clock_seconds"],
+        "cache_was_cold": payload["cache_was_cold"],
+        "wall_clock_is_true_full_compute": payload["wall_clock_is_true_full_compute"],
+        "peak_rss_mb": payload["peak_rss_mb"],
+        "n_boot": payload["n_boot"],
+        "ci_level": payload["ci_level"],
+    }
 
     exp_id = new_experiment_id(registry, "c1-facade", cfg_hash)
     record = ExperimentRecord(
@@ -667,15 +785,22 @@ def _register(payload: Dict[str, object], out_dir: Path, json_path: Path, seed: 
         ended_at=utcnow(),
         exit_code=0,
         summary_metrics=summary_metrics,
+        raw_metrics=raw_metrics,
         artifacts=[str(json_path.relative_to(_REPO)).replace("\\", "/")],
         valid_for_paper=False,
         validation_notes=(
             f"EXPLORATORY C1 facade pilot on {payload['model']} (CPU). Protocol NOT "
-            "frozen. FIX1: consistent mean-based prompt_reach vs latent_reach=||v|| "
-            "from the same neutral baseline (max reported as a labelled upper bound). "
-            "FIX2: strongest-prompt reach measured on a SEPARATELY-authored instruction "
-            "set (data/strongest_prompts/), distinct in kind from the contrast pairs, "
-            "removing the pseudo-circularity of the prior held-out-POS approach. "
+            "frozen. CORRECTED METRIC (D-0016): facade_ratio = prompt_reach / "
+            "pole_reach is same-origin, scale-free, and alpha-free — both reaches "
+            "are on-axis displacement from the SAME neutral origin projected on û. "
+            "This replaces the SUPERSEDED ||v||-based ratio (BLOCKER-1 alpha=1 "
+            "dependence, BLOCKER-2 origin mismatch), which is retained per-axis for "
+            "comparison only. Bootstrap 95% CI over the strong-prompt set + "
+            "leave-one-neutral-out band reported. above-null demoted to a labelled "
+            "sanity field (MAJOR-3). FIX2 retained: strongest-prompt reach on a "
+            "SEPARATELY-authored instruction set, distinct in kind from the contrast "
+            f"pairs. Wall-clock {payload['wall_clock_seconds']}s recorded as TRUE "
+            f"full-compute (cache_was_cold={payload['cache_was_cold']}, MINOR-6). "
             "Registered in a run-local registry (docs/ untouched by task scope)."
         ),
     )
@@ -706,11 +831,15 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--n-extraction", type=int, default=28)
     ap.add_argument("--seed", type=int, default=20260723)
     ap.add_argument("--n-null", type=int, default=2000)
+    ap.add_argument("--n-boot", type=int, default=2000,
+                    help="bootstrap resamples for the facade_ratio CI")
+    ap.add_argument("--ci-level", type=float, default=0.95,
+                    help="bootstrap CI level for the facade_ratio")
     ap.add_argument("--ram-floor-mb", type=float, default=450.0,
                     help="hard-abort the run if system-available RAM drops below this")
     ap.add_argument(
         "--out-dir",
-        default=str(_REPO / "results" / "c1_facade_1p5b_2026-07-23"),
+        default=str(_REPO / "results" / "c1_facade_1p5b_v2_2026-07-23"),
     )
     args = ap.parse_args(argv)
 
@@ -725,6 +854,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         out_dir=out_dir,
         max_scan_layers=args.max_scan_layers,
         ram_floor_mb=args.ram_floor_mb,
+        n_boot=args.n_boot,
+        ci_level=args.ci_level,
     )
     json_path, summary_path = _write_results(payload, out_dir, args.seed)
     exp_id = _register(payload, out_dir, json_path, args.seed)

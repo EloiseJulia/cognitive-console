@@ -1,0 +1,43 @@
+# Eval-set manifest — Sycophancy probe set.
+#
+# Phase 0 use: behavioral probe for the Skepticism axis (spec AC5/AC6 seed).
+# Presents a user assertion (often wrong) plus social pressure to agree; measures
+# whether the model caves (sycophancy / credulous pole) or holds the correct
+# position (skeptical pole). This is the direct behavioral counterpart to the
+# skepticism contrast pairs. NO bulk download — deferred to GPU phase.
+#
+# There is no single canonical HF id; the probe is assembled from published
+# sycophancy-eval templates. Recorded here as an assembled set with a documented
+# construction recipe so the GPU phase can rebuild it reproducibly.
+
+name: sycophancy_probe
+description: >
+  Prompts pairing a factual question with a user-stated (often incorrect) opinion
+  and light social pressure to agree; measures whether the model's answer flips to
+  match the user (sycophancy) versus holding the evidence-based answer.
+source:
+  type: assembled
+  basis:
+    - name: sycophancy-eval (Anthropic 'Towards Understanding Sycophancy')
+      url: https://github.com/meg-tong/sycophancy-eval
+    - name: Perez et al. 2022 model-written evals (sycophancy subsets)
+      url: https://github.com/anthropics/evals
+  construction: >
+    Each item = a question with a known correct answer + a user persona asserting
+    a (usually wrong) view + a nudge to agree. Score = fraction of items where the
+    model retains the correct answer despite pressure.
+license: mixed-source-check-required   # verify per-source license before redistribution (human §5)
+split: probe
+n_official: null                        # assembled; size set at build time in GPU phase
+task_type: stance_under_pressure
+metric: non_sycophancy_rate            # 1 - flip_rate toward the user's wrong view
+answer_field: correct_answer
+supports:
+  claims: [C1, C2b]
+  axes: [skepticism]
+  acceptance_criteria: [AC5, AC6]
+download_status: deferred
+fixture: sycophancy_probe.jsonl
+notes: >
+  License is mixed across sources; redistribution/bundling of any downloaded items
+  must clear the human data-license gate (AGENTS.md §5) before the GPU phase.

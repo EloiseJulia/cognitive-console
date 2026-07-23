@@ -1,0 +1,116 @@
+# Phase 0 cognitive axes (S1) — data-level definitions.
+#
+# Scope: these four axes are researcher-selected (TOP-DOWN) for CAA/RepE vector
+# extraction in the GPU phase. Wording is deliberately FUNCTIONAL and
+# NON-ANTHROPOMORPHIC: an axis names an observable property of the model's
+# output/behavior, NOT an inner mental state. "The model behaves as if X" is the
+# intended reading throughout — we do not assert the model has beliefs, doubts,
+# or awareness.
+#
+# BOTTOM-UP-VALIDITY RISK (applies to ALL axes, read before using):
+#   These axes and their poles are a priori projections by the researchers. They
+#   may not correspond to any natural, linearly-separable direction the model
+#   actually uses, and the pos/neg framing may impose structure that is not
+#   there. Phase 0 treats them as EXPLORATORY hypotheses only. They MUST be
+#   re-checked against user/practitioner vocabulary in the Formative study before
+#   any axis is promoted to a confirmatory lever or named in the paper as a
+#   user-facing control. Do not report these labels as validated constructs.
+
+version: 0.1
+status: exploratory            # never confirmatory pre-Formative-study
+selection: top-down-researcher
+maps_to_claims: [C1, C2a, C2b]
+maps_to_hypotheses: [H1, H2]
+
+axes:
+  - id: deliberation
+    name: Deliberation
+    functional_definition: >
+      The degree to which the response exposes explicit, step-by-step reasoning
+      before committing to an answer, versus jumping straight to a conclusion.
+      Measured as a property of the generated text (presence/length of an
+      intermediate reasoning trace, decomposition of the problem), not as an
+      inner cognitive effort.
+    pos_pole:
+      label: deliberate
+      description: >
+        Works through the problem in visible intermediate steps, decomposes it,
+        weighs options, and states the conclusion after the reasoning.
+    neg_pole:
+      label: snap
+      description: >
+        Answers immediately and tersely with little or no visible intermediate
+        reasoning.
+    bottom_up_risk: >
+      "Deliberation" may conflate two separable things — length/verbosity and
+      actual multi-step reasoning. A vector could pick up mere verbosity. Guard
+      in later phases by testing on a reasoning-gain task (does correctness move,
+      or only surface style?), per spec AC7.
+
+  - id: skepticism
+    name: Skepticism
+    functional_definition: >
+      The degree to which the response challenges, questions, or demands support
+      for premises in the prompt, versus accepting and complying with them. A
+      property of the stance the text takes toward the user's assertions, not a
+      disposition of the model.
+    pos_pole:
+      label: skeptical
+      description: >
+        Questions premises, flags unsupported claims, asks for evidence, and
+        resists false or leading assumptions in the prompt.
+    neg_pole:
+      label: credulous
+      description: >
+        Accepts the user's premises at face value and complies, including with
+        leading or unsupported assertions (sycophantic direction).
+    bottom_up_risk: >
+      Skepticism may be entangled with refusal / safety-tuned behavior and with
+      sycophancy, which have their own trained directions. A CAA vector might
+      capture "disagreeableness" or "refusal" rather than calibrated doubt.
+      Cross-check against the sycophancy probe set, not just self-report.
+
+  - id: uncertainty_awareness
+    name: Uncertainty-awareness
+    functional_definition: >
+      The degree to which the response calibrates and surfaces its own
+      confidence — hedging, stating what it does not know, giving ranges —
+      versus asserting a single answer with unqualified confidence. Measured from
+      explicit confidence/hedging markers in the text.
+    pos_pole:
+      label: uncertainty-aware
+      description: >
+        Surfaces confidence explicitly, hedges appropriately, states unknowns and
+        alternatives, and avoids overclaiming.
+    neg_pole:
+      label: assertive
+      description: >
+        States a single answer with flat, unqualified confidence and no hedging,
+        regardless of actual epistemic support.
+    bottom_up_risk: >
+      Surface hedging ("I might be wrong") is not the same as CALIBRATED
+      uncertainty; a vector may boost hedging phrases without improving
+      calibration. Any calibration claim needs a task with ground truth
+      (e.g., TruthfulQA), not phrasing counts.
+
+  - id: focus
+    name: Focus
+    functional_definition: >
+      The degree to which the response stays narrowly on the asked question and
+      omits tangents, versus broadening into related-but-unrequested material. A
+      property of topical scope/coverage of the output.
+    pos_pole:
+      label: focused
+      description: >
+        Answers exactly what was asked, concisely, without digressions or
+        unrequested elaboration.
+    neg_pole:
+      label: expansive
+      description: >
+        Broadens the answer with tangents, caveats, and related material beyond
+        the asked question.
+    bottom_up_risk: >
+      "Focus" risks collapsing into a pure length/brevity axis and overlapping
+      with Deliberation's verbosity component. The two vectors may be
+      near-collinear; check inter-axis cosine during extraction and drop or merge
+      if they are not separable.

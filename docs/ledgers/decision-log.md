@@ -49,6 +49,22 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0023 · Human: pre-registered C2b ADJUDICATION experiment (fix instrument → freeze → run once)
+- **Human decision (@EloiseJulia):** option 1 sharpened + option 4 absorbed. Do NOT pivot to Plan D now —
+  current C2b negative used audit-rejected proxies (invalid evidence, insufficient for irreversible pivot).
+  Instead: (1) carefully FIX the C2b instrument — eliminate ceiling effect (unsaturated / real-reasoning-gain
+  tasks), orthogonal NON-lexical behavioral proxies, multi-sample + CI, alpha sweep, DROP focus axis;
+  (2) PRE-REGISTER frozen success + kill criteria into docs/ledgers/ BEFORE running — criteria may NOT change
+  after seeing results; (3) budget cap: local first, ONE GPU allocation, adjudicate immediately, wipe;
+  (4) produce a stage summary (evidence chain + risks + 3 routes) as the vehicle for the pre-registration;
+  (5) if the QUALIFIED instrument still shows no RQ2 signal → THEN pivot to Plan D (RQ1-core measurement/
+  diagnostic CHI paper), reported honestly as a negative.
+- **Manager plan:** draft (a) stage-summary doc, (b) pre-registration doc with CONCRETE frozen thresholds →
+  confirm thresholds with human → FREEZE → implement qualified instrument locally + smoke → audit →
+  ONE A800 run → adjudicate against frozen criteria → wipe → report. This adjudication is confirmatory-track
+  for RQ2 direction (continue vs Plan D), so protocol freeze + no-post-hoc-change applies.
+- **Frozen?** Pre-registration to be frozen after human confirms thresholds (next step).
+
 ## 2026-07-23 · D-0022 · A800 7B run COMPLETE — C1 strengthened (3/4), C2b core NOT supported
 - **Run:** Qwen2.5-7B-Instruct on borrowed A800 (GPU fp16, device bug fixed D-0016→D-0021→devfix).
   Total compute 223s. A800 FULLY WIPED after (cc_scratch deleted, 20GB reclaimed; user's pre-existing

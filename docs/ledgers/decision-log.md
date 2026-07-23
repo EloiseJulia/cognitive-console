@@ -49,6 +49,28 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0018 · Fair-metric C1 read on 1.5B — 2/4 axes show a facade gap (credible EXPLORATORY)
+- **Result (feature/3, run c1-facade-d553d2cb-0001, same-origin scale-free metric + bootstrap CI):**
+  | axis | facade_ratio | 95% CI | C1 gap? |
+  |---|---|---|---|
+  | deliberation | 0.566 | [0.437, 0.710] | YES (CI hi < 1) |
+  | uncertainty  | 0.714 | [0.643, 0.796] | YES (CI hi < 1) |
+  | skepticism   | 0.853 | [0.634, 1.066] | NO (CI crosses 1) |
+  | focus        | junk  | extraction fails (layer-2 degenerate, pole_reach≈0) | no |
+- **Manager verification (light, proportionate):** the metric IS the audit-recommended same-origin
+  scale-free formula (prompt_reach/pole_reach, shared neutral origin, α-free); dedicated test file
+  test_same_origin_facade.py pins it (0.4 known-fraction incl. nonzero-origin BLOCKER-2 guard, deterministic
+  bootstrap CI, "CI hi→1 when no facade", leave-one-neutral band). 73 tests green. Numbers reproduce exactly
+  from cache. True wall-clock 391.6s recorded (MINOR-6 fixed). No 4th full audit — metric already audit-blessed.
+- **Read (HONEST):** C1 is PARTIALLY SUPPORTED on 1.5B — 2 of 4 axes show a genuine facade gap (prompt
+  reaches ~57%/71% of the neutral→pole range, CI upper bound < 1); skepticism does not; focus extraction
+  failed. This is EXPLORATORY (1.5B < 7-8B spec target; single seed model; valid_for_paper=false). NOT
+  confirmatory, protocol NOT frozen.
+- **Decision (Manager):** C1 → partially-supported (exploratory). H1 → partially-supported (exploratory).
+  This is the first CREDIBLE signal that the semantic-facade phenomenon is real for some axes. Present to
+  human: the signal exists but is axis-dependent + small-model; decide whether to (a) strengthen on 1.5B/3B
+  (free), (b) fix focus layer-selection, or (c) escalate to 7-8B (GPU, §5). Branch mergeable. Frozen? No.
+
 ## 2026-07-23 · D-0017 · Human GO: same-origin scale-free facade metric + CI, re-run 1.5B
 - **Human decision (@EloiseJulia):** "GO" — implement the audit's recommended fair metric and re-run.
 - **Metric v2 (feature/3):** facade_ratio = ⟨prompt−neutral, û⟩ / ⟨pos_pole−neutral, û⟩ (prompt's fraction

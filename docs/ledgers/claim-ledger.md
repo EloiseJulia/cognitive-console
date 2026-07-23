@@ -14,7 +14,9 @@ Status values: proposed | partially-supported | supported | contradicted | withd
   baseline, with a pre-registered meaningfully large gap.
 - **Scope:** Llama-3-8B-Instruct, Qwen2.5-7B-Instruct; axes = Deliberation/Skepticism/Uncertainty/Focus.
 - **Type:** empirical regularity (diagnostic → confirmatory after protocol freeze)
-- **Status:** proposed (v0.2: added null baseline + effect-size threshold after R1-F3/R2-M1)
+- **Status:** partially-supported (EXPLORATORY, 1.5B) — v0.2 added null baseline + effect-size threshold;
+  D-0018: 2/4 axes (deliberation, uncertainty) show facade gap with same-origin scale-free metric CI<1;
+  skepticism CI crosses 1; focus extraction failed. NOT confirmatory (small model, single seed, unfrozen).
 - **Required evidence:** projection/cosine of strongest-prompt vs CAA vector vs random null; blind-eval.
 - **Known limits:** projection is a linear proxy; axis may be non-linear/multi-mechanism.
 - **Paper location:** TBD

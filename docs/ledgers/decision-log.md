@@ -49,6 +49,17 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0013 · Human GO: run C1 facade on CPU (small model, exploratory, no spend)
+- **Human decision (@EloiseJulia):** "GO" — run C1 facade locally on CPU. Avoid A800 unless unavoidable.
+- **Machine:** 31.7GB RAM (3.8GB free now), C: 196GB free, T1000 unusable (1.3GB free). → CPU + small model.
+- **Manager plan:** implement subagent on feature/3-cpu-c1-facade — implement real CPU HFActivationProvider
+  (forward-only, fp32, last-token pooling, activation cache, HF_HOME), install CPU-only torch, download
+  Qwen2.5-0.5B-Instruct (Apache-2.0, no license gate), run an ANTI-CIRCULAR C1 facade protocol:
+  disjoint extraction/probe split, neutral baseline for prompt shift, ‖v‖ as latent reference.
+- **Labeling:** run is EXPLORATORY (protocol NOT frozen; thresholds placeholder; valid_for_paper=false).
+  Purpose = does a facade signal plausibly exist + does the pipeline run on real activations. Then AUDIT.
+- **Cost:** zero API, zero A800, zero paid — local CPU pilot (L3). Frozen? No.
+
 ## 2026-07-23 · D-0012 · phase0-analysis fixes verified & merged to main
 - **Verification (Manager independent):** re-ran pytest → 111 passed; independently probed B1 (anti-aligned
   facade now `not c1_supported`, via the fail-without-guard test) and M1 (identical green inputs:

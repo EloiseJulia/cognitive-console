@@ -1,0 +1,453 @@
+# ============================================================================
+# HUMAN-READABLE SUMMARY (R2 — Technical Soundness & Experiments, CHI charter gate)
+# ============================================================================
+# Verdict: MAJOR-REVISION (charter must not freeze as-is; core-claim falsifiability
+#   and study-design confounds must be closed at protocol level before any full run).
+# The idea is technically interesting and the theory citation (Mishra) is real, but
+# the CORE claim C2 and the headline metric C1 are, as written, at serious risk of
+# being UNFALSIFIABLE-IN-PRACTICE or TAUTOLOGICAL, and the 3-condition study has a
+# baked-in information/interface confound that could manufacture the very trust/
+# attribution gain it claims to test.
+#
+# Two BLOCKERs for the next gate (both cheap to close on paper, before spending GPU/
+# participant budget):
+#  B1. C2 slides from Mishra's *internal-state* non-surjectivity to a *behavioral/
+#      task* "prompt-unreachable region" with NO prompt-search upper bound. Without a
+#      pre-registered adversarial/automated prompt-optimization ceiling, "prompt-only
+#      can't cross the threshold" is indistinguishable from "we didn't try hard
+#      enough prompts" -> the core causal story is not falsifiable.
+#  B2. Condition C (dual-channel + attribution panel) carries MORE information and a
+#      second interface affordance than A/B; any attribution/trust-calibration gain is
+#      confounded with "condition C simply shows users more." Needs an information-
+#      matched control (e.g. attribution-panel-on-prompt-only, or panel-ablation).
+#
+# Top MAJORs: C1 projection metric is near-guaranteed <100% (no null/baseline defined)
+#  -> as stated it is close to a tautology; "surface-style vs reasoning" confound has
+#  no pre-specified discriminating task; "calibrated trust" has no operationalized
+#  ground-truth controllability to calibrate against (circularity risk); kill/pivot
+#  criteria lack numeric thresholds; no power analysis / target N for the main study.
+#
+# Score if unchanged: 2.0–2.5 / 5 (CHI). Score if blockers+majors closed: 3.5–4.0 / 5.
+# Top-3 rejection risks: (1) core claim unfalsifiable behavioral-vs-internal gap;
+#  (2) confounded 3-condition study; (3) "obvious combination" of Huang&Lim + Labarta
+#  + AI-Instruments unless facade-quantification & conflict phenomena proven non-trivial.
+# ============================================================================
+
+review_header:
+  review_id: review-R2-charter-2026-07-23
+  snapshot_id: charter-2026-07-23
+  reviewer_role: "R2 — Technical Soundness & Experiments (independent, no stake)"
+  target_venue: CHI
+  review_stage: charter
+  review_scope: >
+    Pre-experiment charter review. Assesses whether the falsifiable claims are
+    genuinely falsifiable, whether the Minimum Publishable Evidence is sufficient to
+    distinguish the core explanations, whether the Phase-0 semantic-facade projection
+    metric is a valid operationalization or a linear-probe artifact, whether the
+    3-condition study is fair/confound-free, whether "calibrated trust" is measurable,
+    and whether kill/pivot criteria are concrete. Does NOT re-adjudicate novelty
+    (that is R1/the Novelty Gate); references the Novelty Gate only where it bears on
+    technical falsifiability.
+  materials_examined:
+    - docs/charter/project-charter.md (v0.1 DRAFT)
+    - docs/research/2026-07-23-novelty-falsification.md
+    - docs/ledgers/claim-ledger.md (C1–C3)
+    - 开题报告_非满射双通道认知控制台.md (author intent / background)
+    - AI-Instruction.md Part I §10 (review protocol/format); AGENTS.md
+  missing_materials:
+    - "No study protocol / pre-registration document yet (expected at Protocol Freeze, not now)."
+    - "No power analysis, target N, or pre-registered primary-metric threshold."
+    - "No operational definition of 'true controllability' (the referent that 'calibrated trust' is calibrated against)."
+    - "No definition of the 'compliance-floor' tasks or the objective measure that establishes a control threshold exists."
+    - "No specification of how non-experts set the steering-only (B) sliders (defaults? tutorial? free exploration?) — affects baseline fairness."
+    - "No prompt-search / prompt-optimization protocol for establishing a behavioral prompt-reachability ceiling."
+    - "No stimulus set, LLM-judge rubric, or judge-vs-human agreement plan for the 'task quality' measure."
+    - "Budget caps (GPU, paid-API, max_full_runs) are TBD; IRB/human-subjects path unresolved (both flagged by authors as human-approval items — acceptable at charter stage)."
+  expertise_level: "high (activation steering / representation engineering, LLM eval methodology, HCI controlled-study design & trust-calibration measurement)"
+  conflict_check: "No conflict. Did not author the charter, ledgers, or novelty report; no prior involvement."
+  overall_score_range: "2.0–2.5 / 5 (CHI 5-point) as written; 3.5–4.0 / 5 if the two BLOCKERs and the C1/calibrated-trust MAJORs are closed at protocol level."
+  confidence: "medium-high (3.5/5) — high on the technical/measurement objections; medium on venue-score calibration at a pre-experiment stage."
+  verdict: major-revision
+
+paper_understanding:
+  one_sentence_problem: >
+    Non-expert users of steerable LLMs can only address the model through natural-language
+    prompts, which (per Mishra et al.) cannot reproduce internal states reachable by
+    activation steering; the work proposes a dual-channel console that makes this
+    prompt-vs-latent "non-surjective gap" a visible, operable, trust-calibratable
+    interface object and asks whether non-experts can attribute and resolve conflicts
+    between the two channels.
+  claimed_contributions:
+    - "C1 (RQ1): a quantified 'semantic facade' — the strongest human-readable prompt's mid-layer activation projects onto the CAA direction significantly below vector-only, surfaced to users as a trust-relevant measure."
+    - "C2 (RQ2, CORE): a prompt-unreachable behavioral region exists on compliance-floor tasks, AND a dual-channel + attribution panel lets non-experts attribute/resolve prompt↔latent conflict better than prompt-only or steering-only baselines."
+    - "C3 (RQ3, extension): metacognitive-axis levers act as a boundary object preserving perceived control/continuity across a Llama-3→Qwen-2.5 backend swap better than prompt folklore."
+    - "Design knowledge: legibility / boundary-awareness / conflict-resolution / calibrated-agency principles for latent-controllability UIs."
+  strongest_accept_case: >
+    If Phase-0 shows (a) a normalized facade metric well below a properly defined null,
+    tied to a measurable behavioral shortfall, and (b) at least one compliance-floor
+    task where an automated best-effort prompt search still cannot cross a threshold the
+    latent channel crosses, then the work delivers a genuinely new, theory-grounded
+    empirical phenomenon (behavioral prompt-unreachability made user-legible) plus the
+    first study of non-expert conflict-attribution and trust re-calibration under
+    prompt↔latent disagreement — a CHI-worthy interaction paradigm + design knowledge
+    that none of Huang&Lim (single channel), Labarta (vision/experts), or AI-Instruments
+    (prompt-only) provide. The theory citation is real and correctly quoted.
+  strongest_reject_case: >
+    As written, the two load-bearing claims are not sound. C1's "projection ≪ 100%" is
+    near-guaranteed for any single-direction CAA vector with no null baseline, so it is
+    close to a tautology, not a discovered facade. C2 imports Mishra's proven *internal-
+    state* non-surjectivity to justify an *unproven behavioral* unreachability, with no
+    prompt-optimization ceiling to rule out "the prompt just wasn't good enough"
+    (Stolfo et al. show instruction↔vector correspondence and cut directly against this).
+    The 3-condition study confounds the dual-channel concept with "condition C shows more
+    information / has a second UI panel," so a trust/attribution gain would not isolate
+    the claimed mechanism. "Calibrated trust" has no defined ground-truth controllability
+    to calibrate against (circularity). With numeric kill criteria, power analysis, and
+    fair baselines all TBD, the plan cannot yet distinguish its core explanation from
+    surface-style steering or from an interface-affordance artifact -> reject-until-fixed.
+  clarity_mismatches:
+    - "Charter §5 C1/C2 use 'significantly below' / 'better than' with no numeric threshold; a reader cannot tell what result would falsify vs confirm."
+    - "The term 'prompt-unreachable region' is used behaviorally in C2 but the only cited proof (Mishra) is about internal activations; the charter's §6 Non-Claims partially acknowledge this, but C2's own wording still asserts the behavioral gap as if entailed."
+    - "'calibrated trust' is listed as a first-class measure but never defined operationally in the bundle; author intent (开题) says 'trust tracks true controllability' without saying how true controllability is measured per-trial."
+    - "'compliance floor' / 'control threshold' are central to C2 but undefined — a reviewer cannot judge whether such a threshold is a real construct or chosen post-hoc."
+
+findings:
+  - finding_id: R2-B1
+    severity: blocker
+    dimension: soundness
+    target_claim_ids: [C2]
+    paper_locations:
+      - "charter §1 RQ2; §5 C2; §4 (Mishra row); claim-ledger C2"
+      - "novelty-falsification §0.2, §5 (RQ2 row), §6.1"
+    criticism: >
+      The core claim slides from an internal-state result to a behavioral one. Mishra
+      et al. prove no prompt reproduces the same internal *activation*; C2 asserts
+      prompt-only cannot cross a *behavioral/task* control threshold the latent channel
+      crosses. These are not equivalent — two different internal states can produce the
+      same output behavior. As written there is no procedure to establish behavioral
+      unreachability, so "prompt-only can't cross it" is indistinguishable from "we
+      didn't search hard enough over prompts." Stolfo et al. (ICLR 2025) show natural-
+      language instructions correspond to composable internal vectors, which directly
+      pressures the behavioral-gap story.
+    evidence_examined: "Mishra abstract (verified in novelty report §2); C2 wording; Stolfo neighbor row; Non-Claims §6 (acknowledges no behavioral equivalence but C2 still asserts a behavioral gap)."
+    why_it_matters_for_acceptance: "This is THE core contribution (RQ2). If the prompt-unreachable region is an artifact of a weak prompt-search rather than a genuine ceiling, the paper's central empirical claim collapses and reviewers will reject on soundness."
+    alternative_explanation: "The 'unreachable region' is reachable by a better/optimized/longer/adversarial prompt or few-shot exemplars that the manual prompt condition never tried."
+    requested_evidence_or_change: >
+      (1) Reword C2 and the theory link to separate proven internal-state non-surjectivity
+      from to-be-demonstrated behavioral unreachability. (2) Pre-register a prompt-search
+      UPPER BOUND protocol: for each compliance-floor task, run an automated/best-of-N /
+      instruction-optimization (and a red-team/adversarial) prompt search under a fixed
+      budget; the behavioral gap counts only if the latent channel exceeds the BEST prompt
+      found, not a single folk-theory prompt.
+    cheapest_discriminating_action: >
+      On 1–2 candidate tasks in Phase-0, compare latent-channel effect vs best-of-N
+      (e.g. N=20) automated prompt search on a single open model. If best-of-N prompts
+      reach the latent channel's level, C2's behavioral premise is falsified cheaply,
+      before any full study.
+    acceptance_condition: "C2 rewritten to a behavioral claim with a pre-registered prompt-search ceiling, AND Phase-0 shows ≥1 task where the latent channel exceeds the best searched prompt beyond a pre-registered margin."
+    confidence: "high (4.5/5)"
+    possible_reviewer_misunderstanding: "I may under-credit that a compliance-floor task (e.g. RLHF safety refusal) can be a near-provable behavioral ceiling; if so, the authors should name that task and its ceiling argument explicitly — which would largely close this."
+    requires_new_experiment: true
+    estimated_cost_class: "low (Phase-0 pilot compute; well within the existing 2–3 week Phase-0)"
+    user_approval_required: false
+
+  - finding_id: R2-B2
+    severity: blocker
+    dimension: empirical
+    target_claim_ids: [C2]
+    paper_locations:
+      - "charter §7 (Controlled study, 3-condition A/B/C); §5 C2 (attribution panel gain)"
+    criticism: >
+      Condition C = dual-channel console + attribution panel. It provides both (i) an
+      extra control channel AND (ii) an extra information display (the attribution panel)
+      that A (prompt-only) and B (steering-only) lack. Any measured gain in attribution
+      accuracy, trust calibration, or perceived control is therefore confounded: it could
+      be produced entirely by "C shows users more information / has a richer UI," with no
+      contribution from the dual-channel *concept* or from surfacing the prompt↔latent
+      gap. The study as framed cannot attribute its effect to the claimed mechanism.
+    evidence_examined: "charter §7 condition list; C2 claim that the *attribution panel* yields the gain; NASA-TLX/measures list."
+    why_it_matters_for_acceptance: "CHI reviewers scrutinize whether a controlled study isolates the claimed construct. An information/affordance confound on the central comparison is a standard reject reason for interaction-technique papers."
+    alternative_explanation: "The gain comes from extra on-screen information or a second manipulable widget (novelty/engagement), not from the dual-channel/non-surjective-gap idea."
+    requested_evidence_or_change: >
+      Add an information-matched control that dissociates 'more information' from 'dual
+      channel', e.g. a prompt-only + attribution-panel condition (panel shows facade/
+      projection info without a latent lever), and/or a dual-channel-without-panel
+      ablation. Pre-specify which pairwise contrast tests C2's mechanism. Match time-on-
+      task, tutorial length, and information density across arms.
+    cheapest_discriminating_action: "Add one panel-ablation arm (prompt-only + panel) to the design on paper and state the exact contrast (C vs prompt+panel) that isolates the dual-channel effect — zero compute cost, done before Protocol Freeze."
+    acceptance_condition: "Study design includes an information-matched control and names the specific confound-free contrast that supports C2's attribution/trust claim."
+    confidence: "high (4/5)"
+    possible_reviewer_misunderstanding: "If the authors intend the *panel itself* (not the second channel) as the contribution, then B2 is partly moot — but then C2's 'dual-channel' framing and the whole non-surjective narrative would need re-centering; either way the current design is ambiguous."
+    requires_new_experiment: false
+    estimated_cost_class: "medium (adds one study arm -> more participants; a design change, not new infra)"
+    user_approval_required: false
+
+  - finding_id: R2-M1
+    severity: major
+    dimension: soundness
+    target_claim_ids: [C1]
+    paper_locations:
+      - "charter §5 C1; §7 Phase-0; claim-ledger C1 (Known limits: linear proxy)"
+    criticism: >
+      C1 as stated ("strongest prompt's projection onto the CAA direction is significantly
+      below vector-only, projection ≪ 100%") is close to a tautology and largely a linear-
+      probe artifact. A CAA vector is a single mean-difference direction; the vector-only
+      condition sits at magnitude alpha along it by construction, while an arbitrary prompt's
+      activation will almost never align to that exact magnitude/direction. So projection
+      < vector-only is nearly guaranteed regardless of whether any meaningful 'facade'
+      exists. There is no null/baseline defined (What is the projection of an irrelevant/
+      random prompt? Of a paraphrase? What magnitude counts as 'reaching'?), and cosine/
+      projection is layer- and norm-sensitive. The falsification condition ("strongest
+      prompt ≈ vector-only") is almost impossible to meet, so C1 is barely falsifiable.
+    evidence_examined: "C1 wording; claim-ledger 'projection is a linear proxy' limit; steering-vector construction (CAA neighbor row)."
+    why_it_matters_for_acceptance: "C1 is the RQ1 headline 'semantic facade.' If it is a metric artifact, RQ1 reduces to a near-assumed corollary (novelty report §5 rates RQ1 MED–HIGH risk for exactly this reason) and the trust-relevant claim loses its empirical spine."
+    alternative_explanation: "The <100% projection reflects the arbitrary scaling/geometry of a single mean-diff direction, not a genuine gap between what the prompt intends and what it activates."
+    requested_evidence_or_change: >
+      Define the metric rigorously: (a) a null distribution (random/irrelevant prompts,
+      paraphrase spread) and report the facade as an effect relative to null; (b) normalize
+      for activation norm and report layer sensitivity; (c) tie the projection to a
+      BEHAVIORAL consequence (does lower projection predict a real shortfall in the target
+      cognitive attribute?), so the facade is a phenomenon, not a geometry artifact;
+      (d) pre-register a numeric 'reaches' threshold with justification.
+    cheapest_discriminating_action: "In Phase-0, compute projections for target-prompt vs paraphrase vs random-prompt vs vector-only on one axis/model; if target prompts are not separated from random prompts by the metric, C1 is an artifact — cheap to check."
+    acceptance_condition: "Facade metric defined against a null, norm-normalized, and shown to predict a behavioral shortfall, with a pre-registered threshold."
+    confidence: "high (4/5)"
+    possible_reviewer_misunderstanding: "The authors may already intend behavior-linked, null-relative reporting (开题 hints at behavioral landing points, 开题 §RQ1); if so this is a wording/spec gap rather than a design flaw."
+    requires_new_experiment: false
+    estimated_cost_class: "low (Phase-0 analysis; no new data collection)"
+    user_approval_required: false
+
+  - finding_id: R2-M2
+    severity: major
+    dimension: soundness
+    target_claim_ids: [C2, C1]
+    paper_locations:
+      - "charter §8 (kill criterion: 'steering changes only surface style, not reasoning')"
+    criticism: >
+      The charter concedes steering may change only surface style, not reasoning, and
+      lists it as a pivot criterion — but provides no pre-specified discriminating task or
+      metric to detect it, and no plan to ensure the *cognitive axes* (Deliberation /
+      Skepticism / Uncertainty / Focus) reflect genuine reasoning changes rather than
+      lexical/stylistic markers (hedging words, sentence length). If the 'control' is
+      stylistic, the whole 'cognitive console' framing and the non-surjective story
+      become about surface style, which is far less interesting and easily attacked.
+    evidence_examined: "charter §8 pivot list; axis definitions (开题: uncertainty via ECE/hedging rate — note hedging rate is itself a surface marker)."
+    why_it_matters_for_acceptance: "Distinguishing reasoning-level control from surface-style control is central to the paper being about *cognition* at all; reviewers will demand objective evidence."
+    alternative_explanation: "The steering vector shifts style tokens (e.g. more 'maybe/perhaps') without changing correctness, calibration, or decision behavior."
+    requested_evidence_or_change: >
+      Pre-register objective, non-lexical outcome tasks per axis (e.g. calibration/ECE and
+      accuracy on TruthfulQA/GSM8K for Uncertainty/Deliberation, decision-flip rates for
+      Skepticism) and report style-controlled analyses so a shift is not just word choice."
+    cheapest_discriminating_action: "For one axis, steer and measure a behavioral outcome (e.g. ECE) alongside a lexical style measure; if only style moves, report honestly and pivot early."
+    acceptance_condition: "Each cognitive axis has ≥1 pre-registered behavioral (non-lexical) outcome metric demonstrating reasoning-level, not merely stylistic, effect."
+    confidence: "medium-high (3.5/5)"
+    possible_reviewer_misunderstanding: "Some axes may legitimately be stylistic (e.g. Focus); the requirement is to be explicit about which axes claim reasoning-level effects."
+    requires_new_experiment: false
+    estimated_cost_class: "low (Phase-0)"
+    user_approval_required: false
+
+  - finding_id: R2-M3
+    severity: major
+    dimension: empirical
+    target_claim_ids: [C2, C3]
+    paper_locations:
+      - "charter §7 (measures: 'calibrated trust'); 开题 (trust tracks true controllability)"
+    criticism: >
+      'Calibrated trust' is a first-class measure but is not operationalized. Calibration
+      requires a ground-truth referent: trust should track *true controllability*. The
+      bundle never defines how 'true controllability' is measured per trial/condition, nor
+      the calibration statistic (WoA vs actual lever efficacy? trust-resolution/AUC?
+      trust-vs-accuracy slope? over-/under-reliance rates?). Without a defined referent,
+      'trust is well-calibrated' is circular and unfalsifiable, and it is unclear how C
+      could be shown 'better calibrated' than A/B in a way that is not the experimenter's
+      choice of referent.
+    evidence_examined: "charter §7 measures list; 开题 trust rows (calibrated trust as level-1 metric; over-anthropomorphism as risk)."
+    why_it_matters_for_acceptance: "Calibrated trust underpins the RQ1 facade→trust story and part of RQ2/RQ3; an undefined primary construct is a soundness/statistics red flag at CHI."
+    alternative_explanation: "Reported 'better calibration' is an artifact of how controllability ground truth was chosen or of the extra information in condition C (see R2-B2)."
+    requested_evidence_or_change: >
+      Pre-register: (a) the objective controllability signal per trial (e.g. measured
+      lever/prompt efficacy on the outcome); (b) the calibration metric (e.g. trust-
+      accuracy resolution/AUC, WoA appropriateness, over/under-reliance); (c) the exact
+      contrast establishing 'better calibrated', with a de-anthropomorphization check."
+    cheapest_discriminating_action: "Write the operational definition + one worked example (how a single participant-trial maps to a calibration score) into the protocol — no compute."
+    acceptance_condition: "Calibrated trust has a pre-registered ground-truth referent and calibration statistic before Protocol Freeze."
+    confidence: "high (4/5)"
+    possible_reviewer_misunderstanding: "The team may plan a standard trust-calibration paradigm; if so, citing it and specifying the referent resolves this."
+    requires_new_experiment: false
+    estimated_cost_class: "trivial (definition/pre-registration)"
+    user_approval_required: false
+
+  - finding_id: R2-M4
+    severity: major
+    dimension: statistics
+    target_claim_ids: [C1, C2, C3]
+    paper_locations:
+      - "charter §5 (C1/C2 'significantly below'/'better'); §8 kill criteria; §7 stats"
+    criticism: >
+      Kill/pivot and confirmation criteria lack numeric thresholds. C1 'significantly
+      below', C2 'better than baselines', §8 '3-condition study not significant' — none
+      specify effect-size targets, alpha, projection cut, or the primary endpoint's MDE.
+      Combined with a long measure list (task quality, prediction accuracy, calibrated
+      trust, perceived control, NASA-TLX, traces, mental-model pre/post) this invites
+      exploratory-confirmatory blur and post-hoc metric selection. No power analysis or
+      target N is given for the main study, so feasibility and the confirmatory status of
+      any result cannot be assessed.
+    evidence_examined: "charter §5, §7 (pre-registered primary metric mentioned but unnamed), §8; claim-ledger 'confirmatory after protocol freeze'."
+    why_it_matters_for_acceptance: "Pre-registration with a named primary endpoint + power is expected for confirmatory CHI studies; its absence is a common reviewer objection and blocks the confirmatory claim in the ledger."
+    alternative_explanation: "Any 'significant' result could be one of many measures surviving multiplicity; without a named primary + power, effects may be underpowered or cherry-picked."
+    requested_evidence_or_change: "Name ONE primary endpoint per RQ, its pre-registered threshold/effect size, alpha, multiplicity plan, and a power analysis fixing target N; keep other measures explicitly secondary/exploratory."
+    cheapest_discriminating_action: "Add a one-paragraph pre-registration stub (primary endpoint + assumed effect size + power/N) to the charter/protocol — no compute."
+    acceptance_condition: "Charter names primary endpoints with numeric thresholds and a power-justified N before Protocol Freeze."
+    confidence: "high (4/5)"
+    possible_reviewer_misunderstanding: "Authors state stats will be pre-registered; the objection is that the charter must at least fix the primary endpoint + power now to gate the full run."
+    requires_new_experiment: false
+    estimated_cost_class: "trivial"
+    user_approval_required: false
+
+  - finding_id: R2-M5
+    severity: major
+    dimension: empirical
+    target_claim_ids: [C2]
+    paper_locations:
+      - "charter §7 (condition B steering-only; measures: task quality via 3rd-party/LLM-judge)"
+    criticism: >
+      Two fairness issues in the baselines. (1) Condition B (steering-only) for non-experts:
+      how do laypeople set sliders with no prompt? If defaults or an experimenter-tuned
+      setting are used, B is either crippled (unfair to steering) or oracle-assisted
+      (unfair to prompt) — the charter is silent. (2) 'Task quality' relies on 3rd-party/
+      LLM-as-judge; using an LLM judge (possibly same-family as the tested models) as a
+      primary quality signal risks judge bias and circularity, especially when steering
+      changes style in ways judges reward. Baseline effort/time budgets ('fair baseline
+      budgets') are asserted but not specified.
+    evidence_examined: "charter §7 conditions + measures; novelty report note that Huang&Lim already did layperson sliders (fair-baseline stakes are high)."
+    why_it_matters_for_acceptance: "An unfair or ambiguous steering-only baseline undermines the central A/B/C comparison; LLM-judge circularity is a known CHI/eval objection."
+    alternative_explanation: "A 'dual-channel wins' result could be an artifact of a mis-configured B baseline or a style-biased LLM judge, not the paradigm."
+    requested_evidence_or_change: "Specify how B sliders are configured (matched tutorial/free exploration, not oracle); include human-rated ground truth for task quality with judge-vs-human agreement; equalize time/effort budgets across arms."
+    cheapest_discriminating_action: "Decide and document the B slider-setup protocol and add a human-agreement check on the LLM judge for a subsample — cheap, pre-Freeze."
+    acceptance_condition: "Baseline configuration + judge-validation plan documented and effort-matched before Protocol Freeze."
+    confidence: "medium-high (3.5/5)"
+    possible_reviewer_misunderstanding: "The team may plan human ratings already; charter should say so."
+    requires_new_experiment: false
+    estimated_cost_class: "low"
+    user_approval_required: false
+
+  - finding_id: R2-m1
+    severity: minor
+    dimension: reproducibility
+    target_claim_ids: [C1, C2]
+    paper_locations:
+      - "novelty-falsification §2 (ActAdd Appendix B [NEEDS EVIDENCE]); §6.4"
+    criticism: >
+      The novelty report flags the ActAdd 'Appendix B exclusion experiment' side-evidence
+      as unverified and one theory-link (RQ1 corollary status) as loosely framed. If these
+      appear as motivating evidence in the paper without verification, they are a citation-
+      integrity risk. Not a charter blocker, but must be verified before they enter any
+      write-up.
+    evidence_examined: "novelty report §2 ActAdd row, §6.4."
+    why_it_matters_for_acceptance: "Unverified sub-claims in the motivation are an easy reviewer/auditor hit and a citation-integrity concern."
+    alternative_explanation: "n/a"
+    requested_evidence_or_change: "Verify the ActAdd Appendix B claim against the paper body before citing; mark [NEEDS EVIDENCE] until then."
+    cheapest_discriminating_action: "Read ActAdd Appendix B directly and confirm/withdraw the sub-claim."
+    acceptance_condition: "All motivating sub-claims verified against primary sources before the citation-map is frozen."
+    confidence: "medium (3/5)"
+    possible_reviewer_misunderstanding: "n/a — this is a hygiene item."
+    requires_new_experiment: false
+    estimated_cost_class: "trivial"
+    user_approval_required: false
+
+  - finding_id: R2-m2
+    severity: minor
+    dimension: empirical
+    target_claim_ids: [C3]
+    paper_locations:
+      - "charter §1 RQ3; §5 C3; §8 (cross-model re-mapping is hardest engineering)"
+    criticism: >
+      C3 requires that 'the same lever' behaves consistently across Llama-3→Qwen-2.5, but
+      cross-model dose-response re-mapping is undefined. If levers are re-derived per model,
+      'preserved continuity' may be an engineering achievement of the re-mapping, not a
+      property users experience; if not re-derived, the levers may simply fail on the new
+      model. Either way the causal interpretation of 'boundary object' is fragile.
+    evidence_examined: "charter §8 (re-mapping hardest piece); C3 scope."
+    why_it_matters_for_acceptance: "C3 is an extension and the charter correctly scopes it as non-gating; low priority but the confound should be acknowledged."
+    alternative_explanation: "Perceived continuity comes from hidden per-model recalibration, not from the abstraction being a stable boundary object."
+    requested_evidence_or_change: "State whether levers are re-mapped across models and, if so, how continuity is attributed to the abstraction vs the re-mapping; keep C3 non-gating."
+    cheapest_discriminating_action: "Document the cross-model lever derivation procedure in the C3 protocol."
+    acceptance_condition: "C3 clarifies re-mapping and its interpretation, kept as extension."
+    confidence: "medium (3/5)"
+    possible_reviewer_misunderstanding: "n/a"
+    requires_new_experiment: false
+    estimated_cost_class: "trivial (charter clarification)"
+    user_approval_required: false
+
+  - finding_id: R2-q1
+    severity: question
+    dimension: empirical
+    target_claim_ids: [C2]
+    paper_locations:
+      - "charter §7 (within/mixed 3-condition; conflict tasks)"
+    criticism: >
+      For a within-subject conflict task, order/carryover and learning effects are severe:
+      once a user understands the prompt↔latent conflict in one condition, that mental-model
+      repair transfers to later conditions, biasing pre/post mental-model and attribution
+      measures. Is the design fully within, mixed (which factors between?), counterbalanced,
+      and how are carryover and demand characteristics handled?
+    evidence_examined: "charter §7 'within/mixed 3-condition'; pre/post mental-model measure."
+    why_it_matters_for_acceptance: "Carryover on a learning-heavy conflict task can invalidate within-subject contrasts; reviewers will ask."
+    alternative_explanation: "Apparent condition effects reflect learning/order, not the manipulation."
+    requested_evidence_or_change: "Specify the exact design (which factors within vs between), counterbalancing, and carryover mitigation."
+    cheapest_discriminating_action: "State the design matrix + counterbalancing in the protocol."
+    acceptance_condition: "Design/counterbalancing specified before Protocol Freeze."
+    confidence: "medium (3/5)"
+    possible_reviewer_misunderstanding: "The 'mixed' label suggests between-subject on condition, which would resolve much of this — needs to be explicit."
+    requires_new_experiment: false
+    estimated_cost_class: "trivial"
+    user_approval_required: false
+
+  - finding_id: R2-q2
+    severity: question
+    dimension: ethics
+    target_claim_ids: []
+    paper_locations:
+      - "charter §9, §10 (IRB/human-subjects = human-approval item, unresolved)"
+    criticism: >
+      Human-subjects approval (IRB/Prolific) and paid-API/GPU budget are TBD and correctly
+      flagged as human-approval escalation items. This is acceptable at the charter stage
+      (pre-experiment) and is NOT scored as a blocker, but recruitment for Formative or
+      controlled study must not begin before IRB/consent and data-privacy handling are
+      confirmed.
+    evidence_examined: "charter §9 budget table, §10 open items."
+    why_it_matters_for_acceptance: "Missing ethics approval would be a hard blocker at submission; flagging now prevents it becoming one."
+    alternative_explanation: "n/a"
+    requested_evidence_or_change: "Confirm IRB path, consent, and data-privacy/retention plan before any recruiting; keep as human-approval gate."
+    cheapest_discriminating_action: "Human confirms IRB/recruiting path (AGENTS.md §5)."
+    acceptance_condition: "IRB/consent/privacy confirmed before Formative recruiting."
+    confidence: "high (4/5)"
+    possible_reviewer_misunderstanding: "n/a — flagged appropriately by authors."
+    requires_new_experiment: false
+    estimated_cost_class: "n/a"
+    user_approval_required: true
+
+review_summary:
+  top_3_rejection_risks:
+    - "Core-claim falsifiability (R2-B1): behavioral 'prompt-unreachable region' is asserted from an internal-state theorem with no prompt-search ceiling — indistinguishable from 'weak prompt', and Stolfo et al. cut against it."
+    - "Confounded main study (R2-B2): condition C's extra information/attribution panel confounds the dual-channel concept with 'shows users more', so any trust/attribution gain is not isolatable to the claimed mechanism."
+    - "Tautological/artifactual headline metric + 'obvious combination' framing (R2-M1 + novelty §4): C1's projection<100% is near-guaranteed with no null; if RQ1 facade and RQ2 conflict phenomena aren't shown non-trivial, the work reads as Huang&Lim + Labarta + AI-Instruments combined."
+  must_fix_before_next_gate:
+    - "R2-B1: reword C2 (internal vs behavioral) + pre-register a prompt-search upper bound; Phase-0 best-of-N sanity check."
+    - "R2-B2: add an information-matched control (prompt-only + panel and/or dual-channel − panel) and name the confound-free contrast."
+    - "R2-M1: define the facade metric against a null, norm-normalized, behavior-linked, with a pre-registered threshold."
+    - "R2-M3: operationalize 'calibrated trust' (ground-truth controllability referent + calibration statistic)."
+    - "R2-M4: name primary endpoints with numeric thresholds + power/target-N before any full run."
+    - "R2-M2 & R2-M5: pre-specify reasoning-vs-style discriminating tasks and a fair steering-only baseline + LLM-judge human validation."
+  optional_improvements:
+    - "Rename 'dual-channel' to avoid collision with the ICLR-2026-W 'Dual-Channel Steering' (novelty §6.6)."
+    - "Correct the Labarta/SemanticLens framing (vision/experts) in the related-work narrative (novelty §2)."
+    - "Verify ActAdd Appendix B side-evidence before it enters the paper (R2-m1)."
+    - "Clarify C3 cross-model re-mapping interpretation (R2-m2)."
+  questions_for_manager:
+    - "Is the intended contribution the *second channel* (non-surjective gap) or the *attribution panel*? The answer determines whether R2-B2's confound is fatal or reframes the paper."
+    - "Which concrete compliance-floor task(s) instantiate C2's 'control threshold', and is any of them a near-provable behavioral ceiling (e.g. safety refusal)?"
+    - "What is the pre-registered primary endpoint per RQ, and the assumed effect size for power/N?"
+    - "Is condition assignment (A/B/C) within- or between-subject, and how is carryover on the conflict task handled (R2-q1)?"
+  score_if_unchanged: "2.0–2.5 / 5 (CHI) — reject-leaning; core claim not yet falsifiable and main comparison confounded."
+  score_if_blockers_closed: "3.5–4.0 / 5 (CHI) — borderline-accept to accept, contingent on Phase-0 empirically delivering a non-trivial behavioral gap and a null-relative facade effect."

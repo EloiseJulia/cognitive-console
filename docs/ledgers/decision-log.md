@@ -49,6 +49,23 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0026 · C2b instrument audited — core correct/unbiased; fix Brier+seed+minors+loaders
+- **Audit verdict (independent hostile):** NOT-safe-to-run-as-is, but the CORE is correct & unbiased —
+  paired ITEM-cluster bootstrap, two-sided, Bonferroni CI, DEV/TEST isolation (no selection leakage),
+  three-tier counting, prompt/steer symmetry, coherence gate all verified. Fixes required before A800:
+  - **BLOCKER-1** = the uncertainty (1−ECE) per-item issue → ALREADY resolved by D-0025 (per-item Brier).
+    Audit independently confirmed 1−|correct−conf| biases uncertainty toward pass and can move opposite to
+    ECE. Fix = implement Brier (folded into this pass).
+  - **MAJOR-2** generation unseeded (torch sampling not seeded) → verdict non-reproducible on a confirmatory
+    instrument. Fix = torch.manual_seed(seed) + record in registry.
+  - **MINOR-3** bootstrap B<10000 warns-not-blocks → hard-fail unless explicit override.
+  - **MINOR-4** coherence gate degrades to "==0" when baseline degeneracy=0 → add additive ε floor.
+  - **UNVERIFIED-5** real skepticism/uncertainty loaders are NotImplemented (GSM8K done) → need dataset +
+    §5 license decision (owner).
+- **Manager action:** dispatch fix pass (Brier + seed + minors); ask owner for datasets/license for the real
+  loaders (§5); then re-audit-light + merge, then A800 run.
+- **Frozen?** Prereg still frozen (Brier is the D-0025 clarification, not a new change).
+
 ## 2026-07-23 · D-0025 · Pre-run spec clarification: uncertainty metric (1−ECE)→per-item (1−Brier)
 - **Trigger:** instrument-build subagent flagged that the frozen "(1−ECE)" is a SET metric with no per-item
   value, but §4's paired cluster bootstrap needs per-item outcomes.

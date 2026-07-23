@@ -8,8 +8,9 @@ override with --model for the CPU/1.5B smoke.
 Pipeline
 --------
 1. DISK GUARD — measure HF_HOME + venv against a budget (default 60 GB, hard
-   ceiling 70 GB) BEFORE and after loading, aborting before the borrowed box's
-   disk is blown.
+   ceiling 70 GB) BEFORE the run, AFTER the model is loaded (between C1 and C2b),
+   and AFTER C2b; the post-load and post-run checks ABORT if the footprint is
+   at/over the ceiling so the borrowed box's disk is never blown.
 2. C1 FACADE — reuse scripts.run_c1_facade.run (same-origin facade_ratio + CI),
    written under <out>/c1/.
 3. C2b REACHABILITY — for each axis, extract the CAA direction at C1's chosen
@@ -56,6 +57,53 @@ from scripts import run_c1_facade as c1
 
 DEFAULT_MODEL = "Qwen/Qwen2.5-7B-Instruct"
 DEFAULT_AXES = ["deliberation", "skepticism", "uncertainty_awareness", "focus"]
+
+# The FULL authored strong-prompt set per axis (data/strongest_prompts/*.jsonl).
+# The prompt ceiling is best-of these static, human-authored prompts — NOT OPRO —
+# so it is a conservative UNDER-estimate of true bounded-prompt reach.
+DEFAULT_N_STRONG = 16
+
+# Prominent honesty caveat (from the merge-blocking audit) carried on the combined
+# summary + registry so no downstream reader can over-read the exploratory C2b numbers.
+C2B_HONESTY_CAVEAT = (
+    "C2b uses crude lexical/length proxies that share a basis with the steering "
+    "direction; these numbers are an EXPLORATORY lexical-shift signal ONLY and "
+    "CANNOT support a 'latent reaches beyond the bounded-prompt ceiling' claim "
+    "without an orthogonal non-lexical proxy + variance estimate. "
+    "focus/deliberation are length-confounded; focus is untrustworthy. Single "
+    "greedy sample per cell — do not over-read small margins."
+)
+
+
+def _is_unstable_axis(stable_layer_found: object) -> bool:
+    """True unless C1 explicitly confirmed a stable layer for this axis.
+
+    Treats both an explicit ``False`` (e.g. focus at 1.5B) and an unknown/None
+    (no C1, unconfirmed) as unstable, so a degenerate axis is never silently
+    steered and counted in a headline claim.
+    """
+    return stable_layer_found is not True
+
+
+def _c2b_aggregate(axis_rows: List[Dict[str, object]]) -> Dict[str, object]:
+    """Headline aggregate that EXCLUDES axes on an unstable/unconfirmed C1 layer."""
+    stable = [r for r in axis_rows if not r.get("c2b_on_unstable_layer")]
+    return {
+        "n_axes": len(axis_rows),
+        "n_axes_on_unstable_layer": int(
+            sum(1 for r in axis_rows if r.get("c2b_on_unstable_layer"))
+        ),
+        "n_axes_counted_for_headline": len(stable),
+        "n_axes_steer_beyond_prompt_ceiling": int(
+            sum(1 for r in stable if r.get("reaches_beyond_prompt_ceiling"))
+        ),
+        "headline_excludes_unstable": True,
+        "headline_note": (
+            "'axes where steer reaches beyond ceiling' EXCLUDES axes with "
+            "c2b_on_unstable_layer=true (unstable/unconfirmed C1 layer); those "
+            "axes are still recorded but never counted in the headline."
+        ),
+    }
 
 
 def _rel(path: Path) -> str:
@@ -115,11 +163,14 @@ def run_c2b(
                            scorer=behavior_score)
         row = res.to_row()
         row["c1_chosen_layer"] = layer
-        row["c1_stable_layer_found"] = c1_row.get("stable_layer_found")
+        stable = c1_row.get("stable_layer_found")
+        row["c1_stable_layer_found"] = stable
+        row["c2b_on_unstable_layer"] = _is_unstable_axis(stable)
         axis_rows.append(row)
         print(f"[c2b] axis={axis:<24} layer={layer:>3} "
               f"prompt_ceiling={res.prompt_ceiling:.3f} steer_max={res.steer_only_max:.3f} "
-              f"beyond={res.reaches_beyond_prompt_ceiling} ({time.time()-t0:.1f}s)",
+              f"beyond={res.reaches_beyond_prompt_ceiling} "
+              f"unstable_layer={row['c2b_on_unstable_layer']} ({time.time()-t0:.1f}s)",
               flush=True)
 
     return {
@@ -132,17 +183,18 @@ def run_c2b(
         "n_strong": n_strong,
         "max_new_tokens": max_new_tokens,
         "neutral_prompt": neutral,
+        "prompt_ceiling_label": (
+            f"prompt ceiling = best-of-{n_strong} static authored prompts, NOT OPRO "
+            "— an UNDER-estimate of true prompt reach (conservative for the C2b "
+            "comparison)"
+        ),
+        "c2b_honesty_caveat": C2B_HONESTY_CAVEAT,
         "behavior_proxy_note": (
             "Behavior measured by CRUDE lexical proxies (experiments.behavior), NOT "
             "validated instruments. EXPLORATORY — no frozen verdict."
         ),
         "axes": axis_rows,
-        "aggregate": {
-            "n_axes": len(axis_rows),
-            "n_axes_steer_beyond_prompt_ceiling": int(
-                sum(1 for r in axis_rows if r["reaches_beyond_prompt_ceiling"])
-            ),
-        },
+        "aggregate": _c2b_aggregate(axis_rows),
     }
 
 
@@ -172,22 +224,31 @@ def _write_c2b(payload: Dict[str, object], out_dir: Path) -> Path:
     lines.append(f"- alphas: {payload['alphas']}   n_strong: {payload['n_strong']}   "
                  f"max_new_tokens: {payload['max_new_tokens']}")
     lines.append(f"- valid_for_paper: **{payload['valid_for_paper']}**")
-    lines.append(f"- {payload['behavior_proxy_note']}\n")
+    lines.append(f"- prompt ceiling definition: {payload['prompt_ceiling_label']}")
+    lines.append(f"- {payload['behavior_proxy_note']}")
+    lines.append("")
+    lines.append(f"> **HONESTY CAVEAT (audit):** {payload['c2b_honesty_caveat']}")
+    lines.append("")
     lines.append("## Does latent steering reach behavior BEYOND the bounded prompt ceiling?\n")
-    lines.append("| axis | layer | prompt ceiling | steer-only max | beyond? | margin | conflict winner (max α) |")
-    lines.append("|---|---|---|---|---|---|---|")
+    lines.append("| axis | layer | prompt ceiling | steer-only max | beyond? | margin | unstable layer? | conflict winner (max α) |")
+    lines.append("|---|---|---|---|---|---|---|---|")
     for r in payload["axes"]:  # type: ignore[index]
         conf = r["conflict"][-1] if r["conflict"] else {}
         lines.append(
             f"| {r['axis']} | {r['layer']} | {r['prompt_ceiling']:.3f} | "
             f"{r['steer_only_max']:.3f} | "
             f"{'YES' if r['reaches_beyond_prompt_ceiling'] else 'no'} | "
-            f"{r['beyond_margin']:+.3f} | {conf.get('winner', '—')} |"
+            f"{r['beyond_margin']:+.3f} | "
+            f"{'UNSTABLE' if r.get('c2b_on_unstable_layer') else 'ok'} | "
+            f"{conf.get('winner', '—')} |"
         )
     agg = payload["aggregate"]  # type: ignore[index]
     lines.append("")
     lines.append(f"- axes where steer reaches beyond the prompt ceiling: "
-                 f"{agg['n_axes_steer_beyond_prompt_ceiling']}/{agg['n_axes']}")
+                 f"{agg['n_axes_steer_beyond_prompt_ceiling']}/{agg['n_axes_counted_for_headline']} "
+                 f"(headline EXCLUDES {agg['n_axes_on_unstable_layer']} axis/axes on an "
+                 f"unstable C1 layer; {agg['n_axes']} axes total)")
+    lines.append(f"- {agg['headline_note']}")
     lines.append("")
     lines.append("## Conflict landings (prompt UP vs latent steer DOWN)\n")
     lines.append("| axis | α | prompt pole | steer pole | behavior | landing (raw) | winner |")
@@ -256,7 +317,8 @@ def _register_c2b(payload: Dict[str, object], out_dir: Path, json_path: Path,
             "chosen layer) + CRUDE automatic behavioral proxies (NOT validated "
             "instruments). Measures whether latent steering reaches a behavioral "
             "region beyond a bounded prompt ceiling. Protocol NOT frozen; the proxy "
-            "crudeness is a stated limitation the Manager must weigh."
+            "crudeness is a stated limitation the Manager must weigh. "
+            "HONESTY CAVEAT: " + C2B_HONESTY_CAVEAT
         ),
     )
     registry.append(record)
@@ -267,7 +329,7 @@ def _register_c2b(payload: Dict[str, object], out_dir: Path, json_path: Path,
         aggregation_script="scripts/run_gpu_phase0.py",
         aggregation_commit=git_commit(str(_REPO)),
         output_file=_rel(json_path),
-        raw_data_hash=c1._sha256_str(json.dumps(cfg, sort_keys=True)),
+        raw_data_hash=c1._sha256_file(json_path),
         last_verified=utcnow(),
         verdict="pending",
     )
@@ -275,7 +337,7 @@ def _register_c2b(payload: Dict[str, object], out_dir: Path, json_path: Path,
     return exp_id
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description="Unified GPU Phase-0 runner (C1 + C2b, EXPLORATORY)")
     ap.add_argument("--model", default=DEFAULT_MODEL)
     ap.add_argument("--axes", nargs="*", default=DEFAULT_AXES)
@@ -285,8 +347,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--n-null", type=int, default=2000)
     ap.add_argument("--alphas", type=float, nargs="*", default=[4.0, 8.0, 16.0],
                     help="C2b steering coefficients (absolute, unit direction)")
-    ap.add_argument("--n-strong", type=int, default=6,
-                    help="number of strong prompts per axis for the prompt ceiling")
+    ap.add_argument("--n-strong", type=int, default=DEFAULT_N_STRONG,
+                    help="number of authored strong prompts per axis for the prompt "
+                         "ceiling (default 16 = the FULL authored set; best-of these "
+                         "static prompts, NOT OPRO)")
     ap.add_argument("--max-new-tokens", type=int, default=128)
     ap.add_argument("--disk-budget-gb", type=float, default=60.0)
     ap.add_argument("--disk-ceiling-gb", type=float, default=70.0)
@@ -294,6 +358,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--venv", default=None, help="venv dir to disk-guard (default: $VIRTUAL_ENV)")
     ap.add_argument("--skip-c1", action="store_true", help="run only the C2b pilot")
     ap.add_argument("--out-dir", default=None)
+    return ap
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    ap = build_parser()
     args = ap.parse_args(argv)
 
     out_dir = Path(args.out_dir) if args.out_dir else (
@@ -327,6 +396,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         c1_exp = c1._register(c1_payload, c1_out, c1_json, args.seed)
         print(f"[gpu] C1 done -> {c1_json} (exp {c1_exp})", flush=True)
 
+    # --- DISK GUARD (post-C1 / model downloaded) ------------------------------
+    # The pre-run check above measured a near-empty box; the model weights land
+    # during C1. Now that the model is on disk, ABORT if we are over the ceiling
+    # BEFORE spending more on C2b (a runaway download can never blow the box).
+    usage_mid = check_disk_budget(guard_paths, args.disk_budget_gb, args.disk_ceiling_gb,
+                                  raise_on_over=True)
+    print(f"[gpu] disk post-C1 (model loaded): {usage_mid.message}", flush=True)
+
     # --- C2b REACHABILITY -----------------------------------------------------
     cache_dir = out_dir / "c1" / "activations" / "cache"
     c2b_payload = run_c2b(
@@ -344,6 +421,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     c2b_exp = _register_c2b(c2b_payload, c2b_out, c2b_json, args.seed, hardware)
 
     # --- DISK GUARD (post-run) ------------------------------------------------
+    # Measure for the summary WITHOUT raising, so the (already-written) artifacts
+    # + summary are recorded, then do a final ABORT check below.
     usage1 = check_disk_budget(guard_paths, args.disk_budget_gb, args.disk_ceiling_gb,
                                raise_on_over=False)
     print(f"[gpu] disk post-run: {usage1.message}", flush=True)
@@ -359,15 +438,24 @@ def main(argv: Optional[List[str]] = None) -> int:
         "generated_at": utcnow(),
         "platform": platform.platform(),
         "disk_pre_run_gb": usage0.total_gb,
+        "disk_post_c1_gb": usage_mid.total_gb,
         "disk_post_run_gb": usage1.total_gb,
         "c1_dir": "c1/",
         "c2b_dir": "c2b/",
         "c2b_experiment_id": c2b_exp,
+        "c2b_honesty_caveat": C2B_HONESTY_CAVEAT,
+        "prompt_ceiling_label": c2b_payload["prompt_ceiling_label"],
     }
     with open(out_dir / "run_summary.json", "w", encoding="utf-8") as fh:
         json.dump(combined, fh, indent=2)
     print(f"[gpu] C2b done -> {c2b_json} (exp {c2b_exp})", flush=True)
     print(f"[gpu] TOTAL wall-clock: {wall:.1f}s. Wrote {out_dir}", flush=True)
+
+    # --- DISK GUARD (final abort) ---------------------------------------------
+    # Artifacts + summary are safely on disk; now ABORT (non-zero) if the run
+    # ended over the hard ceiling so the operator stops before reusing the box.
+    check_disk_budget(guard_paths, args.disk_budget_gb, args.disk_ceiling_gb,
+                      raise_on_over=True)
     return 0
 
 

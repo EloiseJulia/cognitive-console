@@ -8,7 +8,12 @@ the small results.
 
 **Expected disk:** ~15 GB for the Qwen2.5-7B-Instruct weights + a few GB for the
 venv/torch-CUDA → **~25 GB total for one model**, well under the 70 GB ceiling.
-The runner's disk guard aborts before crossing 70 GB regardless.
+The runner's disk guard measures `HF_HOME` + venv at several points — before the
+run, **after the model is loaded/downloaded (between C1 and C2b)**, and after
+C2b — and **aborts (raises `DiskBudgetError`, non-zero exit) if the measured
+footprint is at/over the ceiling** at those checkpoints. It cannot interrupt a
+single download mid-stream, but it stops the run before the next expensive step
+once the footprint crosses the budget.
 
 **Expected wall-clock (A800, 7B, fp16):** roughly **10–25 min** for C1 (a few
 forward passes/axis over ~40 pairs + 16 strong + 10 neutral prompts × 4 axes) +
@@ -72,8 +77,14 @@ This writes `results/gpu_7b_<date>/` containing:
 - `c2b/` — C2b reachability JSON + summary + registry + manifest
 - `run_summary.json` — combined EXPLORATORY summary + honest wall-clock + disk.
 
-The runner **disk-guards** `HF_HOME` + venv before and after and **aborts before
-exceeding 70 GB**. All outputs are `valid_for_paper=false`, protocol NOT frozen.
+The prompt ceiling uses the **FULL authored strong-prompt set** (default
+`--n-strong 16` = all 16 static prompts/axis in `data/strongest_prompts/*.jsonl`;
+best-of these, **NOT OPRO** — a conservative UNDER-estimate of true prompt reach).
+
+The runner **disk-guards** `HF_HOME` + venv before the run, again **after the
+model is loaded (between C1 and C2b)**, and after C2b; at the post-load and
+post-run checkpoints it **aborts with a non-zero exit if the footprint is at/over
+the 70 GB ceiling**. All outputs are `valid_for_paper=false`, protocol NOT frozen.
 
 ## 7. Copy the (small) results back to your machine
 From your LOCAL machine:

@@ -23,3 +23,5 @@ dist/
 results/**/activations/
 results/**/*.npy
 results/**/*.npz
+
+.prompt-*.txt

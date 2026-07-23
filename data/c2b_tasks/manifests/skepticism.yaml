@@ -1,0 +1,32 @@
+# C2b adjudication task manifest — SKEPTICISM axis (behavioral OUTCOME).
+#
+# Prereg §1: skepticism -> false-premise REJECTION rate (0-1). Each item embeds a
+# false premise; the answer key marks the option that REJECTS/corrects it (a
+# multiple-choice framing where the "reject the false premise" option is keyed),
+# scored by rule, NOT by counting pushback words.
+
+name: skepticism
+axis: skepticism
+outcome: false_premise_rejection  # keyed MC option (or rule-based correction)
+outcome_range: [0, 1]            # per-item 0/1; axis metric = rejection rate
+scorer: score_skepticism          # cognitive_console.eval.scorers
+answer_field: answer_letter
+n_items_frozen: 60                # prereg §5 N for skepticism
+fixture: skepticism.jsonl         # ~10 hand-authored false-premise MC items (OFFLINE)
+real_source:
+  type: assembled
+  loader: load_skepticism_set     # cognitive_console.eval.c2b_tasks (A800 only)
+  basis:
+    - name: TruthfulQA (false-premise / misconception subset)
+      hf_id: truthful_qa
+      license: Apache-2.0
+    - name: Authored false-premise MC items (this repo's fixture recipe, scaled up)
+  construction: >
+    Each item = a question that presupposes a false premise + a keyed option that
+    rejects/corrects the premise + plausible distractors that accept it. Score =
+    fraction of items where the model selects the reject-false-premise option.
+  license: mixed-source-check-required   # clear the human data-license gate (AGENTS.md §5)
+download_status: deferred
+supports:
+  claims: [C2b]
+  hypothesis: H2

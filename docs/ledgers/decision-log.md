@@ -49,6 +49,28 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0021 · GPU-ready harness AUDITED — safe to run; apply cheap pre-run fixes
+- **Audit verdict (independent hostile, feature/5):** SAFE TO RUN on A800 as-is. No BLOCKER — harness does
+  NOT rig the result, C2b steers at C1's chosen layer with re-derived CAA vector (same seed/split),
+  valid_for_paper=false stamped everywhere, numbers from computed artifacts. Steering hook verified correct.
+- **Findings (mostly interpretation limits, not correctness):**
+  - **[MAJOR M1] Proxy–steering shared basis:** lexical proxies + keyword-basis steering (skepticism/
+    uncertainty) or length-basis (focus/deliberation) → C2b is an EXPLORATORY lexical-shift signal ONLY.
+    CANNOT support "latent reaches beyond prompt ceiling" alone; needs an orthogonal non-lexical proxy +
+    variance before any Claim. HARD caveat.
+  - **[MAJOR M2] focus/deliberation proxies gameable by verbosity/truncation** — focus especially untrustworthy
+    (length-confounded). Flag; no focus "beyond" without length control.
+  - **[MAJOR M3] Prompt ceiling used best-of-6 not the full 16 authored prompts, no OPRO** → weaker ceiling
+    biases toward steering. FIX: run with --n-strong 16, label "best-of-16 static, NOT OPRO".
+  - **[MAJOR M4] Disk guard can't abort a runaway download** (pre-check ~0GB, post-check warn-only); RUN_ON_A800
+    overclaims. FIX: check with raise_on_over after model load; soften doc. (Low real risk: ~25GB ≪ 70GB.)
+  - **[MINOR] m1 raw_data_hash hashes config not artifact; m2 --skip-c1 fallback layer; m3 unstable-layer axes
+    still steered. UNVERIFIED: single greedy sample per cell (reproducible but no variance → don't over-read
+    small margins).**
+- **Manager decision:** apply M3 (--n-strong 16 default) + M4 (real abort) + m1 (hash artifact) before the run
+  (cheap, no extra GPU); DEFER orthogonal-proxy work to a follow-up (that's the confirmatory-track fix). Then
+  merge + run on A800. C2b will be EXPLORATORY-only regardless. Frozen? No.
+
 ## 2026-07-23 · D-0020 · Human: borrowed A800 session (SSH, agent-driven, <70GB, delete-after, fast)
 - **Human decision (@EloiseJulia):** will provide SSH/remote access; agent drives the A800 directly.
   Constraints: total disk <70GB, delete EVERYTHING (models/caches) after, be fast, single session.

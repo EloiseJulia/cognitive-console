@@ -5,6 +5,14 @@
 
 (none yet)
 
+## 2026-07-23 · 1.5B facade_ratio is denominator-dependent (metric artifact, audit D-0016)
+- The v0 "fixed" facade_ratio = prompt_reach(from neutral) / ‖v‖(α=1, from neg pole) is NOT scale-invariant
+  and mixes origins → produces ratio<1 partly by construction. Under a same-origin scale-free denominator
+  (neutral→pos-pole range), the "3/4 facade" collapses to ~1/4 (only uncertainty survives).
+- **Do-not-repeat:** never report facade_ratio against ‖v‖ with an arbitrary α; always use a same-origin,
+  scale-free reach fraction with a CI + neutral-set sensitivity, and unit-test THAT exact computation.
+- "above null" in high-dim is a trivial bar (random projections ≈0); it is NOT evidence of a real gap.
+
 ## 2026-07-23 · C1 facade pilot (CPU/Qwen2.5-0.5B) — underpowered + metric asymmetry
 - **Route:** extract CAA vectors + measure semantic facade on Qwen2.5-0.5B-Instruct, CPU, forward-only.
 - **Failure modes observed:**

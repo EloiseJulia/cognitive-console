@@ -49,6 +49,28 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0016 · 1.5B facade result AUDITED → mostly a metric artifact, NOT a real signal
+- **Audit verdict (independent hostile, feature/3):** the headline "3/4 axes show a facade gap" is
+  **(b) largely an artifact of metric construction**, should NOT move a GPU go/no-go.
+- **2 BLOCKERs (both in the denominator):**
+  1. **Arbitrary steering coefficient α=1** — facade_ratio is not scale-invariant; changing α makes the
+     facade appear/disappear. The "gap" is denominator-dependent, not a property of prompts vs latent.
+  2. **Origin mismatch** — numerator (prompt reach) measured from the NEUTRAL baseline, denominator (‖v‖)
+     effectively from the NEG pole. Same-origin recompute: skepticism 0.48→0.85 (gap gone), deliberation's
+     prompt exceeds ‖v‖ in absolute terms. Only uncertainty (0.71) survives a fair denominator.
+- **MAJORs:** "above null / z=9–14" carries no evidential weight (random-direction projections in 1536-dim
+  ≈0 by concentration → trivially passed); the headline computation itself is untested; focus layer-2
+  degenerate (Cohen's-d picks shallow lexical layer). **CLEAN:** anti-circular phrasing (FIX2 real, distinct
+  in kind), disjoint split, determinism, honest EXPLORATORY/valid_for_paper=false labeling.
+- **Cheapest fix to make C1 trustworthy:** same-origin, scale-free reach fraction —
+  facade_ratio = ⟨prompt−neutral, û⟩ / ⟨pos_pole−neutral, û⟩ (prompt's fraction of the neutral→pos-pole
+  range), with bootstrap CI over strong prompts + leave-one-neutral-out sensitivity, and a unit test pinning
+  THIS computation. Provenance nit: registry wall-clock (20s cache re-run) understates true 453s.
+- **Decision (Manager):** C1 remains UNSUPPORTED. H1 stays 'testing'. Do NOT read a facade from this run.
+  Before any bigger/GPU run, fix the metric (same-origin scale-free) + add CI/sensitivity. This is a
+  METRIC design issue (Manager-owned), so I will re-scope the facade statistic, then re-run on 1.5B (free)
+  to see if a real gap survives. Branch NOT merged. Frozen? No.
+
 ## 2026-07-23 · D-0015 · Human: fix facade metric, then re-run on Qwen2.5-1.5B (option A)
 - **Human decision (@EloiseJulia):** "先修metric，然后A" (fix metric, then Qwen2.5-1.5B, local CPU).
 - **Two metric fixes (both on feature/3):** (1) consistent statistic — measure prompt reach and latent

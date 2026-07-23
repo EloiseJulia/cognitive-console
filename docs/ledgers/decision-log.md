@@ -49,6 +49,17 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0009 · phase0-prep fixes verified & merged to main (f4a1073)
+- **Verification (Manager independent light check):** re-ran `python -m pytest -q` → 64 passed; independently
+  recomputed per-axis pos-longer fraction (delib 0.425, skept 0.400, uncert 0.450, focus 0.525 — all in band)
+  and MAD 1.1–1.5 tokens; eyeballed sample pairs = genuine length-matched minimal contrasts. **B1 closed.**
+- **Merged** feature/1-phase0-prep → main (--no-ff). Backfilled AGENTS.md §1: BUILD=`pip install -e .`,
+  TEST=`python -m pytest -q`, RUN=n/a.
+- **New caveats logged to open-risks (not blocking):** (i) framed-stance contrast style *describes* the axis
+  stance rather than enacting it — standard CAA design but revisit before S5 extraction; (ii) registry
+  `.lock` sidecar has no stale-lock reaping — harden before heavy parallel writes.
+- **Frozen?** No. Phase-0 DATA/scaffolding ready; execution still blocked on human GPU/API/IRB (§5).
+
 ## 2026-07-23 · D-0008 · Phase0-prep audit (merge-after-fixes); dispatching fixes
 - **Audit (independent hostile, branch feature/1-phase0-prep):** metric/registry CODE verified correct
   (projection math, null baseline, single-process atomicity, schema, labels all ✔). But:

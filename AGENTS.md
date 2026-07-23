@@ -38,9 +38,9 @@
 | `<RESEARCH_DIR>` | `docs/research/` |
 | `<REPORT_STORE>` | git 外，建议 `~/reports/cognitive-console/`（大图/大文件不进 git） |
 | `<COMMIT_TRAILER>` | `Co-authored-by: Copilot <copilot@github.com>` |
-| `<BUILD_CMD>` | **待定**（研究早期尚无实现）——Manager 在建立代码骨架时定义并回填本表 |
-| `<RUN_CMD>` | **待定**——同上 |
-| `<TEST_CMD>` | **待定**——同上（预期 Python/PyTorch + 前端 console；如 `pytest` / `npm test`） |
+| `<BUILD_CMD>` | `python -m pip install -e .`（Python 3.12；src-layout 包 `cognitive_console`；建立于 phase0-prep，commit f4a1073） |
+| `<RUN_CMD>` | n/a（Phase 0 为库，无运行入口；有 web console 后回填 FastAPI/React 启动命令） |
+| `<TEST_CMD>` | `python -m pytest -q`（64 tests，位于 `tests/`） |
 
 > 表中“待定”项由 Manager 在 §阶段1 建立最小代码骨架时确定，并回写本文件（提交一次 commit）。
 

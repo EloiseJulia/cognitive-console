@@ -25,3 +25,9 @@
    language; calibrated trust as first-class metric.
 5. **[MED] Concurrency latency** breaks study validity. Mitigation: vLLM-Hook; cap concurrent users.
 6. **[MED] Human-subjects/IRB + budget** not yet approved — blocks Formative + controlled study.
+10. **[LOW-NEW] Framed-stance contrast style.** phase0 contrast pairs *describe* the axis stance (e.g.
+    "let me reason it through" vs "let me just answer") rather than enacting terse-vs-verbose — the only way
+    to length-match. Standard CAA design, but revisit whether the extracted vector captures the axis vs the
+    meta-stance before S5 extraction.
+11. **[LOW-NEW] Registry stale-lock.** `.lock` sidecar (O_EXCL) has no stale-lock reaping; a crashed holder
+    blocks writers until timeout. Harden before heavy parallel GPU-phase writes.

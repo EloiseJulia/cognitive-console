@@ -14,6 +14,19 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
+# Optional real-model backend for the CPU activation provider + C1 facade pilot.
+# NOT a hard dependency: the offline test suite runs without these, and all
+# torch/transformers imports are lazy (inside methods) so the package imports
+# fine without them installed. Install CPU-only torch separately, e.g.:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   pip install -e .[hf]
+hf = [
+    "torch>=2.0",
+    "transformers>=4.40",
+    "accelerate>=0.30",
+    "safetensors>=0.4",
+    "huggingface_hub>=0.23",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]

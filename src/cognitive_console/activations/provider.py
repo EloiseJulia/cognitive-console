@@ -34,8 +34,10 @@ from __future__ import annotations
 
 import abc
 import hashlib
+import os
 from dataclasses import dataclass, field
-from typing import Dict, List, Sequence, Tuple
+from pathlib import Path
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -43,6 +45,13 @@ _DEFAULT_MODEL_HINT = (
     "GPU phase: load Llama-3-8B-Instruct / Qwen2.5-7B-Instruct via transformers "
     "and capture residual-stream activations; deferred until GPU is approved "
     "(AGENTS.md §5)."
+)
+
+_HF_INSTALL_HINT = (
+    "The real HFActivationProvider needs torch + transformers, which are OPTIONAL "
+    "extras (not installed by default). Install the CPU wheels, e.g.:\n"
+    "  pip install torch --index-url https://download.pytorch.org/whl/cpu\n"
+    "  pip install -e .[hf]"
 )
 
 
@@ -232,43 +241,204 @@ class SyntheticActivationProvider(ActivationProvider):
 
 
 class HFActivationProvider(ActivationProvider):
-    """Real transformers-backed provider — STUB (deferred to GPU phase).
+    """Real transformers-backed activation provider — CPU-only implementation.
 
-    Instantiation is allowed (so configs can name it), but any activation
-    capture raises NotImplementedError. torch/transformers are imported LAZILY
-    inside methods, never at module import time, so the whole package imports
-    and unit-tests without torch installed.
+    Captures per-text hidden-state activations from a locally-run causal LM (no
+    generation, single forward pass with ``output_hidden_states=True``). Built and
+    validated on ``Qwen/Qwen2.5-0.5B-Instruct`` (Apache-2.0, ungated) running on
+    CPU in float32, for the exploratory C1 "semantic facade" pilot.
+
+    torch/transformers are imported LAZILY inside methods, never at module import
+    time, so the whole package still imports and the offline unit-test suite still
+    runs even when those optional extras are NOT installed.
+
+    Layer indexing convention
+    -------------------------
+    ``layer`` indexes directly into HuggingFace's ``hidden_states`` tuple, which
+    has ``num_hidden_layers + 1`` entries: ``hidden_states[0]`` is the embedding
+    output (pre-block-0), and ``hidden_states[k]`` (k>=1) is the residual stream
+    AFTER transformer block ``k-1``. So the valid range is ``0 .. num_hidden_layers``
+    inclusive. ``available_layers()`` reflects exactly this range.
+
+    Pooling
+    -------
+    Each text is rendered through the tokenizer chat template as a single USER
+    turn (``add_generation_prompt=True``) and pooled at the LAST non-pad token of
+    the requested hidden-state layer — the position whose residual stream has
+    attended over the whole prompt, i.e. the model's summary state right before it
+    would begin generating.
+
+    On-disk cache
+    -------------
+    Every pooled vector is cached to ``.npy`` keyed by
+    ``sha256(model, layer, pooling, text)`` under ``cache_dir`` so re-runs (e.g.
+    the extraction pass then the probe pass) never recompute a forward for a text
+    already seen. The cache is regenerable and git-ignored.
     """
+
+    _POOLING = "last_non_pad"
 
     def __init__(
         self,
         model_name: str,
         layers: Sequence[int] | None = None,
-        device: str = "cuda",
-        dtype: str = "bfloat16",
+        device: str = "cpu",
+        dtype: str = "float32",
+        cache_dir: str | os.PathLike | None = None,
+        max_length: int = 256,
     ) -> None:
         self.model_name = model_name
         self._layers = list(layers) if layers is not None else []
         self.device = device
         self.dtype = dtype
+        self.max_length = int(max_length)
+        if cache_dir is None:
+            cache_dir = os.environ.get("COGNITIVE_CONSOLE_ACT_CACHE", ".act_cache")
+        self.cache_dir = Path(cache_dir)
+        # Lazily-populated handles (kept on the instance so we load the model once).
+        self._model = None
+        self._tokenizer = None
+        self._config = None
 
+    # -- ActivationProvider interface -------------------------------------
     @property
     def hidden_dim(self) -> int:
-        raise NotImplementedError(_DEFAULT_MODEL_HINT)
+        self._ensure_loaded()
+        return int(self._config.hidden_size)
 
     def available_layers(self) -> List[int]:
+        # If the caller pinned an explicit layer set, honour it WITHOUT loading a
+        # model (keeps config-naming / offline construction cheap and torch-free).
         if self._layers:
-            return sorted(self._layers)
-        raise NotImplementedError(_DEFAULT_MODEL_HINT)
+            return sorted(int(x) for x in self._layers)
+        self._ensure_loaded()
+        return list(range(int(self._config.num_hidden_layers) + 1))
 
-    def _load(self):  # pragma: no cover - exercised only in the GPU phase
-        # Lazy import keeps torch/transformers OPTIONAL for Phase 0.
+    # -- model loading (lazy, torch/transformers optional) -----------------
+    def _ensure_loaded(self):
+        if self._model is not None:
+            return
         try:
-            import torch  # noqa: F401
-            from transformers import AutoModelForCausalLM, AutoTokenizer  # noqa: F401
-        except ImportError as exc:  # pragma: no cover
-            raise NotImplementedError(_DEFAULT_MODEL_HINT) from exc
-        raise NotImplementedError(_DEFAULT_MODEL_HINT)
+            import torch
+            from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+        except ImportError as exc:
+            raise NotImplementedError(_HF_INSTALL_HINT) from exc
+
+        dtype = getattr(torch, self.dtype, torch.float32)
+        self._config = AutoConfig.from_pretrained(self.model_name)
+        self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        if self._tokenizer.pad_token is None:
+            self._tokenizer.pad_token = self._tokenizer.eos_token
+        # transformers >=5 renamed `torch_dtype` -> `dtype`; support both.
+        try:
+            model = AutoModelForCausalLM.from_pretrained(
+                self.model_name, dtype=dtype, low_cpu_mem_usage=True
+            )
+        except TypeError:
+            model = AutoModelForCausalLM.from_pretrained(
+                self.model_name, torch_dtype=dtype, low_cpu_mem_usage=True
+            )
+        model.to(self.device)
+        model.eval()
+        self._model = model
+
+    # -- disk cache --------------------------------------------------------
+    def _cache_key(self, text: str, layer: int) -> str:
+        h = hashlib.sha256()
+        for part in (self.model_name, str(layer), self._POOLING, text):
+            h.update(part.encode("utf-8"))
+            h.update(b"\x1f")
+        return h.hexdigest()
+
+    def _cache_path(self, text: str, layer: int) -> Path:
+        return self.cache_dir / f"{self._cache_key(text, layer)}.npy"
+
+    def _load_cached(self, text: str, layer: int) -> Optional[np.ndarray]:
+        path = self._cache_path(text, layer)
+        if path.exists():
+            try:
+                return np.load(path)
+            except Exception:  # noqa: BLE001 - a corrupt cache entry: recompute
+                return None
+        return None
+
+    def _store_cached(self, text: str, layer: int, vec: np.ndarray) -> None:
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        path = self._cache_path(text, layer)
+        # NOTE: np.save appends ".npy" to a path unless a file OBJECT is passed,
+        # so we write through an explicit handle to keep the tmp name exact and
+        # make the os.replace atomic swap work.
+        tmp = path.with_name(path.name + ".tmp")
+        with open(tmp, "wb") as fh:
+            np.save(fh, vec)
+        os.replace(tmp, path)
+
+    # -- forward pass ------------------------------------------------------
+    def _forward_all_layers(self, text: str) -> Dict[int, np.ndarray]:
+        """One forward pass, pooled at the last non-pad token for EVERY layer.
+
+        A single forward already produces the whole ``hidden_states`` tuple, so we
+        pool + cache every layer at once. This makes the layer scan cost one
+        forward per text instead of one-per-(text, layer).
+        """
+        import torch
+
+        messages = [{"role": "user", "content": text}]
+        prompt = self._tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True
+        )
+        enc = self._tokenizer(
+            prompt,
+            return_tensors="pt",
+            truncation=True,
+            max_length=self.max_length,
+        )
+        enc = {k: v.to(self.device) for k, v in enc.items()}
+        with torch.no_grad():
+            out = self._model(**enc, output_hidden_states=True, use_cache=False)
+        attn = enc.get("attention_mask")
+        if attn is not None:
+            nonpad = attn[0].nonzero(as_tuple=False).flatten()
+            last_idx = int(nonpad[-1].item())
+        else:
+            last_idx = out.hidden_states[0].shape[1] - 1
+        pooled: Dict[int, np.ndarray] = {}
+        for ell, hs in enumerate(out.hidden_states):
+            vec = hs[0, last_idx].to(torch.float32).cpu().numpy()
+            pooled[ell] = np.asarray(vec, dtype=np.float32)
+        return pooled
 
     def get_activations(self, texts: Sequence[str], layer: int) -> np.ndarray:
-        raise NotImplementedError(_DEFAULT_MODEL_HINT)
+        texts = list(texts)
+        layer = int(layer)
+        results: List[Optional[np.ndarray]] = [None] * len(texts)
+
+        # First serve everything we can from the disk cache (no model load needed).
+        missing: List[int] = []
+        for i, text in enumerate(texts):
+            cached = self._load_cached(text, layer)
+            if cached is not None:
+                results[i] = np.asarray(cached, dtype=np.float32)
+            else:
+                missing.append(i)
+
+        if missing:
+            self._ensure_loaded()
+            n_layers = int(self._config.num_hidden_layers)
+            if not (0 <= layer <= n_layers):
+                raise ValueError(
+                    f"layer {layer} out of range 0..{n_layers} "
+                    f"(hidden_states has {n_layers + 1} entries)"
+                )
+            for i in missing:
+                pooled = self._forward_all_layers(texts[i])
+                # Cache every layer from this single forward (cheap scan re-use).
+                for ell, vec in pooled.items():
+                    self._store_cached(texts[i], ell, vec)
+                results[i] = pooled[layer]
+
+        if not texts:
+            self._ensure_loaded()
+            return np.empty((0, int(self._config.hidden_size)), dtype=np.float32)
+        return np.stack(results).astype(np.float32)
+

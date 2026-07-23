@@ -1,0 +1,7 @@
+{"axis": "deliberation", "prompt_id": "delib-strong-01", "text": "Slow down and reason through this carefully, step by step, before you commit to any answer."}
+{"axis": "deliberation", "prompt_id": "delib-strong-02", "text": "Do not rush. Lay out every intermediate step of your thinking, checking each one, and only then state a conclusion."}
+{"axis": "deliberation", "prompt_id": "delib-strong-03", "text": "Take your time and deliberate thoroughly: weigh the options, consider the trade-offs, and show your full chain of reasoning."}
+{"axis": "deliberation", "prompt_id": "delib-strong-04", "text": "Please think this over methodically. Break the problem into parts, work each part out in order, and justify how you get to the result."}
+{"axis": "deliberation", "prompt_id": "delib-strong-05", "text": "Be deliberate and analytical here. Walk me through your reasoning slowly and explicitly instead of jumping to a verdict."}
+{"axis": "deliberation", "prompt_id": "delib-strong-06", "text": "Reason it out in full. I want to see the careful, considered logic behind your answer, not just the answer itself."}
+{"axis": "deliberation", "prompt_id": "delib-strong-07", "text": "Approach this like a patient, meticulous thinker: reflect, reason step by step, and double-check your work before you respond."}

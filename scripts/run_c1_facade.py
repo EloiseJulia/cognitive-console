@@ -19,30 +19,39 @@ the "semantic facade" gap that motivates a legibility/controllability console.
 Anti-circularity protocol (the critics flagged tautology as the #1 risk)
 ------------------------------------------------------------------------
 The single biggest way to fake this result is to build the direction and then
-score the same prompts on it. We avoid that with a strict split + an honest
-baseline + a null:
+score the same-distribution prompts on it. We avoid that with a strict split, a
+SEPARATELY-authored strongest-prompt set, an honest baseline, and a null:
 
 1. DISJOINT split. The axis's 40 contrast pairs are split into a 28-pair
    EXTRACTION set and a 12-pair held-out PROBE set (fixed seed). The CAA vector
-   is built ONLY from the extraction set; the prompt shift is measured ONLY on
-   held-out POS prompts the vector never saw.
+   is built ONLY from the extraction set.
 2. LAYER by extraction-set separation only. The injection layer is chosen by
    Cohen's-d pos/neg separation on the EXTRACTION set (steering/extract.py), not
-   by anything computed on the probe set.
-3. NEUTRAL baseline. The prompt shift is measured RELATIVE to axis-agnostic
+   by anything computed on the strongest-prompt set.
+3. SEPARATE strongest-prompt set (FIX 2). The prompt reach is measured on
+   naturally-authored, forceful user instructions in data/strongest_prompts/,
+   which are DIFFERENT IN KIND from the terse contrast-pair templates and are NOT
+   drawn from the CAA extraction distribution. The prior pilot reused held-out
+   POS contrast-pair texts, which trivially project onto û ~= full ||v||
+   (pseudo-circularity -> a manufactured overshoot). A leakage guard
+   (tests/test_leakage.py) enforces the non-overlap.
+4. NEUTRAL baseline. Every prompt reach is measured RELATIVE to axis-agnostic
    neutral instructions, so we credit the prompt only with the *displacement it
-   adds beyond a content-free instruction*, not the model's baseline position.
-4. LATENT reference = ||v||. The honest "how far latent reaches" scalar is the
-   magnitude of the CAA vector at the chosen layer (its projection on its own
-   unit direction is exactly ||v||).
-5. NULL. The strongest prompt's displacement must clear the p95 of projecting
-   that same displacement onto random unit directions (metrics.random_null_baseline).
+   adds beyond a content-free instruction*.
+5. CONSISTENT estimators from the SAME baseline (FIX 1). latent_reach = ||v||
+   (one scalar). The PRIMARY prompt_reach is the MEAN over the strongest-prompt
+   set of (project_scalar(act, û) - neutral_proj); prompt_reach_max (the max) is
+   reported as a clearly-labelled UPPER BOUND, not the headline. The prior pilot
+   compared the MAX prompt reach against ||v|| with the neutral baseline near the
+   negative pole, so facade_ratio >= 1 was near-structural (max >= mean).
+6. NULL. The prompt displacement must clear the p95 of projecting that same
+   displacement onto random unit directions (metrics.random_null_baseline).
 
-facade_ratio = strongest_prompt_shift / ||v||  (signed).
+facade_ratio_mean = prompt_reach_mean / ||v||  (signed) -- HEADLINE.
+facade_ratio_max  = prompt_reach_max  / ||v||  (signed) -- upper bound.
 EXPLORATORY read (thresholds NOT frozen): a facade gap looks real when
-facade_ratio > 0 (prompt pushes the right way), well below 1 (prompt falls short
-of latent), AND the strongest prompt clears the null. We report the numbers; we
-do NOT hard-code a frozen verdict.
+0 < facade_ratio_mean well below 1 AND the mean displacement clears the null. We
+report the numbers; we do NOT hard-code a frozen verdict.
 """
 
 from __future__ import annotations
@@ -78,10 +87,11 @@ from cognitive_console.registry import ExperimentRecord, ExperimentRegistry
 from cognitive_console.lineage import git_commit, new_experiment_id, utcnow
 from cognitive_console.manifest import ArtifactManifest, write_manifest
 
-DEFAULT_MODEL = "Qwen/Qwen2.5-0.5B-Instruct"
+DEFAULT_MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
 DEFAULT_AXES = ["deliberation", "skepticism", "uncertainty_awareness", "focus"]
 DATA_ROOT = _REPO / "data"
 PAIRS_DIR = DATA_ROOT / "contrast_pairs"
+STRONGEST_DIR = DATA_ROOT / "strongest_prompts"
 NEUTRAL_FILE = DATA_ROOT / "neutral_prompts.jsonl"
 
 
@@ -130,6 +140,32 @@ def load_neutral_prompts() -> List[str]:
     return [r["text"] for r in _read_jsonl(NEUTRAL_FILE)]
 
 
+@dataclass
+class StrongestPrompts:
+    axis: str
+    ids: List[str]
+    texts: List[str]
+    file_hash: str
+
+
+def load_strongest_prompts(axis: str) -> StrongestPrompts:
+    """Load the SEPARATELY-authored strongest human-style instructions for an axis.
+
+    These are deliberately DIFFERENT IN KIND from the terse contrast-pair
+    templates (they are forceful, natural user instructions, not first-person
+    model statements) and are NOT drawn from the CAA extraction distribution, so
+    projecting them onto the axis direction is NOT pseudo-circular. A leakage
+    guard (tests/test_leakage.py) enforces the non-overlap with contrast pairs.
+    """
+    path = STRONGEST_DIR / f"{axis}.jsonl"
+    rows = _read_jsonl(path)
+    ids = [r["prompt_id"] for r in rows]
+    texts = [r["text"] for r in rows]
+    return StrongestPrompts(
+        axis=axis, ids=ids, texts=texts, file_hash=_sha256_file(path)
+    )
+
+
 # --------------------------------------------------------------------------- #
 # Split
 # --------------------------------------------------------------------------- #
@@ -165,20 +201,28 @@ def make_split(pair_ids: List[str], n_extraction: int, seed: int) -> Split:
 class AxisResult:
     axis: str
     chosen_layer: int
-    vector_norm: float                 # ||v||, latent reference (how far latent reaches)
-    neutral_proj: float                # mean neutral projection on û
-    strongest_prompt_shift: float      # max over held-out POS of (proj - neutral_proj)
-    strongest_prompt_id: str
-    mean_prompt_shift: float           # mean over held-out POS
-    facade_ratio: float                # strongest_prompt_shift / ||v|| (signed)
-    mean_facade_ratio: float           # mean_prompt_shift / ||v||
-    above_null: bool                   # |strongest shift| > null p95
-    null_p95: float
-    null_mean: float
-    signal_z: float                    # (|shift| - null_mean)/null_std
-    facade_gap_positive: bool          # 0 < facade_ratio
-    facade_below_latent: bool          # facade_ratio < 1
-    c1_signal: bool                    # positive AND below latent AND above null
+    vector_norm: float                 # ||v|| = latent_reach (displacement adding
+                                       # the CAA vector produces along û; one scalar)
+    neutral_proj: float                # mean neutral projection on û (baseline)
+    # --- PRIMARY (mean-based) estimators, measured from the SAME neutral baseline
+    prompt_reach_mean: float           # MEAN over strongest-prompt set of (proj - neutral_proj)
+    facade_ratio_mean: float           # prompt_reach_mean / ||v||  (signed) -- HEADLINE
+    above_null_mean: bool              # |prompt_reach_mean| > null p95 (mean displacement)
+    null_p95_mean: float
+    signal_z_mean: float               # (|prompt_reach_mean| - null_mean)/null_std
+    # --- Clearly-labelled UPPER BOUND (max-based) estimators
+    prompt_reach_max: float            # MAX over strongest-prompt set (upper bound, NOT headline)
+    strongest_prompt_id: str           # which strongest-prompt attained the max
+    facade_ratio_max: float            # prompt_reach_max / ||v||  (signed)
+    above_null_max: bool               # |prompt_reach_max| > null p95 (max displacement)
+    null_p95_max: float
+    signal_z_max: float
+    # --- EXPLORATORY read (thresholds are placeholders; NO frozen verdict)
+    facade_gap_positive: bool          # 0 < facade_ratio_mean (prompt pushes right way)
+    facade_below_latent: bool          # facade_ratio_mean < 1 (falls short of latent)
+    c1_signal: bool                    # positive AND below latent AND above null (mean-based)
+    n_strongest: int                   # size of the strongest-prompt set
+    strongest_file_hash: str
     n_extraction: int
     n_probe: int
     extraction_separation: float       # Cohen's d at chosen layer (extraction set)
@@ -207,52 +251,70 @@ def analyze_axis(
     ext_pos = [pairs.pos[p] for p in split.extraction_ids]
     ext_neg = [pairs.neg[p] for p in split.extraction_ids]
 
-    # Step 2: CAA extraction + layer scan on the EXTRACTION set only.
+    # Step 2: CAA extraction + layer scan on the EXTRACTION set only. The layer is
+    # chosen by Cohen's-d separation on the extraction set, never on the probe set
+    # or on the (separate) strongest-prompt set -> no circular layer selection.
     caa = extract_caa(provider, axis, ext_pos, ext_neg, layers=scan_layers)
     layer = caa.layer
     v = np.asarray(caa.vector, dtype=np.float64)
     unit = np.asarray(caa.direction, dtype=np.float64)
-    v_norm = float(np.linalg.norm(v))
+    v_norm = float(np.linalg.norm(v))  # latent_reach
 
-    # Step 3: neutral baseline projection on û at the chosen layer.
+    # Step 3: neutral baseline projection on û at the chosen layer. Every prompt
+    # reach below is measured as displacement FROM this same neutral baseline.
     neutral_texts = load_neutral_prompts()
     neutral_acts = provider.get_activations(neutral_texts, layer)
     neutral_projs = np.array(
         [project_scalar(a, unit) for a in neutral_acts], dtype=np.float64
     )
     neutral_proj = float(neutral_projs.mean())
-
-    # Step 5: prompt shift on HELD-OUT POS prompts (never seen by extraction).
-    probe_pos_texts = [pairs.pos[p] for p in split.probe_ids]
-    probe_acts = provider.get_activations(probe_pos_texts, layer)
-    shifts = np.array(
-        [project_scalar(a, unit) - neutral_proj for a in probe_acts], dtype=np.float64
-    )
-    strongest_idx = int(np.argmax(shifts))
-    strongest_shift = float(shifts[strongest_idx])
-    strongest_id = split.probe_ids[strongest_idx]
-    mean_shift = float(shifts.mean())
-
-    # Step 6: facade_ratio (signed) + random-direction null on the displacement.
-    facade_ratio = strongest_shift / v_norm if v_norm > 1e-12 else float("nan")
-    mean_facade_ratio = mean_shift / v_norm if v_norm > 1e-12 else float("nan")
-
-    strongest_act = np.asarray(probe_acts[strongest_idx], dtype=np.float64)
     neutral_mean_act = np.asarray(neutral_acts, dtype=np.float64).mean(axis=0)
-    displacement = strongest_act - neutral_mean_act  # what the prompt actually moved
-    null = random_null_baseline(displacement, n_samples=n_null, seed=seed)
-    null_p95 = float(np.percentile(null, 95))
-    null_mean = float(null.mean())
-    null_std = float(null.std())
-    above_null = bool(abs(strongest_shift) > null_p95)
-    if null_std > 1e-12:
-        signal_z = float((abs(strongest_shift) - null_mean) / null_std)
-    else:
-        signal_z = float("nan")
 
-    facade_positive = facade_ratio > 0
-    facade_below = facade_ratio < 1.0
-    c1_signal = bool(facade_positive and facade_below and above_null)
+    # Step 5: prompt reach on the SEPARATELY-AUTHORED strongest-prompt set (FIX 2).
+    # These instructions are NOT from the contrast-pair distribution used to build
+    # v, so they cannot trivially project onto û at ~full ||v|| (no pseudo-circularity).
+    strongest = load_strongest_prompts(axis)
+    strong_acts = provider.get_activations(strongest.texts, layer)
+    reaches = np.array(
+        [project_scalar(a, unit) - neutral_proj for a in strong_acts], dtype=np.float64
+    )
+
+    # PRIMARY (headline): mean reach over the strongest-prompt set (FIX 1 -- a
+    # consistent estimator vs the same neutral baseline as latent_reach=||v||).
+    prompt_reach_mean = float(reaches.mean())
+    facade_ratio_mean = prompt_reach_mean / v_norm if v_norm > 1e-12 else float("nan")
+
+    # UPPER BOUND (clearly labelled, NOT the headline): the single strongest prompt.
+    max_idx = int(np.argmax(reaches))
+    prompt_reach_max = float(reaches[max_idx])
+    strongest_id = strongest.ids[max_idx]
+    facade_ratio_max = prompt_reach_max / v_norm if v_norm > 1e-12 else float("nan")
+
+    # Step 6: random-direction null on the actual displacement each estimator moved.
+    # Mean-based null uses the MEAN displacement (proj of it == prompt_reach_mean).
+    mean_displacement = strong_acts.astype(np.float64).mean(axis=0) - neutral_mean_act
+    null_mean_dist = random_null_baseline(mean_displacement, n_samples=n_null, seed=seed)
+    null_p95_mean = float(np.percentile(null_mean_dist, 95))
+    nm_mean, nm_std = float(null_mean_dist.mean()), float(null_mean_dist.std())
+    above_null_mean = bool(abs(prompt_reach_mean) > null_p95_mean)
+    signal_z_mean = (
+        float((abs(prompt_reach_mean) - nm_mean) / nm_std) if nm_std > 1e-12 else float("nan")
+    )
+
+    # Max-based null uses the single strongest prompt's displacement.
+    max_displacement = np.asarray(strong_acts[max_idx], dtype=np.float64) - neutral_mean_act
+    null_max_dist = random_null_baseline(max_displacement, n_samples=n_null, seed=seed)
+    null_p95_max = float(np.percentile(null_max_dist, 95))
+    nx_mean, nx_std = float(null_max_dist.mean()), float(null_max_dist.std())
+    above_null_max = bool(abs(prompt_reach_max) > null_p95_max)
+    signal_z_max = (
+        float((abs(prompt_reach_max) - nx_mean) / nx_std) if nx_std > 1e-12 else float("nan")
+    )
+
+    # EXPLORATORY read on the PRIMARY (mean-based) ratio (thresholds NOT frozen).
+    facade_positive = facade_ratio_mean > 0
+    facade_below = facade_ratio_mean < 1.0
+    c1_signal = bool(facade_positive and facade_below and above_null_mean)
 
     per_layer_sep = {
         str(ell): float(d.separation) for ell, d in sorted(caa.per_layer.items())
@@ -263,18 +325,22 @@ def analyze_axis(
         chosen_layer=int(layer),
         vector_norm=v_norm,
         neutral_proj=neutral_proj,
-        strongest_prompt_shift=strongest_shift,
+        prompt_reach_mean=prompt_reach_mean,
+        facade_ratio_mean=float(facade_ratio_mean),
+        above_null_mean=above_null_mean,
+        null_p95_mean=null_p95_mean,
+        signal_z_mean=signal_z_mean,
+        prompt_reach_max=prompt_reach_max,
         strongest_prompt_id=strongest_id,
-        mean_prompt_shift=mean_shift,
-        facade_ratio=float(facade_ratio),
-        mean_facade_ratio=float(mean_facade_ratio),
-        above_null=above_null,
-        null_p95=null_p95,
-        null_mean=null_mean,
-        signal_z=signal_z,
+        facade_ratio_max=float(facade_ratio_max),
+        above_null_max=above_null_max,
+        null_p95_max=null_p95_max,
+        signal_z_max=signal_z_max,
         facade_gap_positive=bool(facade_positive),
         facade_below_latent=bool(facade_below),
         c1_signal=c1_signal,
+        n_strongest=len(strongest.texts),
+        strongest_file_hash=strongest.file_hash,
         n_extraction=len(split.extraction_ids),
         n_probe=len(split.probe_ids),
         extraction_separation=float(caa.per_layer[layer].separation),
@@ -347,21 +413,23 @@ def run(
         results.append(res)
         print(
             f"[c1] axis={axis:<24} layer={res.chosen_layer:>3} "
-            f"||v||={res.vector_norm:8.3f} strongest_shift={res.strongest_prompt_shift:8.3f} "
-            f"facade_ratio={res.facade_ratio:6.3f} above_null={res.above_null} "
-            f"c1={res.c1_signal}  ({time.time()-ta:.1f}s)",
+            f"||v||={res.vector_norm:8.3f} reach_mean={res.prompt_reach_mean:8.3f} "
+            f"ratio_mean={res.facade_ratio_mean:6.3f} ratio_max={res.facade_ratio_max:6.3f} "
+            f"above_null={res.above_null_mean} c1={res.c1_signal}  ({time.time()-ta:.1f}s)",
             flush=True,
         )
 
     # ---- EXPLORATORY Go/No-Go routing (thresholds NOT frozen) --------------
     n_axes = len(results)
     support_fraction = sum(r.c1_signal for r in results) / n_axes if n_axes else 0.0
-    finite_ratios = [r.facade_ratio for r in results if np.isfinite(r.facade_ratio)]
+    finite_ratios = [
+        r.facade_ratio_mean for r in results if np.isfinite(r.facade_ratio_mean)
+    ]
     max_ratio = max(finite_ratios) if finite_ratios else float("nan")
     routing_inputs = RoutingInputs(
         facade_support_fraction=support_fraction,
         max_facade_ratio_observed=max_ratio if np.isfinite(max_ratio) else 0.0,
-        prompt_above_null=all(r.above_null for r in results) if results else False,
+        prompt_above_null=all(r.above_null_mean for r in results) if results else False,
         # C1-only pilot: the downstream AC4/5/8 signals are NOT measured here.
         # Set to False and label the routing EXPLORATORY (see 'routing_caveat').
         blind_eval_above_chance=False,
@@ -394,8 +462,8 @@ def run(
         "aggregate": {
             "n_axes": n_axes,
             "facade_support_fraction": support_fraction,
-            "max_facade_ratio_observed": max_ratio,
-            "prompt_above_null_all": bool(all(r.above_null for r in results)),
+            "max_facade_ratio_mean_observed": max_ratio,
+            "prompt_above_null_all": bool(all(r.above_null_mean for r in results)),
         },
         "routing_EXPLORATORY": routing.to_dict(),
         "routing_caveat": (
@@ -425,29 +493,30 @@ def _write_results(payload: Dict[str, object], out_dir: Path, seed: int) -> Tupl
     lines.append(f"- wall-clock: {payload['wall_clock_seconds']}s   "
                  f"peak RSS: {payload['peak_rss_mb']} MB")
     lines.append(f"- valid_for_paper: **{payload['valid_for_paper']}**\n")
-    lines.append("## Per-axis facade gap\n")
+    lines.append("## Per-axis facade gap  (PRIMARY = mean-based; max = labelled UPPER BOUND)\n")
     lines.append(
-        "| axis | layer | \\|\\|v\\|\\| | neutral_proj | strongest_shift | "
-        "facade_ratio | mean_ratio | above_null | signal_z | C1 signal | ext/probe |"
+        "| axis | layer | \\|\\|v\\|\\| (latent_reach) | neutral_proj | "
+        "prompt_reach_mean | facade_ratio_mean | above_null(mean) | signal_z(mean) | "
+        "prompt_reach_max | facade_ratio_max | above_null(max) | C1 signal | ext_sep | n_strong |"
     )
-    lines.append("|---|---|---|---|---|---|---|---|---|---|---|")
+    lines.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
     for r in payload["axes"]:  # type: ignore[index]
         lines.append(
             f"| {r['axis']} | {r['chosen_layer']} | {r['vector_norm']:.2f} | "
-            f"{r['neutral_proj']:.2f} | {r['strongest_prompt_shift']:.2f} | "
-            f"{r['facade_ratio']:.3f} | {r['mean_facade_ratio']:.3f} | "
-            f"{r['above_null']} | {r['signal_z']:.2f} | "
-            f"{'YES' if r['c1_signal'] else 'no'} | "
-            f"{r['n_extraction']}/{r['n_probe']} |"
+            f"{r['neutral_proj']:.2f} | {r['prompt_reach_mean']:.2f} | "
+            f"{r['facade_ratio_mean']:.3f} | {r['above_null_mean']} | {r['signal_z_mean']:.2f} | "
+            f"{r['prompt_reach_max']:.2f} | {r['facade_ratio_max']:.3f} | {r['above_null_max']} | "
+            f"{'YES' if r['c1_signal'] else 'no'} | {r['extraction_separation']:.2f} | "
+            f"{r['n_strongest']} |"
         )
     agg = payload["aggregate"]  # type: ignore[index]
     lines.append("")
     lines.append("## Aggregate\n")
-    lines.append(f"- axes with a C1 signal: "
+    lines.append(f"- axes with a C1 signal (mean-based): "
                  f"{agg['facade_support_fraction']*100:.0f}% "
                  f"({int(round(agg['facade_support_fraction']*agg['n_axes']))}/{agg['n_axes']})")
-    lines.append(f"- worst (max) facade_ratio: {agg['max_facade_ratio_observed']:.3f}")
-    lines.append(f"- all axes above null: {agg['prompt_above_null_all']}")
+    lines.append(f"- max facade_ratio_mean observed: {agg['max_facade_ratio_mean_observed']:.3f}")
+    lines.append(f"- all axes above null (mean-based): {agg['prompt_above_null_all']}")
     lines.append("")
     lines.append("## Routing (EXPLORATORY — not a real Go/No-Go)\n")
     lines.append(f"- route: `{payload['routing_EXPLORATORY']['route']}`  "  # type: ignore[index]
@@ -456,11 +525,16 @@ def _write_results(payload: Dict[str, object], out_dir: Path, seed: int) -> Tupl
     lines.append("")
     lines.append("## How to read facade_ratio\n")
     lines.append(
-        "- `facade_ratio = strongest_prompt_shift / ||v||` (signed). ~1 => the best "
-        "readable prompt reaches as far as the latent vector (NO facade). Near 0 (but "
-        "> 0 and above null) => strong facade: the prompt points the right way but "
-        "falls far short of the latent reach. < 0 => the best prompt pushes the WRONG "
-        "way along the axis (evidence against a clean prompt->latent map, not a facade)."
+        "- `latent_reach = ||v||` — the displacement adding the CAA vector produces along û.\n"
+        "- **PRIMARY** `prompt_reach_mean = MEAN` over the separately-authored strongest-prompt "
+        "set of `project_scalar(act, û) − neutral_proj`, from the SAME neutral baseline.\n"
+        "- **UPPER BOUND (not headline)** `prompt_reach_max = MAX` over that set.\n"
+        "- `facade_ratio_{mean,max} = prompt_reach_{mean,max} / ||v||` (signed). ~1 => the prompt "
+        "reaches as far as the latent vector (NO facade). 0 < ratio << 1 AND above null => a "
+        "semantic-facade gap (prompt points the right way but falls short). < 0 => the prompt "
+        "pushes the WRONG way along the axis (evidence against a clean prompt->latent map).\n"
+        "- The strongest-prompt set is DISTINCT IN KIND from the contrast pairs used to build v "
+        "(guarded in tests/test_leakage.py), so the ratio is not inflated by pseudo-circularity."
     )
     summary_path = out_dir / "c1_facade_summary.md"
     with open(summary_path, "w", encoding="utf-8") as fh:
@@ -491,15 +565,23 @@ def _register(payload: Dict[str, object], out_dir: Path, json_path: Path, seed: 
     }
     cfg_hash = config_hash(cfg)
     data_hashes = {
-        r["axis"]: {"file": r["file_hash"], "split": r["split_hash"]} for r in axis_rows
+        r["axis"]: {
+            "file": r["file_hash"],
+            "split": r["split_hash"],
+            "strongest": r["strongest_file_hash"],
+        }
+        for r in axis_rows
     }
     summary_metrics = {
         r["axis"]: {
             "chosen_layer": r["chosen_layer"],
             "vector_norm": r["vector_norm"],
-            "strongest_prompt_shift": r["strongest_prompt_shift"],
-            "facade_ratio": r["facade_ratio"],
-            "above_null": r["above_null"],
+            "prompt_reach_mean": r["prompt_reach_mean"],
+            "prompt_reach_max": r["prompt_reach_max"],
+            "facade_ratio_mean": r["facade_ratio_mean"],
+            "facade_ratio_max": r["facade_ratio_max"],
+            "above_null_mean": r["above_null_mean"],
+            "above_null_max": r["above_null_max"],
             "c1_signal": r["c1_signal"],
         }
         for r in axis_rows
@@ -517,7 +599,10 @@ def _register(payload: Dict[str, object], out_dir: Path, json_path: Path, seed: 
         data_hash=_sha256_str(json.dumps(data_hashes, sort_keys=True)),
         config_hash=cfg_hash,
         model=str(payload["model"]),
-        dataset="data/contrast_pairs/*.jsonl (28/12 disjoint split)",
+        dataset=(
+            "data/contrast_pairs/*.jsonl (28/12 disjoint split for v) + "
+            "data/strongest_prompts/*.jsonl (separate strongest-prompt set)"
+        ),
         seed=seed,
         hardware="cpu-local-float32",
         started_at=str(payload["generated_at"]),
@@ -527,7 +612,12 @@ def _register(payload: Dict[str, object], out_dir: Path, json_path: Path, seed: 
         artifacts=[str(json_path.relative_to(_REPO)).replace("\\", "/")],
         valid_for_paper=False,
         validation_notes=(
-            "EXPLORATORY C1 facade pilot on Qwen2.5-0.5B (CPU). Protocol NOT frozen. "
+            f"EXPLORATORY C1 facade pilot on {payload['model']} (CPU). Protocol NOT "
+            "frozen. FIX1: consistent mean-based prompt_reach vs latent_reach=||v|| "
+            "from the same neutral baseline (max reported as a labelled upper bound). "
+            "FIX2: strongest-prompt reach measured on a SEPARATELY-authored instruction "
+            "set (data/strongest_prompts/), distinct in kind from the contrast pairs, "
+            "removing the pseudo-circularity of the prior held-out-POS approach. "
             "Registered in a run-local registry (docs/ untouched by task scope)."
         ),
     )
@@ -560,7 +650,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--n-null", type=int, default=2000)
     ap.add_argument(
         "--out-dir",
-        default=str(_REPO / "results" / "c1_facade_pilot_2026-07-23"),
+        default=str(_REPO / "results" / "c1_facade_1p5b_2026-07-23"),
     )
     args = ap.parse_args(argv)
 

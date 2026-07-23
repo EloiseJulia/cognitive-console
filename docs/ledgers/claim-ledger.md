@@ -38,6 +38,9 @@ Status values: proposed | partially-supported | supported | contradicted | withd
 - **Required evidence:** bounded-prompt-search ceiling demonstrated; attribution accuracy + trust
   calibration gain of C vs A/B/D with effect size + uncertainty.
 - **Known limits:** depends on C1; risk steering changes only surface style (tested via reasoning task).
+  **Threat (PSR/"Steer Like the LLM", ICML 2026):** steering can be trained to match/exceed prompt
+  behaviorally → C2b must frame the gap under a *bounded, user-realistic prompt search*, not absolute, and
+  cite/pre-empt PSR.
 - **Paper location:** TBD
 
 ## C3 — Boundary Object / Cross-Model Trust (RQ3, extension)

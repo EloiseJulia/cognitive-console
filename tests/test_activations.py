@@ -69,12 +69,31 @@ def test_zero_magnitude_plant_has_no_recoverable_direction():
     assert np.linalg.norm(mean_diff) < 2.0
 
 
-def test_hf_provider_is_a_stub_no_torch_required():
-    prov = HFActivationProvider("meta-llama/Meta-Llama-3-8B-Instruct")
-    with pytest.raises(NotImplementedError):
-        prov.get_activations(["hi"], layer=12)
-    with pytest.raises(NotImplementedError):
-        _ = prov.hidden_dim
-    # Importing/using the module must NOT have pulled in torch.
-    assert "torch" not in sys.modules
+def test_hf_provider_lazy_no_torch_at_import_and_offline_construction():
+    # The real HF provider imports torch/transformers LAZILY (inside methods),
+    # so merely importing the package + constructing the provider must not pull
+    # torch into sys.modules and must not touch the network / load a model.
+    prov = HFActivationProvider(
+        "Qwen/Qwen2.5-0.5B-Instruct", layers=[0, 6, 12], device="cpu", dtype="float32"
+    )
     assert isinstance(prov, ActivationProvider)
+    # Explicit layer set is honoured WITHOUT loading a model (cheap, torch-free).
+    assert prov.available_layers() == [0, 6, 12]
+    # Constructing the package must NOT have imported torch.
+    assert "torch" not in sys.modules
+
+
+def test_hf_provider_raises_helpful_error_without_torch():
+    # If torch is not installed, activation capture must fail with a clear,
+    # actionable NotImplementedError (install hint) rather than a bare ImportError.
+    if any(m in sys.modules for m in ("torch", "transformers")):
+        pytest.skip("torch/transformers installed in this env; hint-path not exercised")
+    try:
+        import torch  # noqa: F401
+
+        pytest.skip("torch importable; the missing-extra path is not reachable here")
+    except ImportError:
+        pass
+    prov = HFActivationProvider("Qwen/Qwen2.5-0.5B-Instruct")
+    with pytest.raises(NotImplementedError):
+        prov.get_activations(["hi"], layer=6)

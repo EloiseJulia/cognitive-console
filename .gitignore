@@ -9,3 +9,15 @@ dist/
 
 # Session prompt residue (not part of the deliverable)
 .prompt-phase0-prep.txt
+
+# HuggingFace model cache (weights are large + regenerable; never commit)
+.hf_cache/
+
+# On-disk activation cache produced by the real CPU provider (regenerable)
+.act_cache/
+
+# Large / regenerable run artifacts. We DO commit the small results JSON +
+# human summary (see !exceptions below); everything else under results/ is local.
+results/**/activations/
+results/**/*.npy
+results/**/*.npz

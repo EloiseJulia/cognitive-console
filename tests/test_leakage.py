@@ -11,6 +11,7 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 PAIRS_DIR = REPO / "data" / "contrast_pairs"
 FIXTURES_DIR = REPO / "data" / "eval_sets" / "fixtures"
+STRONGEST_DIR = REPO / "data" / "strongest_prompts"
 
 # Fixture fields that carry model-facing prompt text (any that exist per row).
 FIXTURE_TEXT_FIELDS = ("prompt", "question", "user_view")
@@ -145,3 +146,74 @@ def test_pair_ids_unique_within_axis_polarity():
             key = (row["pair_id"], row["polarity"])
             assert key not in seen, f"{f.name}: duplicate {key}"
             seen.add(key)
+
+
+# --------------------------------------------------------------------------- #
+# Strongest-prompt set guards (FIX 2): the separately-authored strong
+# instructions that drive the C1 facade measurement must NOT be drawn from the
+# contrast-pair distribution used to build the CAA vector. If they overlapped,
+# they would trivially project onto û ~= full ||v|| (pseudo-circularity), which
+# is exactly the manufactured "overshoot" the prior pilot suffered from.
+# --------------------------------------------------------------------------- #
+def strongest_axes():
+    return sorted(f.stem for f in STRONGEST_DIR.glob("*.jsonl"))
+
+
+def strongest_texts():
+    out = []
+    for f in sorted(STRONGEST_DIR.glob("*.jsonl")):
+        for row in _jsonl(f):
+            out.append(row["text"])
+    return out
+
+
+def test_strongest_prompt_files_exist_for_every_axis():
+    axes = strongest_axes()
+    pair_axes = sorted(f.stem for f in PAIRS_DIR.glob("*.jsonl"))
+    assert axes, "no strongest-prompt files found"
+    # Every axis with contrast pairs must have an authored strongest-prompt set.
+    missing = set(pair_axes) - set(axes)
+    assert not missing, f"axes without a strongest-prompt set: {sorted(missing)}"
+
+
+def test_strongest_prompt_sets_have_expected_size_and_schema():
+    for f in sorted(STRONGEST_DIR.glob("*.jsonl")):
+        rows = _jsonl(f)
+        n = len(rows)
+        assert 6 <= n <= 8, f"{f.name}: {n} strongest prompts, expected 6-8"
+        ids = set()
+        for row in rows:
+            assert set(row) == {"axis", "prompt_id", "text"}, f"{f.name}: bad keys {row}"
+            assert row["axis"] == f.stem, f"{f.name}: axis mismatch in {row}"
+            assert isinstance(row["text"], str) and row["text"].strip()
+            assert row["prompt_id"] not in ids, f"{f.name}: dup prompt_id {row['prompt_id']}"
+            ids.add(row["prompt_id"])
+
+
+def test_no_content_overlap_between_strongest_prompts_and_pairs():
+    """The strongest-prompt texts must be DIFFERENT IN KIND from the contrast
+    pairs (no verbatim reuse, no near-duplicate distinctive phrasing). This is the
+    anti-pseudo-circularity guard for the C1 facade measurement."""
+    strong_texts = strongest_texts()
+    pair_texts = contrast_pair_texts()
+    assert strong_texts, "no strongest-prompt texts collected"
+    assert pair_texts, "no contrast-pair texts collected"
+
+    strong_norm = {_normalize(t) for t in strong_texts}
+    pair_norm = {_normalize(t) for t in pair_texts}
+
+    # (1) No exact normalized-string collision.
+    exact = strong_norm & pair_norm
+    assert not exact, f"leakage: identical normalized text in strongest prompts and pairs: {sorted(exact)}"
+
+    # (2) No high n-gram overlap (near-duplicate reuse of a distinctive phrase).
+    pair_ngrams = set()
+    for t in pair_norm:
+        pair_ngrams |= _ngrams(t)
+    shared = set()
+    for t in strong_norm:
+        shared |= _ngrams(t) & pair_ngrams
+    assert not shared, (
+        f"leakage: shared {NGRAM_N}-gram(s) between strongest prompts and contrast pairs: "
+        f"{sorted(shared)[:5]}"
+    )

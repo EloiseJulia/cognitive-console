@@ -131,7 +131,19 @@ def facade_metric(
     null_mean = float(null.mean())
     null_std = float(null.std())
     null_p95 = float(np.percentile(null, 95))
-    signal_z = float((abs(p_proj) - null_mean) / null_std) if null_std > _EPS else float("inf")
+    # signal_z = (|prompt_proj| - null_mean) / null_std. Guard the degenerate
+    # null: when null_std ~ 0 the ratio is undefined. If the excess signal
+    # (|prompt_proj| - null_mean) is also ~ 0 we have 0/0 -> return nan (no
+    # measurable signal, z is meaningless) rather than the misleading +inf a
+    # naive division would produce. A real excess over a zero-variance null is
+    # reported as +/-inf, which is the honest limit.
+    excess = abs(p_proj) - null_mean
+    if null_std > _EPS:
+        signal_z = float(excess / null_std)
+    elif abs(excess) < _EPS:
+        signal_z = float("nan")
+    else:
+        signal_z = float("inf") if excess > 0 else float("-inf")
     return FacadeResult(
         prompt_projection=p_proj,
         vector_projection=v_proj,

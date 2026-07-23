@@ -112,3 +112,14 @@ def test_facade_metric_result_serializes():
     d = res.to_dict()
     assert set(d) >= {"prompt_projection", "vector_projection", "facade_ratio", "null_p95", "signal_z"}
     assert d["facade_ratio"] == pytest.approx(0.5)
+
+
+def test_facade_metric_zero_signal_z_is_nan_not_inf():
+    # Degenerate null (zero prompt activation -> all null projections 0, and no
+    # excess signal): signal_z must be nan, never the misleading +inf.
+    res = metrics.facade_metric(
+        [0.0, 0.0, 0.0, 0.0], [4.0, 0.0, 0.0, 0.0], [1.0, 0.0, 0.0, 0.0], n_null=200, seed=0
+    )
+    assert res.null_std == pytest.approx(0.0)
+    assert math.isnan(res.signal_z)
+    assert not math.isinf(res.signal_z)

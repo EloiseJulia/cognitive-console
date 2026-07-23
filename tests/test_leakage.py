@@ -5,11 +5,17 @@ vector, we could silently evaluate on the very data used to build the interventi
 This guards the extraction/eval boundary before any GPU run."""
 
 import json
+import re
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 PAIRS_DIR = REPO / "data" / "contrast_pairs"
 FIXTURES_DIR = REPO / "data" / "eval_sets" / "fixtures"
+
+# Fixture fields that carry model-facing prompt text (any that exist per row).
+FIXTURE_TEXT_FIELDS = ("prompt", "question", "user_view")
+# n-gram width for the near-duplicate content check.
+NGRAM_N = 6
 
 
 def _jsonl(path):
@@ -33,6 +39,36 @@ def fixture_ids():
     return ids
 
 
+def _normalize(text):
+    """Lowercase, drop punctuation, collapse whitespace -> canonical form."""
+    text = text.lower()
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def contrast_pair_texts():
+    out = []
+    for f in sorted(PAIRS_DIR.glob("*.jsonl")):
+        for row in _jsonl(f):
+            out.append(row["text"])
+    return out
+
+
+def fixture_prompt_texts():
+    out = []
+    for f in sorted(FIXTURES_DIR.glob("*.jsonl")):
+        for row in _jsonl(f):
+            for field in FIXTURE_TEXT_FIELDS:
+                if field in row and isinstance(row[field], str):
+                    out.append(row[field])
+    return out
+
+
+def _ngrams(normalized, n=NGRAM_N):
+    toks = normalized.split()
+    return {" ".join(toks[i : i + n]) for i in range(0, max(0, len(toks) - n + 1))}
+
+
 def test_data_files_exist():
     assert list(PAIRS_DIR.glob("*.jsonl")), "no contrast-pair files found"
     assert list(FIXTURES_DIR.glob("*.jsonl")), "no fixture files found"
@@ -41,8 +77,44 @@ def test_data_files_exist():
 def test_no_id_overlap_between_fixtures_and_pairs():
     pair_ids = set(contrast_pair_ids())
     fix_ids = set(fixture_ids())
+    # Non-vacuous: both id spaces must be populated, else this check proves nothing.
+    assert pair_ids, "no contrast-pair ids collected"
+    assert fix_ids, "no fixture ids collected"
     overlap = pair_ids & fix_ids
     assert not overlap, f"leakage: ids shared between contrast pairs and eval fixtures: {sorted(overlap)}"
+
+
+def test_no_content_overlap_between_pairs_and_fixtures():
+    """CONTENT-level leakage guard (the id-prefix check alone is vacuous because
+    the prefixes are disjoint by construction). If a steering contrast text also
+    appeared, verbatim or nearly so, as an eval prompt, we'd be evaluating on the
+    very strings used to build the intervention."""
+    pair_texts = contrast_pair_texts()
+    fix_texts = fixture_prompt_texts()
+    # Non-vacuous: fail loudly if either corpus is empty.
+    assert pair_texts, "no contrast-pair texts collected"
+    assert fix_texts, "no fixture prompt texts collected"
+
+    pair_norm = {_normalize(t) for t in pair_texts}
+    fix_norm = {_normalize(t) for t in fix_texts}
+    assert pair_norm, "normalized contrast-pair texts are empty"
+    assert fix_norm, "normalized fixture prompt texts are empty"
+
+    # (1) No exact normalized-string collision.
+    exact = pair_norm & fix_norm
+    assert not exact, f"content leakage: identical normalized text in pairs and fixtures: {sorted(exact)}"
+
+    # (2) No high n-gram overlap (near-duplicate reuse of a distinctive phrase).
+    fixture_ngrams = set()
+    for t in fix_norm:
+        fixture_ngrams |= _ngrams(t)
+    shared = set()
+    for t in pair_norm:
+        shared |= _ngrams(t) & fixture_ngrams
+    assert not shared, (
+        f"content leakage: shared {NGRAM_N}-gram(s) between contrast pairs and eval fixtures: "
+        f"{sorted(shared)[:5]}"
+    )
 
 
 def test_fixture_ids_globally_unique():

@@ -1,4 +1,8 @@
-"""Unit tests for the experiment-registry writer (identity + atomicity)."""
+"""Unit tests for the experiment-registry writer (identity + atomicity + locking)."""
+
+import re
+import threading
+from pathlib import Path
 
 import pytest
 import yaml
@@ -114,10 +118,80 @@ def test_invalid_status_rejected():
 
 
 def test_matches_ledger_schema():
-    # The record schema must match docs/ledgers/experiment-registry.yaml exactly.
-    from pathlib import Path
-
+    # The record schema must match docs/ledgers/experiment-registry.yaml exactly,
+    # in BOTH membership and ORDER, so silent field drift is caught.
     ledger = Path(__file__).resolve().parent.parent / "docs" / "ledgers" / "experiment-registry.yaml"
     text = ledger.read_text(encoding="utf-8")
-    for field in REGISTRY_FIELDS:
-        assert f"{field}:" in text, f"field {field!r} missing from ledger schema comment"
+    # Parse the commented schema block: lines like "# - experiment_id: ..." or
+    # "#   parent: null". Capture the leading field name on each such line.
+    fields = []
+    for line in text.splitlines():
+        m = re.match(r"^#\s*(?:-\s*)?([a-z_][a-z0-9_]*):", line)
+        if m:
+            fields.append(m.group(1))
+    assert fields, "no schema fields parsed from the ledger comment block"
+    # Set-equality (no missing/extra fields) AND order-equality (same sequence).
+    assert set(fields) == set(REGISTRY_FIELDS), (
+        f"field-set drift: only-in-ledger={set(fields) - set(REGISTRY_FIELDS)}, "
+        f"only-in-code={set(REGISTRY_FIELDS) - set(fields)}"
+    )
+    assert fields == REGISTRY_FIELDS, (
+        f"field-order drift:\n ledger={fields}\n code  ={REGISTRY_FIELDS}"
+    )
+
+
+def test_parallel_appends_do_not_drop_rows(tmp_path):
+    # Cross-process/thread lock must serialize the load->check->write section so
+    # concurrent appenders of DISTINCT ids all persist (the TOCTOU that silently
+    # dropped runs). Without the lock, interleaved stale loads clobber rows.
+    path = str(tmp_path / "registry.yaml")
+    reg = ExperimentRegistry(path)
+    n = 12
+    barrier = threading.Barrier(n)
+    errors = []
+
+    def worker(i):
+        try:
+            barrier.wait()  # maximize contention: all fire together
+            ExperimentRegistry(path).append(_record(f"exp-{i:04d}", seed=i))
+        except Exception as exc:  # noqa: BLE001 - surface any failure to the assert
+            errors.append(exc)
+
+    threads = [threading.Thread(target=worker, args=(i,)) for i in range(n)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    assert not errors, f"unexpected append errors: {errors}"
+    ids = sorted(r["experiment_id"] for r in reg.load())
+    assert ids == [f"exp-{i:04d}" for i in range(n)], f"rows were dropped: got {ids}"
+
+
+def test_parallel_same_id_raises_not_silent_overwrite(tmp_path):
+    # Two appenders that both load-before-write with the SAME id: exactly one
+    # must persist and the other must raise ExperimentExistsError. Never a silent
+    # overwrite, never a dropped/duplicated row.
+    path = str(tmp_path / "registry.yaml")
+    reg = ExperimentRegistry(path)
+    barrier = threading.Barrier(2)
+    outcomes = []
+
+    def worker(seed):
+        try:
+            barrier.wait()
+            ExperimentRegistry(path).append(_record("exp-dup", seed=seed))
+            outcomes.append(("ok", seed))
+        except ExperimentExistsError:
+            outcomes.append(("exists", seed))
+
+    threads = [threading.Thread(target=worker, args=(s,)) for s in (1, 2)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+
+    rows = reg.load()
+    assert len(rows) == 1, f"expected exactly one persisted row, got {len(rows)}"
+    assert sum(1 for o in outcomes if o[0] == "ok") == 1, outcomes
+    assert sum(1 for o in outcomes if o[0] == "exists") == 1, outcomes

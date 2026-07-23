@@ -11,8 +11,11 @@ Pure stdlib + pyyaml. No network, no model loading.
 
 from __future__ import annotations
 
+import errno
 import os
 import tempfile
+import time
+from contextlib import contextmanager
 from dataclasses import dataclass, field, asdict
 from typing import Any, Dict, List, Optional
 
@@ -96,6 +99,55 @@ class ExperimentExistsError(KeyError):
     """Raised when appending an experiment_id that already exists."""
 
 
+class RegistryLockTimeout(TimeoutError):
+    """Raised when the cross-process registry lock cannot be acquired in time."""
+
+
+@contextmanager
+def _file_lock(target_path: str, timeout: float = 30.0, poll: float = 0.02):
+    """Cross-process advisory lock via an O_CREAT|O_EXCL `.lock` sidecar.
+
+    Only one holder can create the sidecar at a time; others spin with backoff
+    until it is released (removed) or `timeout` elapses. This serializes the
+    load -> check-existing -> append -> atomic_write critical section so two
+    parallel appenders can never both read a stale file and clobber each other's
+    row (the TOCTOU race that silently dropped runs). Portable across Windows and
+    POSIX because it relies only on O_EXCL create semantics, not fcntl/msvcrt.
+    """
+    lock_path = os.path.abspath(target_path) + ".lock"
+    os.makedirs(os.path.dirname(lock_path), exist_ok=True)
+    deadline = time.monotonic() + timeout
+    fd = None
+    while True:
+        try:
+            fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            break
+        except FileExistsError:
+            if time.monotonic() >= deadline:
+                raise RegistryLockTimeout(
+                    f"could not acquire registry lock {lock_path!r} within {timeout}s"
+                )
+            time.sleep(poll)
+        except OSError as exc:  # pragma: no cover - platform-specific fallbacks
+            if exc.errno == errno.EEXIST:
+                if time.monotonic() >= deadline:
+                    raise RegistryLockTimeout(
+                        f"could not acquire registry lock {lock_path!r} within {timeout}s"
+                    )
+                time.sleep(poll)
+            else:
+                raise
+    try:
+        os.write(fd, str(os.getpid()).encode("ascii"))
+        yield
+    finally:
+        os.close(fd)
+        try:
+            os.remove(lock_path)
+        except FileNotFoundError:
+            pass
+
+
 def _load(path: str) -> Dict[str, Any]:
     if not os.path.exists(path):
         return {"experiments": []}
@@ -145,18 +197,24 @@ class ExperimentRegistry:
         return None
 
     def append(self, record: ExperimentRecord) -> Dict[str, Any]:
-        """Append a record. Refuses to overwrite an existing experiment_id."""
-        data = _load(self.path)
-        existing = {r.get("experiment_id") for r in data["experiments"]}
-        if record.experiment_id in existing:
-            raise ExperimentExistsError(
-                f"experiment_id {record.experiment_id!r} already exists; "
-                "registry is append-only and will not silently overwrite"
-            )
-        row = record.to_ordered_dict()
-        data["experiments"].append(row)
-        _atomic_write(self.path, data)
-        return row
+        """Append a record. Refuses to overwrite an existing experiment_id.
+
+        The load -> check -> write sequence is serialized by a cross-process
+        lock so concurrent appenders cannot both read a stale file and drop a
+        row (TOCTOU). Each appender re-loads the freshest file inside the lock.
+        """
+        with _file_lock(self.path):
+            data = _load(self.path)
+            existing = {r.get("experiment_id") for r in data["experiments"]}
+            if record.experiment_id in existing:
+                raise ExperimentExistsError(
+                    f"experiment_id {record.experiment_id!r} already exists; "
+                    "registry is append-only and will not silently overwrite"
+                )
+            row = record.to_ordered_dict()
+            data["experiments"].append(row)
+            _atomic_write(self.path, data)
+            return row
 
     def update_status(
         self,
@@ -169,14 +227,15 @@ class ExperimentRegistry:
         unknown — status transitions must target a registered experiment."""
         if status not in _VALID_STATUS:
             raise ValueError(f"status must be one of {sorted(_VALID_STATUS)}, got {status!r}")
-        data = _load(self.path)
-        for rec in data["experiments"]:
-            if rec.get("experiment_id") == experiment_id:
-                rec["status"] = status
-                for key, val in updates.items():
-                    if key not in REGISTRY_FIELDS:
-                        raise ValueError(f"unknown registry field: {key}")
-                    rec[key] = val
-                _atomic_write(self.path, data)
-                return rec
-        raise KeyError(f"experiment_id {experiment_id!r} not found")
+        with _file_lock(self.path):
+            data = _load(self.path)
+            for rec in data["experiments"]:
+                if rec.get("experiment_id") == experiment_id:
+                    rec["status"] = status
+                    for key, val in updates.items():
+                        if key not in REGISTRY_FIELDS:
+                            raise ValueError(f"unknown registry field: {key}")
+                        rec[key] = val
+                    _atomic_write(self.path, data)
+                    return rec
+            raise KeyError(f"experiment_id {experiment_id!r} not found")

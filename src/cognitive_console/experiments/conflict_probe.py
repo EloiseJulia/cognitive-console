@@ -100,13 +100,55 @@ class SyntheticBehaviorBackend(BehaviorBackend):
 
 
 class HFBehaviorBackend(BehaviorBackend):
-    """Real model behavior backend — STUB, deferred to the GPU phase."""
+    """Legacy STUB kept for API compatibility (superseded by SteeredBehaviorBackend).
+
+    The C2b generate-and-measure path is now REAL via ``SteeredBehaviorBackend``
+    (which composes a ``GenBackend`` steered generator + the ``behavior_score``
+    proxies). This stub is retained so nothing that imported it breaks; it still
+    raises to force callers onto the wired backend.
+    """
 
     def __init__(self, model_name: str):
         self.model_name = model_name
 
     def behavior_score(self, config: ConflictConfig) -> float:
         raise NotImplementedError(_MODEL_HINT)
+
+
+class SteeredBehaviorBackend(BehaviorBackend):
+    """REAL behavior backend: steered generation + automatic behavioral proxy.
+
+    Wires the conflict probe to the deferred model seam. For a ``ConflictConfig``
+    it generates a response to ``config.prompt_text`` while steering along
+    ``config.latent_vector`` at ``config.latent_magnitude`` on ``config.layer``,
+    then scores the axis behavior with ``experiments.behavior.behavior_score``.
+
+    Works with any ``GenBackend``: the real ``SteeredHFBackend`` on GPU or the
+    ``SyntheticSteeredBackend`` offline. No torch is imported here (the backend
+    handles that lazily), so this class stays import-safe for the offline suite.
+    """
+
+    def __init__(self, gen_backend, max_new_tokens: int = 128, scorer=None):
+        from ..steering.generate import GenBackend  # local import: no torch cost
+
+        if not isinstance(gen_backend, GenBackend):
+            raise TypeError("gen_backend must be a GenBackend")
+        self.gen = gen_backend
+        self.max_new_tokens = int(max_new_tokens)
+        if scorer is None:
+            from .behavior import behavior_score as scorer  # noqa: PLC0415
+        self.scorer = scorer
+
+    def behavior_score(self, config: ConflictConfig) -> float:
+        from ..steering.generate import SteerConfig
+
+        steer = SteerConfig(
+            direction=config.latent_vector,
+            alpha=config.latent_magnitude,
+            layer=config.layer,
+        )
+        text = self.gen.generate(config.prompt_text, steer, self.max_new_tokens)
+        return float(self.scorer(text, config.axis))
 
 
 @dataclass

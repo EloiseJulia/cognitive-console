@@ -10,6 +10,7 @@ dist/
 # Session prompt residue (not part of the deliverable)
 .prompt-phase0-prep.txt
 .prompt-strengthen.txt
+.prompt-gpu-ready.txt
 
 # HuggingFace model cache (weights are large + regenerable; never commit)
 .hf_cache/

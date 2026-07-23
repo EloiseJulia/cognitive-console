@@ -1,0 +1,92 @@
+"""Steered-generation seam tests.
+
+Model-independent by default: the SyntheticSteeredBackend and the hook contract
+are tested with NO torch. The REAL SteeredHFBackend smoke test is GATED — it only
+runs when torch + a local model are available AND the env flag is set, so the
+offline suite stays green without torch/model.
+"""
+
+import importlib.util
+import os
+
+import numpy as np
+import pytest
+
+from cognitive_console.steering.generate import (
+    GenBackend,
+    SteerConfig,
+    SteeredHFBackend,
+    SyntheticSteeredBackend,
+    unit_vector,
+)
+from cognitive_console.experiments.behavior import behavior_score
+
+
+def test_unit_vector_normalizes():
+    v = unit_vector([3.0, 4.0])
+    np.testing.assert_allclose(np.linalg.norm(v), 1.0)
+
+
+def test_unit_vector_rejects_zero():
+    with pytest.raises(ValueError):
+        unit_vector([0.0, 0.0])
+
+
+def test_synthetic_backend_is_genbackend():
+    assert isinstance(SyntheticSteeredBackend("deliberation"), GenBackend)
+
+
+@pytest.mark.parametrize("axis", ["deliberation", "skepticism", "uncertainty_awareness"])
+def test_synthetic_alpha_increases_behavior(axis):
+    backend = SyntheticSteeredBackend(axis)
+    d = np.ones(8)
+    s0 = behavior_score(backend.generate("prompt", SteerConfig(d, 0.0, 3)), axis)
+    s_hi = behavior_score(backend.generate("prompt", SteerConfig(d, 4.0, 3)), axis)
+    assert s_hi > s0
+
+
+def test_synthetic_focus_alpha_increases_focus():
+    backend = SyntheticSteeredBackend("focus")
+    d = np.ones(8)
+    s0 = behavior_score(backend.generate("prompt", SteerConfig(d, 0.0, 3)), "focus")
+    s_hi = behavior_score(backend.generate("prompt", SteerConfig(d, 4.0, 3)), "focus")
+    assert s_hi > s0
+
+
+def test_synthetic_prompt_bias_lifts_unsteered():
+    backend = SyntheticSteeredBackend("deliberation", prompt_bias={"strong": 3.0})
+    d = np.ones(4)
+    weak = behavior_score(backend.generate("weak", SteerConfig(d, 0.0, 3)), "deliberation")
+    strong = behavior_score(backend.generate("strong", SteerConfig(d, 0.0, 3)), "deliberation")
+    assert strong > weak
+
+
+def test_synthetic_deterministic():
+    b1 = SyntheticSteeredBackend("skepticism")
+    b2 = SyntheticSteeredBackend("skepticism")
+    d = np.arange(6, dtype=float) + 1
+    assert b1.generate("p", SteerConfig(d, 2.0, 3)) == b2.generate("p", SteerConfig(d, 2.0, 3))
+
+
+# --------------------------------------------------------------------------- #
+# GATED real-model smoke test (skipped unless torch + model + env flag)
+# --------------------------------------------------------------------------- #
+_HAS_TORCH = importlib.util.find_spec("torch") is not None
+_HAS_TF = importlib.util.find_spec("transformers") is not None
+_SMOKE = os.environ.get("COGNITIVE_CONSOLE_GPU_SMOKE") == "1"
+_SMOKE_MODEL = os.environ.get("COGNITIVE_CONSOLE_SMOKE_MODEL", "Qwen/Qwen2.5-1.5B-Instruct")
+
+
+@pytest.mark.skipif(
+    not (_HAS_TORCH and _HAS_TF and _SMOKE),
+    reason="real-model smoke test: set COGNITIVE_CONSOLE_GPU_SMOKE=1 with torch+transformers+model",
+)
+def test_real_steered_generation_alpha0_matches_plain():
+    backend = SteeredHFBackend(_SMOKE_MODEL, device="cpu", dtype="float32")
+    d = np.ones(backend.hidden_dim)
+    layer = max(1, backend.num_hidden_layers // 2)
+    plain = backend.generate("Tell me about the moon.", None, max_new_tokens=16)
+    a0 = backend.generate(
+        "Tell me about the moon.", SteerConfig(d, 0.0, layer), max_new_tokens=16
+    )
+    assert plain == a0  # alpha=0 must be bit-identical to unsteered

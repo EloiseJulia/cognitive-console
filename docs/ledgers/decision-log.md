@@ -49,6 +49,25 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0011 · phase0-analysis audit (merge-after-fixes); dispatching fixes
+- **Audit (independent hostile, branch feature/2-phase0-analysis):** core math verified CLEAN — CAA
+  orientation (pos−neg, not swapped), fair unit-vector null, Cohen's-d layer scan (non-circular), tautology
+  guards, no-torch stub, registry lock, manifest/lineage all ✔. But:
+  - **[BLOCKER B1] Facade scores an ANTI-ALIGNED prompt as C1-supported.** `facade_gap_holds` has only an
+    upper bound and `prompt_above_null` uses |projection|, so a prompt with negative projection (wrong
+    direction — evidence AGAINST a facade) counts as supported → inflates facade_support_fraction → can flip
+    RED/PARTIAL → GREEN. Corrupts the C1 evidence the pipeline exists to produce. Green suite missed it (no
+    negative-projection test). Fix: `0.0 < facade_ratio <= max_facade_ratio` + failing-without-guard test.
+  - **[MAJOR M1] Dead `no_facade_ratio` routing threshold** — subsumed by `not facade_holds`; a
+    "pre-registered" gate that never fires, and `test_red_no_facade_routes_plan_d` is actually driven by a
+    different condition (false confidence). Fix intent + isolate the test.
+  - **[MINOR m1] conflict clipping** discards overshoot/wrong-side C2b signal → keep raw unclipped fraction.
+  - **[MINOR m2] id mint outside registry lock** → move inside / retry.
+  - **[MINOR m3] conflict calibration-pole provenance** → GPU-phase must register calibration as its own
+    experiment_id feeding prompt_target/latent_target (logged to open-risks, deferred).
+- **Manager triage:** FIX B1+M1+m1+m2 now (cheap, our code); DEFER m3 to GPU phase (open-risks). Re-verify → merge.
+- **Frozen?** No. Branch NOT merged until B1 closed.
+
 ## 2026-07-23 · D-0010 · Human approved: write Phase 0 analysis code ahead (CPU, no spend)
 - **Human decision (@EloiseJulia, via ask_user):** "继续停在 CPU 阶段：让我把 Phase 0 分析脚本
   （facade/冲突探针的纯代码部分）先写好待命."

@@ -59,8 +59,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import platform
 import sys
+import threading
 import time
 from collections import OrderedDict
 from dataclasses import dataclass, asdict
@@ -375,6 +377,51 @@ def _peak_rss_mb() -> Optional[float]:
         return None
 
 
+def _available_ram_mb() -> Optional[float]:
+    try:
+        import psutil
+
+        return psutil.virtual_memory().available / (1024.0 * 1024.0)
+    except Exception:
+        return None
+
+
+def start_ram_watchdog(floor_mb: float, poll_s: float = 0.5) -> threading.Event:
+    """Hard-abort the process if system-available RAM drops below ``floor_mb``.
+
+    The 1.5B float32 load materializes ~6-8 GB of weights. On this shared machine
+    we must NEVER page into swap-thrash. A daemon thread polls psutil's
+    system-available memory; if it dips below the floor it prints the exact RAM
+    numbers and calls ``os._exit`` so the OS reclaims the partially-loaded weights
+    immediately instead of thrashing. Returns a stop Event the caller sets once the
+    memory-heavy phase (model load + forwards) is safely past its peak.
+    """
+    stop = threading.Event()
+
+    def _watch() -> None:
+        peak_used = 0.0
+        while not stop.is_set():
+            avail = _available_ram_mb()
+            if avail is not None:
+                peak = _peak_rss_mb() or 0.0
+                peak_used = max(peak_used, peak)
+                if avail < floor_mb:
+                    sys.stderr.write(
+                        "\n[c1][WATCHDOG] system-available RAM "
+                        f"{avail:.0f} MB < floor {floor_mb:.0f} MB "
+                        f"(peak process RSS {peak_used:.0f} MB). "
+                        "Hard-aborting BEFORE swap-thrash — the 1.5B float32 load "
+                        "does not fit in free physical RAM.\n"
+                    )
+                    sys.stderr.flush()
+                    os._exit(75)
+            stop.wait(poll_s)
+
+    t = threading.Thread(target=_watch, name="ram-watchdog", daemon=True)
+    t.start()
+    return stop
+
+
 def run(
     model: str,
     axes: List[str],
@@ -384,8 +431,16 @@ def run(
     n_null: int,
     out_dir: Path,
     max_scan_layers: Optional[int] = None,
+    ram_floor_mb: float = 450.0,
 ) -> Dict[str, object]:
     t0 = time.time()
+    # Guard the whole memory-heavy phase (model load + all forwards). We only stop
+    # the watchdog once every axis is analyzed and activations are cached/pooled.
+    watchdog_stop = start_ram_watchdog(ram_floor_mb)
+    avail0 = _available_ram_mb()
+    if avail0 is not None:
+        print(f"[c1] system-available RAM at start: {avail0:.0f} MB "
+              f"(watchdog floor {ram_floor_mb:.0f} MB)", flush=True)
     cache_dir = out_dir / "activations" / "cache"
     provider = HFActivationProvider(
         model, device="cpu", dtype="float32", cache_dir=str(cache_dir)
@@ -418,6 +473,9 @@ def run(
             f"above_null={res.above_null_mean} c1={res.c1_signal}  ({time.time()-ta:.1f}s)",
             flush=True,
         )
+
+    # Peak memory pressure is behind us (weights loaded, all activations pooled).
+    watchdog_stop.set()
 
     # ---- EXPLORATORY Go/No-Go routing (thresholds NOT frozen) --------------
     n_axes = len(results)
@@ -648,6 +706,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--n-extraction", type=int, default=28)
     ap.add_argument("--seed", type=int, default=20260723)
     ap.add_argument("--n-null", type=int, default=2000)
+    ap.add_argument("--ram-floor-mb", type=float, default=450.0,
+                    help="hard-abort the run if system-available RAM drops below this")
     ap.add_argument(
         "--out-dir",
         default=str(_REPO / "results" / "c1_facade_1p5b_2026-07-23"),
@@ -664,6 +724,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         n_null=args.n_null,
         out_dir=out_dir,
         max_scan_layers=args.max_scan_layers,
+        ram_floor_mb=args.ram_floor_mb,
     )
     json_path, summary_path = _write_results(payload, out_dir, args.seed)
     exp_id = _register(payload, out_dir, json_path, args.seed)

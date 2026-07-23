@@ -14,7 +14,7 @@ Status: registered | testing | supported | refuted | parked
 - success_criterion: statistically significant gap, ≥2 models, ≥3 axes
 - failure_interpretation: if ≈ vector-only → no ceiling → Plan D (measurement paper)
 - protocol_frozen: NO
-- status: registered
+- status: testing (UNDERPOWERED — 0.5B CPU pilot D-0014 inconclusive; needs ≥ few-B model + fixed facade statistic)
 
 ## H2 (→ C2) — Prompt-unreachable region + conflict legibility
 - experiment_type: exploratory (Phase 0 conflict probe) → confirmatory (controlled study)

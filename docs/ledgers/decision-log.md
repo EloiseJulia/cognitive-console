@@ -49,6 +49,23 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0014 · C1 facade pilot ran (CPU/0.5B) — NULL/inconclusive, NOT support for C1
+- **Result (exploratory, feature/3-cpu-c1-facade, run id c1-facade-d963217c-0001):** per-axis facade_ratio —
+  deliberation 1.161 (overshoot), skepticism −0.129 (extraction failed, ‖v‖=0.18), uncertainty 1.059
+  (overshoot), focus 0.696 (only axis showing facade+above-null). 1/4 axes show the pattern → looks like NOISE.
+- **Ops:** cold 399s / warm 81s (reproducible), peak RSS 3.25GB (near the 3.4GB free ceiling), pytest green,
+  zero paid/GPU. Real HFActivationProvider (Qwen2.5-0.5B, CPU, forward-only) + anti-circular runner WORK
+  end-to-end — plumbing/methodology validated.
+- **Two independent reasons it can't read C1 (both correctable):** (1) 0.5B is ~15× below the 7–8B spec
+  target; directions weak/unstable. (2) **Manager-introduced metric asymmetry:** facade_ratio compared the
+  MAX held-out prompt against the MEAN latent ‖v‖ with neutral≈neg → ratio≥1 nearly structural (max≥mean),
+  which manufactures the "overshoot." Fix: use consistent statistics (mean-vs-mean or max-vs-max) before any
+  real read.
+- **Decision (Manager):** treat pilot as plumbing/methods validation ONLY; H1 stays 'testing' (underpowered);
+  do NOT read the facade hypothesis from this. Present hardware fork to human (bigger CPU model vs real
+  7–8B on A800/cloud vs pause). Branch NOT merged pending human direction (also has an audited-test rewrite).
+- **Frozen?** No.
+
 ## 2026-07-23 · D-0013 · Human GO: run C1 facade on CPU (small model, exploratory, no spend)
 - **Human decision (@EloiseJulia):** "GO" — run C1 facade locally on CPU. Avoid A800 unless unavoidable.
 - **Machine:** 31.7GB RAM (3.8GB free now), C: 196GB free, T1000 unusable (1.3GB free). → CPU + small model.

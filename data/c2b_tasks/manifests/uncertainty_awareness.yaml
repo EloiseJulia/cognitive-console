@@ -1,0 +1,47 @@
+# C2b adjudication task manifest — UNCERTAINTY_AWARENESS axis (behavioral OUTCOME).
+#
+# Prereg §1: uncertainty_awareness -> calibration (1 - ECE). Ask a factual
+# question (some the model gets wrong), elicit "Answer: X. Confidence: 0-100%",
+# compute ECE over the test items; outcome = 1 - ECE. This axis gets the MOST
+# items (N=80, noisiest metric).
+
+name: uncertainty_awareness
+axis: uncertainty_awareness
+outcome: per_item_one_minus_brier # per-item 1 - Brier = 1 - (conf - correct)^2 (D-0025)
+outcome_range: [0, 1]
+scorer: score_uncertainty         # cognitive_console.eval.scorers (binned ECE; DESCRIPTIVE only)
+per_item_outcome: per_item_brier  # 1 - (conf - correct)^2 for the paired ITEM-cluster bootstrap
+answer_field: answer
+n_items_frozen: 80                # prereg §5 N for uncertainty (most items)
+fixture: uncertainty.jsonl        # ~10 hand-authored factual items (OFFLINE)
+real_source:
+  type: huggingface
+  loader: load_uncertainty_set    # cognitive_console.eval.c2b_tasks (A800 only)
+  hf_id: trivia_qa
+  config: rc.nocontext
+  split: validation
+  license: Apache-2.0
+  basis:
+    - name: TriviaQA (rc.nocontext) factual short-answer QA with gold answers + aliases
+      hf_id: trivia_qa
+      config: rc.nocontext
+      license: Apache-2.0
+  construction: >
+    Factual short-answer questions (no context passage) with a gold answer and
+    aliases, so the base model is wrong on a non-trivial fraction (calibration
+    needs both correct and incorrect answers to have signal). Elicit an answer +
+    a verbalized confidence; per-item outcome = 1 - Brier over the test pool.
+    Binned set ECE reported DESCRIPTIVELY only (not in the gate).
+  license_note: >
+    TriviaQA is Apache-2.0 (permissive). Owner-approved; no §5 human-data gate
+    required, but record the dataset+version+license in the run manifest.
+download_status: deferred
+supports:
+  claims: [C2b]
+  hypothesis: H2
+note: >
+  Decision D-0025 (owner) resolves the earlier ambiguity: the uncertainty axis
+  per-item metric is the PROPER 1 - Brier = 1 - (conf - correct)^2 (a strictly
+  proper scoring rule) fed to the paired ITEM-cluster bootstrap; delta=0.05 is on
+  this (1 - Brier) scale. The binned set ECE (score_uncertainty) is computed and
+  reported DESCRIPTIVELY only and is NOT part of the pass/fail gate.

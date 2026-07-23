@@ -114,3 +114,63 @@ df -h /scratch
 ```
 After cleanup the borrowed box holds **none** of our models, caches, venv, or
 clone — only the small results now live on your machine.
+
+---
+
+## 9. C2b QUALIFIED ADJUDICATION (FROZEN prereg §4/§5) — separate A800 run
+
+This is the **qualified** C2b behavioral-gap adjudication, run against the FROZEN
+pre-registration `docs/ledgers/prereg-c2b-adjudication.md` (§4 decision rule, §5
+parameters). It is a **separate, later** run from the exploratory Phase-0 pilot
+above. The criteria are LOCKED — do not pass overriding thresholds.
+
+**Frozen parameters (do NOT change):** δ=0.05; N = deliberation 60 / skepticism 60
+/ uncertainty 80; k=5 samples/item; α grid {2,4,6,8,12,16,24}; DEV≈1/3 selects+freezes
+the best-of-16 prompt AND α; TEST≈2/3 adjudicates; paired ITEM-cluster bootstrap
+B≥10000; per-axis CI at 1−0.05/3 (Bonferroni); coherence ≤1.5× baseline; three-tier
+verdict (≥2 pass STRONG_GO / 1 CONDITIONAL_GO+replication / 0 KILL_PLAN_D).
+
+### 9a. CPU / 1.5B smoke (offline, do this BEFORE the A800)
+```bash
+# (i) OFFLINE no-torch pipeline smoke — runs the WHOLE adjudication on the bundled
+#     fixtures with a synthetic backend and emits a real verdict artifact:
+python scripts/run_c2b_adjudication.py --backend synthetic --bootstrap-b 10000
+# (ii) real-model generation smoke on the cached Qwen2.5-1.5B (CPU is slow; small B):
+python scripts/run_c2b_adjudication.py --backend hf --model Qwen/Qwen2.5-1.5B-Instruct \
+  --use-fixture --n-items 4 --bootstrap-b 2000
+```
+
+### 9b. The real 7B adjudication on the A800
+Do steps 0–5 above (venv, torch-CUDA, `pip install -e .`, `HF_HOME`, model download),
+then run the **real** task sets (drop `--use-fixture`; the real loaders download the
+frozen GSM8K test split etc.) at the full frozen bootstrap:
+```bash
+python scripts/run_c2b_adjudication.py \
+  --backend hf --model Qwen/Qwen2.5-7B-Instruct \
+  --bootstrap-b 10000 --seed 20260723 \
+  --hf-home "$HF_HOME" --venv "$PWD/.venv" \
+  --disk-budget-gb 60 --disk-ceiling-gb 70
+```
+This re-derives the **C1 chosen non-degenerate layer per axis on THIS model** (never
+hardcoded) + the CAA unit direction there, disk-guards `HF_HOME`+venv (pre-run, after
+the model loads, after the run), writes
+`results/c2b_adjudication_hf_<date>/` with `c2b_adjudication_results.json`, a human
+`c2b_adjudication_summary.md` (verdict table), a registry row and an artifact
+manifest, and prints the **verdict**.
+
+**Data-license gate (AGENTS.md §5):** the real skepticism/uncertainty loaders are
+`NotImplementedError` stubs with a documented assembly recipe — building/redistributing
+those sets must clear the human data-license gate BEFORE the A800 run. GSM8K (MIT) is
+clear. Until the gate clears, run those two axes on `--use-fixture` or authored items.
+
+**Expected wall-clock (A800, 7B, fp16):** dominated by generation:
+N_items × k(5) × ~5 cells/axis (best-prompt + α-grid on DEV, prompt+steer+baseline+conflict
+on TEST) × 3 axes, ~64–256 new tokens each. Rough estimate **~1.5–3 GPU-hours** for the
+full 60/60/80-item run at k=5 (the bootstrap itself is CPU-cheap, seconds). The runner
+records the true wall-clock. Budget ≤ 1 GPU-hour if you cap `--n-items`/`--max-new-tokens`
+for a reduced pilot (mark it as such — a reduced N is NOT the frozen N).
+
+**EXPLORATORY until this A800 run:** every synthetic/1.5B/CPU run is `valid_for_paper=false`.
+The 7B run is the confirmatory adjudication against the frozen criteria; a CONDITIONAL_GO
+triggers the pre-registered single-axis REPLICATION (new DEV/TEST draw, new seed) before
+any scope-narrowed claim.

@@ -1,0 +1,30 @@
+# C2b adjudication task manifest — DELIBERATION axis (behavioral OUTCOME).
+#
+# Prereg docs/ledgers/prereg-c2b-adjudication.md §1: deliberation -> GSM8K-style
+# multi-step arithmetic ACCURACY (0-1), an outcome scored by an answer key, NOT a
+# lexical marker count. Headroom: for the real A800 run, select items the base
+# Qwen2.5-7B model gets ~50-70% on so both channels can move the number.
+
+name: deliberation
+axis: deliberation
+outcome: exact_match_numeric      # parse final/boxed number, compare to answer key
+outcome_range: [0, 1]            # per-item accuracy; axis metric = mean accuracy
+scorer: score_deliberation        # cognitive_console.eval.scorers
+answer_field: answer
+n_items_frozen: 60                # prereg §5 N for deliberation
+fixture: deliberation.jsonl       # ~10 hand-authored items for OFFLINE tests
+real_source:
+  type: huggingface
+  hf_id: openai/gsm8k
+  config: main
+  split: test
+  loader: load_gsm8k_test         # cognitive_console.eval.c2b_tasks (A800 only)
+  license: MIT
+  homepage: https://github.com/openai/grade-school-math
+  headroom_recipe: >
+    On the A800, sample GSM8K test items and keep those the base model answers
+    correctly ~50-70% of the time (k=5, majority) so there is genuine headroom.
+download_status: deferred         # offline tests use the fixture only
+supports:
+  claims: [C2b]
+  hypothesis: H2

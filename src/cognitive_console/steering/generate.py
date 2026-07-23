@@ -165,6 +165,109 @@ class SyntheticSteeredBackend(GenBackend):
         return self._text_for_intensity(self.intensity(prompt, steer))
 
 
+class SyntheticC2bTaskBackend(GenBackend):
+    """Deterministic offline backend emitting SCORER-PARSEABLE task answers (no torch).
+
+    For the C2b adjudication (``experiments.adjudicate_c2b``) the outcome scorers
+    (``eval.scorers``) parse a numeric answer / a keyed MC letter / an answer +
+    confidence. This backend produces exactly that text so the WHOLE adjudication
+    pipeline — DEV/TEST split, α selection, paired cluster bootstrap, coherence
+    gate, three-tier verdict — runs end-to-end offline with the REAL scorers.
+
+    It is constructed with the axis and the item list, and looks up the item by
+    finding its question (``item['prompt']``) as a substring of the generation
+    prompt. An "intensity" drives correctness:
+
+        intensity = prompt_gain * (instruction present?) + alpha_gain * |alpha|
+
+    The item is answered CORRECTLY iff intensity >= ``threshold``. So a bounded
+    prompt reaches ``prompt_gain`` and latent steering adds ``alpha_gain*|alpha|``
+    on top — exactly the C2b "does steering reach beyond the prompt?" structure.
+    Above ``degenerate_alpha`` the output is made repetitive (high degeneracy) so
+    the coherence gate can be exercised.
+    """
+
+    def __init__(
+        self,
+        axis: str,
+        items: Sequence[dict],
+        instruction_markers: Optional[Sequence[str]] = None,
+        prompt_gain: float = 0.4,
+        alpha_gain: float = 0.1,
+        threshold: float = 0.5,
+        degenerate_alpha: Optional[float] = None,
+    ) -> None:
+        self.axis = axis
+        self.items = list(items)
+        self.instruction_markers = list(
+            instruction_markers or ["think", "careful", "step", "skeptic", "premise",
+                                    "confidence", "reason", "verify", "certain"]
+        )
+        self.prompt_gain = float(prompt_gain)
+        self.alpha_gain = float(alpha_gain)
+        self.threshold = float(threshold)
+        self.degenerate_alpha = degenerate_alpha
+
+    def _find_item(self, prompt: str) -> Optional[dict]:
+        for it in self.items:
+            q = str(it.get("prompt", "")).strip()
+            if q and q in prompt:
+                return it
+        return None
+
+    def _has_instruction(self, prompt: str) -> bool:
+        low = prompt.lower()
+        return any(m in low for m in self.instruction_markers)
+
+    def generate(
+        self,
+        prompt: str,
+        steer: Optional[SteerConfig] = None,
+        max_new_tokens: int = 128,
+    ) -> str:
+        alpha = abs(float(steer.alpha)) if steer is not None else 0.0
+        item = self._find_item(prompt)
+        intensity = self.prompt_gain * (1.0 if self._has_instruction(prompt) else 0.0)
+        intensity += self.alpha_gain * alpha
+        correct = intensity >= self.threshold
+
+        degenerate = self.degenerate_alpha is not None and alpha >= self.degenerate_alpha
+        if item is None:
+            body = "Answer: 0."
+        elif self.axis == "deliberation":
+            gold = str(item.get("answer", "0"))
+            if correct:
+                body = f"Let me work through it. Answer: {gold}."
+            else:
+                wrong = _perturb_number(gold)
+                body = f"Let me work through it. Answer: {wrong}."
+        elif self.axis == "skepticism":
+            key = str(item.get("answer_letter", "B"))
+            wrong_letter = "A" if key.upper() != "A" else "C"
+            body = f"Answer: {key}." if correct else f"Answer: {wrong_letter}."
+        elif self.axis == "uncertainty_awareness":
+            gold = str(item.get("answer", ""))
+            distractor = str(item.get("distractor", gold + " (other)"))
+            if correct:
+                body = f"Answer: {gold}. Confidence: 90%."
+            else:
+                body = f"Answer: {distractor}. Confidence: 30%."
+        else:
+            raise ValueError(f"SyntheticC2bTaskBackend: unknown axis {self.axis!r}")
+
+        if degenerate:
+            body = body + (" repeat repeat repeat" * 12)
+        return body
+
+
+def _perturb_number(gold: str) -> str:
+    try:
+        val = float(gold)
+        return str(int(val + 1)) if val == int(val) else str(val + 1.0)
+    except ValueError:
+        return gold + "0"
+
+
 # --------------------------------------------------------------------------- #
 # Real transformers-backed steered generator
 # --------------------------------------------------------------------------- #
@@ -183,15 +286,32 @@ class SteeredHFBackend(GenBackend):
         device: str = "cpu",
         dtype: str = "float32",
         max_length: int = 512,
+        seed: Optional[int] = None,
     ) -> None:
         self.model_name = model_name
         self.device = device
         self.dtype = dtype
         self.max_length = int(max_length)
+        self.seed = None if seed is None else int(seed)
         self._model = None
         self._tokenizer = None
         self._config = None
         self._layers = None  # the decoder-block module list
+
+    def _seed_torch(self, seed: Optional[int]) -> None:
+        """Deterministically seed torch (global + all CUDA devices) from ``seed``.
+
+        Sampled generation (``do_sample=True``) draws from torch's global RNG, so
+        without seeding the k samples (and the whole verdict) are non-reproducible.
+        Seeding before each generate call makes every (item, sample) reproducible
+        across re-runs with the same run ``--seed`` (prereg reproducibility)."""
+        if seed is None:
+            return
+        import torch
+
+        torch.manual_seed(int(seed))
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(int(seed))
 
     # -- lazy load --------------------------------------------------------
     def _ensure_loaded(self):
@@ -220,6 +340,8 @@ class SteeredHFBackend(GenBackend):
         model.eval()
         self._model = model
         self._layers = self._locate_decoder_layers(model)
+        # Seed torch once at load so even an unseeded per-call path is reproducible.
+        self._seed_torch(self.seed)
 
     @staticmethod
     def _locate_decoder_layers(model):
@@ -279,10 +401,15 @@ class SteeredHFBackend(GenBackend):
         max_new_tokens: int = 128,
         do_sample: bool = False,
         temperature: float = 1.0,
+        seed: Optional[int] = None,
     ) -> str:
         import torch
 
         self._ensure_loaded()
+        # Per-call deterministic seed (e.g. keyed on item + sample index) so re-
+        # runs with the same run seed reproduce every sampled generation. Falls
+        # back to the load-time seed when no per-call seed is supplied.
+        self._seed_torch(seed if seed is not None else self.seed)
         messages = [{"role": "user", "content": prompt}]
         text = self._tokenizer.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=True

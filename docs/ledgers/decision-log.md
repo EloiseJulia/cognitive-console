@@ -49,6 +49,24 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0024 · C2b adjudication pre-registration FROZEN (owner-confirmed, upgraded design)
+- **Owner confirmed with 5 upgrades (all adopted):** (1) decision rule = **paired cluster bootstrap** on
+  per-item diffs `d_i=steer_i−prompt_i`, require 95%(Bonferroni) CI EXCLUDES 0 AND point ≥ δ — FORBID the
+  "two independent non-overlapping CIs" rule (systematic false-KILL bias). (2) N up to **60–80/axis**
+  (uncertainty=80), k=5, bootstrap clusters at ITEM level. (3) **α + best-prompt selected/frozen on a DEV
+  split, evaluated on disjoint TEST** — removes best-of-7-α and best-of-16-prompt selection bias for BOTH
+  channels. (4) **Three-tier verdict:** ≥2 axes pass (Bonferroni) = STRONG GO; exactly 1 = CONDITIONAL GO
+  (pre-registered single-axis REPLICATION; replicate→scope-narrowed RQ2; else Plan D); 0 = KILL→Plan D.
+  (5) δ=0.05 retained (per-axis units documented); coherence gate ≤1.5× retained.
+- **Rationale (owner):** false KILL is irreversible (permanently loses the core selling point); paired test +
+  larger N prevent false kill; Bonferroni + single-axis-must-replicate prevent false positive.
+- **FROZEN:** `docs/ledgers/prereg-c2b-adjudication.md` protocol_frozen=YES as of this commit. Criteria LOCKED;
+  results may not change them. This is the RQ2 confirmatory-track adjudication.
+- **Next (Manager):** implement the qualified instrument locally (tasks + outcome scorers + DEV/TEST + paired
+  cluster bootstrap + coherence gate + α-on-DEV) → CPU/1.5B smoke → independent audit → ONE A800 run →
+  adjudicate against frozen rule → wipe → report verdict.
+- **Frozen?** YES (this pre-registration). Broader Charter still not frozen.
+
 ## 2026-07-23 · D-0023 · Human: pre-registered C2b ADJUDICATION experiment (fix instrument → freeze → run once)
 - **Human decision (@EloiseJulia):** option 1 sharpened + option 4 absorbed. Do NOT pivot to Plan D now —
   current C2b negative used audit-rejected proxies (invalid evidence, insufficient for irreversible pivot).

@@ -49,6 +49,15 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0007 · Human approved: dispatch S1–S4 PREP slices (CPU, no spend)
+- **Human decision (@EloiseJulia, via ask_user):** dispatch S1–S4 PREP now (select axes + author contrast
+  pairs + assemble eval sets + build registry), CPU/zero-cost.
+- **Manager execution choice:** ONE implement subagent in a single worktree `feature/1-phase0-prep`
+  (avoids 3 parallel agents racing to create the Python skeleton → merge conflicts; also cheaper).
+  Establishes minimal Python skeleton + pytest → will backfill BUILD/RUN/TEST into AGENTS.md §1.
+- **Scope:** data-level authoring + scaffolding ONLY. NO GPU, NO model runs, NO paid API, NO user study.
+- **Frozen?** No. Merge to main only after independent audit (阶段4) passes.
+
 ## 2026-07-23 · D-0006 · Prior-art sweep complete; owed-sweep gate CLEARED (contingent)
 - **Input:** `docs/research/2026-07-23-priorart-sweep.md` (commit 2ac2c60). Manual sweep of CHI'26 program +
   preprints, CHI EA'26, IUI/DIS, ICML/ICLR/OpenReview, ACM DL.

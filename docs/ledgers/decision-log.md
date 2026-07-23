@@ -49,6 +49,14 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0005 · Human approved: proceed to prior-art sweep + Phase 0 spec/plan
+- **Human decision (@EloiseJulia, via ask_user):** "批准：先做 prior-art sweep + 出 Phase 0 spec/plan
+  （暂不跑需花钱/GPU 的实验）."
+- **Authorized (no spend):** (a) dispatch research subagent for manual CHI'26/ACM-DL/arXiv prior-art
+  sweep; (b) Manager writes Phase 0 spec (docs/specs/) + plan (docs/plans/), data-level, no L4/GPU/paid API.
+- **Still gated on human (§5, NOT yet given):** GPU hours, paid-API ceiling, IRB/human-subjects, any L4 run.
+- **Frozen?** No. Charter Freeze still deferred pending sweep + budget/IRB + re-review.
+
 ## Earlier pending human-approval items (NOT yet decided)
 - Budget caps (GPU hours, paid-API ceiling, max_full_runs).
 - Human-subjects/IRB path for Formative + controlled study.

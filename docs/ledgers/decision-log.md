@@ -49,6 +49,21 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0008 · Phase0-prep audit (merge-after-fixes); dispatching fixes
+- **Audit (independent hostile, branch feature/1-phase0-prep):** metric/registry CODE verified correct
+  (projection math, null baseline, single-process atomicity, schema, labels all ✔). But:
+  - **[BLOCKER B1] Length confound in contrast pairs.** pos vs neg are 100% rank-correlated with length
+    (pos longer for deliberation/skepticism/uncertainty; shorter for focus). A CAA mean-diff vector would
+    encode verbosity, not the axis → kills C1 validity; realizes R2 style-vs-substance threat in the DATA.
+  - **[MAJOR M1] Leakage test is theater** — id prefixes disjoint by construction → vacuous; no content check.
+  - **[MAJOR M2] Registry cross-process TOCTOU race** — parallel appenders silently drop runs (breaks the
+    exact parallel-subagent workflow the registry exists for; shared experiment-registry.yaml).
+  - **[MINOR m1] schema test one-directional; [MINOR m2] zero-vector inf z.**
+- **Manager triage (all = our code + clear fix → FIX, no owner sign-off needed):** dispatch a fix subagent
+  on the same branch to re-author length-matched minimal-contrast pairs + add length-monotonicity test;
+  add content-level leakage check; add cross-process file lock to registry; fix m1/m2. Re-audit/verify → merge.
+- **Frozen?** No. Branch NOT merged until B1 closed + re-verify green.
+
 ## 2026-07-23 · D-0007 · Human approved: dispatch S1–S4 PREP slices (CPU, no spend)
 - **Human decision (@EloiseJulia, via ask_user):** dispatch S1–S4 PREP now (select axes + author contrast
   pairs + assemble eval sets + build registry), CPU/zero-cost.

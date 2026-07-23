@@ -49,6 +49,15 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0028 · Human GRANTED one A800 allocation for the frozen C2b adjudication
+- **Human decision (@EloiseJulia):** "行，现在就跑吧" + "跑完记得清干净" — one GPU allocation for the
+  frozen C2b adjudication; wipe everything after (same as D-0020/D-0022).
+- **Run:** Qwen2.5-7B-Instruct on A800, frozen prereg instrument (D-0024/25/26/27). DEV-select+freeze α+prompt,
+  TEST adjudicate N=60/60/80 k=5, paired ITEM-cluster bootstrap B≥10000 Bonferroni, three-tier verdict.
+  <70GB disk, wipe after (models+venv+caches), leave user's ~/.cache/huggingface untouched.
+- **Adjudication is CONFIRMATORY-track for RQ2 direction** (verdict decides continue vs Plan D). Criteria LOCKED.
+- **Frozen?** Prereg frozen. Result will be recorded against the locked criteria, verdict not revisable.
+
 ## 2026-07-23 · D-0027 · §5 data-license APPROVED: GSM8K/MIT, TruthfulQA/Apache-2.0, TriviaQA/Apache-2.0
 - **Owner (@EloiseJulia) approved** the C2b adjudication datasets (permissive licenses, research use):
   deliberation=GSM8K (MIT, numeric-answer accuracy); skepticism=TruthfulQA (Apache-2.0, false-premise/

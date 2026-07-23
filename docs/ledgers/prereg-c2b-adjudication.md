@@ -15,8 +15,13 @@
    that have real headroom** and require genuine capability change, not keyword presence:
    - **deliberation** → GSM8K-style multi-step arithmetic/reasoning: measure **accuracy** (0–1) with headroom.
    - **skepticism** → false-premise / sycophancy items: measure **false-premise-rejection rate**.
-   - **uncertainty_awareness** → calibration items (questions the model often gets wrong): measure **(1−ECE)**
-     (higher = better calibration) — this axis gets the MOST items (noisiest metric).
+   - **uncertainty_awareness** → calibration items (questions the model often gets wrong): elicit answer +
+     verbalized confidence; per-item outcome = **1 − Brier = 1 − (conf_i − correct_i)²** (proper scoring rule;
+     per-item, cluster-bootstrappable). Binned ECE reported DESCRIPTIVELY only (not in the gate). This axis
+     gets the MOST items (noisiest metric). *[Pre-run clarification D-0025: the original wording "(1−ECE)" was
+     a SET metric with no per-item value; replaced with per-item (1−Brier). The improper 1−|correct−conf| is
+     rejected (L1-optimal is reporting 0/1 → rewards overconfidence, reverses the axis). Pre-run spec fix, not
+     a post-hoc criterion change; all other criteria unchanged.]*
 2. **Orthogonal, NON-lexical proxy** — the measure is a TASK OUTCOME (accuracy / rejection rate / calibration),
    scored by a rule/answer-key (deterministic), NOT a count of words the steering vector could inject.
 3. **Sample sizes + clustering (upgraded per owner):** **N = 60–80 items per axis** (uncertainty/ECE = 80;
@@ -78,7 +83,8 @@ false kill, while Bonferroni + the single-axis-must-replicate rule guard against
 - DEV/TEST split: ~1/3 DEV (α + best-prompt selection), ~2/3 TEST (adjudication), disjoint, same distribution.
 - α grid (selected on DEV): {2, 4, 6, 8, 12, 16, 24}.
 - δ (meaningful margin) = **0.05** in each axis's outcome units — meaning per axis: deliberation = +0.05
-  accuracy; skepticism = +0.05 false-premise-rejection rate; uncertainty = +0.05 in (1−ECE).
+  accuracy; skepticism = +0.05 false-premise-rejection rate; uncertainty = +0.05 in **(1−Brier)** (per-item
+  Brier scale; ECE reported descriptively only).
 - Coherence gate: steered mean repetition/degeneracy score ≤ **1.5×** the unsteered baseline; cells above the
   bound are DISCARDED.
 - Bootstrap: cluster (item-level), B ≥ 10000, two-sided; per-axis CI at **1 − 0.05/3** (Bonferroni).

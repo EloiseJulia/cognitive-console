@@ -49,6 +49,19 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0025 · Pre-run spec clarification: uncertainty metric (1−ECE)→per-item (1−Brier)
+- **Trigger:** instrument-build subagent flagged that the frozen "(1−ECE)" is a SET metric with no per-item
+  value, but §4's paired cluster bootstrap needs per-item outcomes.
+- **Owner decision (@EloiseJulia):** use per-item **Brier**, outcome_i = 1 − (conf_i − correct_i)²
+  (proper scoring rule, per-item, cluster-bootstrappable). REJECT the subagent's 1−|correct−conf| (improper:
+  L1-optimal is reporting 0/1 → rewards overconfidence, reverses the axis semantics). Binned ECE → descriptive
+  only, not in the gate. δ=0.05 now on the (1−Brier) scale. Prereg §1/§5 wording updated accordingly.
+- **Status:** this is a PRE-RUN clarification of an ambiguity in the frozen spec (no results seen) — explicitly
+  NOT a post-hoc criterion change. ALL other frozen criteria unchanged (paired-diff CI excludes 0 AND point≥δ,
+  N 60/60/80, k=5, item-level cluster bootstrap, α+prompt held-out on DEV, three-tier + Bonferroni, coherence
+  ≤1.5×). Prereg remains FROZEN with this correction recorded.
+- **Action:** instrument code must switch uncertainty per-item outcome to Brier (folded into the post-audit fix).
+
 ## 2026-07-23 · D-0024 · C2b adjudication pre-registration FROZEN (owner-confirmed, upgraded design)
 - **Owner confirmed with 5 upgrades (all adopted):** (1) decision rule = **paired cluster bootstrap** on
   per-item diffs `d_i=steer_i−prompt_i`, require 95%(Bonferroni) CI EXCLUDES 0 AND point ≥ δ — FORBID the

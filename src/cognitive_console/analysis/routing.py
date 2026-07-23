@@ -80,8 +80,11 @@ def decide_route(
         inputs.facade_support_fraction >= th.min_facade_support_fraction
         and inputs.prompt_above_null
     )
-    # "prompt ~= vector-only" — no meaningful facade anywhere.
-    no_facade = inputs.max_facade_ratio_observed >= th.no_facade_ratio and not facade_holds
+    # Independent RED trigger: even if the support fraction looks OK, a worst-case
+    # facade ratio at/above `no_facade_ratio` means that on its worst axis the
+    # prompt "almost fully reproduces" the vector-only projection — there is no
+    # meaningful legibility gap left there, so the clean facade story fails.
+    no_facade_ratio_hit = inputs.max_facade_ratio_observed >= th.no_facade_ratio
 
     gates = {
         "facade_holds": bool(facade_holds),
@@ -91,16 +94,23 @@ def decide_route(
         "composition_survives": bool(inputs.composition_survives),
         "behavioral_ceiling_exists": bool(inputs.behavioral_ceiling_exists),
         "style_only_everywhere": bool(inputs.style_only_everywhere),
-        "no_facade": bool(no_facade),
+        "no_facade_ratio_hit": bool(no_facade_ratio_hit),
     }
 
-    # RED: no facade (prompt ~= vector-only) OR steering only surface style everywhere.
-    if no_facade or inputs.style_only_everywhere or not facade_holds:
+    # RED: no facade support anywhere, OR the worst-axis facade ratio is so high
+    # the gap vanishes there (no_facade_ratio_hit), OR steering only moves surface
+    # style everywhere.
+    if no_facade_ratio_hit or inputs.style_only_everywhere or not facade_holds:
         reason = []
         if not facade_holds:
             reason.append(
                 f"facade does not hold (support={inputs.facade_support_fraction:.2f} "
                 f"< {th.min_facade_support_fraction:.2f} or prompt not above null)"
+            )
+        if no_facade_ratio_hit:
+            reason.append(
+                f"worst-axis facade_ratio {inputs.max_facade_ratio_observed:.2f} "
+                f">= {th.no_facade_ratio:.2f} (prompt ~= vector-only, no gap there)"
             )
         if inputs.style_only_everywhere:
             reason.append("steering changes only surface style everywhere (AC7)")

@@ -203,9 +203,22 @@ class ExperimentRegistry:
         lock so concurrent appenders cannot both read a stale file and drop a
         row (TOCTOU). Each appender re-loads the freshest file inside the lock.
         """
+        return self.append_minted(lambda _ids: record)
+
+    def append_minted(self, minter) -> Dict[str, Any]:
+        """Mint AND append a record atomically under the registry lock.
+
+        `minter(existing_ids)` receives the current experiment_ids (read INSIDE
+        the lock) and returns the `ExperimentRecord` to append. Doing the mint
+        inside the lock closes the race where an id is chosen against a stale,
+        outside-lock read: two parallel same-prefix+config runs would otherwise
+        pick the same NNNN (and, on Windows, a concurrent read could even collide
+        with the atomic replace). Still refuses to overwrite an existing id.
+        """
         with _file_lock(self.path):
             data = _load(self.path)
             existing = {r.get("experiment_id") for r in data["experiments"]}
+            record = minter([r.get("experiment_id") for r in data["experiments"]])
             if record.experiment_id in existing:
                 raise ExperimentExistsError(
                     f"experiment_id {record.experiment_id!r} already exists; "

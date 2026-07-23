@@ -61,6 +61,28 @@ def test_zero_signal_prompt_not_above_null_guards_above_null():
     assert not r.c1_supported
 
 
+def test_negative_projection_prompt_is_not_c1_support():
+    # A prompt whose activation points the WRONG way along the CAA axis (negative
+    # projection, opposite the vector) has |projection| well above the null but a
+    # NEGATIVE signed facade_ratio. That is evidence AGAINST a clean prompt->latent
+    # mapping, not a facade, so it must NOT count as C1 support.
+    prov, caa = _provider_with_axis(seed=7)
+    prov.plant_facade("delib", "PROMPT", "VECTOR", vector_magnitude=8.0,
+                      facade_fraction=-0.6, layer=caa.layer)  # prompt points opposite
+    spec = FacadeSpec(axis="delib", layer=caa.layer, caa_direction=caa.direction,
+                      prompt_text="PROMPT", vector_text="VECTOR")
+    r = analyze_axis_facade(prov, spec, max_facade_ratio=0.8, n_null=500, seed=0)
+    assert r.facade_ratio < 0.0            # signed ratio is negative (wrong side)
+    assert r.prompt_above_null              # |projection| still clears the null
+    assert not r.facade_gap_holds           # guard rejects the wrong-way prompt
+    assert not r.c1_supported
+    # Guard check: WITHOUT the `0.0 < facade_ratio` lower bound (i.e. the old
+    # `facade_ratio <= max_facade_ratio`), this negative ratio would pass and the
+    # prompt would be miscounted as C1 support. Confirm the old predicate flips it.
+    old_gap_holds = r.facade_ratio <= 0.8
+    assert old_gap_holds and not r.facade_gap_holds  # old==True, fixed==False
+
+
 def test_analyze_facade_table_aggregates():
     prov, caa = _provider_with_axis(seed=4)
     prov.plant_facade("delib", "PROMPT", "VECTOR", vector_magnitude=8.0,

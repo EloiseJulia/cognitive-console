@@ -49,12 +49,47 @@ def test_partial_fragile_composition_routes_plan_b():
 
 
 def test_red_no_facade_routes_plan_d():
+    # ISOLATE the no_facade_ratio trigger: facade support looks fine (facade_holds
+    # is True) but the worst-axis facade ratio is >= no_facade_ratio (0.9), so the
+    # gap vanishes on the worst axis => RED on its own. This is the independent
+    # trigger that used to be dead code (subsumed by `not facade_holds`).
     inp = _green()
-    inp.facade_support_fraction = 0.0        # facade does not hold anywhere
-    inp.max_facade_ratio_observed = 0.98     # prompt ~= vector-only
+    assert inp.facade_support_fraction >= 0.5 and inp.prompt_above_null  # facade holds
+    inp.max_facade_ratio_observed = 0.98     # worst-axis prompt ~= vector-only
     d = decide_route(inp)
     assert d.route == PLAN_D
     assert d.verdict == "red"
+    assert d.gates["facade_holds"]           # facade DID hold: this is not the trigger
+    assert d.gates["no_facade_ratio_hit"]    # THIS is what forced RED
+    assert "worst-axis facade_ratio" in d.rationale
+
+
+def test_red_no_support_fraction_routes_plan_d():
+    # The OTHER red path: no facade support anywhere (facade_holds False), with a
+    # benign worst-case ratio so no_facade_ratio is NOT what triggers RED.
+    inp = _green()
+    inp.facade_support_fraction = 0.0        # facade does not hold anywhere
+    inp.max_facade_ratio_observed = 0.30     # benign; not the trigger
+    d = decide_route(inp)
+    assert d.route == PLAN_D
+    assert d.verdict == "red"
+    assert not d.gates["facade_holds"]
+    assert not d.gates["no_facade_ratio_hit"]
+
+
+def test_no_facade_ratio_is_a_real_independent_knob():
+    # Below the 0.9 threshold with facade holding => GREEN. Raising the observed
+    # worst ratio above the threshold flips the SAME inputs to RED, proving the
+    # knob independently affects the outcome (not dead code).
+    below = _green()
+    below.max_facade_ratio_observed = 0.85
+    assert decide_route(below).route == MAIN_LINE
+    above = _green()
+    above.max_facade_ratio_observed = 0.91
+    assert decide_route(above).route == PLAN_D
+    # A stricter threshold makes an otherwise-green run RED: the threshold matters.
+    strict = RoutingThresholds(no_facade_ratio=0.30)
+    assert decide_route(_green(), strict).route == PLAN_D
 
 
 def test_red_style_only_everywhere_routes_plan_d():

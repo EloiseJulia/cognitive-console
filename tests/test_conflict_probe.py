@@ -4,10 +4,12 @@ import numpy as np
 import pytest
 
 from cognitive_console.experiments.conflict_probe import (
+    BehaviorBackend,
     ConflictConfig,
     HFBehaviorBackend,
     SyntheticBehaviorBackend,
     compute_landing,
+    compute_landing_raw,
     run_conflict_probe,
 )
 from cognitive_console.registry import ExperimentRegistry
@@ -55,6 +57,54 @@ def test_intermediate_magnitude_lands_between():
     res = run_conflict_probe(backend, _config(magnitude=1.0))
     # w = 1/(1+1) = 0.5 => lands mid-way.
     assert 0.4 < res.landing_fraction < 0.6
+
+
+def test_compute_landing_raw_preserves_overshoot_and_wrong_side():
+    # Raw keeps the C2b/AC6 signal that clipping would erase.
+    assert compute_landing_raw(1.5, 0.0, 1.0) == pytest.approx(1.5)   # latent overshoot
+    assert compute_landing_raw(-0.3, 0.0, 1.0) == pytest.approx(-0.3)  # wrong side
+    # Clipped view still bounds to [0,1].
+    assert compute_landing(1.5, 0.0, 1.0) == 1.0
+    assert compute_landing(-0.3, 0.0, 1.0) == 0.0
+
+
+class _FixedBackend(BehaviorBackend):
+    """Returns a preset behavior score, to exercise out-of-pole landings."""
+
+    def __init__(self, score: float):
+        self._score = float(score)
+
+    def behavior_score(self, config: ConflictConfig) -> float:
+        return self._score
+
+
+def test_run_conflict_probe_flags_latent_overshoot():
+    # behavior beyond the latent pole (score 1.5 with poles 0->1): clipped landing
+    # saturates at 1.0 but raw exposes the overshoot and `clipped` is True.
+    res = run_conflict_probe(_FixedBackend(1.5), _config(magnitude=3.0))
+    assert res.landing_fraction == pytest.approx(1.0)
+    assert res.landing_fraction_raw == pytest.approx(1.5)
+    assert res.clipped is True
+    assert res.winner == "latent"
+    assert res.to_summary()["landing_fraction_raw"] == pytest.approx(1.5)
+    assert res.to_summary()["clipped"] is True
+
+
+def test_run_conflict_probe_flags_wrong_side_landing():
+    # behavior on the wrong side of the prompt pole (score -0.4): clipped landing
+    # pins at 0.0 but raw is negative and `clipped` is True.
+    res = run_conflict_probe(_FixedBackend(-0.4), _config(magnitude=3.0))
+    assert res.landing_fraction == pytest.approx(0.0)
+    assert res.landing_fraction_raw == pytest.approx(-0.4)
+    assert res.clipped is True
+    assert res.winner == "prompt"
+
+
+def test_synthetic_landing_is_not_clipped():
+    # A normal in-between landing must NOT be flagged as clipped.
+    res = run_conflict_probe(SyntheticBehaviorBackend(latent_gain=1.0), _config(magnitude=1.0))
+    assert res.clipped is False
+    assert 0.0 <= res.landing_fraction_raw <= 1.0
 
 
 def test_conflict_probe_logs_registry_entry(tmp_path):

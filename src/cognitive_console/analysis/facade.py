@@ -33,7 +33,11 @@ class AxisFacadeResult:
     signal_z: float            # effect size: (|prompt_proj| - null_mean)/null_std
     prompt_above_null: bool
     # Pass criteria (pre-registered thresholds, see analyze_facade):
-    facade_gap_holds: bool     # facade_ratio <= max_facade_ratio (prompt below latent)
+    facade_gap_holds: bool     # 0 < facade_ratio <= max_facade_ratio: prompt is on
+                               # the SAME side as the vector (signed ratio > 0) AND
+                               # below the latent ceiling. A wrong-way (negative)
+                               # prompt is evidence AGAINST a clean prompt->latent
+                               # mapping, not a facade, so it must NOT pass.
     above_null: bool           # prompt clears the random-direction null
     c1_supported: bool         # facade_gap_holds AND above_null
     n_null: int
@@ -65,6 +69,14 @@ def analyze_axis_facade(
     `max_facade_ratio` is the pre-registered ceiling below which the
     strongest-prompt projection counts as a genuine facade gap (prompt reaching
     at most this fraction of the latent vector-only projection).
+
+    A genuine semantic facade requires the prompt to move the activation the
+    SAME direction as the latent vector (only *less far*). `facade_ratio` is the
+    SIGNED ratio prompt_proj / vector_proj, so it is > 0 iff the two projections
+    share sign. We therefore require ``0 < facade_ratio <= max_facade_ratio``:
+    a negative ratio means the prompt points the WRONG way along the CAA axis,
+    which is evidence against a clean prompt->latent mapping (not a facade), and
+    must not be counted as C1 support even if its |projection| clears the null.
     """
     prompt_act = provider.get_activations([spec.prompt_text], spec.layer)[0]
     vector_act = provider.get_activations([spec.vector_text], spec.layer)[0]
@@ -75,7 +87,7 @@ def analyze_axis_facade(
         n_null=n_null,
         seed=seed,
     )
-    facade_gap_holds = res.facade_ratio <= max_facade_ratio
+    facade_gap_holds = 0.0 < res.facade_ratio <= max_facade_ratio
     above_null = bool(res.prompt_above_null)
     return AxisFacadeResult(
         axis=spec.axis,

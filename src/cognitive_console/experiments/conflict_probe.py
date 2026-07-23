@@ -116,7 +116,10 @@ class ConflictResult:
     prompt_target: float
     latent_target: float
     latent_magnitude: float
-    landing_fraction: float      # 0 => prompt wins, 1 => latent wins
+    landing_fraction: float      # 0 => prompt wins, 1 => latent wins (clipped)
+    landing_fraction_raw: float  # UNCLIPPED: >1 == latent overshoots its pole,
+                                 # <0 == landed on the wrong side (C2b / AC6 signal)
+    clipped: bool                # True iff raw fell outside [0,1] (overshoot / wrong-side)
     winner: str                  # "prompt" | "latent" | "tie"
     margin: float                # |landing_fraction - 0.5| * 2 in [0,1]
     experiment_id: Optional[str] = None
@@ -126,10 +129,29 @@ class ConflictResult:
             "axis": self.axis,
             "behavior_score": self.behavior_score,
             "landing_fraction": self.landing_fraction,
+            "landing_fraction_raw": self.landing_fraction_raw,
+            "clipped": self.clipped,
             "winner": self.winner,
             "margin": self.margin,
             "latent_magnitude": self.latent_magnitude,
         }
+
+
+def compute_landing_raw(
+    behavior_score: float, prompt_target: float, latent_target: float
+) -> float:
+    """UNCLIPPED landing fraction between the two channel poles.
+
+    0.0 == prompt pole, 1.0 == latent pole. Values >1 mean the latent channel
+    overshoots its own pole; values <0 mean the behavior landed on the wrong side
+    of the prompt pole. These out-of-range cases are exactly the non-additive
+    conflict outcomes C2b/AC6 cares about, so they are preserved here rather than
+    clipped away. Undefined (raises) when the two poles coincide.
+    """
+    span = latent_target - prompt_target
+    if abs(span) < _EPS:
+        raise ValueError("prompt_target == latent_target: no conflict axis to measure")
+    return float((behavior_score - prompt_target) / span)
 
 
 def compute_landing(
@@ -138,14 +160,11 @@ def compute_landing(
     """Landing fraction of the behavior between the two channel poles.
 
     0.0 == fully at the prompt pole, 1.0 == fully at the latent pole. Clipped to
-    [0,1]. Undefined (raises) when the two poles coincide — there is no axis to
-    land on.
+    [0,1] for convenience. Use `compute_landing_raw` to keep overshoot/wrong-side
+    signal. Undefined (raises) when the two poles coincide.
     """
-    span = latent_target - prompt_target
-    if abs(span) < _EPS:
-        raise ValueError("prompt_target == latent_target: no conflict axis to measure")
-    frac = (behavior_score - prompt_target) / span
-    return float(np.clip(frac, 0.0, 1.0))
+    raw = compute_landing_raw(behavior_score, prompt_target, latent_target)
+    return float(np.clip(raw, 0.0, 1.0))
 
 
 def run_conflict_probe(
@@ -164,7 +183,9 @@ def run_conflict_probe(
     computed landing metrics are recorded (no hand values).
     """
     score = backend.behavior_score(config)
-    frac = compute_landing(score, config.prompt_target, config.latent_target)
+    frac_raw = compute_landing_raw(score, config.prompt_target, config.latent_target)
+    frac = float(np.clip(frac_raw, 0.0, 1.0))
+    clipped = bool(abs(frac - frac_raw) > _EPS)
     if frac > 0.5 + _EPS:
         winner = "latent"
     elif frac < 0.5 - _EPS:
@@ -180,6 +201,8 @@ def run_conflict_probe(
         latent_target=config.latent_target,
         latent_magnitude=config.latent_magnitude,
         landing_fraction=frac,
+        landing_fraction_raw=frac_raw,
+        clipped=clipped,
         winner=winner,
         margin=margin,
     )

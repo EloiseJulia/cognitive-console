@@ -49,6 +49,21 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0020 · Human: borrowed A800 session (SSH, agent-driven, <70GB, delete-after, fast)
+- **Human decision (@EloiseJulia):** will provide SSH/remote access; agent drives the A800 directly.
+  Constraints: total disk <70GB, delete EVERYTHING (models/caches) after, be fast, single session.
+- **Strategy:** don't waste scarce A800 time debugging. PHASE A (local, free, NOW): implement + CPU-smoke-test
+  a real steered-generation backend for C2b + unified GPU runner (C1 facade + C2b behavioral pilot) +
+  requirements-gpu + disk-guard + auto-cleanup + RUN_ON_A800 doc. PHASE B (A800 via SSH): clone, venv,
+  download Qwen2.5-7B-Instruct (Apache-2.0, no license gate; ~15GB → ~25GB total, well <70GB), run C1+C2b,
+  pull small results back, delete all.
+- **Model:** Qwen2.5-7B only this session (Llama-3-8B gated/license friction; defer to keep it lean/fast).
+  spec AC2 wants ≥2 models — noted as a limitation for this exploratory-track run.
+- **Transfer:** repo is 0.8MB → git (push+clone OR git bundle). Models download fresh on A800 (not uploaded).
+- **§5 status:** GPU escalation on borrowed hardware — human-authorized. Still EXPLORATORY-track (a first
+  7B read); NOT a frozen confirmatory run (protocol not frozen, no Pre-Full-Run Review yet).
+- **Frozen?** No.
+
 ## 2026-07-23 · D-0019 · Human: strengthen C1 on 1.5B (free) — fix focus, expand prompts, robustness
 - **Human decision (@EloiseJulia):** "a" — strengthen C1 locally before any GPU escalation.
 - **Scope (feature/4-c1-strengthen, CPU/1.5B, optional 3B, zero paid/GPU):**

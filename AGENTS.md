@@ -14,7 +14,7 @@
 ## 0. 项目定位
 
 - **课题**：非满射双通道认知控制台（Non-Surjective Dual-Channel Cognitive Console）——面向终端用户的 LLM 认知状态可读性与可控性研究。
-- **目标会议**：ACM **UIST**（首选）/ **CHI**（次选）。这是要发顶会的严肃投稿，一切以 Part I 的“证据链 + 独立敌对审计”为准，**不允许**为了好看而选择性汇报、夸大 novelty 或跳过 gate。
+- **目标会议**：ACM **CHI**（目标 venue，但**不定死**——若证据更契合别的顶会可经人类批准调整；**不投 UIST**）。这是要发顶会的严肃投稿，一切以 Part I 的“证据链 + 独立敌对审计”为准，**不允许**为了好看而选择性汇报、夸大 novelty 或跳过 gate。
 - **成败关键（来自开题报告）**：把贡献点锚定在“揭示并弥合 prompt 可控性与 latent 机制之间的非满射鸿沟”，而不是“又一个 steering 方法/滑块”。RQ2 不得押在“可读 prompt ≈ steering 向量对齐”，须以 Mishra et al. 的非满射性结论为理论基石。
 
 ---
@@ -89,7 +89,7 @@
 
 Manager 遇到以下情况**必须停下，用 `ask_user` 问人类**（Manager 以交互模式运行，可发问）：
 
-- 修改 **核心 Claim / 研究问题 / 目标 venue**（如 UIST → CHI 切换）。
+- 修改 **核心 Claim / 研究问题 / 目标 venue**（当前 venue = CHI，未定死；从 CHI 切到别的会议属此列）。
 - **超预算** full run、**付费/私有 API**、**GPU 额度超限**、或任何显著成本升级。
 - 涉及 **人类被试（IRB/伦理）、数据许可、隐私、版权**。
 - **对外投稿或发布**（arXiv、OpenReview/HotCRP 提交、公开 repo/数据集/模型）。
@@ -131,7 +131,7 @@ copilot --name "audit-<slug>" --model auto --allow-all-tools --no-ask-user --sha
 ### 6.4 Reviewer Critic Agent（模拟顶会评审，独立 Evaluation Plane）
 ```powershell
 copilot --name "critic-<node>-R<k>" --model auto --allow-all-tools --no-ask-user --share `
-  -p "你是目标 venue(UIST/CHI) 的独立 Reviewer(R<k>)，只读冻结的 Review Input Bundle，不读 Manager 的期望结论。按 AI-Instruction.md Part I §10 执行：Scope Check→独立复述贡献→逐条攻击核心 Claim→Evidence Audit→给 strongest reject/accept case→ranked findings(BLOCKER/MAJOR/MINOR/QUESTION)→每条给最便宜的判别动作+关闭条件→初评分区间+confidence+前三拒稿风险。只报不改。写入 reviews/<snapshot>/review-R<k>.yaml。"
+  -p "你是目标 venue(CHI) 的独立 Reviewer(R<k>)，只读冻结的 Review Input Bundle，不读 Manager 的期望结论。按 AI-Instruction.md Part I §10 执行：Scope Check→独立复述贡献→逐条攻击核心 Claim→Evidence Audit→给 strongest reject/accept case→ranked findings(BLOCKER/MAJOR/MINOR/QUESTION)→每条给最便宜的判别动作+关闭条件→初评分区间+confidence+前三拒稿风险。只报不改。写入 reviews/<snapshot>/review-R<k>.yaml。"
 ```
 
 > **回收**：subagent 结束后，Manager 读取其 `--share` 的 markdown / `docs/**` 产物 / PR，做 gate 判定与 triage（ACCEPT/REBUT/CLARIFY/DEFER/REJECT/ESCALATE，见 Part I §10.6），再决定合并、返工或升级。

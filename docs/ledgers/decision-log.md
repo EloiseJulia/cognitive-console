@@ -34,6 +34,22 @@
 - **Frozen?** No. These feed the Charter-Review triage; Charter to be revised to v0.2 after critics return.
 
 ## Pending human-approval items (NOT yet decided)
+
+## 2026-07-23 · D-0004 · Charter Review complete; Charter revised v0.1→v0.2
+- **Input:** 3 independent CHI critics (R1/R2/R3), all verdict **major-revision**, score ~2.0–3.0/5
+  (→3.0–4.0 if blockers closed). Files: `docs/reviews/2026-07-23-charter/review-R{1,2,3}.yaml` +
+  `manager-response.yaml`.
+- **Unanimous BLOCKER (R1-F1/R2-B1/R3-1):** internal-state non-surjectivity ≠ behavioral unreachability.
+- **Decision (Manager, autonomous — reworking Claim wording pre-freeze to match evidence is Part I core):**
+  Revised Charter to v0.2. Split C2→C2a (internal, theory-backed) + C2b (behavioral, must be empirically
+  demonstrated). Reworded RQ2. Added null baseline + effect-size threshold to C1. De-confounded study
+  (added condition D = dual-channel no-panel). Operationalized calibrated trust. Corrected SemanticLens.
+  Added over-trust Non-Claim. Added reasoning-gain discriminating task. Sharpened RQ1 vs RQ2.
+- **Not frozen.** Charter Freeze deferred until: (a) human confirms budget/IRB/venue, (b) owed manual
+  CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
+- **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
+
+## Earlier pending human-approval items (NOT yet decided)
 - Budget caps (GPU hours, paid-API ceiling, max_full_runs).
 - Human-subjects/IRB path for Formative + controlled study.
 - Any L4 full run, paid/private API, GPU allocation, external submission.

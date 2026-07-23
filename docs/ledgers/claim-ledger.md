@@ -10,26 +10,34 @@ Status values: proposed | partially-supported | supported | contradicted | withd
 
 ## C1 — Semantic Facade (RQ1)
 - **Statement:** For chosen cognitive axes, the strongest human-readable prompt's mid-layer activation
-  projects onto the CAA vector direction significantly below vector-only (projection ≪ 100%).
+  projects onto the CAA vector direction far below vector-only AND far above a random-direction null
+  baseline, with a pre-registered meaningfully large gap.
 - **Scope:** Llama-3-8B-Instruct, Qwen2.5-7B-Instruct; axes = Deliberation/Skepticism/Uncertainty/Focus.
 - **Type:** empirical regularity (diagnostic → confirmatory after protocol freeze)
-- **Status:** proposed
-- **Required evidence:** projection/cosine of strongest-prompt activation vs CAA vector; blind-eval.
-- **Supporting experiments:** (none yet)
-- **Opposing experiments:** (none yet)
+- **Status:** proposed (v0.2: added null baseline + effect-size threshold after R1-F3/R2-M1)
+- **Required evidence:** projection/cosine of strongest-prompt vs CAA vector vs random null; blind-eval.
 - **Known limits:** projection is a linear proxy; axis may be non-linear/multi-mechanism.
 - **Paper location:** TBD
 
-## C2 — Non-Surjective Control + Conflict Resolution (RQ2, CORE)
-- **Statement:** On compliance-floor tasks, prompt-only cannot cross a control threshold the latent
-  channel can; and the dual-channel + attribution panel lets non-experts attribute & resolve
-  prompt↔latent conflict better than prompt-only or steering-only.
-- **Scope:** 3-condition controlled study; open white-box models.
-- **Type:** interaction paradigm + empirical (confirmatory core)
+## C2a — Internal-State Non-Surjectivity (RQ2, theory-backed)
+- **Statement:** Latent steering reaches internal residual states that no prompt in a bounded search
+  reproduces.
+- **Scope:** internal activations; ≥2 open models. **Basis:** Mishra et al. (2604.09839).
+- **Type:** theory-supported empirical check
 - **Status:** proposed
-- **Required evidence:** prompt-unreachable region demonstrated; attribution accuracy + trust-calibration
-  gain of condition C vs A/B with effect size + uncertainty.
-- **Known limits:** depends on C1 holding; risk that steering only changes surface style.
+- **Falsified if:** a bounded prompt search reproduces the steered internal state.
+
+## C2b — Behavioral Gap + Conflict Resolution (RQ2, CORE — empirical, NOT from theory)
+- **Statement:** On compliance-floor tasks, a bounded prompt search (OPRO + human best-effort, fixed
+  budget) cannot cross a behavioral control threshold the latent channel crosses; AND the dual-channel +
+  attribution panel lets non-experts attribute & resolve prompt↔latent conflict better than prompt-only,
+  steering-only, OR dual-channel-without-panel (condition D).
+- **Scope:** 4-condition controlled study; open white-box models.
+- **Type:** interaction paradigm + empirical (confirmatory core)
+- **Status:** proposed (v0.2: separated from C2a; de-confounded via condition D after R2-B1/R2-B2)
+- **Required evidence:** bounded-prompt-search ceiling demonstrated; attribution accuracy + trust
+  calibration gain of C vs A/B/D with effect size + uncertainty.
+- **Known limits:** depends on C1; risk steering changes only surface style (tested via reasoning task).
 - **Paper location:** TBD
 
 ## C3 — Boundary Object / Cross-Model Trust (RQ3, extension)

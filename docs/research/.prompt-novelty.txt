@@ -1,0 +1,30 @@
+You are an INDEPENDENT Research / Novelty-Falsification subagent for the cognitive-console project (a CHI-target HCI paper). You have NO stake in this idea succeeding.
+
+FIRST, read these files in the repo root to get full context:
+- AGENTS.md (your operating constitution)
+- AI-Instruction.md — especially Part I §5 (Novelty Gate & Citation Verification)
+- 开题报告_非满射双通道认知控制台.md (the idea itself)
+- docs/charter/project-charter.md (the drafted Charter you are stress-testing)
+
+YOUR MISSION: FALSIFY the claimed novelty, not support it. Construct the strongest novelty/scoop objection a skeptical top-conference (CHI) reviewer would make, and tie EVERY factual statement to a verifiable source. Use web_search / web_fetch / GitHub search to verify.
+
+The core novelty claim is: "We turn the non-surjective gap between prompt controllability and latent mechanism into a legible, operable, calibratable INTERFACE OBJECT — an interaction model + design knowledge for latent-controllability UIs, NOT another steering method or slider."
+
+Specifically you MUST:
+1. VERIFY (title/authors/year/venue exact, and read beyond the abstract where possible) these load-bearing citations — flag any that are wrong, mis-stated, or possibly fabricated:
+   - Mishra, Khashabi & Liu, "Steered LLM Activations are Non-Surjective" (arXiv:2604.09839, ICLR 2026 Workshops) — THE theoretical foundation. Confirm it exists and that it actually proves steering pushes residual stream off the prompt-reachable manifold. This is critical: if this paper is not real / mis-stated, the whole RQ2 basis collapses. Report honestly.
+   - AI-Instruments (Riche et al., CHI 2025, arXiv:2502.18736)
+   - Huang & Lim, "Designing Intuitive Interfaces for Feature Steering of LLMs" (IASDR 2025)
+   - SemanticLens / "From Attribution to Action" (Labarta et al., 2026)
+   - Tankelevitch et al., "Metacognitive Demands..." (CHI 2024, arXiv:2312.10893)
+   - CAA (Rimsky et al., ACL 2024), ActAdd (Turner et al., arXiv:2308.10248), Stolfo et al. instruction steering (ICLR 2025)
+2. Build a NEAREST-NEIGHBOR matrix (≥5 works): for each, compare objective / mechanism / mathematical form / interaction model, and state the precise delta (or whether we are an obvious combination / trivial engineering variation / mathematically equivalent under different notation / already evaluated under another task name).
+3. Search for CONCURRENT / very recent work (2025–2026) that may already treat the prompt↔latent gap, conflict resolution, or dual-channel latent UIs for non-experts as an interface object — the scoop we most fear.
+4. Give the Reviewer's likely FIRST reaction, a defensible one-sentence novelty, a risk rating (LOW/MED/HIGH) per RQ (RQ1/RQ2/RQ3), and the honest caveats / still-unverified differences.
+
+OUTPUT: write your full report to docs/research/2026-07-23-novelty-falsification.md (create it). Structure: nearest-neighbor matrix, citation-verification table (with verdict per citation: VERIFIED / MISSTATED / UNVERIFIABLE / LIKELY-FABRICATED + evidence link), concurrent-work scan, strongest scoop objection, defensible novelty sentence, per-RQ risk rating, honest caveats. Every fact points to a checkable source URL.
+
+CONSTRAINTS: Doc-only — do NOT write code, do NOT run experiments. Commit the file to the main branch with trailer:
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+
+When done, print a 10-line summary to stdout: per-citation verdicts, the scoop risk level, and your single biggest novelty concern. If you cannot verify the Mishra non-surjectivity paper, say so LOUDLY — that is the highest-priority finding.

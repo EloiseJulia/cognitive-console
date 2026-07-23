@@ -49,6 +49,17 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0010 · Human approved: write Phase 0 analysis code ahead (CPU, no spend)
+- **Human decision (@EloiseJulia, via ask_user):** "继续停在 CPU 阶段：让我把 Phase 0 分析脚本
+  （facade/冲突探针的纯代码部分）先写好待命."
+- **Manager execution choice:** implement subagent on new branch feature/2-phase0-analysis. Write the
+  GPU-independent analysis pipeline behind an `ActivationProvider` abstraction (real HF/GPU impl stubbed;
+  `SyntheticActivationProvider` with injectable planted signal for offline unit tests): CAA mean-diff
+  extraction + layer scan, facade projection analysis (C1), conflict-probe harness (C2b seed), Go/No-Go
+  routing (spec §3), all registry-integrated + reproducible. torch kept optional/lazy so pytest runs w/o it.
+- **Scope:** code + tests only. NO model load, NO GPU, NO downloads, NO paid API. Merge only after audit.
+- **Frozen?** No.
+
 ## 2026-07-23 · D-0009 · phase0-prep fixes verified & merged to main (f4a1073)
 - **Verification (Manager independent light check):** re-ran `python -m pytest -q` → 64 passed; independently
   recomputed per-axis pos-longer fraction (delib 0.425, skept 0.400, uncert 0.450, focus 0.525 — all in band)

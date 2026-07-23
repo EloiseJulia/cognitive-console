@@ -37,14 +37,10 @@ Status values: proposed | partially-supported | supported | contradicted | withd
   steering-only, OR dual-channel-without-panel (condition D).
 - **Scope:** 4-condition controlled study; open white-box models.
 - **Type:** interaction paradigm + empirical (confirmatory core)
-- **Status:** proposed (v0.2: separated from C2a; de-confounded via condition D after R2-B1/R2-B2)
-- **Required evidence:** bounded-prompt-search ceiling demonstrated; attribution accuracy + trust
-  calibration gain of C vs A/B/D with effect size + uncertainty.
-- **Known limits:** depends on C1; risk steering changes only surface style (tested via reasoning task).
-  **Threat (PSR/"Steer Like the LLM", ICML 2026):** steering can be trained to match/exceed prompt
-  behaviorally → C2b must frame the gap under a *bounded, user-realistic prompt search*, not absolute, and
-  cite/pre-empt PSR.
-- **Paper location:** TBD
+- **Status:** proposed → **not-supported (exploratory, E-0004)**: first real probe (Qwen2.5-7B) shows latent
+  steering did NOT reach beyond the bounded-prompt behavioral ceiling on 3/4 axes; prompt wins conflict 3/4.
+  Crude lexical proxies (ceiling-saturated) cannot decisively support OR refute — but NO positive signal.
+  PIVOT SIGNAL toward Plan D if better-instrumented C2b also fails.
 
 ## C3 — Boundary Object / Cross-Model Trust (RQ3, extension)
 - **Statement:** Metacognitive-axis levers preserve perceived control/continuity across a backend model

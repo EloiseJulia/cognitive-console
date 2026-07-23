@@ -1,0 +1,118 @@
+experiments:
+- experiment_id: c1-facade-d710b4b4-0001
+  parent: null
+  hypothesis_id: H1
+  claim_ids:
+  - C1
+  type: exploratory
+  status: done
+  code_commit: 6716cc57e132e1929ad8bfd73b21985495546cb0
+  dirty_tree: null
+  data_hash: sha256:3551d2f68d370fa4bb2c229c0ae80712799de5b581dece07ddb9a404aca8dcc7
+  env_hash: null
+  config_hash: sha256:d710b4b4abe649b19c476b03cb5085e5893c400bf13c9a473b193499b9da96f9
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: data/contrast_pairs/*.jsonl (28/12 disjoint split for v) + data/strongest_prompts/*.jsonl
+    (separate strongest-prompt set)
+  seed: 20260723
+  hardware: cpu-local-float32
+  started_at: '2026-07-23T11:59:32.525627+00:00'
+  ended_at: '2026-07-23T11:59:32.588797+00:00'
+  exit_code: 0
+  raw_metrics:
+    wall_clock_seconds: 27.74
+    cache_was_cold: true
+    wall_clock_is_true_full_compute: true
+    peak_rss_mb: 2452.2
+    n_boot: 2000
+    ci_level: 0.95
+  summary_metrics:
+    deliberation:
+      chosen_layer: 20
+      prompt_reach: 10.418260101105584
+      pole_reach: 17.877713865258034
+      facade_ratio: 0.582751249943177
+      facade_ratio_ci_lo: 0.4878451678981084
+      facade_ratio_ci_hi: 0.6804022442875369
+      facade_ratio_loo_min: 0.5553140866858811
+      facade_ratio_loo_max: 0.6032478887796555
+      facade_ratio_vnorm_mean_SUPERSEDED: 0.329747736264259
+      extraction_success: true
+      facade_gap_holds_ci: true
+      stable_layer_found: true
+      seed_stable: true
+      c1_signal: true
+    skepticism:
+      chosen_layer: 20
+      prompt_reach: 11.483898671907395
+      pole_reach: 20.97031628183139
+      facade_ratio: 0.5476263933060945
+      facade_ratio_ci_lo: 0.433662493258434
+      facade_ratio_ci_hi: 0.6696167891191565
+      facade_ratio_loo_min: 0.5417026370812692
+      facade_ratio_loo_max: 0.5560181611843221
+      facade_ratio_vnorm_mean_SUPERSEDED: 0.3834576190764327
+      extraction_success: true
+      facade_gap_holds_ci: true
+      stable_layer_found: true
+      seed_stable: true
+      c1_signal: true
+    uncertainty_awareness:
+      chosen_layer: 20
+      prompt_reach: 15.192209486052857
+      pole_reach: 21.30426918610573
+      facade_ratio: 0.7131063428339024
+      facade_ratio_ci_lo: 0.5174153548301345
+      facade_ratio_ci_hi: 0.9097230151228484
+      facade_ratio_loo_min: 0.7029594070926198
+      facade_ratio_loo_max: 0.7203404711503273
+      facade_ratio_vnorm_mean_SUPERSEDED: 0.5612914787500669
+      extraction_success: true
+      facade_gap_holds_ci: true
+      stable_layer_found: true
+      seed_stable: true
+      c1_signal: true
+    focus:
+      chosen_layer: 16
+      prompt_reach: 5.653702090178729
+      pole_reach: 1.987817969952955
+      facade_ratio: 2.844174957484932
+      facade_ratio_ci_lo: 2.061420856417053
+      facade_ratio_ci_hi: 3.5492769589260886
+      facade_ratio_loo_min: 2.61552090801218
+      facade_ratio_loo_max: 3.173249618078388
+      facade_ratio_vnorm_mean_SUPERSEDED: 0.3349499040027617
+      extraction_success: true
+      facade_gap_holds_ci: false
+      stable_layer_found: true
+      seed_stable: true
+      c1_signal: false
+    _aggregate:
+      n_axes: 4
+      facade_support_fraction: 0.75
+      n_axes_facade_holds_ci: 3
+      n_axes_stable_layer: 4
+      n_axes_unstable: 0
+      n_axes_seed_stable: 4
+      max_facade_ratio_observed: 2.844174957484932
+      extraction_success_all: true
+  artifacts:
+  - results/gpu_7b_2026-07-23/c1/c1_facade_results.json
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: 'EXPLORATORY C1 facade pilot on Qwen/Qwen2.5-7B-Instruct (CPU).
+    Protocol NOT frozen. CORRECTED METRIC (D-0016): facade_ratio = prompt_reach /
+    pole_reach is same-origin, scale-free, and alpha-free — both reaches are on-axis
+    displacement from the SAME neutral origin projected on û. This replaces the SUPERSEDED
+    ||v||-based ratio (BLOCKER-1 alpha=1 dependence, BLOCKER-2 origin mismatch), which
+    is retained per-axis for comparison only. Bootstrap 95% CI over the strong-prompt
+    set + leave-one-neutral-out band reported. above-null demoted to a labelled sanity
+    field (MAJOR-3). FIX2 retained: strongest-prompt reach on a SEPARATELY-authored
+    instruction set, distinct in kind from the contrast pairs (expanded 7->16/axis,
+    D-0019, to tighten the CI). STRENGTHENED (D-0019): NON-DEGENERATE layer selection
+    (depth floor + pole_reach above random-null p95 + positive separation) replaces
+    bare Cohen''s-d, which had picked a degenerate shallow layer for focus; facade_ratio
+    reported across top-k candidate layers and under multiple RNG seeds for robustness;
+    an axis with no non-degenerate layer is reported UNSTABLE, not forced. Wall-clock
+    27.74s recorded as TRUE full-compute (cache_was_cold=True, MINOR-6). Registered
+    in a run-local registry (docs/ untouched by task scope).'

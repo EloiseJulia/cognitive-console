@@ -1,0 +1,680 @@
+{
+  "kind": "c2b_reachability_pilot",
+  "type": "EXPLORATORY",
+  "valid_for_paper": false,
+  "protocol_frozen": false,
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "alphas": [
+    4.0,
+    8.0,
+    16.0
+  ],
+  "n_strong": 16,
+  "max_new_tokens": 128,
+  "neutral_prompt": "Please answer the following question.",
+  "prompt_ceiling_label": "prompt ceiling = best-of-16 static authored prompts, NOT OPRO \u2014 an UNDER-estimate of true prompt reach (conservative for the C2b comparison)",
+  "c2b_honesty_caveat": "C2b uses crude lexical/length proxies that share a basis with the steering direction; these numbers are an EXPLORATORY lexical-shift signal ONLY and CANNOT support a 'latent reaches beyond the bounded-prompt ceiling' claim without an orthogonal non-lexical proxy + variance estimate. focus/deliberation are length-confounded; focus is untrustworthy. Single greedy sample per cell \u2014 do not over-read small margins.",
+  "behavior_proxy_note": "Behavior measured by CRUDE lexical proxies (experiments.behavior), NOT validated instruments. EXPLORATORY \u2014 no frozen verdict.",
+  "axes": [
+    {
+      "axis": "deliberation",
+      "layer": 20,
+      "alphas": [
+        4.0,
+        8.0,
+        16.0
+      ],
+      "prompt_ceiling": 1.0,
+      "prompt_ceiling_mean": 0.6297916666666665,
+      "best_prompt_id": "delib-strong-05",
+      "prompt_scores": [
+        {
+          "prompt_id": "delib-strong-01",
+          "score": 0.6766666666666666,
+          "preview": "Certainly! I'll follow your instruction to slow down and reason through things step by step before providing an answer. Please go ahead and provide the question"
+        },
+        {
+          "prompt_id": "delib-strong-02",
+          "score": 0.5333333333333333,
+          "preview": "Certainly! I'll follow this approach for any task or question you have. Let's start with an example problem to illustrate the process. Suppose we need to solve "
+        },
+        {
+          "prompt_id": "delib-strong-03",
+          "score": 0.41666666666666663,
+          "preview": "Certainly! To provide a thorough and well-reasoned response, I'll need to know the specific context or decision you're referring to. However, I can walk through"
+        },
+        {
+          "prompt_id": "delib-strong-04",
+          "score": 0.6499999999999999,
+          "preview": "Certainly! To help you with a specific problem, I'll need more details about what the problem is. However, I can walk you through a general method of breaking d"
+        },
+        {
+          "prompt_id": "delib-strong-05",
+          "score": 1.0,
+          "preview": "Certainly! Let's break down the process of being deliberate and analytical step-by-step.\n\n### Step 1: Define the Problem or Question\nFirst, we need to clearly d"
+        },
+        {
+          "prompt_id": "delib-strong-06",
+          "score": 0.3,
+          "preview": "Certainly! I'd be happy to provide a detailed explanation of my reasoning process. Please let me know the specific question or problem you need help with, and I"
+        },
+        {
+          "prompt_id": "delib-strong-07",
+          "score": 0.6499999999999999,
+          "preview": "Certainly. I will approach the task with the same level of meticulousness and attention to detail that one would use in a complex problem-solving scenario. Let'"
+        },
+        {
+          "prompt_id": "delib-strong-08",
+          "score": 0.41666666666666663,
+          "preview": "Certainly! To provide a detailed solution path, I'll need more context about the specific problem or task you're referring to. Could you please specify what kin"
+        },
+        {
+          "prompt_id": "delib-strong-09",
+          "score": 0.7666666666666666,
+          "preview": "Certainly! To approach this methodically, I'll outline a structured process for thinking slowly and rigorously. This involves several steps: defining the proble"
+        },
+        {
+          "prompt_id": "delib-strong-10",
+          "score": 0.5333333333333333,
+          "preview": "Certainly! To provide a thorough deliberation, I'll need more context about the specific issue or decision you're facing. However, I can walk through a general "
+        },
+        {
+          "prompt_id": "delib-strong-11",
+          "score": 0.6499999999999999,
+          "preview": "Certainly! To proceed with a careful analysis, we need to start with the specific problem or question you want to address. Since you haven't provided a particul"
+        },
+        {
+          "prompt_id": "delib-strong-12",
+          "score": 0.6499999999999999,
+          "preview": "Certainly! To provide a reflective and deductive response, I'll need to know the specific premises or context you're referring to. Without that information, I c"
+        },
+        {
+          "prompt_id": "delib-strong-13",
+          "score": 0.6499999999999999,
+          "preview": "Certainly! To provide a thoughtful response, I need to know the specific topic or question you're referring to. Could you please clarify or provide more details"
+        },
+        {
+          "prompt_id": "delib-strong-14",
+          "score": 1.0,
+          "preview": "Certainly! Let's approach this step-by-step in a methodical manner to ensure we cover all aspects thoroughly.\n\n### Step 1: Define the Problem or Question\nFirst,"
+        },
+        {
+          "prompt_id": "delib-strong-15",
+          "score": 0.5333333333333333,
+          "preview": "Certainly! To help you understand the process of deliberate thinking and planning ahead, let's use a simple example: planning a day trip to a nearby city.\n\n### "
+        },
+        {
+          "prompt_id": "delib-strong-16",
+          "score": 0.6499999999999999,
+          "preview": "Certainly! I understand that you want me to approach any task or question with careful consideration and a methodical thought process. Let's break this down ste"
+        }
+      ],
+      "steer_only": [
+        {
+          "alpha": 4.0,
+          "score": 0.105,
+          "preview": "Of course! Please go ahead and ask your question, and I'll do my best to provide a helpful and accurate answer.",
+          "steer_baseline_alpha0": 0.105
+        },
+        {
+          "alpha": 8.0,
+          "score": 0.105,
+          "preview": "Of course! Please go ahead and ask your question, and I'll do my best to provide a helpful and accurate answer.",
+          "steer_baseline_alpha0": 0.105
+        },
+        {
+          "alpha": 16.0,
+          "score": 0.105,
+          "preview": "Of course! Please go ahead and ask your question, and I'll do my best to provide a helpful and accurate answer.",
+          "steer_baseline_alpha0": 0.105
+        }
+      ],
+      "steer_only_max": 0.105,
+      "steer_only_max_alpha": 4.0,
+      "reaches_beyond_prompt_ceiling": false,
+      "beyond_margin": -0.895,
+      "conflict": [
+        {
+          "alpha": 4.0,
+          "steer_sign": -1,
+          "prompt_pole": 1.0,
+          "steer_pole": 0.105,
+          "behavior": 1.0,
+          "landing_fraction": -0.0,
+          "landing_fraction_raw": -0.0,
+          "clipped": false,
+          "winner": "prompt",
+          "preview": "Certainly! Let's break down the process of being deliberate and analytical step-by-step.\n\n### Step 1: Define the Problem or Question\nFirst, we need to clearly d"
+        },
+        {
+          "alpha": 8.0,
+          "steer_sign": -1,
+          "prompt_pole": 1.0,
+          "steer_pole": 0.09499999999999999,
+          "behavior": 1.0,
+          "landing_fraction": -0.0,
+          "landing_fraction_raw": -0.0,
+          "clipped": false,
+          "winner": "prompt",
+          "preview": "Certainly! Let's walk through the process of being deliberate and analytical step-by-step.\n\n### Step 1: Define the Problem or Question\nFirst, we need to clearly"
+        },
+        {
+          "alpha": 16.0,
+          "steer_sign": -1,
+          "prompt_pole": 1.0,
+          "steer_pole": 0.05499999999999999,
+          "behavior": 0.5333333333333333,
+          "landing_fraction": 0.49382716049382713,
+          "landing_fraction_raw": 0.49382716049382713,
+          "clipped": false,
+          "winner": "prompt",
+          "preview": "Certainly, I'll walk you through my reasoning step-by-step without jumping to a conclusion. Let's say the topic is evaluating whether a new technology product s"
+        }
+      ],
+      "max_new_tokens": 128,
+      "scorer_name": "behavior_score",
+      "note": "EXPLORATORY C2b read. Behavior measured by CRUDE lexical proxies (experiments.behavior), NOT validated instruments. No frozen verdict.",
+      "c1_chosen_layer": 20,
+      "c1_stable_layer_found": true,
+      "c2b_on_unstable_layer": false
+    },
+    {
+      "axis": "skepticism",
+      "layer": 20,
+      "alphas": [
+        4.0,
+        8.0,
+        16.0
+      ],
+      "prompt_ceiling": 0.9820137900379085,
+      "prompt_ceiling_mean": 0.6355657629017863,
+      "best_prompt_id": "skep-strong-02",
+      "prompt_scores": [
+        {
+          "prompt_id": "skep-strong-01",
+          "score": 0.7310585786300049,
+          "preview": "Sure, please provide the claims or statements you want me to question and push back against. Once you do, I'll analyze them critically and challenge any parts t"
+        },
+        {
+          "prompt_id": "skep-strong-02",
+          "score": 0.9820137900379085,
+          "preview": "Certainly! When approaching a topic with deep skepticism, it's crucial to question every claim and demand robust evidence before accepting any assertion as true"
+        },
+        {
+          "prompt_id": "skep-strong-03",
+          "score": 0.7310585786300049,
+          "preview": "Certainly! When evaluating information or arguments, it's crucial to approach them with a critical mindset. Here\u2019s how you can do that effectively:\n\n1. **Identi"
+        },
+        {
+          "prompt_id": "skep-strong-04",
+          "score": 0.2689414213699951,
+          "preview": "Certainly! Let's take a critical look at the following statement or argument. Please provide the specific statement or argument you'd like me to critique, and I"
+        },
+        {
+          "prompt_id": "skep-strong-05",
+          "score": 0.8175744761936437,
+          "preview": "Certainly! When evaluating any statement, it's important to approach it with a critical mindset. Here\u2019s how you can test a hypothesis:\n\n1. **Identify the Claim*"
+        },
+        {
+          "prompt_id": "skep-strong-06",
+          "score": 0.6224593312018546,
+          "preview": "Certainly! Being suspicious and rigorous in your approach to information is a valuable skill, especially in today's digital age where misinformation can spread "
+        },
+        {
+          "prompt_id": "skep-strong-07",
+          "score": 0.5,
+          "preview": "Certainly! Let's challenge an argument. Please provide the argument you'd like me to dissect critically. It can be on any topic\u2014philosophical, scientific, polit"
+        },
+        {
+          "prompt_id": "skep-strong-08",
+          "score": 0.8807970779778823,
+          "preview": "Certainly! This approach is a great way to ensure thorough analysis and critical thinking. Let's break down the process:\n\n1. **Identify the Statement or Claim**"
+        },
+        {
+          "prompt_id": "skep-strong-09",
+          "score": 0.8175744761936437,
+          "preview": "Certainly! When critically analyzing an argument or claim, it's crucial to identify any gaps in reasoning, assumptions that may not be fully justified, and area"
+        },
+        {
+          "prompt_id": "skep-strong-10",
+          "score": 0.6224593312018546,
+          "preview": "Certainly! I understand your request to critically evaluate arguments and identify any logical leaps or unsupported assumptions. Please provide the specific arg"
+        },
+        {
+          "prompt_id": "skep-strong-11",
+          "score": 0.3775406687981454,
+          "preview": "Certainly! I'll be thorough and critical in evaluating the claims you present, providing explanations for any weaknesses or areas that require further support.\n"
+        },
+        {
+          "prompt_id": "skep-strong-12",
+          "score": 0.5,
+          "preview": "Certainly! To approach a given argument or statement adversarially, we need to systematically identify potential errors, unstated premises, and any contradictor"
+        },
+        {
+          "prompt_id": "skep-strong-13",
+          "score": 0.8175744761936437,
+          "preview": "Certainly! The phrase \"withhold agreement until it is warranted\" suggests that you should not agree to something unless there is a clear and compelling reason t"
+        },
+        {
+          "prompt_id": "skep-strong-14",
+          "score": 0.5,
+          "preview": "Certainly! When critically analyzing an argument or claim, it's important to approach it with a thorough and skeptical mindset. Here\u2019s how you can do that:\n\n1. "
+        },
+        {
+          "prompt_id": "skep-strong-15",
+          "score": 0.6224593312018546,
+          "preview": "Certainly! This approach to evaluating information is a cornerstone of critical thinking and skepticism. Here\u2019s how you can apply this principle in various cont"
+        },
+        {
+          "prompt_id": "skep-strong-16",
+          "score": 0.3775406687981454,
+          "preview": "Certainly! To proceed with interrogating the statement effectively, I need the specific text or claim you want me to analyze. Please provide the text or claim s"
+        }
+      ],
+      "steer_only": [
+        {
+          "alpha": 4.0,
+          "score": 0.5,
+          "preview": "Of course! Please go ahead and ask your question, and I'll do my best to provide a helpful and accurate answer.",
+          "steer_baseline_alpha0": 0.5
+        },
+        {
+          "alpha": 8.0,
+          "score": 0.5,
+          "preview": "Of course! Please go ahead and ask your question, and I'll do my best to provide a helpful and accurate answer.",
+          "steer_baseline_alpha0": 0.5
+        },
+        {
+          "alpha": 16.0,
+          "score": 0.5,
+          "preview": "Of course! Please go ahead and ask your question, and I'll do my best to provide a detailed and accurate answer.",
+          "steer_baseline_alpha0": 0.5
+        }
+      ],
+      "steer_only_max": 0.5,
+      "steer_only_max_alpha": 4.0,
+      "reaches_beyond_prompt_ceiling": false,
+      "beyond_margin": -0.48201379003790845,
+      "conflict": [
+        {
+          "alpha": 4.0,
+          "steer_sign": -1,
+          "prompt_pole": 0.9820137900379085,
+          "steer_pole": 0.5,
+          "behavior": 0.8175744761936437,
+          "landing_fraction": 0.34115064183398636,
+          "landing_fraction_raw": 0.34115064183398636,
+          "clipped": false,
+          "winner": "prompt",
+          "preview": "Certainly! When approaching a topic with deep skepticism, it's important to critically evaluate each claim and demand robust evidence before accepting any asser"
+        },
+        {
+          "alpha": 8.0,
+          "steer_sign": -1,
+          "prompt_pole": 0.9820137900379085,
+          "steer_pole": 0.5,
+          "behavior": 0.9241418199787566,
+          "landing_fraction": 0.12006289291972436,
+          "landing_fraction_raw": 0.12006289291972436,
+          "clipped": false,
+          "winner": "prompt",
+          "preview": "Certainly! When approaching a topic with deep skepticism, it's important to critically evaluate each claim and demand robust evidence before accepting any asser"
+        },
+        {
+          "alpha": 16.0,
+          "steer_sign": -1,
+          "prompt_pole": 0.9820137900379085,
+          "steer_pole": 0.5,
+          "behavior": 0.8175744761936437,
+          "landing_fraction": 0.34115064183398636,
+          "landing_fraction_raw": 0.34115064183398636,
+          "clipped": false,
+          "winner": "prompt",
+          "preview": "Understood. I will approach this with a highly critical mindset, questioning every premise and argument presented. I'll demand robust evidence for any claims ma"
+        }
+      ],
+      "max_new_tokens": 128,
+      "scorer_name": "behavior_score",
+      "note": "EXPLORATORY C2b read. Behavior measured by CRUDE lexical proxies (experiments.behavior), NOT validated instruments. No frozen verdict.",
+      "c1_chosen_layer": 20,
+      "c1_stable_layer_found": true,
+      "c2b_on_unstable_layer": false
+    },
+    {
+      "axis": "uncertainty_awareness",
+      "layer": 20,
+      "alphas": [
+        4.0,
+        8.0,
+        16.0
+      ],
+      "prompt_ceiling": 0.8807970779778823,
+      "prompt_ceiling_mean": 0.457515209280144,
+      "best_prompt_id": "unc-strong-06",
+      "prompt_scores": [
+        {
+          "prompt_id": "unc-strong-01",
+          "score": 0.3775406687981454,
+          "preview": "Certainly! I'll be transparent about my knowledge and the level of confidence I have in my responses.\n\nFor example, if I'm asked a question that falls outside m"
+        },
+        {
+          "prompt_id": "unc-strong-02",
+          "score": 0.2689414213699951,
+          "preview": "Certainly! I understand the importance of being transparent about the strength of the evidence or the level of certainty in my responses. When the evidence is t"
+        },
+        {
+          "prompt_id": "unc-strong-03",
+          "score": 0.2689414213699951,
+          "preview": "Certainly! Calibrating confidence involves being mindful of the certainty of one's beliefs or claims. Here\u2019s a structured approach to help you distinguish betwe"
+        },
+        {
+          "prompt_id": "unc-strong-04",
+          "score": 0.5,
+          "preview": "Certainly. As an AI developed by Alibaba Cloud, my knowledge is based on the data I was trained on, which has a cutoff date of 2022. This means there may be inf"
+        },
+        {
+          "prompt_id": "unc-strong-05",
+          "score": 0.3775406687981454,
+          "preview": "Certainly! As an AI developed by Alibaba Cloud, I strive to provide accurate and reliable information. However, like any AI system, there are limitations to my "
+        },
+        {
+          "prompt_id": "unc-strong-06",
+          "score": 0.8807970779778823,
+          "preview": "Certainly! Epistemic humility involves recognizing the limits of one's knowledge and acknowledging that there are often gaps in our understanding. Here\u2019s how yo"
+        },
+        {
+          "prompt_id": "unc-strong-07",
+          "score": 0.6224593312018546,
+          "preview": "Certainly! When there is uncertainty or ambiguity in a situation, it's important to be transparent about it rather than pretending that everything is clear-cut."
+        },
+        {
+          "prompt_id": "unc-strong-08",
+          "score": 0.2689414213699951,
+          "preview": "Certainly! Here is my response with a clear separation between the solid facts and any speculative elements:\n\n**Solid Parts:**\n1. I am confident in my ability t"
+        },
+        {
+          "prompt_id": "unc-strong-09",
+          "score": 0.5,
+          "preview": "Absolutely, I understand the importance of honesty and clarity. If I don't have enough information to provide a definitive answer, I will be upfront about it. C"
+        },
+        {
+          "prompt_id": "unc-strong-10",
+          "score": 0.5,
+          "preview": "As an AI developed by Alibaba Cloud, I have a vast amount of information at my disposal, but I don't have a specific metric to quantify exactly how much I know."
+        },
+        {
+          "prompt_id": "unc-strong-11",
+          "score": 0.3775406687981454,
+          "preview": "Certainly! When there's genuine uncertainty about an answer, it's important to provide a clear indication of the likelihood and suggest ways to resolve the doub"
+        },
+        {
+          "prompt_id": "unc-strong-12",
+          "score": 0.3775406687981454,
+          "preview": "Certainly! Being transparent about the unknowns is a crucial aspect of providing accurate and reliable information. Here\u2019s an example to illustrate this princip"
+        },
+        {
+          "prompt_id": "unc-strong-13",
+          "score": 0.3775406687981454,
+          "preview": "Certainly! I'll provide responses with a calibrated level of confidence and explicit caution where needed.\n\n### Response:\n**Calibrated Response:**\nBased on the "
+        },
+        {
+          "prompt_id": "unc-strong-14",
+          "score": 0.5,
+          "preview": "Certainly! Admitting uncertainty is an important aspect of maintaining integrity and fostering trust in any form of communication, whether it's in scientific re"
+        },
+        {
+          "prompt_id": "unc-strong-15",
+          "score": 0.6224593312018546,
+          "preview": "Absolutely, transparency is key in providing accurate and reliable information. When the evidence is weak or conflicting, it's important to acknowledge that and"
+        },
+        {
+          "prompt_id": "unc-strong-16",
+          "score": 0.5,
+          "preview": "Certainly! To provide a clear assessment of my confidence in different parts and identify claims that are most likely to be incorrect, I would need more specifi"
+        }
+      ],
+      "steer_only": [
+        {
+          "alpha": 4.0,
+          "score": 0.5,
+          "preview": "Of course! Please go ahead and ask your question, and I'll do my best to provide a helpful and accurate answer.",
+          "steer_baseline_alpha0": 0.5
+        },
+        {
+          "alpha": 8.0,
+          "score": 0.5,
+          "preview": "Of course! Please go ahead and ask your question, and I'll do my best to provide a helpful and accurate answer.",
+          "steer_baseline_alpha0": 0.5
+        },
+        {
+          "alpha": 16.0,
+          "score": 0.5,
+          "preview": "Of course! Please go ahead and ask your question, and I'll do my best to provide a helpful and accurate answer.",
+          "steer_baseline_alpha0": 0.5
+        }
+      ],
+      "steer_only_max": 0.5,
+      "steer_only_max_alpha": 4.0,
+      "reaches_beyond_prompt_ceiling": false,
+      "beyond_margin": -0.3807970779778823,
+      "conflict": [
+        {
+          "alpha": 4.0,
+          "steer_sign": -1,
+          "prompt_pole": 0.8807970779778823,
+          "steer_pole": 0.5,
+          "behavior": 0.5,
+          "landing_fraction": 1.0,
+          "landing_fraction_raw": 1.0,
+          "clipped": false,
+          "winner": "latent",
+          "preview": "Certainly! Epistemic humility involves recognizing the limits of one's knowledge and acknowledging that there may be aspects of reality that are currently beyon"
+        },
+        {
+          "alpha": 8.0,
+          "steer_sign": -1,
+          "prompt_pole": 0.8807970779778823,
+          "steer_pole": 0.5,
+          "behavior": 0.2689414213699951,
+          "landing_fraction": 1.0,
+          "landing_fraction_raw": 1.6067761335170365,
+          "clipped": true,
+          "winner": "latent",
+          "preview": "Certainly! Epistemic humility involves recognizing the limits of one's knowledge and acknowledging that there may be aspects of reality that are currently beyon"
+        },
+        {
+          "alpha": 16.0,
+          "steer_sign": -1,
+          "prompt_pole": 0.8807970779778823,
+          "steer_pole": 0.5,
+          "behavior": 0.3775406687981454,
+          "landing_fraction": 1.0,
+          "landing_fraction_raw": 1.3215868458133688,
+          "clipped": true,
+          "winner": "latent",
+          "preview": "Certainly! Epistemic humility involves recognizing the limits of one's knowledge and understanding, and acknowledging that there may be aspects of reality that "
+        }
+      ],
+      "max_new_tokens": 128,
+      "scorer_name": "behavior_score",
+      "note": "EXPLORATORY C2b read. Behavior measured by CRUDE lexical proxies (experiments.behavior), NOT validated instruments. No frozen verdict.",
+      "c1_chosen_layer": 20,
+      "c1_stable_layer_found": true,
+      "c2b_on_unstable_layer": false
+    },
+    {
+      "axis": "focus",
+      "layer": 16,
+      "alphas": [
+        4.0,
+        8.0,
+        16.0
+      ],
+      "prompt_ceiling": 0.965,
+      "prompt_ceiling_mean": 0.919375,
+      "best_prompt_id": "focus-strong-02",
+      "prompt_scores": [
+        {
+          "prompt_id": "focus-strong-01",
+          "score": 0.93,
+          "preview": "Understood. How can I assist you specifically today? Please provide your question or request."
+        },
+        {
+          "prompt_id": "focus-strong-02",
+          "score": 0.965,
+          "preview": "Understood. How can I assist you today?"
+        },
+        {
+          "prompt_id": "focus-strong-03",
+          "score": 0.9,
+          "preview": "Understood. I will keep my responses concise and focused, providing only the essential information relevant to the topic at hand."
+        },
+        {
+          "prompt_id": "focus-strong-04",
+          "score": 0.92,
+          "preview": "Sure, please go ahead and state your specific request or need, and I'll address it directly."
+        },
+        {
+          "prompt_id": "focus-strong-05",
+          "score": 0.91,
+          "preview": "Understood. Please provide the specific question or topic you need assistance with, and I'll respond directly to it."
+        },
+        {
+          "prompt_id": "focus-strong-06",
+          "score": 0.94,
+          "preview": "Understood. I will provide precise answers without additional commentary or unrelated information."
+        },
+        {
+          "prompt_id": "focus-strong-07",
+          "score": 0.92,
+          "preview": "Certainly! Please provide your specific question or issue, and I will address it directly and concisely."
+        },
+        {
+          "prompt_id": "focus-strong-08",
+          "score": 0.89,
+          "preview": "Sure, I'll provide the essentials without additional details or caveats. Please let me know the specific topic or information you need summarized."
+        },
+        {
+          "prompt_id": "focus-strong-09",
+          "score": 0.81,
+          "preview": "Certainly. Could you please provide more details about the topic or question you'd like me to explore starting from a single thread? This will help me follow th"
+        },
+        {
+          "prompt_id": "focus-strong-10",
+          "score": 0.95,
+          "preview": "Sure, please provide your specific question or topic for discussion."
+        },
+        {
+          "prompt_id": "focus-strong-11",
+          "score": 0.885,
+          "preview": "Understood. Please provide your exact question or request, and I will focus solely on providing the most relevant and accurate response to it."
+        },
+        {
+          "prompt_id": "focus-strong-12",
+          "score": 0.94,
+          "preview": "Understood. Please provide the specific request or task you need assistance with."
+        },
+        {
+          "prompt_id": "focus-strong-13",
+          "score": 0.955,
+          "preview": "Understood. Please provide the specific question you need addressed."
+        },
+        {
+          "prompt_id": "focus-strong-14",
+          "score": 0.91,
+          "preview": "Sure, please provide the specific issue you need help with, and I'll focus my response directly on that."
+        },
+        {
+          "prompt_id": "focus-strong-15",
+          "score": 0.96,
+          "preview": "Understood. How can I assist you specifically today?"
+        },
+        {
+          "prompt_id": "focus-strong-16",
+          "score": 0.925,
+          "preview": "Understood. I will provide concise, direct answers to your questions without additional commentary or padding."
+        }
+      ],
+      "steer_only": [
+        {
+          "alpha": 4.0,
+          "score": 0.905,
+          "preview": "Of course! Please go ahead and ask your question, and I'll do my best to provide a helpful answer.",
+          "steer_baseline_alpha0": 0.895
+        },
+        {
+          "alpha": 8.0,
+          "score": 0.905,
+          "preview": "Of course! Please go ahead and ask your question, and I'll do my best to provide a helpful answer.",
+          "steer_baseline_alpha0": 0.895
+        },
+        {
+          "alpha": 16.0,
+          "score": 0.975,
+          "preview": "Of course! What's your question?",
+          "steer_baseline_alpha0": 0.895
+        }
+      ],
+      "steer_only_max": 0.975,
+      "steer_only_max_alpha": 16.0,
+      "reaches_beyond_prompt_ceiling": true,
+      "beyond_margin": 0.010000000000000009,
+      "conflict": [
+        {
+          "alpha": 4.0,
+          "steer_sign": -1,
+          "prompt_pole": 0.965,
+          "steer_pole": 0.895,
+          "behavior": 0.95,
+          "landing_fraction": 0.21428571428571463,
+          "landing_fraction_raw": 0.21428571428571463,
+          "clipped": false,
+          "winner": "prompt",
+          "preview": "Understood. Please provide the question you'd like an answer to."
+        },
+        {
+          "alpha": 8.0,
+          "steer_sign": -1,
+          "prompt_pole": 0.965,
+          "steer_pole": 0.895,
+          "behavior": 0.9450000000000001,
+          "landing_fraction": 0.2857142857142846,
+          "landing_fraction_raw": 0.2857142857142846,
+          "clipped": false,
+          "winner": "prompt",
+          "preview": "Understood. Please provide the question you'd like me to answer concisely."
+        },
+        {
+          "alpha": 16.0,
+          "steer_sign": -1,
+          "prompt_pole": 0.965,
+          "steer_pole": 0.815,
+          "behavior": 0.9450000000000001,
+          "landing_fraction": 0.1333333333333327,
+          "landing_fraction_raw": 0.1333333333333327,
+          "clipped": false,
+          "winner": "prompt",
+          "preview": "Understood. Please provide the question you'd like me to answer concisely."
+        }
+      ],
+      "max_new_tokens": 128,
+      "scorer_name": "behavior_score",
+      "note": "EXPLORATORY C2b read. Behavior measured by CRUDE lexical proxies (experiments.behavior), NOT validated instruments. No frozen verdict.",
+      "c1_chosen_layer": 16,
+      "c1_stable_layer_found": true,
+      "c2b_on_unstable_layer": false
+    }
+  ],
+  "aggregate": {
+    "n_axes": 4,
+    "n_axes_on_unstable_layer": 0,
+    "n_axes_counted_for_headline": 4,
+    "n_axes_steer_beyond_prompt_ceiling": 1,
+    "headline_excludes_unstable": true,
+    "headline_note": "'axes where steer reaches beyond ceiling' EXCLUDES axes with c2b_on_unstable_layer=true (unstable/unconfirmed C1 layer); those axes are still recorded but never counted in the headline."
+  },
+  "wall_clock_seconds": 223.4,
+  "generated_at": "2026-07-23T12:02:46.547787+00:00",
+  "platform": "Linux-6.8.0-124-generic-x86_64-with-glibc2.39",
+  "hardware": "cuda-float16"
+}

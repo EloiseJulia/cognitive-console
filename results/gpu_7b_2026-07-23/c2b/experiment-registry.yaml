@@ -1,0 +1,70 @@
+experiments:
+- experiment_id: c2b-reach-16382b53-0001
+  parent: null
+  hypothesis_id: H2
+  claim_ids:
+  - C2b
+  type: exploratory
+  status: done
+  code_commit: 6716cc57e132e1929ad8bfd73b21985495546cb0
+  dirty_tree: null
+  data_hash: null
+  env_hash: null
+  config_hash: sha256:16382b53e9e3f4c62799bb3f281c364e036262d11f56262102b2cdc4f110708e
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: data/strongest_prompts/*.jsonl + data/contrast_pairs/*.jsonl (CAA dir)
+  seed: 20260723
+  hardware: cuda-float16
+  started_at: '2026-07-23T12:02:46.552869+00:00'
+  ended_at: '2026-07-23T12:02:46.552902+00:00'
+  exit_code: 0
+  raw_metrics: null
+  summary_metrics:
+    deliberation:
+      layer: 20
+      prompt_ceiling: 1.0
+      steer_only_max: 0.105
+      reaches_beyond_prompt_ceiling: false
+      beyond_margin: -0.895
+    skepticism:
+      layer: 20
+      prompt_ceiling: 0.9820137900379085
+      steer_only_max: 0.5
+      reaches_beyond_prompt_ceiling: false
+      beyond_margin: -0.48201379003790845
+    uncertainty_awareness:
+      layer: 20
+      prompt_ceiling: 0.8807970779778823
+      steer_only_max: 0.5
+      reaches_beyond_prompt_ceiling: false
+      beyond_margin: -0.3807970779778823
+    focus:
+      layer: 16
+      prompt_ceiling: 0.965
+      steer_only_max: 0.975
+      reaches_beyond_prompt_ceiling: true
+      beyond_margin: 0.010000000000000009
+    _aggregate:
+      n_axes: 4
+      n_axes_on_unstable_layer: 0
+      n_axes_counted_for_headline: 4
+      n_axes_steer_beyond_prompt_ceiling: 1
+      headline_excludes_unstable: true
+      headline_note: '''axes where steer reaches beyond ceiling'' EXCLUDES axes with
+        c2b_on_unstable_layer=true (unstable/unconfirmed C1 layer); those axes are
+        still recorded but never counted in the headline.'
+  artifacts:
+  - results/gpu_7b_2026-07-23/c2b/c2b_reachability_results.json
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: 'EXPLORATORY C2b behavioral reachability pilot. Steered generation
+    (residual activation-addition of alpha*unit-CAA-direction at C1''s chosen layer)
+    + CRUDE automatic behavioral proxies (NOT validated instruments). Measures whether
+    latent steering reaches a behavioral region beyond a bounded prompt ceiling. Protocol
+    NOT frozen; the proxy crudeness is a stated limitation the Manager must weigh.
+    HONESTY CAVEAT: C2b uses crude lexical/length proxies that share a basis with
+    the steering direction; these numbers are an EXPLORATORY lexical-shift signal
+    ONLY and CANNOT support a ''latent reaches beyond the bounded-prompt ceiling''
+    claim without an orthogonal non-lexical proxy + variance estimate. focus/deliberation
+    are length-confounded; focus is untrustworthy. Single greedy sample per cell —
+    do not over-read small margins.'

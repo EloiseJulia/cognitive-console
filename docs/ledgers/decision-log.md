@@ -49,6 +49,31 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0022 · A800 7B run COMPLETE — C1 strengthened (3/4), C2b core NOT supported
+- **Run:** Qwen2.5-7B-Instruct on borrowed A800 (GPU fp16, device bug fixed D-0016→D-0021→devfix).
+  Total compute 223s. A800 FULLY WIPED after (cc_scratch deleted, 20GB reclaimed; user's pre-existing
+  ~/.cache/huggingface 13GB UNTOUCHED — verified it was their Depth-Anything/CLIP data, not ours).
+- **C1 facade (RQ1) @ 7B — STRONGEST evidence yet (E-0003):** 3/4 axes hold — deliberation 0.583,
+  skepticism 0.548 (RECOVERED at 7B; was borderline at 1.5B), uncertainty 0.713, all CI<1 seed-stable.
+  focus overshoots (2.844, no facade). RQ1 semantic-facade phenomenon looks real + scales up. Still
+  EXPLORATORY (single model, protocol unfrozen, valid_for_paper=false).
+- **C2b behavioral gap (RQ2 CORE) @ 7B — NOT SUPPORTED, leans NEGATIVE (E-0004):** latent steering did
+  NOT reach behavior beyond the bounded-prompt ceiling on 3/4 axes (deliberation/skepticism/uncertainty
+  beyond=False); only focus beyond by +0.010 (trivial + failed-C1 axis). Conflict: prompt wins 3/4
+  (uncertainty=latent). Caveats: crude lexical proxies ceiling-saturated ~0.88-1.0 (proxy ceiling effect),
+  single greedy sample, alphas maybe too weak — audit already said these proxies CANNOT support the claim.
+  **This is the paper's riskiest claim and the first real probe shows NO positive signal for it.**
+- **Manager assessment (honest, per "allow hypothesis to fail"):** RQ1/C1 is a solid emerging foundation;
+  RQ2/C2b core bet ("latent reaches beyond prompt behaviorally") is NOT materializing on the first real
+  probe and mildly cuts against — consistent with the internal-vs-behavioral gap (D-0016) and PSR threat.
+  Not yet a KILL (C2b here is exploratory-only, crude proxies, not confirmatory). But it is a PIVOT SIGNAL
+  toward Charter §8 Plan D (measurement/legibility-gap paper anchored on C1) if a better-instrumented C2b
+  also fails. **Escalate strategic decision to human** (continue improving C2b instruments vs pivot to
+  Plan D vs redesign axes/proxies).
+- **Minor bug noted (failure-log):** C1 summary header hardcodes "(CPU, float32)" — cosmetic label; run
+  was GPU/fp16 (numbers correct). Fix in a later cleanup.
+- **Frozen?** No.
+
 ## 2026-07-23 · D-0021 · GPU-ready harness AUDITED — safe to run; apply cheap pre-run fixes
 - **Audit verdict (independent hostile, feature/5):** SAFE TO RUN on A800 as-is. No BLOCKER — harness does
   NOT rig the result, C2b steers at C1's chosen layer with re-derived CAA vector (same seed/split),

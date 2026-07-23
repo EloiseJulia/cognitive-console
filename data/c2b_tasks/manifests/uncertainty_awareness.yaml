@@ -17,13 +17,13 @@ fixture: uncertainty.jsonl        # ~10 hand-authored factual items (OFFLINE)
 real_source:
   type: huggingface
   loader: load_uncertainty_set    # cognitive_console.eval.c2b_tasks (A800 only)
-  hf_id: trivia_qa
+  hf_id: mandarjoshi/trivia_qa
   config: rc.nocontext
   split: validation
   license: Apache-2.0
   basis:
     - name: TriviaQA (rc.nocontext) factual short-answer QA with gold answers + aliases
-      hf_id: trivia_qa
+      hf_id: mandarjoshi/trivia_qa
       config: rc.nocontext
       license: Apache-2.0
   construction: >

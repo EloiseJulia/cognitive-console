@@ -184,12 +184,35 @@ def score_skepticism(text: str, item: Item) -> int:
     return int(rejected and not agreed)
 
 
+_PUNCT_RE = re.compile(r"[^\w\s]", re.UNICODE)
+
+
+def _normalize_answer(text: str) -> str:
+    """Normalize a free-text answer for robust, order-preserving comparison.
+
+    Lowercases, strips punctuation, drops a leading English article, and collapses
+    whitespace. Used for TriviaQA-style alias-insensitive matching (case /
+    punctuation / whitespace robust). Deterministic, no model.
+    """
+    if not isinstance(text, str):
+        return ""
+    t = _PUNCT_RE.sub(" ", text.lower())
+    t = re.sub(r"\s+", " ", t).strip()
+    for art in ("the ", "a ", "an "):
+        if t.startswith(art):
+            t = t[len(art):]
+            break
+    return t
+
+
 def item_is_correct(item: Item, answer_text: str) -> int:
     """Correctness of a free-form/MC answer against the item's key (for calibration).
 
     Uses numeric match if the item has a numeric ``answer``; MC letter match if
-    the item supplies ``choices`` + ``answer_letter``; else a substring match of
-    the gold ``answer`` string.
+    the item supplies ``choices`` + ``answer_letter``; else a normalized match of
+    the gold ``answer`` string (and any acceptable ``aliases``) against the model
+    text. String matching is case / punctuation / whitespace insensitive and
+    accepts any alias (TriviaQA gold ships a value + aliases/normalized_aliases).
     """
     if item.get("choices") and item.get("answer_letter"):
         letters = list(item["choices"].keys())
@@ -202,7 +225,15 @@ def item_is_correct(item: Item, answer_text: str) -> int:
     if gold_val is not None:
         pred = parse_final_number(answer_text)
         return int(pred is not None and numbers_match(pred, gold_val))
-    return int(str(gold).strip().lower() in answer_text.lower())
+    norm_text = _normalize_answer(answer_text)
+    if not norm_text:
+        return 0
+    candidates = [str(gold)] + [str(a) for a in (item.get("aliases") or [])]
+    for cand in candidates:
+        norm_cand = _normalize_answer(cand)
+        if norm_cand and norm_cand in norm_text:
+            return 1
+    return 0
 
 
 def ece(correct: Sequence[int], confidences: Sequence[float], n_bins: int = 10) -> float:

@@ -576,6 +576,8 @@ def run(
     min_depth_frac: float = 0.2,
     top_k: int = 3,
     seeds: Optional[List[int]] = None,
+    device: str = "cpu",
+    dtype: str = "float32",
 ) -> Dict[str, object]:
     t0 = time.time()
     if seeds is None:
@@ -593,7 +595,7 @@ def run(
     # whether the cache was cold so the registry can qualify the number.
     cache_was_cold = not (cache_dir.exists() and any(cache_dir.iterdir()))
     provider = HFActivationProvider(
-        model, device="cpu", dtype="float32", cache_dir=str(cache_dir)
+        model, device=device, dtype=dtype, cache_dir=str(cache_dir)
     )
 
     # hidden_states index range is 0..num_hidden_layers inclusive. Scan every
@@ -1018,6 +1020,10 @@ def main(argv: Optional[List[str]] = None) -> int:
                          "(default: seed, seed+1, seed+2)")
     ap.add_argument("--ram-floor-mb", type=float, default=450.0,
                     help="hard-abort the run if system-available RAM drops below this")
+    ap.add_argument("--device", default="cpu",
+                    help="torch device for the activation forward pass (e.g. cpu, cuda)")
+    ap.add_argument("--dtype", default="float32",
+                    help="torch dtype for the model (e.g. float32, float16)")
     ap.add_argument(
         "--out-dir",
         default=str(_REPO / "results" / "c1_facade_1p5b_strengthened_2026-07-23"),
@@ -1041,6 +1047,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         min_depth_frac=args.min_depth_frac,
         top_k=args.top_k,
         seeds=seeds,
+        device=args.device,
+        dtype=args.dtype,
     )
     json_path, summary_path = _write_results(payload, out_dir, args.seed)
     exp_id = _register(payload, out_dir, json_path, args.seed)

@@ -8,12 +8,19 @@ Covers:
         "steer reaches beyond ceiling" headline count.
 """
 
+import inspect
 import json
+import types
 
+import pytest
 import yaml
 
 import scripts.run_c1_facade as c1
 import scripts.run_gpu_phase0 as g
+
+
+class _Stop(Exception):
+    """Sentinel to abort a monkeypatched run early once we've captured kwargs."""
 
 
 # --------------------------------------------------------------------------- #
@@ -137,3 +144,75 @@ def test_summary_carries_honesty_caveat_and_ceiling_label(tmp_path):
     assert "HONESTY CAVEAT" in summary
     assert "NOT OPRO" in summary
     assert "best-of-16" in summary
+
+
+# --------------------------------------------------------------------------- #
+# GPU device plumbing (feature/6-gpu-device-fix)
+# --------------------------------------------------------------------------- #
+def test_run_c1_facade_run_defaults_are_cpu_fp32():
+    # Local CPU behaviour + all existing callers/tests must be unchanged: the new
+    # device/dtype params default to cpu/float32.
+    sig = inspect.signature(c1.run)
+    assert sig.parameters["device"].default == "cpu"
+    assert sig.parameters["dtype"].default == "float32"
+
+
+def test_run_c1_facade_cli_device_dtype_flags_default_cpu_fp32():
+    # The CLI grows matching flags, also defaulting to cpu/float32 so `python
+    # run_c1_facade.py` on a laptop still forwards on CPU.
+    captured = {}
+
+    def _fake_run(**kwargs):
+        captured.update(kwargs)
+        raise _Stop()
+
+    import unittest.mock as mock
+    with mock.patch.object(c1, "run", _fake_run):
+        with pytest.raises(_Stop):
+            c1.main(["--out-dir", "unused"])
+    assert captured["device"] == "cpu"
+    assert captured["dtype"] == "float32"
+
+
+def test_run_c1_facade_run_forwards_device_dtype_into_provider(monkeypatch, tmp_path):
+    # run(device=..., dtype=...) must reach the HFActivationProvider construction
+    # verbatim (this is the actual GPU-vs-CPU forward-pass bug).
+    captured = {}
+
+    class _FakeProvider:
+        def __init__(self, model, device="cpu", dtype="float32", cache_dir=None):
+            captured["device"] = device
+            captured["dtype"] = dtype
+            raise _Stop()
+
+    monkeypatch.setattr(c1, "HFActivationProvider", _FakeProvider)
+    with pytest.raises(_Stop):
+        c1.run(
+            model="test/model", axes=["deliberation"], scan_step=2,
+            n_extraction=4, seed=1, n_null=8, out_dir=tmp_path,
+            ram_floor_mb=0.0, device="cuda", dtype="float16",
+        )
+    assert captured["device"] == "cuda"
+    assert captured["dtype"] == "float16"
+
+
+def test_run_gpu_phase0_passes_pick_device_dtype_into_c1_run(monkeypatch, tmp_path):
+    # The GPU runner must hand C1 the SAME device/dtype the C2b backend uses
+    # (_pick_device / _pick_dtype), so C1 forwards on cuda/float16 on the A800.
+    captured = {}
+
+    def _fake_c1_run(**kwargs):
+        captured.update(kwargs)
+        raise _Stop()
+
+    _usage = types.SimpleNamespace(message="ok", over_ceiling=False)
+    monkeypatch.setattr(g, "_pick_device", lambda: "cuda")
+    monkeypatch.setattr(g, "_pick_dtype", lambda: "float16")
+    monkeypatch.setattr(g, "default_guard_paths", lambda *a, **k: [])
+    monkeypatch.setattr(g, "check_disk_budget", lambda *a, **k: _usage)
+    monkeypatch.setattr(g.c1, "run", _fake_c1_run)
+
+    with pytest.raises(_Stop):
+        g.main(["--out-dir", str(tmp_path), "--axes", "deliberation"])
+    assert captured["device"] == "cuda"
+    assert captured["dtype"] == "float16"

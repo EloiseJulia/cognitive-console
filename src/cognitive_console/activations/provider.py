@@ -271,9 +271,11 @@ class HFActivationProvider(ActivationProvider):
     On-disk cache
     -------------
     Every pooled vector is cached to ``.npy`` keyed by
-    ``sha256(model, layer, pooling, text)`` under ``cache_dir`` so re-runs (e.g.
-    the extraction pass then the probe pass) never recompute a forward for a text
-    already seen. The cache is regenerable and git-ignored.
+    ``sha256(model, layer, pooling, device, dtype, text)`` under ``cache_dir`` so
+    re-runs (e.g. the extraction pass then the probe pass) never recompute a
+    forward for a text already seen. device/dtype are in the key so a warm
+    cpu-fp32 cache is never reused for a gpu-fp16 run. The cache is regenerable
+    and git-ignored.
     """
 
     _POOLING = "last_non_pad"
@@ -345,7 +347,11 @@ class HFActivationProvider(ActivationProvider):
     # -- disk cache --------------------------------------------------------
     def _cache_key(self, text: str, layer: int) -> str:
         h = hashlib.sha256()
-        for part in (self.model_name, str(layer), self._POOLING, text):
+        # device/dtype are part of the key: an fp16/cuda forward yields numerically
+        # different activations than an fp32/cpu one, so a warm cpu-fp32 cache must
+        # NOT be silently reused for a gpu-fp16 run (would corrupt the GPU results).
+        for part in (self.model_name, str(layer), self._POOLING,
+                     self.device, self.dtype, text):
             h.update(part.encode("utf-8"))
             h.update(b"\x1f")
         return h.hexdigest()

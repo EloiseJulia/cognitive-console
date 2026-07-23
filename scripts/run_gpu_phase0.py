@@ -139,7 +139,7 @@ def run_c2b(
     seed: int,
 ) -> Dict[str, object]:
     """Run the C2b reachability harness for every axis on the real model."""
-    provider = HFActivationProvider(model, device=_pick_device(), dtype="float32",
+    provider = HFActivationProvider(model, device=_pick_device(), dtype=_pick_dtype(),
                                     cache_dir=str(cache_dir))
     gen = SteeredHFBackend(model, device=provider.device, dtype=_pick_dtype())
 
@@ -391,6 +391,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             model=args.model, axes=args.axes, scan_step=args.scan_step,
             n_extraction=args.n_extraction, seed=args.seed, n_null=args.n_null,
             out_dir=c1_out, ram_floor_mb=0.0,
+            device=_pick_device(), dtype=_pick_dtype(),
         )
         c1_json, c1_summary = c1._write_results(c1_payload, c1_out, args.seed)
         c1_exp = c1._register(c1_payload, c1_out, c1_json, args.seed)

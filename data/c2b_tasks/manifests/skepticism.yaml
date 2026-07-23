@@ -16,13 +16,13 @@ fixture: skepticism.jsonl         # ~10 hand-authored false-premise MC items (OF
 real_source:
   type: huggingface
   loader: load_skepticism_set     # cognitive_console.eval.c2b_tasks (A800 only)
-  hf_id: truthful_qa
+  hf_id: truthfulqa/truthful_qa
   config: multiple_choice
   split: validation
   license: Apache-2.0
   basis:
     - name: TruthfulQA (multiple_choice, MC1 keyed misconception rejection)
-      hf_id: truthful_qa
+      hf_id: truthfulqa/truthful_qa
       config: multiple_choice
       license: Apache-2.0
   construction: >

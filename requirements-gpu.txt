@@ -1,0 +1,22 @@
+# GPU (A800) requirements for the Phase-0 pure-compute run (D-0020).
+#
+# Base package deps (numpy, pyyaml) are unchanged and declared in pyproject.toml.
+# This file adds ONLY the optional model-backend stack needed on the A800.
+#
+# TORCH CUDA WHEEL — PICK THE ONE MATCHING THE A800's CUDA (documented placeholder):
+#   Install torch from the CUDA index that matches the box, e.g. for CUDA 12.1:
+#     pip install torch --index-url https://download.pytorch.org/whl/cu121
+#   For CUDA 11.8:
+#     pip install torch --index-url https://download.pytorch.org/whl/cu118
+#   Check the driver/toolkit with `nvidia-smi` and choose the matching cuXXX wheel.
+#   Leaving torch unpinned to a CPU wheel here on purpose — do NOT install the CPU
+#   build on the A800. Install torch FIRST via the correct --index-url, THEN the
+#   rest of this file with:  pip install -r requirements-gpu.txt
+torch>=2.1
+
+transformers>=4.40
+accelerate>=0.30
+safetensors>=0.4
+huggingface_hub>=0.23
+numpy>=1.24
+pyyaml>=6.0

@@ -12,6 +12,14 @@ from .extract import (
     select_nondegenerate_layer,
 )
 
+from .generate import (
+    GenBackend,
+    SteerConfig,
+    SteeredHFBackend,
+    SyntheticSteeredBackend,
+    unit_vector,
+)
+
 __all__ = [
     "CAAResult",
     "LayerCandidate",
@@ -22,4 +30,9 @@ __all__ = [
     "mean_difference_vector",
     "min_layer_for_depth",
     "select_nondegenerate_layer",
+    "GenBackend",
+    "SteerConfig",
+    "SteeredHFBackend",
+    "SyntheticSteeredBackend",
+    "unit_vector",
 ]

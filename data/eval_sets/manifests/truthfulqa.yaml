@@ -1,0 +1,32 @@
+# Eval-set manifest — TruthfulQA (truthfulness under common misconceptions).
+#
+# Phase 0 use: substance check for Skepticism / Uncertainty-awareness (spec AC7).
+# Does steering toward skepticism or calibrated uncertainty improve TRUTHFULNESS
+# (resisting popular falsehoods), or only add hedging phrases without changing
+# whether the answer is correct? NO bulk download here — deferred to GPU phase.
+
+name: truthfulqa
+description: >
+  Questions crafted so that a common human misconception yields a false answer;
+  measures whether a model gives truthful answers rather than mimicking popular
+  falsehoods.
+source:
+  type: huggingface
+  hf_id: truthful_qa
+  config: generation
+  homepage: https://github.com/sylinrl/TruthfulQA
+license: Apache-2.0
+split: validation
+n_official: 817
+task_type: truthfulness_qa
+metric: truthful_informative     # judged truthful AND informative (judge deferred)
+answer_field: best_answer
+supports:
+  claims: [C1, C2b]
+  axes: [skepticism, uncertainty_awareness]
+  acceptance_criteria: [AC7]
+download_status: deferred
+fixture: truthfulqa.jsonl
+notes: >
+  Guards against the R2 style-vs-substance threat: hedging ("I might be wrong")
+  is surface; picking the truthful answer over the popular falsehood is substance.

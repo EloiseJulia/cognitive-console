@@ -1,0 +1,32 @@
+# Eval-set manifest — GSM8K (grade-school math word problems).
+#
+# Phase 0 use: style-vs-substance probe (spec AC7). Does steering a cognitive
+# axis (esp. Deliberation) change *correctness* on multi-step arithmetic, or only
+# surface style? A reasoning-gain task with ground-truth answers is required to
+# tell those apart. NO bulk download here — real fetch is deferred to the GPU
+# phase; the loader reads this manifest plus the tiny hand-written fixture.
+
+name: gsm8k
+description: >
+  Grade-school math word problems requiring multi-step arithmetic reasoning,
+  each with a single numeric ground-truth answer.
+source:
+  type: huggingface
+  hf_id: openai/gsm8k
+  config: main
+  homepage: https://github.com/openai/grade-school-math
+license: MIT
+split: test
+n_official: 1319          # official test split size (for reference; not downloaded now)
+task_type: numeric_qa
+metric: exact_match_numeric      # parse final number, compare to gold
+answer_field: answer             # gold answer after the '####' delimiter
+supports:
+  claims: [C1, C2b]
+  axes: [deliberation, uncertainty_awareness]
+  acceptance_criteria: [AC7]
+download_status: deferred        # GPU phase only; do not fetch in Phase 0 prep
+fixture: gsm8k.jsonl
+notes: >
+  Correctness moving under Deliberation steering = substance; unchanged accuracy
+  with longer output = style-only (report honestly either way, per spec 3-Red).

@@ -1,0 +1,8 @@
+{"id": "format-fix-01", "prompt": "Describe the ocean.", "constraints": [{"type": "max_words", "value": 20}]}
+{"id": "format-fix-02", "prompt": "List three primary colors as a JSON array.", "constraints": [{"type": "valid_json", "value": true}]}
+{"id": "format-fix-03", "prompt": "Write a sentence about coffee that includes the word 'morning'.", "constraints": [{"type": "include_keyword", "value": "morning"}]}
+{"id": "format-fix-04", "prompt": "Explain gravity in exactly two sentences.", "constraints": [{"type": "exact_sentences", "value": 2}]}
+{"id": "format-fix-05", "prompt": "Name a fruit without using the letter 'a'.", "constraints": [{"type": "exclude_char", "value": "a"}]}
+{"id": "format-fix-06", "prompt": "Give a greeting in no more than five words.", "constraints": [{"type": "max_words", "value": 5}]}
+{"id": "format-fix-07", "prompt": "Answer with a JSON object containing keys 'name' and 'age'.", "constraints": [{"type": "valid_json", "value": true}, {"type": "json_keys", "value": ["name", "age"]}]}
+{"id": "format-fix-08", "prompt": "Write about winter and include the word 'snow' while staying under 15 words.", "constraints": [{"type": "include_keyword", "value": "snow"}, {"type": "max_words", "value": 15}]}

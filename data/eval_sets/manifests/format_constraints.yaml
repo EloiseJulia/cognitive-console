@@ -1,0 +1,41 @@
+# Eval-set manifest — Format / length / keyword constraint set (Stolfo-style).
+#
+# Phase 0 use: instruction-following / controllability probe (spec §5, AC4/AC5).
+# Verifiable, automatically-checkable output constraints (exact word count, JSON
+# format, include/exclude a keyword, max length). Used to measure whether a
+# cognitive-axis intervention (esp. Focus) preserves or degrades the model's
+# ability to satisfy hard formatting constraints — and as a clean, judge-free
+# behavioral signal. NO bulk download — deferred to GPU phase.
+
+name: format_constraints
+description: >
+  Prompts with mechanically verifiable output constraints (length, format,
+  keyword inclusion/exclusion). Each item carries a programmatic checker spec so
+  pass/fail needs no human or LLM judge.
+source:
+  type: assembled
+  basis:
+    - name: IFEval (Instruction-Following Eval) verifiable-instructions style
+      url: https://github.com/google-research/google-research/tree/master/instruction_following_eval
+    - name: Stolfo et al. constraint-following steering probes
+      url: https://arxiv.org/abs/2410.12877
+  construction: >
+    Each item = an instruction plus a machine-checkable constraint (e.g. 'answer
+    in exactly 3 sentences', 'output valid JSON with keys a,b', 'include the word
+    X', 'do not use the letter e'). Score = constraint-satisfaction rate.
+license: Apache-2.0                      # IFEval is Apache-2.0; verify per-item on assembly
+split: probe
+n_official: null
+task_type: verifiable_constraint_following
+metric: constraint_satisfaction_rate
+answer_field: constraints                # list of checkable constraint specs
+supports:
+  claims: [C1, C2b]
+  axes: [focus]
+  acceptance_criteria: [AC4, AC5]
+download_status: deferred
+fixture: format_constraints.jsonl
+notes: >
+  Judge-free by design — each constraint has a deterministic checker, giving a
+  fluency/usefulness signal that does not depend on an LLM judge (mitigates the
+  blind-eval fairness concern in the plan's open questions).

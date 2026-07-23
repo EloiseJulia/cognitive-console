@@ -22,8 +22,9 @@ model, no GPU, no I/O.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass, field
-from typing import Dict, List, Sequence
+from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 
@@ -172,3 +173,119 @@ def extract_caa(
         selection=selection,
         per_layer=per_layer,
     )
+
+
+# --------------------------------------------------------------------------- #
+# Non-degenerate layer selection (feature/4, D-0019)
+# --------------------------------------------------------------------------- #
+# The bare Cohen's-d rule above maximizes pos/neg SEPARATION, which can pick a
+# shallow, near-lexical layer whose contrast direction û does NOT actually move
+# the positive pole away from a content-free NEUTRAL origin. On Qwen2.5-1.5B the
+# `focus` axis hit exactly this: layer 2 had the highest separation (6.54) yet
+# pole_reach = <mean(pos) - mean(neutral), û> ~= 0 (a degenerate direction for
+# the facade measurement — there is no achievable range to take a fraction of).
+#
+# A layer is NON-DEGENERATE for the C1 facade read only if ALL hold:
+#   1. depth floor: layer >= min_layer (~>=20% of network depth) — steering
+#      directions live in the transformer's mid/late blocks, not the shallow
+#      near-embedding layers where separation is often lexical.
+#   2. positive pos/neg separation (separation > 0).
+#   3. the positive pole clears the random-direction null from the neutral
+#      origin: pole_reach > 0 AND pole_reach > pole_null_p95 (extraction_success).
+#
+# We select the best-separation layer AMONG the non-degenerate ones (ties -> lower
+# index), and expose the top-k for robustness reporting. If NO layer qualifies,
+# `chosen` is None and the caller must report the axis as UNSTABLE rather than
+# forcing a facade at a degenerate layer.
+
+
+def min_layer_for_depth(top_layer: int, min_depth_frac: float = 0.2) -> int:
+    """Shallowest layer index allowed for CAA selection: ceil(frac * top_layer).
+
+    `top_layer` is the deepest hidden-state index (num_hidden_layers). With
+    frac=0.2 on a 28-block model this excludes layers 1..5 (below index 6)."""
+    if not (0.0 <= min_depth_frac < 1.0):
+        raise ValueError("min_depth_frac must be in [0, 1)")
+    if top_layer < 0:
+        raise ValueError("top_layer must be >= 0")
+    return int(math.ceil(min_depth_frac * top_layer))
+
+
+@dataclass(frozen=True)
+class LayerCandidate:
+    layer: int
+    separation: float          # Cohen's-d pos/neg separation
+    pole_reach: float          # <mean(pos) - mean(neutral), û>
+    pole_null_p95: float       # random-direction null p95 on the pole displacement
+    valid: bool                # non-degenerate for the facade read
+    reject_reason: str         # "" if valid, else why it was rejected
+
+
+@dataclass(frozen=True)
+class LayerSelection:
+    chosen: Optional[int]                       # best non-degenerate layer, or None
+    ranked: List[int]                           # top-k non-degenerate layers (best sep first)
+    candidates: Dict[int, LayerCandidate]       # per-layer diagnostics + validity
+    min_layer: int
+    top_k: int
+
+    @property
+    def has_stable_layer(self) -> bool:
+        return self.chosen is not None
+
+
+def select_nondegenerate_layer(
+    separation_by_layer: Dict[int, float],
+    pole_reach_by_layer: Dict[int, float],
+    pole_null_p95_by_layer: Dict[int, float],
+    min_layer: int,
+    top_k: int = 3,
+) -> LayerSelection:
+    """Pick the best NON-DEGENERATE layer for the C1 facade read.
+
+    A layer qualifies iff layer >= min_layer AND separation > 0 AND
+    pole_reach > 0 AND pole_reach > pole_null_p95. Among qualifying layers the
+    one with the highest Cohen's-d separation wins (ties -> lower index). The
+    top-k qualifying layers are returned for robustness reporting. If none
+    qualify, `chosen` is None (caller reports the axis as unstable).
+    """
+    if top_k < 1:
+        raise ValueError("top_k must be >= 1")
+    layers = sorted(separation_by_layer)
+    candidates: Dict[int, LayerCandidate] = {}
+    for ell in layers:
+        sep = float(separation_by_layer[ell])
+        pole = float(pole_reach_by_layer[ell])
+        p95 = float(pole_null_p95_by_layer[ell])
+        reasons: List[str] = []
+        if ell < min_layer:
+            reasons.append(f"below depth floor (layer {ell} < {min_layer})")
+        if not (sep > 0.0):
+            reasons.append("non-positive pos/neg separation")
+        if not (pole > 0.0):
+            reasons.append("pole_reach <= 0 (pole not on +û side of neutral)")
+        elif not (pole > p95):
+            reasons.append("pole_reach below random-null p95 (extraction failed)")
+        valid = not reasons
+        candidates[ell] = LayerCandidate(
+            layer=ell,
+            separation=sep,
+            pole_reach=pole,
+            pole_null_p95=p95,
+            valid=valid,
+            reject_reason="; ".join(reasons),
+        )
+
+    valid_layers = [ell for ell in layers if candidates[ell].valid]
+    # Best separation first; ties -> lower layer index (deterministic).
+    valid_layers.sort(key=lambda ell: (-candidates[ell].separation, ell))
+    ranked = valid_layers[:top_k]
+    chosen = ranked[0] if ranked else None
+    return LayerSelection(
+        chosen=chosen,
+        ranked=ranked,
+        candidates=candidates,
+        min_layer=int(min_layer),
+        top_k=int(top_k),
+    )
+

@@ -180,7 +180,9 @@ def test_strongest_prompt_sets_have_expected_size_and_schema():
     for f in sorted(STRONGEST_DIR.glob("*.jsonl")):
         rows = _jsonl(f)
         n = len(rows)
-        assert 6 <= n <= 8, f"{f.name}: {n} strongest prompts, expected 6-8"
+        # Expanded set (feature/4, D-0019): 15-20 diverse strong prompts per axis
+        # tightens the bootstrap CI. Lower bound guards against silent truncation.
+        assert 15 <= n <= 20, f"{f.name}: {n} strongest prompts, expected 15-20"
         ids = set()
         for row in rows:
             assert set(row) == {"axis", "prompt_id", "text"}, f"{f.name}: bad keys {row}"

@@ -5,3 +5,12 @@
 {"axis": "focus", "prompt_id": "focus-strong-05", "text": "Stay laser-focused on the actual question. Trim anything that is not directly relevant and get straight to the substance."}
 {"axis": "focus", "prompt_id": "focus-strong-06", "text": "Answer precisely what was asked and nothing more. Resist the urge to elaborate on unrelated points or ramble."}
 {"axis": "focus", "prompt_id": "focus-strong-07", "text": "Be disciplined and direct: one clear line of thought, no detours, aimed squarely at resolving my specific question."}
+{"axis": "focus", "prompt_id": "focus-strong-08", "text": "Give me only the essentials. Strip out background, caveats, and side notes that I did not ask for."}
+{"axis": "focus", "prompt_id": "focus-strong-09", "text": "Hold a single thread and follow it to the answer. Do not branch into related-but-unasked topics."}
+{"axis": "focus", "prompt_id": "focus-strong-10", "text": "Respond with just the relevant point. No warm-up, no summary, no extra scope beyond what I raised."}
+{"axis": "focus", "prompt_id": "focus-strong-11", "text": "Keep your attention fixed on my exact ask. Anything that does not serve that answer should be left out."}
+{"axis": "focus", "prompt_id": "focus-strong-12", "text": "Be economical and pointed. Deliver the specific thing requested without drifting or over-explaining."}
+{"axis": "focus", "prompt_id": "focus-strong-13", "text": "Cut to the chase. Address the precise question and stop there, without spilling into adjacent subjects."}
+{"axis": "focus", "prompt_id": "focus-strong-14", "text": "Stay narrow and on target. I want the answer to this one issue, not a tour of everything around it."}
+{"axis": "focus", "prompt_id": "focus-strong-15", "text": "Focus tightly and answer directly. Leave out asides, hedges, and anything not needed to resolve the ask."}
+{"axis": "focus", "prompt_id": "focus-strong-16", "text": "Keep the response lean and on-mission: the specific answer, nothing padded, nothing off-track."}

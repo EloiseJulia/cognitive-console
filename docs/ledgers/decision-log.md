@@ -49,6 +49,15 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0027 · §5 data-license APPROVED: GSM8K/MIT, TruthfulQA/Apache-2.0, TriviaQA/Apache-2.0
+- **Owner (@EloiseJulia) approved** the C2b adjudication datasets (permissive licenses, research use):
+  deliberation=GSM8K (MIT, numeric-answer accuracy); skepticism=TruthfulQA (Apache-2.0, false-premise/
+  common-misconception rejection, MC keys for deterministic scoring); uncertainty=TriviaQA (Apache-2.0,
+  factual QA + verbalized confidence → per-item Brier).
+- These are downloaded on the A800 at run time (network available); offline fixtures for tests. Manifest
+  records dataset+version+split+license per AI-Instruction §8.
+- **Frozen?** Prereg frozen; instrument fix (Brier+seed+minors+loaders) in progress on feature/7.
+
 ## 2026-07-23 · D-0026 · C2b instrument audited — core correct/unbiased; fix Brier+seed+minors+loaders
 - **Audit verdict (independent hostile):** NOT-safe-to-run-as-is, but the CORE is correct & unbiased —
   paired ITEM-cluster bootstrap, two-sided, Bonferroni CI, DEV/TEST isolation (no selection leakage),

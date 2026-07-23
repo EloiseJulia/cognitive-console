@@ -1,0 +1,13 @@
+artifact_id: c1-facade-pilot-table
+paper_location: null
+supports_claims:
+- C1
+source_experiments:
+- c1-facade-d553d2cb-0001
+aggregation_script: scripts/run_c1_facade.py
+aggregation_commit: 8d0a0bd26f89c416991da1c7be45d533d95b07e6
+raw_data_hash: sha256:89f01eace34c0ce73312636d90b43b4ffd20f5049e5a37824bd10ea83151a458
+output_file: results/c1_facade_1p5b_2026-07-23/c1_facade_results.json
+manual_edits_allowed: false
+last_verified: '2026-07-23T09:18:04.070556+00:00'
+verdict: pending

@@ -49,6 +49,17 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0017 · Human GO: same-origin scale-free facade metric + CI, re-run 1.5B
+- **Human decision (@EloiseJulia):** "GO" — implement the audit's recommended fair metric and re-run.
+- **Metric v2 (feature/3):** facade_ratio = ⟨prompt−neutral, û⟩ / ⟨pos_pole−neutral, û⟩ (prompt's fraction
+  of the neutral→pos-pole achievable range; same origin, scale-free, α-independent). Add bootstrap CI over
+  the strong-prompt set + leave-one-neutral-out sensitivity band. Drop 'above null' as a headline (trivial
+  high-dim bar) — keep only as a sanity note. Unit-test THIS exact computation. Keep old metric fields for
+  compare but mark superseded.
+- **Re-run:** Qwen2.5-1.5B fp32 CPU (weights cached), EXPLORATORY, zero paid/GPU. Then AUDIT again.
+- **Honest read target:** how many axes show a real facade gap (ratio meaningfully <1 with CI not crossing 1)
+  under the FAIR metric. Frozen? No.
+
 ## 2026-07-23 · D-0016 · 1.5B facade result AUDITED → mostly a metric artifact, NOT a real signal
 - **Audit verdict (independent hostile, feature/3):** the headline "3/4 axes show a facade gap" is
   **(b) largely an artifact of metric construction**, should NOT move a GPU go/no-go.

@@ -49,6 +49,17 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0012 · phase0-analysis fixes verified & merged to main
+- **Verification (Manager independent):** re-ran pytest → 111 passed; independently probed B1 (anti-aligned
+  facade now `not c1_supported`, via the fail-without-guard test) and M1 (identical green inputs:
+  max_facade_ratio 0.85→main_line, 0.95→plan_d — the 0.9 gate is now a real independent trigger). **B1 closed.**
+- **Merged** feature/2-phase0-analysis → main (--no-ff). Phase 0 analysis pipeline (activation seam, CAA
+  extraction, facade C1, routing, conflict harness, lineage/manifest) is code-complete + offline-tested;
+  GPU forward pass cleanly stubbed (HFActivationProvider/BehaviorBackend) — plugs into whatever backend later.
+- **Deferred (m3, logged open-risks):** GPU phase must register the conflict-probe calibration (prompt_target/
+  latent_target poles) as its own experiment_id feeding the harness, else landing_fraction is silently biased.
+- **Frozen?** No. All Phase-0 code/data ready on CPU; execution still blocked on human GPU/API/IRB (§5).
+
 ## 2026-07-23 · D-0011 · phase0-analysis audit (merge-after-fixes); dispatching fixes
 - **Audit (independent hostile, branch feature/2-phase0-analysis):** core math verified CLEAN — CAA
   orientation (pos−neg, not swapped), fair unit-vector null, Cohen's-d layer scan (non-circular), tautology

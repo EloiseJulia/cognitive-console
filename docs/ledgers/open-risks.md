@@ -31,3 +31,6 @@
     meta-stance before S5 extraction.
 11. **[LOW-NEW] Registry stale-lock.** `.lock` sidecar (O_EXCL) has no stale-lock reaping; a crashed holder
     blocks writers until timeout. Harden before heavy parallel GPU-phase writes.
+12. **[LOW-NEW] Conflict-probe calibration provenance (m3).** GPU phase must register the calibration run
+    that sets prompt_target/latent_target poles as its own experiment_id feeding conflict_probe, else
+    landing_fraction is silently biased by mis-estimated poles.

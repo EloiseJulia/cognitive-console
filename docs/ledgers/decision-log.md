@@ -49,6 +49,20 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-23 · D-0019 · Human: strengthen C1 on 1.5B (free) — fix focus, expand prompts, robustness
+- **Human decision (@EloiseJulia):** "a" — strengthen C1 locally before any GPU escalation.
+- **Scope (feature/4-c1-strengthen, CPU/1.5B, optional 3B, zero paid/GPU):**
+  1. Fix focus layer-selection: the Cohen's-d rule picked degenerate layer-2 (pole_reach≈0). Restrict the
+     scan to exclude degenerate shallow layers / require chosen-layer pole_reach clearly > 0 (extraction
+     success); if focus still yields no stable direction at 1.5B, report that HONESTLY (don't force it).
+  2. Expand strong-prompt set per axis (7 → ~15–20 diverse, still distinct-in-kind from contrast pairs) to
+     tighten the bootstrap CI.
+  3. Robustness: report facade_ratio across the top-k candidate layers (not just the argmax) + a couple of
+     RNG seeds for the null/bootstrap, so the C1 read isn't a single-layer/single-seed artifact.
+  4. Optional: if RAM allows, a Qwen2.5-3B confirmation pass (free) to see if the 2/4 pattern holds at 3B.
+- **Then AUDIT.** EXPLORATORY still (valid_for_paper=false); goal = harden the C1 exploratory read, not freeze.
+- **Frozen?** No.
+
 ## 2026-07-23 · D-0018 · Fair-metric C1 read on 1.5B — 2/4 axes show a facade gap (credible EXPLORATORY)
 - **Result (feature/3, run c1-facade-d553d2cb-0001, same-origin scale-free metric + bootstrap CI):**
   | axis | facade_ratio | 95% CI | C1 gap? |

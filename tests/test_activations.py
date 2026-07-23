@@ -97,3 +97,29 @@ def test_hf_provider_raises_helpful_error_without_torch():
     prov = HFActivationProvider("Qwen/Qwen2.5-0.5B-Instruct")
     with pytest.raises(NotImplementedError):
         prov.get_activations(["hi"], layer=6)
+
+
+def test_hf_cache_key_includes_device_and_dtype():
+    # A cpu/fp32 forward is numerically different from a cuda/fp16 forward, so the
+    # on-disk activation cache MUST NOT be shared across (device, dtype): otherwise
+    # a warm cpu-fp32 cache would be silently reused for a gpu-fp16 run and corrupt
+    # the GPU results. Construction is torch-free (no model load).
+    cpu = HFActivationProvider(
+        "Qwen/Qwen2.5-0.5B-Instruct", layers=[6], device="cpu", dtype="float32"
+    )
+    gpu = HFActivationProvider(
+        "Qwen/Qwen2.5-0.5B-Instruct", layers=[6], device="cuda", dtype="float16"
+    )
+    text, layer = "hello world", 6
+    assert cpu._cache_key(text, layer) != gpu._cache_key(text, layer)
+    assert cpu._cache_path(text, layer) != gpu._cache_path(text, layer)
+    # Same (device, dtype) is deterministic / reused.
+    cpu2 = HFActivationProvider(
+        "Qwen/Qwen2.5-0.5B-Instruct", layers=[6], device="cpu", dtype="float32"
+    )
+    assert cpu._cache_key(text, layer) == cpu2._cache_key(text, layer)
+    # dtype alone flips the key even on the same device.
+    gpu_fp32 = HFActivationProvider(
+        "Qwen/Qwen2.5-0.5B-Instruct", layers=[6], device="cuda", dtype="float32"
+    )
+    assert gpu._cache_key(text, layer) != gpu_fp32._cache_key(text, layer)

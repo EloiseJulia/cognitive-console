@@ -1,0 +1,110 @@
+reviewer: R3
+persona: Skeptical Generalist
+review_date: 2026-07-24
+scope:
+  mode: frozen-input-only
+  files:
+    - docs/paper/reframe-2026-07-24-reality-check.md
+    - docs/ledgers/claim-ledger.md
+    - docs/ledgers/evidence-ledger.md
+    - results/c2b_adjudication_hf_2026-07-24/c2b_adjudication_summary.md
+    - docs/ledgers/prereg-c2b-adjudication.md
+    - 开题报告_非满射双通道认知控制台.md
+  excluded_by_instruction:
+    - docs/ledgers/decision-log.md
+    - manager-response
+
+independent_restatement: |
+  论文目前最可信的“硬证据主线”是：在 Qwen2.5-7B + CAA 这一路径上，经过冻结预注册评估后，
+  可读的 latent 方向并没有带来超越 best-prompt 的行为收益，且在 uncertainty/calibration 轴出现显著负效应。
+  作者希望把这一定义为 “legibility != controllability” 的 reality-check，并用 non-surjective 叙事解释其意义，
+  同时将 console 从“主贡献”降级为“设计落点/未来方向”。
+
+ranked_findings:
+  - id: R3-B1
+    severity: BLOCKER
+    title: "Venue-fit collapse risk after removing human evidence"
+    why_it_matters: |
+      在当前证据形态下，主体是单模型单方法的模型行为负结果；console 与用户证据尚未落地。
+      对 IUI/CHI 审稿人，这容易被读成“ML 负结果 + HCI 愿景”，而非“已完成的交互贡献”。
+      这是最现实的 desk-reject / out-of-scope 风险。
+    discriminating_action: |
+      增加最小但明确的人机落点证据（即便非正式）：例如 8-12 名目标用户的短程任务研究，
+      检验“边界可视化/冲突解释”是否改变用户的校准信任、错误归因或控制策略。
+    close_condition: |
+      稿件主结论中至少有一条被实际用户数据支持（不只是 future work），并与 C2 负结果形成因果叙事闭环。
+
+  - id: R3-B2
+    severity: BLOCKER
+    title: "External validity too narrow for headline claim"
+    why_it_matters: |
+      C2 目前仅覆盖一个模型家族（Qwen2.5-7B）与一个 steering 方法家族（CAA）。
+      结论若写成一般性的“可读不等于可控”，怀疑型 AC 会直接质疑“只是你们这套方法没调好”。
+    discriminating_action: |
+      做最小稳健性扩展：至少再加 1 个模型家族（如 Llama）和 1 个替代干预族（如 ActAdd/RepE 之一）的同协议复核。
+    close_condition: |
+      核心负结果在“>=2 模型家族 x >=2 方法族”中保持方向一致；否则必须把主张收缩为严格条件化结论。
+
+  - id: R3-M1
+    severity: MAJOR
+    title: "Mechanism bridge is currently inferential, not evidenced"
+    why_it_matters: |
+      off-manifold 机制被放在核心叙事位置，但证据账本也承认它仍是推断性假说。
+      若写得过满，会被认为用理论词汇包装单次负结果。
+    discriminating_action: |
+      补一个低成本机制判别：报告与行为退化相关的 manifold-distance / activation-norm 异常，并做替代解释排除。
+    close_condition: |
+      机制段落从“解释性话术”变为“有判别力的实证支持”或明确降级为限制性假设。
+
+  - id: R3-M2
+    severity: MAJOR
+    title: "Novelty framing vulnerable to 'so what / already known'"
+    why_it_matters: |
+      “prompt 强、latent 不一定更好”在 ML 社区并非反直觉；若没有清晰的可迁移方法学产出，
+      容易被看成一次工程失败的诚实报告，而不是可累计的学术贡献。
+    discriminating_action: |
+      将可复用贡献显式产品化：冻结 adjudication protocol、failure taxonomy、何时不该部署 latent control 的判据。
+    close_condition: |
+      读者可直接复用的“负结果方法资产”成为贡献主项，而不依赖叙事修辞。
+
+four_questions:
+  q1_single_method_single_model_fatal: |
+    从“说服怀疑型 AC”视角，当前形态接近致命（对强主张是致命）。
+    若主张收缩为“在 Qwen2.5-7B + CAA + 该预注册协议下的高可信负结果”，可成立；
+    但不足以支撑更广泛的机制或范式性结论。
+
+  q2_no_human_iui_chi_fit: |
+    无真人后，IUI/CHI 领域匹配显著变弱。当前更像 ML 行为评估论文；
+    若没有最小用户/交互证据，极可能被要求转投 ML venue 或作为 ML 负结果提交。
+    要留在 HCI 顶会，至少要证明该负结果如何改变用户理解、决策或信任校准。
+
+  q3_venue_ranking_after_human_cut:
+    ranking:
+      - venue: IUI
+        fit: "relative-best but still fragile"
+        rationale: "IUI 对智能界面与评估包容度较高，允许系统+评估叙事；但仍需最小交互证据。"
+      - venue: CHI
+        fit: "weaker without user evidence"
+        rationale: "CHI 对人类情境与设计知识要求更高；纯模型负结果难过主审预期。"
+      - venue: CSCW
+        fit: "worst"
+        rationale: "CSCW强调协作/社会技术系统与真实群体实践，当前问题设定与证据都不匹配。"
+
+  q4_minimum_to_convince_skeptical_ac:
+    minimum_additions:
+      - "稳健性最小包：>=2 模型家族 x >=2 方法族，沿用同一冻结 adjudication。"
+      - "至少一个机制判别实验，避免 off-manifold 仅为修辞解释。"
+      - "至少一个面向交互/用户的落点证据（可小样本、可非正式），证明该负结果带来可观察的用户层价值。"
+      - "把主张严格条件化，避免从单方法负结果外推到普遍不可控。"
+
+initial_score:
+  overall_range: "2.0-3.0 / 5 (Reject to Weak Reject)"
+  confidence: 0.82
+  summary_judgment: |
+    作为“高质量负结果”有潜力，但在当前版本中，最可能被拒的原因不是统计不严谨，
+    而是 venue mismatch 与过宽叙事外推。
+
+top3_reject_risks:
+  - "Desk-reject: HCI contribution not evidenced after console downgrade and no human study."
+  - "Over-claim: general non-surjective/controllability narrative backed by single-model single-method negative."
+  - "Reviewer interpretation: this is method weakness, not a field-level insight with user impact."

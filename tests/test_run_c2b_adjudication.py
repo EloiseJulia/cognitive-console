@@ -12,6 +12,7 @@ from scripts import run_c2b_adjudication as R
 def test_parser_has_allow_underpowered_defaulting_off():
     args = R.build_parser().parse_args(["--backend", "synthetic"])
     assert args.allow_underpowered is False
+    assert args.steering_method == "caa"
 
 
 def test_underpowered_bootstrap_hard_fails_without_flag():
@@ -63,6 +64,12 @@ def test_fingerprint_encodes_do_sample_via_backend():
     fp_syn = _fp_for_argv(["--backend", "synthetic", "--batch-size", "16"])
     fp_hf = _fp_for_argv(["--backend", "hf", "--batch-size", "16"])
     assert fp_syn != fp_hf
+
+
+def test_fingerprint_changes_with_steering_method():
+    fp_caa = _fp_for_argv(["--backend", "hf", "--steering-method", "caa"])
+    fp_iti = _fp_for_argv(["--backend", "hf", "--steering-method", "iti"])
+    assert fp_caa != fp_iti
 
 
 @pytest.mark.parametrize("axis", R.ADJ_AXES)

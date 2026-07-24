@@ -1,6 +1,7 @@
 """ActivationProvider seam: synthetic determinism/planting + HF stub (no torch)."""
 
 import sys
+import types
 
 import numpy as np
 import pytest
@@ -123,3 +124,46 @@ def test_hf_cache_key_includes_device_and_dtype():
         "Qwen/Qwen2.5-0.5B-Instruct", layers=[6], device="cuda", dtype="float32"
     )
     assert gpu._cache_key(text, layer) != gpu_fp32._cache_key(text, layer)
+
+
+def test_hf_provider_chat_template_render_is_model_agnostic():
+    class FakeTokenizer:
+        def __init__(self, family):
+            self.family = family
+
+        def apply_chat_template(self, messages, tokenize, add_generation_prompt):
+            assert tokenize is False
+            assert add_generation_prompt is True
+            return f"{self.family}:{messages[0]['role']}:{messages[0]['content']}"
+
+    for family in ("qwen", "llama"):
+        tok = FakeTokenizer(family)
+        rendered = HFActivationProvider._render_user_chat_prompt(tok, "hello")
+        assert rendered == f"{family}:user:hello"
+
+
+def test_hf_provider_chat_template_falls_back_to_raw_text():
+    class PlainTokenizer:
+        pass
+
+    assert HFActivationProvider._render_user_chat_prompt(PlainTokenizer(), "plain") == "plain"
+
+
+def test_hf_provider_chat_template_error_is_explicit():
+    class BrokenTokenizer:
+        def apply_chat_template(self, messages, tokenize, add_generation_prompt):
+            raise ValueError("boom")
+
+    with pytest.raises(RuntimeError, match="apply_chat_template failed"):
+        HFActivationProvider._render_user_chat_prompt(
+            BrokenTokenizer(), "plain", model_name="Qwen/Qwen2.5-0.5B-Instruct"
+        )
+
+
+def test_hf_provider_llama_layer_and_hidden_size_metadata_without_loading():
+    # No torch/network: emulate a loaded Llama-3-8B config.
+    prov = HFActivationProvider("meta-llama/Meta-Llama-3-8B-Instruct")
+    prov._model = object()
+    prov._config = types.SimpleNamespace(num_hidden_layers=32, hidden_size=4096)
+    assert prov.available_layers() == list(range(33))
+    assert prov.hidden_dim == 4096

@@ -90,3 +90,43 @@ def test_real_steered_generation_alpha0_matches_plain():
         "Tell me about the moon.", SteerConfig(d, 0.0, layer), max_new_tokens=16
     )
     assert plain == a0  # alpha=0 must be bit-identical to unsteered
+
+
+@pytest.mark.skipif(
+    not (_HAS_TORCH and _HAS_TF and _SMOKE),
+    reason="real-model smoke test: set COGNITIVE_CONSOLE_GPU_SMOKE=1 with torch+transformers+model",
+)
+def test_batched_vs_unbatched_greedy_identical():
+    """FIX 3: a padded GREEDY batch must reproduce the per-sequence outputs exactly
+    (no RNG), so batching never changes greedy outcomes for the same inputs."""
+    backend = SteeredHFBackend(_SMOKE_MODEL, device="cpu", dtype="float32")
+    d = np.ones(backend.hidden_dim)
+    layer = max(1, backend.num_hidden_layers // 2)
+    steer = SteerConfig(d, 6.0, layer)
+    prompts = ["What is 2+2?", "Name a color.", "Is the sky blue?"]
+    single = [backend.generate(p, steer, max_new_tokens=16) for p in prompts]
+    batched = backend.generate_batch(prompts, steer, max_new_tokens=16, do_sample=False)
+    assert batched == single
+
+
+@pytest.mark.skipif(
+    not (_HAS_TORCH and _HAS_TF and _SMOKE),
+    reason="real-model smoke test: set COGNITIVE_CONSOLE_GPU_SMOKE=1 with torch+transformers+model",
+)
+def test_batched_sampled_is_deterministic_and_well_formed():
+    """FIX 3: SAMPLED batched generation is deterministic for a fixed batch
+    composition/seeds (reproducible -> resume-safe) and yields one output per row.
+    (Bit-identity to the per-row seeded path is NOT required — samples are only
+    required to be statistically equivalent; here we assert reproducibility.)"""
+    backend = SteeredHFBackend(_SMOKE_MODEL, device="cpu", dtype="float32")
+    d = np.ones(backend.hidden_dim)
+    layer = max(1, backend.num_hidden_layers // 2)
+    steer = SteerConfig(d, 6.0, layer)
+    prompts = ["Tell me about the moon.", "Tell me about the sun."]
+    seeds = [11, 22]
+    a = backend.generate_batch(prompts, steer, max_new_tokens=16, seeds=seeds,
+                               do_sample=True, temperature=0.7)
+    b = backend.generate_batch(prompts, steer, max_new_tokens=16, seeds=seeds,
+                               do_sample=True, temperature=0.7)
+    assert a == b  # same seeds + composition -> reproducible
+    assert len(a) == len(prompts)

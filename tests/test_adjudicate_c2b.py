@@ -351,3 +351,192 @@ def test_coherence_floor_still_conservative_on_a_broken_cell():
         return 0.1 if alpha == 0 else 1.0  # 1.0 >> 1.5*0.1 + 0.02 = 0.17
     sel = A.select_on_dev(RecordingSampler(outcome, degeneracy), spec, dev_items, k=5)
     assert sel.frozen_alpha is None
+
+
+# --------------------------------------------------------------------------- #
+# HARDEN FIX 4 — up-front planned generation count (budget visibility)
+# --------------------------------------------------------------------------- #
+def test_plan_generation_counts_matches_hand_count():
+    # _spec: 2 strong prompts; alpha_grid=7; k=5; n=30 -> n_dev=10, n_test=20.
+    spec = _spec(n=30)
+    per_axis, total = A.plan_generation_counts([spec], k=5)
+    # DEV = 5*10*(2 prompts + 1 baseline + 7 alphas) = 500
+    # TEST = 5*20*(prompt+steer+baseline+conflict+conflict_pole = 5) = 500
+    assert per_axis[spec.axis] == 1000
+    assert total == 1000
+
+
+def test_plan_generation_counts_uses_frozen_n_defaults():
+    # With the frozen N=60/60/80, n_strong=16, k=5, grid=7 the planned TOTAL is
+    # the budget the Manager sanity-checks before committing GPU time.
+    def mk(axis, n):
+        items = [{"id": f"{axis}-{i}", "prompt": f"q{i}", "answer": str(i)}
+                 for i in range(n)]
+        strong = [(f"p{j}", f"prompt {j}") for j in range(16)]
+        return AxisAdjSpec(axis=axis, items=items, strong_prompts=strong,
+                           neutral_prompt="n", direction=np.ones(8), layer=3)
+    specs = [mk("deliberation", 60), mk("skepticism", 60),
+             mk("uncertainty_awareness", 80)]
+    per_axis, total = A.plan_generation_counts(specs, k=5)
+    assert per_axis["deliberation"] == 3400
+    assert per_axis["skepticism"] == 3400
+    assert per_axis["uncertainty_awareness"] == 4565
+    assert total == 11365
+
+
+def test_progress_tracker_counts_and_eta():
+    p = A.ProgressTracker(total_planned=100)
+    p.add(20, fresh=True)
+    p.add(30, fresh=False)
+    assert p.done == 50
+    assert p.fresh == 20
+    assert p._eta() >= 0.0
+
+
+# --------------------------------------------------------------------------- #
+# HARDEN FIX 2 — checkpointing + deterministic RESUME -> identical verdict
+# --------------------------------------------------------------------------- #
+def _synth_factory():
+    def sampler_for_axis(axis):
+        task = c2b_tasks.load_c2b_task(axis, use_fixture=True)
+        backend = SyntheticC2bTaskBackend(axis, task.items, prompt_gain=0.4,
+                                          alpha_gain=0.1, threshold=0.5)
+        return BackendOutcomeSampler(backend, do_sample=False)
+    return sampler_for_axis
+
+
+class _PoisonSampler(OutcomeSampler):
+    """Fails loudly if asked to GENERATE — proves a resumed run used the cache."""
+    def sample(self, axis, item, instruction, alpha, k, direction, layer):
+        raise AssertionError("generation attempted despite a complete checkpoint")
+
+
+def test_checkpoint_store_roundtrip(tmp_path):
+    cp = A.CheckpointStore(tmp_path / "ck", "cfg-abc", seed=7)
+    assert cp.get("deliberation", A.PHASE_TEST_STEER, "alpha=4.0", "it-1") is None
+    cp.put("deliberation", A.PHASE_TEST_STEER, "alpha=4.0", "it-1",
+           [1.0, 0.0, 1.0], [0.1, 0.1, 0.1], 4.0, "neutral")
+    cp.close()
+    # a NEW store on the same dir with the same config reloads the cell
+    cp2 = A.CheckpointStore(tmp_path / "ck", "cfg-abc", seed=7)
+    got = cp2.get("deliberation", A.PHASE_TEST_STEER, "alpha=4.0", "it-1")
+    assert got == ([1.0, 0.0, 1.0], [0.1, 0.1, 0.1])
+    # a DIFFERENT config does NOT resume (stale outcomes never reused)
+    cp3 = A.CheckpointStore(tmp_path / "ck", "cfg-DIFFERENT", seed=7)
+    assert cp3.get("deliberation", A.PHASE_TEST_STEER, "alpha=4.0", "it-1") is None
+
+
+def test_fresh_flag_clears_checkpoints(tmp_path):
+    cp = A.CheckpointStore(tmp_path / "ck", "cfg", seed=1)
+    cp.put("skepticism", A.PHASE_DEV_ALPHA, "alpha=2.0", "s-0",
+           [1.0], [0.0], 2.0, "n")
+    cp.close()
+    cp_fresh = A.CheckpointStore(tmp_path / "ck", "cfg", seed=1, fresh=True)
+    assert cp_fresh.get("skepticism", A.PHASE_DEV_ALPHA, "alpha=2.0", "s-0") is None
+
+
+def test_full_resume_skips_all_generation_and_matches_verdict(tmp_path):
+    axes = ["deliberation", "skepticism", "uncertainty_awareness"]
+    specs = [_fixture_spec(a) for a in axes]
+
+    # RUN 1: populate the checkpoint with the synthetic backend.
+    cp1 = A.CheckpointStore(tmp_path / "ck", "fp-1", seed=0)
+    ctx1 = A.RunContext(checkpoint=cp1, progress=A.ProgressTracker(1))
+    rep1 = A.adjudicate(_synth_factory(), specs, bootstrap_b=2000, seed=0, ctx=ctx1)
+    cp1.close()
+
+    # RUN 2: resume. A poison sampler proves NO generation happens (all cached),
+    # yet the FROZEN verdict + per-axis mean(d) are bit-identical to run 1.
+    cp2 = A.CheckpointStore(tmp_path / "ck", "fp-1", seed=0)
+    ctx2 = A.RunContext(checkpoint=cp2, progress=A.ProgressTracker(1))
+    rep2 = A.adjudicate(lambda axis: _PoisonSampler(), specs,
+                        bootstrap_b=2000, seed=0, ctx=ctx2)
+    cp2.close()
+
+    assert rep2.verdict == rep1.verdict
+    assert rep2.axis_passes == rep1.axis_passes
+    for r1, r2 in zip(rep1.axis_results, rep2.axis_results):
+        assert r2.mean_diff == pytest.approx(r1.mean_diff, nan_ok=True)
+        assert r2.per_item_diff == r1.per_item_diff
+
+
+def test_partial_resume_regenerates_missing_cells_identically(tmp_path):
+    axis = "deliberation"
+    specs = [_fixture_spec(axis)]
+
+    cp1 = A.CheckpointStore(tmp_path / "ck", "fp-2", seed=0)
+    ctx1 = A.RunContext(checkpoint=cp1)
+    rep1 = A.adjudicate(_synth_factory(), specs, bootstrap_b=2000, seed=0, ctx=ctx1)
+    cp1.close()
+
+    # Simulate a crash mid TEST-steer: drop that phase's checkpoint file.
+    ((tmp_path / "ck") / f"{axis}_{A.PHASE_TEST_STEER}.jsonl").unlink()
+
+    cp2 = A.CheckpointStore(tmp_path / "ck", "fp-2", seed=0)
+    ctx2 = A.RunContext(checkpoint=cp2)
+    rep2 = A.adjudicate(_synth_factory(), specs, bootstrap_b=2000, seed=0, ctx=ctx2)
+    cp2.close()
+
+    # The deterministic backend reproduces the dropped cell -> identical verdict.
+    assert rep2.verdict == rep1.verdict
+    assert rep2.axis_results[0].per_item_steer == rep1.axis_results[0].per_item_steer
+    assert rep2.axis_results[0].mean_diff == pytest.approx(rep1.axis_results[0].mean_diff)
+
+
+# --------------------------------------------------------------------------- #
+# HARDEN FIX 3 — batched sample_batch is equivalent to per-item sampling
+# --------------------------------------------------------------------------- #
+class _FakeBatchBackend(GenBackend):
+    """A GenBackend that also exposes ``generate_batch`` (like SteeredHFBackend).
+    Deterministic (greedy synthetic answers), so a padded batch is IDENTICAL to
+    per-sequence generation — the offline analogue of the gated real-model test."""
+
+    def __init__(self, axis, items):
+        self._syn = SyntheticC2bTaskBackend(axis, items, prompt_gain=0.4,
+                                            alpha_gain=0.1, threshold=0.5)
+        self.batch_calls = 0
+
+    def generate(self, prompt, steer=None, max_new_tokens=128,
+                 do_sample=False, temperature=1.0, seed=None):
+        return self._syn.generate(prompt, steer, max_new_tokens)
+
+    def generate_batch(self, prompts, steer=None, max_new_tokens=128,
+                       seeds=None, do_sample=False, temperature=1.0):
+        self.batch_calls += 1
+        return [self._syn.generate(p, steer, max_new_tokens) for p in prompts]
+
+
+def test_batched_sample_batch_equivalent_to_unbatched(tmp_path):
+    axis = "deliberation"
+    task = c2b_tasks.load_c2b_task(axis, use_fixture=True)
+    items = list(task.items)
+
+    backend = _FakeBatchBackend(axis, items)
+    batched = BackendOutcomeSampler(backend, do_sample=False, batch_size=16)
+    unbatched = BackendOutcomeSampler(backend, do_sample=False, batch_size=1)
+    assert batched.supports_batch is True
+    assert unbatched.supports_batch is False
+
+    b = batched.sample_batch(axis, items, "Think step by step.", 4.0, 5,
+                             np.ones(8), 3)
+    u = [unbatched.sample(axis, it, "Think step by step.", 4.0, 5, np.ones(8), 3)
+         for it in items]
+    assert backend.batch_calls >= 1  # the batched path really used generate_batch
+    assert [x.outcomes for x in b] == [x.outcomes for x in u]
+    assert [x.degeneracies for x in b] == [x.degeneracies for x in u]
+
+
+def test_channel_chunking_respects_batch_size(tmp_path):
+    # With batch_size=16 and k=5, items_per_batch = 16//5 = 3 => ceil(9/3)=3 batches
+    # for the 9-item deliberation fixture. Outcomes must match the per-item path.
+    axis = "deliberation"
+    task = c2b_tasks.load_c2b_task(axis, use_fixture=True)
+    items = list(task.items)
+    backend = _FakeBatchBackend(axis, items)
+    sampler = BackendOutcomeSampler(backend, do_sample=False, batch_size=16)
+    outs, degs, mat = A._channel_item_outcomes(
+        sampler, axis, items, "Think step by step.", 4.0, 5, np.ones(8), 3)
+    assert outs.shape[0] == len(items)
+    assert mat.shape == (len(items), 5)
+    expected_batches = -(-len(items) // (16 // 5))
+    assert backend.batch_calls == expected_batches

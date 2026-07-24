@@ -31,7 +31,10 @@ from __future__ import annotations
 
 import abc
 import hashlib
+import json
+import time
 from dataclasses import dataclass, field, asdict
+from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
@@ -69,6 +72,193 @@ VERDICT_KILL = "KILL_PLAN_D"
 # Which per-item outcome the paired bootstrap consumes per axis.
 BINARY_OUTCOME_AXES = {"deliberation", "skepticism"}
 CALIBRATION_OUTCOME_AXES = {"uncertainty_awareness"}
+
+
+# --------------------------------------------------------------------------- #
+# Run mechanics: progress logging + checkpointing (FIX 1/2 — NOT the decision
+# rule). These only affect observability/resumability, never the frozen §4 math.
+# --------------------------------------------------------------------------- #
+# Phase labels used for progress lines AND checkpoint file names (<axis>_<phase>).
+PHASE_DEV_PROMPT = "dev_prompt"
+PHASE_DEV_BASELINE = "dev_baseline"
+PHASE_DEV_ALPHA = "dev_alpha"
+PHASE_TEST_PROMPT = "test_prompt"
+PHASE_TEST_STEER = "test_steer"
+PHASE_TEST_BASELINE = "test_baseline"
+PHASE_CONFLICT = "conflict"
+PHASE_CONFLICT_POLE = "conflict_pole"
+
+
+class ProgressTracker:
+    """Flushed per-cell progress logging with a running count + wall-clock ETA.
+
+    A "cell" is one ``_channel_item_outcomes`` call (axis × channel × prompt|alpha
+    over its items). ``total_planned`` is the up-front planned generation count so
+    a run's size is visible immediately. Every line is printed with ``flush=True``
+    (the prior tqdm ``\\r`` never reached the logfile — D-0029)."""
+
+    def __init__(self, total_planned: int):
+        self.total = int(total_planned)
+        self.done = 0
+        self.fresh = 0
+        self.t0 = time.time()
+
+    def _elapsed(self) -> float:
+        return time.time() - self.t0
+
+    def _eta(self) -> float:
+        el = self._elapsed()
+        if self.done <= 0 or el <= 0:
+            return 0.0
+        rate = self.done / el
+        return (self.total - self.done) / rate if rate > 0 else 0.0
+
+    def add(self, n: int, fresh: bool = True) -> None:
+        self.done += int(n)
+        if fresh:
+            self.fresh += int(n)
+
+    def _line(self, axis, phase, idx, total, items, tag):
+        print(
+            f"[c2b-adj] axis={axis} phase={phase} {idx}/{total} items={items} {tag} "
+            f"done={self.done}/{self.total} fresh={self.fresh} "
+            f"elapsed={self._elapsed():.0f}s eta={self._eta():.0f}s",
+            flush=True,
+        )
+
+    def cell_start(self, axis, phase, idx, total, items):
+        self._line(axis, phase, idx, total, items, "START")
+
+    def cell_end(self, axis, phase, idx, total, items):
+        self._line(axis, phase, idx, total, items, "DONE")
+
+
+class CheckpointStore:
+    """Append-only per-(axis,phase) JSONL of per-item k-sample outcomes (FIX 2).
+
+    Each generation cell's per-item result is flushed to
+    ``<ckpt_dir>/<axis>_<phase>.jsonl`` as one JSON line keyed by
+    ``(axis, phase, cell_key, item_id)`` (``cell_key`` encodes the prompt_id or
+    alpha), carrying the frozen ``seed`` and the ``config`` fingerprint. On
+    startup, lines whose ``config`` matches the current run are loaded so already
+    computed cells are SKIPPED and only the missing ones are generated. Because
+    the final adjudication reads the same per-item outcomes, a resumed run yields
+    the IDENTICAL frozen-criteria verdict. ``fresh=True`` ignores/clears prior
+    checkpoints."""
+
+    def __init__(self, ckpt_dir, config_fingerprint: str, seed: int,
+                 fresh: bool = False):
+        self.dir = Path(ckpt_dir)
+        self.dir.mkdir(parents=True, exist_ok=True)
+        self.fp = str(config_fingerprint)
+        self.seed = int(seed)
+        self._cache: Dict[Tuple[str, str, str, str], Tuple[List[float], List[float]]] = {}
+        self._handles: Dict[str, object] = {}
+        if fresh:
+            for f in self.dir.glob("*.jsonl"):
+                try:
+                    f.unlink()
+                except OSError:
+                    pass
+        else:
+            self._load()
+        try:
+            (self.dir / "config_fingerprint.txt").write_text(self.fp, encoding="utf-8")
+        except OSError:
+            pass
+
+    def _load(self) -> None:
+        for f in sorted(self.dir.glob("*.jsonl")):
+            try:
+                lines = f.read_text(encoding="utf-8").splitlines()
+            except OSError:
+                continue
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if rec.get("config") != self.fp:
+                    continue  # different run config -> not resumable, ignore
+                key = (rec["axis"], rec["phase"], rec["cell_key"], str(rec["item_id"]))
+                self._cache[key] = (rec["outcomes"], rec["degeneracies"])
+
+    def get(self, axis, phase, cell_key, item_id):
+        return self._cache.get((axis, phase, cell_key, str(item_id)))
+
+    def _handle(self, axis, phase):
+        fn = self.dir / f"{axis}_{phase}.jsonl"
+        h = self._handles.get(str(fn))
+        if h is None:
+            h = open(fn, "a", encoding="utf-8")
+            self._handles[str(fn)] = h
+        return h
+
+    def put(self, axis, phase, cell_key, item_id, outcomes, degeneracies,
+            alpha, instruction) -> None:
+        rec = {
+            "config": self.fp, "seed": self.seed,
+            "axis": axis, "phase": phase, "cell_key": cell_key,
+            "item_id": str(item_id), "alpha": float(alpha),
+            "outcomes": [float(x) for x in outcomes],
+            "degeneracies": [float(x) for x in degeneracies],
+        }
+        h = self._handle(axis, phase)
+        h.write(json.dumps(rec) + "\n")
+        h.flush()
+        self._cache[(axis, phase, cell_key, str(item_id))] = (rec["outcomes"], rec["degeneracies"])
+
+    def close(self) -> None:
+        for h in self._handles.values():
+            try:
+                h.close()
+            except OSError:
+                pass
+        self._handles.clear()
+
+
+@dataclass
+class RunContext:
+    """Optional run-mechanics carrier threaded through the frozen adjudication.
+
+    ``None`` everywhere => the offline/no-torch default: no progress logging, no
+    checkpointing, per-item generation (unchanged behaviour, tests stay green)."""
+    checkpoint: Optional[CheckpointStore] = None
+    progress: Optional[ProgressTracker] = None
+
+
+def _split_sizes(n: int, dev_fraction: float = DEV_FRACTION) -> Tuple[int, int]:
+    """DEV/TEST sizes matching ``split_dev_test`` (for up-front budget planning)."""
+    n_dev = int(round(dev_fraction * n))
+    n_dev = max(1, min(n_dev, n - 1))
+    return n_dev, n - n_dev
+
+
+def plan_generation_counts(
+    specs: Sequence["AxisAdjSpec"], *, k: int = K_SAMPLES,
+    alpha_grid: Sequence[float] = ALPHA_GRID, dev_fraction: float = DEV_FRACTION,
+) -> Tuple[Dict[str, int], int]:
+    """Up-front UPPER-BOUND planned generation count per axis + total (FIX 4).
+
+    Per axis (all cells run):
+      DEV  = k * n_dev * (n_strong_prompts + 1 baseline + len(alpha_grid))
+      TEST = k * n_test * (prompt + steer + baseline + conflict + conflict_pole)
+    This is the worst case (an axis with no gated alpha runs fewer cells)."""
+    per_axis: Dict[str, int] = {}
+    total = 0
+    for spec in specs:
+        n = len(spec.items)
+        n_dev, n_test = _split_sizes(n, dev_fraction)
+        n_strong = len(spec.strong_prompts)
+        dev = k * n_dev * (n_strong + 1 + len(alpha_grid))
+        test = k * n_test * (1 + 1 + 1 + 1 + 1)
+        cnt = dev + test
+        per_axis[spec.axis] = cnt
+        total += cnt
+    return per_axis, total
 
 
 # --------------------------------------------------------------------------- #
@@ -230,6 +420,15 @@ class OutcomeSampler(abc.ABC):
                k: int, direction: np.ndarray, layer: int) -> SampleBatch:
         """Return a SampleBatch of k outcome+degeneracy scores for the cell."""
 
+    def sample_batch(self, axis: str, items: Sequence[Dict], instruction: str,
+                     alpha: float, k: int, direction: np.ndarray,
+                     layer: int) -> List[SampleBatch]:
+        """Score a CHUNK of items sharing (instruction, alpha). Default loops
+        ``sample``; batched backends override to generate the whole chunk in one
+        padded GPU batch (FIX 3). Returns one SampleBatch per item, in order."""
+        return [self.sample(axis, it, instruction, alpha, k, direction, layer)
+                for it in items]
+
 
 def format_task_input(axis: str, instruction: str, item: Dict) -> str:
     """Build the model input: instruction + task question (+ MC options / answer
@@ -275,7 +474,7 @@ class BackendOutcomeSampler(OutcomeSampler):
 
     def __init__(self, gen_backend: GenBackend, max_new_tokens: int = 256,
                  do_sample: bool = True, temperature: float = 0.7,
-                 seed: int = 0):
+                 seed: int = 0, batch_size: int = 1):
         if not isinstance(gen_backend, GenBackend):
             raise TypeError("gen_backend must be a GenBackend")
         self.gen = gen_backend
@@ -283,12 +482,55 @@ class BackendOutcomeSampler(OutcomeSampler):
         self.do_sample = bool(do_sample)
         self.temperature = float(temperature)
         self.seed = int(seed)
+        self.batch_size = max(1, int(batch_size))
+
+    @property
+    def supports_batch(self) -> bool:
+        """True iff the wrapped backend can generate a padded batch (FIX 3)."""
+        return self.batch_size > 1 and hasattr(self.gen, "generate_batch")
 
     def _call_seed(self, axis: str, item: Dict, alpha: float, j: int) -> int:
         """Deterministic per-(item, sample-index) torch seed derived from the run
         seed, so re-runs reproduce every sampled generation (item-clustered)."""
         key = f"{self.seed}|{axis}|{item.get('id')}|{float(alpha):.6f}|{j}"
         return int(hashlib.sha256(key.encode("utf-8")).hexdigest(), 16) % (2 ** 31)
+
+    def sample_batch(self, axis: str, items: Sequence[Dict], instruction: str,
+                     alpha: float, k: int, direction: np.ndarray,
+                     layer: int) -> List[SampleBatch]:
+        """Generate a whole chunk (all items × k samples) in ONE padded GPU batch
+        when the backend supports it (FIX 3); else fall back to per-item ``sample``.
+
+        The caller sizes the chunk so ``len(items) * k <= batch_size``. Per-row
+        seeds are the SAME per-(item,sample) seeds as the unbatched path, so the
+        batch is deterministic for its (fixed) composition."""
+        items = list(items)
+        if not self.supports_batch:
+            return [self.sample(axis, it, instruction, alpha, k, direction, layer)
+                    for it in items]
+        steer = SteerConfig(direction=direction, alpha=float(alpha), layer=int(layer))
+        prompts: List[str] = []
+        seeds: List[int] = []
+        owner: List[int] = []
+        for ii, it in enumerate(items):
+            text_input = format_task_input(axis, instruction, it)
+            for j in range(int(k)):
+                prompts.append(text_input)
+                seeds.append(self._call_seed(axis, it, alpha, j))
+                owner.append(ii)
+        texts = self.gen.generate_batch(
+            prompts, steer, self.max_new_tokens, seeds=seeds,
+            do_sample=self.do_sample, temperature=self.temperature)
+        batches: List[SampleBatch] = []
+        for ii, it in enumerate(items):
+            outs: List[float] = []
+            degs: List[float] = []
+            for idx, own in enumerate(owner):
+                if own == ii:
+                    outs.append(score_sample_outcome(axis, it, texts[idx]))
+                    degs.append(_scorers.degeneracy_score(texts[idx]))
+            batches.append(SampleBatch(outcomes=outs, degeneracies=degs))
+        return batches
 
     def sample(self, axis: str, item: Dict, instruction: str, alpha: float,
                k: int, direction: np.ndarray, layer: int) -> SampleBatch:
@@ -340,23 +582,83 @@ class DevSelection:
 def _channel_item_outcomes(
     sampler: OutcomeSampler, axis: str, items: Sequence[Dict], instruction: str,
     alpha: float, k: int, direction: np.ndarray, layer: int,
+    *, ctx: Optional[RunContext] = None, phase: str = "", cell_key: str = "",
+    cell_idx: int = 1, cell_total: int = 1,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Return (per_item_outcome[n], per_item_degeneracy[n], per_sample_outcomes[n,k])."""
-    outs: List[float] = []
-    degs: List[float] = []
-    mat: List[List[float]] = []
-    for it in items:
-        batch = sampler.sample(axis, it, instruction, alpha, k, direction, layer)
-        outs.append(batch.mean_outcome())
-        degs.append(batch.mean_degeneracy())
-        mat.append(list(batch.outcomes))
-    return np.asarray(outs), np.asarray(degs), np.asarray(mat)
+    """Return (per_item_outcome[n], per_item_degeneracy[n], per_sample_outcomes[n,k]).
+
+    Run mechanics (FIX 1/2/3, do NOT affect the frozen math):
+    * CHECKPOINT: skip items already in ``ctx.checkpoint`` for this
+      (axis, phase, cell_key); flush each fresh item's k-sample outcome to disk.
+    * BATCH: with a batch-capable sampler, generate items in FIXED-composition
+      chunks of ``batch_size // k`` items. Chunking is cache-INDEPENDENT: a chunk
+      is reused only if ALL its items are cached, otherwise the whole chunk is
+      regenerated with the identical composition (so a resumed sampled run
+      reproduces a fresh run's outputs -> identical verdict). Non-batched samplers
+      use 1-item chunks == the per-cell granularity ("lose at most one cell").
+    * PROGRESS: flushed START/DONE lines with a running count + ETA.
+    """
+    items = list(items)
+    n = len(items)
+    outs: List[Optional[float]] = [None] * n
+    degs: List[Optional[float]] = [None] * n
+    mat: List[Optional[List[float]]] = [None] * n
+
+    ckpt = ctx.checkpoint if ctx is not None else None
+    prog = ctx.progress if ctx is not None else None
+
+    supports_batch = bool(getattr(sampler, "supports_batch", False))
+    if supports_batch:
+        items_per_batch = max(1, int(getattr(sampler, "batch_size", 1)) // max(1, int(k)))
+    else:
+        items_per_batch = 1
+
+    if prog is not None:
+        prog.cell_start(axis, phase, cell_idx, cell_total, n)
+
+    for start in range(0, n, items_per_batch):
+        chunk_idx = list(range(start, min(start + items_per_batch, n)))
+        chunk_items = [items[i] for i in chunk_idx]
+
+        cached = None
+        if ckpt is not None:
+            got = [ckpt.get(axis, phase, cell_key, str(it["id"])) for it in chunk_items]
+            if all(g is not None for g in got):
+                cached = got  # whole chunk resumable -> skip generation
+
+        if cached is not None:
+            for local, i in enumerate(chunk_idx):
+                o, d = cached[local]
+                outs[i] = float(np.mean(o))
+                degs[i] = float(np.mean(d))
+                mat[i] = list(o)
+            if prog is not None:
+                prog.add(len(chunk_idx) * int(k), fresh=False)
+        else:
+            batches = sampler.sample_batch(axis, chunk_items, instruction, alpha,
+                                           k, direction, layer)
+            for local, i in enumerate(chunk_idx):
+                b = batches[local]
+                outs[i] = b.mean_outcome()
+                degs[i] = b.mean_degeneracy()
+                mat[i] = list(b.outcomes)
+                if ckpt is not None:
+                    ckpt.put(axis, phase, cell_key, str(chunk_items[local]["id"]),
+                             b.outcomes, b.degeneracies, alpha, instruction)
+            if prog is not None:
+                prog.add(len(chunk_idx) * int(k), fresh=True)
+
+    if prog is not None:
+        prog.cell_end(axis, phase, cell_idx, cell_total, n)
+
+    return np.asarray(outs, dtype=float), np.asarray(degs, dtype=float), np.asarray(mat, dtype=float)
 
 
 def select_on_dev(
     sampler: OutcomeSampler, spec: AxisAdjSpec, dev_items: Sequence[Dict],
     k: int = K_SAMPLES, alpha_grid: Sequence[float] = ALPHA_GRID,
     coherence_max_ratio: float = COHERENCE_MAX_RATIO,
+    ctx: Optional[RunContext] = None,
 ) -> DevSelection:
     """Select+FREEZE, ON DEV ONLY, the best-of-16 prompt and the best coherence-
     gated α (prereg §4 step 2). No TEST item is touched here (no leakage).
@@ -368,16 +670,21 @@ def select_on_dev(
     """
     # --- best-of-16 prompt (DEV prompt channel, unsteered) ---
     best_pid, best_ptext, best_pout = None, None, -np.inf
-    for pid, ptext in spec.strong_prompts:
+    n_prompts = len(spec.strong_prompts)
+    for pi, (pid, ptext) in enumerate(spec.strong_prompts):
         outs, _, _ = _channel_item_outcomes(
-            sampler, spec.axis, dev_items, ptext, 0.0, k, spec.direction, spec.layer)
+            sampler, spec.axis, dev_items, ptext, 0.0, k, spec.direction, spec.layer,
+            ctx=ctx, phase=PHASE_DEV_PROMPT, cell_key=f"prompt={pid}|alpha=0",
+            cell_idx=pi + 1, cell_total=n_prompts)
         val = float(outs.mean())
         if val > best_pout:
             best_pid, best_ptext, best_pout = pid, ptext, val
 
     # --- unsteered baseline degeneracy (neutral prompt, α=0) on DEV ---
     _, base_deg, _ = _channel_item_outcomes(
-        sampler, spec.axis, dev_items, spec.neutral_prompt, 0.0, k, spec.direction, spec.layer)
+        sampler, spec.axis, dev_items, spec.neutral_prompt, 0.0, k, spec.direction,
+        spec.layer, ctx=ctx, phase=PHASE_DEV_BASELINE, cell_key="alpha=0",
+        cell_idx=1, cell_total=1)
     baseline_degeneracy = float(base_deg.mean())
     gate_ceiling = coherence_max_ratio * baseline_degeneracy + COHERENCE_EPS_FLOOR
 
@@ -385,10 +692,12 @@ def select_on_dev(
     grid_rows: List[Dict[str, object]] = []
     frozen_alpha: Optional[float] = None
     best_steer_out: Optional[float] = None
-    for a in alpha_grid:
+    n_alpha = len(alpha_grid)
+    for ai, a in enumerate(alpha_grid):
         outs, degs, _ = _channel_item_outcomes(
             sampler, spec.axis, dev_items, spec.neutral_prompt, float(a), k,
-            spec.direction, spec.layer)
+            spec.direction, spec.layer, ctx=ctx, phase=PHASE_DEV_ALPHA,
+            cell_key=f"alpha={float(a)}", cell_idx=ai + 1, cell_total=n_alpha)
         steer_out = float(outs.mean())
         steer_deg = float(degs.mean())
         coherence_ok = steer_deg <= gate_ceiling + 1e-12
@@ -444,6 +753,7 @@ def adjudicate_axis(
     bootstrap_b: int = BOOTSTRAP_B, ci_level: float = BONFERRONI_CI_LEVEL,
     delta: float = DELTA, coherence_max_ratio: float = COHERENCE_MAX_RATIO,
     dev_fraction: float = DEV_FRACTION, seed: int = 0,
+    ctx: Optional[RunContext] = None,
 ) -> AxisAdjResult:
     """Full FROZEN adjudication for ONE axis (prereg §4 steps 1-7).
 
@@ -463,16 +773,18 @@ def adjudicate_axis(
     test_items = [by_id[i] for i in split.test_ids]
 
     dev_sel = select_on_dev(sampler, spec, dev_items, k=k, alpha_grid=alpha_grid,
-                            coherence_max_ratio=coherence_max_ratio)
+                            coherence_max_ratio=coherence_max_ratio, ctx=ctx)
 
     frozen_alpha = dev_sel.frozen_alpha
+    prompt_cell = f"prompt={dev_sel.best_prompt_id}|alpha=0"
     # If NO α cleared the DEV coherence gate, the axis has no valid steer cell:
     # it cannot pass (§4 iii). Report an honest non-pass with an empty steer cell.
     if frozen_alpha is None:
         n_test = len(test_items)
         prompt_out, _, _ = _channel_item_outcomes(
             sampler, spec.axis, test_items, dev_sel.best_prompt_text, 0.0, k,
-            spec.direction, spec.layer)
+            spec.direction, spec.layer, ctx=ctx, phase=PHASE_TEST_PROMPT,
+            cell_key=prompt_cell)
         return AxisAdjResult(
             axis=spec.axis, layer=int(spec.layer), n_dev=len(dev_items), n_test=n_test,
             k=int(k), dev_selection=asdict(dev_sel),
@@ -490,13 +802,16 @@ def adjudicate_axis(
     # --- TEST: prompt channel (frozen prompt, α=0) & steer channel (frozen α) ---
     prompt_out, _, prompt_mat = _channel_item_outcomes(
         sampler, spec.axis, test_items, dev_sel.best_prompt_text, 0.0, k,
-        spec.direction, spec.layer)
+        spec.direction, spec.layer, ctx=ctx, phase=PHASE_TEST_PROMPT,
+        cell_key=prompt_cell)
     steer_out, steer_deg, steer_mat = _channel_item_outcomes(
         sampler, spec.axis, test_items, spec.neutral_prompt, frozen_alpha, k,
-        spec.direction, spec.layer)
+        spec.direction, spec.layer, ctx=ctx, phase=PHASE_TEST_STEER,
+        cell_key=f"alpha={float(frozen_alpha)}")
     _, base_deg_test, _ = _channel_item_outcomes(
         sampler, spec.axis, test_items, spec.neutral_prompt, 0.0, k,
-        spec.direction, spec.layer)
+        spec.direction, spec.layer, ctx=ctx, phase=PHASE_TEST_BASELINE,
+        cell_key="alpha=0")
 
     per_item_diff = steer_out - prompt_out
     ci = cluster_bootstrap_ci(per_item_diff, b=bootstrap_b, ci_level=ci_level,
@@ -509,8 +824,8 @@ def adjudicate_axis(
 
     passed = axis_pass(ci.point, ci.ci_lo, ci.ci_hi, coherence_ok, delta=delta)
 
-    conflict = _conflict_cell(sampler, spec, test_items, dev_sel.best_prompt_text,
-                              frozen_alpha, k)
+    conflict = _conflict_cell(sampler, spec, test_items, dev_sel.best_prompt_id,
+                              dev_sel.best_prompt_text, frozen_alpha, k, ctx=ctx)
     descriptive = _descriptive(spec.axis, test_items, prompt_mat, steer_mat)
 
     return AxisAdjResult(
@@ -528,16 +843,19 @@ def adjudicate_axis(
 
 
 def _conflict_cell(sampler: OutcomeSampler, spec: AxisAdjSpec, test_items: Sequence[Dict],
-                   best_prompt_text: str, frozen_alpha: float, k: int) -> Dict[str, object]:
+                   best_prompt_id: str, best_prompt_text: str, frozen_alpha: float,
+                   k: int, ctx: Optional[RunContext] = None) -> Dict[str, object]:
     """SECONDARY/descriptive only (§4): best pro-axis prompt UP vs latent steer the
     OPPOSITE way (−α). Reports which channel the behavior lands nearer. NOT part of
     the pass/fail verdict."""
     conf_out, _, _ = _channel_item_outcomes(
         sampler, spec.axis, test_items, best_prompt_text, -float(frozen_alpha), k,
-        spec.direction, spec.layer)
+        spec.direction, spec.layer, ctx=ctx, phase=PHASE_CONFLICT,
+        cell_key=f"prompt={best_prompt_id}|alpha={-float(frozen_alpha)}")
     prompt_pole, _, _ = _channel_item_outcomes(
         sampler, spec.axis, test_items, best_prompt_text, 0.0, k,
-        spec.direction, spec.layer)
+        spec.direction, spec.layer, ctx=ctx, phase=PHASE_CONFLICT_POLE,
+        cell_key=f"prompt={best_prompt_id}|alpha=0")
     return {
         "note": "SECONDARY/descriptive only — NOT part of the verdict (prereg §4).",
         "alpha_opposite": -float(frozen_alpha),
@@ -607,10 +925,13 @@ def adjudicate(
     bootstrap_b: int = BOOTSTRAP_B, ci_level: float = BONFERRONI_CI_LEVEL,
     delta: float = DELTA, coherence_max_ratio: float = COHERENCE_MAX_RATIO,
     dev_fraction: float = DEV_FRACTION, seed: int = 0,
+    ctx: Optional[RunContext] = None,
 ) -> AdjudicationReport:
     """Run the FROZEN adjudication over all axis specs and emit the three-tier
     verdict (§4). ``sampler_for_axis`` returns the OutcomeSampler for an axis (one
-    shared real backend, or a per-axis synthetic backend in tests)."""
+    shared real backend, or a per-axis synthetic backend in tests). ``ctx`` is the
+    optional run-mechanics carrier (progress + checkpoint); ``None`` => unchanged
+    offline behaviour."""
     results: List[AxisAdjResult] = []
     passes: Dict[str, bool] = {}
     for spec in specs:
@@ -618,7 +939,7 @@ def adjudicate(
         res = adjudicate_axis(
             sampler, spec, k=k, alpha_grid=alpha_grid, bootstrap_b=bootstrap_b,
             ci_level=ci_level, delta=delta, coherence_max_ratio=coherence_max_ratio,
-            dev_fraction=dev_fraction, seed=seed)
+            dev_fraction=dev_fraction, seed=seed, ctx=ctx)
         results.append(res)
         passes[spec.axis] = res.passed
     verdict = three_tier_verdict(passes)

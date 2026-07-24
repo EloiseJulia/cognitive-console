@@ -367,6 +367,20 @@ class SteeredHFBackend(GenBackend):
             "could not locate decoder-block ModuleList on this model architecture"
         )
 
+    @staticmethod
+    def _render_user_chat_prompt(tokenizer, text: str) -> str:
+        """Render one user turn through model chat template when available."""
+        if hasattr(tokenizer, "apply_chat_template"):
+            try:
+                return tokenizer.apply_chat_template(
+                    [{"role": "user", "content": text}],
+                    tokenize=False,
+                    add_generation_prompt=True,
+                )
+            except Exception:
+                pass
+        return text
+
     @property
     def num_hidden_layers(self) -> int:
         self._ensure_loaded()
@@ -416,10 +430,7 @@ class SteeredHFBackend(GenBackend):
         # runs with the same run seed reproduce every sampled generation. Falls
         # back to the load-time seed when no per-call seed is supplied.
         self._seed_torch(seed if seed is not None else self.seed)
-        messages = [{"role": "user", "content": prompt}]
-        text = self._tokenizer.apply_chat_template(
-            messages, tokenize=False, add_generation_prompt=True
-        )
+        text = self._render_user_chat_prompt(self._tokenizer, prompt)
         enc = self._tokenizer(
             text, return_tensors="pt", truncation=True, max_length=self.max_length
         )
@@ -496,9 +507,7 @@ class SteeredHFBackend(GenBackend):
             self._seed_torch(batch_seed)
 
         texts = [
-            self._tokenizer.apply_chat_template(
-                [{"role": "user", "content": p}], tokenize=False, add_generation_prompt=True
-            )
+            self._render_user_chat_prompt(self._tokenizer, p)
             for p in prompts
         ]
         self._tokenizer.padding_side = "left"

@@ -344,6 +344,24 @@ class HFActivationProvider(ActivationProvider):
         model.eval()
         self._model = model
 
+    @staticmethod
+    def _render_user_chat_prompt(tokenizer, text: str) -> str:
+        """Render one user turn through model chat template when available.
+
+        Qwen/Llama instruct models both expose ``apply_chat_template``. For non-chat
+        tokenizers (or template errors), we fall back to raw text.
+        """
+        if hasattr(tokenizer, "apply_chat_template"):
+            try:
+                return tokenizer.apply_chat_template(
+                    [{"role": "user", "content": text}],
+                    tokenize=False,
+                    add_generation_prompt=True,
+                )
+            except Exception:
+                pass
+        return text
+
     # -- disk cache --------------------------------------------------------
     def _cache_key(self, text: str, layer: int) -> str:
         h = hashlib.sha256()
@@ -389,10 +407,7 @@ class HFActivationProvider(ActivationProvider):
         """
         import torch
 
-        messages = [{"role": "user", "content": text}]
-        prompt = self._tokenizer.apply_chat_template(
-            messages, tokenize=False, add_generation_prompt=True
-        )
+        prompt = self._render_user_chat_prompt(self._tokenizer, text)
         enc = self._tokenizer(
             prompt,
             return_tensors="pt",
@@ -447,4 +462,3 @@ class HFActivationProvider(ActivationProvider):
             self._ensure_loaded()
             return np.empty((0, int(self._config.hidden_size)), dtype=np.float32)
         return np.stack(results).astype(np.float32)
-

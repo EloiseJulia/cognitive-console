@@ -11,6 +11,12 @@ from .extract import (
     min_layer_for_depth,
     select_nondegenerate_layer,
 )
+from .iti import (
+    ITIResult,
+    ITILayerDiagnostics,
+    extract_iti,
+    sigma_scaled_alpha,
+)
 
 from .generate import (
     GenBackend,
@@ -30,6 +36,10 @@ __all__ = [
     "mean_difference_vector",
     "min_layer_for_depth",
     "select_nondegenerate_layer",
+    "ITIResult",
+    "ITILayerDiagnostics",
+    "extract_iti",
+    "sigma_scaled_alpha",
     "GenBackend",
     "SteerConfig",
     "SteeredHFBackend",

@@ -50,6 +50,8 @@ from cognitive_console.experiments.adjudicate_c2b import (
     RunContext, plan_generation_counts,
 )
 from cognitive_console.steering.generate import SyntheticC2bTaskBackend
+from cognitive_console.steering.extract import min_layer_for_depth
+from cognitive_console.steering.iti import extract_iti, sigma_scaled_alpha
 from cognitive_console.config import config_hash
 from cognitive_console.registry import ExperimentRecord, ExperimentRegistry
 from cognitive_console.lineage import git_commit, new_experiment_id, utcnow
@@ -64,6 +66,7 @@ ADJ_AXES = ["deliberation", "skepticism", "uncertainty_awareness"]
 DEFAULT_MODEL = "Qwen/Qwen2.5-7B-Instruct"
 SMOKE_MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
 DEFAULT_N_STRONG = 16  # best-of-16 authored prompts (prereg §4)
+DEFAULT_STEERING_METHOD = "caa"
 
 
 def _rel(path: Path) -> str:
@@ -83,6 +86,7 @@ def _config_fingerprint(args, model: str, specs) -> str:
         "seed": int(args.seed),
         "model": str(model),
         "backend": str(args.backend),
+        "steering_method": str(getattr(args, "steering_method", DEFAULT_STEERING_METHOD)),
         "max_new_tokens": int(args.max_new_tokens),
         "temperature": float(args.temperature),
         # batch_size changes the chunk composition, hence each chunk's derived
@@ -108,6 +112,28 @@ def _config_fingerprint(args, model: str, specs) -> str:
     }
     blob = json.dumps(payload, sort_keys=True).encode("utf-8")
     return hashlib.sha256(blob).hexdigest()[:16]
+
+
+class ScaledBackendOutcomeSampler(BackendOutcomeSampler):
+    """Outcome sampler with per-axis alpha scaling (ITI uses alpha*sigma)."""
+
+    def __init__(self, *args, alpha_scale_by_axis: Optional[Dict[str, float]] = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.alpha_scale_by_axis = dict(alpha_scale_by_axis or {})
+
+    def _scaled_alpha(self, axis: str, alpha: float) -> float:
+        scale = float(self.alpha_scale_by_axis.get(axis, 1.0))
+        return sigma_scaled_alpha(alpha, scale)
+
+    def sample(self, axis, item, instruction, alpha, k, direction, layer):
+        return super().sample(
+            axis, item, instruction, self._scaled_alpha(axis, alpha), k, direction, layer
+        )
+
+    def sample_batch(self, axis, items, instruction, alpha, k, direction, layer):
+        return super().sample_batch(
+            axis, items, instruction, self._scaled_alpha(axis, alpha), k, direction, layer
+        )
 
 
 # --------------------------------------------------------------------------- #
@@ -234,10 +260,14 @@ def build_specs_synthetic(axes: List[str], use_fixture: bool,
 
 def build_specs_hf(axes: List[str], model: str, use_fixture: bool,
                    n_items: Optional[int], n_strong: int, n_extraction: int,
-                   seed: int, out_dir: Path) -> (List[AxisAdjSpec], Dict):  # noqa
-    """Real specs: RE-DERIVE the C1 chosen non-degenerate layer + CAA unit direction
-    per axis on THIS model (prereg §2; never hardcoded). Reuses run_c1_facade +
-    run_gpu_phase0._extract_direction."""
+                   seed: int, out_dir: Path, steering_method: str = DEFAULT_STEERING_METHOD
+                   ) -> (List[AxisAdjSpec], Dict):  # noqa
+    """Real specs: derive per-axis steering direction on THIS model.
+
+    * ``caa``: mean-difference direction at C1's chosen non-degenerate layer.
+    * ``iti``: logistic-probe direction with the same non-degenerate layer rule;
+      intervention uses alpha in sigma-units (effective magnitude alpha*sigma).
+    """
     from cognitive_console.activations.provider import HFActivationProvider
 
     device, dtype = p0._pick_device(), p0._pick_dtype()
@@ -251,20 +281,65 @@ def build_specs_hf(axes: List[str], model: str, use_fixture: bool,
     provider = HFActivationProvider(model, device=device, dtype=dtype,
                                     cache_dir=str(c1_out / "activations" / "cache"))
     neutral = c1.load_neutral_prompts()[0]
+    neutral_all = c1.load_neutral_prompts()
     specs = []
     layer_info = {}
+    alpha_scale_by_axis: Dict[str, float] = {}
     for axis in axes:
         row = c1_by_axis.get(axis, {})
-        layer = int(row.get("chosen_layer", max(1, provider.available_layers()[-1] // 2)))
-        direction = p0._extract_direction(provider, axis, layer, n_extraction, seed)
+        if steering_method == "caa":
+            layer = int(row.get("chosen_layer", max(1, provider.available_layers()[-1] // 2)))
+            direction = p0._extract_direction(provider, axis, layer, n_extraction, seed)
+            sigma = 1.0
+            steering_diag = {"selection": "c1_chosen_layer", "sigma": sigma}
+        elif steering_method == "iti":
+            pairs = c1.load_axis_pairs(axis)
+            split = c1.make_split(
+                list(pairs.pos.keys()), n_extraction=n_extraction, seed=seed
+            )
+            ext_pos = [pairs.pos[p] for p in split.extraction_ids]
+            ext_neg = [pairs.neg[p] for p in split.extraction_ids]
+            candidate_layers = [ell for ell in provider.available_layers() if ell >= 1]
+            min_layer = min_layer_for_depth(max(candidate_layers), min_depth_frac=0.2)
+            iti = extract_iti(
+                provider,
+                axis=axis,
+                pos_texts=ext_pos,
+                neg_texts=ext_neg,
+                layers=candidate_layers,
+                selection="nondegenerate",
+                neutral_texts=neutral_all,
+                min_layer=min_layer,
+                min_depth_frac=0.2,
+                n_null=2000,
+                null_seed=seed,
+            )
+            layer = int(iti.layer)
+            direction = iti.direction
+            sigma = float(iti.sigma)
+            steering_diag = {
+                "selection": iti.selection,
+                "sigma": sigma,
+                "iti_probe_norm": float(np.linalg.norm(iti.vector)),
+            }
+        else:
+            raise ValueError(f"unsupported steering method: {steering_method!r}")
+
+        alpha_scale_by_axis[axis] = sigma
         items = load_axis_items(axis, use_fixture, n_items)
         specs.append(AxisAdjSpec(
             axis=axis, items=items, strong_prompts=build_strong_prompts(axis, n_strong),
             neutral_prompt=neutral, direction=direction, layer=layer,
         ))
         layer_info[axis] = {"chosen_layer": layer,
-                            "stable_layer_found": row.get("stable_layer_found")}
-    return specs, {"c1_layer_info": layer_info, "model": model}
+                            "stable_layer_found": row.get("stable_layer_found"),
+                            **steering_diag}
+    return specs, {
+        "c1_layer_info": layer_info,
+        "model": model,
+        "steering_method": steering_method,
+        "alpha_scale_by_axis": alpha_scale_by_axis,
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -280,15 +355,22 @@ def synthetic_sampler_factory(use_fixture: bool, n_items: Optional[int]):
 
 
 def hf_sampler_factory(model: str, max_new_tokens: int, temperature: float,
-                       seed: int, batch_size: int):
+                       seed: int, batch_size: int,
+                       alpha_scale_by_axis: Optional[Dict[str, float]] = None):
     from cognitive_console.steering.generate import SteeredHFBackend
     device, dtype = p0._pick_device(), p0._pick_dtype()
     backend = SteeredHFBackend(model, device=device, dtype=dtype, seed=seed)
 
     def factory(axis: str):
-        return BackendOutcomeSampler(backend, max_new_tokens=max_new_tokens,
-                                     do_sample=True, temperature=temperature,
-                                     seed=seed, batch_size=batch_size)
+        return ScaledBackendOutcomeSampler(
+            backend,
+            max_new_tokens=max_new_tokens,
+            do_sample=True,
+            temperature=temperature,
+            seed=seed,
+            batch_size=batch_size,
+            alpha_scale_by_axis=alpha_scale_by_axis,
+        )
     return factory
 
 
@@ -414,6 +496,12 @@ def build_parser() -> argparse.ArgumentParser:
                     help="synthetic = offline no-torch pipeline smoke; hf = real model")
     ap.add_argument("--model", default=None,
                     help="HF model id (default: 7B for hf; ignored for synthetic)")
+    ap.add_argument(
+        "--steering-method",
+        choices=["caa", "iti"],
+        default=DEFAULT_STEERING_METHOD,
+        help="steering family: caa(mean-diff) or iti(logistic-probe, alpha in sigma units)",
+    )
     ap.add_argument("--axes", nargs="*", default=ADJ_AXES)
     ap.add_argument("--use-fixture", action="store_true",
                     help="use the bundled OFFLINE task fixtures (default for synthetic; "
@@ -481,7 +569,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         sampler_for_axis = synthetic_sampler_factory(use_fixture, args.n_items)
         model = "synthetic-offline"
         hardware = "cpu-offline"
-        meta_extra: Dict = {"backend": "synthetic",
+        meta_extra: Dict = {"backend": "synthetic", "steering_method": args.steering_method,
                             "note": "offline no-torch pipeline smoke on fixtures"}
     else:
         model = args.model or DEFAULT_MODEL
@@ -490,14 +578,15 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"[c2b-adj] disk pre-run: {usage0.message}", flush=True)
         specs, hf_meta = build_specs_hf(
             axes, model, args.use_fixture, args.n_items, args.n_strong,
-            args.n_extraction, args.seed, out_dir)
+            args.n_extraction, args.seed, out_dir, args.steering_method)
         # abort before spending on generation if the model download blew the budget
         usage_mid = check_disk_budget(guard_paths, args.disk_budget_gb,
                                       args.disk_ceiling_gb, raise_on_over=True)
         print(f"[c2b-adj] disk post-C1 (model loaded): {usage_mid.message}", flush=True)
         sampler_for_axis = hf_sampler_factory(model, args.max_new_tokens,
                                               args.temperature, args.seed,
-                                              args.batch_size)
+                                              args.batch_size,
+                                              hf_meta.get("alpha_scale_by_axis"))
         hardware = f"{p0._pick_device()}-{p0._pick_dtype()}"
         meta_extra = {"backend": "hf", **hf_meta}
 

@@ -68,6 +68,40 @@ def test_synthetic_deterministic():
     assert b1.generate("p", SteerConfig(d, 2.0, 3)) == b2.generate("p", SteerConfig(d, 2.0, 3))
 
 
+def test_hf_backend_chat_template_render_is_model_agnostic():
+    class FakeTokenizer:
+        def __init__(self, family):
+            self.family = family
+
+        def apply_chat_template(self, messages, tokenize, add_generation_prompt):
+            assert tokenize is False
+            assert add_generation_prompt is True
+            return f"{self.family}:{messages[0]['role']}:{messages[0]['content']}"
+
+    for family in ("qwen", "llama"):
+        tok = FakeTokenizer(family)
+        rendered = SteeredHFBackend._render_user_chat_prompt(tok, "hi")
+        assert rendered == f"{family}:user:hi"
+
+
+def test_hf_backend_chat_template_falls_back_to_raw_text():
+    class PlainTokenizer:
+        pass
+
+    assert SteeredHFBackend._render_user_chat_prompt(PlainTokenizer(), "raw") == "raw"
+
+
+def test_locate_decoder_layers_supports_llama_style_path():
+    class Dummy:
+        pass
+
+    model = Dummy()
+    model.model = Dummy()
+    model.model.layers = ["l0", "l1", "l2"]
+    got = SteeredHFBackend._locate_decoder_layers(model)
+    assert got == ["l0", "l1", "l2"]
+
+
 # --------------------------------------------------------------------------- #
 # GATED real-model smoke test (skipped unless torch + model + env flag)
 # --------------------------------------------------------------------------- #

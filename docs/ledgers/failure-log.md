@@ -13,6 +13,16 @@
   scale-free reach fraction with a CI + neutral-set sensitivity, and unit-test THAT exact computation.
 - "above null" in high-dim is a trivial bar (random projections ≈0); it is NOT evidence of a real gap.
 
+## 2026-07-24 · C2b A800 adjudication hung + lost 11h56m (D-0029)
+- The frozen C2b run on the borrowed A800 ran ~12h and was killed with NO output. Host NVIDIA driver was
+  reloaded mid-run (NVML mismatch) → broken CUDA context → process spun 100%/one-core, zero progress.
+- No checkpoint/partial output (in-memory only) → 11h56m of compute unsalvageable.
+- **Do-not-repeat:** never launch a multi-hour generation run without (1) per-cell progress logging, (2)
+  periodic disk checkpointing of partial per-item outcomes (resumable), (3) a bounded generation budget
+  (batched generation / smaller max_new_tokens / smaller N) sized to finish in ~1-2h, (4) awareness that a
+  shared/borrowed host may have driver maintenance. Estimate generation count BEFORE launching (~10,700 gens
+  at max_new_tokens=256 single-sequence was ~5-12h, not the 1.5-3h assumed).
+
 ## 2026-07-23 · C1 facade pilot (CPU/Qwen2.5-0.5B) — underpowered + metric asymmetry
 - **Route:** extract CAA vectors + measure semantic facade on Qwen2.5-0.5B-Instruct, CPU, forward-only.
 - **Failure modes observed:**

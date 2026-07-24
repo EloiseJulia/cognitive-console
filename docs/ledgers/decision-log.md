@@ -49,6 +49,28 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-24 · D-0029 · C2b A800 adjudication ABORTED (hung after host driver reload); machine wiped
+- **Outcome:** the frozen C2b adjudication run on the borrowed A800 was KILLED after ~11h56m and produced NO
+  result (C2b verdict lost). Root cause: the host's NVIDIA driver was reloaded/upgraded mid-run (NVML version
+  mismatch 580.173), almost certainly breaking our CUDA context; the process then spun at 100% of one core
+  with zero output/progress for hours (diagnosed: single R thread pinned 100%/core, no GPU waiting pattern,
+  log static, no disk writes). No checkpoint/partial output existed (in-memory only), so nothing was salvageable.
+- **Human decision (@EloiseJulia):** wait (twice) then, on the hung diagnosis, KILL + fully wipe A800.
+- **Cleanup verified:** process terminated; cc_scratch (20GB models/venv/caches) deleted; user's pre-existing
+  ~/.cache/huggingface (13GB, their Depth-Anything/CLIP) UNTOUCHED; no leftover temp scripts. Machine released.
+- **NOT lost:** C1@7B evidence (E-0003, 3/4 axes facade) is committed to main and unaffected. Only this C2b
+  adjudication run's compute was wasted.
+- **Manager failures (recorded honestly):** (1) underestimated generation volume (~10,700 gens, max_new_tokens
+  =256, single-sequence → ~5-11h, not the 1.5-3h estimated); (2) the instrument has NO progress logging and NO
+  checkpointing, so a long run was blind and unsalvageable; (3) did not anticipate host driver reload on a
+  shared borrowed machine.
+- **Before any RE-RUN (fix all three):** (a) add per-axis/per-cell progress logging + periodic checkpoint of
+  partial per-item outcomes to disk (resumable); (b) reduce the frozen N and/or use batched generation +
+  smaller max_new_tokens so the run completes in ~1-2h — since NO results were seen, changing the frozen N is a
+  legitimate pre-run re-registration (document as D-00xx), NOT post-hoc; (c) run on a machine we control or
+  confirm no driver maintenance window. The paired-cluster-bootstrap / DEV-TEST / three-tier decision rule stays.
+- **Frozen?** Prereg decision rule stays frozen; N/generation-budget to be re-pre-registered before re-run.
+
 ## 2026-07-23 · D-0028 · Human GRANTED one A800 allocation for the frozen C2b adjudication
 - **Human decision (@EloiseJulia):** "行，现在就跑吧" + "跑完记得清干净" — one GPU allocation for the
   frozen C2b adjudication; wipe everything after (same as D-0020/D-0022).

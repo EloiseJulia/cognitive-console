@@ -32,12 +32,22 @@ class OODDistribution:
     shrinkage: float
     ridge: float
     n_obs: int
+    reference_id: str | None = None
+    source_hash: str | None = None
+    split_id: str | None = None
 
 
 @dataclass(frozen=True)
 class OODItemStats:
     mahalanobis: float
     norm_inflation: float
+
+
+@dataclass(frozen=True)
+class OODPerItemResult:
+    mahalanobis: np.ndarray
+    norm_inflation: np.ndarray
+    reference_provenance: Dict[str, str]
 
 
 @dataclass(frozen=True)
@@ -192,6 +202,9 @@ def estimate_ood_distribution(
     *,
     shrinkage: float = 0.05,
     ridge: float = 1e-6,
+    reference_id: str | None = None,
+    source_hash: str | None = None,
+    split_id: str | None = None,
 ) -> OODDistribution:
     """Estimate a numerically stable Gaussian reference for Mahalanobis distance."""
     ref = _as_2d("reference_activations", reference_activations)
@@ -217,6 +230,9 @@ def estimate_ood_distribution(
         shrinkage=float(shrinkage),
         ridge=float(ridge),
         n_obs=int(ref.shape[0]),
+        reference_id=reference_id,
+        source_hash=source_hash,
+        split_id=split_id,
     )
 
 
@@ -252,16 +268,60 @@ def per_item_ood_stats(
     *,
     shrinkage: float = 0.05,
     ridge: float = 1e-6,
-) -> tuple[np.ndarray, np.ndarray]:
-    """Return per-item (mahalanobis_distance, norm_inflation)."""
+    reference_id: str | None = None,
+    source_hash: str | None = None,
+    reference_split_id: str | None = None,
+    evaluated_split_id: str | None = None,
+) -> OODPerItemResult:
+    """Return per-item OOD diagnostics with mandatory reference provenance.
+
+    Guardrail: the reference distribution must come from a distinct split from
+    the evaluated steered items, preventing self-fit leakage/circular evidence.
+    """
+    ref_id = (reference_id or "").strip()
+    ref_hash = (source_hash or "").strip()
+    ref_split = (reference_split_id or "").strip()
+    eval_split = (evaluated_split_id or "").strip()
+    if not ref_id:
+        raise ValueError("reference_id is required for OOD provenance (self-fit guardrail)")
+    if not ref_hash:
+        raise ValueError("source_hash is required for OOD provenance (self-fit guardrail)")
+    if not ref_split:
+        raise ValueError(
+            "reference_split_id is required to verify independent OOD reference provenance"
+        )
+    if not eval_split:
+        raise ValueError(
+            "evaluated_split_id is required to prevent self-fit OOD reference leakage"
+        )
+    if ref_split == eval_split:
+        raise ValueError(
+            "reference_split_id must differ from evaluated_split_id "
+            "(self-fit OOD reference leakage is forbidden)"
+        )
+
     dist = estimate_ood_distribution(
-        reference_activations, shrinkage=shrinkage, ridge=ridge
+        reference_activations,
+        shrinkage=shrinkage,
+        ridge=ridge,
+        reference_id=ref_id,
+        source_hash=ref_hash,
+        split_id=ref_split,
     )
     maha = whitened_mahalanobis(steered_residual_activations, dist)
     infl = activation_norm_inflation(
         steered_residual_activations, baseline_residual_activations
     )
-    return maha, infl
+    return OODPerItemResult(
+        mahalanobis=maha,
+        norm_inflation=infl,
+        reference_provenance={
+            "reference_id": ref_id,
+            "source_hash": ref_hash,
+            "split_id": ref_split,
+            "evaluated_split_id": eval_split,
+        },
+    )
 
 
 def bootstrap_spearman(
@@ -272,6 +332,7 @@ def bootstrap_spearman(
     ci_level: float = HM_CI_LEVEL,
     seed: int = 0,
     correlate_with_harm: bool = True,
+    cluster_ids: Sequence[object] | None = None,
 ) -> SpearmanBootstrap:
     """Item-level paired bootstrap Spearman rho.
 
@@ -294,10 +355,25 @@ def bootstrap_spearman(
 
     rng = np.random.default_rng(seed)
     n = x.size
-    idx = rng.integers(0, n, size=(b, n))
     boot = np.empty(b, dtype=np.float64)
-    for i in range(b):
-        boot[i] = _spearman_rho(x[idx[i]], y[idx[i]])
+    if cluster_ids is None:
+        idx = rng.integers(0, n, size=(b, n))
+        for i in range(b):
+            boot[i] = _spearman_rho(x[idx[i]], y[idx[i]])
+    else:
+        clusters = np.asarray(cluster_ids)
+        if clusters.ndim != 1:
+            raise ValueError("cluster_ids must be 1-D")
+        if clusters.size != n:
+            raise ValueError("cluster_ids length must match off_manifold_distance length")
+        uniq, inv = np.unique(clusters, return_inverse=True)
+        if uniq.size < 2:
+            raise ValueError("cluster_ids must contain at least 2 unique clusters")
+        members = [np.flatnonzero(inv == k) for k in range(uniq.size)]
+        for i in range(b):
+            sampled = rng.integers(0, uniq.size, size=uniq.size)
+            sample_idx = np.concatenate([members[k] for k in sampled])
+            boot[i] = _spearman_rho(x[sample_idx], y[sample_idx])
 
     lo_pct = 100.0 * (1.0 - ci_level) / 2.0
     hi_pct = 100.0 * (1.0 + ci_level) / 2.0
@@ -348,12 +424,19 @@ def hm_arm_verdict(
     *,
     rho_threshold: float = HM_SPEARMAN_THRESHOLD,
     min_required: int = HM_REQUIRED_PASS_CELLS,
-    total_cells: int = HM_TOTAL_CELLS,
     b: int = 10000,
     ci_level: float = HM_CI_LEVEL,
     seed: int = 0,
 ) -> HMArmVerdict:
     """Aggregate the frozen H-M verdict: pass in >=3/4 cells."""
+    if len(per_cell) != HM_TOTAL_CELLS:
+        raise ValueError(
+            f"H-M arm requires exactly {HM_TOTAL_CELLS} cells from frozen 2x2 prereg; "
+            f"got {len(per_cell)}"
+        )
+    if not (1 <= min_required <= HM_TOTAL_CELLS):
+        raise ValueError(f"min_required must be in [1, {HM_TOTAL_CELLS}]")
+
     cells: Dict[str, HMCellResult] = {}
     for i, (name, (dist, delta)) in enumerate(sorted(per_cell.items())):
         cells[name] = hm_cell_result(
@@ -367,8 +450,7 @@ def hm_arm_verdict(
         )
     passed_cells = sum(1 for c in cells.values() if c.passed)
     supported = bool(passed_cells >= min_required)
-    if total_cells < 1:
-        raise ValueError("total_cells must be >= 1")
+    total_cells = len(cells)
     return HMArmVerdict(
         passed_cells=int(passed_cells),
         total_cells=int(total_cells),

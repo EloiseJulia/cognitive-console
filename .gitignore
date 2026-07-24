@@ -25,3 +25,6 @@ results/**/*.npy
 results/**/*.npz
 
 .prompt-*.txt
+.worktrees/
+copilot-session-*.md
+*.bundle

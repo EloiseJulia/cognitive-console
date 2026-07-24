@@ -5,6 +5,30 @@
 
 ---
 
+## 2026-07-24 · D-0035 · Human approved reality-check reframe + Route A (pure-model) + venue policy
+- **Human decision (@EloiseJulia, via ask_user):** approve the reality-check reframe (legibility ≠
+  controllability) with two refinements:
+  - **Venue NOT locked to CHI.** Venue is tied to human-subjects: **no-humans → prefer IUI, then CHI
+    empirical track.** **CSCW is WORSE** (collaboration/social focus; cutting humans moves off-target) —
+    CSCW only if we KEEP a human/collaboration study. (Supersedes the CHI-primary framing of D-0002.)
+  - **Route A = pure-model.** Cut human subjects; redirect effort into empirical + mechanism strengthening.
+    **Console demoted to a design argument / SECONDARY contribution — not the headline, no over-claim.**
+  - **Two MUST-ADDs** (else the negative is too thin for a top venue), both pure-model / no humans:
+    1. **Robustness of the negative:** replicate the behavioral non-transfer on **≥2 steering methods**
+       (e.g. ITI / RepE, or layered/scheduled CAA) **× ≥2 models** — the correct form of the "legitimate
+       latent arm": hardening the negative across methods/models strengthens the paper either way.
+    2. **Off-manifold mechanism evidence:** measure OOD distance of steered activations; test "more OOD →
+       worse calibration" correlation to **upgrade C2-mech from hypothesis to evidence.** Low-cost.
+  - **Execution order (free before paid):** (a) FIRST dispatch 3 independent critics on the current reframe
+    — questions: is single-method/single-model fatal? is no-humans viable? CHI/IUI/CSCW fit? how much
+    robustness must be added? NO GPU. (b) THEN shape the new INDEPENDENT pre-registered arm per (1)+(2)
+    (mechanism hypothesis + success/kill + budget) for human approval before any spend.
+  - **Frozen records E-0003 / E-0005 / prereg-c2b-adjudication.md remain UNTOUCHED**; any method improvement
+    goes through a new prereg.
+- **Decision (Manager):** Recorded. Dispatching the 3 critics now (no spend). New-arm prereg drafted only
+  after critic triage. Charter venue policy updated; RQ2 core reframed per claim-ledger C2 + reframe doc.
+- **Frozen?** Reframe structure APPROVED (not yet a paper freeze). Venue = IUI-first (no-humans route).
+
 ## 2026-07-24 · D-0034 · C2b VERDICT = KILL_PLAN_D (0/3), audited VALID_NEGATIVE → escalate Plan-D pivot
 - **Result:** Corrected frozen instrument (D-0033 fix) ran the FULL pre-registered protocol on
   Qwen2.5-7B-Instruct: **11,365 generations, wall 29 min, RC=0, no stall.** Per-axis mean paired diff

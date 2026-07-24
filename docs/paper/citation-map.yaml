@@ -5,7 +5,7 @@
 
 references:
   mishra_non_surjectivity:
-    status: VERIFIED
+    status: UNVERIFIED
     cite_key: "mishra2026nonsurjective"
     relevance: "core background / theory guardrail"
     title: "Steered LLM Activations are Non-Surjective"
@@ -16,7 +16,8 @@ references:
     doi: null
     what_it_claims: "Activation steering can push residual-stream states off the manifold reachable by discrete prompts; no prompt may reproduce the same internal behavior."
     how_we_use_it: "Background/motivation for internal prompt-latent mismatch; not our empirical result and not proof of behavioral prompt unreachability."
-    verifiability_note: "Verified in docs/research/2026-07-23-novelty-falsification.md via arXiv 2604.09839/export API."
+    needs_check: "Cite-verify must confirm exact title, authors, year, arXiv id, venue/workshop note, and whether 2604.09839 is real metadata rather than a placeholder."
+    verifiability_note: "Prior repo docs claimed verification, but owner has required re-scrutiny; treat as UNVERIFIED until docs/research/2026-07-24-citation-verification.md lands."
 
   psr_steer_like_llm:
     status: UNVERIFIED
@@ -237,6 +238,8 @@ references:
     how_we_use_it: "Prompt-control perception neighbor; not latent steering."
     needs_check: "Confirm exact title, authors, venue/year, arXiv id/DOI, and claims."
     verifiability_note: "Lead only until citation-verification doc lands."
+
+
 
 
 

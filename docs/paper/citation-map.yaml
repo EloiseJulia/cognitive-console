@@ -1,0 +1,76 @@
+references:
+  mishra_non_surjectivity:
+    label: "Mishra, Khashabi & Liu, Steered LLM Activations are Non-Surjective"
+    what_it_claims: "Activation steering can push residual stream states off the manifold reachable by discrete prompts; no prompt may reproduce the same internal behavior."
+    how_we_use_it: "Background/motivation for internal prompt-latent mismatch; not our empirical result and not proof of behavioral prompt unreachability."
+    verifiability_note: "Verified in docs/research/2026-07-23-novelty-falsification.md via arXiv 2604.09839/export API."
+  psr_steer_like_llm:
+    label: "Steer Like the LLM / Prompt Steering Replacement (PSR), ICML 2026"
+    what_it_claims: "Trained activation-steering coefficients can imitate prompt steering and achieve performance close to or exceeding prompt steering."
+    how_we_use_it: "Threat/contrast; motivates bounded-scope wording and the planned latent-recovery arm."
+    verifiability_note: "Primary venue page checked in docs/research/2026-07-23-priorart-sweep.md; exact bibliographic details beyond venue-page metadata should be rechecked before camera-ready. [NEEDS EVIDENCE]"
+  caa:
+    label: "CAA / Contrastive Activation Addition"
+    what_it_claims: "Mean-difference contrastive activation vectors can steer high-level model behavior."
+    how_we_use_it: "Steering lineage and one tested method family in E-0005/E-0006."
+    verifiability_note: "Verified in novelty-falsification as ACL 2024 / arXiv:2312.06681; first-author naming should be checked for final bibliography."
+  actadd:
+    label: "ActAdd / Activation Engineering"
+    what_it_claims: "Contrast-pair activation additions can steer language model outputs."
+    how_we_use_it: "Steering lineage/background only."
+    verifiability_note: "Paper existence verified as arXiv:2308.10248; specific Appendix-B exclusion-experiment sub-claim remains [NEEDS EVIDENCE]."
+  iti:
+    label: "Inference-Time Intervention (ITI)"
+    what_it_claims: "Probe/head-based inference-time interventions can steer model behavior."
+    how_we_use_it: "Second tested method family in E-0006 robustness arm."
+    verifiability_note: "Project results verify ITI implementation/provenance, but citation details are not verified in the provided research docs. [NEEDS EVIDENCE]"
+  repe:
+    label: "Representation Engineering / RepE steering lineage"
+    what_it_claims: "Representation-level methods can monitor or control model behavior through learned directions/interventions."
+    how_we_use_it: "Related steering family and possible stronger/alternative method; not tested in current C2 grid."
+    verifiability_note: "Mentioned by project instructions as lineage; exact reference and claims need primary-source verification. [NEEDS EVIDENCE]"
+  huang_lim:
+    label: "Huang & Lim, Designing Intuitive Interfaces for Feature Steering of LLMs"
+    what_it_claims: "Laypeople can use a simplified GUI with SAE feature sliders for persona-oriented LLM steering."
+    how_we_use_it: "Nearest HCI interface neighbor and obvious-combination threat; contrast as single latent channel, no prompt-vs-latent adjudication."
+    verifiability_note: "Verified in novelty-falsification and prior-art sweep as IASDR 2025 poster, DOI 10.21606/iasdr.2025.601."
+  ai_instruments:
+    label: "AI-Instruments"
+    what_it_claims: "Prompts can be reified into reusable direct-manipulation instruments for AI-assisted design."
+    how_we_use_it: "Prompt-layer direct-manipulation neighbor; contrast with latent-vs-prompt adjudication."
+    verifiability_note: "Verified as CHI 2025 / arXiv:2502.18736 in novelty-falsification."
+  labarta_attribution_action:
+    label: "Labarta et al., From Attribution to Action"
+    what_it_claims: "Expert-facing vision/CLIP attribution-to-steering workflow, with interviews."
+    how_we_use_it: "Contrast/threat: interactive steering plus trust/debugging, but different modality and expert population."
+    verifiability_note: "Verified caveat from open-risks #8 and novelty-falsification: vision/CLIP, not LLM; SemanticLens is a separate artifact."
+  latent_manipulator:
+    label: "Latent Manipulator"
+    what_it_claims: "Concept-guided latent manipulation can steer embedding-visualization layouts for document sensemaking."
+    how_we_use_it: "Nearest keyword/UI surface neighbor; contrast as visualization steering, not LLM behavior/control."
+    verifiability_note: "Verified in prior-art sweep as CHI EA 2026 poster/EA with DOI 10.1145/3772363.3798816."
+  mind_the_performance_gap:
+    label: "Mind the Performance Gap: Capability-Behavior Trade-offs in Feature Steering"
+    what_it_claims: "Feature steering can shift behavior while degrading capability/coherence compared with prompting."
+    how_we_use_it: "Related empirical threat/support for steering fragility; not a scoop."
+    verifiability_note: "Prior-art sweep reports body spot-checked via ar5iv, but asks re-confirmation via arXiv API before bibliography. [NEEDS EVIDENCE]"
+  coninstruct:
+    label: "ConInstruct"
+    what_it_claims: "Benchmarks detection/resolution of conflicting textual constraints."
+    how_we_use_it: "Contrast: text-vs-text instruction conflict, not prompt-vs-latent conflict surfaced to users."
+    verifiability_note: "Prior-art sweep lists arXiv:2511.14342; final bibliographic details need verification. [NEEDS EVIDENCE]"
+  who_is_in_charge:
+    label: "Who is In Charge? Dissecting Role Conflicts in LLM Instruction Hierarchy"
+    what_it_claims: "Studies system-vs-user role conflicts and model compliance."
+    how_we_use_it: "Contrast for instruction-hierarchy conflict, not prompt-vs-latent interface conflict."
+    verifiability_note: "Prior-art sweep lists NeurIPS 2025 virtual page; final bibliographic details need verification. [NEEDS EVIDENCE]"
+  learning_to_trust:
+    label: "Learning to Trust: How Humans Mentally Recalibrate AI Confidence Signals"
+    what_it_claims: "Laypeople recalibrate trust in AI confidence signals over exposure."
+    how_we_use_it: "Potential trust-calibration measure/background if the human-study fork reopens."
+    verifiability_note: "Prior-art sweep lists arXiv:2603.22634; final bibliographic details need verification. [NEEDS EVIDENCE]"
+  who_controls_conversation:
+    label: "Who Controls the Conversation? User Perspectives on LLM System Prompts"
+    what_it_claims: "Users' perceptions of and control over system prompts."
+    how_we_use_it: "Prompt-control perception neighbor; not latent steering."
+    verifiability_note: "Prior-art sweep lists CHI 2026 preprint/arXiv:2603.00089; final bibliographic details need verification. [NEEDS EVIDENCE]"

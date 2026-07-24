@@ -1,0 +1,83 @@
+claims:
+  C1:
+    statement: "Representational legibility/facade gap: on selected cognitive axes, a readable prompt reaches only part of the extracted axis pole in mid-layer activation space."
+    status: "partially-supported; exploratory single-model 7B evidence"
+    supporting_evidence_ids: ["E-0003"]
+    scope: "Qwen2.5-7B-Instruct; axes deliberation, skepticism, uncertainty_awareness supported; focus fails; Llama replication pending"
+    paper_sections: ["Abstract", "Introduction", "Methods", "Results", "Limitations", "Conclusion"]
+    main_artifacts: ["fig-ratio-ci"]
+    valid_for_paper: "false for confirmatory/core claim per evidence ledger; usable only if explicitly labeled exploratory/scoped"
+    gate_notes: "Has evidence row E-0003, but ledger says valid_for_paper=false for confirmatory use; mark exploratory everywhere."
+  C2:
+    statement: "Legibility does not transfer to behavioral controllability for naive/bounded CAA/ITI steering: across CAA/ITI x Qwen2.5-7B/Llama-3-8B, steering fails to beat the bounded best-prompt ceiling on all tested axes and harms uncertainty calibration in all four cells."
+    status: "supported as a pre-registered negative generalized across tested methods and models"
+    supporting_evidence_ids: ["E-0005", "E-0006"]
+    scope: "Frozen C2b adjudicator; {CAA, ITI} x {Qwen2.5-7B, Llama-3-8B}; axes deliberation, skepticism, uncertainty_awareness; bounded prompt effort; naive/off-the-shelf steering only"
+    paper_sections: ["Abstract", "Introduction", "Methods", "Results", "Limitations", "Conclusion"]
+    main_artifacts: ["table-c2-delta-4cell", "fig-calibration-harm-4cell"]
+    valid_for_paper: true
+    gate_notes: "Passes Abstract/Contributions/Conclusion evidence gate via E-0005 and E-0006."
+  C2-mech:
+    statement: "Calibration harm might be explained by off-manifold steering distance."
+    status: "hypothesis/future work only; directly tested and not supported"
+    supporting_evidence_ids: ["E-0007"]
+    scope: "Whitened Mahalanobis OOD distance vs per-item calibration harm, uncertainty axis, four CAA/ITI x Qwen/Llama cells"
+    paper_sections: ["Results", "Limitations", "Future Work"]
+    main_artifacts: []
+    valid_for_paper: "future-work/null-result context only; not a contribution"
+    gate_notes: "E-0007 is a valid null, not support for the mechanism. Do not enter Abstract/Contributions/Conclusion as a positive claim."
+  C2a:
+    statement: "Internal-state non-surjectivity: steered residual activations may be unreachable by bounded prompts."
+    status: "background/motivation only"
+    supporting_evidence_ids: []
+    scope: "Mishra et al. theory/background; not empirically tested by this project"
+    paper_sections: ["Introduction", "Related Work"]
+    main_artifacts: []
+    valid_for_paper: "background citation only; not our empirical claim"
+    gate_notes: "No project evidence row because it is not our claim. Must not enter Abstract/Contributions/Conclusion as an empirical contribution."
+  C3:
+    statement: "A cognitive console should surface boundaries/limits of legible latent control and support trust recalibration rather than advertise a latent control slider."
+    status: "design implication only; no user study yet"
+    supporting_evidence_ids: []
+    scope: "Pure-model route; no formative or controlled user study; human study deferred/owner-gated"
+    paper_sections: ["Abstract", "Introduction", "Design implications", "Limitations", "Conclusion"]
+    main_artifacts: []
+    valid_for_paper: "flagged: no standalone evidence row; usable only as a non-empirical design implication derived from C2, not as an empirical contribution"
+    gate_notes: "FLAG: lacks a direct evidence row. If C3 enters Abstract/Contributions/Conclusion as a standalone claim or empirical HCI contribution, the bidirectional gate fails; it may only appear as a clearly marked design implication from C2."
+reverse_artifact_map:
+  table-c2-delta-4cell:
+    artifact_type: "main table"
+    supports_claims: ["C2"]
+    manifest: "docs/paper/table-manifests/c2-delta-4cell.yaml"
+    gate_status: "ok"
+  fig-ratio-ci:
+    artifact_type: "main figure"
+    supports_claims: ["C1"]
+    manifest: "docs/paper/figure-manifests/c1-ratio-ci.yaml"
+    gate_status: "ok, exploratory label required"
+  fig-calibration-harm-4cell:
+    artifact_type: "main figure"
+    supports_claims: ["C2"]
+    manifest: "docs/paper/figure-manifests/c2-calibration-harm-4cell.yaml"
+    gate_status: "ok, manifest stub pending plotting script"
+gate_summary:
+  abstract_contributions_conclusion_claims:
+    - claim: "C1"
+      has_project_evidence_row: true
+      evidence_ids: ["E-0003"]
+      gate_result: "pass only with exploratory/single-model caveat"
+    - claim: "C2"
+      has_project_evidence_row: true
+      evidence_ids: ["E-0005", "E-0006"]
+      gate_result: "pass"
+    - claim: "C3"
+      has_project_evidence_row: false
+      evidence_ids: []
+      gate_result: "FLAGGED: no direct evidence row; allowed only as design implication, not standalone contribution"
+  claims_not_allowed_as_contributions:
+    - claim: "C2-mech"
+      reason: "E-0007 is valid null; mechanism open"
+    - claim: "C2a"
+      reason: "background theory, not our empirical evidence"
+  artifacts_without_claims: []
+

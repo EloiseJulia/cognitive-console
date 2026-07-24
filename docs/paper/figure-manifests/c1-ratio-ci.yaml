@@ -1,0 +1,25 @@
+artifact_id: "fig-ratio-ci"
+artifact_type: "main figure"
+title: "Representational facade ratio by cognitive axis"
+supports_claims: ["C1"]
+source_artifacts:
+  - path: "results/gpu_7b_2026-07-23/c1/c1_facade_results.json"
+    experiment_id: "c1-facade-d710b4b4-0001"
+    role: "per-axis facade_ratio, prompt_reach, pole_reach, CI, layer, stability diagnostics"
+  - path: "results/gpu_7b_2026-07-23/c1/c1_facade_summary.md"
+    experiment_id: "c1-facade-d710b4b4-0001"
+    role: "human-readable audit trail and heterogeneity caveats"
+provenance_rule: "Plot directly from c1_facade_results.json; summary.md is explanatory only."
+axes:
+  x: "cognitive axis (deliberation, skepticism, uncertainty_awareness, focus)"
+  y: "facade_ratio = prompt_reach / pole_reach"
+  interval: "bootstrap 95% CI"
+  reference_lines:
+    - "ratio = 1.0 (no under-reach threshold)"
+encodings:
+  color: "C1 signal status: facade-holds vs no-facade/overshoot"
+  annotation: "exploratory; Qwen2.5-7B only; Llama replication pending"
+required_caveats:
+  - "Focus overshoots/no-facade."
+  - "Deliberation layer-16 sensitivity has CI crossing 1."
+  - "valid_for_paper is exploratory/scoped, not confirmatory."

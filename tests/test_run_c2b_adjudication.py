@@ -5,6 +5,8 @@ FIX 3: an underpowered bootstrap (--bootstrap-b < frozen 10000) must HARD-FAIL
 """
 
 import pytest
+import json
+import numpy as np
 
 from scripts import run_c2b_adjudication as R
 
@@ -193,3 +195,213 @@ def test_looks_like_cuda_error_labeling():
     # a generic RuntimeError with no GPU vocabulary must NOT be mislabeled.
     assert R._looks_like_cuda_error(RuntimeError("list index out of range")) is False
     assert R._looks_like_cuda_error(ValueError("bad config")) is False
+
+
+def _canonical_verdict_metrics(path):
+    data = json.loads(path.read_text(encoding="utf-8"))
+    axes = {}
+    for axis_row in data["axes"]:
+        axes[axis_row["axis"]] = {
+            "layer": axis_row["layer"],
+            "passed": axis_row["passed"],
+            "mean_diff": axis_row["mean_diff"],
+            "ci_lo": axis_row["ci_lo"],
+            "ci_hi": axis_row["ci_hi"],
+            "ci_level": axis_row["ci_level"],
+            "coherence_ok": axis_row["coherence_ok"],
+            "test_steer_degeneracy": axis_row["test_steer_degeneracy"],
+            "test_baseline_degeneracy": axis_row["test_baseline_degeneracy"],
+            "per_item_prompt": axis_row["per_item_prompt"],
+            "per_item_steer": axis_row["per_item_steer"],
+            "per_item_diff": axis_row["per_item_diff"],
+            "frozen_alpha": axis_row["dev_selection"]["frozen_alpha"],
+            "best_prompt_id": axis_row["dev_selection"]["best_prompt_id"],
+        }
+    payload = {
+        "verdict": data["verdict"],
+        "axis_passes": data["axis_passes"],
+        "axes": axes,
+    }
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+
+def test_transcript_side_output_is_metric_invariant(tmp_path):
+    out_a = tmp_path / "with_tx"
+    out_b = tmp_path / "without_tx"
+    argv = [
+        "--backend", "synthetic",
+        "--n-items", "5",
+        "--bootstrap-b", "200",
+        "--allow-underpowered",
+        "--seed", "20260723",
+    ]
+    assert R.main([*argv, "--save-transcripts", "--out-dir", str(out_a)]) == 0
+    assert R.main([*argv, "--no-save-transcripts", "--out-dir", str(out_b)]) == 0
+
+    a = _canonical_verdict_metrics(out_a / "c2b_adjudication_results.json")
+    b = _canonical_verdict_metrics(out_b / "c2b_adjudication_results.json")
+    assert a == b
+
+    tx_dir = out_a / "transcripts"
+    assert tx_dir.exists()
+    assert (tx_dir / "paired_test_channels.jsonl").exists()
+    assert not (out_b / "transcripts").exists()
+
+
+def test_transcript_records_include_parse_diagnostics(tmp_path):
+    out_dir = tmp_path / "tx_diag"
+    rc = R.main([
+        "--backend", "synthetic",
+        "--n-items", "4",
+        "--bootstrap-b", "200",
+        "--allow-underpowered",
+        "--save-transcripts",
+        "--out-dir", str(out_dir),
+    ])
+    assert rc == 0
+    tx_files = sorted((out_dir / "transcripts").glob("*.jsonl"))
+    assert tx_files, "expected transcript jsonl files"
+    row = None
+    for fp in tx_files:
+        if fp.name == "paired_test_channels.jsonl":
+            continue
+        with open(fp, "r", encoding="utf-8") as fh:
+            line = fh.readline().strip()
+        if line:
+            row = json.loads(line)
+            break
+    assert row is not None
+    assert "prompt_text" in row and isinstance(row["prompt_text"], str)
+    assert "generation_text" in row and isinstance(row["generation_text"], str)
+    assert "parse" in row and isinstance(row["parse"], dict)
+    assert "numbers_extracted" in row["parse"]
+    assert "parsed_confidence" in row["parse"]
+    assert "axis_parse_failed" in row["parse"]
+
+
+def test_transcript_alignment_uses_non_alpha_key_for_scaled_iti_flow(tmp_path):
+    out_dir = tmp_path / "iti_alignment"
+    collector = R.TranscriptCollector(out_dir, "fake-model", "iti", "hf")
+    item = {"id": "u1", "prompt": "p"}
+    for j in range(2):
+        collector.record_generation(
+            axis="uncertainty_awareness",
+            item=item,
+            instruction="neutral",
+            alpha=0.2,  # effective alpha after scaling
+            layer=1,
+            sample_index=j,
+            sample_seed=10 + j,
+            prompt_text="Q?",
+            generation_text="confidence: 0.80",
+            outcome=0.8,
+            degeneracy=0.0,
+            max_new_tokens=16,
+        )
+    collector.attach_cell(
+        axis="uncertainty_awareness",
+        phase=R.adj.PHASE_TEST_STEER,
+        cell_key="alpha=0.1",
+        item_id="u1",
+        alpha=0.1,  # requested grid alpha before scaling
+        instruction="neutral",
+        outcomes=[0.8, 0.8],
+    )
+    assert len(collector._all_records) == 2
+    assert all(abs(float(r["alpha"]) - 0.2) < 1e-12 for r in collector._all_records)
+    assert all(abs(float(r["requested_alpha"]) - 0.1) < 1e-12 for r in collector._all_records)
+
+
+def test_transcript_text_is_truncated_with_explicit_marker(tmp_path):
+    out_dir = tmp_path / "truncate"
+    collector = R.TranscriptCollector(out_dir, "fake-model", "iti", "hf")
+    item = {"id": "u1", "prompt": "p"}
+    collector.record_generation(
+        axis="uncertainty_awareness",
+        item=item,
+        instruction="neutral",
+        alpha=0.1,
+        layer=1,
+        sample_index=0,
+        sample_seed=1,
+        prompt_text="P" * (R._TRANSCRIPT_MAX_PROMPT_CHARS + 50),
+        generation_text="G" * (R._TRANSCRIPT_MAX_GENERATION_CHARS + 50),
+        outcome=0.2,
+        degeneracy=0.0,
+        max_new_tokens=8,
+    )
+    collector.attach_cell(
+        axis="uncertainty_awareness",
+        phase=R.adj.PHASE_TEST_STEER,
+        cell_key="alpha=0.1",
+        item_id="u1",
+        alpha=0.1,
+        instruction="neutral",
+        outcomes=[0.2],
+    )
+    rec = collector._all_records[0]
+    assert rec["prompt_truncated"] is True
+    assert rec["generation_truncated"] is True
+    assert rec["prompt_text"].endswith("...[truncated]")
+    assert rec["generation_text"].endswith("...[truncated]")
+
+
+def test_hf_postrun_disk_over_ceiling_fails_explicitly(tmp_path, monkeypatch):
+    class FakeAxisRow:
+        axis = "uncertainty_awareness"
+        per_item_prompt = [0.0]
+        per_item_steer = [0.0]
+
+    class FakeReport:
+        verdict = "KILL_PLAN_D"
+        axis_passes = {"uncertainty_awareness": False}
+        axis_results = [FakeAxisRow()]
+
+    spec = R.AxisAdjSpec(
+        axis="uncertainty_awareness",
+        items=[{"id": "u1", "prompt": "q"}],
+        strong_prompts=[("p1", "strong prompt")],
+        neutral_prompt="neutral prompt",
+        direction=np.ones(8),
+        layer=1,
+    )
+
+    monkeypatch.setattr(
+        R,
+        "build_specs_hf",
+        lambda *a, **k: ([spec], {"alpha_scale_by_axis": {"uncertainty_awareness": 1.0}, "steering_method": "iti"}),
+    )
+    monkeypatch.setattr(R, "hf_sampler_factory", lambda *a, **k: (lambda axis: object()))
+    monkeypatch.setattr(R.adj, "adjudicate", lambda *a, **k: FakeReport())
+    monkeypatch.setattr(
+        R,
+        "write_results",
+        lambda report, out_dir, meta: (out_dir / "c2b_adjudication_results.json"),
+    )
+    monkeypatch.setattr(R, "register", lambda *a, **k: "exp-test")
+
+    class _Usage:
+        message = "ok"
+
+    calls = {"n": 0}
+
+    def fake_check_disk_budget(paths, budget_gb, ceiling_gb, raise_on_over=True):
+        calls["n"] += 1
+        if calls["n"] == 3:
+            raise R.DiskBudgetError("DISK OVER CEILING")
+        return _Usage()
+
+    monkeypatch.setattr(R, "check_disk_budget", fake_check_disk_budget)
+    monkeypatch.setattr(R.p0, "_pick_device", lambda: "cpu")
+    monkeypatch.setattr(R.p0, "_pick_dtype", lambda: "fp32")
+    rc = R.main([
+        "--backend", "hf",
+        "--steering-method", "iti",
+        "--use-fixture",
+        "--allow-underpowered",
+        "--bootstrap-b", "200",
+        "--n-items", "1",
+        "--axes", "uncertainty_awareness",
+        "--out-dir", str(tmp_path / "hf_disk_guard"),
+    ])
+    assert rc == 4

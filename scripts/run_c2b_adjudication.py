@@ -23,10 +23,12 @@ wall-clock, numbers only from computed artifacts. See RUN_ON_A800.md §Adjudicat
 from __future__ import annotations
 
 import argparse
+import collections
 import hashlib
 import json
 import os
 import platform
+import re
 import sys
 import threading
 import time
@@ -44,6 +46,7 @@ if str(_REPO) not in sys.path:
     sys.path.insert(0, str(_REPO))
 
 from cognitive_console.eval import c2b_tasks
+from cognitive_console.eval import scorers as c2b_scorers
 from cognitive_console.experiments import adjudicate_c2b as adj
 from cognitive_console.experiments.adjudicate_c2b import (
     AxisAdjSpec, BackendOutcomeSampler, CheckpointStore, ProgressTracker,
@@ -56,7 +59,11 @@ from cognitive_console.config import config_hash
 from cognitive_console.registry import ExperimentRecord, ExperimentRegistry
 from cognitive_console.lineage import git_commit, new_experiment_id, utcnow
 from cognitive_console.manifest import ArtifactManifest, write_manifest
-from cognitive_console.ops.disk_guard import check_disk_budget, default_guard_paths
+from cognitive_console.ops.disk_guard import (
+    DiskBudgetError,
+    check_disk_budget,
+    default_guard_paths,
+)
 
 from scripts import run_c1_facade as c1
 from scripts import run_gpu_phase0 as p0
@@ -67,6 +74,9 @@ DEFAULT_MODEL = "Qwen/Qwen2.5-7B-Instruct"
 SMOKE_MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
 DEFAULT_N_STRONG = 16  # best-of-16 authored prompts (prereg §4)
 DEFAULT_STEERING_METHOD = "caa"
+_TRANSCRIPT_NUMBER_RE = re.compile(r"-?\d[\d,]*(?:\.\d+)?")
+_TRANSCRIPT_MAX_PROMPT_CHARS = 2_000
+_TRANSCRIPT_MAX_GENERATION_CHARS = 8_000
 
 
 def _rel(path: Path) -> str:
@@ -98,7 +108,11 @@ def _config_fingerprint(args, model: str, specs) -> str:
         "batch_size": int(args.batch_size),
         "do_sample": bool(args.backend == "hf"),
         "k": int(adj.K_SAMPLES),
+        "bootstrap_b": int(args.bootstrap_b),
         "alpha_grid": list(adj.ALPHA_GRID),
+        "coherence_max_ratio": float(adj.COHERENCE_MAX_RATIO),
+        "delta": float(adj.DELTA),
+        "bonferroni_ci_level": float(adj.BONFERRONI_CI_LEVEL),
         "dev_fraction": float(adj.DEV_FRACTION),
         "axes": {
             spec.axis: {
@@ -116,6 +130,377 @@ def _config_fingerprint(args, model: str, specs) -> str:
 
 class ScaledBackendOutcomeSampler(BackendOutcomeSampler):
     """Outcome sampler with per-axis alpha scaling (ITI uses alpha*sigma)."""
+
+    def __init__(self, *args, alpha_scale_by_axis: Optional[Dict[str, float]] = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.alpha_scale_by_axis = dict(alpha_scale_by_axis or {})
+
+    def _scaled_alpha(self, axis: str, alpha: float) -> float:
+        scale = float(self.alpha_scale_by_axis.get(axis, 1.0))
+        return sigma_scaled_alpha(alpha, scale)
+
+    def sample(self, axis, item, instruction, alpha, k, direction, layer):
+        return super().sample(
+            axis, item, instruction, self._scaled_alpha(axis, alpha), k, direction, layer
+        )
+
+    def sample_batch(self, axis, items, instruction, alpha, k, direction, layer):
+        return super().sample_batch(
+            axis, items, instruction, self._scaled_alpha(axis, alpha), k, direction, layer
+        )
+
+
+def _safe_float(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _normalize_alpha(alpha: float) -> str:
+    return f"{float(alpha):.12g}"
+
+
+def _truncate_text(text: str, max_chars: int) -> tuple[str, bool]:
+    raw = str(text)
+    limit = int(max_chars)
+    if limit <= 0 or len(raw) <= limit:
+        return raw, False
+    suffix = " ...[truncated]"
+    keep = max(0, limit - len(suffix))
+    return raw[:keep] + suffix, True
+
+
+class TranscriptCollector:
+    """Collects per-generation transcripts and flushes them as side-output JSONL."""
+
+    def __init__(self, out_dir: Path, model: str, method: str, backend: str):
+        self.out_dir = Path(out_dir)
+        self.model = str(model)
+        self.method = str(method)
+        self.backend = str(backend)
+        self._pending: Dict[tuple, List[Dict]] = collections.defaultdict(list)
+        self._by_cell: Dict[tuple, List[Dict]] = collections.defaultdict(list)
+        self._all_records: List[Dict] = []
+
+    def _pending_key(self, axis: str, item_id: str, instruction: str) -> tuple:
+        return (str(axis), str(item_id), str(instruction))
+
+    def _parse_diag(self, axis: str, item: Dict, text: str, max_new_tokens: int) -> Dict:
+        numbers = _TRANSCRIPT_NUMBER_RE.findall(text or "")
+        parsed_number = c2b_scorers.parse_final_number(text)
+        parsed_conf = c2b_scorers.parse_confidence(text)
+        choice_keys = list((item.get("choices") or {}).keys()) if isinstance(item, dict) else []
+        parsed_choice = c2b_scorers.parse_choice_letter(text, choice_keys) if choice_keys else None
+        try:
+            correctness = int(c2b_scorers.item_is_correct(item, text))
+        except (TypeError, ValueError):
+            correctness = None
+        axis_parse_failed = False
+        if axis == "deliberation":
+            axis_parse_failed = parsed_number is None
+        elif axis == "skepticism" and choice_keys:
+            axis_parse_failed = parsed_choice is None
+        elif axis == "uncertainty_awareness":
+            axis_parse_failed = parsed_conf is None
+        return {
+            "numbers_extracted": [str(n) for n in numbers],
+            "parsed_number": parsed_number,
+            "parsed_choice": parsed_choice,
+            "parsed_confidence": parsed_conf,
+            "correctness": correctness,
+            "axis_parse_failed": bool(axis_parse_failed),
+            "maybe_truncated": len((text or "").split()) >= int(max_new_tokens),
+        }
+
+    def record_generation(self, *, axis: str, item: Dict, instruction: str, alpha: float,
+                          layer: int, sample_index: int, sample_seed: int, prompt_text: str,
+                          generation_text: str, outcome: float, degeneracy: float,
+                          max_new_tokens: int) -> None:
+        item_id = str(item.get("id"))
+        prompt_payload, prompt_truncated = _truncate_text(
+            str(prompt_text), _TRANSCRIPT_MAX_PROMPT_CHARS
+        )
+        generation_full = str(generation_text)
+        generation_payload, generation_truncated = _truncate_text(
+            generation_full, _TRANSCRIPT_MAX_GENERATION_CHARS
+        )
+        rec = {
+            "axis": str(axis),
+            "item_id": item_id,
+            "alpha": float(alpha),
+            "layer": int(layer),
+            "sample_index": int(sample_index),
+            "sample_seed": int(sample_seed),
+            "instruction": str(instruction),
+            "prompt_text": prompt_payload,
+            "generation_text": generation_payload,
+            "prompt_truncated": bool(prompt_truncated),
+            "generation_truncated": bool(generation_truncated),
+            "transcript_char_limits": {
+                "prompt": int(_TRANSCRIPT_MAX_PROMPT_CHARS),
+                "generation": int(_TRANSCRIPT_MAX_GENERATION_CHARS),
+            },
+            "sample_outcome": float(outcome),
+            "sample_degeneracy": float(degeneracy),
+            "parse": self._parse_diag(str(axis), item, generation_full, int(max_new_tokens)),
+            "meta": {"method": self.method, "model": self.model, "backend": self.backend},
+        }
+        self._pending[self._pending_key(str(axis), item_id, str(instruction))].append(rec)
+
+    def attach_cell(self, *, axis: str, phase: str, cell_key: str, item_id: str, alpha: float,
+                    instruction: str, outcomes: List[float]) -> None:
+        key = self._pending_key(axis, item_id, instruction)
+        expected = len(outcomes)
+        rows = self._pending.get(key, [])
+        if len(rows) < expected:
+            raise RuntimeError(
+                f"transcript alignment failure for key={key}: expected {expected} rows, got {len(rows)} "
+                f"(requested_alpha={_normalize_alpha(alpha)})"
+            )
+        take = rows[:expected]
+        del rows[:expected]
+        if not rows:
+            self._pending.pop(key, None)
+        sample_ids = sorted(int(r.get("sample_index", -1)) for r in take)
+        expected_ids = list(range(expected))
+        if sample_ids != expected_ids:
+            raise RuntimeError(
+                f"transcript alignment failure for key={key}: sample_index mismatch "
+                f"expected={expected_ids} got={sample_ids}"
+            )
+        item_mean = float(np.mean([float(r["sample_outcome"]) for r in take]))
+        for r in sorted(take, key=lambda rec: int(rec["sample_index"])):
+            rec = dict(r)
+            rec["phase"] = str(phase)
+            rec["cell_key"] = str(cell_key)
+            rec["requested_alpha"] = float(alpha)
+            rec["item_outcome_mean"] = item_mean
+            self._all_records.append(rec)
+            self._by_cell[(str(axis), str(phase), str(cell_key))].append(rec)
+
+    def _sanitize(self, text: str) -> str:
+        out = re.sub(r"[^A-Za-z0-9_.=-]+", "_", str(text))
+        out = out.strip("_")
+        return out or "cell"
+
+    def _final_outcome_lookup(self, report: adj.AdjudicationReport) -> Dict[tuple, float]:
+        lookup: Dict[tuple, float] = {}
+        for row in report.axis_results:
+            axis = str(row.axis)
+            for idx, value in enumerate(row.per_item_prompt):
+                lookup[(axis, adj.PHASE_TEST_PROMPT, idx)] = float(value)
+            for idx, value in enumerate(row.per_item_steer):
+                lookup[(axis, adj.PHASE_TEST_STEER, idx)] = float(value)
+        return lookup
+
+    def _write_cell_files(self, out_root: Path, final_lookup: Dict[tuple, float]) -> None:
+        for (axis, phase, cell_key), rows in sorted(self._by_cell.items()):
+            p = out_root / f"{self._sanitize(axis)}__{self._sanitize(phase)}__{self._sanitize(cell_key)}.jsonl"
+            sorted_rows = sorted(rows, key=lambda r: (r["item_id"], int(r["sample_index"])))
+            with open(p, "w", encoding="utf-8") as fh:
+                order_by_item: Dict[str, int] = {}
+                for rec in sorted_rows:
+                    idx = order_by_item.setdefault(str(rec["item_id"]), len(order_by_item))
+                    out_rec = dict(rec)
+                    out_rec["final_item_outcome"] = final_lookup.get((axis, phase, idx))
+                    fh.write(json.dumps(out_rec, ensure_ascii=False) + "\n")
+
+    def _write_paired_test_file(self, out_root: Path, report: adj.AdjudicationReport) -> None:
+        grouped: Dict[tuple, Dict[str, Dict[str, Dict[int, Dict]]]] = collections.defaultdict(
+            lambda: collections.defaultdict(dict)
+        )
+        for rec in self._all_records:
+            if rec.get("phase") not in {adj.PHASE_TEST_PROMPT, adj.PHASE_TEST_STEER, adj.PHASE_TEST_BASELINE}:
+                continue
+            key = (str(rec["axis"]), str(rec["item_id"]))
+            phase = str(rec["phase"])
+            grouped[key][phase][int(rec["sample_index"])] = rec
+        path = out_root / "paired_test_channels.jsonl"
+        with open(path, "w", encoding="utf-8") as fh:
+            for axis_row in report.axis_results:
+                axis = str(axis_row.axis)
+                test_items = sorted((k for k in grouped.keys() if k[0] == axis), key=lambda x: x[1])
+                for item_order, key in enumerate(test_items):
+                    phases = grouped[key]
+                    sample_ids = sorted(
+                        set(phases.get(adj.PHASE_TEST_PROMPT, {}).keys())
+                        | set(phases.get(adj.PHASE_TEST_STEER, {}).keys())
+                        | set(phases.get(adj.PHASE_TEST_BASELINE, {}).keys())
+                    )
+                    for sid in sample_ids:
+                        prompt_rec = phases.get(adj.PHASE_TEST_PROMPT, {}).get(sid)
+                        steer_rec = phases.get(adj.PHASE_TEST_STEER, {}).get(sid)
+                        base_rec = phases.get(adj.PHASE_TEST_BASELINE, {}).get(sid)
+                        row = {
+                            "axis": axis,
+                            "item_id": key[1],
+                            "item_order": int(item_order),
+                            "sample_index": int(sid),
+                            "method": self.method,
+                            "model": self.model,
+                            "prompt_text": prompt_rec["prompt_text"] if prompt_rec else None,
+                            "prompt_generation": prompt_rec["generation_text"] if prompt_rec else None,
+                            "steered_generation": steer_rec["generation_text"] if steer_rec else None,
+                            "baseline_generation": base_rec["generation_text"] if base_rec else None,
+                            "prompt_parse": prompt_rec.get("parse") if prompt_rec else None,
+                            "steer_parse": steer_rec.get("parse") if steer_rec else None,
+                            "baseline_parse": base_rec.get("parse") if base_rec else None,
+                            "sample_outcomes": {
+                                "prompt": _safe_float(prompt_rec.get("sample_outcome")) if prompt_rec else None,
+                                "steer": _safe_float(steer_rec.get("sample_outcome")) if steer_rec else None,
+                                "baseline": _safe_float(base_rec.get("sample_outcome")) if base_rec else None,
+                            },
+                            "final_item_outcomes": {
+                                "prompt": float(axis_row.per_item_prompt[item_order])
+                                if item_order < len(axis_row.per_item_prompt) else None,
+                                "steer": float(axis_row.per_item_steer[item_order])
+                                if item_order < len(axis_row.per_item_steer) else None,
+                            },
+                        }
+                        fh.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+    def write_all(self, out_dir: Path, report: adj.AdjudicationReport) -> Optional[Path]:
+        root = Path(out_dir) / "transcripts"
+        root.mkdir(parents=True, exist_ok=True)
+        final_lookup = self._final_outcome_lookup(report)
+        self._write_cell_files(root, final_lookup)
+        self._write_paired_test_file(root, report)
+        return root
+
+
+class TranscriptCheckpointStore(CheckpointStore):
+    """Checkpoint store that tags generated transcript records with phase/cell."""
+
+    def __init__(self, *args, collector: Optional[TranscriptCollector] = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._collector = collector
+
+    def put(self, axis, phase, cell_key, item_id, outcomes, degeneracies, alpha, instruction) -> None:
+        if self._collector is not None:
+            self._collector.attach_cell(
+                axis=str(axis),
+                phase=str(phase),
+                cell_key=str(cell_key),
+                item_id=str(item_id),
+                alpha=float(alpha),
+                instruction=str(instruction),
+                outcomes=[float(x) for x in outcomes],
+            )
+        super().put(axis, phase, cell_key, item_id, outcomes, degeneracies, alpha, instruction)
+
+
+class TranscriptBackendOutcomeSampler(BackendOutcomeSampler):
+    """Sampler wrapper that emits pure-observational transcript records."""
+
+    def __init__(self, *args, transcript_collector: TranscriptCollector, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._collector = transcript_collector
+
+    def _emit(self, *, axis: str, item: Dict, instruction: str, alpha: float, layer: int,
+              sample_index: int, sample_seed: int, prompt_text: str, generation_text: str,
+              outcome: float, degeneracy: float) -> None:
+        self._collector.record_generation(
+            axis=axis,
+            item=item,
+            instruction=instruction,
+            alpha=alpha,
+            layer=layer,
+            sample_index=sample_index,
+            sample_seed=sample_seed,
+            prompt_text=prompt_text,
+            generation_text=generation_text,
+            outcome=outcome,
+            degeneracy=degeneracy,
+            max_new_tokens=self.max_new_tokens,
+        )
+
+    def sample_batch(self, axis: str, items: List[Dict], instruction: str, alpha: float,
+                     k: int, direction: np.ndarray, layer: int):
+        items = list(items)
+        if not self.supports_batch:
+            return [self.sample(axis, it, instruction, alpha, k, direction, layer) for it in items]
+        steer = adj.SteerConfig(direction=direction, alpha=float(alpha), layer=int(layer))
+        prompts: List[str] = []
+        seeds: List[int] = []
+        owners: List[int] = []
+        owner_sample_index: List[int] = []
+        for ii, it in enumerate(items):
+            text_input = adj.format_task_input(axis, instruction, it)
+            for j in range(int(k)):
+                prompts.append(text_input)
+                seeds.append(self._call_seed(axis, it, alpha, j))
+                owners.append(ii)
+                owner_sample_index.append(j)
+        texts = self.gen.generate_batch(
+            prompts, steer, self.max_new_tokens, seeds=seeds,
+            do_sample=self.do_sample, temperature=self.temperature,
+        )
+        batches: List[adj.SampleBatch] = []
+        for ii, it in enumerate(items):
+            outs: List[float] = []
+            degs: List[float] = []
+            for idx, owner in enumerate(owners):
+                if owner != ii:
+                    continue
+                txt = texts[idx]
+                out = adj.score_sample_outcome(axis, it, txt)
+                deg = c2b_scorers.degeneracy_score(txt)
+                outs.append(out)
+                degs.append(deg)
+                self._emit(
+                    axis=axis,
+                    item=it,
+                    instruction=instruction,
+                    alpha=float(alpha),
+                    layer=int(layer),
+                    sample_index=int(owner_sample_index[idx]),
+                    sample_seed=int(seeds[idx]),
+                    prompt_text=str(prompts[idx]),
+                    generation_text=str(txt),
+                    outcome=float(out),
+                    degeneracy=float(deg),
+                )
+            batches.append(adj.SampleBatch(outcomes=outs, degeneracies=degs))
+        return batches
+
+    def sample(self, axis: str, item: Dict, instruction: str, alpha: float, k: int,
+               direction: np.ndarray, layer: int):
+        text_input = adj.format_task_input(axis, instruction, item)
+        steer = adj.SteerConfig(direction=direction, alpha=float(alpha), layer=int(layer))
+        outcomes: List[float] = []
+        degens: List[float] = []
+        for j in range(int(k)):
+            call_seed = self._call_seed(axis, item, alpha, j)
+            try:
+                out = self.gen.generate(
+                    text_input, steer, self.max_new_tokens,
+                    do_sample=self.do_sample, temperature=self.temperature, seed=call_seed,
+                )
+            except TypeError:
+                out = self.gen.generate(text_input, steer, self.max_new_tokens)
+            score = adj.score_sample_outcome(axis, item, out)
+            deg = c2b_scorers.degeneracy_score(out)
+            outcomes.append(score)
+            degens.append(deg)
+            self._emit(
+                axis=axis,
+                item=item,
+                instruction=instruction,
+                alpha=float(alpha),
+                layer=int(layer),
+                sample_index=j,
+                sample_seed=call_seed,
+                prompt_text=text_input,
+                generation_text=str(out),
+                outcome=float(score),
+                degeneracy=float(deg),
+            )
+        return adj.SampleBatch(outcomes=outcomes, degeneracies=degens)
+
+
+class TranscriptScaledBackendOutcomeSampler(TranscriptBackendOutcomeSampler):
+    """Transcript sampler with per-axis alpha scaling (ITI alpha*sigma)."""
 
     def __init__(self, *args, alpha_scale_by_axis: Optional[Dict[str, float]] = None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -345,24 +730,30 @@ def build_specs_hf(axes: List[str], model: str, use_fixture: bool,
 # --------------------------------------------------------------------------- #
 # Samplers
 # --------------------------------------------------------------------------- #
-def synthetic_sampler_factory(use_fixture: bool, n_items: Optional[int]):
+def synthetic_sampler_factory(use_fixture: bool, n_items: Optional[int],
+                              transcript_collector: Optional[TranscriptCollector] = None):
     def factory(axis: str):
         items = load_axis_items(axis, use_fixture, n_items)
         backend = SyntheticC2bTaskBackend(axis, items, prompt_gain=0.4,
                                           alpha_gain=0.1, threshold=0.5)
-        return BackendOutcomeSampler(backend, do_sample=False)
+        sampler_cls = TranscriptBackendOutcomeSampler if transcript_collector else BackendOutcomeSampler
+        kwargs = {"transcript_collector": transcript_collector} if transcript_collector else {}
+        return sampler_cls(backend, do_sample=False, **kwargs)
     return factory
 
 
 def hf_sampler_factory(model: str, max_new_tokens: int, temperature: float,
                        seed: int, batch_size: int,
+                       transcript_collector: Optional[TranscriptCollector] = None,
                        alpha_scale_by_axis: Optional[Dict[str, float]] = None):
     from cognitive_console.steering.generate import SteeredHFBackend
     device, dtype = p0._pick_device(), p0._pick_dtype()
     backend = SteeredHFBackend(model, device=device, dtype=dtype, seed=seed)
 
     def factory(axis: str):
-        return ScaledBackendOutcomeSampler(
+        sampler_cls = TranscriptScaledBackendOutcomeSampler if transcript_collector else ScaledBackendOutcomeSampler
+        kwargs = {"transcript_collector": transcript_collector} if transcript_collector else {}
+        return sampler_cls(
             backend,
             max_new_tokens=max_new_tokens,
             do_sample=True,
@@ -370,6 +761,7 @@ def hf_sampler_factory(model: str, max_new_tokens: int, temperature: float,
             seed=seed,
             batch_size=batch_size,
             alpha_scale_by_axis=alpha_scale_by_axis,
+            **kwargs,
         )
     return factory
 
@@ -537,6 +929,9 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--hf-home", default=None)
     ap.add_argument("--venv", default=None)
     ap.add_argument("--out-dir", default=None)
+    ap.add_argument("--save-transcripts", action=argparse.BooleanOptionalAction, default=False,
+                    help="save per-cell raw generation transcripts to out_dir/transcripts/ "
+                         "(observational side-output only; does not affect frozen verdict math)")
     return ap
 
 
@@ -562,13 +957,18 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     t_start = time.time()
     started_at = utcnow()
+    transcript_collector: Optional[TranscriptCollector] = None
 
     if args.backend == "synthetic":
         use_fixture = True  # synthetic backend only makes sense on the offline fixtures
         specs = build_specs_synthetic(axes, use_fixture, args.n_items, args.n_strong)
-        sampler_for_axis = synthetic_sampler_factory(use_fixture, args.n_items)
         model = "synthetic-offline"
         hardware = "cpu-offline"
+        if args.save_transcripts:
+            transcript_collector = TranscriptCollector(out_dir, model, args.steering_method, "synthetic")
+        sampler_for_axis = synthetic_sampler_factory(
+            use_fixture, args.n_items, transcript_collector=transcript_collector
+        )
         meta_extra: Dict = {"backend": "synthetic", "steering_method": args.steering_method,
                             "note": "offline no-torch pipeline smoke on fixtures"}
     else:
@@ -583,9 +983,12 @@ def main(argv: Optional[List[str]] = None) -> int:
         usage_mid = check_disk_budget(guard_paths, args.disk_budget_gb,
                                       args.disk_ceiling_gb, raise_on_over=True)
         print(f"[c2b-adj] disk post-C1 (model loaded): {usage_mid.message}", flush=True)
+        if args.save_transcripts:
+            transcript_collector = TranscriptCollector(out_dir, model, args.steering_method, "hf")
         sampler_for_axis = hf_sampler_factory(model, args.max_new_tokens,
                                               args.temperature, args.seed,
                                               args.batch_size,
+                                              transcript_collector,
                                               hf_meta.get("alpha_scale_by_axis"))
         hardware = f"{p0._pick_device()}-{p0._pick_dtype()}"
         meta_extra = {"backend": "hf", **hf_meta}
@@ -610,8 +1013,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     # --- FIX 1/2: progress tracker + resumable checkpoint store ---
     fingerprint = _config_fingerprint(args, model, specs)
     ckpt_dir = out_dir / "checkpoints"
-    checkpoint = CheckpointStore(ckpt_dir, fingerprint, seed=args.seed,
-                                 fresh=args.fresh)
+    checkpoint = TranscriptCheckpointStore(
+        ckpt_dir, fingerprint, seed=args.seed, fresh=args.fresh,
+        collector=transcript_collector,
+    )
     progress = ProgressTracker(total_planned=total_plan)
     run_ctx = RunContext(checkpoint=checkpoint, progress=progress)
     print(f"[c2b-adj] checkpoints: {_rel(ckpt_dir)}  "
@@ -650,20 +1055,37 @@ def main(argv: Optional[List[str]] = None) -> int:
         "started_at": started_at, "generated_at": utcnow(),
         "wall_clock_seconds": round(wall, 2), "platform": platform.platform(),
         "use_fixture": bool(args.use_fixture) or args.backend == "synthetic",
+        "config_fingerprint": str(fingerprint),
         **meta_extra,
     }
     json_path = write_results(report, out_dir, meta)
     exp_id = register(report, out_dir, json_path, meta, args.seed)
+    transcript_root = None
+    if transcript_collector is not None:
+        transcript_root = transcript_collector.write_all(out_dir, report)
+        print(f"[c2b-adj] transcripts: {_rel(transcript_root)}", flush=True)
 
     if args.backend == "hf":
         guard_paths = default_guard_paths(args.hf_home, args.venv)
-        usage1 = check_disk_budget(guard_paths, args.disk_budget_gb,
-                                   args.disk_ceiling_gb, raise_on_over=False)
-        print(f"[c2b-adj] disk post-run: {usage1.message}", flush=True)
+        try:
+            usage1 = check_disk_budget(
+                guard_paths,
+                args.disk_budget_gb,
+                args.disk_ceiling_gb,
+                raise_on_over=True,
+            )
+            print(f"[c2b-adj] disk post-run: {usage1.message}", flush=True)
+        except DiskBudgetError as exc:
+            print(f"[c2b-adj] FATAL disk post-run: {exc}", flush=True)
+            return 4
 
     print(f"\n[c2b-adj] VERDICT: {report.verdict}  "
           f"(axes passing: {sum(1 for v in report.axis_passes.values() if v)}/3)", flush=True)
-    print(f"[c2b-adj] wrote {_rel(json_path)}  (exp {exp_id})  wall={wall:.1f}s", flush=True)
+    if transcript_root is not None:
+        print(f"[c2b-adj] wrote {_rel(json_path)} + {_rel(transcript_root)}  "
+              f"(exp {exp_id})  wall={wall:.1f}s", flush=True)
+    else:
+        print(f"[c2b-adj] wrote {_rel(json_path)}  (exp {exp_id})  wall={wall:.1f}s", flush=True)
     return 0
 
 

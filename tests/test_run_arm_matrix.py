@@ -69,6 +69,26 @@ def test_matrix_end_to_end_synthetic_emits_4_cells_and_summary(tmp_path):
     }
 
 
+def test_matrix_forwards_stronger_prompt_optimizer_flags_to_single_cell():
+    args = M.build_parser().parse_args([
+        "--backend", "synthetic",
+        "--enable-stronger-prompt-optimizer",
+        "--prompt-opt-budget", "9",
+        "--prompt-opt-seed-prompts", "3",
+        "--prompt-opt-rounds", "2",
+        "--prompt-opt-candidates-per-round", "2",
+        "--prompt-opt-keep-top-k", "2",
+    ])
+    cell = M.matrix_cells("qwen-x", "llama-y")[0]
+    argv = M._build_single_cell_argv(args, cell, M.Path("C:/tmp/cell"))
+    assert "--enable-stronger-prompt-optimizer" in argv
+    assert "--prompt-opt-budget" in argv and argv[argv.index("--prompt-opt-budget") + 1] == "9"
+    assert "--prompt-opt-seed-prompts" in argv
+    assert "--prompt-opt-rounds" in argv
+    assert "--prompt-opt-candidates-per-round" in argv
+    assert "--prompt-opt-keep-top-k" in argv
+
+
 def test_matrix_resume_skips_completed_cells(tmp_path, monkeypatch):
     out_dir = tmp_path / "resume"
     cells = M.matrix_cells("qwen-x", "llama-y")

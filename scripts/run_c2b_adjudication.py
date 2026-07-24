@@ -52,6 +52,10 @@ from cognitive_console.experiments.adjudicate_c2b import (
     AxisAdjSpec, BackendOutcomeSampler, CheckpointStore, ProgressTracker,
     RunContext, plan_generation_counts,
 )
+from cognitive_console.experiments.prompt_optimizer import (
+    OptimizerConfig,
+    optimize_prompt_on_dev,
+)
 from cognitive_console.steering.generate import SyntheticC2bTaskBackend
 from cognitive_console.steering.extract import min_layer_for_depth
 from cognitive_console.steering.iti import extract_iti, sigma_scaled_alpha
@@ -74,6 +78,10 @@ DEFAULT_MODEL = "Qwen/Qwen2.5-7B-Instruct"
 SMOKE_MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
 DEFAULT_N_STRONG = 16  # best-of-16 authored prompts (prereg §4)
 DEFAULT_STEERING_METHOD = "caa"
+DEFAULT_PROMPT_OPT_SEED_PROMPTS = 4
+DEFAULT_PROMPT_OPT_ROUNDS = 3
+DEFAULT_PROMPT_OPT_CANDIDATES_PER_ROUND = 4
+DEFAULT_PROMPT_OPT_KEEP_TOP_K = 2
 _TRANSCRIPT_NUMBER_RE = re.compile(r"-?\d[\d,]*(?:\.\d+)?")
 _TRANSCRIPT_MAX_PROMPT_CHARS = 2_000
 _TRANSCRIPT_MAX_GENERATION_CHARS = 8_000
@@ -114,6 +122,19 @@ def _config_fingerprint(args, model: str, specs) -> str:
         "delta": float(adj.DELTA),
         "bonferroni_ci_level": float(adj.BONFERRONI_CI_LEVEL),
         "dev_fraction": float(adj.DEV_FRACTION),
+        "stronger_prompt_optimizer": {
+            "enabled": bool(getattr(args, "enable_stronger_prompt_optimizer", False)),
+            "budget": (
+                None if getattr(args, "prompt_opt_budget", None) is None
+                else int(args.prompt_opt_budget)
+            ),
+            "seed_prompts": int(getattr(args, "prompt_opt_seed_prompts", DEFAULT_PROMPT_OPT_SEED_PROMPTS)),
+            "rounds": int(getattr(args, "prompt_opt_rounds", DEFAULT_PROMPT_OPT_ROUNDS)),
+            "candidates_per_round": int(
+                getattr(args, "prompt_opt_candidates_per_round", DEFAULT_PROMPT_OPT_CANDIDATES_PER_ROUND)
+            ),
+            "keep_top_k": int(getattr(args, "prompt_opt_keep_top_k", DEFAULT_PROMPT_OPT_KEEP_TOP_K)),
+        },
         "axes": {
             spec.axis: {
                 "n_items": len(spec.items),
@@ -643,6 +664,59 @@ def build_specs_synthetic(axes: List[str], use_fixture: bool,
     return specs
 
 
+def optimize_specs_with_stronger_prompt_baseline(
+    specs: List[AxisAdjSpec],
+    sampler_for_axis,
+    *,
+    k: int,
+    dev_fraction: float,
+    seed: int,
+    parity_target_n_strong: int,
+    total_budget: int,
+    seed_prompts: int,
+    rounds: int,
+    candidates_per_round: int,
+    keep_top_k: int,
+) -> tuple[List[AxisAdjSpec], Dict[str, Dict]]:
+    optimized_specs: List[AxisAdjSpec] = []
+    by_axis: Dict[str, Dict] = {}
+    for spec in specs:
+        item_ids = [str(it["id"]) for it in spec.items]
+        split = adj.split_dev_test(item_ids, dev_fraction=dev_fraction, seed=seed)
+        by_id = {str(it["id"]): it for it in spec.items}
+        dev_items = [by_id[i] for i in split.dev_ids]
+        sampler = sampler_for_axis(spec.axis)
+        cfg = OptimizerConfig(
+            total_budget=int(total_budget),
+            seed_prompt_count=int(seed_prompts),
+            max_rounds=int(rounds),
+            candidates_per_round=int(candidates_per_round),
+            keep_top_k=int(keep_top_k),
+            seed=int(seed),
+        )
+        opt = optimize_prompt_on_dev(
+            sampler,
+            spec,
+            dev_items,
+            split.test_ids,
+            k=int(k),
+            config=cfg,
+            compute_parity_target_n_strong=int(parity_target_n_strong),
+        )
+        optimized_specs.append(
+            AxisAdjSpec(
+                axis=spec.axis,
+                items=list(spec.items),
+                strong_prompts=[(opt.winner_prompt_id, opt.winner_prompt_text)],
+                neutral_prompt=spec.neutral_prompt,
+                direction=spec.direction,
+                layer=spec.layer,
+            )
+        )
+        by_axis[spec.axis] = opt.to_dict()
+    return optimized_specs, by_axis
+
+
 def build_specs_hf(axes: List[str], model: str, use_fixture: bool,
                    n_items: Optional[int], n_strong: int, n_extraction: int,
                    seed: int, out_dir: Path, steering_method: str = DEFAULT_STEERING_METHOD
@@ -901,6 +975,26 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--n-items", type=int, default=None,
                     help="cap items/axis (default: frozen per-axis N; explicit value overrides)")
     ap.add_argument("--n-strong", type=int, default=DEFAULT_N_STRONG)
+    ap.add_argument(
+        "--enable-stronger-prompt-optimizer",
+        action="store_true",
+        help="run bounded DEV-only iterative prompt optimization baseline, then freeze the winner "
+             "and re-adjudicate on the same TEST split (default off)",
+    )
+    ap.add_argument(
+        "--prompt-opt-budget",
+        type=int,
+        default=None,
+        help="total prompt evaluations for the stronger optimizer (default: n-strong for fixed parity)",
+    )
+    ap.add_argument("--prompt-opt-seed-prompts", type=int, default=DEFAULT_PROMPT_OPT_SEED_PROMPTS)
+    ap.add_argument("--prompt-opt-rounds", type=int, default=DEFAULT_PROMPT_OPT_ROUNDS)
+    ap.add_argument(
+        "--prompt-opt-candidates-per-round",
+        type=int,
+        default=DEFAULT_PROMPT_OPT_CANDIDATES_PER_ROUND,
+    )
+    ap.add_argument("--prompt-opt-keep-top-k", type=int, default=DEFAULT_PROMPT_OPT_KEEP_TOP_K)
     ap.add_argument("--n-extraction", type=int, default=28)
     ap.add_argument("--bootstrap-b", type=int, default=adj.BOOTSTRAP_B)
     ap.add_argument("--allow-underpowered", action="store_true",
@@ -950,6 +1044,18 @@ def main(argv: Optional[List[str]] = None) -> int:
               f"(prereg §5) but --allow-underpowered was passed; NOT valid for the "
               f"confirmatory adjudication.", flush=True)
 
+    if args.enable_stronger_prompt_optimizer:
+        if args.prompt_opt_budget is not None and int(args.prompt_opt_budget) <= 0:
+            raise SystemExit("[c2b-adj] --prompt-opt-budget must be > 0 when provided")
+        for name, value in (
+            ("--prompt-opt-seed-prompts", args.prompt_opt_seed_prompts),
+            ("--prompt-opt-rounds", args.prompt_opt_rounds),
+            ("--prompt-opt-candidates-per-round", args.prompt_opt_candidates_per_round),
+            ("--prompt-opt-keep-top-k", args.prompt_opt_keep_top_k),
+        ):
+            if int(value) <= 0:
+                raise SystemExit(f"[c2b-adj] {name} must be > 0")
+
     out_dir = Path(args.out_dir) if args.out_dir else (
         _REPO / "results" / f"c2b_adjudication_{args.backend}_{date.today().isoformat()}")
     out_dir = out_dir.resolve()
@@ -992,6 +1098,44 @@ def main(argv: Optional[List[str]] = None) -> int:
                                               hf_meta.get("alpha_scale_by_axis"))
         hardware = f"{p0._pick_device()}-{p0._pick_dtype()}"
         meta_extra = {"backend": "hf", **hf_meta}
+
+    prompt_opt_budget = int(args.prompt_opt_budget) if args.prompt_opt_budget is not None else int(args.n_strong)
+    if args.enable_stronger_prompt_optimizer:
+        specs, opt_by_axis = optimize_specs_with_stronger_prompt_baseline(
+            specs,
+            sampler_for_axis,
+            k=adj.K_SAMPLES,
+            dev_fraction=adj.DEV_FRACTION,
+            seed=args.seed,
+            parity_target_n_strong=int(args.n_strong),
+            total_budget=prompt_opt_budget,
+            seed_prompts=int(args.prompt_opt_seed_prompts),
+            rounds=int(args.prompt_opt_rounds),
+            candidates_per_round=int(args.prompt_opt_candidates_per_round),
+            keep_top_k=int(args.prompt_opt_keep_top_k),
+        )
+        meta_extra["stronger_prompt_optimizer"] = {
+            "enabled": True,
+            "budget": int(prompt_opt_budget),
+            "seed_prompts": int(args.prompt_opt_seed_prompts),
+            "rounds": int(args.prompt_opt_rounds),
+            "candidates_per_round": int(args.prompt_opt_candidates_per_round),
+            "keep_top_k": int(args.prompt_opt_keep_top_k),
+            "compute_parity_target_n_strong": int(args.n_strong),
+            "selection_policy": "DEV-only prompt optimization; TEST untouched for selection",
+            "axes": opt_by_axis,
+        }
+        print(
+            f"[c2b-adj] stronger prompt optimizer enabled: budget={prompt_opt_budget}, "
+            f"seed_prompts={args.prompt_opt_seed_prompts}, rounds={args.prompt_opt_rounds}, "
+            f"cand/round={args.prompt_opt_candidates_per_round}",
+            flush=True,
+        )
+    else:
+        meta_extra["stronger_prompt_optimizer"] = {
+            "enabled": False,
+            "compute_parity_target_n_strong": int(args.n_strong),
+        }
 
     # --- FIX 4: up-front PLANNED generation count + rough wall-clock budget so
     # the run's size is visible BEFORE committing GPU time (sanity-check knob). ---

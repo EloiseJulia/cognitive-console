@@ -15,6 +15,8 @@ def test_parser_has_allow_underpowered_defaulting_off():
     args = R.build_parser().parse_args(["--backend", "synthetic"])
     assert args.allow_underpowered is False
     assert args.steering_method == "caa"
+    assert args.enable_stronger_prompt_optimizer is False
+    assert args.prompt_opt_budget is None
 
 
 def test_underpowered_bootstrap_hard_fails_without_flag():
@@ -33,6 +35,34 @@ def test_allow_underpowered_flag_permits_small_bootstrap(tmp_path):
     rc = R.main(["--backend", "synthetic", "--bootstrap-b", "200",
                  "--allow-underpowered", "--out-dir", str(tmp_path)])
     assert rc == 0
+
+
+def test_stronger_prompt_optimizer_runs_and_records_provenance(tmp_path):
+    out_dir = tmp_path / "stronger_prompt"
+    rc = R.main([
+        "--backend", "synthetic",
+        "--n-items", "6",
+        "--bootstrap-b", "200",
+        "--allow-underpowered",
+        "--enable-stronger-prompt-optimizer",
+        "--prompt-opt-budget", "8",
+        "--prompt-opt-seed-prompts", "3",
+        "--prompt-opt-rounds", "2",
+        "--prompt-opt-candidates-per-round", "2",
+        "--prompt-opt-keep-top-k", "2",
+        "--out-dir", str(out_dir),
+    ])
+    assert rc == 0
+    payload = json.loads((out_dir / "c2b_adjudication_results.json").read_text(encoding="utf-8"))
+    spo = payload["stronger_prompt_optimizer"]
+    assert spo["enabled"] is True
+    assert spo["budget"] == 8
+    assert spo["compute_parity_target_n_strong"] == 16
+    for axis in R.ADJ_AXES:
+        row = spo["axes"][axis]
+        assert row["leakage_guard_ok"] is True
+        assert set(row["dev_item_ids"]).isdisjoint(set(row["test_item_ids"]))
+        assert row["evaluations_used"] <= 8
 
 
 # --------------------------------------------------------------------------- #

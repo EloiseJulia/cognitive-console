@@ -38,14 +38,19 @@ Status values: proposed | partially-supported | supported | contradicted | withd
   ONLY via a SEPARATE independent pre-registered arm (never edits E-0005/E-0006).
 - **Paper location:** Contribution 2 (headline); Δ-table (4 cells) + per-cell verdicts.
 
-## C2-mech — Off-manifold degradation (calibration harm) — mechanism HYPOTHESIS / core insight (RQ2)
-- **Statement (hypothesis):** the calibration worsening under steering (uncertainty −0.228) is consistent
-  with the intervention pushing activations off the natural data manifold along a linearly-legible but
-  non-control-valid direction.
-- **Type:** interpretive hypothesis (behavioral-inferential, NOT mechanistically proven)
-- **Status:** **proposed (insight framed as hypothesis).** Cheap confirmation = manifold-distance vs Δoutcome
-  diagnostic (new arm §5 / Future Work). Evidence: inferential from E-0005.
-- **Paper location:** Contribution 3 (insight).
+## C2-mech — Off-manifold degradation (calibration harm) — **HYPOTHESIS / FUTURE WORK (NOT supported by direct test)** · RQ2
+- **Statement (hypothesis):** the calibration worsening under steering (uncertainty axis, negative in all 4
+  cells) *might* be explained by steering pushing activations off the natural data manifold.
+- **Type:** interpretive hypothesis — **DIRECTLY TESTED and NOT SUPPORTED.**
+- **Status:** **DEMOTED to explicit hypothesis / Future Work (E-0007, D-0040).** The pre-registered off-manifold
+  test (whitened Mahalanobis distance vs per-item calibration harm, frozen prereg-ood-capture) returned a
+  VALID NULL: per-cell Spearman ρ ≈ {0.033, 0.039, -0.060, -0.223}, 0/4 pass. Audited VALID_NULL. Per owner's
+  honest-fail rule, we do NOT re-mine an alternative mechanism on the same data. The *distance-based*
+  off-manifold account is not evidenced; the calibration harm is reported as a robust empirical phenomenon
+  (E-0006) whose mechanism is open.
+- **Evidence:** E-0007 (valid null). Does NOT enter Contributions as a mechanism claim; appears in
+  Limitations/Future Work only.
+- **Paper location:** Future Work (mechanism of the calibration harm is an open question).
 
 ## C2a — Internal-State Non-Surjectivity (RQ2, theory backdrop) — BACKGROUND
 - **Statement:** Latent steering reaches internal residual states that no prompt in a bounded search

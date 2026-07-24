@@ -5,6 +5,27 @@
 
 ---
 
+## 2026-07-24 · D-0040 · OOD off-manifold test = VALID NULL (E-0007) → C2-mech honestly demoted; box to be wiped
+- **Result:** the pre-registered H-M off-manifold capture ran on the box (after 3 capture bugs were found &
+  fixed en route — each caught by a guard/audit: (1) `output_hidden_states[layer]` did NOT reflect the steer
+  forward-hook return → steered==baseline (the content self-fit guard CORRECTLY blocked this meaningless
+  capture); real-GPU probe after fix: steered−baseline = exactly α·dir; (2) CUDA OOM from lm_head logits →
+  capture now runs the base transformer + batching; (3) string-only self-fit guard → content-hash+overlap).
+  Final: per-cell Spearman ρ(dist,−Δoutcome) = {0.033, 0.039, -0.060, -0.223}, **0/4 pass → NOT_SUPPORTED**.
+- **Independent hostile audit (audit-ood-null): VALID_NULL.** Capture genuinely post-steer (norm_infl>1,
+  guard silent); Δoutcome aligns with frozen transcripts by item_id EXACTLY (max_abs_diff=0, independently
+  recomputed); ρ≈0 is a real no-correlation not a degenerate/zeroed artifact; frozen metric/criteria faithful;
+  behavioral numbers untouched. Distance-dump deemed NOT required.
+- **Decision (Manager, per owner's frozen honest-fail directive):** the off-manifold *distance* mechanism for
+  the calibration harm is NOT evidenced → **C2-mech DEMOTED to explicit hypothesis / Future Work** in the
+  claim-ledger + paper. We do NOT re-mine a different mechanism on the same data. E-0007 banked (valid null).
+  The behavioral results E-0005/E-0006 (NON_TRANSFER_GENERALIZED) are UNAFFECTED and remain the paper's core.
+- **Lineage fix:** registry cfg now includes steering_method (arm-audit MAJOR closed).
+- **Box:** all GPU work for the arm is COMPLETE (E-0006 + E-0007 banked). Wiping the rented box; human to stop
+  the instance (billed hourly).
+- **Frozen?** E-0007 banked. prereg-ood-capture honored (hypothesis allowed to fail). E-0003/E-0005/E-0006/
+  prereg-c2b/adjudicate_c2b §4 untouched.
+
 ## 2026-07-24 · D-0039 · Arm 2×2 COMPLETE = NON_TRANSFER_GENERALIZED (E-0006, audited VALID); OOD capture pre-registered
 - **Result:** frozen robustness arm ran on the rented box (Qwen download saga resolved by serializing the two
   downloads; Llama via NousResearch identical-weights mirror D-0038). Autonomous chain: waited downloads →

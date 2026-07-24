@@ -1,76 +1,228 @@
+# Citation map scaffold.
+# Owner rule: cite only relevant, recent where possible (prefer 2024-2026), and real/verifiable works.
+# Do not fill title/authors/venue/year/arxiv/doi unless confirmed from repo docs or the forthcoming
+# docs/research/2026-07-24-citation-verification.md. UNVERIFIED entries are stable slots for that update.
+
 references:
   mishra_non_surjectivity:
-    label: "Mishra, Khashabi & Liu, Steered LLM Activations are Non-Surjective"
-    what_it_claims: "Activation steering can push residual stream states off the manifold reachable by discrete prompts; no prompt may reproduce the same internal behavior."
+    status: VERIFIED
+    relevance: "core background / theory guardrail"
+    title: "Steered LLM Activations are Non-Surjective"
+    authors: "Aayush Mishra; Daniel Khashabi; Anqi Liu"
+    year: 2026
+    venue_or_source: "ICLR 2026 Workshops (Sci4DL, Re-Align); arXiv"
+    arxiv: "2604.09839"
+    doi: null
+    what_it_claims: "Activation steering can push residual-stream states off the manifold reachable by discrete prompts; no prompt may reproduce the same internal behavior."
     how_we_use_it: "Background/motivation for internal prompt-latent mismatch; not our empirical result and not proof of behavioral prompt unreachability."
     verifiability_note: "Verified in docs/research/2026-07-23-novelty-falsification.md via arXiv 2604.09839/export API."
+
   psr_steer_like_llm:
-    label: "Steer Like the LLM / Prompt Steering Replacement (PSR), ICML 2026"
-    what_it_claims: "Trained activation-steering coefficients can imitate prompt steering and achieve performance close to or exceeding prompt steering."
+    status: UNVERIFIED
+    relevance: "direct recent threat: trained steering vs prompting"
+    title: null
+    authors: null
+    year: null
+    venue_or_source: null
+    arxiv: null
+    doi: null
+    repo_lead_label: "Steer Like the LLM / Prompt Steering Replacement (PSR), ICML 2026 poster 66813"
+    repo_claimed_year: 2026
+    what_it_claims: "Repo prior-art sweep says it trains activation-steering coefficients to imitate prompt steering and can match/exceed prompt steering."
     how_we_use_it: "Threat/contrast; motivates bounded-scope wording and the planned latent-recovery arm."
-    verifiability_note: "Primary venue page checked in docs/research/2026-07-23-priorart-sweep.md; exact bibliographic details beyond venue-page metadata should be rechecked before camera-ready. [NEEDS EVIDENCE]"
+    needs_check: "Confirm exact title, authors, venue status, year, paper URL/arXiv/DOI, and the precise claim from the primary paper or venue page."
+    verifiability_note: "Lead appears in docs/research/2026-07-23-priorart-sweep.md; final citation details must be slotted in from docs/research/2026-07-24-citation-verification.md."
+
   caa:
-    label: "CAA / Contrastive Activation Addition"
-    what_it_claims: "Mean-difference contrastive activation vectors can steer high-level model behavior."
+    status: VERIFIED
+    relevance: "tested steering family / activation-steering lineage"
+    title: "Steering Llama 2 via Contrastive Activation Addition"
+    authors: null
+    year: 2024
+    venue_or_source: "ACL 2024; arXiv"
+    arxiv: "2312.06681"
+    doi: null
+    what_it_claims: "Contrastive activation-addition directions can steer high-level model behaviors."
     how_we_use_it: "Steering lineage and one tested method family in E-0005/E-0006."
-    verifiability_note: "Verified in novelty-falsification as ACL 2024 / arXiv:2312.06681; first-author naming should be checked for final bibliography."
-  actadd:
-    label: "ActAdd / Activation Engineering"
-    what_it_claims: "Contrast-pair activation additions can steer language model outputs."
+    needs_check: "Confirm final author list and preferred first-author naming before bibliography export."
+    verifiability_note: "Verified in docs/research/2026-07-23-novelty-falsification.md as ACL 2024 / arXiv:2312.06681."
+
+  actadd_activation_engineering:
+    status: PARTIAL
+    relevance: "foundational activation-addition lineage; less recent but still methodologically relevant"
+    title: "Steering Language Models With Activation Engineering"
+    authors: null
+    year: 2023
+    venue_or_source: "arXiv"
+    arxiv: "2308.10248"
+    doi: null
+    what_it_claims: "Activation additions from contrast pairs can steer language model outputs."
     how_we_use_it: "Steering lineage/background only."
-    verifiability_note: "Paper existence verified as arXiv:2308.10248; specific Appendix-B exclusion-experiment sub-claim remains [NEEDS EVIDENCE]."
+    needs_check: "Open-risks #8: the specific Appendix-B exclusion-experiment sub-claim remains NEEDS EVIDENCE and must not be cited until the primary appendix is checked."
+    verifiability_note: "Paper existence/title/arXiv verified in novelty-falsification; Appendix-B sub-claim unverified."
+
   iti:
-    label: "Inference-Time Intervention (ITI)"
-    what_it_claims: "Probe/head-based inference-time interventions can steer model behavior."
-    how_we_use_it: "Second tested method family in E-0006 robustness arm."
-    verifiability_note: "Project results verify ITI implementation/provenance, but citation details are not verified in the provided research docs. [NEEDS EVIDENCE]"
+    status: UNVERIFIED
+    relevance: "tested steering family in E-0006"
+    title: null
+    authors: null
+    year: null
+    venue_or_source: null
+    arxiv: null
+    doi: null
+    repo_lead_label: "Inference-Time Intervention (ITI)"
+    what_it_claims: "Probe/head-based inference-time intervention steering; exact literature claim not yet verified in repo docs."
+    how_we_use_it: "Second tested method family in the robustness arm."
+    needs_check: "Confirm exact canonical ITI citation, title, authors, venue/year, URL/arXiv/DOI, and whether its method description matches our use."
+    verifiability_note: "Project results verify our ITI implementation/provenance, not the bibliographic citation."
+
   repe:
-    label: "Representation Engineering / RepE steering lineage"
-    what_it_claims: "Representation-level methods can monitor or control model behavior through learned directions/interventions."
+    status: UNVERIFIED
+    relevance: "adjacent representation-level steering/control lineage"
+    title: null
+    authors: null
+    year: null
+    venue_or_source: null
+    arxiv: null
+    doi: null
+    repo_lead_label: "Representation Engineering / RepE"
+    what_it_claims: "Representation-level methods can monitor or control model behavior; exact claim not yet verified in repo docs."
     how_we_use_it: "Related steering family and possible stronger/alternative method; not tested in current C2 grid."
-    verifiability_note: "Mentioned by project instructions as lineage; exact reference and claims need primary-source verification. [NEEDS EVIDENCE]"
-  huang_lim:
-    label: "Huang & Lim, Designing Intuitive Interfaces for Feature Steering of LLMs"
-    what_it_claims: "Laypeople can use a simplified GUI with SAE feature sliders for persona-oriented LLM steering."
-    how_we_use_it: "Nearest HCI interface neighbor and obvious-combination threat; contrast as single latent channel, no prompt-vs-latent adjudication."
-    verifiability_note: "Verified in novelty-falsification and prior-art sweep as IASDR 2025 poster, DOI 10.21606/iasdr.2025.601."
+    needs_check: "Confirm canonical RepE reference and exact claims from primary source."
+    verifiability_note: "Mentioned by project instructions as lineage only."
+
+  huang_lim_feature_steering:
+    status: VERIFIED
+    relevance: "nearest HCI interface neighbor"
+    title: "Designing Intuitive Interfaces for Feature Steering of LLMs"
+    authors: null
+    year: 2025
+    venue_or_source: "IASDR 2025 poster paper"
+    arxiv: null
+    doi: "10.21606/iasdr.2025.601"
+    what_it_claims: "Laypeople use a simplified GUI with SAE feature sliders for persona-oriented LLM steering."
+    how_we_use_it: "Nearest HCI interface neighbor and obvious-combination threat; contrast as single latent channel with no prompt-vs-latent adjudication."
+    verifiability_note: "Verified in novelty-falsification and prior-art sweep."
+
   ai_instruments:
-    label: "AI-Instruments"
+    status: VERIFIED
+    relevance: "recent HCI prompt-control/direct-manipulation neighbor"
+    title: "AI-Instruments"
+    authors: null
+    year: 2025
+    venue_or_source: "CHI 2025; arXiv"
+    arxiv: "2502.18736"
+    doi: null
     what_it_claims: "Prompts can be reified into reusable direct-manipulation instruments for AI-assisted design."
     how_we_use_it: "Prompt-layer direct-manipulation neighbor; contrast with latent-vs-prompt adjudication."
+    needs_check: "Confirm full title/subtitle, full author list, and DOI before final references."
     verifiability_note: "Verified as CHI 2025 / arXiv:2502.18736 in novelty-falsification."
+
   labarta_attribution_action:
-    label: "Labarta et al., From Attribution to Action"
-    what_it_claims: "Expert-facing vision/CLIP attribution-to-steering workflow, with interviews."
-    how_we_use_it: "Contrast/threat: interactive steering plus trust/debugging, but different modality and expert population."
-    verifiability_note: "Verified caveat from open-risks #8 and novelty-falsification: vision/CLIP, not LLM; SemanticLens is a separate artifact."
+    status: VERIFIED
+    relevance: "recent interactive steering/trust contrast; modality caveat"
+    title: "From Attribution to Action: A Human-Centered Application of Activation Steering"
+    authors: null
+    year: 2026
+    venue_or_source: "CVPR 2026 Workshop (XAI4CV); arXiv"
+    arxiv: "2604.11467"
+    doi: null
+    what_it_claims: "Expert-facing vision/CLIP attribution-to-steering workflow with interviews."
+    how_we_use_it: "Contrast/threat: interactive steering plus trust/debugging, but vision/CLIP and expert population, not LLM cognitive-axis control."
+    needs_check: "Confirm full title, full author list, and final venue metadata before bibliography export."
+    verifiability_note: "Open-risks #8 caveat retained: Labarta is vision/CLIP verified; SemanticLens is a separate artifact."
+
   latent_manipulator:
-    label: "Latent Manipulator"
+    status: VERIFIED
+    relevance: "recent surface-similar latent/slider HCI neighbor"
+    title: "Latent Manipulator: Using Concept-Guided Embedding Manipulation to Steer Embedding Visualizations"
+    authors: "Raval; Dunnell; Lippman"
+    year: 2026
+    venue_or_source: "CHI EA 2026 poster/EA"
+    arxiv: null
+    doi: "10.1145/3772363.3798816"
     what_it_claims: "Concept-guided latent manipulation can steer embedding-visualization layouts for document sensemaking."
-    how_we_use_it: "Nearest keyword/UI surface neighbor; contrast as visualization steering, not LLM behavior/control."
-    verifiability_note: "Verified in prior-art sweep as CHI EA 2026 poster/EA with DOI 10.1145/3772363.3798816."
+    how_we_use_it: "Nearest keyword/UI surface neighbor; contrast as visualization steering, not LLM generation or behavioral control."
+    needs_check: "Confirm full title and author list before final bibliography."
+    verifiability_note: "Verified in docs/research/2026-07-23-priorart-sweep.md."
+
   mind_the_performance_gap:
-    label: "Mind the Performance Gap: Capability-Behavior Trade-offs in Feature Steering"
-    what_it_claims: "Feature steering can shift behavior while degrading capability/coherence compared with prompting."
+    status: UNVERIFIED
+    relevance: "recent steering-vs-prompting / steering fragility neighbor"
+    title: null
+    authors: null
+    year: null
+    venue_or_source: null
+    arxiv: null
+    doi: null
+    repo_lead_label: "Mind the Performance Gap: Capability-Behavior Trade-offs in Feature Steering (repo lead says arXiv 2602.04903)"
+    repo_claimed_year: 2026
+    what_it_claims: "Repo prior-art sweep says feature steering shifts behavior while degrading capability/coherence compared with prompting."
     how_we_use_it: "Related empirical threat/support for steering fragility; not a scoop."
-    verifiability_note: "Prior-art sweep reports body spot-checked via ar5iv, but asks re-confirmation via arXiv API before bibliography. [NEEDS EVIDENCE]"
+    needs_check: "Confirm exact title, authors, year, arXiv id, and claims from primary source."
+    verifiability_note: "Prior-art sweep says body was spot-checked via ar5iv but requests reconfirmation."
+
   coninstruct:
-    label: "ConInstruct"
-    what_it_claims: "Benchmarks detection/resolution of conflicting textual constraints."
+    status: UNVERIFIED
+    relevance: "recent LLM conflict benchmark contrast"
+    title: null
+    authors: null
+    year: null
+    venue_or_source: null
+    arxiv: null
+    doi: null
+    repo_lead_label: "ConInstruct (repo lead says arXiv 2511.14342)"
+    repo_claimed_year: 2025
+    what_it_claims: "Repo prior-art sweep says it evaluates textual constraint conflict detection/resolution."
     how_we_use_it: "Contrast: text-vs-text instruction conflict, not prompt-vs-latent conflict surfaced to users."
-    verifiability_note: "Prior-art sweep lists arXiv:2511.14342; final bibliographic details need verification. [NEEDS EVIDENCE]"
-  who_is_in_charge:
-    label: "Who is In Charge? Dissecting Role Conflicts in LLM Instruction Hierarchy"
-    what_it_claims: "Studies system-vs-user role conflicts and model compliance."
+    needs_check: "Confirm exact title, authors, year, arXiv id, and benchmark claims."
+    verifiability_note: "Lead only until citation-verification doc lands."
+
+  instruction_hierarchy_conflict:
+    status: UNVERIFIED
+    relevance: "recent instruction-conflict/control contrast"
+    title: null
+    authors: null
+    year: null
+    venue_or_source: null
+    arxiv: null
+    doi: null
+    repo_lead_label: "Who is In Charge? Dissecting Role Conflicts in LLM Instruction Hierarchy"
+    what_it_claims: "Repo prior-art sweep says it studies system-vs-user role conflicts and model compliance."
     how_we_use_it: "Contrast for instruction-hierarchy conflict, not prompt-vs-latent interface conflict."
-    verifiability_note: "Prior-art sweep lists NeurIPS 2025 virtual page; final bibliographic details need verification. [NEEDS EVIDENCE]"
-  learning_to_trust:
-    label: "Learning to Trust: How Humans Mentally Recalibrate AI Confidence Signals"
-    what_it_claims: "Laypeople recalibrate trust in AI confidence signals over exposure."
+    needs_check: "Confirm exact title, authors, venue/year, URL/arXiv/DOI, and claims."
+    verifiability_note: "Lead only until citation-verification doc lands."
+
+  learning_to_trust_confidence:
+    status: UNVERIFIED
+    relevance: "recent trust-calibration HCI/IUI-adjacent background"
+    title: null
+    authors: null
+    year: null
+    venue_or_source: null
+    arxiv: null
+    doi: null
+    repo_lead_label: "Learning to Trust: How Humans Mentally Recalibrate AI Confidence Signals"
+    what_it_claims: "Repo prior-art sweep says it studies laypeople recalibrating trust in AI confidence signals."
     how_we_use_it: "Potential trust-calibration measure/background if the human-study fork reopens."
-    verifiability_note: "Prior-art sweep lists arXiv:2603.22634; final bibliographic details need verification. [NEEDS EVIDENCE]"
-  who_controls_conversation:
-    label: "Who Controls the Conversation? User Perspectives on LLM System Prompts"
-    what_it_claims: "Users' perceptions of and control over system prompts."
+    needs_check: "Confirm exact title, authors, venue/year, URL/arXiv/DOI, and whether it is HCI/IUI-relevant."
+    verifiability_note: "Lead only until citation-verification doc lands."
+
+  system_prompt_user_control:
+    status: UNVERIFIED
+    relevance: "recent prompt-control perception neighbor"
+    title: null
+    authors: null
+    year: null
+    venue_or_source: null
+    arxiv: null
+    doi: null
+    repo_lead_label: "Who Controls the Conversation? User Perspectives on LLM System Prompts"
+    what_it_claims: "Repo prior-art sweep says it studies users' perceptions of and control over system prompts."
     how_we_use_it: "Prompt-control perception neighbor; not latent steering."
-    verifiability_note: "Prior-art sweep lists CHI 2026 preprint/arXiv:2603.00089; final bibliographic details need verification. [NEEDS EVIDENCE]"
+    needs_check: "Confirm exact title, authors, venue/year, arXiv id/DOI, and claims."
+    verifiability_note: "Lead only until citation-verification doc lands."
+
+
+
+

@@ -5,6 +5,36 @@
 
 ---
 
+## 2026-07-24 · D-0036 · Reframe critic triage (R1/R2/R3) + robustness-mechanism arm drafted
+- **Input:** 3 independent IUI/CHI critics on the reality-check reframe →
+  `docs/reviews/2026-07-24-reality-check-reframe/review-R{1,2,3}.yaml`. All **major-revision / reject-if-
+  unchanged**. Score-if-unchanged ≈ IUI 2.8-3.2 / CHI 2.3-2.8; if blockers closed ≈ IUI 3.4-4.0 / CHI 3.0-3.6.
+- **Venue (confirms D-0035):** **IUI > CHI > CSCW** (R1 + R3 explicit; R2 minority put CSCW>CHI but its
+  rationale contradicts the owner's no-humans-→-CSCW-worse call). IUI-first stands.
+- **Unanimous BLOCKERs (= owner's 2 must-adds now hard gates):**
+  1. External validity too narrow (single CAA × single Qwen) — need **≥2 method families × ≥2 model
+     families** on the same frozen adjudication, or narrow the claim everywhere. (R1-F1, R2-M2, R3-B2)
+  2. Off-manifold mechanism is inferential — add a cheap OOD-distance-vs-Δoutcome diagnostic or demote
+     C2-mech to explicit hypothesis. (R1-F3, R2 q4, R3-M1)
+- **NEW cross-critic finding beyond owner's plan (ESCALATED):** **R3-B1 (BLOCKER) + R2 + R1** — a fully
+  human-free paper with the console demoted risks **venue-mismatch / desk-reject** at IUI/CHI ("ML negative +
+  HCI vision, not a finished interaction contribution"). Two resolutions: (a) add a MINIMAL informal user
+  anchor (8-12 users) [breaks strict Route A]; or (b) keep pure-model but make a **reusable methodology
+  asset** the HCI contribution (frozen adjudication protocol + latent failure taxonomy + "when-not-to-deploy"
+  criteria + console **built & walkthrough-demonstrated**, not merely proposed). → sent to human via ask_user.
+- **Other notable (cheap) findings:** prompt-baseline fairness — add a stronger prompt-optimizer baseline or
+  narrow claim (R1-F2, R2-M1); uncertainty harm might be a parser/extraction artifact — needs transcript-
+  level diagnostics, BUT transcripts were wiped → must re-generate WITH transcripts saved (R2-B2); scope
+  language must stay strictly method/model-scoped, no impossibility wording (R2-B1); C1 needs null-relative
+  robustness appendix (R2-M3).
+- **Decision (Manager):** Drafted the **INDEPENDENT robustness+mechanism arm** →
+  `docs/ledgers/prereg-robustness-mechanism-arm-DRAFT.md` (frozen mechanism hypotheses H-R/H-M/H-M-alt,
+  frozen success/kill, budget: GPU small ~5-6h one box; engineering ~5-8 implement+audit cycles ~1500-2500
+  credits). Awaiting human: (i) the R3-B1 human-anchor fork ((a) vs (b)); (ii) arm go/no-go + prereg freeze +
+  GPU sign-off. NO spend until then.
+- **Frozen?** Reframe still APPROVED-structure (D-0035). Arm prereg NOT frozen (pending human). E-0003/E-0005/
+  prereg-c2b untouched.
+
 ## 2026-07-24 · D-0035 · Human approved reality-check reframe + Route A (pure-model) + venue policy
 - **Human decision (@EloiseJulia, via ask_user):** approve the reality-check reframe (legibility ≠
   controllability) with two refinements:

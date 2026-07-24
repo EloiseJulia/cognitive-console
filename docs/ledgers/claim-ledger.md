@@ -8,45 +8,57 @@ Status values: proposed | partially-supported | supported | contradicted | withd
 
 ---
 
-## C1 — Semantic Facade (RQ1)
+## C1 — Representational Legibility Gap / Semantic Facade (RQ1) — CORE-empirical
 - **Statement:** For chosen cognitive axes, the strongest human-readable prompt's mid-layer activation
   projects onto the CAA vector direction far below vector-only AND far above a random-direction null
-  baseline, with a pre-registered meaningfully large gap.
+  baseline, with a pre-registered meaningfully large gap (a measurable legibility/representation gap).
 - **Scope:** Llama-3-8B-Instruct, Qwen2.5-7B-Instruct; axes = Deliberation/Skepticism/Uncertainty/Focus.
 - **Type:** empirical regularity (diagnostic → confirmatory after protocol freeze)
-- **Status:** partially-supported (EXPLORATORY, 1.5B, STRENGTHENED D-0019/E-0002) — 2/4 axes hold under a
-  non-degenerate layer rule + 16 prompts/axis + 3 seeds + top-k robustness: deliberation 0.658 [0.567,0.750],
-  uncertainty 0.687 [0.590,0.782] (CI<1, seed-stable, multi-layer). skepticism 0.887 borderline (layer-fragile).
-  focus UNSTABLE at 1.5B (no non-degenerate direction — real negative). NOT confirmatory (small model, unfrozen).
+- **Status:** **partially-supported / STRENGTHENED @7B (EXPLORATORY, single model family).** E-0003:
+  Qwen2.5-7B 3/4 axes hold (deliberation 0.583 [0.488,0.680], skepticism 0.548 [0.434,0.670], uncertainty
+  0.713 [0.517,0.910], CI<1 seed-stable; focus overshoot/no facade). Corroborated at 1.5B (E-0001/2). NOT
+  confirmatory — single model family, valid_for_paper=false; ≥2-model (Llama-3) replication owed.
 - **Required evidence:** projection/cosine of strongest-prompt vs CAA vector vs random null; blind-eval.
 - **Known limits:** projection is a linear proxy; axis may be non-linear/multi-mechanism.
-- **Paper location:** TBD
+- **Paper location:** Contribution 1 (measurement); ratio-CI figure. See reframe-2026-07-24-reality-check.md.
 
-## C2a — Internal-State Non-Surjectivity (RQ2, theory-backed)
+## C2 — Legibility ≠ Behavioral Controllability (RQ2, CORE reality-check; reframed from C2b)
+- **Statement:** Steering along the *legible* CAA direction does NOT push task behavior beyond the
+  best-prompt ceiling on any tested axis under a frozen pre-registered adjudication; on calibration it is
+  actively harmful. Δ(steer−prompt): deliberation +0.015 [-0.040,+0.070], skepticism −0.080 [-0.225,+0.045],
+  uncertainty **−0.228 [-0.370,-0.092]** → 0/3 pass → KILL_PLAN_D.
+- **Scope:** Qwen2.5-7B-Instruct; CAA method family; frozen instrument (prereg-c2b-adjudication.md).
+- **Type:** pre-registered empirical (qualified NEGATIVE, reported as core reality-check claim)
+- **Status:** **SUPPORTED as a pre-registered negative.** Evidence **E-0005** (audited VALID_NEGATIVE).
+  Judgment FROZEN — will not be revised; "method may be too weak" → Limitations/Future Work only.
+- **Falsified if:** a manifold-respecting / stronger latent intervention beats best-prompt behavior — tested
+  ONLY via a SEPARATE independent pre-registered arm (never edits E-0005).
+- **Paper location:** Contribution 2 (headline); Δ-table.
+
+## C2-mech — Off-manifold degradation (calibration harm) — mechanism HYPOTHESIS / core insight (RQ2)
+- **Statement (hypothesis):** the calibration worsening under steering (uncertainty −0.228) is consistent
+  with the intervention pushing activations off the natural data manifold along a linearly-legible but
+  non-control-valid direction.
+- **Type:** interpretive hypothesis (behavioral-inferential, NOT mechanistically proven)
+- **Status:** **proposed (insight framed as hypothesis).** Cheap confirmation = manifold-distance vs Δoutcome
+  diagnostic (new arm §5 / Future Work). Evidence: inferential from E-0005.
+- **Paper location:** Contribution 3 (insight).
+
+## C2a — Internal-State Non-Surjectivity (RQ2, theory backdrop) — BACKGROUND
 - **Statement:** Latent steering reaches internal residual states that no prompt in a bounded search
-  reproduces.
-- **Scope:** internal activations; ≥2 open models. **Basis:** Mishra et al. (2604.09839).
-- **Type:** theory-supported empirical check
-- **Status:** proposed
+  reproduces. **Basis:** Mishra et al. (2604.09839).
+- **Type:** theory-supported motivation (NOT our empirical result)
+- **Status:** **parked / cited-as-background.** We did not run the internal-reproduction probe; our
+  empirical contribution (C2) is the behavioral non-transfer, not internal non-surjectivity.
 - **Falsified if:** a bounded prompt search reproduces the steered internal state.
 
-## C2b — Behavioral Gap + Conflict Resolution (RQ2, CORE — empirical, NOT from theory)
-- **Statement:** On compliance-floor tasks, a bounded prompt search (OPRO + human best-effort, fixed
-  budget) cannot cross a behavioral control threshold the latent channel crosses; AND the dual-channel +
-  attribution panel lets non-experts attribute & resolve prompt↔latent conflict better than prompt-only,
-  steering-only, OR dual-channel-without-panel (condition D).
-- **Scope:** 4-condition controlled study; open white-box models.
-- **Type:** interaction paradigm + empirical (confirmatory core)
-- **Status:** proposed → **not-supported (exploratory, E-0004)**: first real probe (Qwen2.5-7B) shows latent
-  steering did NOT reach beyond the bounded-prompt behavioral ceiling on 3/4 axes; prompt wins conflict 3/4.
-  Crude lexical proxies (ceiling-saturated) cannot decisively support OR refute — but NO positive signal.
-  PIVOT SIGNAL toward Plan D if better-instrumented C2b also fails.
-
-## C3 — Boundary Object / Cross-Model Trust (RQ3, extension)
-- **Statement:** Metacognitive-axis levers preserve perceived control/continuity across a backend model
-  swap better than prompt folklore.
-- **Scope:** Llama-3 → Qwen-2.5 swap; same axis levers.
-- **Type:** empirical (exploratory → extension)
-- **Status:** proposed
+## C3 — Console as Boundary/Limit + Trust-Calibration Instrument (RQ3, DESIGN/HCI — Plan B elevated)
+- **Statement:** Re-cast the interface from a "latent control slider" to an instrument that surfaces WHERE
+  legible latent control fails/degrades behavior and helps non-experts recalibrate trust and attribute
+  prompt↔latent conflict.
+- **Scope:** formative + 4-condition controlled study; open white-box models.
+- **Type:** design/HCI contribution (empirical user study)
+- **Status:** **proposed.** Evidence = formative + controlled study — NOT yet run; IRB/human-subjects = §5,
+  human-gated.
 - **Known limits:** cross-model automatic re-mapping is the hardest engineering piece.
-- **Paper location:** TBD
+- **Paper location:** Contribution 4 (design).

@@ -26,11 +26,13 @@ Status: registered | testing | supported | refuted | parked
   with effect size + uncertainty
 - failure_interpretation: no unreachable region → Plan B; panel no gain → downgrade RQ2 claim
 - protocol_frozen: YES (behavioral-reachability sub-claim; prereg-c2b-adjudication.md, FROZEN 2026-07-23)
-- status: **REFUTED-on-our-instrument (E-0005, D-0034): frozen adjudication 0/3 axes → KILL_PLAN_D.**
-  Latent CAA steering does NOT reach behavior beyond the best-prompt ceiling (hurts on uncertainty).
-  Audited VALID_NEGATIVE. Reading: supports "prompt = strong ceiling" (non-surjective narrative) but is
-  method-weakness + single-model, NOT a decisive non-surjectivity proof. RQ2 confirmatory bet dropped →
-  Plan-D pivot PENDING human (§5 core-claim change).
+- status: **REFUTED-GENERALIZED (E-0005 + E-0006, D-0034/D-0039): frozen adjudication 0/3 axes across
+  {CAA,ITI}×{Qwen,Llama} = all 4 cells KILL → arm NON_TRANSFER_GENERALIZED.** Latent steering does NOT reach
+  behavior beyond the best-prompt ceiling on ANY method×model; hurts calibration in all 4 cells. Audited
+  VALID (VALID_NEGATIVE + VALID_ARM_EVIDENCE). Reading: "prompt = strong ceiling / legibility ≠ controllability"
+  holds ROBUSTLY across methods+models — no longer a single-method×single-model artifact. RQ2 confirmatory bet
+  dropped → reality-check reframe (D-0035). Off-manifold mechanism (C2-mech) under pre-registered OOD test
+  (prereg-ood-capture.md).
 
 ## H3 (→ C3) — Levers as boundary object across model swap
 - experiment_type: exploratory / extension

@@ -23,17 +23,20 @@ Status values: proposed | partially-supported | supported | contradicted | withd
 - **Paper location:** Contribution 1 (measurement); ratio-CI figure. See reframe-2026-07-24-reality-check.md.
 
 ## C2 — Legibility ≠ Behavioral Controllability (RQ2, CORE reality-check; reframed from C2b)
-- **Statement:** Steering along the *legible* CAA direction does NOT push task behavior beyond the
-  best-prompt ceiling on any tested axis under a frozen pre-registered adjudication; on calibration it is
-  actively harmful. Δ(steer−prompt): deliberation +0.015 [-0.040,+0.070], skepticism −0.080 [-0.225,+0.045],
-  uncertainty **−0.228 [-0.370,-0.092]** → 0/3 pass → KILL_PLAN_D.
-- **Scope:** Qwen2.5-7B-Instruct; CAA method family; frozen instrument (prereg-c2b-adjudication.md).
-- **Type:** pre-registered empirical (qualified NEGATIVE, reported as core reality-check claim)
-- **Status:** **SUPPORTED as a pre-registered negative.** Evidence **E-0005** (audited VALID_NEGATIVE).
-  Judgment FROZEN — will not be revised; "method may be too weak" → Limitations/Future Work only.
+- **Statement:** Steering along the *legible* CAA/ITI direction does NOT push task behavior beyond the
+  best-prompt ceiling on any tested axis under a frozen, pre-registered adjudication, across TWO steering
+  method families (CAA, ITI) and TWO model families (Qwen2.5-7B, Llama-3-8B); on calibration it is
+  consistently HARMFUL (uncertainty axis negative, CI excludes 0, in all 4 method×model cells).
+- **Scope:** {CAA,ITI}×{Qwen2.5-7B, Llama-3-8B}; frozen instrument (prereg-c2b-adjudication.md +
+  prereg-robustness-mechanism-arm.md). Single-family caveat REMOVED (now 2 methods × 2 models).
+- **Type:** pre-registered empirical (qualified NEGATIVE, GENERALIZED; reported as core reality-check claim)
+- **Status:** **SUPPORTED as a pre-registered negative, GENERALIZED across methods+models.** Evidence
+  **E-0005** (Qwen/CAA, VALID_NEGATIVE) + **E-0006** (2×2 arm, VALID_ARM_EVIDENCE, arm_verdict=
+  NON_TRANSFER_GENERALIZED, all 4 cells 0/3). cell1 reproduces E-0005 byte-for-byte. Judgment FROZEN.
+  **This closes the unanimous critic BLOCKER (external validity / single-method×single-model).**
 - **Falsified if:** a manifold-respecting / stronger latent intervention beats best-prompt behavior — tested
-  ONLY via a SEPARATE independent pre-registered arm (never edits E-0005).
-- **Paper location:** Contribution 2 (headline); Δ-table.
+  ONLY via a SEPARATE independent pre-registered arm (never edits E-0005/E-0006).
+- **Paper location:** Contribution 2 (headline); Δ-table (4 cells) + per-cell verdicts.
 
 ## C2-mech — Off-manifold degradation (calibration harm) — mechanism HYPOTHESIS / core insight (RQ2)
 - **Statement (hypothesis):** the calibration worsening under steering (uncertainty −0.228) is consistent

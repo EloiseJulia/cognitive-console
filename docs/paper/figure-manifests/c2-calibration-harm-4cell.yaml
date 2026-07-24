@@ -1,0 +1,32 @@
+artifact_id: "fig-calibration-harm-4cell"
+artifact_type: "main or companion figure stub"
+title: "Uncertainty calibration harm across steering methods and model families"
+supports_claims: ["C2"]
+source_artifacts:
+  - path: "results/arm_full/arm_matrix_summary.json"
+    experiment_id: "arm_full_2x2 / E-0006"
+    role: "cell list and aggregate NON_TRANSFER_GENERALIZED verdict"
+  - path: "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json"
+    experiment_id: "c2b-adj-deac6326-0001 / E-0005; E-0006 cell"
+    role: "uncertainty_awareness mean delta and CI for CAA x Qwen"
+  - path: "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json"
+    experiment_id: "E-0006 cell; exact experiment_id must be read from JSON/registry at build time"
+    role: "uncertainty_awareness mean delta and CI for CAA x Llama"
+  - path: "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json"
+    experiment_id: "E-0006 cell; exact experiment_id must be read from JSON/registry at build time"
+    role: "uncertainty_awareness mean delta and CI for ITI x Qwen"
+  - path: "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json"
+    experiment_id: "E-0006 cell; exact experiment_id must be read from JSON/registry at build time"
+    role: "uncertainty_awareness mean delta and CI for ITI x Llama"
+provenance_rule: "Extract uncertainty_awareness rows from cell JSON; do not copy E-0006 numbers by hand into plotting code."
+axes:
+  x: "method x model cell"
+  y: "TEST paired mean delta in uncertainty outcome (steer - prompt; 1 - Brier)"
+  interval: "Bonferroni-corrected CI from frozen adjudicator"
+  reference_lines:
+    - "delta = 0"
+encodings:
+  color: "steering method"
+  shape: "model family"
+status: "stub: plotting script/table source not yet created"
+required_message: "All four cells are negative with CI excluding 0 per E-0006; mechanism remains open after E-0007."

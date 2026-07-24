@@ -1,0 +1,145 @@
+\documentclass[sigconf]{acmart}
+
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    Bib\TeX}}}
+
+\setcopyright{none}
+\settopmatter{printacmref=false, printccs=false, printfolios=true}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+
+\title{Legible Is Not Controllable: A Frozen Reality Check for Prompt-vs-Latent Behavioral Control in LLMs}
+
+\author{Anonymous Authors}
+\affiliation{%
+  \institution{Anonymous Institution}
+  \country{}}
+\email{anonymous@example.com}
+
+\begin{document}
+
+\begin{abstract}
+This is a scaffold, not a paper freeze. The abstract will state only evidence-backed claims: an exploratory representational-facade measurement (C1), a frozen and independently audited behavioral non-transfer result across CAA/ITI $\times$ Qwen/Llama (C2), the replicated calibration-harm finding, and the non-empirical design implication that cognitive consoles should surface limits rather than promise latent control. Internal non-surjectivity is cited as background only from an ICLR 2026 workshop paper \cite{mishra2026nonsurj}; it is not claimed as our empirical result. The scope is naive/off-the-shelf CAA/ITI steering under bounded prompt effort, not trained steering such as PSR \cite{heyman2026steer}.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+\label{sec:introduction}
+Large language model interfaces increasingly expose controls that appear legible to end users. This paper asks whether a readable cognitive axis is also a reliable behavioral control primitive.
+
+\paragraph{Motivation and scope.}
+Mishra et al.'s workshop result motivates an internal prompt/latent gap \cite{mishra2026nonsurj}. We treat that result as theory background, not as evidence that prompting is behaviorally impossible. Recent steering work also shows that stronger or trained steering can differ sharply from naive steering \cite{heyman2026steer,fan2026asteer,korznikov2025rogue}, so our claim is deliberately scoped.
+
+\paragraph{Contributions.}
+The contribution list must remain tied to \texttt{docs/paper/claim-map.yaml}.
+\begin{enumerate}
+  \item \textbf{C1, exploratory measurement:} a representational-facade measurement on Qwen2.5-7B where readable prompts reach only a fraction of the extracted pole for 3/4 axes; Llama replication remains pending.
+  \item \textbf{C2, headline result:} under a frozen adjudicator, naive CAA/ITI steering fails to beat the bounded best-prompt ceiling in all tested method--model cells and harms uncertainty calibration in all four cells.
+  \item \textbf{Methodology asset:} a reusable frozen prompt-vs-latent behavioral adjudication protocol.
+  \item \textbf{C3, design implication only:} cognitive consoles should instrument limits and trust-calibration risks rather than promise latent control. No empirical user-study credit is claimed on this route.
+\end{enumerate}
+
+\section{Related Work}
+\label{sec:related-work}
+
+\subsection{Non-surjectivity and Prompt--Latent Mismatch}
+Internal-state non-surjectivity motivates this work \cite{mishra2026nonsurj}. The citation is an ICLR 2026 workshop paper, not ICLR main proceedings. Behavioral non-transfer is tested by our frozen adjudicator rather than inferred from that theory. PSR is the mandatory counterpoint: trained steering can mimic prompting \cite{heyman2026steer}, so our C2 result is scoped to naive CAA/ITI rather than all latent control.
+
+\subsection{Activation Steering Lineage}
+Our tested steering families come from CAA and ITI \cite{rimsky2024caa,li2023iti}. ActAdd and RepE provide broader activation-addition and representation-engineering context \cite{turner2023actadd,zou2023repe}; we do not cite the unverified ActAdd Appendix-B sub-claim. Instruction-steering work is an adversarial neighbor because it links natural-language instructions and activation directions \cite{stolfo2025instr}.
+
+\subsection{HCI, Transparency, and Trust Neighbors}
+HCI work frames GenAI use as metacognitive monitoring and control \cite{tankelevitch2024metacog} and calls for human-centered transparency in LLM systems \cite{liao2024transparency}. Interface neighbors include prompt-layer instruments \cite{riche2025aiinstr}, feature-steering interfaces \cite{huang2025steering}, expert vision/CLIP activation-steering workflows \cite{labarta2026attribution}, and latent embedding-visualization manipulation \cite{raval2026latman}. Trust and control background comes from work on system-prompt control, confidence-signal recalibration, and steering/control/trust framing \cite{neumann2026whocontrols,li2026learntrust,subramani2026latent}. Textual instruction-conflict benchmarks sharpen the distinction between text-vs-text conflict and prompt-vs-latent conflict \cite{he2025coninstruct}.
+
+\subsection{Nearest-Neighbor Novelty Contrast}
+\label{sec:novelty-contrast}
+Table~\ref{tab:novelty-neighbors} gives the writing-stage contrast. The machine-readable provenance is in \texttt{docs/paper/citation-map.yaml}.
+
+\begin{table*}[t]
+  \centering
+  \caption{Nearest-neighbor novelty contrast. The paper's distinct unit is a frozen, pre-registered, fairness-controlled prompt-vs-naive-latent adjudication across 2 methods $\times$ 2 models on metacognitive axes, tied to an HCI legibility-console framing.}
+  \label{tab:novelty-neighbors}
+  \begin{tabular}{p{0.25\linewidth}p{0.32\linewidth}p{0.35\linewidth}}
+    \toprule
+    Prior work & What they test & What we uniquely adjudicate \\
+    \midrule
+    Sprejer et al. \cite{sprejer2026mindgap} & Closest empirical neighbor: feature steering can create capability--behavior trade-offs and degradation relative to prompting. & External corroboration for C2/calibration-harm, not a scoop: they use Goodfire SAE features rather than CAA/ITI, evaluate MMLU rather than metacognitive axes, and do not use a frozen pre-registration, 2$\times$2 method--model grid, or HCI legibility-console framing. \\
+    Mishra et al. \cite{mishra2026nonsurj} & Internal residual-state non-surjectivity under activation steering. & Behavioral prompt-vs-latent transfer under frozen DEV/TEST adjudication; Mishra is workshop background/motivation only. \\
+    Heyman and Vandeputte \cite{heyman2026steer} & Trained steering that mimics prompting. & Our result is deliberately about naive/off-the-shelf CAA/ITI under bounded prompt effort; PSR motivates the planned latent-recovery arm. \\
+    Rimsky et al. and Li et al. \cite{rimsky2024caa,li2023iti} & Steering methods: CAA and ITI. & We test whether those legible directions beat the best prompt on task outcomes with fairness controls and hostile audits. \\
+    Fan et al.; Korznikov et al. \cite{fan2026asteer,korznikov2025rogue} & Steerability limits and safety-domain failures of activation steering. & We provide a metacognitive, prompt-vs-latent, pre-registered behavioral adjudication rather than a broad steering benchmark or safety attack. \\
+    Huang and Lim \cite{huang2025steering} & Layperson GUI for SAE feature steering/persona building. & No human-study claim here; our pure-model contribution is prompt-vs-latent behavioral non-transfer and its design implication. \\
+    Riche et al.; Labarta et al.; Raval et al. \cite{riche2025aiinstr,labarta2026attribution,raval2026latman} & Prompt instruments, expert vision/CLIP activation steering, and embedding-visualization manipulation. & We focus on LLM behavioral control and calibration harm; Labarta is vision/CLIP and Latent Manipulator steers visualizations, not LLM generations. \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+\section{Methods}
+\label{sec:methods}
+
+\subsection{C1 Facade Measurement}
+The C1 figure must be rebuilt from \texttt{results/gpu\_7b\_2026-07-23/c1/c1\_facade\_results.json}; provenance is recorded in \texttt{docs/paper/figure-manifests/c1-ratio-ci.yaml}. No numeric values should be copied manually into this file.
+
+\subsection{Frozen Behavioral Adjudicator}
+The adjudicator uses DEV-only selection of prompts and steering strengths, paired TEST comparisons, item-cluster bootstrap, Bonferroni correction, and a coherence gate. The protocol source is \texttt{docs/ledgers/prereg-c2b-adjudication.md}.
+
+\subsection{Steering Families and Models}
+The 2$\times$2 robustness arm covers CAA/ITI $\times$ Qwen2.5-7B/Llama-3-8B. Llama provenance follows D-0038.
+
+\subsection{Audit and Artifact Lineage}
+All main tables and figures must trace to manifests under \texttt{docs/paper/table-manifests/} and \texttt{docs/paper/figure-manifests/}. The LaTeX source should contain placeholders, not hand-entered results.
+
+\section{Results}
+\label{sec:results}
+
+\subsection{Representational Facade Ratio (C1)}
+\begin{figure}[t]
+  \centering
+  \fbox{\parbox{0.9\linewidth}{Placeholder for C1 ratio-CI figure. Rebuild from \texttt{docs/paper/figure-manifests/c1-ratio-ci.yaml}.}}
+  \caption{Exploratory representational-facade ratios by axis. This figure must be generated from the manifest and labeled as Qwen2.5-7B exploratory evidence.}
+  \label{fig:c1-ratio-ci}
+\end{figure}
+
+Figure~\ref{fig:c1-ratio-ci} will carry C1 with explicit caveats: focus overshoot/no-facade, deliberation layer sensitivity, and pending Llama replication.
+
+\subsection{Frozen Prompt-vs-Latent Delta Table (C2)}
+\begin{table*}[t]
+  \centering
+  \caption{Placeholder for the 4-cell frozen adjudication $\Delta$ table. Rebuild from \texttt{docs/paper/table-manifests/c2-delta-4cell.yaml}; do not hand-type numeric results here.}
+  \label{tab:c2-delta-4cell}
+  \begin{tabular}{llllll}
+    \toprule
+    Method & Model & Axis & $\Delta$ steer--prompt & Bonferroni CI & Pass? \\
+    \midrule
+    \multicolumn{6}{c}{Generated rows go here.} \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+Table~\ref{tab:c2-delta-4cell} is the C2 headline artifact: all four cells are 0/3 axes under the frozen rule, but final table values must come from the manifest pipeline.
+
+\subsection{Calibration Harm Across Four Cells}
+\begin{figure}[t]
+  \centering
+  \fbox{\parbox{0.9\linewidth}{Placeholder for calibration-harm figure. Rebuild from \texttt{docs/paper/figure-manifests/c2-calibration-harm-4cell.yaml}.}}
+  \caption{Calibration harm on the uncertainty axis across method--model cells. Mechanism remains open after the E-0007 valid null.}
+  \label{fig:c2-calibration-harm}
+\end{figure}
+
+\section{Design Implications}
+\label{sec:design-implications}
+C3 is non-empirical on the pure-model route. The design implication is to treat the console as a limits and trust-calibration instrument, not as evidence that users can control latent states. This implication is informed by HCI transparency, metacognition, and trust-calibration work \cite{tankelevitch2024metacog,liao2024transparency,li2026learntrust,neumann2026whocontrols,subramani2026latent}.
+
+\section{Limitations}
+\label{sec:limitations}
+C1 is exploratory and single-model pending Llama replication. C2 is scoped to bounded prompt effort and naive/off-the-shelf CAA/ITI. The result is not an impossibility theorem, especially given trained steering results \cite{heyman2026steer}. The calibration-harm mechanism is open, and the human-study fork remains owner-gated.
+
+\section{Future Work}
+\label{sec:future-work}
+Future work includes the frozen latent-recovery arm for PSR-style DEV-optimized steering, Llama C1 replication, a possible owner-approved human study, and a new preregistered mechanism package for calibration harm.
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}

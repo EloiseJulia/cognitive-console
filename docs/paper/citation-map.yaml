@@ -1,0 +1,216 @@
+# Citation map scaffold.
+# Source of truth: docs/research/2026-07-24-citation-verification.md.
+# All entries below are VERIFIED or VERIFIED-SECONDARY there. BibTeX keys match docs/paper/references.bib.
+
+references:
+  mishra_non_surjectivity:
+    status: VERIFIED
+    cite_key: "mishra2026nonsurj"
+    title: "Steered LLM Activations are Non-Surjective"
+    year: 2026
+    venue_or_source: "ICLR 2026 Workshops (Sci4DL and Re-Align), not ICLR main proceedings"
+    how_we_use_it: "C2a background only: internal-state non-surjectivity theory motivation, not our empirical behavioral result."
+    claim_links: ["C2a"]
+    paper_sections: ["Introduction", "Related Work"]
+
+  psr_steer_like_llm:
+    status: VERIFIED
+    cite_key: "heyman2026steer"
+    title: "Steer Like the LLM: Activation Steering that Mimics Prompting"
+    year: 2026
+    venue_or_source: "ICML 2026"
+    how_we_use_it: "Mandatory C2 threat/contrast: trained steering can mimic prompting; our claim is scoped to naive off-the-shelf CAA/ITI and bounded prompt effort."
+    claim_links: ["C2"]
+    paper_sections: ["Abstract", "Introduction", "Related Work", "Limitations", "Future Work"]
+
+  caa:
+    status: VERIFIED
+    cite_key: "rimsky2024caa"
+    title: "Steering Llama 2 via Contrastive Activation Addition"
+    year: 2024
+    venue_or_source: "ACL 2024"
+    how_we_use_it: "Baseline method lineage and tested CAA arm in E-0005/E-0006."
+    claim_links: ["C2"]
+    paper_sections: ["Related Work", "Methods"]
+
+  actadd_activation_engineering:
+    status: VERIFIED
+    verification_scope: "paper metadata verified; Appendix-B sub-claim not verified"
+    cite_key: "turner2023actadd"
+    title: "Steering Language Models With Activation Engineering"
+    year: 2023
+    venue_or_source: "arXiv preprint"
+    how_we_use_it: "Activation-addition background only. Open-risks #8 remains: ActAdd Appendix-B sub-claim is not verified and must not be cited."
+    claim_links: []
+    paper_sections: ["Related Work"]
+
+  iti:
+    status: VERIFIED
+    cite_key: "li2023iti"
+    title: "Inference-Time Intervention: Eliciting Truthful Answers from a Language Model"
+    year: 2023
+    venue_or_source: "NeurIPS 2023"
+    how_we_use_it: "Baseline method lineage and tested ITI arm in E-0006."
+    claim_links: ["C2"]
+    paper_sections: ["Related Work", "Methods"]
+
+  repe:
+    status: VERIFIED
+    verification_scope: "preprint metadata verified; no proceedings publication confirmed"
+    cite_key: "zou2023repe"
+    title: "Representation Engineering: A Top-Down Approach to AI Transparency"
+    year: 2023
+    venue_or_source: "arXiv preprint"
+    how_we_use_it: "Representation-control framework and adjacent method family; not tested in the current C2 grid."
+    claim_links: []
+    paper_sections: ["Related Work"]
+
+  stolfo_instruction_steering:
+    status: VERIFIED
+    cite_key: "stolfo2025instr"
+    title: "Improving Instruction-Following in Language Models through Activation Steering"
+    year: 2025
+    venue_or_source: "ICLR 2025"
+    how_we_use_it: "Adversarial neighbor: instruction-to-vector correspondence; reviewer attack surface against overbroad C2 wording."
+    claim_links: ["C2"]
+    paper_sections: ["Related Work", "Limitations"]
+
+  tankelevitch_metacog:
+    status: VERIFIED
+    cite_key: "tankelevitch2024metacog"
+    title: "The Metacognitive Demands and Opportunities of Generative AI"
+    year: 2024
+    venue_or_source: "CHI 2024"
+    how_we_use_it: "HCI theory base for metacognitive monitoring/control and why legibility matters."
+    claim_links: ["C3"]
+    paper_sections: ["Introduction", "Design Implications"]
+
+  ai_instruments:
+    status: VERIFIED
+    cite_key: "riche2025aiinstr"
+    title: "AI-Instruments: Embodying Prompts as Instruments to Abstract & Reflect Graphical Interface Commands as General-Purpose Tools"
+    year: 2025
+    venue_or_source: "CHI 2025"
+    how_we_use_it: "HCI neighbor: prompt-layer reification/direct manipulation; contrast because it has no latent channel or prompt-vs-latent adjudication."
+    claim_links: ["C3"]
+    paper_sections: ["Related Work"]
+
+  huang_lim_feature_steering:
+    status: VERIFIED
+    cite_key: "huang2025steering"
+    title: "Designing Intuitive Interfaces for Feature Steering of LLMs"
+    year: 2025
+    venue_or_source: "IASDR 2025 poster"
+    how_we_use_it: "Strongest interface neighbor: lay feature-steering UI using SAE/Goodfire features; contrast with our prompt-vs-naive-latent adjudication and CAA/ITI methods."
+    claim_links: ["C3"]
+    paper_sections: ["Related Work"]
+
+  labarta_attribution_action:
+    status: VERIFIED
+    cite_key: "labarta2026attribution"
+    title: "From Attribution to Action: A Human-Centered Application of Activation Steering"
+    year: 2026
+    venue_or_source: "CVPR 2026 Workshop"
+    how_we_use_it: "Differentiation neighbor. Open-risks #8 caveat: verified vision/CLIP expert-debugging workflow, not an LLM latent UI for non-experts; SemanticLens is not cited."
+    claim_links: ["C3"]
+    paper_sections: ["Related Work"]
+
+  latent_manipulator:
+    status: VERIFIED
+    cite_key: "raval2026latman"
+    title: "Latent Manipulator: Using Concept-Guided Embedding Manipulation to Steer Embedding Visualizations"
+    year: 2026
+    venue_or_source: "CHI EA 2026"
+    how_we_use_it: "Surface-similar latent/slider HCI neighbor; contrast as embedding-visualization steering, not LLM behavior."
+    claim_links: ["C3"]
+    paper_sections: ["Related Work"]
+
+  who_controls_prompts:
+    status: VERIFIED
+    cite_key: "neumann2026whocontrols"
+    title: "Who Controls the Conversation? User Perspectives On Generative AI (LLM) System Prompts"
+    year: 2026
+    venue_or_source: "CHI 2026"
+    how_we_use_it: "C3/trust background: user perspectives on prompt-layer control; our console extends the control/legibility problem to latent channels."
+    claim_links: ["C3"]
+    paper_sections: ["Related Work", "Design Implications"]
+
+  transparency_roadmap:
+    status: VERIFIED
+    verification_scope: "verified-secondary per citation-verification report"
+    cite_key: "liao2024transparency"
+    title: "AI Transparency in the Age of LLMs: A Human-Centered Research Roadmap"
+    year: 2024
+    venue_or_source: "Harvard Data Science Review"
+    how_we_use_it: "C3/trust background: human-centered transparency and legibility roadmap for non-experts."
+    claim_links: ["C3"]
+    paper_sections: ["Introduction", "Design Implications"]
+
+  latent_control_trust:
+    status: VERIFIED
+    cite_key: "subramani2026latent"
+    title: "Harnessing the Latent Space: From Steering Vectors to Model Calibrators for Control and Trust"
+    year: 2026
+    venue_or_source: "ACL 2026 BigPicture Workshop"
+    how_we_use_it: "C3/trust background and crowded phrase context for steering/control/trust; not a scoop because no interface or user study."
+    claim_links: ["C3"]
+    paper_sections: ["Related Work", "Design Implications"]
+
+  coninstruct:
+    status: VERIFIED
+    cite_key: "he2025coninstruct"
+    title: "ConInstruct: Evaluating Large Language Models on Conflict Detection and Resolution in Instructions"
+    year: 2025
+    venue_or_source: "arXiv preprint"
+    how_we_use_it: "Conflict-definition contrast: text-constraint conflict is distinct from prompt-vs-latent channel conflict surfaced to users."
+    claim_links: ["C3"]
+    paper_sections: ["Related Work"]
+
+  learning_to_trust_confidence:
+    status: VERIFIED
+    cite_key: "li2026learntrust"
+    title: "Learning to Trust: How Humans Mentally Recalibrate AI Confidence Signals"
+    year: 2026
+    venue_or_source: "arXiv preprint"
+    how_we_use_it: "C3/trust background and possible human-study measure/model if the human-study fork reopens."
+    claim_links: ["C3"]
+    paper_sections: ["Related Work", "Design Implications", "Future Work"]
+
+  mind_the_performance_gap:
+    status: VERIFIED
+    cite_key: "sprejer2026mindgap"
+    title: "Mind the Performance Gap: Capability-Behavior Trade-offs in Feature Steering"
+    year: 2026
+    venue_or_source: "arXiv preprint"
+    how_we_use_it: "Closest empirical neighbor and external corroboration for C2/calibration harm; distinguish because it uses Goodfire SAE features, MMLU, no preregistration, no 2x2 CAA/ITI x model adjudication, and no HCI legibility-console framing."
+    claim_links: ["C2"]
+    paper_sections: ["Related Work", "Results", "Limitations"]
+
+  asteer:
+    status: VERIFIED
+    cite_key: "fan2026asteer"
+    title: "When is Your LLM Steerable?"
+    year: 2026
+    venue_or_source: "arXiv preprint"
+    how_we_use_it: "Steering-limits related work; motivates axis/context/model dependence and boundary conditions."
+    claim_links: ["C2"]
+    paper_sections: ["Related Work", "Limitations"]
+
+  rogue_scalpel:
+    status: VERIFIED
+    verification_scope: "verified-secondary per citation-verification report"
+    cite_key: "korznikov2025rogue"
+    title: "The Rogue Scalpel: Activation Steering Compromises LLM Safety"
+    year: 2026
+    venue_or_source: "ICLR 2026 Workshop"
+    how_we_use_it: "Steering-limits related work and parallel evidence that internal control need not imply precise behavioral control; different safety domain."
+    claim_links: ["C2"]
+    paper_sections: ["Related Work", "Limitations"]
+
+do_not_cite:
+  semanticlens_nmi_2025: "UNVERIFIED-METADATA; no BibTeX entry until DOI, full author list, and exact title are confirmed from primary source."
+  actadd_appendix_b_subclaim: "UNVERIFIABLE in citation-verification pass; do not cite App-B exclusion experiment content until PDF is read directly."
+  cot_unfaithfulness: "Do-not-cite per citation-verification §6."
+  beyond_anthropomorphism: "Do-not-cite per citation-verification §6."
+
+

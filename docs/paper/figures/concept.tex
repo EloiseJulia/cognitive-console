@@ -1,0 +1,23 @@
+\begin{tikzpicture}[
+  >=Latex,
+  channel/.style={draw, rounded corners, align=center, minimum width=2.6cm, minimum height=0.8cm, fill=blue!6},
+  latent/.style={draw, rounded corners, align=center, minimum width=2.6cm, minimum height=0.8cm, fill=orange!10},
+  model/.style={draw, rounded corners, align=center, minimum width=2.5cm, minimum height=1.1cm, fill=gray!8},
+  probe/.style={draw, dashed, rounded corners, align=center, minimum width=2.6cm, minimum height=0.8cm, fill=green!6}
+]
+  \node[channel] (user) {User-facing\\prompt channel};
+  \node[model, right=1.25cm of user] (llm) {LLM\\policy};
+  \node[channel, right=1.25cm of llm] (behavior) {Behavioral\\outcome};
+
+  \node[latent, below=1.0cm of llm] (latent) {Latent steering\\channel};
+  \node[probe, below=1.0cm of user] (console) {Cognitive console\\adjudicator};
+  \node[probe, below=1.0cm of behavior] (limits) {Limits surfaced:\\non-transfer, harm};
+
+  \draw[->, thick] (user) -- node[above, font=\scriptsize]{legible instruction} (llm);
+  \draw[->, thick] (llm) -- node[above, font=\scriptsize]{task behavior} (behavior);
+  \draw[->, thick, orange!80!black] (latent) -- node[right, font=\scriptsize]{$h' = h + \alpha\hat v$} (llm);
+  \draw[->, dashed] (console) -- node[left, font=\scriptsize]{measures facade} (user);
+  \draw[->, dashed] (console) -- node[below, font=\scriptsize]{paired frozen test} (limits);
+  \draw[->, dashed] (limits) -- node[right, font=\scriptsize]{trust calibration} (behavior);
+  \draw[decorate, decoration={brace, amplitude=5pt}, thick] ([yshift=-0.15cm]user.south west) -- node[below=0.2cm, font=\scriptsize, align=center]{legibility does not guarantee controllability} ([yshift=-0.15cm]latent.south east);
+\end{tikzpicture}

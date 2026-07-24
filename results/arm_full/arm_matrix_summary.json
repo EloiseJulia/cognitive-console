@@ -1,0 +1,85 @@
+{
+  "generated_at": "2026-07-24T11:39:45.332358+00:00",
+  "backend": "hf",
+  "seed": 20260723,
+  "arm_rule": "any-pass => SCOPE_NARROWED_POSITIVE; else >=(n_cells-1) zero-pass => NON_TRANSFER_GENERALIZED; else INCONCLUSIVE",
+  "cells": [
+    {
+      "cell_key": "caa__qwen2.5-7b",
+      "method": "caa",
+      "model_label": "qwen2.5-7b",
+      "model_id": "/root/autodl-tmp/models/Qwen2.5-7B-Instruct",
+      "out_dir": "/root/autodl-tmp/cc/repo/results/arm_full/cell_caa__qwen2.5-7b",
+      "result_file": "/root/autodl-tmp/cc/repo/results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+      "config_fingerprint": "433c5772c8ede7f8",
+      "verdict": "KILL_PLAN_D",
+      "axis_passes": {
+        "deliberation": false,
+        "skepticism": false,
+        "uncertainty_awareness": false
+      },
+      "axes_passed": 0,
+      "transcripts_dir": "/root/autodl-tmp/cc/repo/results/arm_full/cell_caa__qwen2.5-7b/transcripts",
+      "transcripts_present": true
+    },
+    {
+      "cell_key": "caa__llama3-8b",
+      "method": "caa",
+      "model_label": "llama3-8b",
+      "model_id": "/root/autodl-tmp/models/Meta-Llama-3-8B-Instruct",
+      "out_dir": "/root/autodl-tmp/cc/repo/results/arm_full/cell_caa__llama3-8b",
+      "result_file": "/root/autodl-tmp/cc/repo/results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
+      "config_fingerprint": "861d5b5f8773c6f0",
+      "verdict": "KILL_PLAN_D",
+      "axis_passes": {
+        "deliberation": false,
+        "skepticism": false,
+        "uncertainty_awareness": false
+      },
+      "axes_passed": 0,
+      "transcripts_dir": "/root/autodl-tmp/cc/repo/results/arm_full/cell_caa__llama3-8b/transcripts",
+      "transcripts_present": true
+    },
+    {
+      "cell_key": "iti__qwen2.5-7b",
+      "method": "iti",
+      "model_label": "qwen2.5-7b",
+      "model_id": "/root/autodl-tmp/models/Qwen2.5-7B-Instruct",
+      "out_dir": "/root/autodl-tmp/cc/repo/results/arm_full/cell_iti__qwen2.5-7b",
+      "result_file": "/root/autodl-tmp/cc/repo/results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
+      "config_fingerprint": "2d1749bdc7089f83",
+      "verdict": "KILL_PLAN_D",
+      "axis_passes": {
+        "deliberation": false,
+        "skepticism": false,
+        "uncertainty_awareness": false
+      },
+      "axes_passed": 0,
+      "transcripts_dir": "/root/autodl-tmp/cc/repo/results/arm_full/cell_iti__qwen2.5-7b/transcripts",
+      "transcripts_present": true
+    },
+    {
+      "cell_key": "iti__llama3-8b",
+      "method": "iti",
+      "model_label": "llama3-8b",
+      "model_id": "/root/autodl-tmp/models/Meta-Llama-3-8B-Instruct",
+      "out_dir": "/root/autodl-tmp/cc/repo/results/arm_full/cell_iti__llama3-8b",
+      "result_file": "/root/autodl-tmp/cc/repo/results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
+      "config_fingerprint": "d39efbeac006dac5",
+      "verdict": "KILL_PLAN_D",
+      "axis_passes": {
+        "deliberation": false,
+        "skepticism": false,
+        "uncertainty_awareness": false
+      },
+      "axes_passed": 0,
+      "transcripts_dir": "/root/autodl-tmp/cc/repo/results/arm_full/cell_iti__llama3-8b/transcripts",
+      "transcripts_present": true
+    }
+  ],
+  "arm_verdict": "NON_TRANSFER_GENERALIZED",
+  "n_cells": 4,
+  "zero_pass_cells": 4,
+  "min_zero_pass_cells_for_generalized": 3,
+  "any_cell_has_pass": false
+}

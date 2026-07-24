@@ -28,3 +28,8 @@ results/**/*.npz
 .worktrees/
 copilot-session-*.md
 *.bundle
+
+results/arm_full/**/transcripts/
+results/arm_full/**/checkpoints/
+results/arm_full/**/c1/
+results/*.tgz

@@ -1,0 +1,63 @@
+experiments:
+- experiment_id: c2b-adj-deac6326-0001
+  parent: null
+  hypothesis_id: H2
+  claim_ids:
+  - C2b
+  type: exploratory
+  status: done
+  code_commit: d20ccedf3756f267a4b9325abd2623c4e7c46335
+  dirty_tree: null
+  data_hash: null
+  env_hash: null
+  config_hash: sha256:deac6326721218c3d2decc89b5d101e06a37dccfa049e05b69d053e2169b7749
+  model: /root/autodl-tmp/models/Qwen2.5-7B-Instruct
+  dataset: data/c2b_tasks/* (fixtures) or deferred real loaders
+  seed: 20260723
+  hardware: cuda-float16
+  started_at: '2026-07-24T09:34:56.167583+00:00'
+  ended_at: '2026-07-24T10:04:00.499753+00:00'
+  exit_code: 0
+  raw_metrics: null
+  summary_metrics:
+    deliberation:
+      layer: 20
+      frozen_alpha: 2.0
+      mean_diff: 0.015000000000000003
+      ci_lo: -0.04
+      ci_hi: 0.06999999999999999
+      ci_level: 0.9833333333333333
+      coherence_ok: true
+      passed: false
+    skepticism:
+      layer: 20
+      frozen_alpha: 6.0
+      mean_diff: -0.08
+      ci_lo: -0.225
+      ci_hi: 0.045
+      ci_level: 0.9833333333333333
+      coherence_ok: true
+      passed: false
+    uncertainty_awareness:
+      layer: 20
+      frozen_alpha: 8.0
+      mean_diff: -0.22767283018867926
+      ci_lo: -0.36977938679245265
+      ci_hi: -0.0916042641509434
+      ci_level: 0.9833333333333333
+      coherence_ok: true
+      passed: false
+    _verdict: KILL_PLAN_D
+    _axis_passes:
+      deliberation: false
+      skepticism: false
+      uncertainty_awareness: false
+    _torch_seed: 20260723
+  artifacts:
+  - results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: C2b QUALIFIED adjudication implementing FROZEN prereg §4/§5 (paired
+    ITEM-cluster bootstrap B>=10000, Bonferroni CI 1-0.05/3, delta=0.05, coherence<=1.5x,
+    three-tier verdict). EXPLORATORY until the A800 7B run (valid_for_paper=false);
+    this run is a exploratory on hf.

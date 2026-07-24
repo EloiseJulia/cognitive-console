@@ -5,6 +5,31 @@
 
 ---
 
+## 2026-07-24 · D-0039 · Arm 2×2 COMPLETE = NON_TRANSFER_GENERALIZED (E-0006, audited VALID); OOD capture pre-registered
+- **Result:** frozen robustness arm ran on the rented box (Qwen download saga resolved by serializing the two
+  downloads; Llama via NousResearch identical-weights mirror D-0038). Autonomous chain: waited downloads →
+  n_items=4 SMOKE (all 4 method×model combos incl. ITI×Llama validated on real GPU, ARM_SMOKE_RC=0) → full
+  2×2. **All 4 cells 0/3 → arm_verdict=NON_TRANSFER_GENERALIZED (E-0006).** cell1 reproduces E-0005
+  byte-for-byte. Uncertainty calibration HARM replicates in all 4 cells (CI all excl 0 negative).
+- **Hostile audit (audit-arm-2x2): VALID_ARM_EVIDENCE**, no BLOCKER. Confirmed: distinct fingerprints (not
+  reused/fabricated), ITI genuinely probe-based, Llama genuinely Llama-3-8B, uncertainty harm is REAL
+  degradation not parser artifact (trunc=0/empty=0; steered text drops the Confidence format), aggregation
+  faithful, CI recompute exact. **MAJOR (lineage, non-numeric):** registry experiment_id omits
+  steering_method → CAA/ITI same-model collide; results JSON records method so recoverable; CODE FIX folded
+  into the OOD capture work.
+- **Significance:** **CLOSES the unanimous critic BLOCKER (external validity / single-method×single-model).**
+  Reality-check "legibility ≠ controllability" now holds robustly across CAA+ITI × Qwen+Llama; steering
+  consistently HARMS calibration.
+- **Decision (Manager) + human directive:** owner chose (a) do the OOD off-manifold capture NOW (box up,
+  models loaded; deferring is strictly costlier — re-download + config drift + dirty lineage), BUT
+  **pre-register BEFORE capturing** and **allow the hypothesis to fail honestly**. Wrote
+  `docs/ledgers/prereg-ood-capture.md`: FROZEN reference=same-layer un-intervened residuals; ONE metric=
+  whitened Mahalanobis; FROZEN support/kill = Spearman ρ(dist,−Δoutcome)≥0.30 & CI-excl-0 in ≥3/4 cells →
+  C2-mech EVIDENCE, else demote to explicit hypothesis/Future-Work (NO re-mining a different mechanism on the
+  same data). Capture must not alter any frozen behavioral number. Then hostile-audit + bank, then WIPE box.
+- **Frozen?** E-0006 banked (H-R). OOD capture prereg to be FROZEN before running. E-0003/E-0005/prereg-c2b
+  untouched.
+
 ## 2026-07-24 · D-0038 · Llama-3-8B is HF-gated → use identical-weights ungated mirror (access workaround)
 - **Problem:** the frozen arm's 2×2 LOCKS the 2nd model to `meta-llama/Meta-Llama-3-8B-Instruct`, but that
   repo is HF-GATED ("Access denied. This repository requires approval") even via hf-mirror — blocks the run.

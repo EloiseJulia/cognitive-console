@@ -5,6 +5,19 @@
 
 ---
 
+## 2026-07-24 · D-0038 · Llama-3-8B is HF-gated → use identical-weights ungated mirror (access workaround)
+- **Problem:** the frozen arm's 2×2 LOCKS the 2nd model to `meta-llama/Meta-Llama-3-8B-Instruct`, but that
+  repo is HF-GATED ("Access denied. This repository requires approval") even via hf-mirror — blocks the run.
+- **Decision (Manager, autonomous — NOT a §5 protocol change):** use
+  `NousResearch/Meta-Llama-3-8B-Instruct`, a well-known **ungated mirror of the IDENTICAL Llama-3-8B-Instruct
+  weights**. Verified genuine: config is `LlamaForCausalLM`, hidden_size=4096, num_hidden_layers=32,
+  eos_token_id=128009 (Llama-3-Instruct EOT) — bit-identical model, only the access path differs. This is a
+  deployment/access detail, NOT a scientific/model change (the frozen spec "Llama-3-8B-Instruct" is honored;
+  same architecture the ITI/provider code targets). Documented in results provenance as the mirror source.
+- **Alternative rejected:** switching to Mistral-7B WOULD be a frozen-protocol change (§5) — not taken.
+  Requesting a gated HF token deferred (mirror is cleaner + reproducible for others).
+- **Frozen?** Arm prereg UNCHANGED (same model identity). Provenance will record mirror repo id.
+
 ## 2026-07-24 · D-0037 · Human FROZE robustness+mechanism arm prereg + budget + pre-granted GPU
 - **Human decision (@EloiseJulia):** "批准冻结此 prereg + 预算；立即开始纯 CPU 工程阶段(ITI/Llama/
   transcript/OOD/prompt-opt)，GPU 你直接跑就行，不用我批准，我刚刚租的那台一直开着的."

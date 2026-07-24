@@ -421,6 +421,22 @@ class SteeredHFBackend(GenBackend):
 
         return hook
 
+    @staticmethod
+    def _make_capture_hook(*, attn, padding_side: str, sink: dict):
+        import torch
+
+        def hook(module, inputs, output):
+            hidden = output[0] if isinstance(output, tuple) else output
+            if attn is None or padding_side == "left":
+                sink["last"] = hidden[:, -1, :]
+            else:
+                last_idx = attn.sum(dim=1) - 1
+                rows = torch.arange(hidden.shape[0], device=hidden.device)
+                sink["last"] = hidden[rows, last_idx, :]
+            return output
+
+        return hook
+
     def capture_residual_activations(
         self,
         prompts: Sequence[str],
@@ -460,7 +476,9 @@ class SteeredHFBackend(GenBackend):
         )
         enc = {k: v.to(self.device) for k, v in enc.items()}
 
-        handle = None
+        attn = enc.get("attention_mask")
+        padding_side = getattr(self._tokenizer, "padding_side", "right")
+        handles = []
         if steer is not None and abs(float(steer.alpha)) > _EPS:
             if not (1 <= int(steer.layer) <= n_layers):
                 raise ValueError(
@@ -468,26 +486,49 @@ class SteeredHFBackend(GenBackend):
                     f"(hidden_states index; hooks decoder block layer-1)"
                 )
             block = self._layers[int(steer.layer) - 1]
-            handle = block.register_forward_hook(self._make_hook(steer))
+            handles.append(block.register_forward_hook(self._make_hook(steer)))
+
+        captured = {"last": None}
+        if layer >= 1:
+            # Register capture AFTER steering so same-block capture sees post-steer output.
+            capture_block = self._layers[layer - 1]
+            handles.append(
+                capture_block.register_forward_hook(
+                    self._make_capture_hook(
+                        attn=attn,
+                        padding_side=padding_side,
+                        sink=captured,
+                    )
+                )
+            )
 
         try:
             with torch.no_grad():
-                out = self._model(**enc, output_hidden_states=True, use_cache=False)
+                out = self._model(
+                    **enc,
+                    output_hidden_states=(layer == 0),
+                    use_cache=False,
+                )
         finally:
-            if handle is not None:
+            for handle in reversed(handles):
                 handle.remove()
 
-        hs = out.hidden_states[layer]
-        attn = enc.get("attention_mask")
-        if attn is None:
-            last = hs[:, -1, :]
-        elif getattr(self._tokenizer, "padding_side", "right") == "left":
-            # With left padding, sequence end is always the true final token.
-            last = hs[:, -1, :]
+        if layer == 0:
+            hs = out.hidden_states[layer]
+            if attn is None or padding_side == "left":
+                # With left padding, sequence end is always the true final token.
+                last = hs[:, -1, :]
+            else:
+                last_idx = attn.sum(dim=1) - 1
+                rows = torch.arange(hs.shape[0], device=hs.device)
+                last = hs[rows, last_idx, :]
         else:
-            last_idx = attn.sum(dim=1) - 1
-            rows = torch.arange(hs.shape[0], device=hs.device)
-            last = hs[rows, last_idx, :]
+            last = captured["last"]
+            if last is None:
+                raise RuntimeError(
+                    "capture hook did not fire for requested layer "
+                    f"{layer} (decoder block index {layer - 1})"
+                )
         return last.to(torch.float32).cpu().numpy()
 
     # -- generation -------------------------------------------------------

@@ -115,76 +115,183 @@ def test_locate_decoder_layers_supports_llama_style_path():
     assert got == ["l0", "l1", "l2"]
 
 
-def test_capture_residual_left_padding_matches_singleton(monkeypatch):
-    class FakeTensor:
-        def __init__(self, arr):
-            self.arr = np.asarray(arr)
+class _FakeTensor:
+    def __init__(self, arr):
+        self.arr = np.asarray(arr)
 
-        @property
-        def shape(self):
-            return self.arr.shape
+    @property
+    def shape(self):
+        return self.arr.shape
 
-        def to(self, target=None):
-            if target is np.float32:
-                return FakeTensor(self.arr.astype(np.float32))
-            return self
+    @property
+    def dtype(self):
+        return self.arr.dtype
 
-        def cpu(self):
-            return self
+    @property
+    def device(self):
+        return "cpu"
 
-        def numpy(self):
-            return np.asarray(self.arr)
+    def to(self, target=None):
+        if target is np.float32:
+            return _FakeTensor(self.arr.astype(np.float32))
+        return self
 
-        def __getitem__(self, idx):
-            return FakeTensor(self.arr[idx])
+    def cpu(self):
+        return self
 
-    class FakeNoGrad:
-        def __enter__(self):
-            return None
+    def numpy(self):
+        return np.asarray(self.arr)
 
-        def __exit__(self, exc_type, exc, tb):
-            return False
+    def sum(self, dim):
+        return _FakeTensor(self.arr.sum(axis=dim))
 
-    class FakeTokenizer:
-        def __init__(self):
-            self.padding_side = "left"
+    def __add__(self, other):
+        other_arr = other.arr if isinstance(other, _FakeTensor) else other
+        return _FakeTensor(self.arr + other_arr)
 
-        def __call__(self, texts, **kwargs):
-            if isinstance(texts, str):
-                texts = [texts]
-            max_length = int(kwargs.get("max_length", 512))
-            tokenized = []
-            for text in texts:
-                ids = [(ord(ch) % 17) + 1 for ch in str(text) if ch != " "]
-                ids = ids[-max_length:] or [1]
-                tokenized.append(ids)
-            max_len = max(len(ids) for ids in tokenized)
-            input_ids = []
-            attn = []
-            for ids in tokenized:
-                pad = max_len - len(ids)
-                input_ids.append(([0] * pad) + ids)
-                attn.append(([0] * pad) + ([1] * len(ids)))
-            return {
-                "input_ids": FakeTensor(np.asarray(input_ids, dtype=np.int64)),
-                "attention_mask": FakeTensor(np.asarray(attn, dtype=np.int64)),
-            }
+    def __radd__(self, other):
+        return self.__add__(other)
 
-    class FakeModel:
-        def __call__(self, **enc):
-            ids = enc["input_ids"].numpy().astype(np.float32)
-            hs = np.stack([ids, ids + 0.5, ids * 2.0], axis=-1)
-            return types.SimpleNamespace(hidden_states=(None, FakeTensor(hs)))
+    def __sub__(self, other):
+        other_arr = other.arr if isinstance(other, _FakeTensor) else other
+        return _FakeTensor(self.arr - other_arr)
 
-    fake_torch = types.SimpleNamespace(float32=np.float32, no_grad=FakeNoGrad)
+    def __mul__(self, other):
+        other_arr = other.arr if isinstance(other, _FakeTensor) else other
+        return _FakeTensor(self.arr * other_arr)
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
+    def __getitem__(self, idx):
+        if isinstance(idx, tuple):
+            idx = tuple(i.arr if isinstance(i, _FakeTensor) else i for i in idx)
+        elif isinstance(idx, _FakeTensor):
+            idx = idx.arr
+        return _FakeTensor(self.arr[idx])
+
+
+class _FakeNoGrad:
+    def __enter__(self):
+        return None
+
+    def __exit__(self, exc_type, exc, tb):
+        return False
+
+
+class _FakeHandle:
+    def __init__(self, hooks, fn):
+        self._hooks = hooks
+        self._fn = fn
+
+    def remove(self):
+        if self._fn in self._hooks:
+            self._hooks.remove(self._fn)
+
+
+class _FakeBlock:
+    def __init__(self, bias):
+        self._bias = float(bias)
+        self._hooks = []
+
+    def register_forward_hook(self, fn):
+        self._hooks.append(fn)
+        return _FakeHandle(self._hooks, fn)
+
+    def forward(self, hidden):
+        pre = hidden + self._bias
+        output = (pre,)
+        for hook in list(self._hooks):
+            hooked = hook(self, (hidden,), output)
+            if hooked is not None:
+                output = hooked
+        post = output[0] if isinstance(output, tuple) else output
+        return pre, post
+
+
+class _FakeTokenizer:
+    def __init__(self):
+        self.padding_side = "left"
+
+    def __call__(self, texts, **kwargs):
+        if isinstance(texts, str):
+            texts = [texts]
+        max_length = int(kwargs.get("max_length", 512))
+        tokenized = []
+        for text in texts:
+            ids = [(ord(ch) % 17) + 1 for ch in str(text) if ch != " "]
+            ids = ids[-max_length:] or [1]
+            tokenized.append(ids)
+        max_len = max(len(ids) for ids in tokenized)
+        input_ids = []
+        attn = []
+        for ids in tokenized:
+            pad = max_len - len(ids)
+            input_ids.append(([0] * pad) + ids)
+            attn.append(([0] * pad) + ([1] * len(ids)))
+        return {
+            "input_ids": _FakeTensor(np.asarray(input_ids, dtype=np.int64)),
+            "attention_mask": _FakeTensor(np.asarray(attn, dtype=np.int64)),
+        }
+
+
+class _FakeModel:
+    def __init__(self, n_layers, hidden_size):
+        self.model = types.SimpleNamespace(
+            layers=[_FakeBlock(i + 1) for i in range(n_layers)]
+        )
+        self._hidden_size = int(hidden_size)
+
+    def __call__(self, **enc):
+        output_hidden_states = bool(enc.pop("output_hidden_states", False))
+        enc.pop("use_cache", None)
+
+        ids = enc["input_ids"].numpy().astype(np.float32)
+        hidden = np.repeat(ids[..., None], self._hidden_size, axis=-1)
+        hidden += np.arange(self._hidden_size, dtype=np.float32).reshape(1, 1, -1)
+        cur = _FakeTensor(hidden)
+
+        all_hidden = [_FakeTensor(cur.numpy().copy())]
+        for block in self.model.layers:
+            pre, post = block.forward(cur)
+            if output_hidden_states:
+                # Simulate the HF ordering bug: hidden_states tracks pre-hook residuals.
+                all_hidden.append(_FakeTensor(pre.numpy().copy()))
+            cur = post
+
+        return types.SimpleNamespace(
+            hidden_states=tuple(all_hidden) if output_hidden_states else None
+        )
+
+
+def _install_fake_torch(monkeypatch):
+    fake_torch = types.SimpleNamespace(
+        float32=np.float32,
+        no_grad=_FakeNoGrad,
+        as_tensor=lambda arr, dtype=None, device=None: _FakeTensor(
+            np.asarray(arr, dtype=dtype)
+        ),
+        arange=lambda n, device=None: _FakeTensor(np.arange(int(n), dtype=np.int64)),
+    )
     monkeypatch.setitem(sys.modules, "torch", fake_torch)
 
+
+def _build_fake_backend(monkeypatch, *, n_layers=2, hidden_size=4):
+    _install_fake_torch(monkeypatch)
     backend = SteeredHFBackend("fake-model")
     backend._ensure_loaded = lambda: None
-    backend._config = types.SimpleNamespace(num_hidden_layers=1, hidden_size=3)
-    backend._tokenizer = FakeTokenizer()
-    backend._model = FakeModel()
-    backend._layers = []
+    backend._config = types.SimpleNamespace(
+        num_hidden_layers=int(n_layers),
+        hidden_size=int(hidden_size),
+    )
+    backend._tokenizer = _FakeTokenizer()
+    backend._model = _FakeModel(n_layers=n_layers, hidden_size=hidden_size)
+    backend._layers = backend._model.model.layers
+    return backend
+
+
+def test_capture_residual_left_padding_matches_singleton(monkeypatch):
+    backend = _build_fake_backend(monkeypatch, n_layers=2, hidden_size=4)
 
     prompts = ["A", "A much longer prompt", "mid size"]
     batched = backend.capture_residual_activations(prompts, layer=1)
@@ -192,6 +299,59 @@ def test_capture_residual_left_padding_matches_singleton(monkeypatch):
         [backend.capture_residual_activations([prompt], layer=1)[0] for prompt in prompts]
     )
     np.testing.assert_allclose(batched, single)
+
+
+def test_capture_residual_steered_minus_baseline_matches_alpha_direction(monkeypatch):
+    backend = _build_fake_backend(monkeypatch, n_layers=2, hidden_size=4)
+    prompts = ["alpha beta", "gamma delta"]
+    layer = 1
+    alpha = 0.75
+    direction = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float64)
+    steer = SteerConfig(direction=direction, alpha=alpha, layer=layer)
+
+    baseline = backend.capture_residual_activations(prompts, layer=layer, steer=None)
+    steered = backend.capture_residual_activations(prompts, layer=layer, steer=steer)
+    delta = steered - baseline
+    expected = np.broadcast_to(
+        (alpha * unit_vector(direction)).astype(np.float32),
+        delta.shape,
+    )
+
+    assert not np.array_equal(steered, baseline)
+    np.testing.assert_allclose(delta, expected, rtol=0.0, atol=1e-6)
+
+
+def test_wrong_hook_order_captures_presteer_and_breaks_delta_equivalence(monkeypatch):
+    backend = _build_fake_backend(monkeypatch, n_layers=1, hidden_size=4)
+    block = backend._layers[0]
+    direction = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float64)
+    alpha = 0.5
+    steer = SteerConfig(direction=direction, alpha=alpha, layer=1)
+    expected = (alpha * unit_vector(direction)).astype(np.float32)[None, :]
+
+    hidden = _FakeTensor(np.asarray([[[2.0, 4.0, 6.0, 8.0]]], dtype=np.float32))
+    _, baseline_post = block.forward(hidden)
+    baseline_last = baseline_post[:, -1, :].numpy()
+
+    captured = {}
+
+    def capture_hook(module, inputs, output):
+        h = output[0] if isinstance(output, tuple) else output
+        captured["last"] = h[:, -1, :]
+        return output
+
+    h_capture = block.register_forward_hook(capture_hook)
+    h_steer = block.register_forward_hook(backend._make_hook(steer))
+    try:
+        block.forward(hidden)
+    finally:
+        h_steer.remove()
+        h_capture.remove()
+
+    delta = captured["last"].numpy() - baseline_last
+    np.testing.assert_allclose(delta, np.zeros_like(delta), rtol=0.0, atol=1e-6)
+    with pytest.raises(AssertionError):
+        np.testing.assert_allclose(delta, expected, rtol=0.0, atol=1e-6)
 
 
 # --------------------------------------------------------------------------- #

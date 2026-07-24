@@ -38,6 +38,7 @@ those optional extras are absent.
 from __future__ import annotations
 
 import abc
+import hashlib
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Sequence
 
@@ -328,6 +329,11 @@ class SteeredHFBackend(GenBackend):
         self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         if self._tokenizer.pad_token is None:
             self._tokenizer.pad_token = self._tokenizer.eos_token
+        # Left-pad for batched generation: newly-generated tokens then start at the
+        # SAME index (the padded length) for every row, so decoding each row's
+        # continuation is a single slice. Single-sequence generate() is unaffected
+        # (it tokenizes one prompt with no padding).
+        self._tokenizer.padding_side = "left"
         try:
             model = AutoModelForCausalLM.from_pretrained(
                 self.model_name, dtype=dtype, low_cpu_mem_usage=True
@@ -448,3 +454,85 @@ class SteeredHFBackend(GenBackend):
 
         new_tokens = out[0][input_len:]
         return self._tokenizer.decode(new_tokens, skip_special_tokens=True)
+
+    # -- BATCHED generation (performance: FIX 3) ---------------------------
+    def generate_batch(
+        self,
+        prompts: Sequence[str],
+        steer: Optional[SteerConfig] = None,
+        max_new_tokens: int = 128,
+        seeds: Optional[Sequence[int]] = None,
+        do_sample: bool = False,
+        temperature: float = 1.0,
+    ) -> List[str]:
+        """Generate a whole PADDED batch in ONE forward loop on the GPU.
+
+        The steering hook is registered on the shared decoder block, so it fires
+        for the entire batch at once (``h -> h + alpha*û`` on every row/position).
+        Left-padding + attention masks make each row's continuation a clean slice.
+
+        Determinism (resume-safe): for sampled generation we derive ONE
+        deterministic ``batch_seed`` from the per-(item,sample) ``seeds`` list and
+        seed torch's global RNG with it before the single ``generate`` call. The
+        batch is therefore reproducible for a fixed batch composition — the caller
+        (``_channel_item_outcomes``) uses a FIXED, cache-independent chunking so a
+        resumed run regenerates any incomplete batch with the identical
+        composition and reproduces its outputs. Greedy (``do_sample=False``) uses
+        no RNG, so a batch is bit-identical to the per-row single-sequence path.
+        """
+        import torch
+
+        self._ensure_loaded()
+        prompts = list(prompts)
+        if not prompts:
+            return []
+
+        if do_sample:
+            if seeds:
+                key = "|".join(str(int(s)) for s in seeds)
+            else:
+                key = str(self.seed)
+            batch_seed = int(hashlib.sha256(key.encode("utf-8")).hexdigest(), 16) % (2 ** 31)
+            self._seed_torch(batch_seed)
+
+        texts = [
+            self._tokenizer.apply_chat_template(
+                [{"role": "user", "content": p}], tokenize=False, add_generation_prompt=True
+            )
+            for p in prompts
+        ]
+        self._tokenizer.padding_side = "left"
+        enc = self._tokenizer(
+            texts, return_tensors="pt", padding=True, truncation=True,
+            max_length=self.max_length,
+        )
+        enc = {k: v.to(self.device) for k, v in enc.items()}
+        input_len = enc["input_ids"].shape[1]
+
+        handle = None
+        if steer is not None and abs(float(steer.alpha)) > _EPS:
+            n = int(self._config.num_hidden_layers)
+            if not (1 <= steer.layer <= n):
+                raise ValueError(
+                    f"steer.layer {steer.layer} out of range 1..{n} "
+                    f"(hidden_states index; hooks decoder block layer-1)"
+                )
+            block = self._layers[steer.layer - 1]
+            handle = block.register_forward_hook(self._make_hook(steer))
+
+        try:
+            gen_kwargs = dict(
+                max_new_tokens=int(max_new_tokens),
+                do_sample=bool(do_sample),
+                pad_token_id=self._tokenizer.pad_token_id,
+            )
+            if do_sample:
+                gen_kwargs["temperature"] = float(temperature)
+            with torch.no_grad():
+                out = self._model.generate(**enc, **gen_kwargs)
+        finally:
+            if handle is not None:
+                handle.remove()
+
+        new = out[:, input_len:]
+        return [self._tokenizer.decode(row, skip_special_tokens=True) for row in new]

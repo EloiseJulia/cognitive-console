@@ -23,9 +23,12 @@ wall-clock, numbers only from computed artifacts. See RUN_ON_A800.md §Adjudicat
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
 import platform
 import sys
+import threading
 import time
 from dataclasses import asdict
 from datetime import date
@@ -43,7 +46,8 @@ if str(_REPO) not in sys.path:
 from cognitive_console.eval import c2b_tasks
 from cognitive_console.experiments import adjudicate_c2b as adj
 from cognitive_console.experiments.adjudicate_c2b import (
-    AxisAdjSpec, BackendOutcomeSampler,
+    AxisAdjSpec, BackendOutcomeSampler, CheckpointStore, ProgressTracker,
+    RunContext, plan_generation_counts,
 )
 from cognitive_console.steering.generate import SyntheticC2bTaskBackend
 from cognitive_console.config import config_hash
@@ -68,6 +72,127 @@ def _rel(path: Path) -> str:
         return str(p.relative_to(_REPO)).replace("\\", "/")
     except ValueError:
         return str(p).replace("\\", "/")
+
+
+def _config_fingerprint(args, model: str, specs) -> str:
+    """Stable hash of everything that affects generated outcomes, so a resumed run
+    only reuses checkpoints from an IDENTICAL config (seed/model/N/items/gen knobs).
+    Changing max_new_tokens, temperature, seed, model, or the item set invalidates
+    resume (fresh generations), keeping the frozen verdict faithful."""
+    payload = {
+        "seed": int(args.seed),
+        "model": str(model),
+        "backend": str(args.backend),
+        "max_new_tokens": int(args.max_new_tokens),
+        "temperature": float(args.temperature),
+        # batch_size changes the chunk composition, hence each chunk's derived
+        # batch_seed and RNG stream, hence the sampled outcomes — so it MUST be in
+        # the fingerprint (MAJOR-1): resuming with a different --batch-size would
+        # otherwise silently reuse a cache built at a different composition and
+        # yield non-reproducible sampled cells. do_sample likewise gates whether
+        # the RNG path is used at all (hf=True samples, synthetic=greedy).
+        "batch_size": int(args.batch_size),
+        "do_sample": bool(args.backend == "hf"),
+        "k": int(adj.K_SAMPLES),
+        "alpha_grid": list(adj.ALPHA_GRID),
+        "dev_fraction": float(adj.DEV_FRACTION),
+        "axes": {
+            spec.axis: {
+                "n_items": len(spec.items),
+                "item_ids": sorted(str(it["id"]) for it in spec.items),
+                "n_strong": len(spec.strong_prompts),
+                "strong_ids": [str(pid) for pid, _ in spec.strong_prompts],
+            }
+            for spec in specs
+        },
+    }
+    blob = json.dumps(payload, sort_keys=True).encode("utf-8")
+    return hashlib.sha256(blob).hexdigest()[:16]
+
+
+# --------------------------------------------------------------------------- #
+# MINOR-1: silent-hang watchdog + honest CUDA/driver error labeling
+# --------------------------------------------------------------------------- #
+_CUDA_TOKENS = ("cuda", "cublas", "cudnn", "device", "nccl", "hip", "gpu",
+                "out of memory")
+
+
+def _looks_like_cuda_error(exc: BaseException) -> bool:
+    """Only call an error 'likely CUDA/driver' if its text actually looks like one
+    (MINOR-1): a plain RuntimeError from unrelated code would otherwise be
+    mislabeled as a GPU fault, misdirecting triage."""
+    msg = f"{type(exc).__name__}: {exc}".lower()
+    return any(tok in msg for tok in _CUDA_TOKENS)
+
+
+def watchdog_should_abort(last_activity_ts: float, stall_timeout: float,
+                          now: Optional[float] = None) -> bool:
+    """Pure, testable stall decision: True iff more than ``stall_timeout`` seconds
+    have elapsed since ``last_activity_ts``. ``stall_timeout <= 0`` disables the
+    watchdog (never aborts). The runner (never the test) turns True into os._exit.
+
+    This targets the D-0029 failure mode: a SILENT 100%-CPU spin after a host
+    driver reload that raises NO exception, so ``except (RuntimeError, MemoryError)``
+    never fires and the process holds a borrowed GPU forever."""
+    if stall_timeout is None or float(stall_timeout) <= 0:
+        return False
+    ref = time.time() if now is None else float(now)
+    return (ref - float(last_activity_ts)) > float(stall_timeout)
+
+
+class InactivityWatchdog:
+    """Background daemon thread that hard-exits the process if no generation cell
+    has completed for longer than ``stall_timeout`` seconds. Off when timeout<=0.
+
+    The abort action is injected (``on_abort``) so tests can assert firing without
+    actually calling ``os._exit``; the runner uses the default hard-exit."""
+
+    def __init__(self, progress, stall_timeout: float,
+                 check_interval: Optional[float] = None, on_abort=None):
+        self.progress = progress
+        self.stall_timeout = float(stall_timeout)
+        if check_interval is not None:
+            self.check_interval = float(check_interval)
+        else:
+            self.check_interval = min(30.0, max(1.0, self.stall_timeout / 10.0))
+        self._on_abort = on_abort if on_abort is not None else self._default_abort
+        self._thread = None
+        self._stop = threading.Event()
+
+    def start(self) -> "InactivityWatchdog":
+        if self.stall_timeout <= 0:
+            return self  # disabled
+        self._thread = threading.Thread(
+            target=self._run, name="c2b-stall-watchdog", daemon=True)
+        self._thread.start()
+        return self
+
+    def stop(self) -> None:
+        self._stop.set()
+
+    def _run(self) -> None:
+        while not self._stop.wait(self.check_interval):
+            last = getattr(self.progress, "last_activity", None)
+            if last is None:
+                continue
+            if watchdog_should_abort(last, self.stall_timeout):
+                idle = time.time() - float(last)
+                self._on_abort(self.stall_timeout, idle)
+                return
+
+    @staticmethod
+    def _default_abort(stall_timeout: float, idle: float) -> None:
+        msg = (f"\n[c2b-adj] FATAL STALL: no generation cell completed for "
+               f"{idle:.0f}s (> --stall-timeout {stall_timeout:.0f}s). This is the "
+               f"D-0029 silent-hang mode (100% CPU spin, NO exception raised, e.g. "
+               f"after a host driver reload). Hard-exiting non-zero so the process "
+               f"does NOT spin forever holding a borrowed GPU. Partial results are "
+               f"CHECKPOINTED per-cell; re-run the SAME command (no --fresh) to "
+               f"RESUME.\n")
+        sys.stderr.write(msg)
+        sys.stderr.flush()
+        sys.stdout.flush()
+        os._exit(3)
 
 
 # --------------------------------------------------------------------------- #
@@ -147,14 +272,16 @@ def synthetic_sampler_factory(use_fixture: bool, n_items: Optional[int]):
     return factory
 
 
-def hf_sampler_factory(model: str, max_new_tokens: int, temperature: float, seed: int):
+def hf_sampler_factory(model: str, max_new_tokens: int, temperature: float,
+                       seed: int, batch_size: int):
     from cognitive_console.steering.generate import SteeredHFBackend
     device, dtype = p0._pick_device(), p0._pick_dtype()
     backend = SteeredHFBackend(model, device=device, dtype=dtype, seed=seed)
 
     def factory(axis: str):
         return BackendOutcomeSampler(backend, max_new_tokens=max_new_tokens,
-                                     do_sample=True, temperature=temperature, seed=seed)
+                                     do_sample=True, temperature=temperature,
+                                     seed=seed, batch_size=batch_size)
     return factory
 
 
@@ -292,9 +419,24 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--allow-underpowered", action="store_true",
                     help="permit --bootstrap-b < frozen 10000 (prereg §5). OFF by "
                          "default: the confirmatory run HARD-FAILS if underpowered.")
-    ap.add_argument("--max-new-tokens", type=int, default=256)
+    ap.add_argument("--max-new-tokens", type=int, default=64,
+                    help="max new tokens per generation (default 64: these tasks "
+                         "have SHORT answers — a number / MC letter / short answer "
+                         "+ confidence; the prior 256 was overkill, D-0029). Tunable.")
+    ap.add_argument("--batch-size", type=int, default=16,
+                    help="padded GPU batch size for generation (hf backend). Cuts "
+                         "wall-clock several-fold vs one-sequence-at-a-time (FIX 3). "
+                         "The chunk = batch_size//k items generated in one batch.")
+    ap.add_argument("--fresh", action="store_true",
+                    help="ignore/clear any existing checkpoints and start over "
+                         "(default: RESUME from out_dir/checkpoints if config matches).")
     ap.add_argument("--temperature", type=float, default=0.7)
     ap.add_argument("--seed", type=int, default=20260723)
+    ap.add_argument("--stall-timeout", type=float, default=600.0,
+                    help="inactivity watchdog (MINOR-1): hard-exit non-zero if no "
+                         "generation cell completes for this many seconds, to break "
+                         "the D-0029 SILENT 100%%-CPU spin (no exception raised). "
+                         "0 = disabled.")
     ap.add_argument("--disk-budget-gb", type=float, default=60.0)
     ap.add_argument("--disk-ceiling-gb", type=float, default=70.0)
     ap.add_argument("--hf-home", default=None)
@@ -347,15 +489,62 @@ def main(argv: Optional[List[str]] = None) -> int:
                                       args.disk_ceiling_gb, raise_on_over=True)
         print(f"[c2b-adj] disk post-C1 (model loaded): {usage_mid.message}", flush=True)
         sampler_for_axis = hf_sampler_factory(model, args.max_new_tokens,
-                                              args.temperature, args.seed)
+                                              args.temperature, args.seed,
+                                              args.batch_size)
         hardware = f"{p0._pick_device()}-{p0._pick_dtype()}"
         meta_extra = {"backend": "hf", **hf_meta}
 
-    report = adj.adjudicate(
-        sampler_for_axis, specs, k=adj.K_SAMPLES, alpha_grid=adj.ALPHA_GRID,
-        bootstrap_b=args.bootstrap_b, ci_level=adj.BONFERRONI_CI_LEVEL,
-        delta=adj.DELTA, coherence_max_ratio=adj.COHERENCE_MAX_RATIO,
-        dev_fraction=adj.DEV_FRACTION, seed=args.seed)
+    # --- FIX 4: up-front PLANNED generation count + rough wall-clock budget so
+    # the run's size is visible BEFORE committing GPU time (sanity-check knob). ---
+    per_axis_plan, total_plan = plan_generation_counts(
+        specs, k=adj.K_SAMPLES, alpha_grid=adj.ALPHA_GRID,
+        dev_fraction=adj.DEV_FRACTION)
+    plan_str = ", ".join(f"{a}={c}" for a, c in per_axis_plan.items())
+    print(f"[c2b-adj] PLANNED generations (upper bound): {plan_str}  "
+          f"TOTAL={total_plan}", flush=True)
+    n_batches = -(-total_plan // max(1, args.batch_size))  # ceil
+    lo_h = n_batches * 2.0 / 3600.0
+    hi_h = n_batches * 4.0 / 3600.0
+    print(f"[c2b-adj] budget: batch_size={args.batch_size} "
+          f"max_new_tokens={args.max_new_tokens} -> ~{n_batches} batches; "
+          f"rough wall-clock ~{lo_h:.2f}-{hi_h:.2f}h "
+          f"(assuming ~2-4 s/batch on the target GPU; SANITY-CHECK before "
+          f"committing GPU time).", flush=True)
+
+    # --- FIX 1/2: progress tracker + resumable checkpoint store ---
+    fingerprint = _config_fingerprint(args, model, specs)
+    ckpt_dir = out_dir / "checkpoints"
+    checkpoint = CheckpointStore(ckpt_dir, fingerprint, seed=args.seed,
+                                 fresh=args.fresh)
+    progress = ProgressTracker(total_planned=total_plan)
+    run_ctx = RunContext(checkpoint=checkpoint, progress=progress)
+    print(f"[c2b-adj] checkpoints: {_rel(ckpt_dir)}  "
+          f"(fresh={args.fresh}; resume auto-skips cells whose config matches)",
+          flush=True)
+
+    # --- FIX 5 + MINOR-1: a CUDA/driver error (e.g. driver reload) must NOT spin
+    # forever; checkpoints are flushed per-cell, so we log clearly and EXIT
+    # non-zero. A background inactivity watchdog also breaks the D-0029 SILENT
+    # hang (100% CPU spin, NO exception) that the except below cannot catch. ---
+    watchdog = InactivityWatchdog(progress, args.stall_timeout).start()
+    try:
+        report = adj.adjudicate(
+            sampler_for_axis, specs, k=adj.K_SAMPLES, alpha_grid=adj.ALPHA_GRID,
+            bootstrap_b=args.bootstrap_b, ci_level=adj.BONFERRONI_CI_LEVEL,
+            delta=adj.DELTA, coherence_max_ratio=adj.COHERENCE_MAX_RATIO,
+            dev_fraction=adj.DEV_FRACTION, seed=args.seed, ctx=run_ctx)
+    except (RuntimeError, MemoryError) as exc:
+        checkpoint.close()
+        label = ("likely CUDA/driver" if _looks_like_cuda_error(exc)
+                 else "generic error")
+        print(f"\n[c2b-adj] FATAL generation error ({label}): "
+              f"{type(exc).__name__}: {exc}", flush=True)
+        print(f"[c2b-adj] partial results are CHECKPOINTED at {_rel(ckpt_dir)} — "
+              f"re-run the SAME command (without --fresh) to RESUME.", flush=True)
+        return 2
+    finally:
+        watchdog.stop()
+        checkpoint.close()
 
     wall = time.time() - t_start
     meta = {

@@ -59,7 +59,11 @@ from cognitive_console.config import config_hash
 from cognitive_console.registry import ExperimentRecord, ExperimentRegistry
 from cognitive_console.lineage import git_commit, new_experiment_id, utcnow
 from cognitive_console.manifest import ArtifactManifest, write_manifest
-from cognitive_console.ops.disk_guard import check_disk_budget, default_guard_paths
+from cognitive_console.ops.disk_guard import (
+    DiskBudgetError,
+    check_disk_budget,
+    default_guard_paths,
+)
 
 from scripts import run_c1_facade as c1
 from scripts import run_gpu_phase0 as p0
@@ -71,6 +75,8 @@ SMOKE_MODEL = "Qwen/Qwen2.5-1.5B-Instruct"
 DEFAULT_N_STRONG = 16  # best-of-16 authored prompts (prereg §4)
 DEFAULT_STEERING_METHOD = "caa"
 _TRANSCRIPT_NUMBER_RE = re.compile(r"-?\d[\d,]*(?:\.\d+)?")
+_TRANSCRIPT_MAX_PROMPT_CHARS = 2_000
+_TRANSCRIPT_MAX_GENERATION_CHARS = 8_000
 
 
 def _rel(path: Path) -> str:
@@ -102,7 +108,11 @@ def _config_fingerprint(args, model: str, specs) -> str:
         "batch_size": int(args.batch_size),
         "do_sample": bool(args.backend == "hf"),
         "k": int(adj.K_SAMPLES),
+        "bootstrap_b": int(args.bootstrap_b),
         "alpha_grid": list(adj.ALPHA_GRID),
+        "coherence_max_ratio": float(adj.COHERENCE_MAX_RATIO),
+        "delta": float(adj.DELTA),
+        "bonferroni_ci_level": float(adj.BONFERRONI_CI_LEVEL),
         "dev_fraction": float(adj.DEV_FRACTION),
         "axes": {
             spec.axis: {
@@ -151,6 +161,16 @@ def _normalize_alpha(alpha: float) -> str:
     return f"{float(alpha):.12g}"
 
 
+def _truncate_text(text: str, max_chars: int) -> tuple[str, bool]:
+    raw = str(text)
+    limit = int(max_chars)
+    if limit <= 0 or len(raw) <= limit:
+        return raw, False
+    suffix = " ...[truncated]"
+    keep = max(0, limit - len(suffix))
+    return raw[:keep] + suffix, True
+
+
 class TranscriptCollector:
     """Collects per-generation transcripts and flushes them as side-output JSONL."""
 
@@ -163,8 +183,8 @@ class TranscriptCollector:
         self._by_cell: Dict[tuple, List[Dict]] = collections.defaultdict(list)
         self._all_records: List[Dict] = []
 
-    def _pending_key(self, axis: str, item_id: str, alpha: float, instruction: str) -> tuple:
-        return (str(axis), str(item_id), _normalize_alpha(alpha), str(instruction))
+    def _pending_key(self, axis: str, item_id: str, instruction: str) -> tuple:
+        return (str(axis), str(item_id), str(instruction))
 
     def _parse_diag(self, axis: str, item: Dict, text: str, max_new_tokens: int) -> Dict:
         numbers = _TRANSCRIPT_NUMBER_RE.findall(text or "")
@@ -198,6 +218,13 @@ class TranscriptCollector:
                           generation_text: str, outcome: float, degeneracy: float,
                           max_new_tokens: int) -> None:
         item_id = str(item.get("id"))
+        prompt_payload, prompt_truncated = _truncate_text(
+            str(prompt_text), _TRANSCRIPT_MAX_PROMPT_CHARS
+        )
+        generation_full = str(generation_text)
+        generation_payload, generation_truncated = _truncate_text(
+            generation_full, _TRANSCRIPT_MAX_GENERATION_CHARS
+        )
         rec = {
             "axis": str(axis),
             "item_id": item_id,
@@ -206,33 +233,48 @@ class TranscriptCollector:
             "sample_index": int(sample_index),
             "sample_seed": int(sample_seed),
             "instruction": str(instruction),
-            "prompt_text": str(prompt_text),
-            "generation_text": str(generation_text),
+            "prompt_text": prompt_payload,
+            "generation_text": generation_payload,
+            "prompt_truncated": bool(prompt_truncated),
+            "generation_truncated": bool(generation_truncated),
+            "transcript_char_limits": {
+                "prompt": int(_TRANSCRIPT_MAX_PROMPT_CHARS),
+                "generation": int(_TRANSCRIPT_MAX_GENERATION_CHARS),
+            },
             "sample_outcome": float(outcome),
             "sample_degeneracy": float(degeneracy),
-            "parse": self._parse_diag(str(axis), item, str(generation_text), int(max_new_tokens)),
+            "parse": self._parse_diag(str(axis), item, generation_full, int(max_new_tokens)),
             "meta": {"method": self.method, "model": self.model, "backend": self.backend},
         }
-        self._pending[self._pending_key(str(axis), item_id, float(alpha), str(instruction))].append(rec)
+        self._pending[self._pending_key(str(axis), item_id, str(instruction))].append(rec)
 
     def attach_cell(self, *, axis: str, phase: str, cell_key: str, item_id: str, alpha: float,
                     instruction: str, outcomes: List[float]) -> None:
-        key = self._pending_key(axis, item_id, alpha, instruction)
+        key = self._pending_key(axis, item_id, instruction)
         expected = len(outcomes)
         rows = self._pending.get(key, [])
         if len(rows) < expected:
             raise RuntimeError(
-                f"transcript alignment failure for key={key}: expected {expected} rows, got {len(rows)}"
+                f"transcript alignment failure for key={key}: expected {expected} rows, got {len(rows)} "
+                f"(requested_alpha={_normalize_alpha(alpha)})"
             )
         take = rows[:expected]
         del rows[:expected]
         if not rows:
             self._pending.pop(key, None)
+        sample_ids = sorted(int(r.get("sample_index", -1)) for r in take)
+        expected_ids = list(range(expected))
+        if sample_ids != expected_ids:
+            raise RuntimeError(
+                f"transcript alignment failure for key={key}: sample_index mismatch "
+                f"expected={expected_ids} got={sample_ids}"
+            )
         item_mean = float(np.mean([float(r["sample_outcome"]) for r in take]))
-        for r in take:
+        for r in sorted(take, key=lambda rec: int(rec["sample_index"])):
             rec = dict(r)
             rec["phase"] = str(phase)
             rec["cell_key"] = str(cell_key)
+            rec["requested_alpha"] = float(alpha)
             rec["item_outcome_mean"] = item_mean
             self._all_records.append(rec)
             self._by_cell[(str(axis), str(phase), str(cell_key))].append(rec)
@@ -1013,6 +1055,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         "started_at": started_at, "generated_at": utcnow(),
         "wall_clock_seconds": round(wall, 2), "platform": platform.platform(),
         "use_fixture": bool(args.use_fixture) or args.backend == "synthetic",
+        "config_fingerprint": str(fingerprint),
         **meta_extra,
     }
     json_path = write_results(report, out_dir, meta)
@@ -1024,9 +1067,17 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     if args.backend == "hf":
         guard_paths = default_guard_paths(args.hf_home, args.venv)
-        usage1 = check_disk_budget(guard_paths, args.disk_budget_gb,
-                                   args.disk_ceiling_gb, raise_on_over=False)
-        print(f"[c2b-adj] disk post-run: {usage1.message}", flush=True)
+        try:
+            usage1 = check_disk_budget(
+                guard_paths,
+                args.disk_budget_gb,
+                args.disk_ceiling_gb,
+                raise_on_over=True,
+            )
+            print(f"[c2b-adj] disk post-run: {usage1.message}", flush=True)
+        except DiskBudgetError as exc:
+            print(f"[c2b-adj] FATAL disk post-run: {exc}", flush=True)
+            return 4
 
     print(f"\n[c2b-adj] VERDICT: {report.verdict}  "
           f"(axes passing: {sum(1 for v in report.axis_passes.values() if v)}/3)", flush=True)

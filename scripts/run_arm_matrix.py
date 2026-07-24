@@ -32,6 +32,12 @@ DEFAULT_LLAMA_MODEL = "meta-llama/Meta-Llama-3-8B-Instruct"
 ARM_SCOPE_NARROWED_POSITIVE = "SCOPE_NARROWED_POSITIVE"
 ARM_NON_TRANSFER_GENERALIZED = "NON_TRANSFER_GENERALIZED"
 ARM_INCONCLUSIVE = "INCONCLUSIVE"
+FROZEN_CELL_KEYS = frozenset({
+    "caa__qwen2.5-7b",
+    "caa__llama3-8b",
+    "iti__qwen2.5-7b",
+    "iti__llama3-8b",
+})
 
 
 @dataclass(frozen=True)
@@ -68,8 +74,15 @@ def _planned_generations_per_axis(n_items_override: Optional[int], n_strong: int
 
 
 def summarize_arm_verdict(cell_summaries: List[Dict]) -> Dict[str, object]:
+    keys = {str(c.get("cell_key", "")) for c in cell_summaries}
+    if len(cell_summaries) != 4:
+        raise ValueError(f"frozen robustness matrix requires exactly 4 cells; got {len(cell_summaries)}")
+    if keys != FROZEN_CELL_KEYS:
+        raise ValueError(
+            f"frozen robustness matrix cell keys mismatch: expected={sorted(FROZEN_CELL_KEYS)} got={sorted(keys)}"
+        )
     total = len(cell_summaries)
-    min_zero_for_generalized = max(1, total - 1)
+    min_zero_for_generalized = 3
     zero_pass_cells = sum(1 for c in cell_summaries if int(c.get("axes_passed", 0)) == 0)
     any_pass = any(int(c.get("axes_passed", 0)) >= 1 for c in cell_summaries)
     if any_pass:
@@ -129,18 +142,72 @@ def _build_single_cell_argv(args, cell: MatrixCell, out_dir: Path) -> List[str]:
     return argv
 
 
-def _read_cell_result(path: Path, cell: MatrixCell) -> Dict[str, object]:
+def _cell_fingerprint(args, cell: MatrixCell, out_dir: Path) -> str:
+    parser = single.build_parser()
+    cell_args = parser.parse_args(_build_single_cell_argv(args, cell, out_dir))
+    use_fixture = bool(cell_args.use_fixture) or str(cell_args.backend) == "synthetic"
+    specs = single.build_specs_synthetic(
+        list(cell_args.axes),
+        use_fixture,
+        cell_args.n_items,
+        cell_args.n_strong,
+    )
+    if str(cell_args.backend) == "synthetic":
+        fp_model = "synthetic-offline"
+    else:
+        fp_model = str(cell_args.model or single.DEFAULT_MODEL)
+    return single._config_fingerprint(cell_args, fp_model, specs)
+
+
+def _validate_cell_provenance(data: Dict[str, object], *, expected_backend: str, expected_method: str,
+                              expected_model: str, expected_fingerprint: str, cell_key: str) -> None:
+    reported_backend = str(data.get("backend", ""))
+    reported_method = str(data.get("steering_method", ""))
+    reported_model = str(data.get("model", ""))
+    reported_fingerprint = str(data.get("config_fingerprint", ""))
+    if reported_backend != expected_backend:
+        raise ValueError(
+            f"{cell_key}: backend mismatch (result={reported_backend!r}, requested={expected_backend!r})"
+        )
+    if reported_method != expected_method:
+        raise ValueError(
+            f"{cell_key}: method mismatch (result={reported_method!r}, requested={expected_method!r})"
+        )
+    if reported_model != expected_model:
+        raise ValueError(
+            f"{cell_key}: model mismatch (result={reported_model!r}, requested={expected_model!r})"
+        )
+    if reported_fingerprint != expected_fingerprint:
+        raise ValueError(
+            f"{cell_key}: config fingerprint mismatch (result={reported_fingerprint!r}, "
+            f"requested={expected_fingerprint!r})"
+        )
+
+
+def _read_cell_result(path: Path, cell: MatrixCell, args, *, strict: bool) -> Dict[str, object]:
     data = json.loads(path.read_text(encoding="utf-8"))
+    expected_model = "synthetic-offline" if args.backend == "synthetic" else str(cell.model_id)
+    expected_fingerprint = _cell_fingerprint(args, cell, path.parent)
+    if strict:
+        _validate_cell_provenance(
+            data,
+            expected_backend=str(args.backend),
+            expected_method=str(cell.method),
+            expected_model=expected_model,
+            expected_fingerprint=expected_fingerprint,
+            cell_key=cell.key,
+        )
     axis_passes = dict(data.get("axis_passes", {}))
     axes_passed = sum(1 for v in axis_passes.values() if bool(v))
     transcripts_dir = path.parent / "transcripts"
     return {
         "cell_key": cell.key,
-        "method": cell.method,
+        "method": str(data.get("steering_method", "")),
         "model_label": cell.model_label,
-        "model_id": cell.model_id,
+        "model_id": str(data.get("model", "")),
         "out_dir": str(path.parent),
         "result_file": str(path),
+        "config_fingerprint": str(data.get("config_fingerprint", "")),
         "verdict": data.get("verdict"),
         "axis_passes": axis_passes,
         "axes_passed": int(axes_passed),
@@ -236,9 +303,17 @@ def main(argv: Optional[List[str]] = None) -> int:
     for cell in cells:
         result_path = _cell_result_path(out_dir, cell)
         if result_path.exists() and not args.fresh:
-            print(f"[arm-matrix] skip completed {cell.key}: {result_path}", flush=True)
-            cell_summaries.append(_read_cell_result(result_path, cell))
-            continue
+            try:
+                cell_summary = _read_cell_result(result_path, cell, args, strict=True)
+            except ValueError as exc:
+                print(
+                    f"[arm-matrix] existing result is not reusable for {cell.key}; rerunning: {exc}",
+                    flush=True,
+                )
+            else:
+                print(f"[arm-matrix] skip completed {cell.key}: {result_path}", flush=True)
+                cell_summaries.append(cell_summary)
+                continue
 
         usage0 = check_disk_budget(guard_paths, args.disk_budget_gb, args.disk_ceiling_gb, raise_on_over=True)
         print(f"[arm-matrix] disk pre-cell {cell.key}: {usage0.message}", flush=True)
@@ -251,7 +326,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             return int(rc)
         if not result_path.exists():
             raise FileNotFoundError(f"cell completed but missing result file: {result_path}")
-        cell_summaries.append(_read_cell_result(result_path, cell))
+        cell_summaries.append(_read_cell_result(result_path, cell, args, strict=True))
 
         usage1 = check_disk_budget(guard_paths, args.disk_budget_gb, args.disk_ceiling_gb, raise_on_over=True)
         print(f"[arm-matrix] disk post-cell {cell.key}: {usage1.message}", flush=True)

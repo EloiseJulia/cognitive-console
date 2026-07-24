@@ -49,6 +49,23 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-24 · D-0030 · C2b instrument HARDENED + audited + smoke-verified; ready for a controlled re-run
+- **Done (feature/9 merged):** progress logging (flushed, per-cell + ETA + startup budget printout),
+  per-cell checkpoint/resume (resumable, config-fingerprinted incl. batch_size+do_sample after audit MAJOR-1),
+  batched generation, stall watchdog (--stall-timeout 600s → prevents the D-0029 silent-spin), honest CUDA
+  error labeling. Audit verdict: frozen decision logic UNCHANGED, batching UNBIASED, resume reproduces verdict.
+  Real-torch smoke on Qwen2.5-1.5B: greedy batched == single-sequence EXACT match. 243 tests green.
+- **Budget now tractable:** frozen N=60/60/80 = 11,365 generations; at batch-size 16 + max-new-tokens 64 →
+  ~25-50 min wall-clock on an A800 (vs the lost ~12h). So **N does NOT need to shrink** — the original frozen
+  N is fine; only max_new_tokens 256→64 changed (short-answer tasks).
+- **Pending pre-run re-registration (before the next GPU run — must be pre-run, not post-hoc):** record a
+  decision fixing max_new_tokens=64, batch_size=16, stall_timeout, and confirming N stays 60/60/80. The frozen
+  statistical decision rule (paired cluster bootstrap, DEV/TEST, three-tier, Bonferroni, δ=0.05, coherence)
+  is unchanged. Then the run is: fast (~30-50min), observable, resumable, crash-safe.
+- **Next GPU run gating:** run on a machine we control OR confirm no driver-maintenance window; human GPU
+  allocation. C1@7B (E-0003) already banked.
+- **Frozen?** Decision rule frozen; run-mechanics hardened; N/max_new_tokens to be re-registered pre-run.
+
 ## 2026-07-24 · D-0029 · C2b A800 adjudication ABORTED (hung after host driver reload); machine wiped
 - **Outcome:** the frozen C2b adjudication run on the borrowed A800 was KILLED after ~11h56m and produced NO
   result (C2b verdict lost). Root cause: the host's NVIDIA driver was reloaded/upgraded mid-run (NVML version

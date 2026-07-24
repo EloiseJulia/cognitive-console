@@ -173,6 +173,36 @@ def test_per_item_ood_stats_rejects_same_split_reference():
         )
 
 
+def test_per_item_ood_stats_rejects_same_content_even_if_split_id_is_renamed():
+    steered, baseline, _ref, _delta = _planted_hm_cell(seed=171)
+    with pytest.raises(ValueError, match="content guardrail"):
+        per_item_ood_stats(
+            steered,
+            baseline,
+            steered.copy(),
+            reference_id="c1-ref",
+            source_hash="sha256:ref-renamed-self-fit",
+            reference_split_id="independent-looking-label",
+            evaluated_split_id="different-label",
+        )
+
+
+def test_per_item_ood_stats_rejects_high_overlap_reference():
+    steered, baseline, ref, _delta = _planted_hm_cell(seed=172, n=200)
+    ref_like_steered = steered.copy()
+    ref_like_steered[:2] = ref[:2]
+    with pytest.raises(ValueError, match="content guardrail"):
+        per_item_ood_stats(
+            steered,
+            baseline,
+            ref_like_steered,
+            reference_id="c1-ref",
+            source_hash="sha256:ref-overlap",
+            reference_split_id="train-like",
+            evaluated_split_id="test-like",
+        )
+
+
 def test_per_item_ood_stats_accepts_independent_reference_provenance():
     steered, baseline, ref, _delta = _planted_hm_cell(seed=72)
     stats = per_item_ood_stats(

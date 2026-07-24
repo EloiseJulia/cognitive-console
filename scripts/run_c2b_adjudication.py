@@ -914,6 +914,7 @@ def register(report: adj.AdjudicationReport, out_dir: Path, json_path: Path,
     cfg = {
         "kind": "c2b_qualified_adjudication",
         "model": meta.get("model"),
+        "steering_method": meta.get("steering_method"),
         "backend": meta.get("backend"),
         "axes": [r.axis for r in report.axis_results],
         "frozen_params": report.frozen_params,

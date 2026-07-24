@@ -6,7 +6,9 @@ Implements the frozen H-M mechanism check from:
 
 from __future__ import annotations
 
+import hashlib
 from dataclasses import asdict, dataclass
+from collections import Counter
 from typing import Dict, Mapping, Sequence
 
 import numpy as np
@@ -155,6 +157,33 @@ def _as_1d(name: str, x) -> np.ndarray:
     return arr
 
 
+def _array_content_hash(x: np.ndarray) -> str:
+    arr = np.ascontiguousarray(np.asarray(x, dtype=np.float64))
+    h = hashlib.sha256()
+    h.update(str(arr.shape).encode("utf-8"))
+    h.update(arr.tobytes())
+    return "sha256:" + h.hexdigest()
+
+
+def _row_overlap_fraction(a: np.ndarray, b: np.ndarray) -> float:
+    aa = _as_2d("a", a)
+    bb = _as_2d("b", b)
+    if aa.shape[1] != bb.shape[1]:
+        return 0.0
+    if aa.shape[0] == 0 or bb.shape[0] == 0:
+        return 0.0
+    left = Counter(
+        hashlib.sha256(np.ascontiguousarray(row, dtype=np.float64).tobytes()).hexdigest()
+        for row in aa
+    )
+    right = Counter(
+        hashlib.sha256(np.ascontiguousarray(row, dtype=np.float64).tobytes()).hexdigest()
+        for row in bb
+    )
+    shared = sum(min(c, right.get(k, 0)) for k, c in left.items())
+    return float(shared / max(1, min(aa.shape[0], bb.shape[0])))
+
+
 def _rank_average_ties(x: np.ndarray) -> np.ndarray:
     order = np.argsort(x, kind="mergesort")
     sorted_x = x[order]
@@ -279,12 +308,12 @@ def per_item_ood_stats(
     the evaluated steered items, preventing self-fit leakage/circular evidence.
     """
     ref_id = (reference_id or "").strip()
-    ref_hash = (source_hash or "").strip()
+    source_hash_provenance = (source_hash or "").strip()
     ref_split = (reference_split_id or "").strip()
     eval_split = (evaluated_split_id or "").strip()
     if not ref_id:
         raise ValueError("reference_id is required for OOD provenance (self-fit guardrail)")
-    if not ref_hash:
+    if not source_hash_provenance:
         raise ValueError("source_hash is required for OOD provenance (self-fit guardrail)")
     if not ref_split:
         raise ValueError(
@@ -299,25 +328,37 @@ def per_item_ood_stats(
             "reference_split_id must differ from evaluated_split_id "
             "(self-fit OOD reference leakage is forbidden)"
         )
+    steered = _as_2d("steered_residual_activations", steered_residual_activations)
+    baseline = _as_2d("baseline_residual_activations", baseline_residual_activations)
+    ref = _as_2d("reference_activations", reference_activations)
+    if steered.shape != baseline.shape:
+        raise ValueError("steered and baseline residual arrays must have same shape")
+    ref_content_hash = _array_content_hash(ref)
+    eval_hash = _array_content_hash(steered)
+    overlap = _row_overlap_fraction(ref, steered)
+    # Strong self-fit guardrail: label-only split changes cannot bypass content identity.
+    if ref_content_hash == eval_hash or overlap >= 0.98:
+        raise ValueError(
+            "reference activations are not independent from evaluated activations "
+            "(self-fit OOD reference leakage is forbidden by content guardrail)"
+        )
 
     dist = estimate_ood_distribution(
-        reference_activations,
+        ref,
         shrinkage=shrinkage,
         ridge=ridge,
         reference_id=ref_id,
-        source_hash=ref_hash,
+        source_hash=source_hash_provenance,
         split_id=ref_split,
     )
-    maha = whitened_mahalanobis(steered_residual_activations, dist)
-    infl = activation_norm_inflation(
-        steered_residual_activations, baseline_residual_activations
-    )
+    maha = whitened_mahalanobis(steered, dist)
+    infl = activation_norm_inflation(steered, baseline)
     return OODPerItemResult(
         mahalanobis=maha,
         norm_inflation=infl,
         reference_provenance={
             "reference_id": ref_id,
-            "source_hash": ref_hash,
+            "source_hash": source_hash_provenance,
             "split_id": ref_split,
             "evaluated_split_id": eval_split,
         },

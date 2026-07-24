@@ -56,7 +56,7 @@ def _render_html() -> str:
       </table>
     </div>
     <div class="panel">
-      <h2>3) C2 transfer check: Δ(steer−prompt) + Bonferroni CI</h2>
+      <h2>3) C2 transfer check: Δ(steer−prompt) + Bonferroni CI<span class="badge" id="c2-source"></span></h2>
       <div class="muted">Uncertainty boundary warning appears in red when latent control degrades calibration.</div>
       <table id="c2-table">
         <thead><tr><th>Axis</th><th>Δ(steer-prompt)</th><th>CI</th><th>Pass/Fail</th></tr></thead>
@@ -90,8 +90,9 @@ def _render_html() -> str:
       .then((data) => {
         document.getElementById("positioning").textContent = data.positioning;
         document.getElementById("c1-source").textContent = data.c1.source_mode;
+        document.getElementById("c2-source").textContent = data.c2.source_mode;
         document.getElementById("provenance").textContent =
-          `C2 source: ${data.provenance.c2b_results} | C1 source: ${data.provenance.c1_results} | arm source: ${data.provenance.arm_summary} | fallback: ${data.provenance.evidence_ledger_fallback}`;
+          `C2 source (${data.c2.source_mode}): ${data.provenance.c2b_results} | C1 source (${data.c1.source_mode}): ${data.provenance.c1_results} | arm source (${data.arm.source_mode}): ${data.provenance.arm_summary} | fallback: ${data.provenance.evidence_ledger_fallback}`;
 
         const chBody = document.querySelector("#channels-table tbody");
         data.c2.rows.forEach((r) => {

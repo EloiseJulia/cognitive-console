@@ -23,6 +23,7 @@ def _read_json(path: Path) -> dict:
 def test_loader_reads_real_numbers_from_json():
     c2 = _read_json(C2B_JSON)
     payload = build_console_payload()
+    assert payload["c2"]["source_mode"] == "results_c2b_json"
     unc_json = next(row for row in c2["axes"] if row["axis"] == "uncertainty_awareness")
     unc_payload = next(row for row in payload["c2"]["rows"] if row["axis"] == "uncertainty_awareness")
     assert unc_payload["mean_diff"] == pytest.approx(unc_json["mean_diff"])
@@ -47,6 +48,26 @@ def test_loader_is_not_hardcoded_for_c2_values(tmp_path: Path):
     assert unc_payload["mean_diff"] == pytest.approx(-0.123456)
     assert unc_payload["ci_lo"] == pytest.approx(-0.2)
     assert unc_payload["ci_hi"] == pytest.approx(-0.1)
+
+
+def test_c2_fallback_to_evidence_ledger_when_results_missing(tmp_path: Path):
+    missing_c2 = tmp_path / "missing_c2b_adjudication_results.json"
+
+    payload = build_console_payload(
+        c2b_path=missing_c2,
+        c1_path=C1_JSON,
+        evidence_ledger_path=EVIDENCE_LEDGER,
+    )
+
+    assert payload["c2"]["source_mode"] == "evidence_ledger_e0005_fallback"
+    assert payload["verdict"] == "KILL_PLAN_D"
+    rows = {row["axis"]: row for row in payload["c2"]["rows"]}
+    assert rows["deliberation"]["mean_diff"] == pytest.approx(0.015)
+    assert rows["skepticism"]["mean_diff"] == pytest.approx(-0.080)
+    assert rows["uncertainty_awareness"]["mean_diff"] == pytest.approx(-0.228)
+    assert rows["uncertainty_awareness"]["ci_lo"] == pytest.approx(-0.370)
+    assert rows["uncertainty_awareness"]["ci_hi"] == pytest.approx(-0.092)
+    assert rows["uncertainty_awareness"]["source"] == "evidence_ledger_e0005_fallback"
 
 
 def test_c1_prefers_results_json_when_available():

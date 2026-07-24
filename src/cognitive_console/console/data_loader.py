@@ -78,6 +78,9 @@ def _parse_e0003_line(text: str) -> Dict[str, Tuple[float, float, float]]:
     return out
 
 
+_SIGNED_FLOAT = r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)"
+
+
 def _load_c1_fallback_from_evidence(evidence_ledger_path: Path) -> List[Dict]:
     text = evidence_ledger_path.read_text(encoding="utf-8")
     line = None
@@ -120,6 +123,66 @@ def _load_c1_rows(c1_path: Path, evidence_ledger_path: Path) -> Tuple[List[Dict]
     return _load_c1_fallback_from_evidence(evidence_ledger_path), "evidence_ledger_fallback"
 
 
+def _parse_e0005_line(text: str) -> Dict[str, Tuple[float, float, float]]:
+    out: Dict[str, Tuple[float, float, float]] = {}
+    patterns = {
+        "deliberation": rf"deliberation\s+\**({_SIGNED_FLOAT})\s*\[\s*({_SIGNED_FLOAT})\s*,\s*({_SIGNED_FLOAT})\s*\]\**",
+        "skepticism": rf"skepticism\s+\**({_SIGNED_FLOAT})\s*\[\s*({_SIGNED_FLOAT})\s*,\s*({_SIGNED_FLOAT})\s*\]\**",
+        "uncertainty_awareness": rf"uncertainty\s+\**({_SIGNED_FLOAT})\s*\[\s*({_SIGNED_FLOAT})\s*,\s*({_SIGNED_FLOAT})\s*\]\**",
+    }
+    for axis, pat in patterns.items():
+        m = re.search(pat, text, flags=re.IGNORECASE)
+        if not m:
+            continue
+        out[axis] = (float(m.group(1)), float(m.group(2)), float(m.group(3)))
+    return out
+
+
+def _load_c2_fallback_from_evidence(evidence_ledger_path: Path) -> Dict:
+    text = evidence_ledger_path.read_text(encoding="utf-8")
+    line = next((ln for ln in text.splitlines() if ln.startswith("| E-0005 ")), "")
+    if not line:
+        raise ValueError("Could not find E-0005 row in evidence ledger fallback.")
+    parsed = _parse_e0005_line(line)
+    if not parsed:
+        raise ValueError("Could not parse C2 mean-diff+CI from E-0005 fallback text.")
+    delta_match = re.search(r"δ=([0-9.]+)", line)
+    ci_match = re.search(r"Bonferroni CI\s+([0-9.]+)", line, flags=re.IGNORECASE)
+    verdict_match = re.search(r"VERDICT=([A-Z0-9_]+)", line)
+    axes = []
+    for axis in ["deliberation", "skepticism", "uncertainty_awareness"]:
+        if axis not in parsed:
+            continue
+        mean_diff, ci_lo, ci_hi = parsed[axis]
+        axes.append(
+            {
+                "axis": axis,
+                "mean_diff": mean_diff,
+                "ci_lo": ci_lo,
+                "ci_hi": ci_hi,
+                "passed": False,
+                "coherence_ok": "coherence gates ok" in line.lower(),
+                "source": "evidence_ledger_e0005_fallback",
+                "note": "per-item prompt/steer values unavailable in fallback source.",
+            }
+        )
+    return {
+        "verdict": verdict_match.group(1) if verdict_match else None,
+        "frozen_params": {
+            "bonferroni_ci_level": float(ci_match.group(1)) if ci_match else None,
+            "delta": float(delta_match.group(1)) if delta_match else None,
+        },
+        "axes": axes,
+        "note": "Fallback parses C2 adjudication summary only from evidence-ledger E-0005.",
+    }
+
+
+def _load_c2_data(c2b_path: Path, evidence_ledger_path: Path) -> Tuple[Dict, str]:
+    if c2b_path.exists():
+        return _load_json(c2b_path), "results_c2b_json"
+    return _load_c2_fallback_from_evidence(evidence_ledger_path), "evidence_ledger_e0005_fallback"
+
+
 def _build_c2_rows(c2b_data: Dict) -> List[Dict]:
     rows: List[Dict] = []
     for axis_row in c2b_data.get("axes", []):
@@ -147,6 +210,8 @@ def _build_c2_rows(c2b_data: Dict) -> List[Dict]:
                 "delta": axis_row.get("delta"),
                 "prompt_mean": prompt_mean,
                 "steer_mean": steer_mean,
+                "source": axis_row.get("source", "c2b_results_json"),
+                "note": axis_row.get("note"),
                 "conflict_latent_drags_down": bool(
                     axis_row.get("conflict", {}).get("latent_drags_down", False)
                 ),
@@ -382,7 +447,7 @@ def build_console_payload(
     arm_summary_path = arm_summary_path or (root / ARM_SUMMARY_REL)
     evidence_ledger_path = evidence_ledger_path or (root / EVIDENCE_LEDGER_REL)
 
-    c2b_data = _load_json(c2b_path)
+    c2b_data, c2_source_mode = _load_c2_data(c2b_path, evidence_ledger_path)
     c1_rows, c1_source_mode = _load_c1_rows(c1_path, evidence_ledger_path)
     c2_rows = _build_c2_rows(c2b_data)
     arm_payload, arm_source_mode = _load_arm_rows(root, arm_summary_path, evidence_ledger_path)
@@ -403,7 +468,7 @@ def build_console_payload(
         },
         "c2": {
             "evidence_id": "E-0005",
-            "source_mode": "results_c2b_json",
+            "source_mode": c2_source_mode,
             "bonferroni_ci_level": c2b_data.get("frozen_params", {}).get("bonferroni_ci_level"),
             "delta": c2b_data.get("frozen_params", {}).get("delta"),
             "rows": c2_rows,

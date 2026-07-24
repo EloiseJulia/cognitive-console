@@ -1,0 +1,38 @@
+You are an Implement subagent on branch feature/2-phase0-analysis (in this worktree). Write the Phase 0 analysis/experiment pipeline CODE AHEAD OF GPU AVAILABILITY. Everything must run and be unit-tested OFFLINE. NO model loading, NO GPU, NO network downloads, NO paid API — the actual forward pass is deferred to a later GPU phase and must be cleanly abstracted/stubbed.
+
+Read first (repo root of this worktree):
+- AGENTS.md; AI-Instruction.md Part I §8 (registry/lineage) + Part II
+- docs/specs/phase0-pilot.md (AC1..AC9, Go/No-Go §3), docs/plans/phase0-pilot-plan.md (slices S5–S11)
+- existing code you build on: src/cognitive_console/{metrics.py,registry.py,eval/loaders.py}, data/axes.yaml, data/contrast_pairs/*.jsonl
+
+MANAGER-FIXED DESIGN (do not deviate):
+
+1. **Activation abstraction (the key seam).** Define `ActivationProvider` (Protocol/ABC) with e.g.
+   `get_activations(texts: list[str], layer: int) -> np.ndarray` (shape [n, d]) and a way to list available layers.
+   - `HFActivationProvider`: real implementation is a STUB — raise `NotImplementedError("GPU phase: load Llama-3-8B / Qwen2.5-7B via transformers; deferred until GPU approved")`. Keep any torch/transformers import LAZY/inside the method so importing the module never requires torch.
+   - `SyntheticActivationProvider`: deterministic, seeded, offline. It must accept a planted "axis signal": given contrast pairs labeled pos/neg, it returns activations where pos/neg differ along a known injected direction by a controllable magnitude, plus noise. This lets tests verify the pipeline RECOVERS a known facade gap.
+
+2. **CAA extraction** `src/cognitive_console/steering/extract.py`: mean-difference vector per axis from pos/neg activations (using an ActivationProvider), with a layer scan that selects the best layer by a documented criterion (e.g. max pos/neg separation). Pure numpy given activations. Return the vector + chosen layer + diagnostics.
+
+3. **Facade analysis (C1)** `src/cognitive_console/analysis/facade.py`: for each axis, compute the strongest-prompt activation projection onto the CAA direction, vs vector-only, vs random-direction null baseline (reuse metrics.py). Output a structured result (facade_ratio, signal_z, above_null, effect size) per axis/layer. Aggregate to a results table.
+
+4. **Conflict-probe harness (C2b seed)** `src/cognitive_console/experiments/conflict_probe.py`: given a prompt-condition (text) and a latent-condition (axis vector + magnitude), define the harness that (via an abstracted generate/measure backend, stubbed like the provider) records the behavioral "landing point" between the two channels. The pure-code part = config, orchestration, landing computation, logging; the model-generation part is a stubbed `BehaviorBackend` (Synthetic impl for tests).
+
+5. **Go/No-Go routing (S11)** `src/cognitive_console/analysis/routing.py`: implement the spec §3 decision — map a results object to {main_line, plan_b, plan_d} using the documented green/partial/red criteria. Pure function, thoroughly tested.
+
+6. **Registry integration.** Every analysis "run" creates an experiment_id via registry.py with correct hypothesis_id/claim_ids/type/lineage; numbers come only from computed artifacts (no hand values). Provide an artifact-manifest writer (artifact_id, supports_claims, source_experiment, output file, script commit) matching AI-Instruction §8.3.
+
+7. **Config-driven + reproducible.** YAML experiment configs (axes, layers, seed, null n, thresholds), seeded RNG, config_hash recorded.
+
+TESTS (pytest, offline, must be meaningful not vacuous):
+- Plant a known signal in SyntheticActivationProvider; assert facade pipeline recovers facade_ratio within an expected range AND that a zero-signal plant yields no facade gap (guards tautology).
+- Assert CAA extraction returns the correct mean-difference on fixed synthetic activations, and layer scan picks the planted best layer.
+- Assert routing maps hand-constructed green/partial/red results to main/plan_b/plan_d correctly.
+- Assert conflict harness produces a landing metric and logs a registry entry.
+- Assert HFActivationProvider raises NotImplementedError (no accidental torch requirement); module imports without torch installed.
+
+CONSTRAINTS: work only in this worktree; DO NOT modify docs/ (read-only). Keep deps minimal (numpy, pyyaml, pytest); torch/transformers must be OPTIONAL (not imported at module top-level, not required for pytest). Run `python -m pip install -e .` and `python -m pytest -q` → GREEN (all old + new tests). Part II §3.3 self-check. Commit to feature/2-phase0-analysis with trailer:
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+DO NOT merge, DO NOT touch main, DO NOT push if it prompts for credentials.
+
+Report: modules created, the ActivationProvider/BehaviorBackend contract, how tests plant+recover a known signal, pytest counts, and any judgment calls (flag ambiguities — don't silently guess).

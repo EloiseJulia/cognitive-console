@@ -5,6 +5,23 @@
 
 ---
 
+## 2026-07-24 · D-0037 · Human FROZE robustness+mechanism arm prereg + budget + pre-granted GPU
+- **Human decision (@EloiseJulia):** "批准冻结此 prereg + 预算；立即开始纯 CPU 工程阶段(ITI/Llama/
+  transcript/OOD/prompt-opt)，GPU 你直接跑就行，不用我批准，我刚刚租的那台一直开着的."
+- **Effect:**
+  - `docs/ledgers/prereg-robustness-mechanism-arm-DRAFT.md` is now **FROZEN** — LOCKED 2×2 {CAA,ITI}×
+    {Qwen2.5-7B,Llama-3-8B} (3 axes/cell, transcripts saved), OOD Spearman ρ≥0.30 CI-excl-0 in ≥3/4 cells,
+    three-tier success/kill, stronger-prompt-optimizer + C1-null appendix. Immutable post-freeze.
+  - **Budget approved** (GPU small ~4-6h one rented box; engineering ~6-8 implement+audit cycles).
+  - **GPU sign-off PRE-GRANTED** for this arm — the always-on rented box; Manager may run the GPU matrix
+    WITHOUT a further ask (the §4b gate is satisfied in advance). (Still: wipe/clean discipline + hostile
+    audit each cell before banking.)
+  - **Start NOW:** pure-CPU engineering phase (ITI method, Llama-3 provider, transcript-saving, OOD
+    diagnostic, prompt-optimizer, C1-null appendix) — each behind a hostile audit before merge.
+- **Untouched:** E-0003, E-0005, prereg-c2b-adjudication.md, frozen `adjudicate_c2b` §4 logic.
+- **Frozen?** YES — arm prereg frozen. In parallel (already running): console build (feature/37-console) +
+  methodology-asset doc (both no-regret, no GPU).
+
 ## 2026-07-24 · D-0036 · Reframe critic triage (R1/R2/R3) + robustness-mechanism arm drafted
 - **Input:** 3 independent IUI/CHI critics on the reality-check reframe →
   `docs/reviews/2026-07-24-reality-check-reframe/review-R{1,2,3}.yaml`. All **major-revision / reject-if-

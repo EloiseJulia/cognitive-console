@@ -1,6 +1,7 @@
-# PREREG — Robustness + Mechanism Arm (INDEPENDENT exploratory arm) — FINAL, pending human freeze
+# PREREG — Robustness + Mechanism Arm (INDEPENDENT exploratory arm) — **FROZEN 2026-07-24**
 
-> Status: **FINAL draft, submitted for human §5 freeze/budget approval (2026-07-24).** NOT yet frozen. This is a NEW independent
+> Status: **FROZEN 2026-07-24** (human @EloiseJulia approved freeze + budget + pre-granted GPU sign-off,
+> D-0037). Criteria below are now IMMUTABLE — not revised after seeing results. Any change = new prereg. This is a NEW independent
 > pre-registration per owner directive 2026-07-24; it does NOT touch the frozen records E-0003 / E-0005 /
 > prereg-c2b-adjudication.md. Purpose: harden (or overturn) the C2 behavioral-non-transfer negative and
 > upgrade the C2-mech off-manifold hypothesis, both PURE-MODEL / no humans. Shaped by the 3 critic reviews

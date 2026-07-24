@@ -1,0 +1,37 @@
+You are an Implement+Experiment subagent on branch feature/3-cpu-c1-facade (in this worktree). GOAL: implement the REAL CPU activation backend and run the FIRST C1 "semantic facade" pilot on a small open model, LOCALLY on CPU. This is an EXPLORATORY pilot (protocol NOT frozen), zero paid API, zero GPU/A800.
+
+Read first: AGENTS.md; AI-Instruction.md Part I §6 (L-levels), §8 (registry); docs/specs/phase0-pilot.md; and the existing code you build on: src/cognitive_console/{activations/provider.py, steering/extract.py, analysis/facade.py, metrics.py, registry.py, lineage.py, manifest.py, config.py}, data/axes.yaml, data/contrast_pairs/*.jsonl.
+
+## STEP 1 — Environment (local, no GPU)
+- Install CPU-only PyTorch: `python -m pip install torch --index-url https://download.pytorch.org/whl/cpu` plus `transformers accelerate safetensors huggingface_hub`. Add these under an optional extra `[hf]` in pyproject.toml (do NOT make them hard deps — the offline test suite must still run without them; keep torch imports lazy/inside methods).
+- Set HF_HOME to a repo-local cache dir under a path with space (e.g. env var; default to a `.hf_cache/` you .gitignore). Machine has 196GB free on C:, ~3.8GB free RAM right now.
+
+## STEP 2 — Implement the real CPU HFActivationProvider (replace the stub body)
+In activations/provider.py, implement `HFActivationProvider.get_activations(texts, layer)`:
+- Lazily import torch/transformers inside the method (module import must still succeed without torch).
+- Load `Qwen/Qwen2.5-0.5B-Instruct` (Apache-2.0, no gated license) with torch_dtype=float32, device_map="cpu", once (cache the model/tokenizer on the instance).
+- Tokenize each text (apply the chat template as a user turn), forward with output_hidden_states=True, no generation.
+- Pool = the hidden state at the LAST non-pad token of `hidden_states[layer]` (layer index into hidden_states; document the indexing convention). Return np.ndarray [n, d] float32.
+- Cache activations to disk keyed by sha256(model, layer, pooling, text) so re-runs don't recompute. `available_layers()` and `hidden_dim` from the loaded config.
+Keep `SyntheticActivationProvider` untouched (tests depend on it).
+
+## STEP 3 — Run an ANTI-CIRCULAR C1 facade pilot (this is the science; get it right)
+Write `scripts/run_c1_facade.py` (a runnable module) implementing EXACTLY this protocol per axis (do NOT shortcut — the critics flagged circularity/tautology as the top risk):
+1. Load the axis's 40 pairs. Split into a DISJOINT extraction set (28 pairs) and a held-out PROBE set (12 pairs) with a fixed seed. Record which pair_ids went where (no leakage between the two).
+2. For a scan over layers (e.g. every ~2nd layer), build the CAA vector v = mean(extraction POS activations) − mean(extraction NEG activations); unit direction û = v/||v||. Pick the best layer by Cohen's-d separation of pos vs neg projections on the EXTRACTION set (reuse steering/extract.py). Fix that layer for the rest.
+3. NEUTRAL baseline: define ~10 neutral, axis-agnostic instructions (e.g. "Please answer the following question.", "Respond to the user.") — put them in `data/neutral_prompts.jsonl`. neutral_proj = mean projection (metrics.project_scalar) of neutral activations onto û.
+4. LATENT reference (vector-only): the displacement the steering intervention adds = ||v|| along û (i.e. the magnitude of the CAA vector at the chosen layer). This is the honest "how far latent reaches" scalar.
+5. PROMPT shift: for each HELD-OUT POS readable prompt, prompt_shift = project_scalar(act, û) − neutral_proj. strongest_prompt_shift = max over held-out POS (the best a readable prompt does). Also report the mean.
+6. facade_ratio = strongest_prompt_shift / ||v||  (signed). Random-direction NULL: reuse the metrics null baseline to test whether strongest_prompt_shift clears the p95 of projections onto random unit directions.
+7. C1 signal per axis (EXPLORATORY read, thresholds are placeholders): facade_ratio > 0 AND well below 1 (report the number; do not hard-code a verdict as if frozen) AND strongest prompt above null.
+Aggregate all axes into a results table; also feed the Go/No-Go routing (analysis/routing.py) but clearly label the routing as EXPLORATORY (thresholds not frozen).
+
+## STEP 4 — Register + record honestly
+- Register the run via lineage/registry as type=EXPLORATORY, valid_for_paper=false, with model, seed, layer, data split hashes. Write a results artifact (JSON) + a short human-readable summary to `results/c1_facade_pilot_2026-07-23/` (gitignore large caches, commit the small results JSON + summary).
+- Numbers only from computed artifacts (no hand values).
+
+CONSTRAINTS: work only in this worktree; DO NOT modify docs/. Do NOT touch the audited core metric logic in a way that breaks tests — you may ADD to metrics/extract but keep `python -m pytest -q` GREEN (offline suite must still pass WITHOUT requiring the new C1 run). Run the offline suite AND your new run. Commit to feature/3-cpu-c1-facade with trailer:
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
+DO NOT merge, DO NOT push if prompted for credentials.
+
+Report to the Manager: the facade_ratio per axis (+ strongest_prompt_shift, ||v||, above_null, chosen layer), the extraction/probe split sizes, wall-clock + peak RAM, pytest result, and — CRITICALLY — an HONEST caveats section: residual circularity, small-model limitations, neutral-baseline sensitivity, and whether the signal looks real or noise. Do NOT spin a positive result; if facade_ratio ≈ 1 or noisy, say so plainly. Flag any judgment call.

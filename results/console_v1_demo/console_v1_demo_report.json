@@ -1,0 +1,124 @@
+{
+  "kind": "console_v1_simulated_demo",
+  "source": "computed from frozen artifacts by cognitive_console.console.data_loader",
+  "c1_source_mode": "results_c1_json",
+  "c2_source_mode": "results_c2b_json",
+  "arm_source_mode": "results_arm_full_json",
+  "facade_limit_flags": [
+    {
+      "axis": "deliberation",
+      "label": "Deliberation",
+      "ratio": 0.582751249943177,
+      "ci_lo": 0.4878451678981084,
+      "ci_hi": 0.6804022442875369,
+      "source": "c1_results_json"
+    },
+    {
+      "axis": "skepticism",
+      "label": "Skepticism",
+      "ratio": 0.5476263933060945,
+      "ci_lo": 0.433662493258434,
+      "ci_hi": 0.6696167891191565,
+      "source": "c1_results_json"
+    },
+    {
+      "axis": "uncertainty_awareness",
+      "label": "Uncertainty-awareness",
+      "ratio": 0.7131063428339024,
+      "ci_lo": 0.5174153548301345,
+      "ci_hi": 0.9097230151228484,
+      "source": "c1_results_json"
+    }
+  ],
+  "facade_non_flags": [
+    {
+      "axis": "focus",
+      "label": "Focus",
+      "ratio": 2.844174957484932,
+      "ci_lo": 2.061420856417053,
+      "ci_hi": 3.5492769589260886,
+      "source": "c1_results_json"
+    }
+  ],
+  "steering_degradation_flags": [
+    {
+      "axis": "deliberation",
+      "label": "Deliberation",
+      "mean_diff": 0.015000000000000003,
+      "ci_lo": -0.04,
+      "ci_hi": 0.06999999999999999,
+      "passed": false,
+      "robust": false
+    },
+    {
+      "axis": "skepticism",
+      "label": "Skepticism",
+      "mean_diff": -0.08,
+      "ci_lo": -0.225,
+      "ci_hi": 0.045,
+      "passed": false,
+      "robust": false
+    },
+    {
+      "axis": "uncertainty_awareness",
+      "label": "Uncertainty-awareness",
+      "mean_diff": -0.22767283018867926,
+      "ci_lo": -0.36977938679245265,
+      "ci_hi": -0.0916042641509434,
+      "passed": false,
+      "robust": true
+    }
+  ],
+  "arm_uncertainty_harm_flags": [
+    {
+      "cell_key": "caa__qwen2.5-7b",
+      "method": "caa",
+      "model_label": "qwen2.5-7b",
+      "mean_diff": -0.22767283018867926,
+      "ci_lo": -0.36977938679245265,
+      "ci_hi": -0.0916042641509434
+    },
+    {
+      "cell_key": "caa__llama3-8b",
+      "method": "caa",
+      "model_label": "llama3-8b",
+      "mean_diff": -0.07152792452830188,
+      "ci_lo": -0.10344302830188679,
+      "ci_hi": -0.034011905660377276
+    },
+    {
+      "cell_key": "iti__qwen2.5-7b",
+      "method": "iti",
+      "model_label": "qwen2.5-7b",
+      "mean_diff": -0.10275547169811322,
+      "ci_lo": -0.13587504716981133,
+      "ci_hi": -0.06936867924528302
+    },
+    {
+      "cell_key": "iti__llama3-8b",
+      "method": "iti",
+      "model_label": "llama3-8b",
+      "mean_diff": -0.08401849056603775,
+      "ci_lo": -0.11516317924528303,
+      "ci_hi": -0.04857440566037723
+    }
+  ],
+  "summary": {
+    "facade_limit_axes": [
+      "deliberation",
+      "skepticism",
+      "uncertainty_awareness"
+    ],
+    "steering_degradation_or_fail_axes": [
+      "deliberation",
+      "skepticism",
+      "uncertainty_awareness"
+    ],
+    "robust_uncertainty_harm_cells": [
+      "caa__qwen2.5-7b",
+      "caa__llama3-8b",
+      "iti__qwen2.5-7b",
+      "iti__llama3-8b"
+    ]
+  }
+}

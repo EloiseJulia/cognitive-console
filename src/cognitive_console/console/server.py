@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import webbrowser
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Tuple
 
-from .data_loader import build_console_payload
+from .data_loader import build_console_payload, build_demo_report
 
 
 def _render_html() -> str:
@@ -32,6 +33,7 @@ def _render_html() -> str:
     .card { border-radius: 10px; padding: 12px; border: 1px solid #2e3558; background: #13172a; }
     .card.red { border-color: #a33; background: #2a1616; }
     .card.amber { border-color: #8f6d2d; background: #2a2516; }
+    .mini { font-size: 12px; color: #aab2d5; }
   </style>
 </head>
 <body>
@@ -65,6 +67,19 @@ def _render_html() -> str:
       <h2>4) Trust-calibration panel: when not to trust latent control</h2>
       <div class="grid" id="trust-grid"></div>
     </div>
+    <div class="panel">
+      <h2>5) Simulated demo: automatic failure-signature localization</h2>
+      <div class="muted">No human labels or model calls: flags are computed from frozen artifacts.</div>
+      <div class="grid" id="demo-grid"></div>
+    </div>
+    <div class="panel">
+      <h2>E-0006 robustness arm (2×2)</h2>
+      <div class="muted" id="arm-verdict"></div>
+      <table id="arm-table">
+        <thead><tr><th>Cell</th><th>Uncertainty Δ</th><th>CI</th><th>Robust harm?</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
     <div class="muted" id="provenance"></div>
   </div>
   <script>
@@ -76,7 +91,7 @@ def _render_html() -> str:
         document.getElementById("positioning").textContent = data.positioning;
         document.getElementById("c1-source").textContent = data.c1.source_mode;
         document.getElementById("provenance").textContent =
-          `C2 source: ${data.provenance.c2b_results} | C1 source: ${data.provenance.c1_results} | fallback: ${data.provenance.evidence_ledger_fallback}`;
+          `C2 source: ${data.provenance.c2b_results} | C1 source: ${data.provenance.c1_results} | arm source: ${data.provenance.arm_summary} | fallback: ${data.provenance.evidence_ledger_fallback}`;
 
         const chBody = document.querySelector("#channels-table tbody");
         data.c2.rows.forEach((r) => {
@@ -110,6 +125,35 @@ def _render_html() -> str:
           div.innerHTML = `<h3>${r.title}</h3><div>${r.body}</div>`;
           trust.appendChild(div);
         });
+
+        const armBody = document.querySelector("#arm-table tbody");
+        document.getElementById("arm-verdict").textContent =
+          `Source=${data.arm.source_mode}; verdict=${data.arm.arm_verdict}; zero-pass cells=${data.arm.zero_pass_cells}/${data.arm.n_cells}`;
+        data.arm.cells.forEach((cell) => {
+          const unc = (cell.axes || []).find((r) => r.axis === "uncertainty_awareness");
+          const tr = document.createElement("tr");
+          const harm = unc && unc.robust_degradation_flag;
+          tr.innerHTML = `<td>${cell.method} × ${cell.model_label}<div class="mini">${cell.cell_key}</div></td><td class="${harm ? "warn" : ""}">${n(unc && unc.mean_diff)}</td><td>[${n(unc && unc.ci_lo)}, ${n(unc && unc.ci_hi)}]</td><td>${yesNo(harm)}</td>`;
+          armBody.appendChild(tr);
+        });
+
+        return fetch("/api/demo");
+      })
+      .then((resp) => resp.json())
+      .then((demo) => {
+        const grid = document.getElementById("demo-grid");
+        const mk = (title, items, fmt) => {
+          const div = document.createElement("div");
+          div.className = "card amber";
+          div.innerHTML = `<h3>${title}</h3>` + items.map(fmt).join("");
+          grid.appendChild(div);
+        };
+        mk("C1 facade-limit flags", demo.facade_limit_flags, (r) =>
+          `<div>${r.label}: ratio=${n(r.ratio)} CI=[${n(r.ci_lo)}, ${n(r.ci_hi)}]</div>`);
+        mk("C2 steering degradation/fail flags", demo.steering_degradation_flags, (r) =>
+          `<div>${r.label}: Δ=${n(r.mean_diff)} CI=[${n(r.ci_lo)}, ${n(r.ci_hi)}], pass=${r.passed}</div>`);
+        mk("2×2 uncertainty harm replication", demo.arm_uncertainty_harm_flags, (r) =>
+          `<div>${r.method}×${r.model_label}: Δ=${n(r.mean_diff)} CI=[${n(r.ci_lo)}, ${n(r.ci_hi)}]</div>`);
       })
       .catch((err) => {
         document.body.innerHTML = `<pre>Failed to load console data: ${err}</pre>`;
@@ -134,6 +178,11 @@ class _ConsoleHandler(BaseHTTPRequestHandler):
             body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
             self._send(HTTPStatus.OK, body, "application/json; charset=utf-8")
             return
+        if self.path == "/api/demo":
+            payload = build_console_payload()
+            body = json.dumps(build_demo_report(payload), ensure_ascii=False).encode("utf-8")
+            self._send(HTTPStatus.OK, body, "application/json; charset=utf-8")
+            return
         if self.path in ("/", "/index.html"):
             html = _render_html().encode("utf-8")
             self._send(HTTPStatus.OK, html, "text/html; charset=utf-8")
@@ -144,9 +193,12 @@ class _ConsoleHandler(BaseHTTPRequestHandler):
         return
 
 
-def run_server(host: str, port: int) -> None:
+def run_server(host: str, port: int, open_browser: bool = False) -> None:
     httpd = ThreadingHTTPServer((host, port), _ConsoleHandler)
-    print(f"Console running at http://{host}:{port}")
+    url = f"http://{host}:{port}"
+    print(f"Console running at {url}")
+    if open_browser:
+        webbrowser.open(url)
     httpd.serve_forever()
 
 
@@ -154,9 +206,10 @@ def parse_args(argv: Tuple[str, ...] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run reality-check console v1.")
     parser.add_argument("--host", default="127.0.0.1", help="Host to bind (default: 127.0.0.1).")
     parser.add_argument("--port", type=int, default=8000, help="Port to bind (default: 8000).")
+    parser.add_argument("--open", action="store_true", help="Open the console URL in the default browser.")
     return parser.parse_args(argv)
 
 
 def main() -> None:
     args = parse_args()
-    run_server(args.host, args.port)
+    run_server(args.host, args.port, open_browser=args.open)

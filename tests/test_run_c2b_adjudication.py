@@ -4,9 +4,10 @@ FIX 3: an underpowered bootstrap (--bootstrap-b < frozen 10000) must HARD-FAIL
 (SystemExit) unless the explicit --allow-underpowered flag is passed.
 """
 
-import pytest
 import json
+
 import numpy as np
+import pytest
 
 from scripts import run_c2b_adjudication as R
 
@@ -77,6 +78,33 @@ def _fp_for_argv(argv):
     return R._config_fingerprint(args, "some-model", specs)
 
 
+class _PromptLengthSampler:
+    def sample_batch(self, axis, items, instruction, alpha, k, direction, layer):
+        score = min(1.0, len(str(instruction)) / 200.0)
+        return [R.adj.SampleBatch(outcomes=[float(score)] * int(k), degeneracies=[0.0] * int(k))
+                for _ in items]
+
+
+def _runtime_fp_for_argv(argv):
+    args = R.build_parser().parse_args(argv)
+    specs = R.build_specs_synthetic(list(args.axes), True, args.n_items, args.n_strong)
+    if args.enable_stronger_prompt_optimizer:
+        specs, _ = R.optimize_specs_with_stronger_prompt_baseline(
+            specs,
+            sampler_for_axis=lambda _axis: _PromptLengthSampler(),
+            k=R.adj.K_SAMPLES,
+            dev_fraction=R.adj.DEV_FRACTION,
+            seed=int(args.seed),
+            parity_target_n_strong=int(args.n_strong),
+            total_budget=R._effective_prompt_opt_budget(args),
+            seed_prompts=int(args.prompt_opt_seed_prompts),
+            rounds=int(args.prompt_opt_rounds),
+            candidates_per_round=int(args.prompt_opt_candidates_per_round),
+            keep_top_k=int(args.prompt_opt_keep_top_k),
+        )
+    return R._config_fingerprint(args, "some-model", specs)
+
+
 def test_fingerprint_changes_with_batch_size():
     fp16 = _fp_for_argv(["--backend", "hf", "--batch-size", "16"])
     fp8 = _fp_for_argv(["--backend", "hf", "--batch-size", "8"])
@@ -102,6 +130,138 @@ def test_fingerprint_changes_with_steering_method():
     fp_caa = _fp_for_argv(["--backend", "hf", "--steering-method", "caa"])
     fp_iti = _fp_for_argv(["--backend", "hf", "--steering-method", "iti"])
     assert fp_caa != fp_iti
+
+
+def test_optimizer_runtime_fingerprint_changes_with_implicit_effective_budget():
+    fp16 = _runtime_fp_for_argv([
+        "--backend", "synthetic",
+        "--enable-stronger-prompt-optimizer",
+        "--n-items", "6",
+        "--n-strong", "16",
+    ])
+    fp8 = _runtime_fp_for_argv([
+        "--backend", "synthetic",
+        "--enable-stronger-prompt-optimizer",
+        "--n-items", "6",
+        "--n-strong", "8",
+    ])
+    assert fp16 != fp8, "implicit budget=n_strong MUST invalidate resume fingerprint"
+
+
+@pytest.mark.parametrize(
+    "flag,a,b",
+    [
+        ("--prompt-opt-budget", "8", "9"),
+        ("--prompt-opt-rounds", "2", "3"),
+        ("--prompt-opt-candidates-per-round", "2", "3"),
+    ],
+)
+def test_optimizer_runtime_fingerprint_changes_with_optimizer_knobs(flag, a, b):
+    base = [
+        "--backend", "synthetic",
+        "--enable-stronger-prompt-optimizer",
+        "--n-items", "6",
+        "--n-strong", "8",
+        "--prompt-opt-seed-prompts", "3",
+    ]
+    fp_a = _runtime_fp_for_argv([*base, flag, a])
+    fp_b = _runtime_fp_for_argv([*base, flag, b])
+    assert fp_a != fp_b
+
+
+def test_optimizer_resume_invalidates_when_n_strong_changes_with_implicit_budget(tmp_path):
+    out_dir = tmp_path / "resume_opt_nstrong"
+    argv_base = [
+        "--backend", "synthetic",
+        "--n-items", "6",
+        "--bootstrap-b", "200",
+        "--allow-underpowered",
+        "--enable-stronger-prompt-optimizer",
+        "--prompt-opt-seed-prompts", "3",
+        "--prompt-opt-rounds", "2",
+        "--prompt-opt-candidates-per-round", "2",
+        "--prompt-opt-keep-top-k", "2",
+        "--out-dir", str(out_dir),
+    ]
+    assert R.main([*argv_base, "--n-strong", "8"]) == 0
+    first = json.loads((out_dir / "c2b_adjudication_results.json").read_text(encoding="utf-8"))
+    fp1 = str(first["config_fingerprint"])
+
+    assert R.main([*argv_base, "--n-strong", "4"]) == 0
+    second = json.loads((out_dir / "c2b_adjudication_results.json").read_text(encoding="utf-8"))
+    fp2 = str(second["config_fingerprint"])
+    assert fp1 != fp2
+
+    seen = set()
+    for fp in sorted((out_dir / "checkpoints").glob("*.jsonl")):
+        with open(fp, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                seen.add(str(json.loads(line).get("config")))
+    assert fp1 in seen and fp2 in seen
+
+
+def test_optimizer_generation_accounting_is_reported_and_totals_match(tmp_path, capsys):
+    out_dir = tmp_path / "opt_accounting"
+    rc = R.main([
+        "--backend", "synthetic",
+        "--n-items", "6",
+        "--n-strong", "4",
+        "--bootstrap-b", "200",
+        "--allow-underpowered",
+        "--enable-stronger-prompt-optimizer",
+        "--prompt-opt-budget", "8",
+        "--prompt-opt-seed-prompts", "3",
+        "--prompt-opt-rounds", "2",
+        "--prompt-opt-candidates-per-round", "2",
+        "--prompt-opt-keep-top-k", "2",
+        "--out-dir", str(out_dir),
+    ])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "PLANNED optimizer generations (used):" in out
+    assert "PLANNED total generations (adjudication + optimizer):" in out
+
+    payload = json.loads((out_dir / "c2b_adjudication_results.json").read_text(encoding="utf-8"))
+    accounting = payload["generation_accounting"]
+    assert accounting["optimizer"]["enabled"] is True
+    assert int(accounting["optimizer"]["total_used"]) > 0
+    assert int(accounting["total"]["used"]) == (
+        int(accounting["adjudication"]["total"]) + int(accounting["optimizer"]["total_used"])
+    )
+    spo = payload["stronger_prompt_optimizer"]
+    assert int(spo["generation_counts"]["total_used"]) == int(accounting["optimizer"]["total_used"])
+
+
+def test_optimizer_adjudication_accounting_matches_optimizer_off_with_single_prompt(tmp_path):
+    out_off = tmp_path / "adj_only"
+    out_on = tmp_path / "adj_plus_opt"
+    common = [
+        "--backend", "synthetic",
+        "--n-items", "6",
+        "--n-strong", "1",
+        "--bootstrap-b", "200",
+        "--allow-underpowered",
+    ]
+    assert R.main([*common, "--out-dir", str(out_off)]) == 0
+    assert R.main([
+        *common,
+        "--enable-stronger-prompt-optimizer",
+        "--prompt-opt-budget", "1",
+        "--prompt-opt-seed-prompts", "1",
+        "--prompt-opt-rounds", "1",
+        "--prompt-opt-candidates-per-round", "1",
+        "--prompt-opt-keep-top-k", "1",
+        "--out-dir", str(out_on),
+    ]) == 0
+    payload_off = json.loads((out_off / "c2b_adjudication_results.json").read_text(encoding="utf-8"))
+    payload_on = json.loads((out_on / "c2b_adjudication_results.json").read_text(encoding="utf-8"))
+    assert int(payload_on["generation_accounting"]["adjudication"]["total"]) == int(
+        payload_off["generation_accounting"]["adjudication"]["total"]
+    )
+    assert int(payload_on["generation_accounting"]["optimizer"]["total_used"]) > 0
 
 
 @pytest.mark.parametrize("axis", R.ADJ_AXES)

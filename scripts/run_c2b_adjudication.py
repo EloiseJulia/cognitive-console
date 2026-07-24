@@ -95,11 +95,19 @@ def _rel(path: Path) -> str:
         return str(p).replace("\\", "/")
 
 
+def _effective_prompt_opt_budget(args) -> int:
+    raw = getattr(args, "prompt_opt_budget", None)
+    if raw is None:
+        return int(getattr(args, "n_strong"))
+    return int(raw)
+
+
 def _config_fingerprint(args, model: str, specs) -> str:
     """Stable hash of everything that affects generated outcomes, so a resumed run
     only reuses checkpoints from an IDENTICAL config (seed/model/N/items/gen knobs).
     Changing max_new_tokens, temperature, seed, model, or the item set invalidates
     resume (fresh generations), keeping the frozen verdict faithful."""
+    opt_enabled = bool(getattr(args, "enable_stronger_prompt_optimizer", False))
     payload = {
         "seed": int(args.seed),
         "model": str(model),
@@ -123,10 +131,13 @@ def _config_fingerprint(args, model: str, specs) -> str:
         "bonferroni_ci_level": float(adj.BONFERRONI_CI_LEVEL),
         "dev_fraction": float(adj.DEV_FRACTION),
         "stronger_prompt_optimizer": {
-            "enabled": bool(getattr(args, "enable_stronger_prompt_optimizer", False)),
-            "budget": (
+            "enabled": opt_enabled,
+            "budget_cli": (
                 None if getattr(args, "prompt_opt_budget", None) is None
                 else int(args.prompt_opt_budget)
+            ),
+            "budget_effective": (
+                _effective_prompt_opt_budget(args) if opt_enabled else None
             ),
             "seed_prompts": int(getattr(args, "prompt_opt_seed_prompts", DEFAULT_PROMPT_OPT_SEED_PROMPTS)),
             "rounds": int(getattr(args, "prompt_opt_rounds", DEFAULT_PROMPT_OPT_ROUNDS)),
@@ -134,6 +145,9 @@ def _config_fingerprint(args, model: str, specs) -> str:
                 getattr(args, "prompt_opt_candidates_per_round", DEFAULT_PROMPT_OPT_CANDIDATES_PER_ROUND)
             ),
             "keep_top_k": int(getattr(args, "prompt_opt_keep_top_k", DEFAULT_PROMPT_OPT_KEEP_TOP_K)),
+            "optimizer_seed": int(getattr(args, "seed", 0)),
+            "compute_parity_target_n_strong": int(getattr(args, "n_strong")),
+            "n_strong_requested": int(getattr(args, "n_strong")),
         },
         "axes": {
             spec.axis: {
@@ -1099,7 +1113,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         hardware = f"{p0._pick_device()}-{p0._pick_dtype()}"
         meta_extra = {"backend": "hf", **hf_meta}
 
-    prompt_opt_budget = int(args.prompt_opt_budget) if args.prompt_opt_budget is not None else int(args.n_strong)
+    prompt_opt_budget = _effective_prompt_opt_budget(args)
+    optimizer_generation_by_axis: Dict[str, Dict[str, int]] = {}
+    optimizer_generation_total_used = 0
+    optimizer_generation_total_cap = 0
     if args.enable_stronger_prompt_optimizer:
         specs, opt_by_axis = optimize_specs_with_stronger_prompt_baseline(
             specs,
@@ -1114,6 +1131,21 @@ def main(argv: Optional[List[str]] = None) -> int:
             candidates_per_round=int(args.prompt_opt_candidates_per_round),
             keep_top_k=int(args.prompt_opt_keep_top_k),
         )
+        for axis, row in opt_by_axis.items():
+            evals_used = int(row.get("evaluations_used", 0))
+            dev_items = int(len(row.get("dev_item_ids", [])))
+            total_budget = int(row.get("total_budget", prompt_opt_budget))
+            used = int(evals_used * dev_items * int(adj.K_SAMPLES))
+            cap = int(total_budget * dev_items * int(adj.K_SAMPLES))
+            optimizer_generation_by_axis[axis] = {
+                "evaluations_used": evals_used,
+                "dev_items": dev_items,
+                "k_samples": int(adj.K_SAMPLES),
+                "generations_used": used,
+                "generations_budget_cap": cap,
+            }
+            optimizer_generation_total_used += used
+            optimizer_generation_total_cap += cap
         meta_extra["stronger_prompt_optimizer"] = {
             "enabled": True,
             "budget": int(prompt_opt_budget),
@@ -1121,8 +1153,14 @@ def main(argv: Optional[List[str]] = None) -> int:
             "rounds": int(args.prompt_opt_rounds),
             "candidates_per_round": int(args.prompt_opt_candidates_per_round),
             "keep_top_k": int(args.prompt_opt_keep_top_k),
+            "optimizer_seed": int(args.seed),
             "compute_parity_target_n_strong": int(args.n_strong),
             "selection_policy": "DEV-only prompt optimization; TEST untouched for selection",
+            "generation_counts": {
+                "per_axis": optimizer_generation_by_axis,
+                "total_used": int(optimizer_generation_total_used),
+                "total_budget_cap": int(optimizer_generation_total_cap),
+            },
             "axes": opt_by_axis,
         }
         print(
@@ -1142,9 +1180,44 @@ def main(argv: Optional[List[str]] = None) -> int:
     per_axis_plan, total_plan = plan_generation_counts(
         specs, k=adj.K_SAMPLES, alpha_grid=adj.ALPHA_GRID,
         dev_fraction=adj.DEV_FRACTION)
+    total_with_optimizer_used = int(total_plan + optimizer_generation_total_used)
+    total_with_optimizer_cap = int(total_plan + optimizer_generation_total_cap)
+    generation_accounting = {
+        "adjudication": {
+            "per_axis": {str(a): int(c) for a, c in per_axis_plan.items()},
+            "total": int(total_plan),
+        },
+        "optimizer": {
+            "enabled": bool(args.enable_stronger_prompt_optimizer),
+            "per_axis": optimizer_generation_by_axis,
+            "total_used": int(optimizer_generation_total_used),
+            "total_budget_cap": int(optimizer_generation_total_cap),
+        },
+        "total": {
+            "used": int(total_with_optimizer_used),
+            "budget_cap": int(total_with_optimizer_cap),
+        },
+    }
+    meta_extra["generation_accounting"] = generation_accounting
     plan_str = ", ".join(f"{a}={c}" for a, c in per_axis_plan.items())
-    print(f"[c2b-adj] PLANNED generations (upper bound): {plan_str}  "
+    print(f"[c2b-adj] PLANNED adjudication generations (upper bound): {plan_str}  "
           f"TOTAL={total_plan}", flush=True)
+    if args.enable_stronger_prompt_optimizer:
+        opt_plan_str = ", ".join(
+            f"{axis}={row['generations_used']}"
+            for axis, row in optimizer_generation_by_axis.items()
+        )
+        print(
+            f"[c2b-adj] PLANNED optimizer generations (used): "
+            f"{opt_plan_str if opt_plan_str else 'none'}  TOTAL={optimizer_generation_total_used} "
+            f"(budget-cap TOTAL={optimizer_generation_total_cap})",
+            flush=True,
+        )
+        print(
+            f"[c2b-adj] PLANNED total generations (adjudication + optimizer): "
+            f"USED={total_with_optimizer_used}  BUDGET_CAP={total_with_optimizer_cap}",
+            flush=True,
+        )
     n_batches = -(-total_plan // max(1, args.batch_size))  # ceil
     lo_h = n_batches * 2.0 / 3600.0
     hi_h = n_batches * 4.0 / 3600.0

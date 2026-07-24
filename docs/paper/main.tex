@@ -101,28 +101,37 @@ Table~\ref{tab:novelty-neighbors} summarizes the nearest neighbors. The contrast
   \end{tabular}
 \end{table*}
 
+
 \section{Methods}
 \label{sec:methods}
 
+Our method separates two questions that are easy to conflate in a console design. C1 asks whether a readable prompt occupies the same representational direction as an extracted cognitive-axis pole. C2 asks whether acting on a legible latent direction improves behavior beyond what a bounded prompt channel already achieves. The first question is exploratory and representational; the second is a frozen behavioral adjudication. We keep them separate so that a positive legibility signal cannot be silently promoted into evidence of user-facing control.
+
 \subsection{C1 Facade Measurement}
-The C1 figure is rebuilt from \pathtt{results/gpu\_7b\_2026-07-23/c1/c1\_facade\_results.json}; provenance is recorded in \pathtt{docs/paper/figure-manifests/c1-ratio-ci.yaml}. No numeric values are copied manually into this file. For each axis, the script plots the frozen artifact's scale-free facade ratio
+The C1 analysis measures a representational facade on Qwen2.5-7B-Instruct. For each metacognitive axis, we construct contrastive activation directions from positive and negative examples and ask how far the strongest readable prompt travels along the extracted axis. The measurement uses the generated C1 artifact at \pathtt{results/gpu\_7b\_2026-07-23/c1/}, with figure provenance recorded in \pathtt{docs/paper/figure-manifests/c1-ratio-ci.yaml}. It is not a behavioral user study and not a confirmatory multi-model result.
+
+The plotted quantity is the scale-free facade ratio
 \begin{equation}
   r_a = \frac{\mathrm{prompt\_reach}_a}{\mathrm{pole\_reach}_a},
   \label{eq:facade-ratio}
 \end{equation}
-and the random-null reference on the same scale, $\mathrm{pole\_null\_p95}_a /\allowbreak \mathrm{pole\_reach}_a$. This measurement is exploratory and Qwen2.5-7B only.
+where the numerator is the projection of the strongest prompt-origin activation shift onto axis \(a\), and the denominator is the reach of the extracted axis pole at the chosen non-degenerate layer. A small ratio means that the prompt is semantically legible but reaches only part of the corresponding extracted activation direction. The figure also includes the random-null reference on the same scale, so that the reader can distinguish a meaningful prompt-aligned displacement from what would be expected from unrelated directions. Because this run covers one model family and shows axis heterogeneity, we treat C1 as exploratory evidence for a measurement pattern rather than as a general law about prompts and activations.
 
 \subsection{Frozen Behavioral Adjudicator}
-The adjudicator uses DEV-only selection of prompts and steering strengths, paired TEST comparisons, item-cluster bootstrap, Bonferroni correction, and a coherence gate. The protocol source is \pathtt{docs/ledgers/prereg-c2b-adjudication.md}. CAA constructs a mean-difference steering vector
+The C2 adjudicator is frozen in \pathtt{docs/ledgers/prereg-c2b-adjudication.md} and reused by the robustness arm in \pathtt{docs/ledgers/prereg-robustness-mechanism-arm.md}. Its purpose is to test a control claim under a fair comparator: if a user or interface already has a bounded prompt channel, does naive latent steering add behavioral control beyond the best prompt selected under the same discipline?
+
+The protocol fixes the outcome for each axis before seeing TEST results: deliberation is scored by task accuracy, skepticism by false-premise rejection, and uncertainty by the proper per-item score \(1-\mathrm{Brier}\) (Table~\ref{tab:axis-outcomes}). Focus is excluded from C2 because the C1 extraction diagnostics did not support treating it as a valid facade axis. For each remaining axis, items are split into DEV and TEST pools from the same task distribution. Both channels get their search on DEV only: the best prompt is selected on DEV, and the steering strength is also selected on DEV. The TEST set is used only once for the paired adjudication.
+
+This design deliberately removes several researcher degrees of freedom. DEV-only selection prevents the latent channel from benefiting from a post-hoc best steering strength and prevents the prompt channel from being weakened by an under-tuned comparator. Paired TEST differences compare the two channels on the same items, reducing cross-sample noise and avoiding the weaker logic of unrelated confidence intervals. The item-cluster bootstrap respects the repeated samples nested within each item. Bonferroni correction across axes controls the chance of declaring a latent win by trying several metacognitive targets. The meaningful-margin threshold prevents tiny but statistically detectable differences from being written as practical control. Finally, the coherence gate rejects apparent gains that arise from degraded or degenerate outputs rather than usable behavior. Together, these controls make the adjudicator a HARKing-resistant measurement instrument: success criteria, selection budget, multiplicity handling, and failure verdicts are fixed before TEST inspection.
+
+For CAA, the latent direction is the contrastive mean difference \cite{rimsky2024caa}
 \begin{equation}
   v = \mathbb{E}_{x \in A^+}[h_L(x)] - \mathbb{E}_{x \in A^-}[h_L(x)],
   \qquad
   h'_L = h_L + \alpha \hat{v},
   \label{eq:caa-steering}
 \end{equation}
-where $L$ is the intervention layer and $\hat{v}$ is the unit direction. ITI uses the same intervention form with a probe-derived direction.
-
-For each TEST item $i$, the frozen rule compares steer-only behavior against the DEV-selected best prompt using the paired difference
+where \(L\) is the intervention layer and \(\hat{v}\) is the unit direction. ITI uses the same additive intervention form but obtains the direction from a probe-derived signal rather than a CAA contrast \cite{li2023iti}. For each TEST item \(i\), the frozen comparison is the paired steer-minus-prompt outcome difference
 \begin{equation}
   d_i = \mathrm{steer}_i - \mathrm{prompt}_i.
   \label{eq:paired-diff}
@@ -142,14 +151,14 @@ An axis passes iff
   \end{aligned}
   \label{eq:axis-pass}
 \end{equation}
-The frozen verdict is STRONG\_GO for at least two passing axes, CONDITIONAL\_GO for exactly one passing axis, and KILL\_PLAN\_D for zero passing axes. Outcome definitions are fixed as deliberation = accuracy, skepticism = false-premise rejection rate, and uncertainty = $1-\mathrm{Brier}$ (Table~\ref{tab:axis-outcomes}).
+The frozen verdict is STRONG\_GO for at least two passing axes, CONDITIONAL\_GO for exactly one passing axis, and KILL\_PLAN\_D for zero passing axes.
 \input{tables/axis-outcome-definitions.tex}
 
 \subsection{Steering Families and Models}
-The 2$\times$2 robustness arm covers CAA/ITI $\times$ Qwen2.5-7B/Llama-3-8B. Llama provenance follows D-0038.
+The robustness arm expands the original Qwen/CAA adjudication into the full CAA/ITI by Qwen2.5-7B/Llama-3-8B grid. CAA represents a simple mean-difference steering family; ITI provides a probe-direction family with a different construction lineage. Qwen2.5-7B-Instruct and Llama-3-8B-Instruct are treated as separate model families, with Llama run through the NousResearch identical-weights mirror recorded in the decision log. The arm reuses the same frozen adjudication rule rather than creating a new success criterion for each method or model. Thus, a positive cell would have narrowed the negative claim, while all-cell failure strengthens only the scoped statement about these naive, off-the-shelf steering families.
 
 \subsection{Audit and Artifact Lineage}
-All main tables and figures must trace to manifests under \pathtt{docs/paper/table-manifests/} and \pathtt{docs/paper/figure-manifests/}. The LaTeX source includes generated figures and table inputs whose numeric values are rebuilt from frozen artifacts, not hand-entered.
+Credibility is part of the method, not an afterthought. E-0005, E-0006, and E-0007 were each reviewed by independent hostile audit sessions that treated prior conclusions as untrusted and rechecked the relevant artifacts, pairing, model/method provenance, parser integrity, and aggregation. The LaTeX source does not manually transcribe result values into prose. Main quantitative artifacts are generated through manifests under \pathtt{docs/paper/table-manifests/} and \pathtt{docs/paper/figure-manifests/}; the C2 table and calibration-harm figure trace to frozen JSON artifacts, and the C1 figure traces to the registered C1 facade experiment. This lineage is what permits the paper to report a negative result without asking the reader to trust a narrative reconstruction.
 
 \section{Results}
 \label{sec:results}
@@ -162,12 +171,12 @@ All main tables and figures must trace to manifests under \pathtt{docs/paper/tab
   \label{fig:c1-ratio-ci}
 \end{figure}
 
-Figure~\ref{fig:c1-ratio-ci} carries C1 with explicit caveats: focus overshoot/no-facade, deliberation layer sensitivity, and pending Llama replication.
+Figure~\ref{fig:c1-ratio-ci} shows the C1 reality check. On the supported axes, readable prompts move in the intended direction but do not span the full extracted pole reach, which is the facade pattern measured by \eqref{eq:facade-ratio}. The same figure also shows why the claim must remain scoped. Focus is not a facade case; it overshoots rather than providing a clean prompt-reach deficit. Deliberation is also layer-sensitive in the underlying artifact, so the result should not be read as a stable, layer-invariant property of the model. Most importantly, C1 is currently a Qwen-only exploratory measurement. It motivates the behavioral adjudication, but it does not by itself establish behavioral non-transfer or user-facing controllability.
 
 \subsection{Frozen Prompt-vs-Latent Delta Table (C2)}
 \input{tables/c2-delta-4cell.tex}
 
-Table~\ref{tab:c2-delta-4cell} is the C2 headline artifact: all four cells are 0/3 axes under the frozen rule, and all table values are generated by the artifact pipeline.
+Table~\ref{tab:c2-delta-4cell} is the C2 headline artifact. Under the frozen pass rule in \eqref{eq:axis-pass}, every method--model cell fails to produce a latent win on the adjudicated axes, yielding the pre-registered non-transfer verdict within the tested scope. This is a stronger result than the original single-cell negative because the failure is not confined to one steering family or one model family. It is still not a universal statement about steering: the table adjudicates naive CAA and ITI against a bounded best-prompt ceiling, using the frozen tasks, axes, models, and selection budgets specified in the preregistrations.
 
 \subsection{Calibration Harm Across Four Cells}
 \begin{figure}[t]
@@ -177,18 +186,57 @@ Table~\ref{tab:c2-delta-4cell} is the C2 headline artifact: all four cells are 0
   \label{fig:c2-calibration-harm}
 \end{figure}
 
+Figure~\ref{fig:c2-calibration-harm} isolates the most practically striking sub-finding. On the uncertainty axis, the steer-minus-prompt effect is negative in every method--model cell, and each interval excludes zero. Thus the latent intervention is not merely failing to add useful uncertainty control; in the tested grid, it worsens calibration relative to the DEV-selected best prompt. For a console that might expose a calibration or confidence control, this is the highest-risk failure mode in the paper.
+
+The mechanism is deliberately left open. The pre-registered OOD activation-capture test in \pathtt{docs/ledgers/prereg-ood-capture.md} asked whether off-manifold distance, measured by whitened Mahalanobis distance of steered residuals, explained the calibration harm. E-0007 returned a valid null rather than mechanism support. We therefore report calibration harm as a robust behavioral phenomenon in E-0006, not as evidence for an off-manifold causal account. No alternative mechanism is mined from the same data.
+
 \section{Design Implications}
 \label{sec:design-implications}
 \input{tables/failure-taxonomy.tex}
-C3 is non-empirical on the pure-model route. The design implication is to treat the console as a limits and trust-calibration instrument, not as evidence that users can control latent states. This implication is informed by HCI transparency, metacognition, and trust-calibration work \cite{tankelevitch2024metacog,liao2024transparency,li2026learntrust,neumann2026whocontrols,subramani2026latent}.
+
+The design implication of C2 is not to hide latent information from users. It is to change what a cognitive console treats as the unit of interaction. A console that turns every legible direction into a slider invites a control interpretation that the evidence does not support. A safer design treats legibility, transfer, and calibration as separate states that must be instrumented and displayed. This stance follows HCI work arguing that transparency should support actionability and calibrated reliance, not merely expose more internal structure \cite{tankelevitch2024metacog,liao2024transparency,li2026learntrust,neumann2026whocontrols,subramani2026latent}.
+
+Table~\ref{tab:failure-taxonomy} turns the model evidence into five interface-relevant failure classes. F1 is the basic legible-but-non-transfer facade: an axis can be readable as a representation but fail the behavioral adjudicator. F2 is the calibration backfire documented on the uncertainty axis, where the console should warn that naive steering may reduce rather than improve trust-relevant behavior. F3 is a guardrail class: the coherence gate did not drive the present verdict, but it represents the kind of degeneration that should block deployment of a latent control. F4 captures layer sensitivity, reminding designers that a direction found at one intervention layer is not automatically a stable interface object. F5 captures extraction degeneration, where the axis itself should be redesigned before any control claim is made.
+
+A cognitive console should therefore instrument boundaries rather than promise latent agency. At minimum, it should show whether a direction has passed a prompt-vs-latent behavioral test, whether a prompt baseline is already better, whether calibration-facing behavior is harmed, and whether the result is exploratory, confirmatory, or untested for the current model and method. These signals can help users and developers recalibrate trust: a readable latent axis becomes diagnostic evidence about the model, not a guarantee that moving along it is an appropriate user-facing action. This is a design implication from model evidence only. We do not claim that users understand these warnings, rely on them appropriately, or benefit from the console without a future human-subjects study.
+
+\section{Discussion}
+\label{sec:discussion}
+
+The paper is best read as a reality check on an appealing HCI inference. Legibility is valuable: it gives analysts and users a vocabulary for asking whether the model appears deliberative, skeptical, or calibrated. But the frozen adjudication shows that, for the tested naive steering families and model families, that vocabulary does not automatically become a behavioral control channel. This distinction matters for interface design because the failure is not invisible. The console can expose it: representational reach, transfer verdict, calibration harm, coherence status, and artifact lineage can all be made visible instead of being collapsed into a single control affordance.
+
+The strongest counterpoint is trained prompt-steering recovery. Heyman and Vandeputte show that steering can be trained to mimic prompting \cite{heyman2026steer}. That result is not a nuisance citation; it defines the boundary of our claim. Our C2 result concerns naive, bounded CAA/ITI-style interventions, not optimized steering procedures trained to recover prompt behavior. The planned frozen latent-recovery arm is therefore the direct next test. If a PSR-style method passes the same adjudicator, the conclusion should be narrowed rather than defended rhetorically: naive legible directions failed, while trained recovery may identify a more faithful latent control class.
+
+Sprejer et al. provide useful corroboration from a different route \cite{sprejer2026mindgap}. Their feature-steering results also warn that moving along interpretable internal features can degrade behavior relative to prompting. The overlap increases confidence that calibration and capability trade-offs are not merely an implementation accident in our code. The differences are equally important: their steering family, task domain, and registration structure differ from ours, so the two papers should be read as converging evidence about a risk, not as duplicate demonstrations of the same empirical claim.
+
+The generalization scope is intentionally modest. We cover two model families, two off-the-shelf steering families, and three adjudicated metacognitive axes under a frozen protocol. We do not test larger models, trained steering, multi-layer schedules, representation-engineering variants, product-specific prompts, or user adaptation to console feedback. We also do not prove the mechanism of calibration harm. The value of the result is narrower but cleaner: within a transparent and audited comparison, a legible latent direction did not beat a bounded prompt ceiling and did harm calibration.
 
 \section{Limitations}
 \label{sec:limitations}
-C1 is exploratory and single-model pending Llama replication. C2 is scoped to bounded prompt effort and naive/off-the-shelf CAA/ITI. The result is not an impossibility theorem, especially given trained steering results \cite{heyman2026steer}. The calibration-harm mechanism is open, and the human-study fork remains owner-gated.
+
+C1 remains exploratory. The facade ratio is measured on Qwen2.5-7B-Instruct, and the Llama replication is still owed before the representational claim can be promoted beyond a single-family diagnostic. The result is also heterogeneous across axes: focus is an overshoot/non-facade case, and deliberation shows layer sensitivity. These caveats are not peripheral; they are part of the reason the paper treats C1 as a measurement probe rather than as a confirmatory claim.
+
+C2 is stronger but still scoped. The negative result covers bounded prompt effort versus naive/off-the-shelf CAA and ITI under the frozen adjudicator. It should not be cited as an impossibility theorem for activation steering, latent control, or prompt/latent equivalence. Trained or optimized procedures, including PSR-style prompt-mimicking steering, remain outside the completed evidence and are the target of the planned latent-recovery arm \cite{heyman2026steer}. Other models, tasks, axes, layers, and intervention schedules may behave differently.
+
+The mechanism of calibration harm is open. The off-manifold distance account was not merely untested; it was pre-registered and returned a valid null in E-0007. That null leaves the behavioral harm intact but removes mechanism credit. Future mechanism work needs a new preregistered package rather than post-hoc reinterpretation of the same capture data.
+
+Finally, the HCI claim is deliberately a design implication, not a user-study result. The human-study fork remains owner-gated because it would require separate ethics, recruitment, and venue decisions. Until such a study is run, we cannot claim that people understand the proposed warnings, calibrate trust better, or make better decisions with the console.
 
 \section{Future Work}
 \label{sec:future-work}
-Future work includes the frozen latent-recovery arm for PSR-style DEV-optimized steering, Llama C1 replication, a possible owner-approved human study, and a new preregistered mechanism package for calibration harm.
+
+The first follow-up is the frozen latent-recovery arm. A PSR-style or otherwise trained steering method should be evaluated under the same DEV/TEST discipline, paired bootstrap, multiplicity correction, and coherence gate. A pass would not erase the CAA/ITI negative; it would identify the conditions under which latent control becomes recoverable.
+
+The second follow-up is representational replication. Running the C1 facade measurement on Llama-3-8B would test whether the Qwen facade pattern is model-family-specific and would clarify which axes are stable enough to motivate behavioral tests. Any new axis should first pass extraction and layer-sensitivity diagnostics before entering a control claim.
+
+The third follow-up is mechanism work for calibration harm. Because E-0007 rejected the pre-registered off-manifold distance account, future work should test new hypotheses in a fresh preregistered package, with the mechanism claim separated from the already-banked behavioral result. Candidate mechanisms might concern confidence-format disruption, distributional shifts in answer style, or interactions between sampling and calibration scoring, but those hypotheses require new evidence.
+
+A final branch is human evaluation. If the owner approves the human-subjects route, a study should test whether boundary instrumentation actually improves users' calibrated reliance and control judgments. The present paper supplies the model-evidence basis and the failure taxonomy; it does not supply behavioral evidence about users.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+This paper tested a narrow but important inference for cognitive-console design: whether a readable latent direction can be treated as a behavioral control. The evidence supports three scoped conclusions. First, C1 provides exploratory single-model evidence that several metacognitive axes have a representational facade pattern, while also showing heterogeneity and an axis failure case. Second, C2 provides a frozen, audited negative result across the tested CAA/ITI by Qwen/Llama grid: naive latent steering does not beat the bounded best-prompt ceiling, and the uncertainty axis shows calibration harm in every cell. Third, the appropriate HCI stance is to surface those boundaries and trust-calibration risks rather than package legible directions as latent control sliders. We do not claim a universal limit on steering, a proven mechanism for calibration harm, or demonstrated user benefit. The contribution is a scoped reality check and a design discipline for treating legibility and control as different properties.
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}

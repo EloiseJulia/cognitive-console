@@ -1,6 +1,6 @@
-# PREREG DRAFT — Robustness + Mechanism Arm (INDEPENDENT exploratory arm)
+# PREREG — Robustness + Mechanism Arm (INDEPENDENT exploratory arm) — FINAL, pending human freeze
 
-> Status: **DRAFT for human budget/go-no-go approval.** NOT frozen. This is a NEW independent
+> Status: **FINAL draft, submitted for human §5 freeze/budget approval (2026-07-24).** NOT yet frozen. This is a NEW independent
 > pre-registration per owner directive 2026-07-24; it does NOT touch the frozen records E-0003 / E-0005 /
 > prereg-c2b-adjudication.md. Purpose: harden (or overturn) the C2 behavioral-non-transfer negative and
 > upgrade the C2-mech off-manifold hypothesis, both PURE-MODEL / no humans. Shaped by the 3 critic reviews
@@ -26,60 +26,77 @@
   layer-scheduled, or RepE-style) recovers behavioral gain on ≥1 axis where naive CAA failed → would
   *narrow* (not overturn) C2.
 
-## 2. Design (frozen skeleton; PURE-MODEL, no humans)
+## 2. Design (FINAL skeleton; PURE-MODEL, no humans)
 
 - **Adjudication logic:** REUSE the frozen `adjudicate_c2b` decision rule VERBATIM (δ=0.05, Bonferroni
   item-cluster bootstrap, DEV/TEST split, coherence gate, three-tier). No change to §4 math.
-- **Robustness matrix (≥2×2, target 3×2):**
-  - Steering methods: **CAA (baseline, re-run) + ≥1 orthogonal family (ITI or RepE or projected/whitened
-    CAA)**; stretch: a third (ActAdd/layer-scheduled).
-  - Model families: **Qwen2.5-7B-Instruct + ≥1 non-Qwen (Llama-3-8B-Instruct or Mistral-7B)**.
-  - Axes: at least **uncertainty (the harm axis) + one more**; full 3 axes if budget allows.
-  - Each cell runs the SAME frozen adjudication; **SAVE RAW TRANSCRIPTS this time** (fixes R2-B2 —
-    transcripts were wiped last run, so parser-artifact diagnostics need re-generation).
-- **Off-manifold diagnostic (H-M):** on the SAME cached generations, compute per-item activation
-  displacement proxies (e.g. Mahalanobis/whitened distance to the layer's train-activation distribution,
-  local-linearity/norm inflation) at the steered layer; test correlation with per-item Δoutcome
-  (esp. uncertainty). Pre-register the correlation sign/threshold.
-- **Stronger-prompt-optimizer baseline (R1-F2 / R2-M1):** one bounded iterative prompt optimizer on DEV
-  only under fixed compute parity, freeze winner, re-adjudicate on existing TEST items — to defend the
-  "prompt is a hard ceiling" fairness. (Optional but recommended.)
+- **Robustness matrix — LOCKED 2×2 (4 cells), each running the full frozen 3-axis adjudication:**
+
+  | | Qwen2.5-7B-Instruct | Llama-3-8B-Instruct |
+  |---|---|---|
+  | **CAA** (baseline family, re-run) | cell-1 (reproduces E-0005) | cell-2 |
+  | **ITI** (orthogonal family: per-head probe direction, inference-time intervention) | cell-3 | cell-4 |
+
+  - Axes per cell: **all 3** (uncertainty [harm axis] + deliberation + skepticism) — generation is cheap
+    (~29 min/cell), so no axis subsetting.
+  - **Stretch (budget-permitting, NOT required for the BLOCKER):** a 3rd method column =
+    **projected/whitened CAA** (covariance-respecting) as the direct H-M-alt "manifold-respecting rescue"
+    test → would make it 3×2 = 6 cells.
+  - **SAVE RAW TRANSCRIPTS every cell** (fixes R2-B2: last run's transcripts were wiped, so
+    parser/extraction-artifact diagnostics need regeneration). Store per-item: prompt, steered/baseline
+    generations, parsed answer+confidence, outcome.
+- **Off-manifold diagnostic (H-M) — LOCKED:** on the SAME cached generations, at the steered layer L,
+  compute per-item **whitened (Mahalanobis) distance** of the steered residual to the train-prompt
+  activation distribution (mean+covariance estimated from the C1 extraction contrast set), plus
+  activation-norm inflation ratio. Pre-registered test: **Spearman ρ between off-manifold distance and
+  per-item Δoutcome (steer−baseline)** — primary on the **uncertainty** axis per cell, secondary pooled
+  across cells.
+- **Stronger-prompt-optimizer baseline (R1-F2 / R2-M1) — RECOMMENDED, in-scope:** one bounded iterative
+  prompt optimizer on DEV only, fixed compute parity vs. the best-of-16 pool; freeze winner; re-adjudicate
+  on existing TEST items → defends "prompt is a hard ceiling." Run on Qwen cell-1 at minimum.
 - **C1 null-robustness appendix (R2-M3, cheap):** random-direction + prompt nulls, layer/norm sensitivity
-  for C1 ratio — from existing/recomputable C1 artifacts.
+  for the C1 ratio — recomputed from C1 extraction artifacts (regenerated in-cell if wiped).
 
-## 3. Frozen success / kill criteria (set BEFORE running)
+## 3. Frozen success / kill criteria (set BEFORE running; NOT revised after results)
 
-- **H-R verdict (per the frozen three-tier, applied per cell):**
-  - **NON-TRANSFER GENERALIZED (strengthens C2):** 0 axes pass in **≥ (all but one)** cells → C2 negative
-    reported as robust across methods×models. *This is the expected + paper-strengthening outcome.*
-  - **SCOPE-NARROWED POSITIVE (secondary contribution):** ≥1 cell shows ≥1 axis PASS (frozen rule) →
-    report as "controllability recoverable under {method/constraint}", narrow C2, add as secondary finding.
-    Does NOT touch E-0005.
-  - **INCONCLUSIVE:** mixed/underpowered → report qualified, no strong generality claim.
-- **H-M verdict:** pre-register that off-manifold distance correlates with Δoutcome degradation at
-  |ρ| ≥ [TBD, e.g. 0.3] with CI excluding 0 (pooled across items) → C2-mech upgraded hypothesis→evidence;
-  else C2-mech stays explicit hypothesis / Future Work.
-- **Kill:** if the instrument fails validity checks (as before) the cell is invalid, not a result.
+- **H-R (robustness of the non-transfer) — per-cell verdict uses the frozen three-tier, aggregated:**
+  - **NON-TRANSFER GENERALIZED (strengthens C2, expected):** across the 4 required cells, **0 axes PASS in
+    ≥3 of 4 cells** (i.e. the direction-consistent negative holds broadly) → C2 negative reported as robust
+    across methods × models.
+  - **SCOPE-NARROWED POSITIVE (secondary contribution):** **≥1 cell has ≥1 axis PASS** under the frozen
+    rule → report as "controllability recoverable under {method/model}", NARROW C2 to the failing regime,
+    add the positive as a SECONDARY finding. Does NOT touch E-0005.
+  - **INCONCLUSIVE:** neither clean pattern (mixed, or ≥2 cells invalid) → report qualified, no strong
+    generality claim; consider a power top-up (new decision).
+- **H-M (off-manifold) — frozen threshold:** on the uncertainty axis, **Spearman ρ(off-manifold distance,
+  −Δoutcome) ≥ 0.30 with 95% bootstrap CI excluding 0** in **≥3 of 4 cells** → C2-mech UPGRADED
+  hypothesis→evidence. Else C2-mech remains an explicit hypothesis / Future Work (no mechanism credit).
+- **Per-cell validity kill:** a cell that fails instrument validity checks (coherence-gate degeneracy on
+  ALL α, generation stall, extraction collapse) is marked INVALID (not a result) and re-run or dropped —
+  it does not count toward either verdict.
 
-## 4. Budget estimate (for human approval)
+## 4. Budget estimate (for §5 human approval)
 
-- **GPU (small):** ~4 cells (2 methods × 2 models) × ~11,365 gens × ~29 min ≈ **~2–3 h generation** +
-  model loads + one-time Llama/Mistral download (~16 GB). Realistic **~5–6 h on one rented 32 GB GPU box**
-  (≈ low tens of RMB). Off-manifold diagnostic + C1 nulls = minutes (on cached). Stronger-prompt-optimizer
-  DEV runs add modest generation.
-- **Engineering (AI credits, the real cost):** implement + INDEPENDENT-audit cycles for: (i) ITI/RepE (or
-  projected-CAA) steering method, (ii) Llama-3/Mistral provider wiring, (iii) transcript-saving, (iv)
-  off-manifold diagnostic, (v) stronger-prompt-optimizer, (vi) C1 null appendix. Est. **~5–8 implement+audit
-  subagent cycles** (each behind a hostile audit before merge). Rough **~1500–2500 AI credits**.
-- **Human gates:** (a) freeze THIS prereg's criteria before running; (b) GPU rental sign-off; (c) any venue
-  change already covered by D-0035.
+- **GPU (small, one box):** 4 required cells × (~29 min gen + ~4 min load) ≈ **~2.2 h generation**; +
+  one-time Llama-3-8B download (~16 GB); + stronger-prompt-optimizer DEV runs (~20-30 min) + OOD diagnostic
+  & C1 nulls (minutes, on cached). **Total ≈ 4-6 h on ONE rented 32 GB GPU box** (RTX 4080S/4090 class),
+  ≈ **low tens of RMB**. Stretch 3rd method column adds ~1.2 h (2 more cells).
+- **Engineering (AI credits — the real cost, PRE-GPU / no spend on hardware):** implement + INDEPENDENT-audit
+  cycles for (i) **ITI** steering method, (ii) **Llama-3 provider** wiring (chat template + hook layers),
+  (iii) **transcript-saving**, (iv) **off-manifold diagnostic**, (v) **stronger-prompt-optimizer**, (vi)
+  **C1 null appendix**. Est. **~6-8 implement+audit subagent cycles**, rough **~1800-2600 AI credits**.
+  (Optional projected/whitened-CAA adds ~1 cycle.)
+- **Human §5 gates:** (a) FREEZE this prereg (this doc) — sign-off requested now; (b) GPU rental sign-off
+  before the single GPU session; (c) venue policy already set (D-0035, IUI-first).
 
 ## 5. Sequencing (free before paid)
-1. Freeze this prereg (fill the [TBD] threshold + final matrix) — human sign-off.
-2. Engineering (pure-CPU dev + tests + audits) for the new methods/models/diagnostics — no GPU.
-3. Smoke on 1.5B CPU (batched-equivalence + transcript save) — no GPU.
-4. ONE rented GPU session runs the whole matrix + diagnostics — human GPU sign-off.
-5. Manager verify + hostile-audit each cell's result; bank as E-0006.. ; update claim-ledger C2/C2-mech.
+1. **Human freezes this prereg** (§4a) — the LOCKED 2×2 + OOD threshold above become immutable.
+2. **Engineering (pure-CPU dev + tests + hostile audits)** for ITI / Llama provider / transcript-save /
+   OOD diagnostic / prompt-optimizer / C1 nulls — NO GPU. (Can start in parallel with console + methodology
+   asset, which do not depend on this freeze.)
+3. **Smoke on 1.5B CPU** — batched-equivalence + transcript-save + OOD-diagnostic sanity — NO GPU.
+4. **ONE rented GPU session** runs the whole 2×2 (+ optional stretch) + diagnostics — human GPU sign-off (§4b).
+5. Manager verify + **hostile-audit each cell** → bank as E-0006.. ; update claim-ledger C2 / C2-mech.
 
 ## 6. Untouchable
 E-0003, E-0005, prereg-c2b-adjudication.md, and `adjudicate_c2b` frozen §4 logic are FROZEN. This arm ADDS

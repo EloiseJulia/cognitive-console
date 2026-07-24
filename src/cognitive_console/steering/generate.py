@@ -368,7 +368,7 @@ class SteeredHFBackend(GenBackend):
         )
 
     @staticmethod
-    def _render_user_chat_prompt(tokenizer, text: str) -> str:
+    def _render_user_chat_prompt(tokenizer, text: str, model_name: str = "unknown") -> str:
         """Render one user turn through model chat template when available."""
         if hasattr(tokenizer, "apply_chat_template"):
             try:
@@ -377,8 +377,12 @@ class SteeredHFBackend(GenBackend):
                     tokenize=False,
                     add_generation_prompt=True,
                 )
-            except Exception:
-                pass
+            except Exception as exc:
+                tok_cls = tokenizer.__class__.__name__
+                raise RuntimeError(
+                    "tokenizer.apply_chat_template failed for "
+                    f"model '{model_name}' (tokenizer={tok_cls})"
+                ) from exc
         return text
 
     @property
@@ -430,7 +434,7 @@ class SteeredHFBackend(GenBackend):
         # runs with the same run seed reproduce every sampled generation. Falls
         # back to the load-time seed when no per-call seed is supplied.
         self._seed_torch(seed if seed is not None else self.seed)
-        text = self._render_user_chat_prompt(self._tokenizer, prompt)
+        text = self._render_user_chat_prompt(self._tokenizer, prompt, self.model_name)
         enc = self._tokenizer(
             text, return_tensors="pt", truncation=True, max_length=self.max_length
         )
@@ -507,7 +511,7 @@ class SteeredHFBackend(GenBackend):
             self._seed_torch(batch_seed)
 
         texts = [
-            self._render_user_chat_prompt(self._tokenizer, p)
+            self._render_user_chat_prompt(self._tokenizer, p, self.model_name)
             for p in prompts
         ]
         self._tokenizer.padding_side = "left"

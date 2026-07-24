@@ -149,6 +149,17 @@ def test_hf_provider_chat_template_falls_back_to_raw_text():
     assert HFActivationProvider._render_user_chat_prompt(PlainTokenizer(), "plain") == "plain"
 
 
+def test_hf_provider_chat_template_error_is_explicit():
+    class BrokenTokenizer:
+        def apply_chat_template(self, messages, tokenize, add_generation_prompt):
+            raise ValueError("boom")
+
+    with pytest.raises(RuntimeError, match="apply_chat_template failed"):
+        HFActivationProvider._render_user_chat_prompt(
+            BrokenTokenizer(), "plain", model_name="Qwen/Qwen2.5-0.5B-Instruct"
+        )
+
+
 def test_hf_provider_llama_layer_and_hidden_size_metadata_without_loading():
     # No torch/network: emulate a loaded Llama-3-8B config.
     prov = HFActivationProvider("meta-llama/Meta-Llama-3-8B-Instruct")

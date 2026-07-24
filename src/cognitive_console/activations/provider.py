@@ -345,11 +345,11 @@ class HFActivationProvider(ActivationProvider):
         self._model = model
 
     @staticmethod
-    def _render_user_chat_prompt(tokenizer, text: str) -> str:
+    def _render_user_chat_prompt(tokenizer, text: str, model_name: str = "unknown") -> str:
         """Render one user turn through model chat template when available.
 
         Qwen/Llama instruct models both expose ``apply_chat_template``. For non-chat
-        tokenizers (or template errors), we fall back to raw text.
+        tokenizers, we fall back to raw text.
         """
         if hasattr(tokenizer, "apply_chat_template"):
             try:
@@ -358,8 +358,12 @@ class HFActivationProvider(ActivationProvider):
                     tokenize=False,
                     add_generation_prompt=True,
                 )
-            except Exception:
-                pass
+            except Exception as exc:
+                tok_cls = tokenizer.__class__.__name__
+                raise RuntimeError(
+                    "tokenizer.apply_chat_template failed for "
+                    f"model '{model_name}' (tokenizer={tok_cls})"
+                ) from exc
         return text
 
     # -- disk cache --------------------------------------------------------
@@ -407,7 +411,7 @@ class HFActivationProvider(ActivationProvider):
         """
         import torch
 
-        prompt = self._render_user_chat_prompt(self._tokenizer, text)
+        prompt = self._render_user_chat_prompt(self._tokenizer, text, self.model_name)
         enc = self._tokenizer(
             prompt,
             return_tensors="pt",

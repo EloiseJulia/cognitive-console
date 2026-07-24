@@ -91,6 +91,17 @@ def test_hf_backend_chat_template_falls_back_to_raw_text():
     assert SteeredHFBackend._render_user_chat_prompt(PlainTokenizer(), "raw") == "raw"
 
 
+def test_hf_backend_chat_template_error_is_explicit():
+    class BrokenTokenizer:
+        def apply_chat_template(self, messages, tokenize, add_generation_prompt):
+            raise ValueError("boom")
+
+    with pytest.raises(RuntimeError, match="apply_chat_template failed"):
+        SteeredHFBackend._render_user_chat_prompt(
+            BrokenTokenizer(), "raw", model_name="Qwen/Qwen2.5-1.5B-Instruct"
+        )
+
+
 def test_locate_decoder_layers_supports_llama_style_path():
     class Dummy:
         pass

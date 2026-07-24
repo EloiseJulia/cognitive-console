@@ -2,8 +2,10 @@
 \usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{seqsplit}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,decorations.pathreplacing}
+\DeclareRobustCommand{\pathtt}[1]{\texttt{\seqsplit{#1}}}
 
 \AtBeginDocument{%
   \providecommand\BibTeX{{%
@@ -37,7 +39,7 @@ Large language model interfaces increasingly expose controls that appear legible
 Mishra et al.'s workshop result motivates an internal prompt/latent gap \cite{mishra2026nonsurj}. We treat that result as theory background, not as evidence that prompting is behaviorally impossible. Recent steering work also shows that stronger or trained steering can differ sharply from naive steering \cite{heyman2026steer,fan2026asteer,korznikov2025rogue}, so our claim is deliberately scoped.
 
 \paragraph{Contributions.}
-The contribution list must remain tied to \texttt{docs/paper/claim-map.yaml}.
+The contribution list must remain tied to \pathtt{docs/paper/claim-map.yaml}.
 \begin{enumerate}
   \item \textbf{C1, exploratory measurement:} a representational-facade measurement on Qwen2.5-7B where readable prompts reach only a fraction of the extracted pole for 3/4 axes; Llama replication remains pending.
   \item \textbf{C2, headline result:} under a frozen adjudicator, naive CAA/ITI steering fails to beat the bounded best-prompt ceiling in all tested method--model cells and harms uncertainty calibration in all four cells.
@@ -67,7 +69,7 @@ HCI work frames GenAI use as metacognitive monitoring and control \cite{tankelev
 
 \subsection{Nearest-Neighbor Novelty Contrast}
 \label{sec:novelty-contrast}
-Table~\ref{tab:novelty-neighbors} gives the writing-stage contrast. The machine-readable provenance is in \texttt{docs/paper/citation-map.yaml}.
+Table~\ref{tab:novelty-neighbors} gives the writing-stage contrast. The machine-readable provenance is in \pathtt{docs/paper/citation-map.yaml}.
 
 \begin{table*}[t]
   \centering
@@ -92,15 +94,15 @@ Table~\ref{tab:novelty-neighbors} gives the writing-stage contrast. The machine-
 \label{sec:methods}
 
 \subsection{C1 Facade Measurement}
-The C1 figure is rebuilt from \texttt{results/gpu\_7b\_2026-07-23/c1/c1\_facade\_results.json}; provenance is recorded in \texttt{docs/paper/figure-manifests/c1-ratio-ci.yaml}. No numeric values are copied manually into this file. For each axis, the script plots the frozen artifact's scale-free facade ratio
+The C1 figure is rebuilt from \pathtt{results/gpu\_7b\_2026-07-23/c1/c1\_facade\_results.json}; provenance is recorded in \pathtt{docs/paper/figure-manifests/c1-ratio-ci.yaml}. No numeric values are copied manually into this file. For each axis, the script plots the frozen artifact's scale-free facade ratio
 \begin{equation}
   r_a = \frac{\mathrm{prompt\_reach}_a}{\mathrm{pole\_reach}_a},
   \label{eq:facade-ratio}
 \end{equation}
-and the random-null reference on the same scale, $\mathrm{pole\_null\_p95}_a / \mathrm{pole\_reach}_a$. This measurement is exploratory and Qwen2.5-7B only.
+and the random-null reference on the same scale, $\mathrm{pole\_null\_p95}_a /\allowbreak \mathrm{pole\_reach}_a$. This measurement is exploratory and Qwen2.5-7B only.
 
 \subsection{Frozen Behavioral Adjudicator}
-The adjudicator uses DEV-only selection of prompts and steering strengths, paired TEST comparisons, item-cluster bootstrap, Bonferroni correction, and a coherence gate. The protocol source is \texttt{docs/ledgers/prereg-c2b-adjudication.md}. CAA constructs a mean-difference steering vector
+The adjudicator uses DEV-only selection of prompts and steering strengths, paired TEST comparisons, item-cluster bootstrap, Bonferroni correction, and a coherence gate. The protocol source is \pathtt{docs/ledgers/prereg-c2b-adjudication.md}. CAA constructs a mean-difference steering vector
 \begin{equation}
   v = \mathbb{E}_{x \in A^+}[h_L(x)] - \mathbb{E}_{x \in A^-}[h_L(x)],
   \qquad
@@ -121,12 +123,12 @@ The confidence interval is obtained by paired item-cluster bootstrap: resample i
 \end{equation}
 An axis passes iff
 \begin{equation}
-  0 \notin \mathrm{CI}_{0.98333}(\bar d_a)
-  \quad\wedge\quad
-  \bar d_a \ge \delta
-  \quad\wedge\quad
-  \mathrm{coherence\ ratio}_a \le 1.5,
-  \qquad \delta = 0.05.
+  \begin{aligned}
+    0 &\notin \mathrm{CI}_{0.98333}(\bar d_a) \\
+    &\wedge\quad \bar d_a \ge \delta \\
+    &\wedge\quad \mathrm{coherence\ ratio}_a \le 1.5,
+    \qquad \delta = 0.05.
+  \end{aligned}
   \label{eq:axis-pass}
 \end{equation}
 The frozen verdict is STRONG\_GO for at least two passing axes, CONDITIONAL\_GO for exactly one passing axis, and KILL\_PLAN\_D for zero passing axes. Outcome definitions are fixed as deliberation = accuracy, skepticism = false-premise rejection rate, and uncertainty = $1-\mathrm{Brier}$ (Table~\ref{tab:axis-outcomes}).
@@ -136,7 +138,7 @@ The frozen verdict is STRONG\_GO for at least two passing axes, CONDITIONAL\_GO 
 The 2$\times$2 robustness arm covers CAA/ITI $\times$ Qwen2.5-7B/Llama-3-8B. Llama provenance follows D-0038.
 
 \subsection{Audit and Artifact Lineage}
-All main tables and figures must trace to manifests under \texttt{docs/paper/table-manifests/} and \texttt{docs/paper/figure-manifests/}. The LaTeX source includes generated figures and table inputs whose numeric values are rebuilt from frozen artifacts, not hand-entered.
+All main tables and figures must trace to manifests under \pathtt{docs/paper/table-manifests/} and \pathtt{docs/paper/figure-manifests/}. The LaTeX source includes generated figures and table inputs whose numeric values are rebuilt from frozen artifacts, not hand-entered.
 
 \section{Results}
 \label{sec:results}
@@ -145,7 +147,7 @@ All main tables and figures must trace to manifests under \texttt{docs/paper/tab
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/c1-ratio-ci.pdf}
-  \caption{Exploratory representational-facade ratios by axis for Claim C1, generated from experiment \texttt{c1-facade-d710b4b4-0001} (\texttt{results/gpu\_7b\_2026-07-23/c1/c1\_facade\_results.json}). Focus is labeled as non-facade/overshoot; C1 remains single-model exploratory evidence.}
+  \caption{Exploratory representational-facade ratios by axis for Claim C1, generated from experiment \pathtt{c1-facade-d710b4b4-0001} (\pathtt{results/gpu\_7b\_2026-07-23/c1/c1\_facade\_results.json}). Focus is labeled as non-facade/overshoot; C1 remains single-model exploratory evidence.}
   \label{fig:c1-ratio-ci}
 \end{figure}
 
@@ -160,7 +162,7 @@ Table~\ref{tab:c2-delta-4cell} is the C2 headline artifact: all four cells are 0
 \begin{figure}[t]
   \centering
   \includegraphics[width=\linewidth]{figures/c2-calibration-harm.pdf}
-  \caption{Calibration harm on the uncertainty axis across method--model cells for Claim C2, generated from \texttt{results/arm\_full/} (E-0006; CAA$\times$Qwen reproduces E-0005). Mechanism remains open after the E-0007 valid null.}
+  \caption{Calibration harm on the uncertainty axis across method--model cells for Claim C2, generated from \pathtt{results/arm\_full/} (E-0006; CAA$\times$Qwen reproduces E-0005). Mechanism remains open after the E-0007 valid null.}
   \label{fig:c2-calibration-harm}
 \end{figure}
 

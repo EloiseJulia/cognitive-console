@@ -1,0 +1,228 @@
+review_header:
+  review_id: review-R2-reality-check-reframe-2026-07-24
+  snapshot_id: 2026-07-24-reality-check-reframe
+  reviewer_role: "R2 — Technical Soundness & Experiments (independent)"
+  target_venue: "CHI/IUI/CSCW simulation"
+  review_stage: "Claim Freeze / reality-check reframe"
+  review_scope: >
+    Internal-validity audit of the frozen C2b negative adjudication and its use as top-tier evidence:
+    prereg fidelity (delta/Bonferroni/paired item-cluster bootstrap/coherence gate/DEV-TEST split/3-tier verdict),
+    attribution of 0/3 to true behavioral non-transfer vs instrument weakness, uncertainty-axis degradation signal quality,
+    robustness of C1 ratio<1 framing, and minimum evidence needed for CHI/IUI/CSCW-level claims.
+  materials_examined:
+    - docs/paper/reframe-2026-07-24-reality-check.md
+    - docs/ledgers/claim-ledger.md
+    - docs/ledgers/evidence-ledger.md
+    - results/c2b_adjudication_hf_2026-07-24/c2b_adjudication_summary.md
+    - results/c2b_adjudication_hf_2026-07-24/c2b_adjudication_results.json
+    - docs/ledgers/prereg-c2b-adjudication.md
+    - src/cognitive_console/experiments/adjudicate_c2b.py
+  missing_materials:
+    - "No raw generation transcripts / parser-failure audit table for uncertainty axis."
+    - "No C1 raw per-item or per-prompt null-baseline artifacts in this bundle (only ledger summaries)."
+    - "No cross-method (ITI/RepE/hierarchical CAA) or cross-model replication bundle."
+    - "No explicit power/MDE justification document for N=60/60/80 under delta=0.05."
+  expertise_level: "high"
+  conflict_check: "No conflict; independent read-only review."
+  overall_score_range: "2.8–3.3 / 5 if unchanged (CHI), 3.4–3.9 / 5 after robustness package."
+  confidence: "medium-high (3.8/5)"
+  verdict: "major-revision"
+
+paper_understanding:
+  one_sentence_problem: >
+    The paper argues that a legible latent direction (C1 facade) does not transfer into superior behavioral control over best prompts (C2),
+    using a frozen adjudication that returns 0/3 axis passes and a harmful uncertainty delta.
+  claimed_contributions:
+    - "C1: representational legibility/facade gap (ratio<1 style evidence, 3/4 at 7B)."
+    - "C2: pre-registered qualified negative (0/3 pass) for behavioral beyond-best-prompt via CAA on Qwen2.5-7B."
+    - "C2-mech: off-manifold degradation hypothesis from uncertainty harm."
+    - "C3: HCI reframe from latent superpower to boundary/trust-calibration instrument."
+  strongest_accept_case: >
+    As a scoped reality-check claim ("naive CAA on this model/setting fails to beat best prompt and harms calibration"),
+    the prereg implementation is substantially clean and the uncertainty harm CI is non-trivial.
+  strongest_reject_case: >
+    If framed as general evidence for non-surjective behavioral impossibility, this is under-identified:
+    single method, single model family, possible measurement fragility on uncertainty axis, and no independent method family falsification.
+  clarity_mismatches:
+    - "Claim-ledger says C2 is supported; this is true only for scoped method/model claim, not for broad mechanism claim."
+    - "C2-mech off-manifold is currently inferential; language in reframe draft can read stronger than evidence."
+    - "C1 ratio<1 can be mistaken as theorem-like rather than geometry+operational metric requiring null/context."
+
+findings:
+  - finding_id: R2-B1
+    severity: blocker
+    dimension: soundness
+    target_claim_ids: [C2, C2-mech]
+    paper_locations:
+      - "docs/paper/reframe-2026-07-24-reality-check.md §2 C2/C2-mech"
+      - "docs/ledgers/claim-ledger.md C2/C2-mech"
+    criticism: >
+      The frozen adjudication validly supports a narrow claim ("CAA@Qwen2.5-7B failed to beat best prompt under this instrument"),
+      but not a broad non-surjective behavioral impossibility claim. Current narrative is close to over-transporting from method failure to mechanism truth.
+    evidence_examined: "E-0005 summary+JSON; prereg decision rule; adjudicate_c2b implementation."
+    why_it_matters_for_acceptance: "Top-tier reviewers will reject claim inflation from single-arm negative to general theory-level conclusion."
+    alternative_explanation: "CAA direction quality/manifold mismatch may be the cause; stronger latent intervention might recover behavior."
+    requested_evidence_or_change: >
+      Keep C2 as strictly method-and-model scoped in headline language, and demote off-manifold to explicit hypothesis unless independently tested.
+    cheapest_discriminating_action: >
+      Rewrite Abstract/Contributions with hard scope sentence: single model family + single steering family + qualified negative only.
+    acceptance_condition: "No general impossibility language; C2-mech labeled hypothesis until dedicated mechanism arm completes."
+    confidence: "high (4.5/5)"
+    possible_reviewer_misunderstanding: "None; this is claim-scope control, not denial of current negative."
+    requires_new_experiment: false
+    estimated_cost_class: "trivial"
+    user_approval_required: false
+
+  - finding_id: R2-B2
+    severity: blocker
+    dimension: statistics
+    target_claim_ids: [C2]
+    paper_locations:
+      - "results/c2b_adjudication_hf_2026-07-24/c2b_adjudication_results.json (uncertainty axis)"
+      - "docs/ledgers/prereg-c2b-adjudication.md §1, §5"
+      - "src/cognitive_console/experiments/adjudicate_c2b.py score_sample_outcome/_descriptive"
+    criticism: >
+      The uncertainty effect (mean d=-0.228, CI below 0) is strong, but internal-validity still depends on confidence parsing and answer-key extraction quality.
+      Bundle lacks parser-failure/truncation audit and alternative calibration summaries beyond 1-Brier gate metric, so degradation could partly be instrumentation-sensitive.
+    evidence_examined: >
+      JSON per-item outcomes show many extreme values (near 0/1) and large negative tails; prereg documents 1-Brier choice and ECE as descriptive-only.
+    why_it_matters_for_acceptance: "The single significant axis is a harm signal; if it is parser-sensitive, headline 'steering harms calibration' becomes fragile."
+    alternative_explanation: "Steering changed output format/confidence expression, hurting parser extraction more than underlying calibration."
+    requested_evidence_or_change: >
+      Add frozen post-hoc diagnostics (no criterion change): parse success rate by channel, confidence-length distribution, truncation counts, and descriptive ECE/NLL/Brier decomposition.
+    cheapest_discriminating_action: "Run transcript-level audit on existing outputs only; no rerun needed."
+    acceptance_condition: >
+      Show harm persists under robust extraction diagnostics and at least one auxiliary descriptive calibration readout on same cached generations.
+    confidence: "medium-high (4/5)"
+    possible_reviewer_misunderstanding: "I am not asking to change gate metric; only to prove harm is not an extraction artifact."
+    requires_new_experiment: false
+    estimated_cost_class: "low"
+    user_approval_required: false
+
+  - finding_id: R2-M1
+    severity: major
+    dimension: statistics
+    target_claim_ids: [C2]
+    paper_locations:
+      - "docs/ledgers/prereg-c2b-adjudication.md §4-§5"
+      - "results/c2b_adjudication_hf_2026-07-24/c2b_adjudication_summary.md"
+    criticism: >
+      Non-pass on deliberation/skepticism is currently "insufficient evidence of improvement," not strong evidence of null/equivalence.
+      CIs remain wide around delta=0.05 and include moderate positive values.
+    evidence_examined: "Delib CI [-0.040, +0.070], Skep CI [-0.225, +0.045], Bonferroni 98.33%."
+    why_it_matters_for_acceptance: "Without precision framing, reviewers may read 0/3 as over-claimed universal failure."
+    alternative_explanation: "Small positive effect may exist but unresolved under current N/variance."
+    requested_evidence_or_change: >
+      Report explicit MDE/power interpretation and avoid equivalence language for those two axes; characterize them as inconclusive-under-threshold.
+    cheapest_discriminating_action: "Add statistical interpretation paragraph and forest-style CI plot with ROPE around delta."
+    acceptance_condition: "Text distinguishes true harm axis from inconclusive axes; no 'proved no effect' wording."
+    confidence: "high (4/5)"
+    possible_reviewer_misunderstanding: "None."
+    requires_new_experiment: false
+    estimated_cost_class: "trivial"
+    user_approval_required: false
+
+  - finding_id: R2-M2
+    severity: major
+    dimension: empirical
+    target_claim_ids: [C2, C2-mech]
+    paper_locations:
+      - "docs/ledgers/claim-ledger.md C2 scope"
+      - "docs/paper/reframe-2026-07-24-reality-check.md §3 contribution bullets"
+    criticism: >
+      Single steering family (CAA) + single model family cannot support a strong top-tier mechanism narrative.
+      It supports a high-quality case study negative, not a field-level boundary claim.
+    evidence_examined: "Claim/evidence ledger scope statements; E-0005 single-run family."
+    why_it_matters_for_acceptance: "Generality expectations at CHI/IUI for mechanism claims are higher than one method/model slice."
+    alternative_explanation: "Failure is intervention-specific rather than channel-structure-specific."
+    requested_evidence_or_change: >
+      Add minimum robustness matrix before strong claiming: >=3 steering families × >=2 model families, with pre-registered same adjudication logic.
+    cheapest_discriminating_action: >
+      Stage-gated package: first add one orthogonal method (ITI or RepE) on current model; only then expand to second model if signal changes.
+    acceptance_condition: >
+      Either (a) broaden evidence matrix, or (b) intentionally narrow claim to "CAA reality-check case study" in title/abstract/conclusion.
+    confidence: "high (4/5)"
+    possible_reviewer_misunderstanding: "This is about top-tier claim strength, not denying current run quality."
+    requires_new_experiment: true
+    estimated_cost_class: "medium-high"
+    user_approval_required: true
+
+  - finding_id: R2-M3
+    severity: major
+    dimension: soundness
+    target_claim_ids: [C1]
+    paper_locations:
+      - "docs/ledgers/claim-ledger.md C1"
+      - "docs/paper/reframe-2026-07-24-reality-check.md §2 C1"
+    criticism: >
+      C1 ratio<1 can be partly geometric/operational artifact unless anchored with nulls and behavior linkage.
+      This bundle lacks C1 raw null distributions, layer/norm sensitivity tables, and direct ratio->behavior relation checks.
+    evidence_examined: "C1 summarized only in ledger/evidence text (E-0003), no raw manifests in bundle."
+    why_it_matters_for_acceptance: "If C1 is seen as metric artifact, the legibility-vs-control bridge weakens."
+    alternative_explanation: "Any prompt may naturally under-reach vector pole irrespective of meaningful facade."
+    requested_evidence_or_change: >
+      Add C1 robustness appendix: random-direction/prompt nulls, norm/layer sensitivity, and correlation with behavioral ceilings.
+    cheapest_discriminating_action: "Pull existing C1 artifacts and compute null-relative effect sizes; no new training required."
+    acceptance_condition: "C1 presented as null-relative empirical effect, not raw ratio theorem."
+    confidence: "medium-high (3.7/5)"
+    possible_reviewer_misunderstanding: "May already exist outside bundle; if so include it in review snapshot."
+    requires_new_experiment: false
+    estimated_cost_class: "low-medium"
+    user_approval_required: false
+
+  - finding_id: R2-m1
+    severity: minor
+    dimension: reproducibility
+    target_claim_ids: [C2]
+    paper_locations:
+      - "src/cognitive_console/experiments/adjudicate_c2b.py"
+      - "results/c2b_adjudication_hf_2026-07-24/c2b_adjudication_results.json"
+    criticism: >
+      Frozen implementation is generally faithful; however coherence gate includes an additive eps floor (0.02) beyond the plain prose description,
+      which should be explicitly documented in paper methods to avoid reviewer suspicion of hidden leniency.
+    evidence_examined: "COHERENCE_EPS_FLOOR and gate formula in code; frozen params in JSON."
+    why_it_matters_for_acceptance: "Transparency issue, not core validity issue."
+    alternative_explanation: "None."
+    requested_evidence_or_change: "State exact gate formula (1.5*baseline + eps_floor) and rationale in methods."
+    cheapest_discriminating_action: "One-methods-paragraph clarification."
+    acceptance_condition: "Formula explicitly reported."
+    confidence: "high (4/5)"
+    possible_reviewer_misunderstanding: "This is not a post-hoc change; code shows it was frozen."
+    requires_new_experiment: false
+    estimated_cost_class: "trivial"
+    user_approval_required: false
+
+answers_to_required_questions:
+  q1_single_method_single_model_fatal: >
+    对“广义 non-surjective 行为结论”是致命的；对“CAA@Qwen2.5-7B 在该冻结仪器下失败”不是致命的。
+    结论可成立但必须强约束作用域，不能上升为普遍机制真理。
+  q2_no_human_pure_model_soundness_and_full_paper: >
+    纯模型路线在方法学上可以自洽（尤其用于RQ1测量+RQ2 reality-check），但单靠它难以支撑一篇“完整 CHI 主线论文”。
+    若无人类研究，更像 ML-eval/measurement 论文；对 CHI 需至少补充明确 HCI 价值锚点或转向更方法导向 venue framing。
+  q3_venue_fit_ranking_by_evidence_shape: >
+    以当前证据形态（纯模型、负结果、机制未直接取证）排序：IUI >= CSCW > CHI。
+    IUI更接受智能交互系统+算法证据；CSCW可容纳反思性/责任化证据但需社会技术外延；CHI主会通常更期待更完整的人机证据链。
+  q4_minimum_robustness_package_for_top_tier: >
+    最低建议：steering方法>=3（CAA + ITI + RepE/分层CAA其一）× 模型家族>=2（如Qwen2.5-7B + Llama3-8B），
+    每格保持同一预注册裁决器；至少1个新seed复现关键轴（尤其uncertainty）。
+    off-manifold OOD机制取证若要把C2-mech写进贡献则“基本必需”（激活距离/局部线性度/退化与delta关联证据），
+    否则应降为未来工作假设。统计上需补：MDE/功效说明、等效/非劣边界解释、多重比较全表、效应量与CI图、解析失败敏感性分析。
+
+review_summary:
+  top_3_rejection_risks:
+    - "Scope overclaim: method-specific negative presented as general non-surjective behavioral theorem."
+    - "Uncertainty harm may be challenged as parser/instrument artifact without transcript-level diagnostics."
+    - "C1 facade ratio interpreted as geometric artifact due to missing null-relative robustness in current snapshot."
+  must_fix_before_next_gate:
+    - "Lock narrative scope of C2/C2-mech to evidence actually established."
+    - "Publish uncertainty-axis extraction robustness diagnostics on existing outputs."
+    - "Clarify inconclusive-vs-harm interpretation across three axes (no equivalence overclaim)."
+  optional_improvements:
+    - "Expose full C1 null/layer/norm robustness appendix in same review bundle."
+    - "Document coherence gate exact formula including eps floor in manuscript methods."
+  questions_for_manager:
+    - "Will paper title/abstract explicitly state 'single-method single-model qualified negative'?"
+    - "Is C2-mech intended as contribution claim or clearly as hypothesis/future-work?"
+    - "Is there budget/approval for >=1 orthogonal steering method replication before submission gate?"
+  score_if_unchanged: "2.8–3.3 / 5 (reject-leaning at CHI; borderline at IUI)."
+  score_if_blockers_closed: "3.4–3.9 / 5 (borderline-accept range depending on venue and framing discipline)."

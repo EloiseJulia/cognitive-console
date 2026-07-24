@@ -102,6 +102,13 @@ class ProgressTracker:
         self.done = 0
         self.fresh = 0
         self.t0 = time.time()
+        # Monotonic-ish wall-clock of the last observed progress. An external
+        # inactivity watchdog (runner) reads this to detect a SILENT hang (e.g. a
+        # host-driver reload that spins at 100% CPU with NO exception — D-0029).
+        self.last_activity = self.t0
+
+    def heartbeat(self) -> None:
+        self.last_activity = time.time()
 
     def _elapsed(self) -> float:
         return time.time() - self.t0
@@ -117,6 +124,7 @@ class ProgressTracker:
         self.done += int(n)
         if fresh:
             self.fresh += int(n)
+        self.last_activity = time.time()
 
     def _line(self, axis, phase, idx, total, items, tag):
         print(
@@ -127,9 +135,11 @@ class ProgressTracker:
         )
 
     def cell_start(self, axis, phase, idx, total, items):
+        self.last_activity = time.time()
         self._line(axis, phase, idx, total, items, "START")
 
     def cell_end(self, axis, phase, idx, total, items):
+        self.last_activity = time.time()
         self._line(axis, phase, idx, total, items, "DONE")
 
 
@@ -184,6 +194,11 @@ class CheckpointStore:
                 if rec.get("config") != self.fp:
                     continue  # different run config -> not resumable, ignore
                 key = (rec["axis"], rec["phase"], rec["cell_key"], str(rec["item_id"]))
+                # MINOR-2: duplicate lines for the same key (e.g. a cell re-run
+                # after a crash+resume) are load-order LAST-WINS — iterating files
+                # sorted and lines in append order means the most recently written
+                # record for a key overwrites earlier ones, which is the correct
+                # resume semantics. No explicit dedup needed.
                 self._cache[key] = (rec["outcomes"], rec["degeneracies"])
 
     def get(self, axis, phase, cell_key, item_id):

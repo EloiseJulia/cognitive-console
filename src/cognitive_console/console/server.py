@@ -1,0 +1,162 @@
+from __future__ import annotations
+
+import argparse
+import json
+from http import HTTPStatus
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from typing import Tuple
+
+from .data_loader import build_console_payload
+
+
+def _render_html() -> str:
+    return """<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reality-check Console v1</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #0f1220; color: #e9ecf7; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    .panel { background: #171b2f; border: 1px solid #2e3558; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+    h1, h2, h3 { margin-top: 0; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border-bottom: 1px solid #2e3558; padding: 8px; text-align: left; }
+    .muted { color: #aab2d5; font-size: 13px; }
+    .ok { color: #79e07d; font-weight: 700; }
+    .fail { color: #ffbd66; font-weight: 700; }
+    .warn { color: #ff6b6b; font-weight: 700; }
+    .badge { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; font-size: 12px; border: 1px solid #445083; color: #c7d0fa; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+    .card { border-radius: 10px; padding: 12px; border: 1px solid #2e3558; background: #13172a; }
+    .card.red { border-color: #a33; background: #2a1616; }
+    .card.amber { border-color: #8f6d2d; background: #2a2516; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Dual-channel Cognitive Console v1</h1>
+    <div class="muted" id="positioning"></div>
+    <div class="panel">
+      <h2>1) Dual-channel comparison (Prompt vs Latent)</h2>
+      <div class="muted">Boundary instrument: compare behavior outcomes instead of assuming latent superiority.</div>
+      <table id="channels-table">
+        <thead><tr><th>Axis</th><th>Prompt mean</th><th>Latent mean</th><th>Δ(steer-prompt)</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <h2>2) C1 legibility gap ratio + CI<span class="badge" id="c1-source"></span></h2>
+      <table id="c1-table">
+        <thead><tr><th>Axis</th><th>Prompt reach</th><th>Pole reach</th><th>Ratio</th><th>CI</th><th>Facade CI&lt;1</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <h2>3) C2 transfer check: Δ(steer−prompt) + Bonferroni CI</h2>
+      <div class="muted">Uncertainty boundary warning appears in red when latent control degrades calibration.</div>
+      <table id="c2-table">
+        <thead><tr><th>Axis</th><th>Δ(steer-prompt)</th><th>CI</th><th>Pass/Fail</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <h2>4) Trust-calibration panel: when not to trust latent control</h2>
+      <div class="grid" id="trust-grid"></div>
+    </div>
+    <div class="muted" id="provenance"></div>
+  </div>
+  <script>
+    const n = (x, digits=3) => (typeof x === "number" ? x.toFixed(digits) : "n/a");
+    const yesNo = (flag) => flag ? "<span class='ok'>yes</span>" : "<span class='fail'>no</span>";
+    fetch("/api/data")
+      .then((resp) => resp.json())
+      .then((data) => {
+        document.getElementById("positioning").textContent = data.positioning;
+        document.getElementById("c1-source").textContent = data.c1.source_mode;
+        document.getElementById("provenance").textContent =
+          `C2 source: ${data.provenance.c2b_results} | C1 source: ${data.provenance.c1_results} | fallback: ${data.provenance.evidence_ledger_fallback}`;
+
+        const chBody = document.querySelector("#channels-table tbody");
+        data.c2.rows.forEach((r) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${r.label}</td><td>${n(r.prompt_mean)}</td><td>${n(r.steer_mean)}</td><td>${n(r.mean_diff)}</td>`;
+          chBody.appendChild(tr);
+        });
+
+        const c1Body = document.querySelector("#c1-table tbody");
+        data.c1.rows.forEach((r) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${r.label}</td><td>${n(r.prompt_reach)}</td><td>${n(r.pole_reach)}</td><td>${n(r.ratio)}</td><td>[${n(r.ci_lo)}, ${n(r.ci_hi)}]</td><td>${yesNo(r.holds_ci)}</td>`;
+          c1Body.appendChild(tr);
+        });
+
+        const c2Body = document.querySelector("#c2-table tbody");
+        data.c2.rows.forEach((r) => {
+          const tr = document.createElement("tr");
+          const isCritical = r.axis === "uncertainty_awareness" && (typeof r.mean_diff === "number") && r.mean_diff < 0;
+          const valueClass = isCritical ? "warn" : "";
+          const passTag = r.passed ? "<span class='ok'>pass</span>" : "<span class='fail'>fail</span>";
+          tr.innerHTML = `<td>${r.label}</td><td class="${valueClass}">${n(r.mean_diff)}</td><td>[${n(r.ci_lo)}, ${n(r.ci_hi)}]</td><td>${passTag}</td>`;
+          c2Body.appendChild(tr);
+        });
+
+        const trust = document.getElementById("trust-grid");
+        data.trust_calibration.forEach((r) => {
+          const div = document.createElement("div");
+          const cls = r.severity === "red" ? "card red" : "card amber";
+          div.className = cls;
+          div.innerHTML = `<h3>${r.title}</h3><div>${r.body}</div>`;
+          trust.appendChild(div);
+        });
+      })
+      .catch((err) => {
+        document.body.innerHTML = `<pre>Failed to load console data: ${err}</pre>`;
+      });
+  </script>
+</body>
+</html>
+"""
+
+
+class _ConsoleHandler(BaseHTTPRequestHandler):
+    def _send(self, status: HTTPStatus, body: bytes, content_type: str) -> None:
+        self.send_response(status.value)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_GET(self) -> None:  # noqa: N802
+        if self.path == "/api/data":
+            payload = build_console_payload()
+            body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+            self._send(HTTPStatus.OK, body, "application/json; charset=utf-8")
+            return
+        if self.path in ("/", "/index.html"):
+            html = _render_html().encode("utf-8")
+            self._send(HTTPStatus.OK, html, "text/html; charset=utf-8")
+            return
+        self._send(HTTPStatus.NOT_FOUND, b"not found", "text/plain; charset=utf-8")
+
+    def log_message(self, format: str, *args: object) -> None:
+        return
+
+
+def run_server(host: str, port: int) -> None:
+    httpd = ThreadingHTTPServer((host, port), _ConsoleHandler)
+    print(f"Console running at http://{host}:{port}")
+    httpd.serve_forever()
+
+
+def parse_args(argv: Tuple[str, ...] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run reality-check console v1.")
+    parser.add_argument("--host", default="127.0.0.1", help="Host to bind (default: 127.0.0.1).")
+    parser.add_argument("--port", type=int, default=8000, help="Port to bind (default: 8000).")
+    return parser.parse_args(argv)
+
+
+def main() -> None:
+    args = parse_args()
+    run_server(args.host, args.port)

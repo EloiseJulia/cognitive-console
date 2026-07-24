@@ -6,6 +6,7 @@
 references:
   mishra_non_surjectivity:
     status: VERIFIED
+    cite_key: "mishra2026nonsurjective"
     relevance: "core background / theory guardrail"
     title: "Steered LLM Activations are Non-Surjective"
     authors: "Aayush Mishra; Daniel Khashabi; Anqi Liu"
@@ -19,6 +20,7 @@ references:
 
   psr_steer_like_llm:
     status: UNVERIFIED
+    cite_key: "psr_steer_like_llm"
     relevance: "direct recent threat: trained steering vs prompting"
     title: null
     authors: null
@@ -35,6 +37,7 @@ references:
 
   caa:
     status: VERIFIED
+    cite_key: "caa"
     relevance: "tested steering family / activation-steering lineage"
     title: "Steering Llama 2 via Contrastive Activation Addition"
     authors: null
@@ -49,6 +52,7 @@ references:
 
   actadd_activation_engineering:
     status: PARTIAL
+    cite_key: "actadd_activation_engineering"
     relevance: "foundational activation-addition lineage; less recent but still methodologically relevant"
     title: "Steering Language Models With Activation Engineering"
     authors: null
@@ -63,6 +67,7 @@ references:
 
   iti:
     status: UNVERIFIED
+    cite_key: "iti"
     relevance: "tested steering family in E-0006"
     title: null
     authors: null
@@ -78,6 +83,7 @@ references:
 
   repe:
     status: UNVERIFIED
+    cite_key: "repe"
     relevance: "adjacent representation-level steering/control lineage"
     title: null
     authors: null
@@ -93,6 +99,7 @@ references:
 
   huang_lim_feature_steering:
     status: VERIFIED
+    cite_key: "huang_lim_feature_steering"
     relevance: "nearest HCI interface neighbor"
     title: "Designing Intuitive Interfaces for Feature Steering of LLMs"
     authors: null
@@ -106,6 +113,7 @@ references:
 
   ai_instruments:
     status: VERIFIED
+    cite_key: "ai_instruments"
     relevance: "recent HCI prompt-control/direct-manipulation neighbor"
     title: "AI-Instruments"
     authors: null
@@ -120,6 +128,7 @@ references:
 
   labarta_attribution_action:
     status: VERIFIED
+    cite_key: "labarta_attribution_action"
     relevance: "recent interactive steering/trust contrast; modality caveat"
     title: "From Attribution to Action: A Human-Centered Application of Activation Steering"
     authors: null
@@ -134,6 +143,7 @@ references:
 
   latent_manipulator:
     status: VERIFIED
+    cite_key: "latent_manipulator"
     relevance: "recent surface-similar latent/slider HCI neighbor"
     title: "Latent Manipulator: Using Concept-Guided Embedding Manipulation to Steer Embedding Visualizations"
     authors: "Raval; Dunnell; Lippman"
@@ -148,6 +158,7 @@ references:
 
   mind_the_performance_gap:
     status: UNVERIFIED
+    cite_key: "mind_the_performance_gap"
     relevance: "recent steering-vs-prompting / steering fragility neighbor"
     title: null
     authors: null
@@ -164,6 +175,7 @@ references:
 
   coninstruct:
     status: UNVERIFIED
+    cite_key: "coninstruct"
     relevance: "recent LLM conflict benchmark contrast"
     title: null
     authors: null
@@ -180,6 +192,7 @@ references:
 
   instruction_hierarchy_conflict:
     status: UNVERIFIED
+    cite_key: "instruction_hierarchy_conflict"
     relevance: "recent instruction-conflict/control contrast"
     title: null
     authors: null
@@ -195,6 +208,7 @@ references:
 
   learning_to_trust_confidence:
     status: UNVERIFIED
+    cite_key: "learning_to_trust_confidence"
     relevance: "recent trust-calibration HCI/IUI-adjacent background"
     title: null
     authors: null
@@ -210,6 +224,7 @@ references:
 
   system_prompt_user_control:
     status: UNVERIFIED
+    cite_key: "system_prompt_user_control"
     relevance: "recent prompt-control perception neighbor"
     title: null
     authors: null

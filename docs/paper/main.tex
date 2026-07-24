@@ -1,0 +1,141 @@
+\documentclass[sigconf]{acmart}
+
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    Bib\TeX}}}
+
+\setcopyright{none}
+\settopmatter{printacmref=false, printccs=false, printfolios=true}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+
+\title{Legible Is Not Controllable: A Frozen Reality Check for Prompt-vs-Latent Behavioral Control in LLMs}
+
+\author{Anonymous Authors}
+\affiliation{%
+  \institution{Anonymous Institution}
+  \country{}}
+\email{anonymous@example.com}
+
+\begin{document}
+
+\begin{abstract}
+This is a scaffold, not a paper freeze. The abstract will state only evidence-backed claims: an exploratory representational-facade measurement (C1), a frozen and independently audited behavioral non-transfer result across CAA/ITI $\times$ Qwen/Llama (C2), the replicated calibration-harm finding, and the non-empirical design implication that cognitive consoles should surface limits rather than promise latent control. Internal non-surjectivity is cited as background only \cite{mishra2026nonsurjective}; it is not claimed as our empirical result.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+\label{sec:introduction}
+Large language model interfaces increasingly expose controls that appear legible to end users. This paper asks whether a readable cognitive axis is also a reliable behavioral control primitive.
+
+\paragraph{Motivation and scope.}
+Mishra et al.'s non-surjectivity result motivates an internal prompt/latent gap \cite{mishra2026nonsurjective}. We treat that result as theory background, not as evidence that prompting is behaviorally impossible.
+
+\paragraph{Contributions.}
+The contribution list must remain tied to \texttt{docs/paper/claim-map.yaml}.
+\begin{enumerate}
+  \item \textbf{C1, exploratory measurement:} a representational-facade measurement on Qwen2.5-7B where readable prompts reach only a fraction of the extracted pole for 3/4 axes; Llama replication remains pending.
+  \item \textbf{C2, headline result:} under a frozen adjudicator, naive CAA/ITI steering fails to beat the bounded best-prompt ceiling in all tested method--model cells and harms uncertainty calibration in all four cells.
+  \item \textbf{Methodology asset:} a reusable frozen prompt-vs-latent behavioral adjudication protocol.
+  \item \textbf{C3, design implication only:} cognitive consoles should instrument limits and trust-calibration risks rather than promise latent control. No empirical user-study credit is claimed on this route.
+\end{enumerate}
+
+\section{Related Work}
+\label{sec:related-work}
+
+\subsection{Non-surjectivity and Prompt--Latent Mismatch}
+Internal-state non-surjectivity motivates this work \cite{mishra2026nonsurjective}. Behavioral non-transfer is tested by our frozen adjudicator rather than inferred from that theory.
+
+% TODO VERIFY: psr_steer_like_llm
+% TODO VERIFY: mind_the_performance_gap
+
+\subsection{Activation Steering Lineage}
+This section will cite CAA, ITI, RepE, and ActAdd only after verified BibTeX entries are reconciled from \texttt{docs/research/2026-07-24-citation-verification.md}.
+
+% TODO VERIFY: caa
+% TODO VERIFY: iti
+% TODO VERIFY: repe
+% TODO VERIFY: actadd_activation_engineering
+
+\subsection{HCI and Interface Neighbors}
+The nearest interface neighbors include prompt-layer direct manipulation, feature-steering interfaces, and latent visualization tools. Verified BibTeX should be slotted into \texttt{references.bib} by the stable keys in \texttt{citation-map.yaml}. The open-risks caveat remains: Labarta is a vision/CLIP expert-debugging contrast, not an LLM latent-control UI.
+
+% TODO VERIFY: ai_instruments
+% TODO VERIFY: huang_lim_feature_steering
+% TODO VERIFY: labarta_attribution_action
+% TODO VERIFY: latent_manipulator
+% TODO VERIFY: learning_to_trust_confidence
+% TODO VERIFY: system_prompt_user_control
+
+\subsection{Nearest-Neighbor Novelty Contrast}
+\label{sec:novelty-contrast}
+The machine-readable version of this contrast is in \texttt{docs/paper/citation-map.yaml}; the prose/table version is scaffolded in \texttt{docs/paper/outline.md}. The novelty unit is not ``steering and prompting differ,'' but a frozen, fairness-controlled, independently audited behavioral adjudication showing that legibility does not transfer to control across 2 methods $\times$ 2 models, with a replicated calibration-harm sub-finding.
+
+\section{Methods}
+\label{sec:methods}
+
+\subsection{C1 Facade Measurement}
+The C1 figure must be rebuilt from \texttt{results/gpu\_7b\_2026-07-23/c1/c1\_facade\_results.json}; provenance is recorded in \texttt{docs/paper/figure-manifests/c1-ratio-ci.yaml}. No numeric values should be copied manually into this file.
+
+\subsection{Frozen Behavioral Adjudicator}
+The adjudicator uses DEV-only selection of prompts and steering strengths, paired TEST comparisons, item-cluster bootstrap, Bonferroni correction, and a coherence gate. The protocol source is \texttt{docs/ledgers/prereg-c2b-adjudication.md}.
+
+\subsection{Steering Families and Models}
+The 2$\times$2 robustness arm covers CAA/ITI $\times$ Qwen2.5-7B/Llama-3-8B. Llama provenance follows D-0038.
+
+\subsection{Audit and Artifact Lineage}
+All main tables and figures must trace to manifests under \texttt{docs/paper/table-manifests/} and \texttt{docs/paper/figure-manifests/}. The LaTeX source should contain placeholders, not hand-entered results.
+
+\section{Results}
+\label{sec:results}
+
+\subsection{Representational Facade Ratio (C1)}
+\begin{figure}[t]
+  \centering
+  \fbox{\parbox{0.9\linewidth}{Placeholder for C1 ratio-CI figure. Rebuild from \texttt{docs/paper/figure-manifests/c1-ratio-ci.yaml}.}}
+  \caption{Exploratory representational-facade ratios by axis. This figure must be generated from the manifest and labeled as Qwen2.5-7B exploratory evidence.}
+  \label{fig:c1-ratio-ci}
+\end{figure}
+
+Figure~\ref{fig:c1-ratio-ci} will carry C1 with explicit caveats: focus overshoot/no-facade, deliberation layer sensitivity, and pending Llama replication.
+
+\subsection{Frozen Prompt-vs-Latent Delta Table (C2)}
+\begin{table*}[t]
+  \centering
+  \caption{Placeholder for the 4-cell frozen adjudication $\Delta$ table. Rebuild from \texttt{docs/paper/table-manifests/c2-delta-4cell.yaml}; do not hand-type numeric results here.}
+  \label{tab:c2-delta-4cell}
+  \begin{tabular}{llllll}
+    \toprule
+    Method & Model & Axis & $\Delta$ steer--prompt & Bonferroni CI & Pass? \\
+    \midrule
+    \multicolumn{6}{c}{Generated rows go here.} \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+Table~\ref{tab:c2-delta-4cell} is the C2 headline artifact: all four cells are 0/3 axes under the frozen rule, but final table values must come from the manifest pipeline.
+
+\subsection{Calibration Harm Across Four Cells}
+\begin{figure}[t]
+  \centering
+  \fbox{\parbox{0.9\linewidth}{Placeholder for calibration-harm figure. Rebuild from \texttt{docs/paper/figure-manifests/c2-calibration-harm-4cell.yaml}.}}
+  \caption{Calibration harm on the uncertainty axis across method--model cells. Mechanism remains open after the E-0007 valid null.}
+  \label{fig:c2-calibration-harm}
+\end{figure}
+
+\section{Design Implications}
+\label{sec:design-implications}
+C3 is non-empirical on the pure-model route. The design implication is to treat the console as a limits and trust-calibration instrument, not as evidence that users can control latent states.
+
+\section{Limitations}
+\label{sec:limitations}
+C1 is exploratory and single-model pending Llama replication. C2 is scoped to bounded prompt effort and naive/off-the-shelf CAA/ITI. The result is not an impossibility theorem. The calibration-harm mechanism is open, and the human-study fork remains owner-gated.
+
+\section{Future Work}
+\label{sec:future-work}
+Future work includes the frozen latent-recovery arm for PSR-style DEV-optimized steering, Llama C1 replication, a possible owner-approved human study, and a new preregistered mechanism package for calibration harm.
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}

@@ -193,12 +193,19 @@ class _FakeBlock:
     def __init__(self, bias):
         self._bias = float(bias)
         self._hooks = []
+        self._pre_hooks = []
 
     def register_forward_hook(self, fn):
         self._hooks.append(fn)
         return _FakeHandle(self._hooks, fn)
 
+    def register_forward_pre_hook(self, fn):
+        self._pre_hooks.append(fn)
+        return _FakeHandle(self._pre_hooks, fn)
+
     def forward(self, hidden):
+        for pre_hook in list(self._pre_hooks):
+            pre_hook(self, (hidden,))
         pre = hidden + self._bias
         output = (pre,)
         for hook in list(self._hooks):
@@ -236,9 +243,27 @@ class _FakeTokenizer:
 
 
 class _FakeModel:
+    class _FakeBaseModel:
+        def __init__(self, *, layers, hidden_size):
+            self.layers = layers
+            self._hidden_size = int(hidden_size)
+
+        def __call__(self, **enc):
+            enc.pop("use_cache", None)
+            enc.pop("output_hidden_states", None)
+            ids = enc["input_ids"].numpy().astype(np.float32)
+            hidden = np.repeat(ids[..., None], self._hidden_size, axis=-1)
+            hidden += np.arange(self._hidden_size, dtype=np.float32).reshape(1, 1, -1)
+            cur = _FakeTensor(hidden)
+            for block in self.layers:
+                _pre, post = block.forward(cur)
+                cur = post
+            return types.SimpleNamespace(hidden_states=None)
+
     def __init__(self, n_layers, hidden_size):
-        self.model = types.SimpleNamespace(
-            layers=[_FakeBlock(i + 1) for i in range(n_layers)]
+        self.model = self._FakeBaseModel(
+            layers=[_FakeBlock(i + 1) for i in range(n_layers)],
+            hidden_size=hidden_size,
         )
         self._hidden_size = int(hidden_size)
 
@@ -294,11 +319,30 @@ def test_capture_residual_left_padding_matches_singleton(monkeypatch):
     backend = _build_fake_backend(monkeypatch, n_layers=2, hidden_size=4)
 
     prompts = ["A", "A much longer prompt", "mid size"]
-    batched = backend.capture_residual_activations(prompts, layer=1)
+    batched = backend.capture_residual_activations(prompts, layer=1, batch_size=8)
     single = np.vstack(
         [backend.capture_residual_activations([prompt], layer=1)[0] for prompt in prompts]
     )
     np.testing.assert_allclose(batched, single)
+
+
+def test_capture_residual_batching_is_equivalent(monkeypatch):
+    backend = _build_fake_backend(monkeypatch, n_layers=2, hidden_size=4)
+    prompts = ["alpha", "beta beta", "gamma gamma gamma", "delta"]
+    one_shot = backend.capture_residual_activations(prompts, layer=1, batch_size=len(prompts))
+    chunked = backend.capture_residual_activations(prompts, layer=1, batch_size=2)
+    np.testing.assert_allclose(chunked, one_shot)
+
+
+def test_capture_residual_unsteered_equals_zero_alpha_steer(monkeypatch):
+    backend = _build_fake_backend(monkeypatch, n_layers=2, hidden_size=4)
+    prompts = ["alpha beta", "gamma delta"]
+    layer = 1
+    direction = np.array([1.0, 2.0, 3.0, 4.0], dtype=np.float64)
+    steer_zero = SteerConfig(direction=direction, alpha=0.0, layer=layer)
+    baseline = backend.capture_residual_activations(prompts, layer=layer, steer=None)
+    zero = backend.capture_residual_activations(prompts, layer=layer, steer=steer_zero)
+    np.testing.assert_allclose(zero, baseline, rtol=0.0, atol=1e-6)
 
 
 def test_capture_residual_steered_minus_baseline_matches_alpha_direction(monkeypatch):

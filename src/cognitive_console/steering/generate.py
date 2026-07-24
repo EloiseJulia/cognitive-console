@@ -437,12 +437,29 @@ class SteeredHFBackend(GenBackend):
 
         return hook
 
+    @staticmethod
+    def _make_capture_input_hook(*, attn, padding_side: str, sink: dict):
+        import torch
+
+        def hook(module, inputs):
+            hidden = inputs[0]
+            if attn is None or padding_side == "left":
+                sink["last"] = hidden[:, -1, :]
+            else:
+                last_idx = attn.sum(dim=1) - 1
+                rows = torch.arange(hidden.shape[0], device=hidden.device)
+                sink["last"] = hidden[rows, last_idx, :]
+            return None
+
+        return hook
+
     def capture_residual_activations(
         self,
         prompts: Sequence[str],
         layer: int,
         *,
         steer: Optional[SteerConfig] = None,
+        batch_size: Optional[int] = 8,
     ) -> np.ndarray:
         """Capture last-token residual activations at one hidden-state layer.
 
@@ -461,75 +478,87 @@ class SteeredHFBackend(GenBackend):
         prompts = list(prompts)
         if not prompts:
             return np.empty((0, self.hidden_dim), dtype=np.float32)
+        if batch_size is None:
+            batch_size = len(prompts)
+        batch_size = int(batch_size)
+        if batch_size <= 0:
+            raise ValueError(f"batch_size must be positive, got {batch_size}")
 
-        texts = [
-            self._render_user_chat_prompt(self._tokenizer, p, self.model_name)
-            for p in prompts
-        ]
-        self._tokenizer.padding_side = "left"
-        enc = self._tokenizer(
-            texts,
-            return_tensors="pt",
-            padding=True,
-            truncation=True,
-            max_length=self.max_length,
-        )
-        enc = {k: v.to(self.device) for k, v in enc.items()}
-
-        attn = enc.get("attention_mask")
+        base_model = getattr(self._model, "model", self._model)
         padding_side = getattr(self._tokenizer, "padding_side", "right")
-        handles = []
-        if steer is not None and abs(float(steer.alpha)) > _EPS:
-            if not (1 <= int(steer.layer) <= n_layers):
-                raise ValueError(
-                    f"steer.layer {steer.layer} out of range 1..{n_layers} "
-                    f"(hidden_states index; hooks decoder block layer-1)"
-                )
-            block = self._layers[int(steer.layer) - 1]
-            handles.append(block.register_forward_hook(self._make_hook(steer)))
+        out_rows = []
 
-        captured = {"last": None}
-        if layer >= 1:
-            # Register capture AFTER steering so same-block capture sees post-steer output.
-            capture_block = self._layers[layer - 1]
-            handles.append(
-                capture_block.register_forward_hook(
-                    self._make_capture_hook(
-                        attn=attn,
-                        padding_side=padding_side,
-                        sink=captured,
+        for start in range(0, len(prompts), batch_size):
+            batch_prompts = prompts[start : start + batch_size]
+            texts = [
+                self._render_user_chat_prompt(self._tokenizer, p, self.model_name)
+                for p in batch_prompts
+            ]
+            self._tokenizer.padding_side = "left"
+            enc = self._tokenizer(
+                texts,
+                return_tensors="pt",
+                padding=True,
+                truncation=True,
+                max_length=self.max_length,
+            )
+            enc = {k: v.to(self.device) for k, v in enc.items()}
+
+            attn = enc.get("attention_mask")
+            handles = []
+            if steer is not None and abs(float(steer.alpha)) > _EPS:
+                if not (1 <= int(steer.layer) <= n_layers):
+                    raise ValueError(
+                        f"steer.layer {steer.layer} out of range 1..{n_layers} "
+                        f"(hidden_states index; hooks decoder block layer-1)"
+                    )
+                block = self._layers[int(steer.layer) - 1]
+                handles.append(block.register_forward_hook(self._make_hook(steer)))
+
+            captured = {"last": None}
+            if layer == 0:
+                if n_layers < 1:
+                    raise RuntimeError("decoder has no blocks; cannot capture layer 0 residual")
+                capture_block = self._layers[0]
+                handles.append(
+                    capture_block.register_forward_pre_hook(
+                        self._make_capture_input_hook(
+                            attn=attn,
+                            padding_side=padding_side,
+                            sink=captured,
+                        )
                     )
                 )
-            )
-
-        try:
-            with torch.no_grad():
-                out = self._model(
-                    **enc,
-                    output_hidden_states=(layer == 0),
-                    use_cache=False,
-                )
-        finally:
-            for handle in reversed(handles):
-                handle.remove()
-
-        if layer == 0:
-            hs = out.hidden_states[layer]
-            if attn is None or padding_side == "left":
-                # With left padding, sequence end is always the true final token.
-                last = hs[:, -1, :]
             else:
-                last_idx = attn.sum(dim=1) - 1
-                rows = torch.arange(hs.shape[0], device=hs.device)
-                last = hs[rows, last_idx, :]
-        else:
+                # Register capture AFTER steering so same-block capture sees post-steer output.
+                capture_block = self._layers[layer - 1]
+                handles.append(
+                    capture_block.register_forward_hook(
+                        self._make_capture_hook(
+                            attn=attn,
+                            padding_side=padding_side,
+                            sink=captured,
+                        )
+                    )
+                )
+
+            try:
+                with torch.no_grad():
+                    # Capture runs on decoder-block hooks; call base model so lm_head
+                    # logits are never materialized during activation capture.
+                    base_model(**enc, use_cache=False)
+            finally:
+                for handle in reversed(handles):
+                    handle.remove()
+
             last = captured["last"]
             if last is None:
                 raise RuntimeError(
                     "capture hook did not fire for requested layer "
                     f"{layer} (decoder block index {layer - 1})"
                 )
-        return last.to(torch.float32).cpu().numpy()
+            out_rows.append(last.to(torch.float32).cpu().numpy())
+        return np.concatenate(out_rows, axis=0)
 
     # -- generation -------------------------------------------------------
     def generate(

@@ -49,6 +49,22 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-24 · D-0031 · Pre-run generation-mechanics addendum FROZEN (max_new_tokens=64, batch=16, stall=600s)
+- **Owner (@EloiseJulia) directive:** write the pre-run re-registration draft ready-to-go.
+- **Frozen into prereg §5a (PRE-RUN, no results seen — pre-registered, not post-hoc):** max_new_tokens=64
+  (short-answer tasks; 256 was overkill/4× slower; answer parsers key on final answer/MC letter/confidence,
+  fit in 64), batch_size=16 (audit-verified greedy batched == single-sequence EXACT on 1.5B; in checkpoint
+  fingerprint), stall_timeout=600s (D-0029 hang guard), seed=20260723. **N unchanged = 60/60/80, k=5** (the
+  hardened instrument runs full frozen N in ~25-50min → no reduction needed). Must checkpoint/resume + run on
+  a controlled machine or confirmed no-driver-maintenance window.
+- **Statistical decision rule + §5 statistical params UNCHANGED** (paired cluster bootstrap, DEV/TEST,
+  three-tier, Bonferroni, δ=0.05, coherence, per-item Brier). This addendum is compute-mechanics only.
+- **Exact run command (ready):** `python scripts/run_c2b_adjudication.py --backend hf
+  --model Qwen/Qwen2.5-7B-Instruct --bootstrap-b 10000 --seed 20260723 --batch-size 16 --max-new-tokens 64
+  --stall-timeout 600 --hf-home <scratch>/hf_home` (NOT --use-fixture; real GSM8K/TruthfulQA/TriviaQA).
+- **Status:** instrument READY; awaiting human GPU allocation on a controlled/maintenance-free machine.
+- **Frozen?** YES — §5a frozen. Nothing left to decide pre-run except when/where the GPU runs.
+
 ## 2026-07-24 · D-0030 · C2b instrument HARDENED + audited + smoke-verified; ready for a controlled re-run
 - **Done (feature/9 merged):** progress logging (flushed, per-cell + ETA + startup budget printout),
   per-cell checkpoint/resume (resumable, config-fingerprinted incl. batch_size+do_sample after audit MAJOR-1),

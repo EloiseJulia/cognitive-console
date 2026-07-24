@@ -90,6 +90,23 @@ false kill, while Bonferroni + the single-axis-must-replicate rule guard against
 - Bootstrap: cluster (item-level), B ≥ 10000, two-sided; per-axis CI at **1 − 0.05/3** (Bonferroni).
 - Decision: paired-diff CI excludes 0 AND point ≥ δ AND coherence-gate pass; three-tier verdict as in §4.
 
+### 5a. Pre-run generation-mechanics addendum (frozen 2026-07-24, D-0031 — PRE-RUN, no results seen)
+These fix generation COMPUTE mechanics only; they do NOT touch the §4 statistical decision rule or the §5
+statistical parameters (N, k, δ, α grid, DEV/TEST, Bonferroni, coherence, bootstrap). Recorded pre-run so they
+are pre-registered, not post-hoc.
+- **max_new_tokens = 64** (was an un-frozen default 256). Justification: the three tasks have SHORT answers —
+  GSM8K final number, TruthfulQA MC letter, TriviaQA short answer + a verbalized confidence — so 64 new tokens
+  is ample; 256 was overkill and 4× slower. Risk noted: 64 could truncate an unusually long chain; the answer
+  parsers key on the final answer/MC letter/confidence, which fit well within 64. If any axis shows pervasive
+  truncation of the keyed answer in the logs, that is reported as a limitation (not a criteria change).
+- **batch_size = 16** (batched generation; audit-verified greedy batched == single-sequence EXACT on
+  Qwen2.5-1.5B; sampled cells deterministic per fixed batch_size, which is now in the checkpoint fingerprint).
+- **stall_timeout = 600s** (inactivity watchdog → hard-exit on a silent GPU/driver hang, per D-0029).
+- **N unchanged = 60/60/80, k=5** — the hardened instrument runs the full frozen N in ~25–50 min, so no N
+  reduction is needed. seed = 20260723 (as before).
+- **Run must checkpoint/resume** (per-cell) and run on a machine we control OR a confirmed no-driver-maintenance
+  window (D-0029 root cause).
+
 ## 6. Freeze block
 - protocol_frozen: **YES — frozen 2026-07-23 after owner confirmation of the §4 decision rule + §5 parameters.**
 - After freeze: tasks, outcome proxies, DEV/TEST protocol, α grid, δ, coherence bound, bootstrap/clustering,

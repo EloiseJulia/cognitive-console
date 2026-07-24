@@ -133,6 +133,16 @@ def _build_single_cell_argv(args, cell: MatrixCell, out_dir: Path) -> List[str]:
         argv.append("--fresh")
     if args.save_transcripts:
         argv.append("--save-transcripts")
+    if args.enable_stronger_prompt_optimizer:
+        argv.append("--enable-stronger-prompt-optimizer")
+        if args.prompt_opt_budget is not None:
+            argv.extend(["--prompt-opt-budget", str(args.prompt_opt_budget)])
+        argv.extend(["--prompt-opt-seed-prompts", str(args.prompt_opt_seed_prompts)])
+        argv.extend(["--prompt-opt-rounds", str(args.prompt_opt_rounds)])
+        argv.extend(
+            ["--prompt-opt-candidates-per-round", str(args.prompt_opt_candidates_per_round)]
+        )
+        argv.extend(["--prompt-opt-keep-top-k", str(args.prompt_opt_keep_top_k)])
     if args.n_items is not None:
         argv.extend(["--n-items", str(args.n_items)])
     if args.hf_home:
@@ -250,6 +260,16 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--seed", type=int, default=20260723)
     ap.add_argument("--n-items", type=int, default=None)
     ap.add_argument("--n-strong", type=int, default=single.DEFAULT_N_STRONG)
+    ap.add_argument("--enable-stronger-prompt-optimizer", action="store_true")
+    ap.add_argument("--prompt-opt-budget", type=int, default=None)
+    ap.add_argument("--prompt-opt-seed-prompts", type=int, default=single.DEFAULT_PROMPT_OPT_SEED_PROMPTS)
+    ap.add_argument("--prompt-opt-rounds", type=int, default=single.DEFAULT_PROMPT_OPT_ROUNDS)
+    ap.add_argument(
+        "--prompt-opt-candidates-per-round",
+        type=int,
+        default=single.DEFAULT_PROMPT_OPT_CANDIDATES_PER_ROUND,
+    )
+    ap.add_argument("--prompt-opt-keep-top-k", type=int, default=single.DEFAULT_PROMPT_OPT_KEEP_TOP_K)
     ap.add_argument("--n-extraction", type=int, default=28)
     ap.add_argument("--bootstrap-b", type=int, default=adj.BOOTSTRAP_B)
     ap.add_argument("--allow-underpowered", action="store_true")

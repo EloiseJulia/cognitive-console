@@ -5,6 +5,38 @@
 
 ---
 
+## 2026-07-24 · D-0034 · C2b VERDICT = KILL_PLAN_D (0/3), audited VALID_NEGATIVE → escalate Plan-D pivot
+- **Result:** Corrected frozen instrument (D-0033 fix) ran the FULL pre-registered protocol on
+  Qwen2.5-7B-Instruct: **11,365 generations, wall 29 min, RC=0, no stall.** Per-axis mean paired diff
+  (test_steer − test_prompt), Bonferroni-0.98333 item-cluster-bootstrap CI:
+  - deliberation +0.015 [-0.040, +0.070] — CI crosses 0 → no
+  - skepticism  -0.080 [-0.225, +0.045] — no
+  - uncertainty **-0.228 [-0.370, -0.092]** — significantly NEGATIVE (steering hurts) → no
+  All coherence gates ok; frozen α = 2/6/8 (NOT compressed by the gate). **axes passing = 0/3 →
+  VERDICT = KILL_PLAN_D** (frozen §4 three-tier rule). Evidence E-0005; exp c2b-adj-deac6326-0001.
+- **Independent hostile audit (audit-c2b-verdict): VALID_NEGATIVE, no BLOCKER.** Re-derived all three
+  CIs from raw per-item diffs == JSON exactly; confirmed instrument truly ran (not silent failure),
+  C1@7B 3/3 facade consistent, outcomes non-degenerate (not all-0/1), pairing/clustering correct,
+  the null is NOT a coherence-gate/α-compression artifact. Only non-blocking notes: checkpoints/ subdir
+  not pulled (MINOR, raw diffs are in JSON); dev-side per-item outcomes only as means (UNVERIFIED, test
+  side full + non-degenerate).
+- **Scientific reading (audit + Manager):** naive CAA latent steering does NOT beat the best-prompt
+  ceiling behaviorally on any axis (and hurts on uncertainty). This is **strong method-weakness evidence**
+  and is **consistent with** the non-surjective narrative (prompt is a strong behavioral ceiling), but is
+  **single-model + single-method → NOT a decisive general non-surjectivity proof.** The original RQ2
+  confirmatory bet ("latent steering reaches behavior BEYOND the bounded-prompt ceiling") is **not
+  supported** by our own frozen test.
+- **Decision (Manager):** The frozen prereg pre-committed 0-pass → KILL → Plan D. Manager marks C2/H2
+  (behavioral-reachability-beyond-prompt) **REFUTED-on-our-instrument (exploratory, single model)**;
+  E-0004 (crude-proxy) formally superseded by E-0005. **BUT enacting Plan D reshapes the paper's core
+  Claim / RQ structure → AGENTS.md §5 item → ESCALATE to human before rewriting Charter.** Recommendation
+  to human: pivot to **Plan D** = RQ1-core measurement/console paper (C1 facade 3/3 @7B = E-0003 banked)
+  + honest behavioral-negative (E-0005) reframed as "prompt is a strong ceiling naive latent steering
+  can't cross" — NOT a claim that latent steering is impossible.
+- **Cost/cleanup:** rented box (RTX 4080 SUPER 32GB) WIPED (all result/log artifacts pulled local first);
+  human asked to 关机 the instance to stop hourly billing.
+- **Frozen?** Prereg honored, judgment rule UNCHANGED post-results. Charter core-claim change PENDING human.
+
 ## 2026-07-24 · D-0033 · KILLED 3rd A800 run: loader ignored frozen per-axis N (protocol-scale bug)
 - **Trigger:** On the rented bjb1 box the auto-chain fired the frozen adjudication after the 15GB model
   finished downloading. **C1 re-derived on 7B = 3/3 axes facade** (deliberation ratio 0.583 CI[0.488,0.681],

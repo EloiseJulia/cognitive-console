@@ -1,0 +1,300 @@
+# ============================================================================
+# R1 (Novelty & Significance) verdict: MAJOR-REVISION / borderline reject for CHI now.
+# Strongest value is an honest, pre-registered behavioral negative that separates
+# "readable representation" from "useful control." Current fatal risk is external
+# validity: single method (CAA) + single family (Qwen2.5) makes novelty easy to
+# dismiss as method-specific failure. This can still be competitive for IUI (model-
+# first reality-check framing) if robustness is expanded and mechanism language stays
+# explicitly hypothesis-level.
+# ============================================================================
+
+review_id: review-R1-reality-check-reframe-2026-07-24
+snapshot_id: 2026-07-24-reality-check-reframe
+reviewer_role: "R1 — Novelty & Significance (IUI/CHI simulation, independent)"
+target_venue: "IUI/CHI (route-A pure-model framing)"
+review_stage: reframe-reality-check
+review_scope: >
+  Evaluate whether the reframed core (C1 + C2 negative + C2-mech hypothesis) is
+  sufficiently novel and significant for top-tier HCI venues under a pure-model route.
+  Focus on novelty delta against known steering-vs-prompt literature and whether
+  evidence strength can sustain the headline claim without human-subject studies.
+
+materials_examined:
+  - docs/paper/reframe-2026-07-24-reality-check.md
+  - docs/ledgers/claim-ledger.md
+  - docs/ledgers/evidence-ledger.md
+  - results/c2b_adjudication_hf_2026-07-24/c2b_adjudication_summary.md
+  - docs/ledgers/prereg-c2b-adjudication.md
+  - 开题报告_非满射双通道认知控制台.md
+
+missing_materials:
+  - "No multi-family replication for C2 (currently Qwen2.5-7B only)."
+  - "No method diversity beyond CAA-family intervention."
+  - "No direct comparator to stronger prompt-search baselines (only best-of-16 prompt in current protocol)."
+  - "No direct off-manifold diagnostic evidence (C2-mech remains inferential)."
+  - "No human-study evidence for C3 (acknowledged as proposed only)."
+
+expertise_level: "high on novelty/significance in HCI+LLM control literature; medium on low-level mechanistic proof"
+conflict_check: "no conflict; did not read manager expectations or response files"
+overall_score_range: "IUI: 2.8-3.7 / 5 ; CHI: 2.3-3.2 / 5 (current bundle only)"
+confidence: "medium-high"
+verdict: major-revision
+
+paper_understanding:
+  one_sentence_problem: >
+    The work tests whether a latent direction that is legible in representation space
+    actually transfers into superior behavioral control over strong prompting, and
+    reports that this transfer fails under a frozen adjudication, with calibration harm.
+  claimed_contributions:
+    - "C1: A measurable representational legibility gap (prompt reaches only part of CAA direction extent) on 3/4 axes at Qwen2.5-7B."
+    - "C2: A pre-registered behavioral reality-check: steer-only on that legible direction does not beat the best prompt ceiling on 0/3 adjudicated axes; uncertainty calibration worsens."
+    - "C2-mech: Off-manifold explanation as a mechanism hypothesis for why legible directions may be behaviorally invalid control coordinates."
+    - "Design implication: shift console positioning from 'superpower control' to 'boundary/trust-calibration instrument' (currently conceptual, no human evidence)."
+  strongest_accept_case: >
+    As a rigorously frozen negative, this is more than "our method failed": it directly
+    challenges a widespread implicit assumption ("if a direction is readable, steering
+    it should help behavior"), with paired item-cluster bootstrap, multiplicity control,
+    DEV/TEST separation, and explicit kill criteria. That combination of disciplined
+    falsification + actionable design reframing can be publishable as a high-value
+    reality-check paper, especially in IUI.
+  strongest_reject_case: >
+    The headline may be judged incremental or under-scoped: prior work already frames
+    prompt-vs-latent mismatch/non-equivalence (Mishra non-surjectivity backdrop,
+    activation-steering-vs-prompt comparisons, PSR/Steer-like families). With only one
+    steering method family and one model family, reviewers can dismiss C2 as
+    "CAA-on-Qwen limitation," not a field-relevant insight.
+  clarity_mismatches:
+    - "C2-mech wording occasionally reads causal; evidence only supports consistency, not mechanism proof."
+    - "C2 currently mixes 'prompt is a strong ceiling' language with limited baseline diversity; this is vulnerable unless explicitly scoped to tested protocol."
+    - "Route-A pure-model framing and C3 design framing coexist; must avoid overselling C3 as an empirical contribution in this submission."
+
+findings:
+  - finding_id: R1-F1
+    severity: blocker
+    dimension: novelty
+    target_claim_ids: [C2]
+    paper_locations:
+      - "docs/paper/reframe-2026-07-24-reality-check.md §2 C2, §3 contribution-2"
+      - "docs/ledgers/claim-ledger.md C2"
+      - "results/c2b_adjudication_hf_2026-07-24/c2b_adjudication_summary.md"
+    criticism: >
+      Core negative is currently single-method-family (CAA) + single-model-family (Qwen2.5).
+      This makes the novelty/significance attack trivial: "method-specific miss, not
+      general reality-check."
+    evidence_examined: "C2 scope and E-0005 metadata explicitly state Qwen2.5 + CAA-only."
+    why_it_matters_for_acceptance: >
+      Top-tier reviewers require a negative claim to survive transfer attacks. Without
+      minimal cross-method/cross-family robustness, the work is easy to reframe as
+      local failure.
+    alternative_explanation: >
+      A different intervention family (e.g., manifold-constrained or representation-
+      preserving steering) or another model family may recover gains, invalidating the
+      implied generality of "legible != controllable."
+    requested_evidence_or_change: >
+      Scope C2 headline explicitly to "naive CAA on tested family" OR add minimum
+      robustness matrix (methods x families) before top-tier submission.
+    cheapest_discriminating_action: >
+      Add one non-CAA intervention family and one non-Qwen family with the same frozen
+      adjudication on at least the uncertainty and one additional axis.
+    acceptance_condition: >
+      Either (A) claim is narrowed to method/family-specific reality-check everywhere
+      (title/abstract/contributions), or (B) robustness matrix shows failure pattern
+      persists beyond CAA+Qwen.
+    confidence: high
+    possible_reviewer_misunderstanding: >
+      Reviewers may overread the current draft as impossibility theorem; this is partly
+      wording risk but still a real evidence-scope gap.
+    requires_new_experiment: true
+    estimated_cost_class: medium
+    user_approval_required: true
+
+  - finding_id: R1-F2
+    severity: major
+    dimension: significance
+    target_claim_ids: [C2]
+    paper_locations:
+      - "docs/ledgers/prereg-c2b-adjudication.md §1, §4, §5"
+      - "docs/paper/reframe-2026-07-24-reality-check.md §3 contribution-2"
+    criticism: >
+      Prompt comparator is stronger than many papers, but still vulnerable to "prompt
+      budget unfairness" criticism for broad conclusions.
+    evidence_examined: "Best-of-16 prompt on DEV is pre-registered; no adversarial prompt-optimization baseline beyond this."
+    why_it_matters_for_acceptance: >
+      Significance depends on proving the ceiling is genuinely hard to beat, not just
+      hard under one search budget.
+    alternative_explanation: >
+      Better prompt-search strategies (self-critique, iterative prompt optimizer, or
+      larger candidate pool) may close or reverse the observed gap.
+    requested_evidence_or_change: >
+      Add one stronger prompt optimization baseline under fixed compute budget parity,
+      or explicitly narrow claim to "within current bounded prompt protocol."
+    cheapest_discriminating_action: >
+      Run a bounded iterative prompt-optimizer baseline on DEV only, freeze winner, and
+      re-adjudicate on existing TEST items.
+    acceptance_condition: >
+      Either stronger prompt baseline still does not overturn C2 pattern, or paper
+      language narrows to current prompt-budget regime with explicit non-claim.
+    confidence: medium-high
+    possible_reviewer_misunderstanding: >
+      Some reviewers may treat any bounded prompt search as sufficient; risk remains in
+      stronger methodological panels.
+    requires_new_experiment: true
+    estimated_cost_class: medium
+    user_approval_required: true
+
+  - finding_id: R1-F3
+    severity: major
+    dimension: soundness
+    target_claim_ids: [C2-mech]
+    paper_locations:
+      - "docs/paper/reframe-2026-07-24-reality-check.md §2 C2-mech, §3 contribution-3"
+      - "docs/ledgers/claim-ledger.md C2-mech"
+    criticism: >
+      Off-manifold mechanism is plausible but currently inferential only; as a "core
+      insight" it risks being read as post-hoc storytelling.
+    evidence_examined: "Claim ledger marks C2-mech as proposed hypothesis with no direct diagnostic yet."
+    why_it_matters_for_acceptance: >
+      Novelty credit for mechanism insight is fragile unless one direct diagnostic ties
+      degradation to manifold-distance proxies.
+    alternative_explanation: >
+      Calibration harm could arise from prompt-format interactions, decoding sensitivity,
+      or layer-choice instability rather than off-manifold displacement.
+    requested_evidence_or_change: >
+      Add a low-cost mechanistic diagnostic (distance proxy vs per-item delta outcome)
+      or demote C2-mech to explicit future-work hypothesis in contribution list.
+    cheapest_discriminating_action: >
+      Compute per-item activation norm/whitening-distance shift between steered and
+      prompt conditions, test correlation with uncertainty delta.
+    acceptance_condition: >
+      Either significant diagnostic support exists, or contribution wording removes
+      mechanism-style novelty and keeps it as hypothesis only.
+    confidence: high
+    possible_reviewer_misunderstanding: >
+      If manuscript already labels this as hypothesis everywhere, rejection risk drops;
+      current framing still invites over-interpretation.
+    requires_new_experiment: true
+    estimated_cost_class: low
+    user_approval_required: false
+
+  - finding_id: R1-F4
+    severity: major
+    dimension: novelty
+    target_claim_ids: [C1, C2]
+    paper_locations:
+      - "docs/paper/reframe-2026-07-24-reality-check.md §1, §3"
+      - "开题报告_非满射双通道认知控制台.md (Mishra/PSR/Stolfo context rows)"
+    criticism: >
+      The incremental-risk narrative is under-defended against nearest-neighbor attack
+      ("known that steering and prompting differ"). Current package needs explicit
+      differentiation: your contribution is not merely "they differ," but a frozen
+      behavioral adjudication showing non-transfer under fairness controls.
+    evidence_examined: "Reframe states this implicitly, but not as an explicit novelty contrast matrix in the paper-facing framing."
+    why_it_matters_for_acceptance: >
+      Without explicit contrast framing, reviewers map the work into existing buckets and
+      score novelty down.
+    alternative_explanation: >
+      Readers may infer this is a repackaging of known representational non-equivalence.
+    requested_evidence_or_change: >
+      Add a concise nearest-neighbor contrast table in the paper: what prior work tests
+      vs what this work uniquely adjudicates.
+    cheapest_discriminating_action: >
+      Writing-only: one comparison table in intro/related work and one "non-claims"
+      paragraph that blocks over-generalization.
+    acceptance_condition: >
+      Distinct novelty unit is explicit and reviewer can answer "what is new here?" in
+      one sentence without ambiguity.
+    confidence: high
+    possible_reviewer_misunderstanding: >
+      If related-work section is already planned but omitted in bundle, this may partly
+      be a snapshot artifact.
+    requires_new_experiment: false
+    estimated_cost_class: trivial
+    user_approval_required: false
+
+  - finding_id: R1-F5
+    severity: minor
+    dimension: significance
+    target_claim_ids: [C3]
+    paper_locations:
+      - "docs/paper/reframe-2026-07-24-reality-check.md §2 C3, §3 contribution-4"
+    criticism: >
+      In route-A pure-model submission, C3 is strategic context but currently reads like
+      a promised contribution, which can trigger "incomplete paper" judgments.
+    evidence_examined: "C3 is marked proposed/not-run; still listed in contribution structure."
+    why_it_matters_for_acceptance: "Scope confusion can depress clarity and significance scores."
+    alternative_explanation: "Reviewers may think the paper is half system paper, half model audit."
+    requested_evidence_or_change: "Demote C3 to design implication/future track for this submission."
+    cheapest_discriminating_action: "Writing-only scope edit across abstract/introduction/conclusion."
+    acceptance_condition: "No empirical credit claimed for C3 in the route-A manuscript."
+    confidence: high
+    possible_reviewer_misunderstanding: "None material."
+    requires_new_experiment: false
+    estimated_cost_class: trivial
+    user_approval_required: false
+
+  - finding_id: R1-F6
+    severity: question
+    dimension: empirical
+    target_claim_ids: [C1]
+    paper_locations:
+      - "docs/ledgers/evidence-ledger.md E-0003"
+    criticism: >
+      C1 has one axis (focus) opposite pattern and one layer-sensitivity caveat
+      (deliberation layer-16 CI crosses 1). How prominently this heterogeneity is reported
+      will affect perceived credibility.
+    evidence_examined: "E-0003 notes overshoot axis and layer sensitivity explicitly."
+    why_it_matters_for_acceptance: "Transparent heterogeneity reporting increases trust in negative-result papers."
+    alternative_explanation: "Axis definitions may mix multiple mechanisms."
+    requested_evidence_or_change: "Ensure C1 is presented as conditional/axis-specific, not monolithic."
+    cheapest_discriminating_action: "Writing-only caveat placement in abstract limitations + main results."
+    acceptance_condition: "Axis heterogeneity is explicit in headline result statements."
+    confidence: high
+    possible_reviewer_misunderstanding: "None."
+    requires_new_experiment: false
+    estimated_cost_class: trivial
+    user_approval_required: false
+
+direct_answers_to_4_required_questions:
+  q1_single_method_single_family_fatal: >
+    Not automatically fatal, but close to fatal for CHI and a major risk for IUI.
+    As-is it is defensible only as "CAA-on-Qwen reality-check." For top-tier acceptance,
+    either narrow the claim scope very explicitly or add minimum cross-method/cross-family
+    robustness.
+  q2_no_human_study_feasibility_iui_chi: >
+    Feasible for IUI as a model-measurement/reality-check paper if rigor and robustness
+    are strong; typical ceiling around borderline-accept to weak-accept.
+    For CHI mainline, pure-model/no-human is much harder; likely weak-reject unless the
+    empirical insight is unusually general and methodologically airtight.
+    Practical score bands from this bundle: IUI ~2.8-3.7/5; CHI ~2.3-3.2/5.
+  q3_venue_fit_ranking_chi_iui_cscw: >
+    Fit ranking for this pure-model reality-check package: IUI > CHI > CSCW.
+    IUI is most compatible with interface-intelligence measurement without mandatory user
+    study; CHI can accept but typically expects stronger interaction/design evidence;
+    CSCW fit is weakest here because collective/social workflow implications are not core.
+  q4_minimum_robustness_needed: >
+    Minimum to be "top-conference defensible": at least 2 steering families x 2 model
+    families (e.g., CAA + one manifold-respecting alternative; Qwen + one Llama/Mistral-
+    family) on the same frozen adjudication for at least 2 axes including uncertainty.
+    Add at least one direct mechanism diagnostic for C2-mech (off-manifold proxy vs
+    outcome degradation). Also add one stronger prompt-optimization comparator or strictly
+    narrow non-claims to current prompt budget.
+
+review_summary:
+  top_3_rejection_risks:
+    - "Method-specificity kill-shot: single CAA x single Qwen can be dismissed as local failure."
+    - "Incremental novelty framing: reviewers may read it as already-known prompt-vs-steering mismatch."
+    - "Mechanism overreach: off-manifold insight may look post-hoc without direct diagnostic."
+  must_fix_before_next_gate:
+    - "Close R1-F1 (scope narrowing or robustness expansion)."
+    - "Close R1-F2 (prompt-baseline fairness defense)."
+    - "Close R1-F3 (mechanism evidence or demotion to explicit hypothesis)."
+    - "Apply R1-F4 writing-level novelty contrast hardening."
+  optional_improvements:
+    - "Demote C3 to implication-only in route-A manuscript to avoid scope diffusion."
+    - "Highlight C1 heterogeneity (focus/layer caveats) in headline text for credibility."
+  questions_for_manager:
+    - "Will route-A intentionally target IUI first and treat CHI as stretch, or keep dual-target messaging?"
+    - "Can budget support the minimum 2x2 robustness matrix before claim freeze?"
+    - "If robustness budget is denied, will title/abstract be narrowed to avoid over-claim risk?"
+  score_if_unchanged: "IUI 2.8-3.2/5; CHI 2.3-2.8/5"
+  score_if_blockers_closed: "IUI 3.4-4.0/5; CHI 3.0-3.6/5"

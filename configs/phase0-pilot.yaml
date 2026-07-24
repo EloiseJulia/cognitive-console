@@ -1,0 +1,21 @@
+# Phase-0 analysis experiment config (offline pipeline; GPU forward pass deferred).
+#
+# This drives the facade (C1) + routing (S11) analysis. `model` names the
+# provider that the GPU phase will use; in Phase-0 prep the SyntheticActivation
+# Provider stands in so the pipeline is fully unit-testable with no GPU.
+#
+# The config is hashed canonically (cognitive_console.config.config_hash) and the
+# hash is recorded in the experiment registry for reproducibility.
+
+axes: [deliberation, skepticism, uncertainty_awareness, focus]
+layers: [4, 8, 12, 16, 20]
+seed: 0
+n_null: 1000
+
+# Pre-registered facade thresholds (freeze before any confirmatory labeling).
+max_facade_ratio: 0.8            # prompt must reach <= 80% of vector-only to count as a facade gap
+min_facade_support_fraction: 0.5 # facade must hold on >= half the axes
+no_facade_ratio: 0.9             # facade_ratio >= 0.9 with no support => "prompt ~= vector-only" (RED)
+
+model: llama-3-8b-instruct       # deferred; provider is synthetic in Phase-0 prep
+dataset: contrast_pairs

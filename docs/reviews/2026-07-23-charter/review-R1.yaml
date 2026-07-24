@@ -1,0 +1,390 @@
+# ============================================================================
+# HUMAN-READABLE SUMMARY (R1 — Novelty & Significance, CHI, Charter stage)
+# ----------------------------------------------------------------------------
+# Verdict: MAJOR-REVISION (charter viable to freeze only after wording + prior-art fixes).
+# The core idea — making the *prompt<->latent non-surjective gap itself* an operable,
+# calibratable interface object — is the freshest, least-occupied framing in this space
+# and is NOT a trivial steering+slider mashup ON PAPER. But three things put CHI
+# acceptance at real risk and MUST be closed before the next gate:
+#   1. THEORY OVER-APPLICATION (BLOCKER-class for the *claim wording*, not the idea):
+#      Mishra proves non-surjectivity of INTERNAL activations; C2 asserts BEHAVIORAL
+#      unreachability ("prompt can't cross a threshold the slider can"). That inference
+#      is unearned and Stolfo et al. (instruction<->vector correspondence) can be
+#      weaponized against it. The charter leans its headline on a result that does not
+#      entail the headline.
+#   2. "OBVIOUS COMBINATION" RISK vs Huang&Lim (layperson steering sliders + study),
+#      AI-Instruments (control-as-direct-manipulation object), Labarta (interactive
+#      attribution->steering + user study + trust), Tankelevitch (metacognition framing).
+#      The whole contribution currently rests on ONE not-yet-demonstrated differentiator:
+#      quantified facade (RQ1) + genuine prompt<->latent CONFLICT attribution (RQ2). If
+#      those collapse empirically, the paper degrades to "a prompt box next to their sliders."
+#   3. SIGNIFICANCE / "NLP dressed as HCI": the interaction insight that could NOT be
+#      predicted from the 5 neighbors is asserted, not yet evidenced. CHI reviewers will
+#      demand design knowledge that transcends "add explainability + customizability"
+#      (which Tankelevitch already recommended).
+# Also: correct the SemanticLens/Labarta mis-framing (vision+experts, not an LLM UI
+# competitor) and rename "dual-channel" (ICLR'26 W already owns "Dual-Channel Steering").
+# None of these are fatal at Charter stage; all are cheap to close pre-experiment.
+# score_if_unchanged: 2.0-2.5/5 ; score_if_blockers_closed: 3.0-3.5/5 (borderline->positive).
+# ============================================================================
+
+review_id: review-R1-charter-2026-07-23
+snapshot_id: charter-2026-07-23
+reviewer_role: "R1 — Novelty & Significance (independent, no stake)"
+target_venue: CHI
+review_stage: charter
+review_scope: >
+  Charter-gate review (pre-experiment). Assess novelty, significance, and CHI-fit of the
+  proposed contribution and the falsifiable claims C1-C3. Judge whether the defensible
+  one-sentence novelty survives against the nearest neighbors and the Novelty-Falsification
+  report's scoop findings. NOT assessing full results/paper (none exist yet — correct for stage).
+
+materials_examined:
+  - docs/charter/project-charter.md (v0.1 DRAFT)
+  - docs/research/2026-07-23-novelty-falsification.md (independent Novelty Gate output)
+  - docs/ledgers/claim-ledger.md (C1-C3)
+  - 开题报告_非满射双通道认知控制台.md (author intent / background)
+  - AI-Instruction.md Part I §10 (review protocol/format)
+
+missing_materials:
+  - No system/prototype, no Phase-0 pilot data, no facade projection numbers (expected: pre-experiment stage; not penalized).
+  - No completed manual CHI'26 / ACM DL prior-art sweep (Novelty report §3 flags it as still owed — treat "field is clear" as PROVISIONAL).
+  - ActAdd "Appendix B exclusion experiment" sub-claim unverified (Novelty report §2, §6.4) — flagged [NEEDS EVIDENCE], not yet load-bearing for a claim.
+  - No claim->evidence paper-location mapping yet (claim-ledger "Paper location: TBD") — acceptable at charter stage.
+
+expertise_level: "high (HCI + representation-engineering/steering literature); medium on the exact non-surjectivity proof internals"
+conflict_check: "no conflict; did not author charter/idea; did not read Manager expectations or any desired verdict"
+overall_score_range: "2.0-3.5 / 5 (conditional: 2.0-2.5 if unchanged; 3.0-3.5 if blockers closed)"
+confidence: "medium-high on novelty/significance analysis; medium on scoop-clearance (prior-art sweep incomplete)"
+verdict: major-revision
+
+# ---------------------------------------------------------------------------
+paper_understanding:
+  one_sentence_problem: >
+    Non-expert users cannot see or coordinate the gap between what their natural-language
+    prompt actually achieves inside an LLM and what a direct latent intervention (steering
+    vector) can additionally reach; this proposal asks whether surfacing that
+    prompt<->latent divergence as a first-class, operable interface object lets users
+    understand, adjudicate conflicts, and calibrate trust over a control capability that
+    provably exceeds prompting.
+  claimed_contributions:
+    - "C1 (RQ1): an empirically quantified 'semantic facade' — the strongest human-readable prompt's mid-layer activation projects far below the steering-vector direction (projection << 100%), surfaced to users as a trust-relevant measure."
+    - "C2 (RQ2, CORE): a new interaction paradigm — a dual-channel console + attribution panel — that (a) exhibits a prompt-unreachable control region the latent channel crosses, and (b) lets non-experts attribute and resolve prompt<->latent CONFLICT better than prompt-only or steering-only baselines."
+    - "C3 (RQ3, extension): metacognitive-axis levers act as a boundary object preserving perceived control/continuity across a backend model swap (Llama-3 -> Qwen-2.5) better than prompt folklore."
+    - "Framing/theory contribution: reifying the non-surjective gap as an interaction problem, grounded in Mishra et al. (non-surjectivity) and Tankelevitch et al. (metacognitive demands)."
+  strongest_accept_case: >
+    No prior system makes the prompt<->latent DIVERGENCE ITSELF the operable object. Huang&Lim
+    expose a single latent channel (sliders, no prompt-conflict, no facade quantification, no
+    trust re-calibration on disagreement); AI-Instruments stays entirely at the prompt layer;
+    Labarta is vision + expert debugging. Studying how a NON-EXPERT attributes, adjudicates, and
+    re-trusts when a readable prompt and a latent lever openly CONFLICT is a genuinely new HCI
+    phenomenon with clear theoretical grounding (non-surjectivity + metacognition) and a real
+    kill/pivot discipline. If RQ1's facade metric measurably shifts trust behavior and RQ2 shows
+    even one true prompt-unreachable behavioral region with better non-expert conflict attribution,
+    this is a fresh, generative interaction model — exactly the "system + theory + controlled study
+    + design knowledge" CHI rewards.
+  strongest_reject_case: >
+    This is an obvious combination of five published parts (Huang&Lim sliders + Labarta attribution
+    panel + AI-Instruments reification + Tankelevitch framing + Mishra citation for gravitas), and
+    the theoretical foundation is misapplied: Mishra proves internal-STATE non-surjectivity, not
+    that any user-relevant BEHAVIOR is unreachable by prompting — so the headline "prompts hit a wall
+    the sliders cross" is not established by the theory it leans on, and Stolfo et al. show
+    instruction<->vector correspondence that cuts directly against a behavioral gap. The novel
+    ingredient (quantified facade + conflict attribution) is asserted, not demonstrated, and could
+    collapse to "we added a prompt box next to existing sliders." Term "dual-channel steering" is
+    already coined for a different ML method. Net: high risk of "NLP dressed as HCI" with a novelty
+    delta contingent on results that do not yet exist.
+  clarity_mismatches:
+    - "The charter's core-novelty table (§4) and the Novelty report DISAGREE on scoop risk (charter self-rates the core gap 'LOW'; independent report rates it 'MEDIUM'). The charter should adopt the more conservative MED and stop citing its own optimistic rating."
+    - "C2's statement conflates an internal-state result (Mishra) with a behavioral claim (task threshold). A CHI reviewer will read 'provably exceeds what any prompt can reach' (RQ2 text, §1) as claiming the PROOF covers behavior — it does not. The word 'provably' is doing illegitimate work."
+    - "§4 bundles 'SemanticLens' and Labarta 'From Attribution to Action' as one neighbor and implies an LLM latent-UI competitor; they are two artifacts, vision-modality, expert-facing. This overstates the threat AND mis-cites — both hurt credibility."
+
+# ---------------------------------------------------------------------------
+findings:
+
+  - finding_id: R1-F1
+    severity: blocker
+    dimension: novelty
+    target_claim_ids: [C2]
+    paper_locations:
+      - "charter §1 RQ2 ('a control capability that provably exceeds what any prompt can reach')"
+      - "charter §5 C2 / claim-ledger C2 statement"
+      - "charter §4 row 'Mishra et al.' ('Our theoretical foundation')"
+    criticism: >
+      The core contribution's theoretical legitimacy is built on an unearned inference. Mishra et al.
+      (verified, arXiv:2604.09839) prove non-surjectivity of the INTERNAL residual-stream activation:
+      no prompt reproduces the same internal STATE. C2 claims BEHAVIORAL unreachability: prompt-only
+      cannot cross a task/compliance threshold the latent channel can. Two distinct internal states can
+      produce identical output behavior, so the behavioral claim is strictly stronger and NOT entailed
+      by the proof. Worse, Stolfo et al. (ICLR 2025, verified) demonstrate instruction<->vector
+      correspondence and composability — a hostile reviewer will use it to argue prompts DO reach much
+      of what steering does behaviorally. As written, the paper leans its headline novelty on a theorem
+      that does not support the headline.
+    evidence_examined: "Novelty report §0.2, §2 (Mishra row), §5 RQ2 row, §6.1; charter §1/§4/§5; claim-ledger C2."
+    why_it_matters_for_acceptance: >
+      Novelty & significance for CHI hinge on the 'non-surjective gap' being a REAL, theory-grounded
+      phenomenon rather than rhetorical framing. If the theory-to-claim link is exposed as over-reach,
+      the contribution collapses from 'principled new interaction problem' to 'we found some tasks where
+      our sliders beat prompts' — an engineering demo, not a paradigm. This is the single most likely
+      reviewer kill-shot.
+    alternative_explanation: >
+      Any observed prompt-vs-slider behavioral gap may be an artifact of (a) weak/under-optimized
+      prompting (prompt-search budget too small), or (b) the specific compliance-floor task construction,
+      NOT a fundamental reachability wall. Non-surjectivity of state does not imply the gap survives fair,
+      well-budgeted prompt optimization.
+    requested_evidence_or_change: >
+      (1) Rewrite C2 and RQ2 to SEPARATE 'internal-state non-surjectivity (proven, cited)' from
+      'behavioral/task unreachability (an empirical claim to be demonstrated, NOT assumed)'. Delete or
+      qualify 'provably' in the behavioral sentence. (2) Add an explicit prompt-optimization budget to the
+      protocol so the 'strongest prompt' is defensibly strong (else the gap is trivially attackable).
+    cheapest_discriminating_action: >
+      A wording/scoping edit to C2 + RQ2 + §4 (zero compute), PLUS defining a fair prompt-search budget in
+      the Minimum Publishable Evidence section. No experiment required at charter stage.
+    acceptance_condition: >
+      C2 explicitly framed as an empirical behavioral claim (not theorem-entailed), the theory cited only
+      for internal-state non-surjectivity, and a fair prompt-optimization protocol specified.
+    confidence: high
+    possible_reviewer_misunderstanding: >
+      If the authors already intend 'provably' to modify only the internal-state result and 'behavioral gap'
+      as separately-to-be-shown, then this is a CLARITY fix rather than a substantive error — but the current
+      text does not make that separation, so the risk stands regardless.
+    requires_new_experiment: false
+    estimated_cost_class: trivial
+    user_approval_required: false
+
+  - finding_id: R1-F2
+    severity: blocker
+    dimension: significance
+    target_claim_ids: [C1, C2]
+    paper_locations:
+      - "charter §4 core-novelty table (all rows) + one-sentence novelty (§4)"
+      - "charter §3 Contribution Type"
+    criticism: >
+      The entire novelty delta rests on TWO not-yet-demonstrated differentiators — (i) a quantified
+      'semantic facade' surfaced to users (C1/RQ1) and (ii) genuine non-expert attribution/resolution of
+      prompt<->latent CONFLICT (C2/RQ2). Every other ingredient is already published: layperson steering
+      sliders + user study (Huang&Lim, IASDR'25), interactive attribution->steering + user study + trust
+      grounding (Labarta, CVPR'26 W), control-as-direct-manipulation object (AI-Instruments, CHI'25), and
+      the metacognition framing that already RECOMMENDS 'explainability + customizability' (Tankelevitch,
+      CHI'24). If the two differentiators do not empirically deliver something non-obvious, the paper is a
+      predictable instantiation of Tankelevitch's recommendation and an 'obvious combination' of the rest.
+    evidence_examined: "Novelty report §1 (neighbor matrix rows 1-4), §4 (steel-manned reject), §5, §6.2; charter §4."
+    why_it_matters_for_acceptance: >
+      CHI significance is judged on whether the interaction insight could NOT have been predicted from prior
+      work. Right now the charter ASSERTS the insight is non-obvious but stakes it entirely on results that
+      do not exist. Reviewers routinely reject charter-quality novelty that is 'contingent on our study working.'
+    alternative_explanation: >
+      It is possible the conflict/facade phenomena are genuinely novel and rich; but it is equally possible
+      that, once built, condition C reduces to 'sliders + a prompt box,' with conflict resolution being
+      whatever the sliders already afford. The charter cannot yet distinguish these.
+    requested_evidence_or_change: >
+      Add to the charter a concrete, falsifiable statement of WHAT specific interaction phenomenon (beyond
+      Huang&Lim's single channel and Tankelevitch's recommendation) the study is designed to reveal, and a
+      pre-registered analysis that would show it is non-trivial (e.g., attribution-accuracy delta and a
+      trust-recalibration behavior that single-channel steering cannot produce by construction).
+    cheapest_discriminating_action: >
+      Charter-text addition (design-knowledge target + pre-registered discriminating measure). Optionally, a
+      cheap Phase-0 desk analysis mapping each planned finding to the specific neighbor it must beat. No compute.
+    acceptance_condition: >
+      Charter names the non-obvious design contribution explicitly and specifies a measure that would
+      falsify 'obvious combination' — reviewed and judged plausible before Protocol Freeze.
+    confidence: high
+    possible_reviewer_misunderstanding: >
+      A generous reviewer may accept 'the conflict-attribution phenomenon is inherently new' on face; but R1
+      should not rely on reviewer generosity for the load-bearing contribution.
+    requires_new_experiment: false
+    estimated_cost_class: trivial
+    user_approval_required: false
+
+  - finding_id: R1-F3
+    severity: major
+    dimension: soundness
+    target_claim_ids: [C1]
+    paper_locations:
+      - "charter §5 C1 / claim-ledger C1 (projection << 100%)"
+      - "charter §7 Phase 0 (quantified semantic-facade projection)"
+    criticism: >
+      C1 as stated ('strongest prompt projects significantly below vector-only') is close to a COROLLARY of
+      Mishra + ActAdd and is nearly assumed-true: a linear projection of a prompt-induced activation onto a
+      contrastive steering direction being <100% is almost guaranteed and by itself carries little novelty.
+      The Novelty report (§5 RQ1) rates RQ1 MED-HIGH risk precisely because the bare projection fact is
+      near-trivial. Novelty lives ONLY in showing the facade is (a) surfaced to users as a measure and
+      (b) demonstrably mis-calibrates or re-calibrates trust — which C1's current wording does not require.
+    evidence_examined: "Novelty report §5 (RQ1 row), §6.1; claim-ledger C1 'projection is a linear proxy'; charter §5/§7."
+    why_it_matters_for_acceptance: >
+      If C1 is confirmed but framed only as 'projection < 100%,' reviewers will say the empirical regularity
+      is unsurprising and unpublishable on its own, weakening the RQ1 leg and increasing pressure on RQ2 to
+      carry the whole paper.
+    alternative_explanation: >
+      A <100% projection could reflect a non-linear or multi-mechanism axis (claim-ledger 'known limits')
+      rather than a genuine 'facade' — i.e., the metric under-reads reachability rather than proving a wall.
+    requested_evidence_or_change: >
+      Re-scope C1 from 'projection << 100%' to 'a user-surfaced facade metric that measurably changes trust/
+      behavior', and register the trust-behavior link as the load-bearing part, not the projection magnitude.
+    cheapest_discriminating_action: >
+      Charter/claim-ledger re-wording now; validated later by the Formative study's trust measure (already planned).
+    acceptance_condition: "C1 restated so its novelty is the trust-relevant, user-surfaced facade, not the near-trivial projection inequality."
+    confidence: medium-high
+    possible_reviewer_misunderstanding: "Authors may already intend the trust-linkage as the point; the ledger wording just does not encode it."
+    requires_new_experiment: false
+    estimated_cost_class: trivial
+    user_approval_required: false
+
+  - finding_id: R1-F4
+    severity: major
+    dimension: novelty
+    target_claim_ids: [C1, C2, C3]
+    paper_locations:
+      - "charter §4 (SemanticLens row) — 'SAE attribution->action causal-verification loop'"
+      - "Novelty report §2 (Labarta row, MISSTATED)"
+    criticism: >
+      The charter bundles 'SemanticLens' (Fraunhofer HHI, Nature MI 2025) and Labarta et al. 'From Attribution
+      to Action' (CVPR'26 W, vision/CLIP, N=8 EXPERT interviews) as a single LLM-latent-UI neighbor. They are
+      distinct artifacts, in the VISION modality, aimed at EXPERT debugging. This mis-framing both misrepresents
+      prior art (a credibility risk if a reviewer knows the work) AND over-states the threat to this proposal —
+      correcting it actually REDUCES scoop risk. Additionally, Labarta's 'trust grounded in observed responses'
+      finding partially pre-empts the RQ1 trust angle and should be cited honestly as related, not as a defeated competitor.
+    evidence_examined: "Novelty report §1 row 3, §2 (Labarta MISSTATED row, both URLs), §6.3."
+    why_it_matters_for_acceptance: >
+      CHI reviewers penalize inaccurate related-work characterization heavily; a mis-cited neighbor signals
+      either unfamiliarity or spin, and either erodes trust in the rest of the novelty argument.
+    alternative_explanation: "None material — this is a factual mis-framing confirmed by the independent citation audit."
+    requested_evidence_or_change: >
+      Split the two works; label Labarta as vision + expert + debugging (a related but non-competing precedent,
+      and a partial pre-emption of the trust-grounding finding to be acknowledged), and cite SemanticLens separately if used.
+    cheapest_discriminating_action: "Related-work text correction (zero compute); already evidenced by the citation audit."
+    acceptance_condition: "§4 corrected: two separate entries, correct modality/population, honest trust-pre-emption note."
+    confidence: high
+    possible_reviewer_misunderstanding: "None; the audit URLs settle it."
+    requires_new_experiment: false
+    estimated_cost_class: trivial
+    user_approval_required: false
+
+  - finding_id: R1-F5
+    severity: major
+    dimension: novelty
+    target_claim_ids: [C2]
+    paper_locations:
+      - "charter title + §3 Contribution Type ('dual-channel')"
+      - "Novelty report §3 (name-collision row), §6.6"
+    criticism: >
+      'Dual-Channel Steering' is already a published, coined term (ICLR 2026 'Latent & Implicit Thinking'
+      workshop) for a DIFFERENT method (prompt vs Text-to-LoRA parameter modulation for ensemble reasoning).
+      Retaining 'dual-channel' invites reviewer deja-vu, self-inflicted prior-art collision, and search
+      confusion — a gratuitous novelty risk for a paper whose entire pitch is 'we are not the existing steering work.'
+    evidence_examined: "Novelty report §3 row 1 (openreview + iclr virtual URLs), §6.6."
+    why_it_matters_for_acceptance: >
+      Naming collisions cause reviewers to mis-anchor the contribution against the wrong prior work and can
+      trigger 'this exists' reflexes even when the substance differs — a cheap-to-avoid acceptance drag.
+    alternative_explanation: "None; the collision is factual."
+    requested_evidence_or_change: "Rename the paradigm (and ideally the project) to a term not owned by an ML steering method; keep 'non-surjective gap / prompt<->latent divergence' as the distinctive hook."
+    cheapest_discriminating_action: "Terminology change in charter (zero compute)."
+    acceptance_condition: "A distinct paradigm name adopted and the collision noted/differentiated in related work."
+    confidence: medium-high
+    possible_reviewer_misunderstanding: "Some reviewers may not know the ICLR'26 W paper; but the risk is asymmetric and cheap to remove."
+    requires_new_experiment: false
+    estimated_cost_class: trivial
+    user_approval_required: false
+
+  - finding_id: R1-F6
+    severity: major
+    dimension: soundness
+    target_claim_ids: [C1, C2, C3]
+    paper_locations:
+      - "Novelty report §3 (search-hygiene note), §6.5 ('field-clear claim is not proven')"
+      - "charter §4 self-rated 'LOW' scoop"
+    criticism: >
+      The claim that the 'prompt<->latent-gap-as-object' field is open is PROVISIONAL: the owed manual
+      CHI'26 / ACM DL prior-art sweep has not been run, and AI-search hallucinated several fake CHI/UIST
+      2025-26 papers during the novelty pass. A charter that freezes novelty as 'LOW' scoop risk without
+      the manual sweep is unsound; a single overlooked concurrent CHI'26 paper could sink the contribution.
+    evidence_examined: "Novelty report §3 warning box, §6.5, §7 recommendation (iv)."
+    why_it_matters_for_acceptance: >
+      Novelty is the whole game for R1. An incomplete prior-art sweep means the current 'defensible' verdict
+      could be overturned by a paper the authors have not yet looked for — the highest-variance risk on the board.
+    alternative_explanation: "The field may indeed be clear; but absence of a search is not evidence of absence."
+    requested_evidence_or_change: >
+      Run and record a manual ACM DL + CHI'26 program + arXiv sweep for prompt<->latent-gap / conflict-
+      attribution / dual-channel-latent-UI-for-non-experts BEFORE Protocol Freeze; downgrade the charter's
+      self-rated scoop from LOW to MED until then.
+    cheapest_discriminating_action: "A focused half-day manual sweep of CHI'26 program + ACM DL + arXiv listings (no compute, no cost)."
+    acceptance_condition: "Documented manual sweep with no substantive scoop found (or a pivot decision if one is found); charter scoop rating set to MED."
+    confidence: high
+    possible_reviewer_misunderstanding: "None; the novelty report itself flags the sweep as owed."
+    requires_new_experiment: false
+    estimated_cost_class: trivial
+    user_approval_required: false
+
+  - finding_id: R1-F7
+    severity: minor
+    dimension: reproducibility
+    target_claim_ids: [C1]
+    paper_locations:
+      - "Novelty report §2 (ActAdd row), §6.4 [NEEDS EVIDENCE]"
+      - "开题报告 (ActAdd Appendix B exclusion-experiment reference)"
+    criticism: >
+      The 开题's specific ActAdd 'Appendix B exclusion experiment' side-evidence (embedding-injection weak vs
+      post-layer activation-diff strong; perplexity-degradation asymmetry) was NOT verified against the paper
+      body. If it migrates into the paper as support for the facade mechanism, it is an unverified citation-level claim.
+    evidence_examined: "Novelty report §2 (ActAdd row, UNVERIFIABLE sub-claim), §6.4."
+    why_it_matters_for_acceptance: >
+      Minor now (it is background, not a core claim), but any unverified specific sub-claim that reaches the
+      paper is a soundness/citation-integrity liability under adversarial review.
+    alternative_explanation: "The sub-claim may well be correct; it simply has not been checked."
+    requested_evidence_or_change: "Verify the ActAdd Appendix B specifics against the paper body before citing, or drop the specific detail."
+    cheapest_discriminating_action: "One reading of ActAdd (arXiv:2308.10248) appendix (zero compute)."
+    acceptance_condition: "Sub-claim verified-and-cited-accurately or removed."
+    confidence: medium
+    possible_reviewer_misunderstanding: "The detail may not be intended for the paper at all; if so, no action needed."
+    requires_new_experiment: false
+    estimated_cost_class: trivial
+    user_approval_required: false
+
+  - finding_id: R1-F8
+    severity: question
+    dimension: significance
+    target_claim_ids: [C3]
+    paper_locations:
+      - "charter §1 RQ3 / §5 C3 / claim-ledger C3"
+    criticism: >
+      C3 (cross-model boundary-object continuity) is novel but feasibility-risky (cross-model dose-response
+      re-mapping is the hardest engineering piece, per claim-ledger). QUESTION: is C3 intended to add
+      significance, or is it a hedge? If the main contribution (C2) is strong, C3's engineering risk could
+      drag the whole paper; if C2 is weak, C3 cannot rescue it.
+    evidence_examined: "Novelty report §5 (RQ3 row, MED-HIGH feasibility risk); charter §8 (kept as extension); claim-ledger C3."
+    why_it_matters_for_acceptance: >
+      Overloading a CHI paper with a high-risk third RQ can dilute the core contribution and give reviewers a
+      failure mode to fixate on; scoping C3 firmly as optional protects the main story.
+    alternative_explanation: "N/A (scoping question)."
+    requested_evidence_or_change: "Confirm C3 is firewalled as extension/ablation that cannot gate C1/C2 (charter §8 already suggests this — make it explicit in the contribution framing)."
+    cheapest_discriminating_action: "Charter scoping statement (zero compute)."
+    acceptance_condition: "C3 explicitly non-gating for the main contribution."
+    confidence: medium
+    possible_reviewer_misunderstanding: "Charter §4 betting order already deprioritizes C3; this is a framing confirmation."
+    requires_new_experiment: false
+    estimated_cost_class: trivial
+    user_approval_required: false
+
+# ---------------------------------------------------------------------------
+review_summary:
+  top_3_rejection_risks:
+    - "THEORY OVER-APPLICATION (R1-F1): headline 'prompts provably can't reach it' is not entailed by Mishra (internal-state, not behavioral); Stolfo can be weaponized against it. If unfixed, the theoretical spine of RQ2 breaks under review."
+    - "OBVIOUS-COMBINATION / 'NLP dressed as HCI' (R1-F2): every ingredient except quantified-facade + conflict-attribution is published (Huang&Lim, Labarta, AI-Instruments, Tankelevitch); novelty is contingent on unproven results, and the non-obvious design insight is asserted not specified."
+    - "INCOMPLETE SCOOP CLEARANCE + naming collision (R1-F6, R1-F5): manual CHI'26/ACM-DL sweep still owed (AI search hallucinated neighbors), and 'dual-channel steering' is already coined for a different ML method — a concurrent CHI'26 paper or reviewer deja-vu could sink novelty."
+  must_fix_before_next_gate:
+    - "R1-F1: separate internal-state non-surjectivity (proven, cited) from behavioral unreachability (empirical, to demonstrate); remove/qualify 'provably'; specify a fair prompt-optimization budget."
+    - "R1-F2: state the specific non-obvious design contribution + a pre-registered measure that would falsify 'obvious combination'."
+    - "R1-F4: correct the SemanticLens/Labarta mis-framing (two works, vision, experts; honest trust pre-emption note)."
+    - "R1-F6: run and record the manual CHI'26/ACM-DL prior-art sweep; downgrade self-rated scoop LOW -> MED."
+    - "R1-F5: rename the paradigm off 'dual-channel steering'."
+  optional_improvements:
+    - "R1-F3: re-scope C1 so novelty is the trust-relevant surfaced facade, not the near-trivial projection<100%."
+    - "R1-F7: verify or drop the ActAdd Appendix B side-evidence before it reaches the paper."
+    - "R1-F8: explicitly firewall C3 as non-gating extension."
+  questions_for_manager:
+    - "Does 'provably exceeds what any prompt can reach' (RQ2) refer to Mishra's internal-state proof or to an intended empirical behavioral result? The distinction changes the whole novelty defense."
+    - "What prompt-optimization budget will define the 'strongest prompt' so the facade/gap is not trivially attackable as 'you just prompted badly'?"
+    - "Has any manual CHI'26 program / ACM DL sweep been done since the novelty pass, or is 'field is open' still provisional?"
+    - "Is the team willing to rename off 'dual-channel' to avoid the ICLR'26 collision?"
+  score_if_unchanged: "2.0-2.5 / 5 (below CHI bar: theory over-reach + obvious-combination risk unaddressed)"
+  score_if_blockers_closed: "3.0-3.5 / 5 (borderline-to-positive: a fresh, well-scoped interaction problem with honest theory and cleared prior art — acceptance then hinges on the Phase-0/RQ2 empirical payoff, judged at later gates)"

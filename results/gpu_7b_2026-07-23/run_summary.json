@@ -1,0 +1,18 @@
+{
+  "kind": "gpu_phase0_run",
+  "type": "EXPLORATORY",
+  "valid_for_paper": false,
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "hardware": "cuda-float16",
+  "wall_clock_seconds": 223.4,
+  "generated_at": "2026-07-23T12:02:46.727594+00:00",
+  "platform": "Linux-6.8.0-124-generic-x86_64-with-glibc2.39",
+  "disk_pre_run_gb": 19.224038811400533,
+  "disk_post_c1_gb": 19.224038811400533,
+  "disk_post_run_gb": 19.224038811400533,
+  "c1_dir": "c1/",
+  "c2b_dir": "c2b/",
+  "c2b_experiment_id": "c2b-reach-16382b53-0001",
+  "c2b_honesty_caveat": "C2b uses crude lexical/length proxies that share a basis with the steering direction; these numbers are an EXPLORATORY lexical-shift signal ONLY and CANNOT support a 'latent reaches beyond the bounded-prompt ceiling' claim without an orthogonal non-lexical proxy + variance estimate. focus/deliberation are length-confounded; focus is untrustworthy. Single greedy sample per cell \u2014 do not over-read small margins.",
+  "prompt_ceiling_label": "prompt ceiling = best-of-16 static authored prompts, NOT OPRO \u2014 an UNDER-estimate of true prompt reach (conservative for the C2b comparison)"
+}

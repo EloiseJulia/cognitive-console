@@ -1,0 +1,79 @@
+experiments:
+- experiment_id: c1-facade-d553d2cb-0001
+  parent: null
+  hypothesis_id: H1
+  claim_ids:
+  - C1
+  type: exploratory
+  status: done
+  code_commit: 8d0a0bd26f89c416991da1c7be45d533d95b07e6
+  dirty_tree: null
+  data_hash: sha256:89f01eace34c0ce73312636d90b43b4ffd20f5049e5a37824bd10ea83151a458
+  env_hash: null
+  config_hash: sha256:d553d2cbaa3a147068ee88b49ec54cde4ba235da3f7426a5013e49ac22f614cb
+  model: Qwen/Qwen2.5-1.5B-Instruct
+  dataset: data/contrast_pairs/*.jsonl (28/12 disjoint split for v) + data/strongest_prompts/*.jsonl
+    (separate strongest-prompt set)
+  seed: 20260723
+  hardware: cpu-local-float32
+  started_at: '2026-07-23T09:18:03.506525+00:00'
+  ended_at: '2026-07-23T09:18:03.974886+00:00'
+  exit_code: 0
+  raw_metrics: null
+  summary_metrics:
+    deliberation:
+      chosen_layer: 14
+      vector_norm: 7.185815519171466
+      prompt_reach_mean: 3.7176925138490904
+      prompt_reach_max: 5.888703578740875
+      facade_ratio_mean: 0.5173654269206379
+      facade_ratio_max: 0.8194899469698397
+      above_null_mean: true
+      above_null_max: true
+      c1_signal: true
+    skepticism:
+      chosen_layer: 16
+      vector_norm: 5.649957935847681
+      prompt_reach_mean: 2.725618328829035
+      prompt_reach_max: 4.108698224014803
+      facade_ratio_mean: 0.48241391524981364
+      facade_ratio_max: 0.7272086395450946
+      above_null_mean: true
+      above_null_max: true
+      c1_signal: true
+    uncertainty_awareness:
+      chosen_layer: 18
+      vector_norm: 6.157749071862695
+      prompt_reach_mean: 5.071465168683587
+      prompt_reach_max: 6.4469500919224565
+      facade_ratio_mean: 0.8235907487457083
+      facade_ratio_max: 1.0469653791807205
+      above_null_mean: true
+      above_null_max: true
+      c1_signal: true
+    focus:
+      chosen_layer: 2
+      vector_norm: 1.0775058710087957
+      prompt_reach_mean: -0.4434740591684854
+      prompt_reach_max: 0.015486309484428903
+      facade_ratio_mean: -0.4115746104968233
+      facade_ratio_max: 0.014372366685974641
+      above_null_mean: true
+      above_null_max: false
+      c1_signal: false
+    _aggregate:
+      n_axes: 4
+      facade_support_fraction: 0.75
+      max_facade_ratio_mean_observed: 0.8235907487457083
+      prompt_above_null_all: true
+  artifacts:
+  - results/c1_facade_1p5b_2026-07-23/c1_facade_results.json
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: 'EXPLORATORY C1 facade pilot on Qwen/Qwen2.5-1.5B-Instruct (CPU).
+    Protocol NOT frozen. FIX1: consistent mean-based prompt_reach vs latent_reach=||v||
+    from the same neutral baseline (max reported as a labelled upper bound). FIX2:
+    strongest-prompt reach measured on a SEPARATELY-authored instruction set (data/strongest_prompts/),
+    distinct in kind from the contrast pairs, removing the pseudo-circularity of the
+    prior held-out-POS approach. Registered in a run-local registry (docs/ untouched
+    by task scope).'

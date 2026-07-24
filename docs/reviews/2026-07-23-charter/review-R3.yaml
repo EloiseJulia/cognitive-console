@@ -1,0 +1,529 @@
+# =============================================================================
+# HUMAN-READABLE SUMMARY (R3 — Skeptical Generalist & Clarity, ACM CHI, Charter gate)
+# -----------------------------------------------------------------------------
+# Verdict: MAJOR-REVISION-BEFORE-FREEZE. The idea is genuinely interesting and the
+#   charter is unusually self-aware (honest kill/pivot criteria, real citations).
+#   But at the charter stage it still reads like a specialist's paper: a non-expert
+#   CHI reviewer would struggle with the core vocabulary ("non-surjective",
+#   "semantic facade", "boundary object") and would not, on a first read, be able
+#   to separate RQ1 from RQ2 or see why the console is more than "a prompt box
+#   next to feature-steering sliders."
+# Top clarity/scope risks:
+#   1. Whole contribution leans on ONE workshop (non-archival) paper (Mishra), AND
+#      over-applies it: Mishra proves INTERNAL-state non-surjectivity; the core
+#      user-facing Claim C2 asserts BEHAVIORAL unreachability. Single point of
+#      failure + unearned inference. (BLOCKER-R3-1)
+#   2. RQ1 vs RQ2 overlap and heavy jargon; a generalist reviewer may not grasp
+#      the distinct contribution of each, and RQ1 may be seen as an assumed
+#      corollary rather than a finding. (MAJOR)
+#   3. 16-week scope (Phase-0 interp + 2 user studies across 2 models + a system)
+#      is aggressive; RQ3 cross-model re-mapping is a known-hard engineering risk
+#      that could sink the timeline. (MAJOR)
+# Non-Claims are strong on ML over-claiming but INCOMPLETE on the HCI risks a CHI
+#   reviewer cares about most: over-anthropomorphism / automation over-trust /
+#   dark-pattern potential of a "cognitive control" console. (MAJOR)
+# Score if unchanged: 2.0–3.0 (5-pt, borderline-reject). Score if blockers closed
+#   at charter stage: 3.0–3.5 (borderline, credible full-paper trajectory).
+# NOTE: charter/pre-experiment stage — absence of results is NOT penalized.
+# =============================================================================
+
+review_id: review-R3-charter-2026-07-23
+snapshot_id: charter-2026-07-23
+reviewer_role: R3 — Skeptical Generalist & Clarity
+target_venue: CHI
+review_stage: charter
+review_scope: >
+  Charter-gate review of a proposal (pre-experiment, no results yet). Assessed:
+  framing legibility for a non-specialist CHI audience; distinctness and load-bearing
+  weight of RQ1/RQ2/RQ3; realism of the 16-week scope; honesty/completeness of the
+  Non-Claims (esp. over-anthropomorphism / over-trust); human-subjects + budget
+  risk; and the fragility of depending on a single non-surjectivity paper. Novelty
+  and citation integrity were taken from the independent Novelty Gate output, not
+  re-verified from primary sources by R3.
+
+materials_examined:
+  - docs/charter/project-charter.md (v0.1 DRAFT)
+  - docs/research/2026-07-23-novelty-falsification.md (independent Novelty Gate)
+  - docs/ledgers/claim-ledger.md (C1–C3)
+  - 开题报告_非满射双通道认知控制台.md (author intent / background)
+  - AGENTS.md (governance) and AI-Instruction.md Part I §10 (review protocol/format)
+
+missing_materials:
+  - No system/interface sketch, wireframe, or interaction storyboard — cannot judge
+    whether "the gap as an interface object" is concretely designable vs a slogan.
+  - No study protocol / task list / measures instrument for the RQ2 controlled study
+    (measures are named but not operationalized; "calibrated trust" instrument unspecified).
+  - No draft IRB/ethics plan, consent, or recruitment plan (Prolific? compensation? data handling).
+  - No Phase-0 pilot data or feasibility evidence that the 3–4 cognitive axes are
+    stable/discriminable (this is expected-absent at charter stage; reported, not penalized).
+  - No operational definition of the "compliance floor" / "prompt-unreachable region"
+    task that C2 hinges on.
+  - Budget caps are "TBD" (GPU hours, paid-API ceiling, max full runs) — cannot assess
+    feasibility envelope.
+  - No manual CHI'26/ACM-DL prior-art sweep (Novelty Gate flags this as still owed).
+
+expertise_level: >
+  Confident generalist HCI reviewer; comfortable with study design, trust/automation
+  literature, and metacognition framing. NON-expert in representation engineering /
+  mechanistic interpretability internals (CAA/RepE/SAE, manifold non-surjectivity) —
+  which is precisely the R3 vantage: if I cannot follow the mechanism story, a large
+  fraction of the CHI PC cannot either. Confidence lowered on ML-internal findings.
+
+conflict_check: none — no authorship, no prior involvement, no stake in outcome.
+
+overall_score_range: "2.0–3.0 / 5 (borderline reject as currently framed)"
+confidence: medium
+verdict: major-revision-before-freeze
+
+# ---------------------------------------------------------------------------
+paper_understanding:
+  one_sentence_problem: >
+    When an interface gives a non-expert user two ways to shape an LLM's "cognitive
+    style" at once — writing a prompt (soft, language-bounded) and pulling a latent
+    steering slider (hard, reaches states no prompt can) — can users understand what
+    each channel does, tell them apart, and stay calibrated (not over-trust) when the
+    two disagree, even after the underlying model is swapped?
+
+  claimed_contributions:
+    - >-
+      C1 (RQ1): a QUANTIFIED "semantic facade" — the strongest readable prompt only
+      partially reaches the latent direction it names; surfaced to users as a trust-relevant measure.
+    - >-
+      C2 (RQ2, CORE): a new interaction paradigm (dual-channel console + attribution
+      panel) that lets non-experts correctly ATTRIBUTE and RESOLVE prompt↔latent
+      conflict, and empirical demonstration of a prompt-unreachable control region.
+    - >-
+      C3 (RQ3, extension): the axis levers act as a "boundary object" preserving
+      perceived control/continuity across a backend model swap better than prompt folklore.
+    - Design knowledge for latent-controllability UIs (the HCI deliverable CHI rewards).
+
+  strongest_accept_case: >
+    If the Phase-0 pilot shows the semantic facade is real and quantifiable, and the
+    controlled study shows non-experts genuinely attribute/resolve prompt↔latent
+    CONFLICT better with the console than with either single channel, this is a
+    first-of-kind interaction contribution: nobody has made the prompt↔latent DIVERGENCE
+    itself the operable, trust-calibrating interface object. It combines a crisp,
+    falsifiable empirical phenomenon (facade %) with a paradigm + design knowledge and
+    a timely, important problem (calibrated trust in controllable LLMs) — squarely in
+    CHI's wheelhouse. The charter's honesty (explicit kill/pivot criteria, verified
+    citations, exploratory-vs-confirmatory discipline) signals a paper that will
+    survive rebuttal. Even a partial win (RQ1 measurement + RQ2 attribution gain)
+    yields a publishable CHI contribution.
+
+  strongest_reject_case: >
+    "This is an obvious combination the theory doesn't even support. Huang & Lim
+    (IASDR'25) already gave laypeople steering sliders + a study; AI-Instruments
+    (CHI'25) already reified control as direct-manipulation objects; Tankelevitch
+    (CHI'24) already told us to add explainability + customizability; the authors bolt
+    a prompt box next to the sliders and cite a single non-archival workshop paper
+    (Mishra) for gravitas — and even that paper only proves INTERNAL activations are
+    non-surjective, not that any user-relevant OUTCOME is unreachable by prompting.
+    The headline 'prompts hit a wall the slider crosses' is therefore not established
+    by the theory it leans on, and 'dual-channel steering' is already a coined term for
+    something else. The framing is dense jargon (non-surjective, semantic facade,
+    boundary object) that will lose half the PC, and the 16-week plan (interp pilot +
+    two studies + a system + a cross-model swap) is not credibly deliverable, so the
+    core study risks being underpowered."
+
+  clarity_mismatches:
+    - >-
+      The charter's own novelty table rates core scoop risk "LOW"; the independent
+      Novelty Gate rates it "MEDIUM." A reader comparing the two documents sees the
+      proposal grading itself more generously than its own auditor — a credibility ding.
+    - >-
+      "Non-surjective" is used as if self-evidently a user-facing property. It is an
+      INTERNAL-state result. The charter never linguistically separates "internal state
+      unreachable" (proven) from "task outcome unreachable" (to be shown). A generalist
+      reader will conflate them exactly as the charter's prose invites.
+    - >-
+      RQ1 ("semantic facade") and RQ2 ("non-surjective control") both rest on the same
+      prompt-under-reaches-latent phenomenon; the distinct QUESTION each answers is not
+      crisply separated for a non-specialist. RQ1 reads like a measurement precondition
+      of RQ2 rather than an independent contribution.
+    - >-
+      "Cognitive axes / cognitive console / cognitive attribute" language implies the
+      model literally has cognition; a CHI reviewer sensitive to anthropomorphism will
+      read this as over-claiming unless explicitly hedged as behavioral-style axes.
+    - >-
+      "Boundary object" (RQ3) is borrowed from CSCW/STS where it denotes an artifact
+      bridging communities of practice; here it is repurposed to mean cross-model
+      interaction stability. The mismatch will read as jargon misuse to reviewers who
+      know the original term.
+
+# ---------------------------------------------------------------------------
+findings:
+
+  - finding_id: BLOCKER-R3-1
+    severity: blocker
+    dimension: soundness
+    target_claim_ids: [C2]
+    paper_locations:
+      - charter §1 RQ2 ("a control capability that provably exceeds what any prompt can reach")
+      - charter §4 Mishra row + §5 C2
+      - claim-ledger C2 statement
+      - novelty-falsification §0.2, §5 RQ2, §6.1
+    criticism: >
+      The core Claim C2 and the RQ2 framing assert BEHAVIORAL / task-level
+      unreachability ("prompt-only cannot cross a control threshold the latent channel
+      can", "provably exceeds what any prompt can reach"). The cited proof (Mishra)
+      establishes non-surjectivity of the INTERNAL residual-stream activation — no
+      prompt reproduces the same internal state. These are not the same claim: two
+      different internal states can produce the same observable behavior, so the theory
+      does NOT entail that any user-relevant outcome is prompt-unreachable. The word
+      "provably" in RQ2 is therefore unearned. This is a logical over-application at the
+      load-bearing joint of the paper, and it depends on a SINGLE non-archival workshop
+      paper — a single point of failure both in provenance (non-archival) and in inference.
+    evidence_examined: >
+      Novelty Gate verified Mishra is real and correctly quoted but explicitly flags
+      the internal-vs-behavioral over-application (§0.2, §6.1) and notes Stolfo et al.
+      (instruction↔vector correspondence) can be weaponized against the behavioral gap.
+    why_it_matters_for_acceptance: >
+      A hostile reviewer/auditor who spots "provably" resting on an internal-state
+      result will discount the entire core contribution as theoretically unsupported.
+      At CHI, an over-claimed formal foundation is a fast path to reject.
+    alternative_explanation: >
+      It is possible C2 is empirically true (a compliance-floor task really is
+      prompt-unreachable in behavior) even though the theory doesn't prove it — but then
+      the claim must be labeled EMPIRICAL-to-be-demonstrated, not "provable."
+    requested_evidence_or_change: >
+      (1) Reword C2/RQ2/charter §4 to separate "internal-state non-surjectivity (proven,
+      cited)" from "behavioral/task unreachability (an empirical hypothesis this work
+      tests)"; drop "provably" from the behavioral claim. (2) Add at least one concretely
+      defined compliance-floor task where a prompt-unreachable BEHAVIORAL region is
+      operationalized and can be exhibited. (3) Acknowledge Mishra is a non-archival
+      workshop paper and do not let the contribution stand or fall on it alone.
+    cheapest_discriminating_action: >
+      A wording fix in the charter + a one-paragraph task definition for the
+      prompt-unreachable behavioral region. No experiment needed to close at charter gate;
+      the empirical demonstration is deferred to Phase 0 but the CLAIM must be re-scoped now.
+    acceptance_condition: >
+      C2 and RQ2 text explicitly distinguish proven-internal from to-be-shown-behavioral;
+      "provably" removed from any behavioral assertion; claim-ledger C2 updated with the
+      internal-vs-behavioral limit recorded in Known limits.
+    confidence: high
+    possible_reviewer_misunderstanding: >
+      If the authors already MEANT "provably (internal) + empirically (behavioral)", it
+      is a pure wording problem — but the current prose does not say so, so the fix is
+      still required.
+    requires_new_experiment: false
+    estimated_cost_class: trivial
+    user_approval_required: true  # touches core Claim C2 wording → AGENTS.md §5 core-claim change
+
+  - finding_id: MAJOR-R3-2
+    severity: major
+    dimension: clarity
+    target_claim_ids: [C1, C2]
+    paper_locations:
+      - charter §1 RQ1 vs RQ2
+      - charter §5 C1 vs C2
+      - claim-ledger C1, C2
+    criticism: >
+      For a non-specialist CHI reviewer, RQ1 and RQ2 are not crisply distinct and each
+      is not obviously carrying independent weight. RQ1 (semantic facade: prompt
+      under-reaches the latent direction) reads as a MEASUREMENT PRECONDITION for RQ2
+      (dual-channel conflict attribution), not a standalone contribution. The Novelty
+      Gate independently rates RQ1 "MED–HIGH" risk precisely because the facade
+      phenomenon is close to an assumed corollary of Mishra+ActAdd and end-user
+      prompt-misunderstanding is heavily covered. If RQ1 collapses into "we measured the
+      obvious", the paper loses a claimed contribution.
+    evidence_examined: >
+      Charter §5 C1 falsification ("projection ≪ 100%") is near-assumed true; Novelty
+      Gate §5 says novelty rests entirely on operationalizing facade as a user-facing,
+      trust-mis-calibrating measure, not on the projection being <100%.
+    why_it_matters_for_acceptance: >
+      CHI reviewers reward crisp, separable contributions. Overlapping RQs invite
+      "salami / one-idea-stretched-to-three" criticism and weaken perceived depth.
+    alternative_explanation: >
+      The RQs may be genuinely distinct in the authors' heads (RQ1 = does the gap exist
+      and mis-calibrate trust; RQ2 = can users operate across the gap under conflict)
+      but the charter does not draw that line sharply.
+    requested_evidence_or_change: >
+      Reframe RQ1 around the TRUST-CALIBRATION consequence (does surfacing the facade %
+      change user trust behavior?), not the mere existence of a <100% projection. Add a
+      one-line "what RQ1 proves that RQ2 assumes, and vice versa" delineation.
+    cheapest_discriminating_action: >
+      Rewrite RQ1/C1 to foreground the user-facing, trust-changing measure; add an
+      explicit RQ-separation sentence. Charter-stage text change only.
+    acceptance_condition: >
+      RQ1 stated as an independently falsifiable trust-calibration claim distinct from
+      RQ2's conflict-attribution claim, with each RQ's unique deliverable named.
+    confidence: medium
+    possible_reviewer_misunderstanding: >
+      A specialist might see the distinction as obvious; R3's point is that the
+      generalist majority of the PC will not without explicit signposting.
+    requires_new_experiment: false
+    estimated_cost_class: trivial
+    user_approval_required: false
+
+  - finding_id: MAJOR-R3-3
+    severity: major
+    dimension: empirical
+    target_claim_ids: [C1, C2, C3]
+    paper_locations:
+      - charter §7 Minimum Publishable Evidence
+      - charter §9 Budget (Calendar ~16-week sprint)
+      - charter §1 Betting order ("RQ3 hardest to engineer")
+    criticism: >
+      The 16-week scope is aggressive to the point of feasibility risk. Within one sprint
+      the plan requires: Phase-0 interpretability pilot (axis selection, contrast pairs,
+      CAA vectors on ≥2 models, facade quantification, blind-eval, transfer/composability,
+      conflict probes) + a formative study (N≈12–16) + a 3-condition controlled study
+      with pre-registration and adequate power + a full dual-channel SYSTEM + the RQ3
+      cross-model swap. RQ3's cross-model dose-response re-mapping is flagged by both the
+      charter and the Novelty Gate as the hardest engineering piece. If it slips, either
+      the main study is underpowered or RQ3 is dropped late.
+    evidence_examined: >
+      Charter §1 labels RQ3 "hardest to engineer"; Novelty Gate §5 rates RQ3
+      "MED–HIGH (feasibility, not scoop)"; §7 lists a very large evidence bundle for
+      one sprint; §9 leaves GPU/API/full-run budgets TBD.
+    why_it_matters_for_acceptance: >
+      Underpowered or rushed studies are a top-3 CHI reject reason. A charter that
+      over-commits invites "this cannot be done well in the stated time" and undermines
+      trust in the eventual numbers.
+    alternative_explanation: >
+      The kill/pivot criteria (§8) do provide fallbacks (e.g. Plan D measurement paper),
+      which partially de-risks this — but the charter does not phase RQ3 as explicitly
+      optional/late-cut, so timeline risk remains.
+    requested_evidence_or_change: >
+      Explicitly declare a minimum-viable-paper = RQ1 + RQ2 only, with RQ3 as a
+      clearly cuttable extension gated on a mid-sprint feasibility checkpoint; add a rough
+      week-level milestone budget so power/sample size is protected.
+    cheapest_discriminating_action: >
+      Add a 4–5 line phased timeline with an explicit RQ3 go/no-go checkpoint and a
+      stated minimum publishable unit (RQ1+RQ2). Planning-doc change only.
+    acceptance_condition: >
+      Charter states the minimum publishable unit excludes RQ3, and defines a mid-sprint
+      RQ3 feasibility gate with a drop rule that does not endanger main-study power.
+    confidence: medium
+    possible_reviewer_misunderstanding: >
+      The charter's §8 already implies fallbacks; R3 asks that the SCOPE-CUT be made
+      explicit rather than emergent, so this is partly a signposting fix.
+    requires_new_experiment: false
+    estimated_cost_class: trivial
+    user_approval_required: false
+
+  - finding_id: MAJOR-R3-4
+    severity: major
+    dimension: ethics
+    target_claim_ids: [C2, C3]
+    paper_locations:
+      - charter §6 Non-Claims
+      - charter §1 RQ2 (trust attribution / adaptation)
+      - charter §7 measures (calibrated trust, perceived control)
+    criticism: >
+      The Non-Claims are thorough on ML over-claiming (no new steering method, no
+      prompt≈vector equivalence, no causal-mechanism claim, no deployment safety) but
+      INCOMPLETE on the HCI-specific risks a CHI reviewer weights most for a system that
+      markets "cognitive control" to non-experts: (a) over-anthropomorphism — calling
+      style axes "cognitive" and offering a "skepticism"/"deliberation" slider can lead
+      users to attribute mind/agency to the model; (b) automation over-trust — a
+      confident-looking latent lever can INCREASE unwarranted trust, the opposite of the
+      stated calibration goal; (c) dark-pattern / manipulation potential of a console
+      that can dial a model's apparent confidence. None of these are named as a
+      non-claim, a risk, or a measured harm.
+    evidence_examined: >
+      Charter §6 lists five non-claims, all ML-facing; none address anthropomorphism,
+      over-trust as a harm, or manipulation. Novelty Gate §5 notes Labarta's "trust
+      grounded in observed responses" finding, underscoring trust as a live construct.
+    why_it_matters_for_acceptance: >
+      CHI increasingly requires an ethics/harms reflection; a trust-and-cognition system
+      with no anthropomorphism/over-trust discussion reads as naive and draws reviewer
+      and ethics-committee pushback. It also directly threatens the calibration claim:
+      if the console raises confidence-without-competence, C2's "trust-calibration gain"
+      could invert.
+    alternative_explanation: >
+      The team may intend to handle this in the study (they measure "calibrated trust"),
+      but the charter never states over-trust/anthropomorphism as a risk to guard against
+      or a possible negative finding to report honestly.
+    requested_evidence_or_change: >
+      Add explicit Non-Claims / risks: (i) the console is not claimed to reduce
+      anthropomorphism and may increase it; (ii) latent levers may cause over-trust and
+      this will be measured and reported even if negative; (iii) a stance on
+      manipulation/dark-pattern potential. Add a matching measure (e.g., trust
+      resolution / over-reliance) and a pre-registered negative-result reporting rule.
+    cheapest_discriminating_action: >
+      Extend §6 Non-Claims and §7 measures with the three risk statements + one
+      over-trust measure. Charter-stage text change; ties into the IRB plan.
+    acceptance_condition: >
+      Non-Claims explicitly cover anthropomorphism and over-trust; the study includes an
+      over-reliance/over-trust measure and a commitment to report it even if it
+      contradicts the calibration hypothesis.
+    confidence: high
+    possible_reviewer_misunderstanding: none significant — this is a genuine omission at charter stage.
+    requires_new_experiment: false
+    estimated_cost_class: trivial
+    user_approval_required: true  # touches ethics/human-subjects framing → AGENTS.md §5
+
+  - finding_id: MAJOR-R3-5
+    severity: major
+    dimension: reproducibility
+    target_claim_ids: [C1, C2, C3]
+    paper_locations:
+      - charter §9 Budget (all caps "TBD"), §10 open items
+      - charter §7 (human-subjects), §9 (IRB = escalation)
+    criticism: >
+      Feasibility-critical parameters are undefined at charter stage: GPU hours, paid-API
+      ceiling, max full runs are all "TBD", and the human-subjects/IRB path plus
+      recruitment/compensation/data-handling plan are unspecified. For a CHI paper whose
+      main evidence is TWO human-subjects studies, an unresolved IRB and recruiting path
+      is a real schedule and ethics risk, and undefined compute caps make it impossible
+      to judge whether the interpretability pilot is achievable on "local Windows."
+    evidence_examined: >
+      Charter §9 marks GPU/API/full-run caps TBD and IRB as a §5 human-escalation item;
+      §10 lists these as open items to confirm with human before freeze.
+    why_it_matters_for_acceptance: >
+      Not a novelty issue but a deliverability/ethics-readiness issue. CHI reviewers and
+      ethics review will ask about consent, compensation, and data handling; absence of a
+      plan is a common desk-level concern for empirical HCI work.
+    alternative_explanation: >
+      The charter correctly routes these to human approval (governance), so this is a
+      "must-resolve-before-freeze open item" rather than a hidden flaw — reported as such.
+    requested_evidence_or_change: >
+      Before Charter Freeze, resolve: (i) concrete compute caps and confirmation the
+      Phase-0 pilot fits them; (ii) an IRB/ethics plan with platform (e.g. Prolific),
+      compensation, consent, and data-handling; (iii) paid-API ceiling for the
+      closed-model baseline.
+    cheapest_discriminating_action: >
+      Fill §9 caps with numbers and attach a one-page IRB/recruitment sketch. Human
+      sign-off item (already routed to §5).
+    acceptance_condition: >
+      §9 has concrete caps; an IRB/ethics + recruitment + data-handling plan exists and
+      is human-approved; Phase-0 compute feasibility confirmed.
+    confidence: high
+    possible_reviewer_misunderstanding: none — the charter itself lists these as unresolved.
+    requires_new_experiment: false
+    estimated_cost_class: small
+    user_approval_required: true  # budget + human-subjects → AGENTS.md §5
+
+  - finding_id: MINOR-R3-6
+    severity: minor
+    dimension: clarity
+    target_claim_ids: [C2]
+    paper_locations:
+      - charter §3 Contribution Type ("dual-channel"), §4, title
+      - novelty-falsification §3 ("Dual-Channel Steering" name collision), §6.6
+    criticism: >
+      "Dual-Channel Steering" is already a published (ICLR 2026 workshop) term for a
+      different, ML-ensemble meaning, and "non-surjective / boundary object / semantic
+      facade" is a dense jargon stack. This creates reviewer déjà vu and self-inflicted
+      prior-art confusion, and raises the comprehension bar for a generalist PC.
+    evidence_examined: Novelty Gate §3 and §6.6 flag the exact-term collision and recommend renaming.
+    why_it_matters_for_acceptance: >
+      Naming collisions cause reviewers to mis-map the work onto existing art; heavy
+      jargon depresses clarity scores. Both are cheap to fix and materially help.
+    alternative_explanation: none — this is a presentation choice.
+    requested_evidence_or_change: >
+      Rename the paradigm to avoid the collision; introduce each key term with a
+      one-line plain-language gloss on first use; lead the abstract with the concrete
+      user scenario before the theory vocabulary.
+    cheapest_discriminating_action: Pick a new name + add plain-language glosses. Text-only.
+    acceptance_condition: Paradigm renamed away from "dual-channel steering"; each jargon term glossed at first use.
+    confidence: medium
+    possible_reviewer_misunderstanding: none.
+    requires_new_experiment: false
+    estimated_cost_class: trivial
+    user_approval_required: false
+
+  - finding_id: MINOR-R3-7
+    severity: minor
+    dimension: novelty
+    target_claim_ids: [C2, C3]
+    paper_locations:
+      - charter §4 novelty table (rates core gap implicitly LOW), §4 SemanticLens/Labarta row
+      - novelty-falsification §2 (Labarta MISSTATED), §6.3, §7
+    criticism: >
+      The charter's novelty table under-rates scoop risk relative to its own auditor
+      (charter implies LOW, Novelty Gate says MEDIUM) and mis-frames the Labarta/
+      SemanticLens row (it is a VISION/expert tool, and "SemanticLens" is a separate
+      artifact). A skeptical reviewer cross-reading will treat the self-grading as
+      optimistic and the mis-citation as sloppiness.
+    evidence_examined: Novelty Gate §2 marks Labarta MISSTATED; §6.3 asks for correction; §7 sets scoop risk MED.
+    why_it_matters_for_acceptance: >
+      Accurate related-work positioning is a CHI expectation; an over-favorable
+      self-assessment and a mischaracterized neighbor are easy reviewer ammunition.
+    alternative_explanation: >
+      Honesty here actually HELPS the authors (Labarta being vision+expert reduces the
+      threat), so correcting it is low-cost and net-positive.
+    requested_evidence_or_change: >
+      Align the charter's scoop-risk rating to the Novelty Gate's MEDIUM; correct the
+      Labarta row (vision/CLIP, experts, distinct from SemanticLens); complete the owed
+      manual CHI'26/ACM-DL prior-art sweep before Protocol Freeze.
+    cheapest_discriminating_action: Edit the two table rows + schedule the manual sweep. Text + a bounded search task.
+    acceptance_condition: Novelty table matches auditor's MED rating; Labarta framing corrected; manual sweep logged.
+    confidence: medium
+    possible_reviewer_misunderstanding: none.
+    requires_new_experiment: false
+    estimated_cost_class: small
+    user_approval_required: false
+
+  - finding_id: QUESTION-R3-8
+    severity: question
+    dimension: significance
+    target_claim_ids: [C2]
+    paper_locations:
+      - charter §1 RQ2, §7 controlled study
+    criticism: >
+      Practical relevance question: in realistic use, WHY would a non-expert ever face a
+      prompt↔latent CONFLICT? Users typically set one intent; the conflict scenario
+      ("prompt says confident, skepticism slider high") may be an artifact the study
+      induces rather than a situation users encounter, which would weaken external
+      validity of the core contribution.
+    evidence_examined: Charter §1/§7 describe conflict as central but do not motivate a natural usage context for it.
+    why_it_matters_for_acceptance: >
+      If conflict is study-induced only, reviewers may see C2's "conflict attribution"
+      as an artificial task with limited real-world import, lowering significance.
+    alternative_explanation: >
+      Conflict may arise naturally (e.g., a saved prompt template plus a preset slider,
+      or collaborative/multi-session use) — but the charter must argue this.
+    requested_evidence_or_change: >
+      Add a paragraph motivating naturally-occurring prompt↔latent conflict (defaults,
+      templates, presets, multi-user handoff) to establish ecological validity.
+    cheapest_discriminating_action: Add a motivating-scenario paragraph; optionally probe in the formative study.
+    acceptance_condition: Charter articulates ≥1 realistic scenario where conflict arises without being artificially staged.
+    confidence: low
+    possible_reviewer_misunderstanding: >
+      The authors may already have a scenario in mind (the 开题报告); R3 only sees it
+      unstated in the frozen bundle.
+    requires_new_experiment: false
+    estimated_cost_class: trivial
+    user_approval_required: false
+
+# ---------------------------------------------------------------------------
+review_summary:
+  top_3_rejection_risks:
+    - >
+      Over-applied theory + single-point-of-failure citation: the CORE claim (C2 /
+      RQ2 "provably exceeds any prompt") asserts behavioral unreachability while the one
+      non-archival paper it leans on (Mishra) proves only internal-state non-surjectivity.
+      (BLOCKER-R3-1)
+    - >
+      "Obvious combination" + clarity: a generalist PC may not distinguish the
+      contribution from Huang & Lim sliders + AI-Instruments + Tankelevitch framing, and
+      may not follow the jargon (non-surjective / semantic facade / boundary object) or
+      separate RQ1 from RQ2. (MAJOR-R3-2, MINOR-R3-6)
+    - >
+      Deliverability + ethics readiness: aggressive 16-week scope with hard RQ3
+      engineering, undefined compute/IRB/budget, and Non-Claims that omit
+      over-anthropomorphism / over-trust harms. (MAJOR-R3-3, R3-4, R3-5)
+
+  must_fix_before_next_gate:
+    - BLOCKER-R3-1 — re-scope C2/RQ2 to separate proven-internal from to-be-shown-behavioral; drop "provably"; do not stake the paper on one workshop paper. (human approval — core claim)
+    - MAJOR-R3-4 — add over-anthropomorphism / over-trust / manipulation to Non-Claims + add an over-reliance measure + negative-result reporting rule. (human approval — ethics)
+    - MAJOR-R3-5 — resolve compute caps + IRB/recruitment/data-handling before freeze. (human approval — budget + human subjects)
+    - MAJOR-R3-3 — declare RQ1+RQ2 as the minimum publishable unit with an explicit RQ3 go/no-go checkpoint.
+    - MAJOR-R3-2 — sharpen RQ1 as an independent trust-calibration claim distinct from RQ2.
+
+  optional_improvements:
+    - MINOR-R3-6 — rename the paradigm away from "dual-channel steering"; gloss jargon at first use; lead with the concrete user scenario.
+    - MINOR-R3-7 — align novelty-table scoop rating to the auditor's MEDIUM; correct the Labarta/SemanticLens framing; run the owed manual CHI'26/ACM-DL sweep.
+    - QUESTION-R3-8 — motivate naturally-occurring prompt↔latent conflict for ecological validity.
+
+  questions_for_manager:
+    - Does the team intend C2 as behavioral-empirical (not theory-proven)? If so, will the charter wording be corrected before freeze? (BLOCKER-R3-1)
+    - What is the concrete definition of the "compliance-floor / prompt-unreachable" task, and is there a Phase-0 feasibility signal it exists behaviorally?
+    - Is there an IRB determination path and a recruitment/compensation plan, and can Phase-0 interpretability run within the (still-TBD) local compute budget?
+    - Is RQ3 formally cuttable, and what is the mid-sprint criterion to drop it without endangering main-study power?
+    - How will over-trust/over-reliance be measured, and is there a pre-commitment to report it even if it contradicts the calibration hypothesis?
+
+  score_if_unchanged: "2.0–3.0 / 5 (borderline reject) — strong idea, but over-applied theory, dense framing, and unresolved scope/ethics/budget."
+  score_if_blockers_closed: "3.0–3.5 / 5 (borderline / weak accept trajectory) — with C2 re-scoped, ethics Non-Claims added, RQ1/RQ2 sharpened, RQ3 made cuttable, and budget/IRB resolved, this is a credible CHI full-paper plan; final score will hinge on whether Phase-0 shows the semantic facade and behavioral conflict are real and non-trivial."

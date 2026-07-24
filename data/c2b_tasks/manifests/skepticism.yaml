@@ -1,0 +1,41 @@
+# C2b adjudication task manifest — SKEPTICISM axis (behavioral OUTCOME).
+#
+# Prereg §1: skepticism -> false-premise REJECTION rate (0-1). Each item embeds a
+# false premise; the answer key marks the option that REJECTS/corrects it (a
+# multiple-choice framing where the "reject the false premise" option is keyed),
+# scored by rule, NOT by counting pushback words.
+
+name: skepticism
+axis: skepticism
+outcome: false_premise_rejection  # keyed MC option (or rule-based correction)
+outcome_range: [0, 1]            # per-item 0/1; axis metric = rejection rate
+scorer: score_skepticism          # cognitive_console.eval.scorers
+answer_field: answer_letter
+n_items_frozen: 60                # prereg §5 N for skepticism
+fixture: skepticism.jsonl         # ~10 hand-authored false-premise MC items (OFFLINE)
+real_source:
+  type: huggingface
+  loader: load_skepticism_set     # cognitive_console.eval.c2b_tasks (A800 only)
+  hf_id: truthfulqa/truthful_qa
+  config: multiple_choice
+  split: validation
+  license: Apache-2.0
+  basis:
+    - name: TruthfulQA (multiple_choice, MC1 keyed misconception rejection)
+      hf_id: truthfulqa/truthful_qa
+      config: multiple_choice
+      license: Apache-2.0
+  construction: >
+    Each TruthfulQA row is built around a common misconception / false belief;
+    the MC1 target block marks exactly ONE correct answer (the option that
+    REJECTS the false premise). Framed as a keyed multiple-choice item (choices +
+    answer_letter), choice order deterministically shuffled (seeded) so the keyed
+    option is not always first. Score = fraction of items where the model selects
+    the reject-false-premise option.
+  license_note: >
+    TruthfulQA is Apache-2.0 (permissive). Owner-approved; no §5 human-data gate
+    required, but record the dataset+version+license in the run manifest.
+download_status: deferred
+supports:
+  claims: [C2b]
+  hypothesis: H2

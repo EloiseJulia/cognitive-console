@@ -1,0 +1,157 @@
+# Manager Response — Charter Review (snapshot charter-2026-07-23)
+# Per AI-Instruction Part I §10.6. Manager triage of R1/R2/R3 findings.
+# Disposition ∈ ACCEPT | PARTIALLY_ACCEPT | REBUT_WITH_EVIDENCE | CLARIFY_ONLY | DEFER | REJECT | ESCALATE_TO_USER
+
+meta_review:
+  snapshot_id: charter-2026-07-23
+  reviewers: [R1-novelty, R2-soundness, R3-generalist]
+  consensus_verdict: major-revision (do NOT freeze Charter as v0.1)
+  score_range_unchanged: "2.0-3.0 / 5"
+  score_range_if_blockers_closed: "3.0-4.0 / 5"
+  shared_blocker: >
+    Theory over-application — Mishra proves non-surjectivity of INTERNAL activations; C2/RQ2 assert
+    BEHAVIORAL prompt-unreachability, which is not entailed. Flagged independently by R1-F1, R2-B1, R3-1.
+  outcome: >
+    Idea survives; all fixes are cheap and pre-experiment. Charter revised to v0.2. No kill/pivot triggered.
+    Two items escalate to human (budget/IRB, scope realism). Charter Freeze deferred until: v0.2 accepted +
+    owed manual prior-art sweep run + human confirms budget/IRB.
+
+dispositions:
+
+  - finding_ids: [R1-F1, R2-B1, BLOCKER-R3-1]
+    root_cause: theory-over-application
+    disposition: ACCEPT
+    action: >
+      Split the claim. C2a (theory-backed): steering reaches INTERNAL residual states no prompt reproduces
+      (cite Mishra, scope = internal activations). C2b (must be EMPIRICALLY demonstrated, NOT asserted):
+      on defined tasks, a bounded prompt-search (OPRO + human best-effort, fixed budget) cannot cross a
+      behavioral threshold the latent channel crosses. RQ2 reworded to drop "provably exceeds any prompt"
+      behaviorally. Mishra = motivation for why a behavioral gap is plausible, not proof of it.
+    owner: charter-v0.2 + claim-ledger
+    requires_reaudit: yes (at Claim Freeze)
+
+  - finding_ids: [R2-B2]
+    root_cause: confounded-condition-C
+    disposition: ACCEPT
+    action: >
+      De-confound: add condition D = dual-channel control WITHOUT attribution panel (isolates the panel's
+      contribution), OR add the attribution/info display to baselines. Study now separates (i) extra latent
+      channel from (ii) attribution-panel legibility. Claim C2 attributes gains to the specific factor tested.
+    owner: charter-v0.2 §7 study design
+    requires_reaudit: yes (Pre-Full-Run)
+
+  - finding_ids: [R1-F2]
+    root_cause: novelty-contingent-on-unproven-results
+    disposition: PARTIALLY_ACCEPT
+    action: >
+      Inherent to a pre-experiment charter; made explicit: Phase 0 is the NOVELTY-GATING experiment. Novelty
+      is conditional — if facade + conflict phenomena do not materialize, pivot to Plan B/D (already in §8).
+      Stated as accepted, gated risk rather than a hidden assumption.
+    owner: charter-v0.2 §4/§8
+
+  - finding_ids: [R1-F3, R2-M1]
+    root_cause: C1-near-tautological
+    disposition: ACCEPT
+    action: >
+      Add null baseline (random-direction projection) + require the facade to be LARGE (pre-registered
+      effect-size threshold), not merely <100%. C1 reworded: strongest-prompt projection is far below
+      vector-only AND far above random, with a meaningful gap. Blind-eval discriminability > chance retained.
+    owner: charter-v0.2 §5 + claim-ledger C1
+
+  - finding_ids: [R1-F4]
+    root_cause: semanticlens-misframing
+    disposition: ACCEPT
+    action: >
+      Correct §4: "From Attribution to Action" (Labarta, CVPR'26 W) = vision/CLIP, expert debugging, N=8;
+      "SemanticLens" (Fraunhofer, Nat.Mach.Intell.'25) is a separate artifact. Neither is an LLM latent UI
+      for non-experts — reduces scoop, but framing must be accurate.
+    owner: charter-v0.2 §4
+
+  - finding_ids: [R1-F5]
+    root_cause: name-collision
+    disposition: ACCEPT
+    action: >
+      Note "Dual-Channel Steering" already coined (ICLR'26 WS) for a different method. Add naming caveat;
+      consider alternative product name at writing stage. Not fatal.
+    owner: open-risks + paper naming (deferred)
+
+  - finding_ids: [R1-F6]
+    root_cause: owed-prior-art-sweep
+    disposition: ACCEPT
+    action: >
+      Schedule a second research subagent to run the manual CHI'26 + ACM DL + arXiv prior-art sweep BEFORE
+      Charter Freeze. Until done, scoop status is PROVISIONAL-MED, not LOW.
+    owner: new research task (dependency before freeze)
+
+  - finding_ids: [R2-M2]
+    root_cause: surface-style-vs-reasoning-confound
+    disposition: ACCEPT
+    action: >
+      Pre-specify a discriminating task in Phase 0: reasoning-gain tasks (GSM8K / TruthfulQA) where
+      style-only steering cannot improve correctness. Report style-vs-substance honestly either way.
+    owner: charter-v0.2 §7 Phase 0
+
+  - finding_ids: [R2-M3]
+    root_cause: calibrated-trust-not-operationalized
+    disposition: ACCEPT
+    action: >
+      Operationalize: measure ACTUAL lever controllability (behavioral effect size per lever) and PERCEIVED
+      controllability (user prediction); calibrated trust = alignment/gap between the two. Ground-truth
+      referent = measured effect, not self-report alone.
+    owner: charter-v0.2 §7 measures
+
+  - finding_ids: [R2-M4]
+    root_cause: missing-numeric-thresholds
+    disposition: PARTIALLY_ACCEPT
+    action: >
+      Add provisional numeric thresholds + a power/N note now; exact pre-registration finalized at Protocol
+      Freeze / Pre-Full-Run Review. E.g. facade gap ≥ preregistered d; condition-C attribution accuracy
+      improvement with 95% CI excluding 0.
+    owner: charter-v0.2 §8 + protocol (later)
+
+  - finding_ids: [R2-M5]
+    root_cause: steering-only-baseline-fairness
+    disposition: ACCEPT
+    action: >
+      Specify condition B protocol: laypeople get labeled axis sliders + a structured form (mirrors
+      Huang&Lim), with equal onboarding to condition C. Document default handling to avoid unfair B.
+    owner: charter-v0.2 §7
+
+  - finding_ids: [MAJOR-R3-2]
+    root_cause: rq1-rq2-not-distinct + jargon
+    disposition: ACCEPT (CLARIFY)
+    action: >
+      Sharpen: RQ1 = measure the mismatch (does the user know where the prompt lands?); RQ2 = act on the gap
+      (can users coordinate + resolve conflict across two channels?). Define jargon (non-surjective, semantic
+      facade, boundary object) in plain language on first use.
+    owner: charter-v0.2 §1
+
+  - finding_ids: [MAJOR-R3-3]
+    root_cause: 16-week-scope-feasibility
+    disposition: ESCALATE_TO_USER
+    action: >
+      Scope realism depends on budget/compute/IRB (human items). Recommend: Phase 0 first (2-3 wks, highest
+      ROI); RQ3 explicitly extension/ablation, droppable. Present sequencing to human for a scope decision.
+    owner: human
+
+  - finding_ids: [MAJOR-R3-4]
+    root_cause: non-claims-missing-over-trust-harm
+    disposition: ACCEPT
+    action: >
+      Add to Non-Claims + a short ethics note: we do not claim the console eliminates over-anthropomorphism /
+      over-trust; calibrated-trust is monitored as a first-class metric and a potential harm.
+    owner: charter-v0.2 §6
+
+  - finding_ids: [MAJOR-R3-5]
+    root_cause: tbd-budget-irb
+    disposition: ESCALATE_TO_USER
+    action: >
+      GPU hours, paid-API ceiling, max_full_runs, IRB/human-subjects path = AGENTS.md §5 human-approval
+      items. Already pending; surfaced to human in the confirmation request.
+    owner: human
+
+top_3_manager_priorities:
+  - Close BLOCKER-α by splitting C2 into internal (C2a) vs behavioral (C2b) with an explicit prompt-search
+    ceiling protocol (kills the sharpest reviewer attack).
+  - De-confound the study (add no-panel dual-channel condition) so C2 gains are attributable.
+  - Run the owed manual prior-art sweep before Charter Freeze; keep scoop at MED until cleared.

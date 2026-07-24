@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cognitive_console"
+version = "0.0.1"
+description = "Non-surjective dual-channel cognitive console — Phase 0 prep scaffolding (data-level, CPU-only, no torch)."
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0"]
+# Optional real-model backend for the CPU activation provider + C1 facade pilot.
+# NOT a hard dependency: the offline test suite runs without these, and all
+# torch/transformers imports are lazy (inside methods) so the package imports
+# fine without them installed. Install CPU-only torch separately, e.g.:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   pip install -e .[hf]
+hf = [
+    "torch>=2.0",
+    "transformers>=4.40",
+    "accelerate>=0.30",
+    "safetensors>=0.4",
+    "huggingface_hub>=0.23",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

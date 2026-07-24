@@ -1,0 +1,13 @@
+artifact_id: c2b-reachability-pilot-table
+paper_location: null
+supports_claims:
+- C2b
+source_experiments:
+- c2b-reach-16382b53-0001
+aggregation_script: scripts/run_gpu_phase0.py
+aggregation_commit: 6716cc57e132e1929ad8bfd73b21985495546cb0
+raw_data_hash: sha256:9f081258f1c45b249964bff56a017de407330d3af271484b7a2ff87dd2ec8966
+output_file: results/gpu_7b_2026-07-23/c2b/c2b_reachability_results.json
+manual_edits_allowed: false
+last_verified: '2026-07-23T12:02:46.559978+00:00'
+verdict: pending

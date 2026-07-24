@@ -49,6 +49,20 @@
   CHI'26/ACM-DL prior-art sweep run (new research task), (c) v0.2 re-reviewed.
 - **Escalated to human (§5):** budget caps, IRB/human-subjects path, 16-week scope realism.
 
+## 2026-07-24 · D-0032 · C2b adjudication running on RENTED controlled RTX 4090 (AutoDL)
+- **Human rented** a single-tenant AutoDL RTX 4090 24GB (driver 595, torch 2.8.0+cu128 preinstalled, python
+  3.12, 50GB autodl-tmp data disk, network_turbo). SSH provided. This avoids the D-0029 shared-machine
+  auto-driver-upgrade risk (single-tenant dedicated instance).
+- **Launched** the FROZEN C2b adjudication with the D-0031 mechanics: `--backend hf --model
+  Qwen/Qwen2.5-7B-Instruct --bootstrap-b 10000 --seed 20260723 --batch-size 16 --max-new-tokens 64
+  --stall-timeout 600` on real GSM8K/TruthfulQA/TriviaQA; HF_HOME on the data disk; hardened instrument
+  (progress logging + checkpoint/resume + watchdog). Expected ~25-50 min.
+- **VRAM note:** 7B fp16 ~15GB + batch-16 KV/overhead should fit in 24GB; if OOM, drop --batch-size to 8
+  (compute-mechanics only, in the fingerprint, does not touch the frozen statistical rule).
+- **On completion:** pull results, adjudicate against frozen criteria (three-tier verdict), then wipe the
+  rented box (it's billed hourly — shut down promptly).
+- **Frozen?** Prereg + mechanics frozen; this run produces the verdict against locked criteria.
+
 ## 2026-07-24 · D-0031 · Pre-run generation-mechanics addendum FROZEN (max_new_tokens=64, batch=16, stall=600s)
 - **Owner (@EloiseJulia) directive:** write the pre-run re-registration draft ready-to-go.
 - **Frozen into prereg §5a (PRE-RUN, no results seen — pre-registered, not post-hoc):** max_new_tokens=64

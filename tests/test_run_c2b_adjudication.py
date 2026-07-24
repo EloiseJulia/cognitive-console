@@ -8,6 +8,7 @@ import json
 
 import numpy as np
 import pytest
+import yaml
 
 from scripts import run_c2b_adjudication as R
 
@@ -130,6 +131,26 @@ def test_fingerprint_changes_with_steering_method():
     fp_caa = _fp_for_argv(["--backend", "hf", "--steering-method", "caa"])
     fp_iti = _fp_for_argv(["--backend", "hf", "--steering-method", "iti"])
     assert fp_caa != fp_iti
+
+
+def test_registry_experiment_id_differs_between_methods_for_same_model(tmp_path):
+    common = [
+        "--backend", "synthetic",
+        "--n-items", "4",
+        "--bootstrap-b", "200",
+        "--allow-underpowered",
+        "--model", "same-model",
+    ]
+    out_caa = tmp_path / "reg_caa"
+    out_iti = tmp_path / "reg_iti"
+    assert R.main([*common, "--steering-method", "caa", "--out-dir", str(out_caa)]) == 0
+    assert R.main([*common, "--steering-method", "iti", "--out-dir", str(out_iti)]) == 0
+
+    reg_caa = yaml.safe_load((out_caa / "experiment-registry.yaml").read_text(encoding="utf-8"))
+    reg_iti = yaml.safe_load((out_iti / "experiment-registry.yaml").read_text(encoding="utf-8"))
+    exp_caa = str(reg_caa["experiments"][0]["experiment_id"])
+    exp_iti = str(reg_iti["experiments"][0]["experiment_id"])
+    assert exp_caa != exp_iti
 
 
 def test_optimizer_runtime_fingerprint_changes_with_implicit_effective_budget():

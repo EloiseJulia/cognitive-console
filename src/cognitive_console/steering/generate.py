@@ -395,6 +395,10 @@ class SteeredHFBackend(GenBackend):
         self._ensure_loaded()
         return int(self._config.hidden_size)
 
+    def available_layers(self) -> List[int]:
+        self._ensure_loaded()
+        return list(range(int(self._config.num_hidden_layers) + 1))
+
     # -- hook -------------------------------------------------------------
     def _make_hook(self, steer: SteerConfig):
         import torch
@@ -416,6 +420,72 @@ class SteeredHFBackend(GenBackend):
             return hidden
 
         return hook
+
+    def capture_residual_activations(
+        self,
+        prompts: Sequence[str],
+        layer: int,
+        *,
+        steer: Optional[SteerConfig] = None,
+    ) -> np.ndarray:
+        """Capture last-token residual activations at one hidden-state layer.
+
+        Returns shape ``[len(prompts), hidden_dim]``. When ``steer`` is provided,
+        the same residual-addition hook used for generation is applied during the
+        forward pass.
+        """
+        import torch
+
+        self._ensure_loaded()
+        layer = int(layer)
+        n_layers = int(self._config.num_hidden_layers)
+        if not (0 <= layer <= n_layers):
+            raise ValueError(f"layer {layer} out of range 0..{n_layers}")
+
+        prompts = list(prompts)
+        if not prompts:
+            return np.empty((0, self.hidden_dim), dtype=np.float32)
+
+        texts = [
+            self._render_user_chat_prompt(self._tokenizer, p, self.model_name)
+            for p in prompts
+        ]
+        self._tokenizer.padding_side = "left"
+        enc = self._tokenizer(
+            texts,
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+            max_length=self.max_length,
+        )
+        enc = {k: v.to(self.device) for k, v in enc.items()}
+
+        handle = None
+        if steer is not None and abs(float(steer.alpha)) > _EPS:
+            if not (1 <= int(steer.layer) <= n_layers):
+                raise ValueError(
+                    f"steer.layer {steer.layer} out of range 1..{n_layers} "
+                    f"(hidden_states index; hooks decoder block layer-1)"
+                )
+            block = self._layers[int(steer.layer) - 1]
+            handle = block.register_forward_hook(self._make_hook(steer))
+
+        try:
+            with torch.no_grad():
+                out = self._model(**enc, output_hidden_states=True, use_cache=False)
+        finally:
+            if handle is not None:
+                handle.remove()
+
+        hs = out.hidden_states[layer]
+        attn = enc.get("attention_mask")
+        if attn is None:
+            last = hs[:, -1, :]
+        else:
+            last_idx = attn.sum(dim=1) - 1
+            rows = torch.arange(hs.shape[0], device=hs.device)
+            last = hs[rows, last_idx, :]
+        return last.to(torch.float32).cpu().numpy()
 
     # -- generation -------------------------------------------------------
     def generate(

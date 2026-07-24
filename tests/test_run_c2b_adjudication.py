@@ -5,6 +5,7 @@ FIX 3: an underpowered bootstrap (--bootstrap-b < frozen 10000) must HARD-FAIL
 """
 
 import pytest
+import json
 
 from scripts import run_c2b_adjudication as R
 
@@ -193,3 +194,85 @@ def test_looks_like_cuda_error_labeling():
     # a generic RuntimeError with no GPU vocabulary must NOT be mislabeled.
     assert R._looks_like_cuda_error(RuntimeError("list index out of range")) is False
     assert R._looks_like_cuda_error(ValueError("bad config")) is False
+
+
+def _canonical_verdict_metrics(path):
+    data = json.loads(path.read_text(encoding="utf-8"))
+    axes = {}
+    for axis_row in data["axes"]:
+        axes[axis_row["axis"]] = {
+            "layer": axis_row["layer"],
+            "passed": axis_row["passed"],
+            "mean_diff": axis_row["mean_diff"],
+            "ci_lo": axis_row["ci_lo"],
+            "ci_hi": axis_row["ci_hi"],
+            "ci_level": axis_row["ci_level"],
+            "coherence_ok": axis_row["coherence_ok"],
+            "test_steer_degeneracy": axis_row["test_steer_degeneracy"],
+            "test_baseline_degeneracy": axis_row["test_baseline_degeneracy"],
+            "per_item_prompt": axis_row["per_item_prompt"],
+            "per_item_steer": axis_row["per_item_steer"],
+            "per_item_diff": axis_row["per_item_diff"],
+            "frozen_alpha": axis_row["dev_selection"]["frozen_alpha"],
+            "best_prompt_id": axis_row["dev_selection"]["best_prompt_id"],
+        }
+    payload = {
+        "verdict": data["verdict"],
+        "axis_passes": data["axis_passes"],
+        "axes": axes,
+    }
+    return json.dumps(payload, sort_keys=True, separators=(",", ":"))
+
+
+def test_transcript_side_output_is_metric_invariant(tmp_path):
+    out_a = tmp_path / "with_tx"
+    out_b = tmp_path / "without_tx"
+    argv = [
+        "--backend", "synthetic",
+        "--n-items", "5",
+        "--bootstrap-b", "200",
+        "--allow-underpowered",
+        "--seed", "20260723",
+    ]
+    assert R.main([*argv, "--save-transcripts", "--out-dir", str(out_a)]) == 0
+    assert R.main([*argv, "--no-save-transcripts", "--out-dir", str(out_b)]) == 0
+
+    a = _canonical_verdict_metrics(out_a / "c2b_adjudication_results.json")
+    b = _canonical_verdict_metrics(out_b / "c2b_adjudication_results.json")
+    assert a == b
+
+    tx_dir = out_a / "transcripts"
+    assert tx_dir.exists()
+    assert (tx_dir / "paired_test_channels.jsonl").exists()
+    assert not (out_b / "transcripts").exists()
+
+
+def test_transcript_records_include_parse_diagnostics(tmp_path):
+    out_dir = tmp_path / "tx_diag"
+    rc = R.main([
+        "--backend", "synthetic",
+        "--n-items", "4",
+        "--bootstrap-b", "200",
+        "--allow-underpowered",
+        "--save-transcripts",
+        "--out-dir", str(out_dir),
+    ])
+    assert rc == 0
+    tx_files = sorted((out_dir / "transcripts").glob("*.jsonl"))
+    assert tx_files, "expected transcript jsonl files"
+    row = None
+    for fp in tx_files:
+        if fp.name == "paired_test_channels.jsonl":
+            continue
+        with open(fp, "r", encoding="utf-8") as fh:
+            line = fh.readline().strip()
+        if line:
+            row = json.loads(line)
+            break
+    assert row is not None
+    assert "prompt_text" in row and isinstance(row["prompt_text"], str)
+    assert "generation_text" in row and isinstance(row["generation_text"], str)
+    assert "parse" in row and isinstance(row["parse"], dict)
+    assert "numbers_extracted" in row["parse"]
+    assert "parsed_confidence" in row["parse"]
+    assert "axis_parse_failed" in row["parse"]

@@ -1,4 +1,9 @@
 \documentclass[sigconf]{acmart}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,decorations.pathreplacing}
 
 \AtBeginDocument{%
   \providecommand\BibTeX{{%
@@ -40,6 +45,14 @@ The contribution list must remain tied to \texttt{docs/paper/claim-map.yaml}.
   \item \textbf{C3, design implication only:} cognitive consoles should instrument limits and trust-calibration risks rather than promise latent control. No empirical user-study credit is claimed on this route.
 \end{enumerate}
 
+
+\begin{figure*}[t]
+  \centering
+  \input{figures/concept.tex}
+  \caption{Dual-channel cognitive-console framing. The prompt channel is user-legible, while the latent-steering channel intervenes on hidden states; the console instruments where legibility fails to transfer to behavioral control. This HCI schematic is conceptual, not a result artifact.}
+  \label{fig:concept}
+\end{figure*}
+
 \section{Related Work}
 \label{sec:related-work}
 
@@ -79,16 +92,51 @@ Table~\ref{tab:novelty-neighbors} gives the writing-stage contrast. The machine-
 \label{sec:methods}
 
 \subsection{C1 Facade Measurement}
-The C1 figure must be rebuilt from \texttt{results/gpu\_7b\_2026-07-23/c1/c1\_facade\_results.json}; provenance is recorded in \texttt{docs/paper/figure-manifests/c1-ratio-ci.yaml}. No numeric values should be copied manually into this file.
+The C1 figure is rebuilt from \texttt{results/gpu\_7b\_2026-07-23/c1/c1\_facade\_results.json}; provenance is recorded in \texttt{docs/paper/figure-manifests/c1-ratio-ci.yaml}. No numeric values are copied manually into this file. For each axis, the script plots the frozen artifact's scale-free facade ratio
+\begin{equation}
+  r_a = \frac{\mathrm{prompt\_reach}_a}{\mathrm{pole\_reach}_a},
+  \label{eq:facade-ratio}
+\end{equation}
+and the random-null reference on the same scale, $\mathrm{pole\_null\_p95}_a / \mathrm{pole\_reach}_a$. This measurement is exploratory and Qwen2.5-7B only.
 
 \subsection{Frozen Behavioral Adjudicator}
-The adjudicator uses DEV-only selection of prompts and steering strengths, paired TEST comparisons, item-cluster bootstrap, Bonferroni correction, and a coherence gate. The protocol source is \texttt{docs/ledgers/prereg-c2b-adjudication.md}.
+The adjudicator uses DEV-only selection of prompts and steering strengths, paired TEST comparisons, item-cluster bootstrap, Bonferroni correction, and a coherence gate. The protocol source is \texttt{docs/ledgers/prereg-c2b-adjudication.md}. CAA constructs a mean-difference steering vector
+\begin{equation}
+  v = \mathbb{E}_{x \in A^+}[h_L(x)] - \mathbb{E}_{x \in A^-}[h_L(x)],
+  \qquad
+  h'_L = h_L + \alpha \hat{v},
+  \label{eq:caa-steering}
+\end{equation}
+where $L$ is the intervention layer and $\hat{v}$ is the unit direction. ITI uses the same intervention form with a probe-derived direction.
+
+For each TEST item $i$, the frozen rule compares steer-only behavior against the DEV-selected best prompt using the paired difference
+\begin{equation}
+  d_i = \mathrm{steer}_i - \mathrm{prompt}_i.
+  \label{eq:paired-diff}
+\end{equation}
+The confidence interval is obtained by paired item-cluster bootstrap: resample items as clusters, each carrying its $k$ samples, with $B \ge 10000$. For the three adjudicated axes, the per-axis CI is the Bonferroni two-sided interval at
+\begin{equation}
+  1 - \frac{0.05}{3} = 0.98333.
+  \label{eq:bonferroni-ci}
+\end{equation}
+An axis passes iff
+\begin{equation}
+  0 \notin \mathrm{CI}_{0.98333}(\bar d_a)
+  \quad\wedge\quad
+  \bar d_a \ge \delta
+  \quad\wedge\quad
+  \mathrm{coherence\ ratio}_a \le 1.5,
+  \qquad \delta = 0.05.
+  \label{eq:axis-pass}
+\end{equation}
+The frozen verdict is STRONG\_GO for at least two passing axes, CONDITIONAL\_GO for exactly one passing axis, and KILL\_PLAN\_D for zero passing axes. Outcome definitions are fixed as deliberation = accuracy, skepticism = false-premise rejection rate, and uncertainty = $1-\mathrm{Brier}$ (Table~\ref{tab:axis-outcomes}).
+\input{tables/axis-outcome-definitions.tex}
 
 \subsection{Steering Families and Models}
 The 2$\times$2 robustness arm covers CAA/ITI $\times$ Qwen2.5-7B/Llama-3-8B. Llama provenance follows D-0038.
 
 \subsection{Audit and Artifact Lineage}
-All main tables and figures must trace to manifests under \texttt{docs/paper/table-manifests/} and \texttt{docs/paper/figure-manifests/}. The LaTeX source should contain placeholders, not hand-entered results.
+All main tables and figures must trace to manifests under \texttt{docs/paper/table-manifests/} and \texttt{docs/paper/figure-manifests/}. The LaTeX source includes generated figures and table inputs whose numeric values are rebuilt from frozen artifacts, not hand-entered.
 
 \section{Results}
 \label{sec:results}
@@ -96,39 +144,29 @@ All main tables and figures must trace to manifests under \texttt{docs/paper/tab
 \subsection{Representational Facade Ratio (C1)}
 \begin{figure}[t]
   \centering
-  \fbox{\parbox{0.9\linewidth}{Placeholder for C1 ratio-CI figure. Rebuild from \texttt{docs/paper/figure-manifests/c1-ratio-ci.yaml}.}}
-  \caption{Exploratory representational-facade ratios by axis. This figure must be generated from the manifest and labeled as Qwen2.5-7B exploratory evidence.}
+  \includegraphics[width=\linewidth]{figures/c1-ratio-ci.pdf}
+  \caption{Exploratory representational-facade ratios by axis for Claim C1, generated from experiment \texttt{c1-facade-d710b4b4-0001} (\texttt{results/gpu\_7b\_2026-07-23/c1/c1\_facade\_results.json}). Focus is labeled as non-facade/overshoot; C1 remains single-model exploratory evidence.}
   \label{fig:c1-ratio-ci}
 \end{figure}
 
-Figure~\ref{fig:c1-ratio-ci} will carry C1 with explicit caveats: focus overshoot/no-facade, deliberation layer sensitivity, and pending Llama replication.
+Figure~\ref{fig:c1-ratio-ci} carries C1 with explicit caveats: focus overshoot/no-facade, deliberation layer sensitivity, and pending Llama replication.
 
 \subsection{Frozen Prompt-vs-Latent Delta Table (C2)}
-\begin{table*}[t]
-  \centering
-  \caption{Placeholder for the 4-cell frozen adjudication $\Delta$ table. Rebuild from \texttt{docs/paper/table-manifests/c2-delta-4cell.yaml}; do not hand-type numeric results here.}
-  \label{tab:c2-delta-4cell}
-  \begin{tabular}{llllll}
-    \toprule
-    Method & Model & Axis & $\Delta$ steer--prompt & Bonferroni CI & Pass? \\
-    \midrule
-    \multicolumn{6}{c}{Generated rows go here.} \\
-    \bottomrule
-  \end{tabular}
-\end{table*}
+\input{tables/c2-delta-4cell.tex}
 
-Table~\ref{tab:c2-delta-4cell} is the C2 headline artifact: all four cells are 0/3 axes under the frozen rule, but final table values must come from the manifest pipeline.
+Table~\ref{tab:c2-delta-4cell} is the C2 headline artifact: all four cells are 0/3 axes under the frozen rule, and all table values are generated by the artifact pipeline.
 
 \subsection{Calibration Harm Across Four Cells}
 \begin{figure}[t]
   \centering
-  \fbox{\parbox{0.9\linewidth}{Placeholder for calibration-harm figure. Rebuild from \texttt{docs/paper/figure-manifests/c2-calibration-harm-4cell.yaml}.}}
-  \caption{Calibration harm on the uncertainty axis across method--model cells. Mechanism remains open after the E-0007 valid null.}
+  \includegraphics[width=\linewidth]{figures/c2-calibration-harm.pdf}
+  \caption{Calibration harm on the uncertainty axis across method--model cells for Claim C2, generated from \texttt{results/arm\_full/} (E-0006; CAA$\times$Qwen reproduces E-0005). Mechanism remains open after the E-0007 valid null.}
   \label{fig:c2-calibration-harm}
 \end{figure}
 
 \section{Design Implications}
 \label{sec:design-implications}
+\input{tables/failure-taxonomy.tex}
 C3 is non-empirical on the pure-model route. The design implication is to treat the console as a limits and trust-calibration instrument, not as evidence that users can control latent states. This implication is informed by HCI transparency, metacognition, and trust-calibration work \cite{tankelevitch2024metacog,liao2024transparency,li2026learntrust,neumann2026whocontrols,subramani2026latent}.
 
 \section{Limitations}

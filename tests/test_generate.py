@@ -8,6 +8,8 @@ offline suite stays green without torch/model.
 
 import importlib.util
 import os
+import sys
+import types
 
 import numpy as np
 import pytest
@@ -111,6 +113,85 @@ def test_locate_decoder_layers_supports_llama_style_path():
     model.model.layers = ["l0", "l1", "l2"]
     got = SteeredHFBackend._locate_decoder_layers(model)
     assert got == ["l0", "l1", "l2"]
+
+
+def test_capture_residual_left_padding_matches_singleton(monkeypatch):
+    class FakeTensor:
+        def __init__(self, arr):
+            self.arr = np.asarray(arr)
+
+        @property
+        def shape(self):
+            return self.arr.shape
+
+        def to(self, target=None):
+            if target is np.float32:
+                return FakeTensor(self.arr.astype(np.float32))
+            return self
+
+        def cpu(self):
+            return self
+
+        def numpy(self):
+            return np.asarray(self.arr)
+
+        def __getitem__(self, idx):
+            return FakeTensor(self.arr[idx])
+
+    class FakeNoGrad:
+        def __enter__(self):
+            return None
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+    class FakeTokenizer:
+        def __init__(self):
+            self.padding_side = "left"
+
+        def __call__(self, texts, **kwargs):
+            if isinstance(texts, str):
+                texts = [texts]
+            max_length = int(kwargs.get("max_length", 512))
+            tokenized = []
+            for text in texts:
+                ids = [(ord(ch) % 17) + 1 for ch in str(text) if ch != " "]
+                ids = ids[-max_length:] or [1]
+                tokenized.append(ids)
+            max_len = max(len(ids) for ids in tokenized)
+            input_ids = []
+            attn = []
+            for ids in tokenized:
+                pad = max_len - len(ids)
+                input_ids.append(([0] * pad) + ids)
+                attn.append(([0] * pad) + ([1] * len(ids)))
+            return {
+                "input_ids": FakeTensor(np.asarray(input_ids, dtype=np.int64)),
+                "attention_mask": FakeTensor(np.asarray(attn, dtype=np.int64)),
+            }
+
+    class FakeModel:
+        def __call__(self, **enc):
+            ids = enc["input_ids"].numpy().astype(np.float32)
+            hs = np.stack([ids, ids + 0.5, ids * 2.0], axis=-1)
+            return types.SimpleNamespace(hidden_states=(None, FakeTensor(hs)))
+
+    fake_torch = types.SimpleNamespace(float32=np.float32, no_grad=FakeNoGrad)
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+
+    backend = SteeredHFBackend("fake-model")
+    backend._ensure_loaded = lambda: None
+    backend._config = types.SimpleNamespace(num_hidden_layers=1, hidden_size=3)
+    backend._tokenizer = FakeTokenizer()
+    backend._model = FakeModel()
+    backend._layers = []
+
+    prompts = ["A", "A much longer prompt", "mid size"]
+    batched = backend.capture_residual_activations(prompts, layer=1)
+    single = np.vstack(
+        [backend.capture_residual_activations([prompt], layer=1)[0] for prompt in prompts]
+    )
+    np.testing.assert_allclose(batched, single)
 
 
 # --------------------------------------------------------------------------- #

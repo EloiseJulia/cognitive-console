@@ -27,7 +27,6 @@ if str(_REPO) not in sys.path:
 
 from cognitive_console.analysis import ood
 from cognitive_console.experiments import adjudicate_c2b as adj
-from cognitive_console.eval import c2b_tasks
 from cognitive_console.lineage import git_commit, utcnow
 from cognitive_console.steering.extract import extract_caa
 from cognitive_console.steering.generate import SteerConfig, SteeredHFBackend
@@ -83,6 +82,23 @@ def _json_load(path: Path) -> Dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _jsonl_load(path: Path) -> List[Dict]:
+    rows: List[Dict] = []
+    with path.open("r", encoding="utf-8") as fh:
+        for line_no, raw in enumerate(fh, start=1):
+            s = raw.strip()
+            if not s:
+                continue
+            try:
+                rec = json.loads(s)
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"invalid JSONL at {path}:{line_no}") from exc
+            if not isinstance(rec, dict):
+                raise ValueError(f"invalid JSONL record at {path}:{line_no}: expected object")
+            rows.append(rec)
+    return rows
+
+
 def _sha256_array(x: np.ndarray) -> str:
     arr = np.ascontiguousarray(np.asarray(x, dtype=np.float64))
     return "sha256:" + hashlib.sha256(arr.tobytes()).hexdigest()
@@ -106,28 +122,115 @@ def _runtime_model_for_label(model_label: str, qwen_model: str, llama_model: str
     raise ValueError(f"unknown frozen model label in cell key: {model_label}")
 
 
-def _resolve_uncertainty_items(payload: Dict, axis_row: Dict, seed: int) -> tuple[List[str], List[str]]:
-    explicit_ids = axis_row.get("test_item_ids")
-    explicit_prompts = axis_row.get("test_item_prompts")
-    if isinstance(explicit_ids, list) and explicit_ids:
-        ids = [str(x) for x in explicit_ids]
-        if isinstance(explicit_prompts, list) and len(explicit_prompts) == len(ids):
-            return ids, [str(x) for x in explicit_prompts]
+def _load_frozen_uncertainty_from_transcripts(
+    cell_dir: Path,
+) -> tuple[List[str], List[str], np.ndarray]:
+    transcripts_dir = cell_dir / "transcripts"
+    if not transcripts_dir.exists():
+        raise FileNotFoundError(
+            f"{cell_dir.name}: missing frozen transcripts directory: {transcripts_dir}"
+        )
+    paired_path = transcripts_dir / "paired_test_channels.jsonl"
+    if not paired_path.exists():
+        raise FileNotFoundError(
+            f"{cell_dir.name}: missing frozen transcript file: {paired_path}"
+        )
+    rows = _jsonl_load(paired_path)
+    if not rows:
+        raise ValueError(f"{cell_dir.name}: transcript file is empty: {paired_path}")
 
-    frozen_params = payload.get("frozen_params", {})
-    n_items = int((frozen_params.get("n_items_by_axis", {}) or {}).get(AXIS, adj.N_ITEMS_BY_AXIS[AXIS]))
-    dev_fraction = float(frozen_params.get("dev_fraction", adj.DEV_FRACTION))
-    use_fixture = bool(payload.get("use_fixture", False))
-    task = c2b_tasks.load_c2b_task(AXIS, use_fixture=use_fixture)
-    items = list(task.items)[:n_items]
-    ids = [str(it["id"]) for it in items]
-    split = adj.split_dev_test(ids, dev_fraction=dev_fraction, seed=int(seed))
-    by_id = {str(it["id"]): it for it in items}
-    test_items = [by_id[i] for i in split.test_ids]
-    return [str(it["id"]) for it in test_items], [str(it.get("prompt", "")) for it in test_items]
+    by_item: Dict[str, Dict[str, object]] = {}
+    for rec in rows:
+        if str(rec.get("axis", "")) != AXIS:
+            continue
+        item_id = str(rec.get("item_id", "")).strip()
+        if not item_id:
+            raise ValueError(f"{cell_dir.name}: transcript record missing item_id")
+        prompt_text = rec.get("prompt_text")
+        if not isinstance(prompt_text, str) or not prompt_text.strip():
+            raise ValueError(
+                f"{cell_dir.name}: transcript record missing prompt_text for item_id={item_id}"
+            )
+        final_outcomes = rec.get("final_item_outcomes")
+        if not isinstance(final_outcomes, dict):
+            raise ValueError(
+                f"{cell_dir.name}: transcript record missing final_item_outcomes for item_id={item_id}"
+            )
+        if "prompt" not in final_outcomes or "steer" not in final_outcomes:
+            raise ValueError(
+                f"{cell_dir.name}: transcript record missing final_item_outcomes.prompt/steer "
+                f"for item_id={item_id}"
+            )
+        try:
+            prompt_outcome = float(final_outcomes["prompt"])
+            steer_outcome = float(final_outcomes["steer"])
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                f"{cell_dir.name}: non-numeric final_item_outcomes for item_id={item_id}"
+            ) from exc
+        if not (np.isfinite(prompt_outcome) and np.isfinite(steer_outcome)):
+            raise ValueError(
+                f"{cell_dir.name}: non-finite final_item_outcomes for item_id={item_id}"
+            )
+        raw_order = rec.get("item_order")
+        item_order: int | None = None
+        if raw_order is not None:
+            try:
+                item_order = int(raw_order)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"{cell_dir.name}: invalid item_order for item_id={item_id}"
+                ) from exc
+
+        prev = by_item.get(item_id)
+        if prev is None:
+            by_item[item_id] = {
+                "item_order": item_order,
+                "prompt_text": prompt_text,
+                "prompt_outcome": prompt_outcome,
+                "steer_outcome": steer_outcome,
+            }
+            continue
+        if prev["prompt_text"] != prompt_text:
+            raise ValueError(
+                f"{cell_dir.name}: inconsistent prompt_text across transcript rows for item_id={item_id}"
+            )
+        if item_order is not None and prev["item_order"] is not None and prev["item_order"] != item_order:
+            raise ValueError(
+                f"{cell_dir.name}: inconsistent item_order across transcript rows for item_id={item_id}"
+            )
+        if not np.isclose(float(prev["prompt_outcome"]), prompt_outcome):
+            raise ValueError(
+                f"{cell_dir.name}: inconsistent prompt outcome across transcript rows for item_id={item_id}"
+            )
+        if not np.isclose(float(prev["steer_outcome"]), steer_outcome):
+            raise ValueError(
+                f"{cell_dir.name}: inconsistent steer outcome across transcript rows for item_id={item_id}"
+            )
+
+    if not by_item:
+        raise ValueError(
+            f"{cell_dir.name}: no {AXIS} rows found in frozen transcript file {paired_path}"
+        )
+
+    def _sort_key(item: tuple[str, Dict[str, object]]) -> tuple[int, str]:
+        item_id, payload = item
+        order = payload.get("item_order")
+        return (int(order) if isinstance(order, int) else 10**9, item_id)
+
+    ordered = sorted(by_item.items(), key=_sort_key)
+    item_ids = [item_id for item_id, _ in ordered]
+    item_prompts = [str(payload["prompt_text"]) for _, payload in ordered]
+    delta = np.asarray(
+        [float(payload["steer_outcome"]) - float(payload["prompt_outcome"]) for _, payload in ordered],
+        dtype=np.float64,
+    )
+    if delta.ndim != 1 or delta.size < 2:
+        raise ValueError(f"{cell_dir.name}: transcript-derived delta_outcome must have >=2 items")
+    return item_ids, item_prompts, delta
 
 
-def _load_cell_spec(cell_dir: Path, *, seed: int, qwen_model: str, llama_model: str) -> CellFrozenSpec:
+def _load_cell_spec(cell_dir: Path, *, qwen_model: str, llama_model: str) -> CellFrozenSpec:
     method_from_key, model_label = _parse_cell_key(cell_dir.name)
     result_path = cell_dir / "c2b_adjudication_results.json"
     if not result_path.exists():
@@ -151,9 +254,7 @@ def _load_cell_spec(cell_dir: Path, *, seed: int, qwen_model: str, llama_model: 
 
     layer = int(row.get("layer"))
     frozen_alpha = float((row.get("dev_selection") or {}).get("frozen_alpha"))
-    delta_outcome = np.asarray(row.get("per_item_diff", []), dtype=np.float64)
-    if delta_outcome.ndim != 1 or delta_outcome.size < 2:
-        raise ValueError(f"{cell_dir.name}: invalid per_item_diff for {AXIS}")
+    item_ids, item_prompts, delta_outcome = _load_frozen_uncertainty_from_transcripts(cell_dir)
 
     sigma = float((payload.get("alpha_scale_by_axis") or {}).get(AXIS, 1.0))
     effective_alpha = (
@@ -161,8 +262,12 @@ def _load_cell_spec(cell_dir: Path, *, seed: int, qwen_model: str, llama_model: 
         if steering_method == "iti"
         else float(frozen_alpha)
     )
-    item_ids, item_prompts = _resolve_uncertainty_items(payload, row, seed)
-    if len(item_ids) != delta_outcome.size:
+    if int(row.get("n_test", 0)) and len(item_ids) != int(row.get("n_test")):
+        raise ValueError(
+            f"{cell_dir.name}: transcript item count mismatch with frozen n_test "
+            f"({len(item_ids)} vs {int(row.get('n_test'))})"
+        )
+    if len(item_ids) != int(delta_outcome.size):
         raise ValueError(
             f"{cell_dir.name}: item/delta length mismatch ({len(item_ids)} vs {delta_outcome.size})"
         )
@@ -395,7 +500,6 @@ def main(argv: Optional[List[str]] = None) -> int:
     cell_specs = [
         _load_cell_spec(
             p,
-            seed=args.seed,
             qwen_model=args.qwen_model,
             llama_model=args.llama_model,
         )

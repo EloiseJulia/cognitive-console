@@ -481,6 +481,9 @@ class SteeredHFBackend(GenBackend):
         attn = enc.get("attention_mask")
         if attn is None:
             last = hs[:, -1, :]
+        elif getattr(self._tokenizer, "padding_side", "right") == "left":
+            # With left padding, sequence end is always the true final token.
+            last = hs[:, -1, :]
         else:
             last_idx = attn.sum(dim=1) - 1
             rows = torch.arange(hs.shape[0], device=hs.device)

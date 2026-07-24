@@ -1,6 +1,6 @@
-# PREREG — Latent Recovery Arm (Workstream D) — DRAFT / INERT
+# PREREG — Latent Recovery Arm (Workstream D) — FROZEN (Option 1)
 
-> Status: **DRAFT — NOT FROZEN, NOT AUTHORIZED TO RUN.** This document is an independent proposed pre-registration for Manager review and owner sign-off. It is **inert** until the owner explicitly approves (AGENTS.md §5) both protocol freeze and any hourly-billed GPU spend. No experiment, GPU provisioning, TEST generation, or frozen-record edit is authorized by this draft.
+> Status: **FROZEN 2026-07-24 (owner-approved, decision D-0041).** Owner selected **Option 1 (faithful PSR primary; manifold variant optional secondary only)** and authorized the **Qwen primary-arm GPU budget (~2.0–3.4 GPU-h, ~US$5–10)**; the conditional Llama confirmation arm is NOT yet authorized (revisit only if the Qwen primary shows signal). The frozen success/kill criteria, primary method, adjudicator reuse, and DEV/TEST discipline below are now IMMUTABLE for this arm. Implementation + run are authorized under the approved budget, but require the owner to physically provision (boot) the hourly-billed GPU box before any spend. This arm never edits or reinterprets the frozen records below.
 >
 > Purpose: add a new, stronger/principled latent-steering arm that directly answers the PSR / "Steer Like the LLM" ICML 2026 risk (open-risks #9): trained/optimized steering may match or exceed prompting behaviorally. This arm tests whether behavioral gain can be recovered on at least one axis where naive mean-difference CAA/ITI failed.
 >
@@ -10,7 +10,7 @@
 
 ## OWNER DECISION BOX (before freeze)
 
-The Manager-recommended freeze choice is **Option 1: faithful PSR primary; manifold variant optional secondary only**.
+**FROZEN DECISION (D-0041, owner-approved 2026-07-24): Option 1 selected** — faithful PSR primary; manifold variant optional secondary only. The table below is retained for the record.
 
 | Option | Primary method | Claim-level consequence if it fails | Recommendation |
 |---|---|---|---|

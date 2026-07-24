@@ -46,23 +46,17 @@ A frozen, fairness-controlled, independently-audited behavioral adjudication sho
 
 ### Nearest-neighbor novelty contrast table (R1-F4)
 
-Citation hygiene rule for this table: prefer directly relevant 2024-2026 neighbors; use exact details only where verified in repo docs; mark unverified leads so the citation-verification pass can fill them in.
+Citation hygiene rule for this table: use only works verified in `docs/research/2026-07-24-citation-verification.md`; BibTeX keys match `docs/paper/references.bib`.
 
-| prior work (year; status) | what THEY test | what WE uniquely adjudicate |
+| prior work (year; cite key) | what THEY test | what WE uniquely adjudicate |
 |---|---|---|
-| Mishra et al., *Steered LLM Activations are Non-Surjective* (2026; VERIFIED) | Internal residual-state non-surjectivity under activation steering | A behavioral prompt-vs-latent transfer test under frozen DEV/TEST adjudication; Mishra is background, not our result |
-| PSR / "Steer Like the LLM" lead (repo says 2026; details UNVERIFIED) | Repo prior-art sweep says trained steering can imitate or exceed prompt steering | Naive/bounded off-the-shelf CAA/ITI failure under user-realistic bounded prompt effort; PSR is a threat and planned response |
-| CAA, *Steering Llama 2 via Contrastive Activation Addition* (2024; VERIFIED) | Contrastive activation-addition steering of high-level model behavior | Whether a legible CAA direction beats the best prompt on task outcomes under fairness controls and hostile audits |
-| ITI canonical citation (UNVERIFIED) | Probe/head-based inference-time intervention steering, as used in our robustness arm | Whether an orthogonal steering family also fails to beat the best prompt across Qwen/Llama |
-| ActAdd / Activation Engineering (2023; PARTIAL) | Activation-addition steering from contrast pairs | Background lineage only; ActAdd Appendix-B exclusion sub-claim remains [NEEDS EVIDENCE] and is not used as support |
-| RepE canonical citation (UNVERIFIED) | Representation-level monitoring/control methods | Adjacent stronger steering family; not tested in the current 2x2 grid |
-| Huang & Lim, *Designing Intuitive Interfaces for Feature Steering of LLMs* (2025; VERIFIED) | Layperson GUI for SAE feature steering/persona building | Prompt-vs-latent divergence and control non-transfer across methods/models; no human-study claim in this route |
-| AI-Instruments (2025; VERIFIED, full bib details still to check) | Prompt-only direct-manipulation instruments | Latent-vs-prompt adjudication and representational facade measurement beyond prompt reification |
-| Labarta et al., *From Attribution to Action* (2026; VERIFIED caveat) | Expert CLIP/vision attribution-to-steering workflow | LLM behavioral control reality check; Labarta is vision/CLIP, not an LLM latent UI |
-| Latent Manipulator (2026; VERIFIED, full title/details to check) | Slider manipulation of embedding-visualization layouts | LLM generation behavior and calibration harm under latent steering, not document-map visualization |
-| Mind-the-Performance-Gap lead (repo says 2026; details UNVERIFIED) | Repo prior-art sweep says feature steering trades behavior shifts against capability/coherence | Related steering fragility evidence; our adjudicator directly compares steer vs best prompt with frozen pass/fail criteria |
-| Trust-calibration / system-prompt-control HCI leads (repo says 2026; details UNVERIFIED) | Repo prior-art sweep lists confidence-signal trust recalibration and user system-prompt-control studies | Human-study fork background only; pure-model route claims design implications without empirical user-study credit |
-
+| Sprejer et al., *Mind the Performance Gap* (2026; `sprejer2026mindgap`) | Closest empirical neighbor: feature steering can induce capability--behavior trade-offs and degradation relative to prompting | External corroboration for C2/calibration-harm, not a scoop: Goodfire SAE features, MMLU, no pre-registration, no CAA/ITI 2×2 model grid, no HCI legibility-console framing |
+| Mishra et al., *Steered LLM Activations are Non-Surjective* (2026 workshop; `mishra2026nonsurj`) | Internal residual-state non-surjectivity under activation steering | A behavioral prompt-vs-latent transfer test under frozen DEV/TEST adjudication; Mishra is background, not our result |
+| Heyman & Vandeputte, *Steer Like the LLM* (2026; `heyman2026steer`) | Trained steering that mimics prompting | Naive/bounded off-the-shelf CAA/ITI failure; PSR is a threat and planned response, not covered by C2 |
+| Rimsky et al. CAA + Li et al. ITI (2024/2023; `rimsky2024caa`, `li2023iti`) | Activation steering methods | Whether those legible directions beat the best prompt on task outcomes, with fairness controls and hostile audits |
+| Fan et al. ASTEER + Korznikov et al. Rogue Scalpel (2026; `fan2026asteer`, `korznikov2025rogue`) | Steerability limits and safety-domain steering failures | Metacognitive-axis prompt-vs-latent adjudication, not a broad benchmark or safety attack |
+| Huang & Lim (2025; `huang2025steering`) | Layperson GUI for SAE feature steering/persona building | Prompt-vs-latent behavioral non-transfer and design implications; no human-study claim in this route |
+| Riche et al., Labarta et al., Raval et al. (2025/2026; `riche2025aiinstr`, `labarta2026attribution`, `raval2026latman`) | Prompt instruments, expert vision/CLIP steering, and embedding-visualization manipulation | LLM behavioral control and calibration harm; Labarta is vision/CLIP and Latent Manipulator steers visualizations, not LLM generations |
 ## 3. Methods (claims carried: C1 measurement; C2 adjudication)
 
 ### 3.1 C1 facade measurement
@@ -126,4 +120,5 @@ Citation hygiene rule for this table: prefer directly relevant 2024-2026 neighbo
 ## 8. Conclusion (claims carried: C1 scoped; C2 headline; C3 implication)
 - Repeat only evidence-backed claims: exploratory legibility facade, generalized C2 non-transfer across tested cells, robust calibration harm, and design implication.
 - Do not conclude that all steering fails, that prompts are behaviorally non-surjective in general, or that users empirically benefit from the console.
+
 

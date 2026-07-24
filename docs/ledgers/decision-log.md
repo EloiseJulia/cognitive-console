@@ -5,6 +5,26 @@
 
 ---
 
+## 2026-07-24 · D-0033 · KILLED 3rd A800 run: loader ignored frozen per-axis N (protocol-scale bug)
+- **Trigger:** On the rented bjb1 box the auto-chain fired the frozen adjudication after the 15GB model
+  finished downloading. **C1 re-derived on 7B = 3/3 axes facade** (deliberation ratio 0.583 CI[0.488,0.681],
+  skepticism 0.548 CI[0.434,0.670], uncertainty 0.713 CI[0.518,0.910]) — corroborates E-0003.
+- **BUG caught by Manager consistency check (NOT by prior audits):** first C2b progress line printed
+  `phase=dev_prompt items=440 done=0/1137835` — total planned generations **1,137,835 vs the frozen 11,365
+  (~100×)**; items=440 ≈ DEV_FRACTION×full GSM8K test split (1319). Root cause: `scripts/run_c2b_adjudication.py::load_axis_items`
+  only slices `items[:n_items]` when `--n-items` is passed; default is `None`, and the real loaders
+  (`_load_real`) pull the FULL HF datasets. The frozen per-axis N (`N_ITEMS_BY_AXIS`={60,60,80}) is **never
+  applied** on the real path, and `--n-items` is a single int that cannot express per-axis N anyway. The
+  hardening audits exercised `plan_generation_counts` with hand-built N=60/80 specs, so this real-loader
+  path was never exercised.
+- **Decision (Manager, autonomous — NOT a §5 item):** KILLED the run + auto-chain immediately (GPU freed,
+  billed hourly). This is a **launcher/instrument bug fix that makes the run HONOR the already-frozen N**;
+  it does NOT touch the §4 decision rule or any frozen value → within Manager authority (owner methodology:
+  fix instrument, never change judgment). Fix: `load_axis_items` must default `n_items` to
+  `N_ITEMS_BY_AXIS[axis]` when None (real path), reproducing the frozen 11,365-gen budget. Dispatch an
+  implement subagent (worktree) + a hostile audit before the corrected run's result is banked.
+- **Frozen?** Prereg UNCHANGED (D-0024/25/31 still authoritative). Model weights retained on box for reuse.
+
 ## 2026-07-23 · D-0001 · Session bootstrap & Charter v0.1 drafted
 - **Decision (Manager, autonomous):** Established `docs/` ledger structure per AGENTS.md §8; drafted
   Research Charter v0.1 (status: proposed, NOT frozen); registered C1/C2/C3 + H1/H2/H3.

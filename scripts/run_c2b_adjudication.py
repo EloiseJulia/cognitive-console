@@ -199,10 +199,17 @@ class InactivityWatchdog:
 # Spec construction
 # --------------------------------------------------------------------------- #
 def load_axis_items(axis: str, use_fixture: bool, n_items: Optional[int]) -> List[Dict]:
+    """Load items for one axis with frozen per-axis caps by default.
+
+    If ``n_items`` is provided, it explicitly overrides the cap. Otherwise we use
+    the frozen preregistered per-axis default from ``adj.N_ITEMS_BY_AXIS`` when
+    available. Unknown axes keep the legacy uncapped behavior.
+    """
     task = c2b_tasks.load_c2b_task(axis, use_fixture=use_fixture)
     items = list(task.items)
-    if n_items is not None:
-        items = items[:n_items]
+    cap = n_items if n_items is not None else adj.N_ITEMS_BY_AXIS.get(axis)
+    if cap is not None:
+        items = items[:cap]
     return items
 
 
@@ -412,7 +419,7 @@ def build_parser() -> argparse.ArgumentParser:
                     help="use the bundled OFFLINE task fixtures (default for synthetic; "
                          "also the CPU/1.5B smoke). Omit on the A800 for the real loaders.")
     ap.add_argument("--n-items", type=int, default=None,
-                    help="cap items/axis (default: all fixture items, or frozen N for real)")
+                    help="cap items/axis (default: frozen per-axis N; explicit value overrides)")
     ap.add_argument("--n-strong", type=int, default=DEFAULT_N_STRONG)
     ap.add_argument("--n-extraction", type=int, default=28)
     ap.add_argument("--bootstrap-b", type=int, default=adj.BOOTSTRAP_B)

@@ -65,6 +65,45 @@ def test_fingerprint_encodes_do_sample_via_backend():
     assert fp_syn != fp_hf
 
 
+@pytest.mark.parametrize("axis", R.ADJ_AXES)
+def test_load_axis_items_defaults_to_frozen_per_axis_n(monkeypatch, axis):
+    frozen_n = R.adj.N_ITEMS_BY_AXIS[axis]
+    fake_items = [{"id": f"{axis}-{i}", "prompt": f"q{i}"} for i in range(frozen_n + 11)]
+
+    class FakeTask:
+        def __init__(self, items):
+            self.items = items
+
+    def fake_load_c2b_task(axis_name, use_fixture):
+        assert axis_name == axis
+        assert use_fixture is True
+        return FakeTask(fake_items)
+
+    monkeypatch.setattr(R.c2b_tasks, "load_c2b_task", fake_load_c2b_task)
+    got = R.load_axis_items(axis, use_fixture=True, n_items=None)
+    assert len(got) == frozen_n
+    assert got == fake_items[:frozen_n]
+
+
+def test_load_axis_items_explicit_n_items_overrides_frozen_default(monkeypatch):
+    axis = "uncertainty_awareness"
+    frozen_n = R.adj.N_ITEMS_BY_AXIS[axis]
+    fake_items = [{"id": f"{axis}-{i}", "prompt": f"q{i}"} for i in range(frozen_n + 21)]
+
+    class FakeTask:
+        def __init__(self, items):
+            self.items = items
+
+    monkeypatch.setattr(
+        R.c2b_tasks,
+        "load_c2b_task",
+        lambda axis_name, use_fixture: FakeTask(fake_items),
+    )
+    got = R.load_axis_items(axis, use_fixture=True, n_items=5)
+    assert len(got) == 5
+    assert got == fake_items[:5]
+
+
 # --------------------------------------------------------------------------- #
 # MINOR-1: inactivity watchdog for the D-0029 SILENT-hang failure mode.
 # --------------------------------------------------------------------------- #

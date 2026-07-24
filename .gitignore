@@ -33,3 +33,12 @@ results/arm_full/**/transcripts/
 results/arm_full/**/checkpoints/
 results/arm_full/**/c1/
 results/*.tgz
+
+# LaTeX paper build artifacts
+docs/paper/build/
+docs/paper/*.aux
+docs/paper/*.bbl
+docs/paper/*.blg
+docs/paper/*.log
+docs/paper/*.out
+docs/paper/*.pdf

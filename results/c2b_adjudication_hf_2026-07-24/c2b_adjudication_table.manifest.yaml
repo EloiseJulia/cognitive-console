@@ -1,0 +1,13 @@
+artifact_id: c2b-qualified-adjudication-table
+paper_location: null
+supports_claims:
+- C2b
+source_experiments:
+- c2b-adj-deac6326-0001
+aggregation_script: scripts/run_c2b_adjudication.py
+aggregation_commit: 9150cbfae6be7df695932fbf5cb9904b48cf0c75
+raw_data_hash: sha256:5ddb6a2ecf3b71af67da2f2c7988e2eea156c0a576583bb05669bc719732943d
+output_file: results/c2b_adjudication_hf_2026-07-24/c2b_adjudication_results.json
+manual_edits_allowed: false
+last_verified: '2026-07-24T05:56:11.188353+00:00'
+verdict: pending

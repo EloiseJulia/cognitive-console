@@ -14,10 +14,13 @@ Status values: proposed | partially-supported | supported | contradicted | withd
   baseline, with a pre-registered meaningfully large gap (a measurable legibility/representation gap).
 - **Scope:** Llama-3-8B-Instruct, Qwen2.5-7B-Instruct; axes = Deliberation/Skepticism/Uncertainty/Focus.
 - **Type:** empirical regularity (diagnostic → confirmatory after protocol freeze)
-- **Status:** **partially-supported / STRENGTHENED @7B (EXPLORATORY, single model family).** E-0003:
-  Qwen2.5-7B 3/4 axes hold (deliberation 0.583 [0.488,0.680], skepticism 0.548 [0.434,0.670], uncertainty
-  0.713 [0.517,0.910], CI<1 seed-stable; focus overshoot/no facade). Corroborated at 1.5B (E-0001/2). NOT
-  confirmatory — single model family, valid_for_paper=false; ≥2-model (Llama-3) replication owed.
+- **Status:** **partially-supported / 2-MODEL support at 3/4 aggregate, EXPLORATORY, with per-axis
+  heterogeneity.** E-0003 (Qwen2.5-7B): 3/4 hold (deliberation 0.583, skepticism 0.548, uncertainty 0.713;
+  focus overshoot/no facade). **E-0008 (Llama-3-8B, frozen protocol, audited): also 3/4 hold** (deliberation
+  0.872, skepticism 0.628, focus 0.471; **uncertainty 1.000 does NOT hold**). **HONEST CAVEAT:** facade is
+  MODEL-INVARIANT only on **deliberation + skepticism** (both models); uncertainty and focus FLIP across
+  models. "3/4" replicates in magnitude, NOT in axis composition — NOT a clean identical replication. Both
+  EXPLORATORY, valid_for_paper=false (single run per model). Corroborated at 1.5B (E-0001/2).
 - **Required evidence:** projection/cosine of strongest-prompt vs CAA vector vs random null; blind-eval.
 - **Known limits:** projection is a linear proxy; axis may be non-linear/multi-mechanism.
 - **Paper location:** Contribution 1 (measurement); ratio-CI figure. See reframe-2026-07-24-reality-check.md.

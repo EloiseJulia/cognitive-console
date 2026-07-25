@@ -2,7 +2,45 @@
 # Immutable log. Every run (incl. failed/cancelled/invalidated) gets a unique experiment_id.
 # Fields per AI-Instruction Part I §8.1. No outputs/final2/really_final folder-science.
 
-experiments: []
+experiments:
+  - experiment_id: psr-qwen-primary-smoke-failed-20260725
+    parent: null
+    hypothesis_id: H-D
+    claim_ids: [C2b]
+    type: diagnostic
+    status: failed
+    code_commit: 91765c0
+    dirty_tree: true
+    data_hash: null
+    env_hash: null
+    config_hash: null
+    model: Qwen/Qwen2.5-7B-Instruct
+    dataset: data/c2b_tasks/fixtures/*; data/contrast_pairs/*; data/strongest_prompts/*
+    seed: 20260723
+    hardware: NVIDIA GeForce RTX 4090 D 24GB
+    started_at: '2026-07-25T22:52:40.626+08:00'
+    ended_at: '2026-07-26T00:16:32.511+08:00'
+    exit_code: 1
+    raw_metrics: results/psr_qwen_primary/psr_qwen_smoke_failure.json
+    summary_metrics:
+      full_run_started: false
+      failure_stage: gpu_smoke_before_full_run
+      steering_applies_cosine: 0.9999792521147886
+      steering_applies_max_abs_error: 0.007659860490832646
+      psr_dev_evaluations_reached: false
+      per_axis_eval_count: null
+      coverage_guard_reached: false
+    artifacts:
+      - results/psr_qwen_primary/psr_qwen_smoke_failure.json
+    failure_reason: >-
+      Runner-only GPU smoke failed before PSR DEV evaluations: after C1 completed,
+      optimize_psr_on_dev attempted to load ScheduledSteeredHFBackend while
+      HFActivationProvider still held a Qwen2.5-7B model on the RTX 4090 D,
+      causing CUDA OOM. Per instruction, the frozen full arm was not run.
+    valid_for_paper: false
+    validation_notes: >-
+      Diagnostic failed smoke record only. Frozen PSR/adjudicator code was not
+      modified, TEST was not touched, and no frozen PSR verdict was produced.
 # - experiment_id: exp-0001
 #   parent: null
 #   hypothesis_id: H1

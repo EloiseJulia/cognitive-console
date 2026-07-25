@@ -1,0 +1,50 @@
+{
+  "experiment_id": "psr-qwen-primary-smoke-failed-20260725",
+  "run_type": "diagnostic",
+  "status": "failed",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "backend": "hf",
+  "steering_method": "psr",
+  "protocol_frozen": true,
+  "prereg": "docs/ledgers/prereg-latent-recovery-arm.md (FROZEN Option 1 + D-0042 lambda_coh=1.0)",
+  "started_at": "2026-07-25T22:52:40.626+08:00",
+  "ended_at": "2026-07-26T00:16:32.511+08:00",
+  "full_run_started": false,
+  "failure_stage": "gpu_smoke_before_full_run",
+  "failure_reason": "Runner-only GPU smoke failed before PSR DEV evaluations: after C1 completed, optimize_psr_on_dev attempted to load ScheduledSteeredHFBackend while HFActivationProvider still held a Qwen2.5-7B model on the RTX 4090 D, causing CUDA OOM (23.50 GiB in use; ~10.69 MiB free; failed allocating 130 MiB). Per instruction, the frozen full arm was not run.",
+  "download_notes": {
+    "llama_cache_removed": true,
+    "disk_after_llama_cleanup": "30G available on /root",
+    "hf_mirror_snapshot_download": "stalled on large safetensors after ~25 minutes (~146 MB incomplete); stopped before full arm",
+    "modelscope_fallback": "Qwen/Qwen2.5-7B-Instruct downloaded serially with max_workers=1 to /root/modelscope-qwen and hardlinked into the HF snapshot cache for load testing; not committed"
+  },
+  "gpu_smoke": {
+    "steering_applies_check": {
+      "method": "forward-hook hidden-state delta on one prompt token using SteeredHFBackend float16",
+      "layer": 14,
+      "alpha": 2.0,
+      "cosine_delta_vs_expected_alpha_direction": 0.9999792521147886,
+      "max_abs_error_vs_expected_alpha_direction": 0.007659860490832646,
+      "interpretation": "directional application observed; strict fp32-level equality tolerance was not met under float16"
+    },
+    "runner_smoke": {
+      "command_scope": "--use-fixture --n-items 3 --psr-candidate-budget 3 --bootstrap-b 100 --allow-underpowered --batch-size 1 --max-new-tokens 8",
+      "c1_completed": true,
+      "psr_dev_evaluations_reached": false,
+      "per_axis_eval_count": null,
+      "coverage_guard_reached": false,
+      "error": "torch.OutOfMemoryError while loading ScheduledSteeredHFBackend during PSR DEV baseline generation"
+    }
+  },
+  "frozen_verdict": null,
+  "arm_outcome": "not_run_invalid_smoke",
+  "valid_for_paper": false,
+  "artifacts_committed": [
+    "results/psr_qwen_primary/psr_qwen_smoke_failure.json"
+  ],
+  "final_box_state_after_cleanup": {
+    "gpu": "NVIDIA GeForce RTX 4090 D, 0 MiB used / 24564 MiB total, 0% util",
+    "disk": "overlay 30G size, 641M used, 30G available, 3% use; /root/.cache/huggingface 12K"
+  },
+  "sensitive_credentials_written": false
+}

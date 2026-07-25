@@ -1,0 +1,21 @@
+artifact_id: "table-c1-twomodel"
+artifact_type: "main table"
+title: "Exploratory two-model C1 facade comparison"
+supports_claims: ["C1"]
+source_artifacts:
+  - path: "results/gpu_7b_2026-07-23/c1/c1_facade_results.json"
+    experiment_id: "c1-facade-d710b4b4-0001"
+    evidence_id: "E-0003"
+    role: "Qwen2.5-7B per-axis facade ratios, CIs, and pass/fail flags"
+  - path: "results/llama_c1_facade_2026-07-24/c1_facade_results.json"
+    experiment_id: "c1-facade-1dcc4fa7-0001"
+    evidence_id: "E-0008"
+    role: "Llama-3-8B per-axis facade ratios, CIs, and pass/fail flags"
+generation_script: "docs/paper/scripts/make_c1_twomodel_table.py"
+output_file: "docs/paper/tables/c1-twomodel.tex"
+manual_edits_allowed: false
+provenance_rule: "Rebuild from committed JSON artifacts only; no hand-copied C1 numbers in prose."
+required_caveats:
+  - "Both E-0003 and E-0008 are EXPLORATORY and valid_for_paper=false for confirmatory use."
+  - "C1 has two-model support at the aggregate 3/4 level, but per-axis composition differs."
+  - "Model-invariant axes in this pair are deliberation and skepticism; uncertainty and focus are heterogeneous."

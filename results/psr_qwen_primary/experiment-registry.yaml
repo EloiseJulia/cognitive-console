@@ -1,0 +1,34 @@
+experiments:
+- experiment_id: psr-c2b-adj-0018d5ea7e84f48ac52bbbbdf16829f5-0001
+  parent: null
+  hypothesis_id: H2
+  claim_ids:
+  - C2b
+  type: exploratory
+  status: done
+  code_commit: null
+  dirty_tree: null
+  data_hash: null
+  env_hash: null
+  config_hash: sha256:0018d5ea7e84f48ac52bbbbdf16829f5
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: data/c2b_tasks/* (fixtures) or deferred real loaders
+  seed: 20260723
+  hardware: cuda-float16
+  started_at: '2026-07-25T17:10:24.607535+00:00'
+  ended_at: '2026-07-25T18:12:35.429525+00:00'
+  exit_code: 0
+  raw_metrics: null
+  summary_metrics:
+    _verdict: KILL_PLAN_D
+    _axis_passes:
+      deliberation: false
+      skepticism: false
+      uncertainty_awareness: false
+    _steering_method: psr
+  artifacts:
+  - results/psr_qwen_primary/psr_c2b_adjudication_results.json
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: Faithful-PSR Workstream D arm. Frozen C2b adjudicator imported
+    unchanged; PSR optimization is DEV-only and provenance guarded.

@@ -10,6 +10,8 @@
 
 ## OWNER DECISION BOX (before freeze)
 
+**PRE-RUN PARAMETER FREEZE (Manager D-0042, 2026-07-25, before any data):** `lambda_coh = 1.0` in the DEV objective `J` (previously unspecified numerically). Coherence is already a hard TEST pass gate (<=1.5x) in the frozen adjudicator, so this weight only shapes DEV candidate selection; frozen + fingerprinted before any TEST run.
+
 **FROZEN DECISION (D-0041, owner-approved 2026-07-24): Option 1 selected** — faithful PSR primary; manifold variant optional secondary only. The table below is retained for the record.
 
 | Option | Primary method | Claim-level consequence if it fails | Recommendation |

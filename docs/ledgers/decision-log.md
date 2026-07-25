@@ -5,6 +5,21 @@
 
 ---
 
+## 2026-07-25 · D-0042 · Pre-run parameter freeze for the PSR arm: lambda_coh = 1.0 (frozen BEFORE any data)
+- **Context:** Implementing the frozen PSR method (feature/psr-impl, PR#12) surfaced that prereg-latent-recovery-arm.md
+  specifies the DEV objective `J = mean_DEV(outcome) - lambda_coh * max(0, coherence_ratio - 1.5)` but did NOT give a
+  numeric value for `lambda_coh`.
+- **Decision (Manager, self-decided; NOT a §5 change to a frozen judgment — completing an unspecified constant BEFORE
+  any run, per honest-fail):** freeze **`lambda_coh = 1.0`**. Rationale: the coherence gate (<=1.5x) is ALREADY a hard
+  per-axis TEST pass condition in the frozen adjudicator regardless of lambda_coh; lambda_coh only shapes DEV-stage
+  candidate selection to avoid degenerate vectors, so it is secondary; 1.0 is a neutral default. It is frozen and
+  fingerprinted in the run config BEFORE any TEST data is seen. Recorded as a pre-run freeze addendum in the prereg.
+- **Also frozen at implementation (matching the prereg):** basis {CAA, ITI, top-16 PCA}, r=16; <=32 DEV candidate
+  evals/axis; {L-1,L,L+1} schedule (DEV-selected); alpha grid {2,4,6,8,12,16,24}; optimizer seed 20260723;
+  objective optimizes ABSOLUTE DEV outcome (not beat-a-specific-prompt); adjudicator imported BYTE-IDENTICAL.
+- **Frozen?** No frozen judgment/evidence altered. E-0005/6/7, adjudicate_c2b §4, the three preregs' decision rules
+  untouched. This only fills a previously-unspecified optimization constant before the run.
+
 ## 2026-07-24 · D-0041 · Writing-threshold stage kickoff: G/doc-sync merged; D prereg FROZEN (Option 1); A staged; origin/main found stale
 - **New Manager took over** (handoff 2026-07-24), passed acceptance exam. Launched 3 parallel workflows + doc hygiene.
 - **Workflow G (console):** feature/37-console built console v1 + no-human computational demo (auto-flags C1 facade limit + C2 steering degradation from FROZEN artifacts). Independent hostile audit (audit-console) = **MERGEABLE**, no BLOCKER/MAJOR; recomputed every displayed number by hand from artifacts (no hardcoded/fabricated values); 318 passed/4 skipped. One MINOR (C2 channel has no evidence-ledger fallback — robustness gap, not integrity) logged as follow-up. Merged to local main (was GitHub PR#2).

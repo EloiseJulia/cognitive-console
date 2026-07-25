@@ -123,3 +123,61 @@ experiments:
     its run-local registry step because relative --out-dir is not relative_to(_REPO);
     this canonical ledger entry repairs lineage without altering protocol or metric
     logic.
+
+- experiment_id: psr-c2b-adj-0018d5ea7e84f48ac52bbbbdf16829f5-0001
+  parent: null
+  hypothesis_id: H-D
+  claim_ids:
+  - C2b
+  type: exploratory
+  status: done
+  code_commit: 8ae7ce2
+  dirty_tree: false
+  data_hash: null
+  env_hash: null
+  config_hash: sha256:0018d5ea7e84f48ac52bbbbdf16829f5
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: data/c2b_tasks/* via frozen real loaders; data/contrast_pairs/*; data/strongest_prompts/*
+  seed: 20260723
+  hardware: NVIDIA GeForce RTX 4090 D 24GB; cuda-float16
+  started_at: '2026-07-25T17:10:24.607535+00:00'
+  ended_at: '2026-07-25T18:12:35.429525+00:00'
+  exit_code: 0
+  raw_metrics: results/psr_qwen_primary/psr_c2b_adjudication_results.json
+  summary_metrics:
+    verdict: KILL_PLAN_D
+    arm_outcome: robust_to_method_strength
+    axis_passes:
+      deliberation: false
+      skepticism: false
+      uncertainty_awareness: false
+    mean_diff:
+      deliberation: 0.024999999999999998
+      skepticism: -0.06000000000000001
+      uncertainty_awareness: -0.1603479245283019
+    ci_9833:
+      deliberation: [-0.030000000000000006, 0.1]
+      skepticism: [-0.20999999999999996, 0.06999999999999999]
+      uncertainty_awareness: [-0.2916816509433962, -0.03906637735849025]
+    coherence_ok:
+      deliberation: true
+      skepticism: true
+      uncertainty_awareness: true
+    psr_dev_evaluations:
+      deliberation: 32
+      skepticism: 32
+      uncertainty_awareness: 32
+    wall_clock_seconds: 3730.4
+  artifacts:
+  - results/psr_qwen_primary/psr_c2b_adjudication_results.json
+  - results/psr_qwen_primary/experiment-registry.yaml
+  - results/psr_qwen_smoke_run2/smoke_summary.json
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    Faithful-PSR Workstream D Qwen primary arm. Frozen C2b adjudicator imported
+    unchanged; PSR optimization was DEV-only; coverage guard passed before
+    result persistence. All three axes failed the frozen pass rule, upgrading
+    the C2 negative within this tested model/budget scope to robust to method
+    strength.
+

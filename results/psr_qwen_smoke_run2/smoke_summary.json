@@ -1,0 +1,13 @@
+{
+  "steering_applies": true,
+  "steering_cosine": 0.9999792521147886,
+  "steering_max_abs_error": 0.007659860490832646,
+  "peak_vram_mib": 15452,
+  "runner_rc": 0,
+  "evals": {
+    "deliberation": 3,
+    "skepticism": 3,
+    "uncertainty_awareness": 3
+  },
+  "coverage_guard_active": true
+}

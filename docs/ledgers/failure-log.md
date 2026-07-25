@@ -5,6 +5,15 @@
 
 (none yet)
 
+## 2026-07-26 · PSR arm first GPU attempt: double-model-load CUDA OOM (caught by smoke gate, no bad verdict)
+- `run_psr_arm.py` loaded TWO Qwen2.5-7B copies (basis-extraction provider + steered-generation backend) → ~30GB
+  > 24GB VRAM → CUDA OOM before PSR DEV evals. The MANDATORY GPU smoke gate caught it; the full arm did NOT run
+  and NO verdict was fabricated (recorded honestly as `not_run_invalid_smoke`, PR#14, closed as superseded).
+- Steering mechanism itself verified correct at smoke (steered−baseline == α·dir, cos=0.99998).
+- Fix (PR#15, D-0043): share ONE HF model instance across extraction+generation+adjudication; peak VRAM ~15-17GB;
+  protocol byte-identical. Re-run succeeded → E-0009. **Lesson:** for single-GPU steering runs, always share one
+  model handle across extraction + steered-generation; add a smoke that asserts peak VRAM / single model load.
+
 ## 2026-07-23 · 1.5B facade_ratio is denominator-dependent (metric artifact, audit D-0016)
 - The v0 "fixed" facade_ratio = prompt_reach(from neutral) / ‖v‖(α=1, from neg pole) is NOT scale-invariant
   and mixes origins → produces ratio<1 partly by construction. Under a same-origin scale-free denominator

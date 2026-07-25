@@ -39,6 +39,12 @@ Status values: proposed | partially-supported | supported | contradicted | withd
   **This closes the unanimous critic BLOCKER (external validity / single-method×single-model).**
 - **Falsified if:** a manifold-respecting / stronger latent intervention beats best-prompt behavior — tested
   ONLY via a SEPARATE independent pre-registered arm (never edits E-0005/E-0006).
+- **Robustness update (EXPLORATORY, does NOT change the frozen headline):** the SEPARATE pre-registered PSR
+  latent-recovery arm (E-0009, prereg-latent-recovery-arm Option 1) ran on Qwen2.5-7B: a faithful DEV-optimized
+  PSR-style steering method (the direct answer to PSR / open-risk #9) ALSO returned KILL_PLAN_D (all 3 axes fail;
+  uncertainty significantly HURTS). Audited VALID_NEGATIVE. This suggests the negative is robust to METHOD
+  STRENGTH, not merely to naive CAA/ITI — but it is EXPLORATORY (single model, single seed, valid_for_paper=false)
+  and pre-empts the "method too weak" attack; it does NOT overwrite or upgrade the frozen E-0005/E-0006 headline.
 - **Paper location:** Contribution 2 (headline); Δ-table (4 cells) + per-cell verdicts.
 
 ## C2-mech — Off-manifold degradation (calibration harm) — **HYPOTHESIS / FUTURE WORK (NOT supported by direct test)** · RQ2

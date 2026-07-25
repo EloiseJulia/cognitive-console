@@ -5,6 +5,30 @@
 
 ---
 
+## 2026-07-26 · D-0043 · GPU session (owner-approved): Llama C1 done (E-0008) + PSR arm KILL (E-0009); box auto-off
+- **Owner** provisioned the RTX4090D box and authorized full-auto A→D. Both ran; box auto-powered-off after
+  results were pushed to origin (cost control: safety-net `shutdown +240` + immediate shutdown; box confirmed
+  unreachable/off, GPU billing stopped).
+- **A (E-0008, audited mergeable):** Llama-3-8B C1 facade via the FROZEN C1 protocol (byte-identical, parity vs
+  E-0003 clean). 3/4 axes hold — BUT axis composition differs from Qwen: MODEL-INVARIANT only on deliberation +
+  skepticism; uncertainty holds on Qwen not Llama; focus holds on Llama not Qwen. C1 = 2-model support at 3/4
+  aggregate WITH heterogeneity; both exploratory, valid_for_paper=false. Honest caveat banked.
+- **D code path:** implemented faithful-PSR method (PR#12, audited SAFE-TO-RUN after fixing a BLOCKER budget
+  overrun + 2 MAJORs); D-0042 froze lambda_coh=1.0 before data. First GPU attempt hit a double-model-load OOM,
+  caught by the mandatory smoke gate (no full run, no fabricated verdict); fixed memory-only (PR#15, protocol
+  byte-identical) and re-ran.
+- **D result (E-0009, audited VALID_NEGATIVE):** frozen PSR arm on Qwen2.5-7B = KILL_PLAN_D (all 3 axes fail;
+  uncertainty -0.160 CI excludes 0 negative). Audit confirmed the negative is GENUINE (optimizer did real work,
+  steering applied, no degeneracy, no leakage, fingerprint reproduces). **Consequence:** C2 "legibility ≠
+  controllability" is robust to METHOD STRENGTH (naive CAA/ITI + DEV-optimized PSR) — but EXPLORATORY, single
+  model/seed, valid_for_paper=false; does NOT overwrite the frozen E-0005/E-0006 headline; pre-empts the "method
+  too weak" reject risk.
+- **Every hostile audit again earned its keep:** caught the PSR budget 7× overrun (pre-run), the OOM (via smoke),
+  and validated the negative as non-artifactual (post-run). honest-fail honored throughout.
+- **Frozen?** E-0008/E-0009 banked as exploratory. E-0003/E-0005/E-0006/E-0007 + preregs + adjudicate_c2b §4
+  untouched. **Next (owner-gated framing):** update the paper to incorporate E-0008 (C1 Llama + heterogeneity)
+  and E-0009 (PSR arm as exploratory supporting evidence) — Manager to present framing for owner sign-off.
+
 ## 2026-07-25 · D-0042 · Pre-run parameter freeze for the PSR arm: lambda_coh = 1.0 (frozen BEFORE any data)
 - **Context:** Implementing the frozen PSR method (feature/psr-impl, PR#12) surfaced that prereg-latent-recovery-arm.md
   specifies the DEV objective `J = mean_DEV(outcome) - lambda_coh * max(0, coherence_ratio - 1.5)` but did NOT give a

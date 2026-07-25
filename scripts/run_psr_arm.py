@@ -162,6 +162,8 @@ def build_specs_hf_psr(args, out_dir: Path, transcript_collector=None):
     device, dtype = p0._pick_device(), p0._pick_dtype()
     model = args.model or DEFAULT_MODEL
     c1_out = out_dir / "c1"
+    provider = HFActivationProvider(model, device=device, dtype=dtype,
+                                    cache_dir=str(c1_out / "activations" / "cache"))
     c1_payload = c1.run(
         model=model,
         axes=args.axes,
@@ -173,10 +175,10 @@ def build_specs_hf_psr(args, out_dir: Path, transcript_collector=None):
         ram_floor_mb=0.0,
         device=device,
         dtype=dtype,
+        activation_provider=provider,
     )
     c1_by_axis = {r["axis"]: r for r in c1_payload["axes"]}
-    provider = HFActivationProvider(model, device=device, dtype=dtype,
-                                    cache_dir=str(c1_out / "activations" / "cache"))
+    shared_model, shared_tokenizer, shared_config = provider.hf_handles()
     neutral = c1.load_neutral_prompts()[0]
     neutral_all = c1.load_neutral_prompts()
     cfg = psr.PSRConfig(
@@ -185,7 +187,15 @@ def build_specs_hf_psr(args, out_dir: Path, transcript_collector=None):
         optimizer_seed=int(args.psr_seed),
         coherence_lambda=float(args.psr_coherence_lambda),
     )
-    backend = psr.ScheduledSteeredHFBackend(model, device=device, dtype=dtype, seed=args.seed)
+    backend = psr.ScheduledSteeredHFBackend(
+        model,
+        device=device,
+        dtype=dtype,
+        seed=args.seed,
+        model=shared_model,
+        tokenizer=shared_tokenizer,
+        config=shared_config,
+    )
     specs: List[AxisAdjSpec] = []
     results: Dict[str, psr.PSRResult] = {}
     schedule_by_axis = {}
@@ -219,6 +229,13 @@ def build_specs_hf_psr(args, out_dir: Path, transcript_collector=None):
             natural_activations=acts,
             r=args.psr_rank,
         )
+        del acts
+        try:
+            import torch
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
+        except ImportError:
+            pass
         items = c2b.load_axis_items(axis, args.use_fixture, args.n_items)
         dev_items, test_items = _split_items(items, args.seed)
 

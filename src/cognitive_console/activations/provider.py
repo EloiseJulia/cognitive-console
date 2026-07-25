@@ -344,6 +344,11 @@ class HFActivationProvider(ActivationProvider):
         model.eval()
         self._model = model
 
+    def hf_handles(self):
+        """Return the loaded HF model/tokenizer/config for same-process sharing."""
+        self._ensure_loaded()
+        return self._model, self._tokenizer, self._config
+
     @staticmethod
     def _render_user_chat_prompt(tokenizer, text: str, model_name: str = "unknown") -> str:
         """Render one user turn through model chat template when available.

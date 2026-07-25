@@ -578,6 +578,7 @@ def run(
     seeds: Optional[List[int]] = None,
     device: str = "cpu",
     dtype: str = "float32",
+    activation_provider: Optional[HFActivationProvider] = None,
 ) -> Dict[str, object]:
     t0 = time.time()
     if seeds is None:
@@ -594,7 +595,7 @@ def run(
     # the measured wall-clock UNDER-reports the true full-compute cost. Record
     # whether the cache was cold so the registry can qualify the number.
     cache_was_cold = not (cache_dir.exists() and any(cache_dir.iterdir()))
-    provider = HFActivationProvider(
+    provider = activation_provider or HFActivationProvider(
         model, device=device, dtype=dtype, cache_dir=str(cache_dir)
     )
 

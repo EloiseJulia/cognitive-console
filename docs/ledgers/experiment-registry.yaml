@@ -2,28 +2,124 @@
 # Immutable log. Every run (incl. failed/cancelled/invalidated) gets a unique experiment_id.
 # Fields per AI-Instruction Part I §8.1. No outputs/final2/really_final folder-science.
 
-experiments: []
-# - experiment_id: exp-0001
-#   parent: null
-#   hypothesis_id: H1
-#   claim_ids: [C1]
-#   type: exploratory        # confirmatory | exploratory | diagnostic
-#   status: planned          # planned | running | done | failed | cancelled | invalidated
-#   code_commit: null
-#   dirty_tree: null
-#   data_hash: null
-#   env_hash: null
-#   config_hash: null
-#   model: null
-#   dataset: null
-#   seed: null
-#   hardware: null
-#   started_at: null
-#   ended_at: null
-#   exit_code: null
-#   raw_metrics: null
-#   summary_metrics: null
-#   artifacts: []
-#   failure_reason: null
-#   valid_for_paper: false
-#   validation_notes: null
+experiments:
+- experiment_id: c1-facade-1dcc4fa7-0001
+  parent: null
+  hypothesis_id: H1
+  claim_ids:
+  - C1
+  type: exploratory
+  status: done
+  code_commit: 255dd0722435a7fb03d33789920e95a2269cefc6
+  dirty_tree: false
+  data_hash: sha256:811918919004ffc28af7df3709b3b7458c198a97b34436ed8e00570622e57d19
+  env_hash: null
+  config_hash: sha256:1dcc4fa78792d27ecd256efec4c3c8833c4711cd69b364120f6eb9e9f2b4e4fa
+  model: NousResearch/Meta-Llama-3-8B-Instruct
+  dataset: data/contrast_pairs/*.jsonl (28/12 disjoint split for v) + data/strongest_prompts/*.jsonl
+    (separate strongest-prompt set)
+  seed: 20260723
+  hardware: NVIDIA RTX 4090 D (24GB), CUDA, requested dtype=float16
+  started_at: '2026-07-25T14:45:02.185381+00:00'
+  ended_at: '2026-07-25T14:47:00.606222+00:00'
+  exit_code: 1
+  raw_metrics:
+    wall_clock_seconds: 87.62
+    cache_was_cold: true
+    wall_clock_is_true_full_compute: true
+    peak_rss_mb: 2030.5
+    n_boot: 2000
+    ci_level: 0.95
+    requested_device: cuda
+    requested_dtype: float16
+    remote_python: /root/miniconda3/bin/python
+    model_weights_source: Gitee HF mirror after hf-mirror snapshot_download stalled;
+      safetensors shard sha256s verified against LFS pointers
+    script_exit_code: 1
+  summary_metrics:
+    deliberation:
+      chosen_layer: 12
+      prompt_reach: 1.2757103167983992
+      pole_reach: 1.463053273138843
+      facade_ratio: 0.87195069394943
+      facade_ratio_ci_lo: 0.7979331268094674
+      facade_ratio_ci_hi: 0.9366337848778328
+      facade_ratio_loo_min: 0.8701822613319099
+      facade_ratio_loo_max: 0.8739644908995505
+      facade_ratio_vnorm_mean_SUPERSEDED: 0.5776761416622207
+      extraction_success: true
+      facade_gap_holds_ci: true
+      stable_layer_found: true
+      seed_stable: true
+      c1_signal: true
+    skepticism:
+      chosen_layer: 14
+      prompt_reach: 1.3687879955520432
+      pole_reach: 2.179597395648867
+      facade_ratio: 0.6280003813018664
+      facade_ratio_ci_lo: 0.5812309931165491
+      facade_ratio_ci_hi: 0.6732835393882968
+      facade_ratio_loo_min: 0.6249332048496804
+      facade_ratio_loo_max: 0.6312795524354508
+      facade_ratio_vnorm_mean_SUPERSEDED: 0.50534449334442
+      extraction_success: true
+      facade_gap_holds_ci: true
+      stable_layer_found: true
+      seed_stable: true
+      c1_signal: true
+    uncertainty_awareness:
+      chosen_layer: 10
+      prompt_reach: 0.6313084232305046
+      pole_reach: 0.6311947062779829
+      facade_ratio: 1.0001801614484258
+      facade_ratio_ci_lo: 0.8389971086937577
+      facade_ratio_ci_hi: 1.1473372405526683
+      facade_ratio_loo_min: 1.0001770703368404
+      facade_ratio_loo_max: 1.0001836626732388
+      facade_ratio_vnorm_mean_SUPERSEDED: 0.5218137086044353
+      extraction_success: true
+      facade_gap_holds_ci: false
+      stable_layer_found: true
+      seed_stable: true
+      c1_signal: false
+    focus:
+      chosen_layer: 8
+      prompt_reach: 0.20657328039031037
+      pole_reach: 0.43853302269550354
+      facade_ratio: 0.4710552448720493
+      facade_ratio_ci_lo: 0.3059750381407144
+      facade_ratio_ci_hi: 0.6303283770228723
+      facade_ratio_loo_min: 0.4532438627587572
+      facade_ratio_loo_max: 0.4980057112833011
+      facade_ratio_vnorm_mean_SUPERSEDED: 0.13652581999724261
+      extraction_success: true
+      facade_gap_holds_ci: true
+      stable_layer_found: true
+      seed_stable: true
+      c1_signal: true
+    _aggregate:
+      n_axes: 4
+      facade_support_fraction: 0.75
+      n_axes_facade_holds_ci: 3
+      n_axes_stable_layer: 4
+      n_axes_unstable: 0
+      n_axes_seed_stable: 4
+      max_facade_ratio_observed: 1.0001801614484258
+      extraction_success_all: true
+  artifacts:
+  - results/llama_c1_facade_2026-07-24/c1_facade_results.json
+  - results/llama_c1_facade_2026-07-24/c1_facade_run_metadata.json
+  failure_reason: Exact script completed metric computation and wrote c1_facade_results.json,
+    then exited nonzero in run-local registry postprocessing because relative --out-dir
+    was not relative_to(_REPO). Canonical registry entry was added without changing
+    protocol or metric logic.
+  valid_for_paper: false
+  validation_notes: Exploratory C1 Llama-3-8B replication using the frozen C1 facade
+    code path unchanged. Exact run command matched E-0003 hyperparameters (axes, scan-step,
+    n-extraction, seed, n-null, n-boot, ci-level, min-depth-frac, top-k, seeds, ram-floor)
+    with model changed to NousResearch/Meta-Llama-3-8B-Instruct and requested device/dtype
+    cuda/float16. Metric numbers are copied from c1_facade_results.json; audit pending
+    before valid_for_paper can change. The upstream script wrote results but failed
+    its run-local registry step because relative --out-dir is not relative_to(_REPO);
+    this canonical ledger entry repairs lineage without altering protocol or metric
+    logic.

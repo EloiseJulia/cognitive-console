@@ -18,8 +18,9 @@ axes:
     - "ratio = 1.0 (no under-reach threshold)"
 encodings:
   color: "C1 signal status: facade-holds vs no-facade/overshoot"
-  annotation: "exploratory; Qwen2.5-7B only; Llama replication pending"
+  annotation: "exploratory; Qwen2.5-7B figure; Llama comparison is in generated table-c1-twomodel"
 required_caveats:
   - "Focus overshoots/no-facade."
   - "Deliberation layer-16 sensitivity has CI crossing 1."
+  - "E-0008 Llama replication gives the same aggregate 3/4 support but different axis composition."
   - "valid_for_paper is exploratory/scoped, not confirmatory."

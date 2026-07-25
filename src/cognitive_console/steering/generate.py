@@ -288,16 +288,30 @@ class SteeredHFBackend(GenBackend):
         dtype: str = "float32",
         max_length: int = 512,
         seed: Optional[int] = None,
+        *,
+        model=None,
+        tokenizer=None,
+        config=None,
+        layers=None,
     ) -> None:
         self.model_name = model_name
         self.device = device
         self.dtype = dtype
         self.max_length = int(max_length)
         self.seed = None if seed is None else int(seed)
-        self._model = None
-        self._tokenizer = None
-        self._config = None
-        self._layers = None  # the decoder-block module list
+        self._model = model
+        self._tokenizer = tokenizer
+        self._config = config
+        self._layers = layers  # the decoder-block module list
+        if self._model is not None:
+            if self._tokenizer is None or self._config is None:
+                raise ValueError("preloaded SteeredHFBackend requires tokenizer and config")
+            if getattr(self._tokenizer, "pad_token", None) is None:
+                self._tokenizer.pad_token = self._tokenizer.eos_token
+            self._tokenizer.padding_side = "left"
+            if self._layers is None:
+                self._layers = self._locate_decoder_layers(self._model)
+            self._seed_torch(self.seed)
 
     def _seed_torch(self, seed: Optional[int]) -> None:
         """Deterministically seed torch (global + all CUDA devices) from ``seed``.

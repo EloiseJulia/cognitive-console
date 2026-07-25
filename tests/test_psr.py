@@ -1,4 +1,6 @@
 import json
+import sys
+import types
 
 import numpy as np
 import pytest
@@ -247,3 +249,161 @@ def test_psr_runner_guard_precedes_done_persistence(tmp_path, monkeypatch):
         ])
     assert not (out_dir / "psr_c2b_adjudication_results.json").exists()
     assert not (out_dir / "experiment-registry.yaml").exists()
+
+
+def test_hf_psr_arm_shares_single_base_model_load(tmp_path, monkeypatch):
+    calls = {"from_pretrained": 0}
+
+    class _FakeCuda:
+        @staticmethod
+        def is_available():
+            return False
+
+        @staticmethod
+        def manual_seed_all(seed):
+            return None
+
+        @staticmethod
+        def empty_cache():
+            return None
+
+    fake_torch = types.SimpleNamespace(
+        float32="float32",
+        float16="float16",
+        bfloat16="bfloat16",
+        cuda=_FakeCuda(),
+        manual_seed=lambda seed: None,
+    )
+
+    class _FakeConfig:
+        hidden_size = 4
+        num_hidden_layers = 4
+
+    class _FakeTokenizer:
+        eos_token = "<eos>"
+        pad_token = None
+        pad_token_id = 0
+        padding_side = "right"
+
+    class _FakeModel:
+        def __init__(self):
+            self.model = types.SimpleNamespace(layers=[object(), object(), object(), object()])
+
+        def to(self, device):
+            return self
+
+        def eval(self):
+            return self
+
+    class _FakeAutoConfig:
+        @staticmethod
+        def from_pretrained(model_name):
+            return _FakeConfig()
+
+    class _FakeAutoTokenizer:
+        @staticmethod
+        def from_pretrained(model_name):
+            return _FakeTokenizer()
+
+    class _FakeAutoModelForCausalLM:
+        @staticmethod
+        def from_pretrained(model_name, **kwargs):
+            calls["from_pretrained"] += 1
+            return _FakeModel()
+
+    fake_transformers = types.SimpleNamespace(
+        AutoConfig=_FakeAutoConfig,
+        AutoTokenizer=_FakeAutoTokenizer,
+        AutoModelForCausalLM=_FakeAutoModelForCausalLM,
+    )
+    monkeypatch.setitem(sys.modules, "torch", fake_torch)
+    monkeypatch.setitem(sys.modules, "transformers", fake_transformers)
+    monkeypatch.setattr(P.p0, "_pick_device", lambda: "cpu")
+    monkeypatch.setattr(P.p0, "_pick_dtype", lambda: "float32")
+
+    def fake_c1_run(**kwargs):
+        provider = kwargs["activation_provider"]
+        assert provider.available_layers() == [0, 1, 2, 3, 4]
+        assert provider.hidden_dim == 4
+        return {"axes": [{"axis": "deliberation", "chosen_layer": 2, "stable_layer_found": True}]}
+
+    monkeypatch.setattr(P.c1, "run", fake_c1_run)
+    monkeypatch.setattr(P.p0, "_extract_direction", lambda *args, **kwargs: np.array([1.0, 0.0, 0.0, 0.0]))
+
+    class _FakeITI:
+        direction = np.array([0.0, 1.0, 0.0, 0.0])
+
+    monkeypatch.setattr(P, "extract_iti", lambda *args, **kwargs: _FakeITI())
+
+    def fake_get_activations(self, texts, layer):
+        self._ensure_loaded()
+        rows = []
+        for i, _text in enumerate(texts):
+            rows.append(np.array([1.0, float(i), float(layer), 0.5], dtype=np.float32))
+        return np.vstack(rows)
+
+    monkeypatch.setattr("cognitive_console.activations.provider.HFActivationProvider.get_activations", fake_get_activations)
+    monkeypatch.setattr(P.c2b, "load_axis_items", lambda axis, use_fixture, n_items: _items(axis, 4))
+    monkeypatch.setattr(P.c2b, "build_strong_prompts", lambda axis, n: [("p0", "strong prompt")])
+
+    def fake_optimize(**kwargs):
+        return psr.PSRResult(
+            axis=kwargs["axis"],
+            model=kwargs["model"],
+            backend=kwargs["backend"],
+            layer=kwargs["basis"].layer,
+            schedule_layers=[kwargs["basis"].layer],
+            schedule_weights=[1.0],
+            direction=[1.0, 0.0, 0.0, 0.0],
+            alpha=2.0,
+            selected_dev_score=0.0,
+            selected_dev_outcome=0.0,
+            selected_dev_degeneracy=0.0,
+            baseline_degeneracy=0.0,
+            evaluations_used=1,
+            candidate_budget=kwargs["config"].candidate_budget,
+            item_ids_dev=[str(it["id"]) for it in kwargs["dev_items"]],
+            item_ids_forbidden_test=[str(it["id"]) for it in kwargs["forbidden_test_items"]],
+            config=kwargs["config"].to_dict(),
+            basis_labels=list(kwargs["basis"].labels),
+            basis_diagnostics=dict(kwargs["basis"].diagnostics),
+            candidate=psr.PSRCandidate(
+                coefficients=[1.0],
+                schedule_weights=[1.0],
+                direction=[1.0, 0.0, 0.0, 0.0],
+                alpha=2.0,
+                dev_score=0.0,
+                dev_outcome=0.0,
+                dev_degeneracy=0.0,
+                baseline_degeneracy=0.0,
+                coherence_penalty=0.0,
+                coherence_ratio=0.0,
+                candidate_index=0,
+            ),
+        )
+
+    monkeypatch.setattr(psr, "optimize_psr_on_dev", fake_optimize)
+
+    args = types.SimpleNamespace(
+        model="fake-model",
+        axes=["deliberation"],
+        n_extraction=4,
+        seed=123,
+        psr_rank=16,
+        psr_candidate_budget=32,
+        psr_seed=20260723,
+        psr_coherence_lambda=1.0,
+        n_items=4,
+        use_fixture=True,
+        n_strong=1,
+        max_new_tokens=4,
+        temperature=0.7,
+        batch_size=2,
+    )
+    specs, results, sampler_for_axis, model, hardware = P.build_specs_hf_psr(args, tmp_path)
+    assert calls["from_pretrained"] == 1
+    assert model == "fake-model"
+    assert hardware == "cpu-float32"
+    assert len(specs) == 1
+    assert set(results) == {"deliberation"}
+    assert sampler_for_axis("deliberation").gen._model is not None

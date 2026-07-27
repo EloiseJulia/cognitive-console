@@ -1,0 +1,413 @@
+{
+  "coverage_guard": {
+    "ok": false,
+    "expected_items": 12,
+    "expected_conditions": [
+      "no_persona",
+      "narrow_persona",
+      "oracle_persona"
+    ],
+    "k": 5,
+    "missing_items": [],
+    "missing_conditions": [],
+    "short_cells": [],
+    "unclassified_valid_samples": [
+      [
+        "design_assignment_problem",
+        "narrow_persona",
+        0
+      ],
+      [
+        "design_assignment_problem",
+        "narrow_persona",
+        1
+      ],
+      [
+        "design_knapsack",
+        "no_persona",
+        0
+      ],
+      [
+        "design_knapsack",
+        "no_persona",
+        1
+      ],
+      [
+        "design_knapsack",
+        "no_persona",
+        2
+      ],
+      [
+        "design_knapsack",
+        "no_persona",
+        3
+      ],
+      [
+        "design_knapsack",
+        "no_persona",
+        4
+      ],
+      [
+        "design_knapsack",
+        "narrow_persona",
+        0
+      ],
+      [
+        "design_knapsack",
+        "narrow_persona",
+        1
+      ],
+      [
+        "design_knapsack",
+        "narrow_persona",
+        2
+      ],
+      [
+        "design_knapsack",
+        "narrow_persona",
+        3
+      ],
+      [
+        "design_knapsack",
+        "narrow_persona",
+        4
+      ],
+      [
+        "pm_critical_path",
+        "no_persona",
+        0
+      ],
+      [
+        "pm_critical_path",
+        "oracle_persona",
+        0
+      ],
+      [
+        "pm_queue_bottleneck",
+        "no_persona",
+        0
+      ],
+      [
+        "pm_queue_bottleneck",
+        "no_persona",
+        1
+      ],
+      [
+        "pm_queue_bottleneck",
+        "no_persona",
+        2
+      ],
+      [
+        "pm_queue_bottleneck",
+        "no_persona",
+        3
+      ],
+      [
+        "pm_queue_bottleneck",
+        "no_persona",
+        4
+      ],
+      [
+        "pm_queue_bottleneck",
+        "narrow_persona",
+        0
+      ]
+    ],
+    "n_unclassified_valid_samples": 41
+  },
+  "axis": {
+    "method": "caa",
+    "axis": "breadth_focus",
+    "selected_layer": 7,
+    "stable_layer_found": true,
+    "unstable_reason": "",
+    "separation_by_layer": {
+      "0": 0.0,
+      "1": 16.69741505880915,
+      "2": 20.673782080577833,
+      "3": 13.88968432870746,
+      "4": 14.881535715900709,
+      "5": 16.043003520024588,
+      "6": 15.712719772542453,
+      "7": 16.2705000055948,
+      "8": 14.338040114502428,
+      "9": 12.524932679331723,
+      "10": 12.00482259581231,
+      "11": 11.169417818209583,
+      "12": 11.891400476258514,
+      "13": 15.357285897874384,
+      "14": 16.211997355924993,
+      "15": 14.030441625699808,
+      "16": 13.353735902092355,
+      "17": 14.270485671290405,
+      "18": 13.255840167131995,
+      "19": 9.779812981931583,
+      "20": 8.848583229226907,
+      "21": 8.20689808144416,
+      "22": 7.339870299342044,
+      "23": 6.6066402308912355,
+      "24": 6.375499567260284,
+      "25": 6.010304050393497,
+      "26": 5.633398249301703,
+      "27": 5.583608893088458,
+      "28": 4.982906549089701
+    },
+    "layer_selection": {
+      "chosen": 7,
+      "ranked": [
+        7,
+        14,
+        6
+      ],
+      "min_layer": 6,
+      "top_k": 3,
+      "candidates": {
+        "0": {
+          "layer": 0,
+          "separation": 0.0,
+          "pole_reach": 0.0,
+          "pole_null_p95": 0.0,
+          "valid": false,
+          "reject_reason": "below depth floor (layer 0 < 6); non-positive pos/neg separation; pole_reach <= 0 (pole not on +\u00fb side of neutral)"
+        },
+        "1": {
+          "layer": 1,
+          "separation": 16.69741505880915,
+          "pole_reach": 1.0248742795697448,
+          "pole_null_p95": 0.061100327613298124,
+          "valid": false,
+          "reject_reason": "below depth floor (layer 1 < 6)"
+        },
+        "2": {
+          "layer": 2,
+          "separation": 20.673782080577833,
+          "pole_reach": 1.776999836967657,
+          "pole_null_p95": 0.09960589695781841,
+          "valid": false,
+          "reject_reason": "below depth floor (layer 2 < 6)"
+        },
+        "3": {
+          "layer": 3,
+          "separation": 13.88968432870746,
+          "pole_reach": 1.973859571390369,
+          "pole_null_p95": 0.11931719549410691,
+          "valid": false,
+          "reject_reason": "below depth floor (layer 3 < 6)"
+        },
+        "4": {
+          "layer": 4,
+          "separation": 14.881535715900709,
+          "pole_reach": 2.381684677483228,
+          "pole_null_p95": 0.15563045590597294,
+          "valid": false,
+          "reject_reason": "below depth floor (layer 4 < 6)"
+        },
+        "5": {
+          "layer": 5,
+          "separation": 16.043003520024588,
+          "pole_reach": 2.9716687561822805,
+          "pole_null_p95": 0.2148134985882541,
+          "valid": false,
+          "reject_reason": "below depth floor (layer 5 < 6)"
+        },
+        "6": {
+          "layer": 6,
+          "separation": 15.712719772542453,
+          "pole_reach": 4.563661174419529,
+          "pole_null_p95": 0.3714970715163252,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "7": {
+          "layer": 7,
+          "separation": 16.2705000055948,
+          "pole_reach": 5.02659653497942,
+          "pole_null_p95": 0.391554504956786,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "8": {
+          "layer": 8,
+          "separation": 14.338040114502428,
+          "pole_reach": 6.233162620773552,
+          "pole_null_p95": 0.3895205660945098,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "9": {
+          "layer": 9,
+          "separation": 12.524932679331723,
+          "pole_reach": 6.227159790947201,
+          "pole_null_p95": 0.46160964449149783,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "10": {
+          "layer": 10,
+          "separation": 12.00482259581231,
+          "pole_reach": 7.687044604850414,
+          "pole_null_p95": 0.509622476694406,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "11": {
+          "layer": 11,
+          "separation": 11.169417818209583,
+          "pole_reach": 7.736941630759526,
+          "pole_null_p95": 0.5399247905705531,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "12": {
+          "layer": 12,
+          "separation": 11.891400476258514,
+          "pole_reach": 7.706121864950554,
+          "pole_null_p95": 0.5485773059454752,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "13": {
+          "layer": 13,
+          "separation": 15.357285897874384,
+          "pole_reach": 7.80878327487366,
+          "pole_null_p95": 0.6035897618904822,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "14": {
+          "layer": 14,
+          "separation": 16.211997355924993,
+          "pole_reach": 7.476713734799242,
+          "pole_null_p95": 0.7232093306502094,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "15": {
+          "layer": 15,
+          "separation": 14.030441625699808,
+          "pole_reach": 9.209586077161244,
+          "pole_null_p95": 0.8137545480494592,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "16": {
+          "layer": 16,
+          "separation": 13.353735902092355,
+          "pole_reach": 9.126098680476678,
+          "pole_null_p95": 0.8216951742532794,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "17": {
+          "layer": 17,
+          "separation": 14.270485671290405,
+          "pole_reach": 10.455008406659708,
+          "pole_null_p95": 0.9051007963953996,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "18": {
+          "layer": 18,
+          "separation": 13.255840167131995,
+          "pole_reach": 11.941700200923147,
+          "pole_null_p95": 1.0368276308023319,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "19": {
+          "layer": 19,
+          "separation": 9.779812981931583,
+          "pole_reach": 13.933960091106123,
+          "pole_null_p95": 1.5233150370647468,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "20": {
+          "layer": 20,
+          "separation": 8.848583229226907,
+          "pole_reach": 19.593995905286164,
+          "pole_null_p95": 1.7229326527373767,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "21": {
+          "layer": 21,
+          "separation": 8.20689808144416,
+          "pole_reach": 29.94087414244514,
+          "pole_null_p95": 2.4195922878621836,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "22": {
+          "layer": 22,
+          "separation": 7.339870299342044,
+          "pole_reach": 41.18598541772293,
+          "pole_null_p95": 2.984493289879232,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "23": {
+          "layer": 23,
+          "separation": 6.6066402308912355,
+          "pole_reach": 51.783905859407355,
+          "pole_null_p95": 3.49198757765908,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "24": {
+          "layer": 24,
+          "separation": 6.375499567260284,
+          "pole_reach": 63.178930768753006,
+          "pole_null_p95": 4.273875332721796,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "25": {
+          "layer": 25,
+          "separation": 6.010304050393497,
+          "pole_reach": 74.23188529231724,
+          "pole_null_p95": 5.057437623349096,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "26": {
+          "layer": 26,
+          "separation": 5.633398249301703,
+          "pole_reach": 92.77047273892623,
+          "pole_null_p95": 5.502881777347725,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "27": {
+          "layer": 27,
+          "separation": 5.583608893088458,
+          "pole_reach": 108.42063473062575,
+          "pole_null_p95": 6.885822689845378,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "28": {
+          "layer": 28,
+          "separation": 4.982906549089701,
+          "pole_reach": 86.18994343363254,
+          "pole_null_p95": 5.15998154564932,
+          "valid": true,
+          "reject_reason": ""
+        }
+      }
+    },
+    "facade_ratio": 0.27147351965493816,
+    "facade_ci": [
+      0.005913323151613872,
+      0.5370337161582625
+    ],
+    "broad_reach": 1.3645878532361797,
+    "focus_reach": -0.04827956820278345,
+    "pole_reach": 5.02659653497942,
+    "broad_null_p95": 0.26408694542046235,
+    "lexical_control_reach": -0.2515471670397469,
+    "expected_order": true,
+    "linearly_readable": true,
+    "verdict": "LINEARLY_READABLE_L0"
+  }
+}

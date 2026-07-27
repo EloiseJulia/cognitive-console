@@ -1,0 +1,402 @@
+{
+  "schema": "persona_breadth_l0_tasks_v1",
+  "oracle_solution_policy": "All tasks are synthetic microtasks with objective answer keys. Oracle domains were selected when a named method has an inspectable optimality proof (shortest path/topological sort/expected value/Bayes/critical path/service rates/binary decision trees/parity/counterexample/enumerated optimization). These notes are per-item in oracle_determination; no benchmark or copyrighted items are copied.",
+  "items": [
+    {
+      "item_id": "excel_shortest_path",
+      "family": "spreadsheet_vs_graph",
+      "task_text": "A sheet lists directed roads with travel times: A-B 4, A-C 2, C-B 1, B-D 5, C-D 8, B-E 2, E-D 1. Find the fastest route from A to D and its total time.",
+      "narrow_persona": "Act as an Excel expert. Stay within spreadsheet formulas and workflows.",
+      "narrow_domain": "spreadsheet",
+      "oracle_persona": "Act as a graph algorithms expert. Use the cleanest graph method.",
+      "oracle_domain": "graph_algorithms",
+      "oracle_solution": "Shortest path A-C-B-E-D with total time 6, by Dijkstra/shortest-path relaxation.",
+      "oracle_domain_markers": [
+        "shortest path",
+        "dijkstra",
+        "graph",
+        "node",
+        "edge",
+        "relax",
+        "A-C-B-E-D",
+        "A \u2192 C \u2192 B \u2192 E \u2192 D"
+      ],
+      "persona_domain_markers": [
+        "excel",
+        "spreadsheet",
+        "formula",
+        "cell",
+        "vlookup",
+        "solver",
+        "table"
+      ],
+      "acceptance_criteria": [
+        "States route A-C-B-E-D or A -> C -> B -> E -> D",
+        "States total time 6",
+        "Uses or names shortest-path/graph reasoning for oracle-domain reach"
+      ],
+      "oracle_determination": "The directed weighted graph is small enough to verify by exhaustive path enumeration; Dijkstra gives the unique minimum total 6."
+    },
+    {
+      "item_id": "excel_topological_order",
+      "family": "spreadsheet_vs_graph",
+      "task_text": "Tasks have dependencies: clean before paint; wire before inspect; frame before wire and clean; paint and inspect before deliver. Give a valid execution order.",
+      "narrow_persona": "Act as an Excel expert. Stay within spreadsheet formulas and workflows.",
+      "narrow_domain": "spreadsheet",
+      "oracle_persona": "Act as a graph algorithms expert. Use dependency-graph reasoning.",
+      "oracle_domain": "graph_algorithms",
+      "oracle_solution": "One valid topological order is frame, wire, clean, inspect, paint, deliver.",
+      "oracle_domain_markers": [
+        "topological",
+        "DAG",
+        "dependency graph",
+        "partial order",
+        "nodes",
+        "edges",
+        "toposort"
+      ],
+      "persona_domain_markers": [
+        "excel",
+        "spreadsheet",
+        "formula",
+        "sort",
+        "row",
+        "column"
+      ],
+      "acceptance_criteria": [
+        "Frame appears before wire and clean",
+        "Wire before inspect; clean before paint",
+        "Inspect and paint before deliver",
+        "Identifies topological/dependency-graph reasoning for oracle-domain reach"
+      ],
+      "oracle_determination": "The dependencies form a DAG; any topological sort satisfying all precedence constraints is objectively valid."
+    },
+    {
+      "item_id": "contract_expected_value",
+      "family": "legal_vs_statistics",
+      "task_text": "Toy contract choice: Clause A costs $20 if a 30% delay occurs. Clause B costs $8 always plus $5 if delay occurs. Pick the lower expected cost clause.",
+      "narrow_persona": "Act as a contract analyst. Discuss only clause wording and legal risk.",
+      "narrow_domain": "contract_analysis",
+      "oracle_persona": "Act as a decision analyst. Compute expected values.",
+      "oracle_domain": "expected_value",
+      "oracle_solution": "A has expected cost 0.30*20 = 6. B has 8 + 0.30*5 = 9.5. Choose A.",
+      "oracle_domain_markers": [
+        "expected value",
+        "expected cost",
+        "0.30",
+        "30%",
+        "probability",
+        "EV",
+        "6",
+        "9.5"
+      ],
+      "persona_domain_markers": [
+        "contract",
+        "clause",
+        "legal",
+        "liability",
+        "wording",
+        "risk allocation"
+      ],
+      "acceptance_criteria": [
+        "Computes A expected cost as 6",
+        "Computes B expected cost as 9.5",
+        "Chooses A"
+      ],
+      "oracle_determination": "Expected monetary value directly optimizes the stated lower-expected-cost objective."
+    },
+    {
+      "item_id": "contract_bayes_update",
+      "family": "legal_vs_statistics",
+      "task_text": "Toy vendor warranty: prior chance a part is defective is 10%. A cheap test is positive with 80% sensitivity and 20% false-positive rate. If the test is positive, should you treat defect as more likely than not?",
+      "narrow_persona": "Act as a contract analyst. Discuss only warranty language and obligations.",
+      "narrow_domain": "contract_analysis",
+      "oracle_persona": "Act as a Bayesian statistician. Use Bayes' rule.",
+      "oracle_domain": "bayesian_statistics",
+      "oracle_solution": "P(defect|positive)=0.8*0.1/(0.8*0.1+0.2*0.9)=0.08/0.26\u22480.31, so not more likely than not.",
+      "oracle_domain_markers": [
+        "Bayes",
+        "posterior",
+        "base rate",
+        "sensitivity",
+        "false positive",
+        "0.31",
+        "31%",
+        "0.08",
+        "0.26"
+      ],
+      "persona_domain_markers": [
+        "warranty",
+        "contract",
+        "obligation",
+        "clause",
+        "legal"
+      ],
+      "acceptance_criteria": [
+        "Uses Bayes/base-rate calculation",
+        "Reports posterior about 31%",
+        "Answers no/not more likely than not"
+      ],
+      "oracle_determination": "Bayes' theorem is the objective calculation requested by the probability question."
+    },
+    {
+      "item_id": "pm_critical_path",
+      "family": "pm_vs_operations_research",
+      "task_text": "Project tasks: A=2 days, B=4 days after A, C=3 days after A, D=2 days after B and C. What is the minimum project duration?",
+      "narrow_persona": "Act as a project manager. Use only PM status-report heuristics.",
+      "narrow_domain": "project_management",
+      "oracle_persona": "Act as an operations researcher. Use critical-path analysis.",
+      "oracle_domain": "critical_path",
+      "oracle_solution": "Paths: A-B-D = 8, A-C-D = 7. Critical path A-B-D, duration 8 days.",
+      "oracle_domain_markers": [
+        "critical path",
+        "CPM",
+        "path",
+        "A-B-D",
+        "A \u2192 B \u2192 D",
+        "8 days",
+        "longest path"
+      ],
+      "persona_domain_markers": [
+        "stakeholder",
+        "milestone",
+        "status",
+        "Gantt",
+        "project manager",
+        "PM"
+      ],
+      "acceptance_criteria": [
+        "Computes both dependent paths or equivalent earliest finish times",
+        "Identifies A-B-D as critical path",
+        "Reports 8 days"
+      ],
+      "oracle_determination": "Critical-path longest-path computation is the standard optimal schedule duration for precedence-constrained tasks."
+    },
+    {
+      "item_id": "pm_queue_bottleneck",
+      "family": "pm_vs_operations_research",
+      "task_text": "A support desk has one triage worker taking 3 minutes per ticket and one specialist taking 5 minutes per ticket. Tickets pass triage then specialist. Which station is the throughput bottleneck?",
+      "narrow_persona": "Act as a project manager. Give only staffing and coordination advice.",
+      "narrow_domain": "project_management",
+      "oracle_persona": "Act as an operations researcher. Analyze service rates and bottlenecks.",
+      "oracle_domain": "queueing",
+      "oracle_solution": "Triage capacity is 20 tickets/hour; specialist capacity is 12 tickets/hour. The specialist is the bottleneck.",
+      "oracle_domain_markers": [
+        "queue",
+        "service rate",
+        "capacity",
+        "throughput",
+        "bottleneck",
+        "20 tickets/hour",
+        "12 tickets/hour"
+      ],
+      "persona_domain_markers": [
+        "staffing",
+        "standup",
+        "coordination",
+        "project manager",
+        "milestone"
+      ],
+      "acceptance_criteria": [
+        "Converts 3 min to 20/hour",
+        "Converts 5 min to 12/hour",
+        "Identifies specialist as bottleneck"
+      ],
+      "oracle_determination": "Queueing/service-rate comparison directly determines serial-system throughput."
+    },
+    {
+      "item_id": "communications_binary_search",
+      "family": "communications_vs_information_theory",
+      "task_text": "You must identify one faulty box among 16 boxes using yes/no questions. What is the minimum number of questions needed in the worst case?",
+      "narrow_persona": "Act as a communications coach. Focus only on phrasing empathetic questions.",
+      "narrow_domain": "communications",
+      "oracle_persona": "Act as an information theorist. Use binary search/entropy.",
+      "oracle_domain": "information_theory",
+      "oracle_solution": "4 questions, because each yes/no question gives one bit and 2^4=16.",
+      "oracle_domain_markers": [
+        "binary search",
+        "bit",
+        "entropy",
+        "information",
+        "2^4",
+        "log2",
+        "4 questions",
+        "halve"
+      ],
+      "persona_domain_markers": [
+        "empathy",
+        "phrasing",
+        "tone",
+        "communication",
+        "rapport"
+      ],
+      "acceptance_criteria": [
+        "States 4 questions",
+        "Justifies by halving/log2(16)/bits",
+        "Worst-case framing retained"
+      ],
+      "oracle_determination": "Information-theoretic lower bound log2(16)=4 is tight via binary splitting."
+    },
+    {
+      "item_id": "communications_active_learning",
+      "family": "communications_vs_information_theory",
+      "task_text": "A user may want one of 8 equally likely product categories. You can ask yes/no questions before recommending. What question strategy minimizes worst-case questions?",
+      "narrow_persona": "Act as a communications coach. Focus only on rapport and wording.",
+      "narrow_domain": "communications",
+      "oracle_persona": "Act as an information theorist. Use balanced splits.",
+      "oracle_domain": "information_theory",
+      "oracle_solution": "Ask balanced yes/no questions that split the remaining categories in half; worst case 3 questions because 2^3=8.",
+      "oracle_domain_markers": [
+        "balanced split",
+        "binary search",
+        "entropy",
+        "information gain",
+        "2^3",
+        "log2",
+        "3 questions",
+        "halve"
+      ],
+      "persona_domain_markers": [
+        "rapport",
+        "tone",
+        "open-ended",
+        "communication",
+        "empathy"
+      ],
+      "acceptance_criteria": [
+        "Proposes balanced halving questions",
+        "States worst case 3",
+        "References information gain/binary search/entropy"
+      ],
+      "oracle_determination": "A balanced decision tree achieves the log2(8)=3 worst-case lower bound."
+    },
+    {
+      "item_id": "tutor_invariant_coins",
+      "family": "tutor_vs_formal_reasoning",
+      "task_text": "Start with 10 coins heads-up. A move flips exactly two coins. Can you end with exactly 9 heads?",
+      "narrow_persona": "Act as a patient tutor. Use only intuitive encouragement and examples.",
+      "narrow_domain": "tutoring",
+      "oracle_persona": "Act as a formal proof expert. Use invariants or parity.",
+      "oracle_domain": "invariant_reasoning",
+      "oracle_solution": "No. Flipping two coins changes the number of heads by -2, 0, or +2, so parity stays even; 9 is odd.",
+      "oracle_domain_markers": [
+        "invariant",
+        "parity",
+        "even",
+        "odd",
+        "mod 2",
+        "cannot",
+        "flipping two"
+      ],
+      "persona_domain_markers": [
+        "encourage",
+        "student",
+        "step by step",
+        "intuition",
+        "tutor"
+      ],
+      "acceptance_criteria": [
+        "Answers no",
+        "States parity/evenness invariant",
+        "Explains flipping two preserves parity of heads"
+      ],
+      "oracle_determination": "Parity invariant is a complete proof independent of examples."
+    },
+    {
+      "item_id": "tutor_counterexample_average",
+      "family": "tutor_vs_formal_reasoning",
+      "task_text": "Claim: if two datasets have the same average, then after adding the same new number to both, their averages remain equal. Is the claim always true?",
+      "narrow_persona": "Act as a patient tutor. Use only reassuring explanation and examples.",
+      "narrow_domain": "tutoring",
+      "oracle_persona": "Act as a formal reasoning expert. Use proof or counterexample.",
+      "oracle_domain": "counterexample_reasoning",
+      "oracle_solution": "No. Example: [0,10] average 5 and [5] average 5. Add 7: averages become 17/3\u22485.67 and 6, not equal.",
+      "oracle_domain_markers": [
+        "counterexample",
+        "not always",
+        "[0,10]",
+        "[5]",
+        "17/3",
+        "5.67",
+        "6"
+      ],
+      "persona_domain_markers": [
+        "student",
+        "encourage",
+        "intuition",
+        "tutor",
+        "explain gently"
+      ],
+      "acceptance_criteria": [
+        "Answers not always/no",
+        "Provides a valid counterexample with initially equal averages",
+        "Shows averages differ after adding same number"
+      ],
+      "oracle_determination": "A single counterexample disproves the universal claim."
+    },
+    {
+      "item_id": "design_assignment_problem",
+      "family": "design_vs_optimization",
+      "task_text": "Assign two workers to two jobs. Costs: Ann-X=4, Ann-Y=1, Bo-X=2, Bo-Y=3. Each worker gets one job. What minimum-cost assignment?",
+      "narrow_persona": "Act as a design thinking facilitator. Use only brainstorming language.",
+      "narrow_domain": "design_thinking",
+      "oracle_persona": "Act as an optimization expert. Solve the assignment problem.",
+      "oracle_domain": "optimization",
+      "oracle_solution": "Ann-Y and Bo-X costs 1+2=3, lower than Ann-X and Bo-Y cost 7.",
+      "oracle_domain_markers": [
+        "assignment problem",
+        "optimization",
+        "minimum cost",
+        "Ann-Y",
+        "Bo-X",
+        "1+2=3",
+        "Hungarian"
+      ],
+      "persona_domain_markers": [
+        "brainstorm",
+        "ideate",
+        "empathize",
+        "prototype",
+        "design thinking"
+      ],
+      "acceptance_criteria": [
+        "Chooses Ann-Y and Bo-X",
+        "Reports total cost 3",
+        "Compares or optimizes against alternative"
+      ],
+      "oracle_determination": "Exhaustive enumeration over the two feasible assignments proves the minimum."
+    },
+    {
+      "item_id": "design_knapsack",
+      "family": "design_vs_optimization",
+      "task_text": "Choose features under budget 5. Feature A: value 6 cost 4. B: value 4 cost 3. C: value 3 cost 2. D: value 2 cost 1. Maximize total value.",
+      "narrow_persona": "Act as a design thinking facilitator. Use only ideation and user-empathy framing.",
+      "narrow_domain": "design_thinking",
+      "oracle_persona": "Act as an optimization expert. Solve the knapsack problem.",
+      "oracle_domain": "dynamic_programming",
+      "oracle_solution": "Pick A and D: cost 5, value 8. B+C also costs 5 but value 7; others are lower.",
+      "oracle_domain_markers": [
+        "knapsack",
+        "dynamic programming",
+        "optimize",
+        "A and D",
+        "value 8",
+        "cost 5",
+        "DP"
+      ],
+      "persona_domain_markers": [
+        "ideate",
+        "empathy",
+        "prototype",
+        "user journey",
+        "design thinking"
+      ],
+      "acceptance_criteria": [
+        "Chooses A and D",
+        "Reports value 8 and cost 5",
+        "Indicates optimization/knapsack reasoning"
+      ],
+      "oracle_determination": "Enumerating feasible subsets or 0/1 knapsack DP shows A+D has maximum value 8."
+    }
+  ]
+}

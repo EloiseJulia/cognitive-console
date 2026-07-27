@@ -1,0 +1,26 @@
+{
+  "neutral_prompts": [
+    "Solve the task carefully.",
+    "Give the best answer you can.",
+    "Answer concisely but include necessary reasoning.",
+    "Work through the problem."
+  ],
+  "broad_prompts": [
+    "Search across multiple domains before committing to a solution method.",
+    "List substantially different solution frames, then pick the strongest one.",
+    "Do not stay in the obvious persona domain if another field has a cleaner method.",
+    "Act as a generalist who transfers tools across domains."
+  ],
+  "focus_prompts": [
+    "Stay within the assigned professional role even if another approach seems possible.",
+    "Use only the named persona domain and avoid cross-domain methods.",
+    "Keep the solution domain-locked and do not explore alternatives.",
+    "Act as a narrow specialist using only in-domain tools."
+  ],
+  "lexical_controls": [
+    "Act as a person named Alex and answer in a concise style.",
+    "Use a polished format with short headings.",
+    "Be confident and direct without adding unrelated details.",
+    "Answer as a helpful assistant with clear wording."
+  ]
+}

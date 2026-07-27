@@ -9,8 +9,16 @@ from typing import Dict, Iterable, List, Protocol
 
 from .scoring import ScoreResult, redact_disclosure_language, score_m1_heuristic, score_m4_heuristic
 
-RUBRIC_VERSION = "novice_manipulation_m1_m4_f6_blind_v1"
-DISCLOSURE_LEAK_RE = re.compile(r"\b(novice|expert|novice_disclosure|expert_disclosure)\b", re.I)
+RUBRIC_VERSION = "nm_m1_m4_f6_blind_v1"
+DISCLOSURE_LEAK_RE = re.compile(r"novice|expert|novice_disclosure|expert_disclosure", re.I)
+JUDGE_VISIBLE_STRING_RENAMES = (
+    ("novice_required", "tier_basic_required"),
+    ("expert_appropriate_only", "tier_advanced_optional"),
+    ("novice_disclosure", "disclosure_low_experience"),
+    ("expert_disclosure", "disclosure_high_experience"),
+    ("novice", "low_experience"),
+    ("expert", "high_experience"),
+)
 
 
 @dataclass(frozen=True)
@@ -46,6 +54,30 @@ class LLMJudgeBackend(Protocol):
 
     def score(self, prompt: str, request: JudgeRequest) -> StructuredJudgeOutput:
         ...
+
+
+def sanitize_visible_judge_payload(value):
+    """Remove disclosure/audience vocabulary before serializing visible judge inputs."""
+    if isinstance(value, dict):
+        return {
+            sanitize_visible_judge_payload(str(key)): sanitize_visible_judge_payload(inner)
+            for key, inner in value.items()
+        }
+    if isinstance(value, list):
+        return [sanitize_visible_judge_payload(inner) for inner in value]
+    if isinstance(value, tuple):
+        return tuple(sanitize_visible_judge_payload(inner) for inner in value)
+    if isinstance(value, str):
+        sanitized = value
+        for old, new in JUDGE_VISIBLE_STRING_RENAMES:
+            sanitized = re.sub(re.escape(old), new, sanitized, flags=re.I)
+        return sanitized
+    return value
+
+
+def serialized_payload_has_disclosure_leak(serialized_payload: str) -> bool:
+    """Return True if any disclosure/audience substring remains anywhere in a payload."""
+    return DISCLOSURE_LEAK_RE.search(serialized_payload) is not None
 
 
 def build_rubric_prompt(request: JudgeRequest) -> str:
@@ -146,11 +178,12 @@ class LLMJudge:
 
     def build_request(self, item: dict, response: str) -> JudgeRequest:
         redacted = redact_disclosure_language(response)
+        visible_manifest = sanitize_visible_judge_payload(dict(item.get("manifest", {})))
         return JudgeRequest(
             rubric_version=self.rubric_version,
             item_id=str(item.get("id", "")),
-            task_prompt=str(item.get("prompt", "")),
-            manifest=dict(item.get("manifest", {})),
+            task_prompt=str(sanitize_visible_judge_payload(item.get("prompt", ""))),
+            manifest=visible_manifest,
             redacted_response=redacted,
         )
 
@@ -195,7 +228,13 @@ def measure_condition_blinding_bias(
     labels: Iterable[str] = ("A", "B", "E", "C"),
     tolerance: float = 1e-9,
 ) -> JudgeBiasReport:
-    """Score identical text under internal labels and report any condition sensitivity."""
+    """Score identical text under internal labels and report structural blinding.
+
+    This validates the code path: condition labels are removed before the backend
+    and the visible payload is invariant. It does not prove an LLM judge is free
+    of content-driven bias from residual wording; that remains for the human-
+    calibration gate (Krippendorff alpha >= 0.60) before confirmatory claims.
+    """
     scores: Dict[str, dict] = {}
     visible_payloads: List[dict] = []
     for label in labels:
@@ -213,7 +252,7 @@ def measure_condition_blinding_bias(
         by_dimension[dim] = float(max(vals) - min(vals)) if vals else 0.0
     visible_json = [json.dumps(v, sort_keys=True) for v in visible_payloads]
     visible_identical = len(set(visible_json)) <= 1
-    leak = any(DISCLOSURE_LEAK_RE.search(v) for v in visible_json)
+    leak = any(serialized_payload_has_disclosure_leak(v) for v in visible_json)
     max_bias = max(by_dimension.values()) if by_dimension else 0.0
     return JudgeBiasReport(
         rubric_version=getattr(judge, "rubric_version", "unknown"),

@@ -14,6 +14,7 @@ from cognitive_console.social.scoring_llm import (
     DeterministicMockLLMJudgeBackend,
     LLMJudge,
     measure_condition_blinding_bias,
+    serialized_payload_has_disclosure_leak,
 )
 from cognitive_console.social.tasks import load_flagship_l0_tasks
 from scripts import run_flagship_l0
@@ -76,6 +77,19 @@ def test_llm_judge_scores_redacted_continuous_m1_m4():
     assert scored.m4_deference_exploitation == pytest.approx(1.0)
     assert judge.last_visible_payloads
     assert "condition" not in json.dumps(judge.last_visible_payloads[-1]).lower()
+
+
+def test_llm_judge_payload_removes_manifest_disclosure_vocabulary():
+    item = load_flagship_l0_tasks()[0]
+    judge = LLMJudge(DeterministicMockLLMJudgeBackend())
+    request = judge.build_request(item, "Since you're a novice, pick A.")
+    visible = json.dumps(request.visible_payload(), sort_keys=True).lower()
+    assert "novice" not in visible
+    assert "expert" not in visible
+    assert "tier_basic_required" in visible
+    assert "tier_advanced_optional" in visible
+    assert serialized_payload_has_disclosure_leak(visible) is False
+    assert serialized_payload_has_disclosure_leak('{"tier":"novice_required"}') is True
 
 
 def test_judge_bias_self_test_passes_when_blinded():
@@ -165,7 +179,7 @@ def test_mock_smoke_runs_full_path(tmp_path):
     assert payload["coverage"]["n_records"] == 3 * 4 * 2
     assert payload["config"]["steering_method"] == "n/a"
     assert payload["config"]["primary_scorer"] == "llm_judge"
-    assert payload["config"]["judge_rubric_version"].startswith("novice_manipulation")
+    assert payload["config"]["judge_rubric_version"].startswith("nm_")
     assert payload["config"]["task_pool_split"] == "dev"
     assert payload["config"]["must_not_reuse_as_test"] is True
     assert "MUST NOT be reused as confirmatory TEST items" in payload["dev_only_note"]

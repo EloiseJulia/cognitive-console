@@ -309,3 +309,77 @@ experiments:
     must not be treated as independent behavioral evidence. Metrics are copied
     only from the result JSON. The runner does not emit wall-clock timestamps;
     canonical lineage pins the synced source to clean commit 857a315.
+
+
+- experiment_id: flagship-l0-0e6455dc6bdc0883-0001
+  parent: null
+  hypothesis_id: H-NM
+  claim_ids: []
+  type: diagnostic
+  status: done
+  code_commit: 1cd6066d298331fbffc60fd571b10831781b720e
+  dirty_tree: false
+  data_hash: sha256:f4a039bbb96eb3b77ba4ab39e1726d08bfc7928456bccaddd356fb4d52844e36
+  env_hash: null
+  config_hash: sha256:0e6455dc6bdc0883
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: src/cognitive_console/social/data/flagship_l0_tasks.json (14 DEV-only D-0044 pre-freeze power/MDE items)
+  seed: 20260727
+  hardware: NVIDIA A800 80GB PCIe 80GB, borrowed server GPU index 1 only via CUDA_VISIBLE_DEVICES=1; Linux CUDA 12.x
+  started_at: '2026-07-27T10:46:11.852698+00:00'
+  ended_at: '2026-07-27T11:16:38.505391+00:00'
+  exit_code: 0
+  raw_metrics: results/flagship_confirm/flagship_l0_results.json
+  summary_metrics:
+    condition_means: {"M1": {"A": 0.3942857142857143, "B": 0.4685714285714285, "C": 0.4114285714285714, "E": 0.41571428571428576}, "M4": {"A": 0.0, "B": 0.0, "C": 0.0, "E": 0.0}}
+    primary_directional_check: {"b_minus_e_observed_delta": 0.05285714285714277, "b_minus_e_status": "exploratory_underpowered_not_primary_in_D0045_l0", "note": "D-0045 re-scopes the DEV-power L0 M1 directional check to B>A only; B>E remains part of the frozen full-study manipulation-present criterion, but this L0 harness reports it as exploratory/underpowered rather than primary.", "primary_l0_m1_directional_check": "B>A", "primary_observed_contrast": "B_minus_A", "primary_observed_delta": 0.07428571428571423}
+    judge_bias: {"disclosure_leak_found": false, "max_abs_bias": 0.0, "passed": true, "visible_payloads_identical": true}
+    mde: [{"control_within_item_variance": 0.03557142857142857, "degenerate_zero_variance": false, "dimension": "m1", "mde_by_candidate": {"N120_k5": 0.042672454061085344, "N40_k3": 0.08130812371998879, "N80_k5": 0.05226286926100747}, "mde_flag_by_candidate": {"N120_k5": "OK", "N40_k3": "OK", "N80_k5": "OK"}, "n_observed_items": 14, "paired_diff_variance": 0.019595604395604396}, {"control_within_item_variance": 0.0, "degenerate_zero_variance": true, "dimension": "m4", "mde_by_candidate": {"N120_k5": null, "N40_k3": null, "N80_k5": null}, "mde_flag_by_candidate": {"N120_k5": "DEGENERATE_ZERO_VARIANCE_MDE_UNDEFINED", "N40_k3": "DEGENERATE_ZERO_VARIANCE_MDE_UNDEFINED", "N80_k5": "DEGENERATE_ZERO_VARIANCE_MDE_UNDEFINED"}, "n_observed_items": 14, "paired_diff_variance": 0.0}]
+    coverage: {"complete": true, "conditions": ["A", "B", "E", "C"], "k": 5, "n_items": 14, "n_records": 280}
+  artifacts:
+  - results/flagship_confirm/flagship_l0_results.json
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    L0 confirmation diagnostic using local Qwen/Qwen2.5-7B-Instruct for both
+    generation and the validated condition-blinded LLM judge. Metrics are copied
+    only from the result JSON. Primary pre-registered L0 check is B>A on M1 per
+    D-0045; B>E remains exploratory/underpowered. M4 MDE is undefined because
+    M4 remained all-zero. Human calibration remains required before any
+    confirmatory claim.
+
+
+- experiment_id: breadth-l0-failed-coverage-b191f526fbb42a9d-0001
+  parent: null
+  hypothesis_id: H-BREADTH
+  claim_ids: []
+  type: diagnostic
+  status: failed
+  code_commit: 1cd6066d298331fbffc60fd571b10831781b720e
+  dirty_tree: false
+  data_hash: sha256:8b2a69d6b0caa509c456d94265df01b1641fab3be7229549191ba410c20dd95f
+  env_hash: null
+  config_hash: null
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: data/persona_breadth_l0/tasks.json + breadth_focus_contrast_pairs.jsonl + readability_prompts.json
+  seed: 20260727
+  hardware: NVIDIA A800 80GB PCIe 80GB, borrowed server GPU index 1 only via CUDA_VISIBLE_DEVICES=1; Linux CUDA 12.x
+  started_at: null
+  ended_at: null
+  exit_code: 1
+  raw_metrics: results/breadth_confirm/breadth_l0_hf_FAILED_COVERAGE.json
+  summary_metrics:
+    coverage_guard: {"missing_conditions": [], "missing_items": [], "n_unclassified_valid_samples": 41, "ok": false, "short_cells": []}
+    breadth_axis: {"linearly_readable": true, "selected_layer": 7, "stable_layer_found": true, "verdict": "LINEARLY_READABLE_L0"}
+  artifacts:
+  - results/breadth_confirm/breadth_l0_hf_FAILED_COVERAGE.json
+  failure_reason: >-
+    Deterministic marker classifier coverage guard failed closed before
+    suppression and LLM agreement metrics were computed; 41 valid samples were
+    unclassified. No suppression rate or kappa is available from this failed run.
+  valid_for_paper: false
+  validation_notes: >-
+    L0 breadth confirmation attempted with deterministic marker classifier and
+    judge-cross-check, but the fingerprint/coverage guard failed closed. Report
+    only the failure JSON values; do not tune or infer suppression/kappa from
+    partial outputs.

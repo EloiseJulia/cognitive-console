@@ -5,6 +5,35 @@
 
 ---
 
+## 2026-07-27 · D-0046 · Confirmation L0 with validated instruments: B>A REPLICATES (directional/underpowered); breadth guard fired
+- **Ran** the confirmation L0 on the borrowed A800 (GPU1 only, etiquette honored, ~/cc_l0 fully cleaned, no shutdown)
+  with the UPGRADED instruments (validated blinded LLM judge; deterministic breadth classifier). Independent hostile
+  audit (audit-confirm) re-derived everything from the 280 records.
+- **Flagship (validated LLM judge llm_judge_blind_v1), exp in registry code_commit 1cd6066:** M1 A=0.394,
+  B(novice)=0.469, E=0.416, expert=0.411. **B>A = +0.074 REPLICATES** the prior lexical-scorer L0 (+0.078) — audited
+  REAL, not a scorer artifact (LLM judge AND embedded lexical baseline both positive; 8/11 non-zero items positive;
+  present in raw records not summary-only). **BUT directional/underpowered: item-level t=1.99, p≈0.068, leans partly
+  on one strong item; needs N120/k5 (δ 0.043) for a powered confirmatory test.** M1 judge is GRADED (6-level
+  histogram, not saturated). **M4 = GENUINE behavioral null** (judge CAN emit M4>0 in self-test but returns 0 on all
+  280 real responses → Qwen does not do F6-strict deference-exploitation); correctly flagged
+  DEGENERATE_ZERO_VARIANCE_MDE_UNDEFINED. Condition-blinding held (A1 redaction symmetric across conditions,
+  judge_bias max_abs_bias=0). valid_for_paper=false.
+- **Breadth (deterministic classifier):** coverage guard FIRED (FAILED_COVERAGE) — HONEST fail-closed: the new
+  deterministic method-only markers UNDER-COVER real generations (many samples classify to no domain), so no
+  suppression rate/kappa was produced (no fabricated verdict). The breadth AXIS geometry sub-readout still emitted
+  LINEARLY_READABLE_L0 (independent of the failed behavioral classification; carries no valid_for_paper flag, must
+  NOT be cited standalone). **Audit MAJOR-1 to FIX:** the guard's n_unclassified_valid_samples=41 is not backed by
+  its enumerated list (only 20 entries) — reconcile the count before relying on this classifier; also the marker
+  coverage gap must be fixed (add fallback/broader markers) before any breadth suppression claim.
+- **Decision (Manager):** the flagship B>A social-inference-axis signal is now trustworthy enough as SUPPORTING/
+  DIAGNOSTIC evidence for the CURRENT paper (extends legibility!=controllability to a social-inference axis), but NOT
+  as a standalone confirmatory claim (self-judge; DEV-only 14-item pool; underpowered). Human-calibration gate
+  (α≥0.60) remains required before any confirmatory claim. Next: (1) fix breadth classifier marker-coverage + count
+  bug; (2) plan how to fold the social-inference axis into the current paper (extend thesis, add claim-map dimension,
+  keep frozen C1/C2 headline); a fuller powered flagship run is a later owner-gated decision.
+- **Frozen?** Results banked exploratory (valid_for_paper=false). Frozen records E-0003..E-0009, the flagship prereg
+  (D-0044), adjudicate_c2b untouched.
+
 ## 2026-07-27 · D-0045 · Two L0 probes on borrowed A800 (exploratory); instrument fixes needed before any full run
 - **Ran** both L0 harnesses on a borrowed shared A800 (GPU1 only, etiquette honored, ~/cc_l0 fully cleaned after, no
   shutdown). Qwen2.5-7B. Both `valid_for_paper=false`. Independent hostile audit (audit-l0-results) done.

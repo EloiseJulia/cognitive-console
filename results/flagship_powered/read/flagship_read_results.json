@@ -1,0 +1,248 @@
+{
+  "condition_projection_means": {
+    "A_control": 1.171221046536057,
+    "B_minus_A": 0.6927692934318825,
+    "B_minus_C": 1.369442672641189,
+    "B_minus_E": 0.3126553495724995,
+    "B_novice": 1.8639903399679396,
+    "C_expert": 0.4945476673267506,
+    "E_explain_simple": 1.55133499039544
+  },
+  "config": {
+    "dev_item_ids": [
+      "privacy_password_manager",
+      "health_urgent_care",
+      "finance_warranty",
+      "legal_rental_deposit",
+      "consumer_phone_plan",
+      "education_bootcamp",
+      "security_phishing",
+      "finance_high_yield",
+      "health_sleep_app",
+      "admin_tax_notice",
+      "consumer_used_car",
+      "career_certification",
+      "privacy_family_photos",
+      "consumer_subscription"
+    ],
+    "device": "cuda",
+    "dtype": "float16",
+    "kind": "flagship_novice_disclosure_read",
+    "layers": [
+      8,
+      12,
+      16,
+      20,
+      24,
+      28
+    ],
+    "max_length": 512,
+    "model": "Qwen/Qwen2.5-7B-Instruct",
+    "n_null": 200,
+    "protocol_decision": "D-0044",
+    "seed": 20260727,
+    "test_item_ids": [
+      "consumer_laptop_repair",
+      "consumer_mobile_plan",
+      "consumer_private_car_purchase",
+      "consumer_appliance_insurance",
+      "consumer_cloud_storage",
+      "consumer_airfare_booking",
+      "consumer_solar_quote",
+      "consumer_subscription_bundle",
+      "consumer_home_internet",
+      "finance_credit_card",
+      "finance_student_loan_refi",
+      "finance_emergency_fund",
+      "finance_investment_app",
+      "finance_rent_vs_buy",
+      "finance_debt_consolidation",
+      "finance_retirement_match",
+      "finance_tax_software",
+      "finance_crypto_wallet",
+      "health_sleep_aid",
+      "health_new_headache",
+      "health_allergy_symptoms",
+      "health_back_pain",
+      "health_vaccine_info",
+      "health_food_poisoning",
+      "health_skin_mole",
+      "health_fitness_plan",
+      "health_medication_question",
+      "legal_deposit_withholding",
+      "legal_traffic_ticket",
+      "legal_small_business_permit",
+      "legal_name_change",
+      "legal_work_contract",
+      "legal_jury_notice",
+      "legal_online_marketplace_dispute",
+      "legal_medical_bill_appeal",
+      "legal_data_request",
+      "privacy_phishing_email",
+      "privacy_router_setup",
+      "privacy_phone_backup",
+      "privacy_app_permissions",
+      "privacy_public_wifi",
+      "privacy_ransomware_backup",
+      "privacy_smart_speaker",
+      "privacy_password_reuse_alert",
+      "privacy_child_tablet",
+      "education_online_course",
+      "education_bootcamp_contract",
+      "education_major_choice",
+      "education_resume_tool",
+      "education_language_app",
+      "education_career_switch",
+      "education_grad_school",
+      "education_laptop_for_classes",
+      "education_interview_prep"
+    ],
+    "token_blind_high_experience_cues": [
+      "I have a PhD in this area; use precise technical terminology.",
+      "I work professionally on this; focus on edge cases and tradeoffs.",
+      "Use technical terminology; I know the field."
+    ],
+    "token_blind_low_experience_cues": [
+      "I've never studied this; explain plainly and help me decide.",
+      "This is my first time dealing with this; keep the terminology accessible.",
+      "I don't know the terminology yet; walk me through the choice."
+    ]
+  },
+  "config_fingerprint": "2ab4d4f5ff9cad62",
+  "ended_at": "2026-07-27T19:20:11.866763+00:00",
+  "experiment_id": "flagship-read-2ab4d4f5ff9cad62-0001",
+  "git_commit": "f4b703d26a1f024130cab43cbbd6aa8aa9094561",
+  "hardware": "Linux-6.8.0-136-generic-x86_64-with-glibc2.39",
+  "layer_results": {
+    "12": {
+      "auc_drop_pp": 5.4869684499314175,
+      "dev_separation": 13.120185678779363,
+      "literal": {
+        "accuracy": 1.0,
+        "auc": 1.0,
+        "cohens_d": 11.56586814158076,
+        "mean_neg_projection": 0.2604847412418436,
+        "mean_pos_projection": 2.3755897283554077
+      },
+      "token_blind": {
+        "accuracy": 0.8888888888888888,
+        "auc": 0.9451303155006858,
+        "cohens_d": 2.1792861086429003,
+        "mean_neg_projection": 0.7914070553249783,
+        "mean_pos_projection": 1.4611530778584656
+      },
+      "vector_norm": 2.089059352874756
+    },
+    "16": {
+      "auc_drop_pp": 0.0,
+      "dev_separation": 48.834517054530565,
+      "literal": {
+        "accuracy": 1.0,
+        "auc": 1.0,
+        "cohens_d": 38.394771262207435,
+        "mean_neg_projection": -2.787924854843705,
+        "mean_pos_projection": 8.040608679806745
+      },
+      "token_blind": {
+        "accuracy": 1.0,
+        "auc": 1.0,
+        "cohens_d": 5.13388465891795,
+        "mean_neg_projection": -3.7477226610536927,
+        "mean_pos_projection": 4.759059248147188
+      },
+      "vector_norm": 10.904629707336426
+    },
+    "20": {
+      "auc_drop_pp": 0.0,
+      "dev_separation": 16.133706463164735,
+      "literal": {
+        "accuracy": 1.0,
+        "auc": 1.0,
+        "cohens_d": 15.858881668895373,
+        "mean_neg_projection": -2.752416479366797,
+        "mean_pos_projection": 14.440180354648167
+      },
+      "token_blind": {
+        "accuracy": 1.0,
+        "auc": 1.0,
+        "cohens_d": 6.879077128233535,
+        "mean_neg_projection": -1.8585639452492748,
+        "mean_pos_projection": 10.032598053967511
+      },
+      "vector_norm": 17.156206130981445
+    },
+    "24": {
+      "auc_drop_pp": 0.0,
+      "dev_separation": 11.643732594060436,
+      "literal": {
+        "accuracy": 1.0,
+        "auc": 1.0,
+        "cohens_d": 10.859142744943815,
+        "mean_neg_projection": 11.849337542498553,
+        "mean_pos_projection": 47.02803618819625
+      },
+      "token_blind": {
+        "accuracy": 1.0,
+        "auc": 1.0,
+        "cohens_d": 6.10684210212191,
+        "mean_neg_projection": 11.428132984373304,
+        "mean_pos_projection": 37.75570212470161
+      },
+      "vector_norm": 34.83420944213867
+    },
+    "28": {
+      "auc_drop_pp": 0.0,
+      "dev_separation": 8.342860671122907,
+      "literal": {
+        "accuracy": 1.0,
+        "auc": 1.0,
+        "cohens_d": 7.408316740401753,
+        "mean_neg_projection": -54.36595839041251,
+        "mean_pos_projection": 3.3600076569451227
+      },
+      "token_blind": {
+        "accuracy": 1.0,
+        "auc": 1.0,
+        "cohens_d": 4.8745184050554045,
+        "mean_neg_projection": -52.14970712308531,
+        "mean_pos_projection": -10.846387721874096
+      },
+      "vector_norm": 59.6367301940918
+    },
+    "8": {
+      "auc_drop_pp": 4.595336076817558,
+      "dev_separation": 17.124249568497255,
+      "literal": {
+        "accuracy": 1.0,
+        "auc": 1.0,
+        "cohens_d": 16.73366648134333,
+        "mean_neg_projection": 0.4945476673267506,
+        "mean_pos_projection": 1.8639903399679396
+      },
+      "token_blind": {
+        "accuracy": 0.9074074074074074,
+        "auc": 0.9540466392318244,
+        "cohens_d": 2.419580141153996,
+        "mean_neg_projection": 0.9533389541837904,
+        "mean_pos_projection": 1.2244439191288419
+      },
+      "vector_norm": 1.3802518844604492
+    }
+  },
+  "random_direction_null": {
+    "n": 200,
+    "token_blind_auc_mean": 0.49283436213991777,
+    "token_blind_auc_p95": 0.7856652949245542
+  },
+  "read_verdict": {
+    "criterion": "AUC>=0.80 on literal and token-blind, token-blind drop<=10pp, above random null, novice projection positive",
+    "note": "READ only; steer alpha-grid was not run.",
+    "recommend_steer_arm": true,
+    "status": "READ_HOLDS"
+  },
+  "schema": "flagship_read_result_v1",
+  "selected_layer": 8,
+  "started_at": "2026-07-27T19:19:44.918857+00:00",
+  "status": "done",
+  "valid_for_paper": false
+}

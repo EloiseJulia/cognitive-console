@@ -16,7 +16,7 @@ from cognitive_console.social.scoring_llm import (
     measure_condition_blinding_bias,
     serialized_payload_has_disclosure_leak,
 )
-from cognitive_console.social.tasks import load_flagship_l0_tasks
+from cognitive_console.social.tasks import load_flagship_l0_tasks, load_flagship_test_tasks
 from scripts import run_flagship_l0
 
 
@@ -34,6 +34,29 @@ def test_l0_items_are_dev_only():
     tasks = load_flagship_l0_tasks()
     assert len(tasks) == 14
     assert {item["split"] for item in tasks} == {"dev"}
+
+
+def test_flagship_test_pool_is_frozen_disjoint_and_covered():
+    dev = load_flagship_l0_tasks()
+    test = load_flagship_test_tasks()
+    assert len(test) >= 53
+    assert {item["split"] for item in test} == {"test"}
+    assert {item["id"] for item in dev}.isdisjoint({item["id"] for item in test})
+    assert {item["prompt"] for item in dev}.isdisjoint({item["prompt"] for item in test})
+    domains = {item["domain"] for item in test}
+    assert {
+        "consumer_decision",
+        "financial_literacy",
+        "health_information",
+        "legal_administrative",
+        "privacy_security",
+        "education_career",
+    } <= domains
+    for item in test:
+        manifest = item["manifest"]
+        for field in ("alternatives", "caveats"):
+            tiers = {entry["tier"] for entry in manifest[field]}
+            assert {"always_required", "novice_required", "expert_appropriate_only"} <= tiers
 
 
 def test_m1_m4_dual_requirement_and_verification_escape():
@@ -157,6 +180,30 @@ def test_degenerate_mde_is_undefined_not_zero():
     assert by_dim["m1"].degenerate_zero_variance is True
 
 
+def test_behavioral_verdict_returns_complete_scope_for_implemented_dimensions():
+    stats = {
+        "B_minus_A": {
+            "M1": {"passes_effect_rule_without_human_alpha": False},
+            "M4": {"passes_effect_rule_without_human_alpha": False},
+        },
+        "B_minus_E": {
+            "M1": {"passes_identity_specific_rule_without_human_alpha": False},
+            "M4": {"passes_identity_specific_rule_without_human_alpha": False},
+        },
+    }
+    verdict = run_flagship_l0._behavioral_verdict(
+        stats,
+        {"status": "not_run_required_before_confirmatory_claim"},
+    )
+    assert verdict is not None
+    assert verdict["valid_for_paper"] is False
+    assert verdict["ba_pass_without_human_alpha"] == []
+    assert verdict["be_m1_m4_pass_without_human_alpha"] == []
+    assert verdict["manipulation_present_without_human_alpha"] is False
+    assert verdict["invalid_dimensions"]["M2"]["reason"] == "not_implemented"
+    assert verdict["invalid_dimensions"]["M3"]["status"] == "INVALID"
+
+
 def test_coverage_guard_rejects_incomplete():
     records = [{"item_id": "i1", "condition_id": "A", "sample_index": 0, "scores": {"m1_recommendation_strength": 0, "m4_deference_exploitation": 0}}]
     with pytest.raises(CoverageError):
@@ -188,6 +235,9 @@ def test_mock_smoke_runs_full_path(tmp_path):
     assert payload["human_calibration"]["status"] == "not_run_required_before_confirmatory_claim"
     assert payload["primary_directional_check"]["primary_l0_m1_directional_check"] == "B>A"
     assert payload["primary_directional_check"]["b_minus_e_status"] == "exploratory_underpowered_not_primary_in_D0045_l0"
+    assert set(payload["condition_means"]) == {"M1", "M4"}
+    assert payload["dimension_status"]["M2"]["status"] == "INVALID"
+    assert payload["paired_bootstrap"]["invalid_dimensions"]["M3"]["reason"] == "not_implemented"
     assert payload["lexical_baseline_condition_means"]["M1"]
     assert payload["mde"]
     assert any(

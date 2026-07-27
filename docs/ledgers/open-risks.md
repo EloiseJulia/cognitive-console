@@ -41,3 +41,5 @@
 12. **[LOW-NEW] Conflict-probe calibration provenance (m3).** GPU phase must register the calibration run
     that sets prompt_target/latent_target poles as its own experiment_id feeding conflict_probe, else
     landing_fraction is silently biased by mis-estimated poles.
+
+13. **[MED-NEW] Registry auto-writer drops the schema comment block.** The experiment-registry.yaml Python writer re-serializes the YAML from data on each run and DELETES the leading commented schema block (the `# - experiment_id: ...` template that test_matches_ledger_schema parses). Silently broke the test during the A/D GPU runs (restored manually, commit bad1266). HARDEN: make the writer preserve/re-emit the schema comment header, or move the schema to a separate tracked file the test reads. Until fixed, every registry write re-breaks it.

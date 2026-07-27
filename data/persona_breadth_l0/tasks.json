@@ -15,11 +15,10 @@
         "shortest path",
         "dijkstra",
         "graph",
+        "weighted graph",
         "node",
         "edge",
-        "relax",
-        "A-C-B-E-D",
-        "A \u2192 C \u2192 B \u2192 E \u2192 D"
+        "relaxation"
       ],
       "persona_domain_markers": [
         "excel",
@@ -47,13 +46,12 @@
       "oracle_domain": "graph_algorithms",
       "oracle_solution": "One valid topological order is frame, wire, clean, inspect, paint, deliver.",
       "oracle_domain_markers": [
+        "topological sort",
         "topological",
         "DAG",
         "dependency graph",
         "partial order",
-        "nodes",
-        "edges",
-        "toposort"
+        "precedence constraint"
       ],
       "persona_domain_markers": [
         "excel",
@@ -83,12 +81,8 @@
       "oracle_domain_markers": [
         "expected value",
         "expected cost",
-        "0.30",
-        "30%",
         "probability",
-        "EV",
-        "6",
-        "9.5"
+        "decision analysis"
       ],
       "persona_domain_markers": [
         "contract",
@@ -116,14 +110,12 @@
       "oracle_solution": "P(defect|positive)=0.8*0.1/(0.8*0.1+0.2*0.9)=0.08/0.26\u22480.31, so not more likely than not.",
       "oracle_domain_markers": [
         "Bayes",
+        "Bayes rule",
+        "Bayesian",
         "posterior",
         "base rate",
         "sensitivity",
-        "false positive",
-        "0.31",
-        "31%",
-        "0.08",
-        "0.26"
+        "false positive"
       ],
       "persona_domain_markers": [
         "warranty",
@@ -150,12 +142,11 @@
       "oracle_solution": "Paths: A-B-D = 8, A-C-D = 7. Critical path A-B-D, duration 8 days.",
       "oracle_domain_markers": [
         "critical path",
+        "critical path method",
         "CPM",
-        "path",
-        "A-B-D",
-        "A \u2192 B \u2192 D",
-        "8 days",
-        "longest path"
+        "longest path",
+        "precedence constraint",
+        "earliest finish"
       ],
       "persona_domain_markers": [
         "stakeholder",
@@ -182,13 +173,12 @@
       "oracle_domain": "queueing",
       "oracle_solution": "Triage capacity is 20 tickets/hour; specialist capacity is 12 tickets/hour. The specialist is the bottleneck.",
       "oracle_domain_markers": [
+        "queueing",
         "queue",
         "service rate",
         "capacity",
         "throughput",
-        "bottleneck",
-        "20 tickets/hour",
-        "12 tickets/hour"
+        "bottleneck"
       ],
       "persona_domain_markers": [
         "staffing",
@@ -217,10 +207,9 @@
         "binary search",
         "bit",
         "entropy",
-        "information",
-        "2^4",
+        "information theory",
         "log2",
-        "4 questions",
+        "halving",
         "halve"
       ],
       "persona_domain_markers": [
@@ -251,9 +240,8 @@
         "binary search",
         "entropy",
         "information gain",
-        "2^3",
-        "log2",
-        "3 questions",
+        "decision tree",
+        "halving",
         "halve"
       ],
       "persona_domain_markers": [
@@ -282,11 +270,9 @@
       "oracle_domain_markers": [
         "invariant",
         "parity",
-        "even",
-        "odd",
         "mod 2",
-        "cannot",
-        "flipping two"
+        "evenness",
+        "oddness"
       ],
       "persona_domain_markers": [
         "encourage",
@@ -313,12 +299,9 @@
       "oracle_solution": "No. Example: [0,10] average 5 and [5] average 5. Add 7: averages become 17/3\u22485.67 and 6, not equal.",
       "oracle_domain_markers": [
         "counterexample",
-        "not always",
-        "[0,10]",
-        "[5]",
-        "17/3",
-        "5.67",
-        "6"
+        "universal claim",
+        "disproof",
+        "not always"
       ],
       "persona_domain_markers": [
         "student",
@@ -347,10 +330,8 @@
         "assignment problem",
         "optimization",
         "minimum cost",
-        "Ann-Y",
-        "Bo-X",
-        "1+2=3",
-        "Hungarian"
+        "enumeration",
+        "Hungarian algorithm"
       ],
       "persona_domain_markers": [
         "brainstorm",
@@ -378,11 +359,8 @@
       "oracle_domain_markers": [
         "knapsack",
         "dynamic programming",
-        "optimize",
-        "A and D",
-        "value 8",
-        "cost 5",
-        "DP"
+        "optimization",
+        "0/1 knapsack"
       ],
       "persona_domain_markers": [
         "ideate",

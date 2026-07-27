@@ -22,6 +22,7 @@ if str(_REPO / "src") not in sys.path:
 
 from cognitive_console.activations.provider import HFActivationProvider
 from cognitive_console.experiments.breadth_l0 import (
+    LLMJudgeDomainClassifier,
     RuleBasedDomainClassifier,
     aggregate_metrics,
     coverage_guard,
@@ -59,6 +60,10 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--backend", choices=["mock", "hf"], default="mock")
     ap.add_argument("--mock", action="store_true", help="Alias for --backend mock")
+    ap.add_argument(
+        "--classifier", choices=["rule", "judge"], default=None,
+        help="Domain classifier. Defaults to rule for --mock and local LLM judge for --backend hf.",
+    )
     ap.add_argument("--model", default=DEFAULT_MODEL)
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--dtype", default="float16")
@@ -73,6 +78,8 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
     if args.mock:
         args.backend = "mock"
+    if args.classifier is None:
+        args.classifier = "rule" if args.backend == "mock" else "judge"
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     out_path = args.output_dir / f"breadth_l0_{args.backend}_k{args.k}_seed{args.seed}.json"
@@ -107,7 +114,10 @@ def main(argv=None) -> int:
     gen_backend = SteeredHFBackend(
         args.model, device=args.device, dtype=args.dtype, max_length=1024, seed=args.seed,
     )
-    classifier = RuleBasedDomainClassifier(extra_markers={"general_reasoning": ["general reasoning", "baseline reasoning"]})
+    if args.classifier == "judge":
+        classifier = LLMJudgeDomainClassifier(backend=gen_backend)
+    else:
+        classifier = RuleBasedDomainClassifier(extra_markers={"general_reasoning": ["general reasoning", "baseline reasoning"]})
     rows = sample_conditions(gen_backend, classifier, tasks, args.k, max_new_tokens=args.max_new_tokens)
     guard = coverage_guard(rows, tasks, args.k)
     if not guard["ok"]:
@@ -122,6 +132,7 @@ def main(argv=None) -> int:
         "model": args.model,
         "k": args.k,
         "fingerprint": fp,
+        "classifier": args.classifier,
         "coverage_guard_passed": True,
         "coverage_guard": guard,
         "metrics": aggregate_metrics(rows),

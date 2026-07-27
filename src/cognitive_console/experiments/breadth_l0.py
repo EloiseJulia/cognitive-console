@@ -110,6 +110,7 @@ class BreadthAxisResult:
     focus_reach: Optional[float]
     pole_reach: Optional[float]
     broad_null_p95: Optional[float]
+    lexical_control_reach: Optional[float]
     expected_order: bool
     linearly_readable: bool
     verdict: str
@@ -134,7 +135,7 @@ class BreadthRunResult:
 
 
 class DomainClassifier(Protocol):
-    def classify(self, text: str, task: BreadthTask) -> ClassifiedSample:
+    def classify(self, text: str, task: BreadthTask, sample_index: int = 0) -> ClassifiedSample:
         ...
 
 
@@ -180,8 +181,21 @@ def render_prompt(task: BreadthTask, condition: str, sample_index: int = 0) -> s
 
 
 def _marker_hit(text: str, markers: Sequence[str]) -> bool:
+    """Return true only for whole-token / whole-phrase marker matches.
+
+    Substring matching is unsafe here: e.g. "EV" matches "review" and "6"
+    matches any incidental digit. Markers are escaped and wrapped in non-word
+    boundaries so they must appear as a complete token or phrase.
+    """
     low = text.lower()
-    return any(str(m).lower() in low for m in markers)
+    for marker in markers:
+        m = str(marker).strip().lower()
+        if not m:
+            continue
+        pattern = r"(?<![A-Za-z0-9_])" + re.escape(m) + r"(?![A-Za-z0-9_])"
+        if re.search(pattern, low):
+            return True
+    return False
 
 
 class RuleBasedDomainClassifier:
@@ -190,15 +204,14 @@ class RuleBasedDomainClassifier:
     def __init__(self, extra_markers: Optional[Dict[str, Sequence[str]]] = None) -> None:
         self.extra_markers = {k: [m.lower() for m in v] for k, v in (extra_markers or {}).items()}
 
-    def classify(self, text: str, task: BreadthTask) -> ClassifiedSample:
-        return self.classify_sample(0, text, task)
-
-    def classify_sample(self, sample_index: int, text: str, task: BreadthTask) -> ClassifiedSample:
+    def classify(self, text: str, task: BreadthTask, sample_index: int = 0) -> ClassifiedSample:
         low = text.lower()
         domains: List[str] = []
-        if _marker_hit(low, task.oracle_domain_markers) or task.oracle_domain.lower() in low:
+        oracle_domain_tokens = [task.oracle_domain, task.oracle_domain.replace("_", " ")]
+        narrow_domain_tokens = [task.narrow_domain, task.narrow_domain.replace("_", " ")]
+        if _marker_hit(low, list(task.oracle_domain_markers) + oracle_domain_tokens):
             domains.append(task.oracle_domain)
-        if _marker_hit(low, task.persona_domain_markers) or task.narrow_domain.lower() in low:
+        if _marker_hit(low, list(task.persona_domain_markers) + narrow_domain_tokens):
             domains.append(task.narrow_domain)
         for domain, markers in self.extra_markers.items():
             if domain not in domains and _marker_hit(low, markers):
@@ -220,16 +233,61 @@ class RuleBasedDomainClassifier:
 
 
 class LLMJudgeDomainClassifier:
-    """Interface seam for a future frozen LLM/human judge; no paid API is called."""
+    """Local-model judge seam; no paid API is called.
 
-    def __init__(self, judge_fn=None) -> None:
-        if judge_fn is None:
-            raise ValueError("LLMJudgeDomainClassifier requires an explicit local judge_fn")
+    The judge function may be injected directly for tests, or a local GenBackend
+    can be supplied. Backend generations are expected to return a JSON object
+    with at least ``domains`` and optional validity flags.
+    """
+
+    def __init__(self, judge_fn=None, backend: Optional[GenBackend] = None) -> None:
+        if judge_fn is None and backend is None:
+            raise ValueError("LLMJudgeDomainClassifier requires a local judge_fn or backend")
         self.judge_fn = judge_fn
+        self.backend = backend
 
-    def classify(self, text: str, task: BreadthTask) -> ClassifiedSample:
-        row = self.judge_fn(text=text, task=task)
-        return ClassifiedSample(**row)
+    def _prompt(self, text: str, task: BreadthTask) -> str:
+        return (
+            "You are a frozen domain-use judge for a synthetic task. "
+            "Return ONLY compact JSON with keys domains (array), valid (bool), "
+            "invalid_reason (string). Allowed domains are: "
+            f"{task.oracle_domain}, {task.narrow_domain}, general_reasoning. "
+            "Label a domain only if the solution uses that method/domain, not "
+            "merely because it contains a numeric answer.\n"
+            f"Task: {task.task_text}\n"
+            f"Oracle domain: {task.oracle_domain}; method markers: {task.oracle_domain_markers}\n"
+            f"Narrow domain: {task.narrow_domain}; method markers: {task.persona_domain_markers}\n"
+            f"Solution text:\n{text}"
+        )
+
+    def _backend_judge(self, text: str, task: BreadthTask) -> Dict[str, object]:
+        raw = self.backend.generate(self._prompt(text, task), max_new_tokens=160)  # type: ignore[union-attr]
+        m = re.search(r"\{.*\}", raw, flags=re.DOTALL)
+        if not m:
+            return {"domains": [], "valid": False, "invalid_reason": "judge returned no JSON"}
+        try:
+            return json.loads(m.group(0))
+        except json.JSONDecodeError:
+            return {"domains": [], "valid": False, "invalid_reason": "judge returned invalid JSON"}
+
+    def classify(self, text: str, task: BreadthTask, sample_index: int = 0) -> ClassifiedSample:
+        row = (
+            self.judge_fn(text=text, task=task, sample_index=sample_index)
+            if self.judge_fn is not None
+            else self._backend_judge(text, task)
+        )
+        domains = sorted({str(d) for d in row.get("domains", [])})
+        valid = bool(row.get("valid", True))
+        invalid_reason = str(row.get("invalid_reason", "" if valid else "judge marked invalid"))
+        return ClassifiedSample(
+            sample_index=int(sample_index),
+            text=text,
+            domains=domains,
+            uses_oracle_domain=task.oracle_domain in domains,
+            uses_narrow_domain=task.narrow_domain in domains,
+            valid=valid,
+            invalid_reason=invalid_reason,
+        )
 
 
 class MockBreadthBackend(GenBackend):
@@ -264,7 +322,7 @@ class MockBreadthBackend(GenBackend):
 
 def sample_conditions(
     backend: GenBackend,
-    classifier: RuleBasedDomainClassifier,
+    classifier: DomainClassifier,
     tasks: Sequence[BreadthTask],
     k: int,
     *,
@@ -280,7 +338,7 @@ def sample_conditions(
             for i in range(k):
                 prompt = render_prompt(task, condition, sample_index=i)
                 text = backend.generate(prompt, max_new_tokens=max_new_tokens)
-                samples.append(classifier.classify_sample(i, text, task))
+                samples.append(classifier.classify(text, task, sample_index=i))
             rows.append(ItemConditionResult(task.item_id, condition, first_prompt, samples))
     return rows
 
@@ -391,7 +449,7 @@ def extract_breadth_axis(
             separation_by_layer={str(k): float(v) for k, v in sep_by.items()},
             layer_selection=_layer_selection_to_dict(sel),
             facade_ratio=None, facade_ci=None, broad_reach=None, focus_reach=None,
-            pole_reach=None, broad_null_p95=None, expected_order=False,
+            pole_reach=None, broad_null_p95=None, lexical_control_reach=None, expected_order=False,
             linearly_readable=False,
             verdict="NOT_LINEAR_OR_DEGENERATE",
         )
@@ -401,19 +459,32 @@ def extract_breadth_axis(
     neutral_acts = provider.get_activations(neutral, ell).astype(np.float64)
     broad_acts = provider.get_activations(broad_eval, ell).astype(np.float64)
     focus_acts = provider.get_activations(focus_eval, ell).astype(np.float64)
+    lexical_controls = list(readability.get("lexical_controls", []))
     pos_acts = provider.get_activations(broad_texts, ell).astype(np.float64)
+    control_acts = provider.get_activations(lexical_controls, ell).astype(np.float64) if lexical_controls else np.empty((0, provider.hidden_dim))
     neutral_proj = neutral_acts @ direction
     broad_proj = broad_acts @ direction
     focus_proj = focus_acts @ direction
+    control_proj = control_acts @ direction if len(control_acts) else np.asarray([], dtype=np.float64)
     pos_proj = pos_acts @ direction
     facade = same_origin_facade(broad_proj, pos_proj, neutral_proj, n_boot=500, seed=seed)
     broad_reach = float(broad_proj.mean() - neutral_proj.mean())
     focus_reach = float(focus_proj.mean() - neutral_proj.mean())
+    lexical_control_reach = float(control_proj.mean() - neutral_proj.mean()) if len(control_proj) else 0.0
     null_dist = random_null_baseline(broad_acts.mean(axis=0) - neutral_acts.mean(axis=0), n_samples=int(n_null), seed=int(seed) + 999)
     broad_null_p95 = float(np.percentile(null_dist, 95))
     expected_order = bool(broad_reach > 0.0 and focus_reach < broad_reach and facade.pole_reach > 0.0)
-    linearly_readable = bool(expected_order and broad_reach > broad_null_p95 and 0.0 < facade.facade_ratio <= 1.25)
-    verdict = "LINEARLY_READABLE_L0" if linearly_readable else "READABILITY_FAILED_REPORT_NOT_LINEAR"
+    specific_to_breadth = bool(broad_reach > lexical_control_reach)
+    linearly_readable = bool(
+        expected_order and broad_reach > broad_null_p95
+        and specific_to_breadth and 0.0 < facade.facade_ratio <= 1.25
+    )
+    if linearly_readable:
+        verdict = "LINEARLY_READABLE_L0"
+    elif expected_order and broad_reach > broad_null_p95 and not specific_to_breadth:
+        verdict = "READABLE_BUT_NONSPECIFIC_LEXICAL_CONTROL"
+    else:
+        verdict = "READABILITY_FAILED_REPORT_NOT_LINEAR"
     return BreadthAxisResult(
         method=method, axis="breadth_focus", selected_layer=ell,
         stable_layer_found=True, unstable_reason="",
@@ -423,6 +494,7 @@ def extract_breadth_axis(
         facade_ci=[float(facade.ci_lo), float(facade.ci_hi)],
         broad_reach=broad_reach, focus_reach=focus_reach,
         pole_reach=float(facade.pole_reach), broad_null_p95=broad_null_p95,
+        lexical_control_reach=lexical_control_reach,
         expected_order=expected_order, linearly_readable=linearly_readable,
         verdict=verdict,
     )
@@ -441,6 +513,8 @@ def build_mock_activation_provider(broad_texts: Sequence[str], focus_texts: Sequ
         provider.plant_facade("breadth_focus", text, f"VECTOR::{text}", 4.0, 0.55, layer)
     for text in readability["focus_prompts"]:
         provider.plant_facade("breadth_focus", text, f"FOCUS_VECTOR::{text}", -2.0, 1.0, layer)
+    for text in readability.get("lexical_controls", []):
+        provider.plant_facade("breadth_focus", text, f"CONTROL_VECTOR::{text}", 4.0, 0.1, layer)
     return provider
 
 

@@ -96,6 +96,21 @@ class PairedSuppressionResult:
 
 
 @dataclass(frozen=True)
+class ClassifierAgreementResult:
+    primary_classifier: str
+    secondary_classifier: str
+    n_samples: int
+    domain_label_agreement: Optional[float]
+    oracle_reach_agreement: Optional[float]
+    narrow_reach_agreement: Optional[float]
+    oracle_reach_cohen_kappa: Optional[float]
+    narrow_reach_cohen_kappa: Optional[float]
+    confusion: Dict[str, int]
+    disagreements: List[Dict[str, object]]
+    note: str
+
+
+@dataclass(frozen=True)
 class BreadthAxisResult:
     method: str
     axis: str
@@ -123,6 +138,8 @@ class BreadthRunResult:
     model: str
     k: int
     fingerprint: str
+    classifier: str
+    secondary_classifier_agreement: ClassifierAgreementResult
     coverage_guard_passed: bool
     coverage_guard: Dict[str, object]
     metrics: Dict[str, object]
@@ -248,15 +265,16 @@ class LLMJudgeDomainClassifier:
 
     def _prompt(self, text: str, task: BreadthTask) -> str:
         return (
-            "You are a frozen domain-use judge for a synthetic task. "
+            "You are a frozen, condition-blinded domain-use judge for a synthetic task. "
+            "You do not know which persona or prompt condition produced the solution. "
             "Return ONLY compact JSON with keys domains (array), valid (bool), "
-            "invalid_reason (string). Allowed domains are: "
+            "invalid_reason (string). Allowed domain labels are: "
             f"{task.oracle_domain}, {task.narrow_domain}, general_reasoning. "
-            "Label a domain only if the solution uses that method/domain, not "
-            "merely because it contains a numeric answer.\n"
+            "Label a domain only if the solution text itself uses that method/domain, not "
+            "merely because it contains a numeric answer or matches the task answer.\n"
             f"Task: {task.task_text}\n"
-            f"Oracle domain: {task.oracle_domain}; method markers: {task.oracle_domain_markers}\n"
-            f"Narrow domain: {task.narrow_domain}; method markers: {task.persona_domain_markers}\n"
+            f"Domain label {task.oracle_domain}; method markers: {task.oracle_domain_markers}\n"
+            f"Domain label {task.narrow_domain}; method markers: {task.persona_domain_markers}\n"
             f"Solution text:\n{text}"
         )
 
@@ -318,6 +336,82 @@ class MockBreadthBackend(GenBackend):
             method = "cross-domain search" if domain == task.oracle_domain else "baseline reasoning"
         answer = task.oracle_solution if domain == task.oracle_domain else "A plausible but domain-locked answer."
         return f"DOMAIN: {domain}. METHOD: {method}. {answer}"
+
+
+def _cohen_kappa(left: Sequence[bool], right: Sequence[bool]) -> float:
+    if len(left) != len(right):
+        raise ValueError("kappa inputs must have the same length")
+    n = len(left)
+    if n == 0:
+        return math.nan
+    obs = sum(1 for a, b in zip(left, right) if bool(a) == bool(b)) / n
+    p_left = sum(1 for x in left if x) / n
+    p_right = sum(1 for x in right if x) / n
+    expected = p_left * p_right + (1.0 - p_left) * (1.0 - p_right)
+    if abs(1.0 - expected) <= _EPS:
+        return 1.0 if abs(obs - 1.0) <= _EPS else 0.0
+    return float((obs - expected) / (1.0 - expected))
+
+
+def classifier_agreement(
+    rows: Sequence[ItemConditionResult],
+    tasks: Sequence[BreadthTask],
+    secondary_classifier: Optional[DomainClassifier],
+    *,
+    primary_classifier_name: str = "deterministic_marker_v2",
+    secondary_classifier_name: str = "none",
+    max_disagreements: int = 20,
+) -> ClassifierAgreementResult:
+    if secondary_classifier is None:
+        return ClassifierAgreementResult(
+            primary_classifier=primary_classifier_name, secondary_classifier=secondary_classifier_name,
+            n_samples=0, domain_label_agreement=None, oracle_reach_agreement=None,
+            narrow_reach_agreement=None, oracle_reach_cohen_kappa=None,
+            narrow_reach_cohen_kappa=None, confusion={}, disagreements=[],
+            note="secondary frozen/blinded LLM judge not run; suppression verdict uses deterministic markers only",
+        )
+    task_by_id = {t.item_id: t for t in tasks}
+    n = 0
+    domain_agree = 0
+    oracle_left: List[bool] = []
+    oracle_right: List[bool] = []
+    narrow_left: List[bool] = []
+    narrow_right: List[bool] = []
+    confusion = {
+        "oracle_both": 0, "oracle_primary_only": 0, "oracle_secondary_only": 0, "oracle_neither": 0,
+        "narrow_both": 0, "narrow_primary_only": 0, "narrow_secondary_only": 0, "narrow_neither": 0,
+    }
+    disagreements: List[Dict[str, object]] = []
+    for row in rows:
+        task = task_by_id[row.item_id]
+        for sample in row.samples:
+            primary = sample
+            secondary = secondary_classifier.classify(sample.text, task, sample_index=sample.sample_index)
+            n += 1
+            if set(primary.domains) == set(secondary.domains) and primary.valid == secondary.valid:
+                domain_agree += 1
+            po, so = bool(primary.uses_oracle_domain), bool(secondary.uses_oracle_domain)
+            pn, sn = bool(primary.uses_narrow_domain), bool(secondary.uses_narrow_domain)
+            oracle_left.append(po); oracle_right.append(so)
+            narrow_left.append(pn); narrow_right.append(sn)
+            confusion["oracle_both" if po and so else "oracle_primary_only" if po else "oracle_secondary_only" if so else "oracle_neither"] += 1
+            confusion["narrow_both" if pn and sn else "narrow_primary_only" if pn else "narrow_secondary_only" if sn else "narrow_neither"] += 1
+            if (set(primary.domains) != set(secondary.domains) or primary.valid != secondary.valid) and len(disagreements) < max_disagreements:
+                disagreements.append({
+                    "item_id": row.item_id, "condition": row.condition, "sample_index": sample.sample_index,
+                    "primary_domains": list(primary.domains), "secondary_domains": list(secondary.domains),
+                    "primary_valid": primary.valid, "secondary_valid": secondary.valid,
+                })
+    return ClassifierAgreementResult(
+        primary_classifier=primary_classifier_name, secondary_classifier=secondary_classifier_name, n_samples=n,
+        domain_label_agreement=float(domain_agree / n) if n else math.nan,
+        oracle_reach_agreement=float(sum(1 for a, b in zip(oracle_left, oracle_right) if a == b) / n) if n else math.nan,
+        narrow_reach_agreement=float(sum(1 for a, b in zip(narrow_left, narrow_right) if a == b) / n) if n else math.nan,
+        oracle_reach_cohen_kappa=_cohen_kappa(oracle_left, oracle_right),
+        narrow_reach_cohen_kappa=_cohen_kappa(narrow_left, narrow_right),
+        confusion=confusion, disagreements=disagreements,
+        note="secondary classifier is a condition-blinded cross-check only; suppression verdict uses deterministic markers",
+    )
 
 
 def sample_conditions(
@@ -590,9 +684,12 @@ def run_mock_l0(tasks_path: Path, pairs_path: Path, read_path: Path, *, k: int =
     axis = extract_breadth_axis(provider, broad, focus, readability, seed=seed)
     suppression = oracle_suppression(rows, seed=seed, bootstrap_b=500)
     fp = result_fingerprint(tasks_path, pairs_path, read_path, backend="mock", model=model, k=k, seed=seed)
+    agreement = classifier_agreement(rows, tasks, secondary_classifier=None)
     return BreadthRunResult(
         schema="persona_breadth_l0_result_v1", backend="mock", model=model, k=int(k),
-        fingerprint=fp, coverage_guard_passed=True, coverage_guard=guard,
+        fingerprint=fp, classifier="deterministic_marker_v2",
+        secondary_classifier_agreement=agreement,
+        coverage_guard_passed=True, coverage_guard=guard,
         metrics=aggregate_metrics(rows), suppression=suppression, breadth_axis=axis,
         items=[asdict(r) for r in rows],
     )

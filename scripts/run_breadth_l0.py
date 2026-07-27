@@ -5,7 +5,7 @@ CPU smoke:
     python -m scripts.run_breadth_l0 --mock --k 5
 
 Deferred GPU L0 (do not run without Manager/human compute approval):
-    python -m scripts.run_breadth_l0 --backend hf --model Qwen/Qwen2.5-7B-Instruct --device cuda --dtype float16 --k 5
+    python -m scripts.run_breadth_l0 --backend hf --classifier rule --judge-cross-check --model Qwen/Qwen2.5-7B-Instruct --device cuda --dtype float16 --k 5
 """
 
 from __future__ import annotations
@@ -25,6 +25,7 @@ from cognitive_console.experiments.breadth_l0 import (
     LLMJudgeDomainClassifier,
     RuleBasedDomainClassifier,
     aggregate_metrics,
+    classifier_agreement,
     coverage_guard,
     extract_breadth_axis,
     load_contrast_pairs,
@@ -61,8 +62,12 @@ def main(argv=None) -> int:
     ap.add_argument("--backend", choices=["mock", "hf"], default="mock")
     ap.add_argument("--mock", action="store_true", help="Alias for --backend mock")
     ap.add_argument(
-        "--classifier", choices=["rule", "judge"], default=None,
-        help="Domain classifier. Defaults to rule for --mock and local LLM judge for --backend hf.",
+        "--classifier", choices=["rule"], default="rule",
+        help="Primary domain classifier. Only deterministic marker ground truth is allowed for suppression.",
+    )
+    ap.add_argument(
+        "--judge-cross-check", action="store_true",
+        help="Run a frozen condition-blinded local LLM judge as a secondary agreement/bias cross-check. Does not define suppression.",
     )
     ap.add_argument("--model", default=DEFAULT_MODEL)
     ap.add_argument("--device", default="cuda")
@@ -78,8 +83,6 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
     if args.mock:
         args.backend = "mock"
-    if args.classifier is None:
-        args.classifier = "rule" if args.backend == "mock" else "judge"
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     out_path = args.output_dir / f"breadth_l0_{args.backend}_k{args.k}_seed{args.seed}.json"
@@ -114,10 +117,7 @@ def main(argv=None) -> int:
     gen_backend = SteeredHFBackend(
         args.model, device=args.device, dtype=args.dtype, max_length=1024, seed=args.seed,
     )
-    if args.classifier == "judge":
-        classifier = LLMJudgeDomainClassifier(backend=gen_backend)
-    else:
-        classifier = RuleBasedDomainClassifier(extra_markers={"general_reasoning": ["general reasoning", "baseline reasoning"]})
+    classifier = RuleBasedDomainClassifier(extra_markers={"general_reasoning": ["general_reasoning", "general reasoning", "baseline reasoning"]})
     rows = sample_conditions(gen_backend, classifier, tasks, args.k, max_new_tokens=args.max_new_tokens)
     guard = coverage_guard(rows, tasks, args.k)
     if not guard["ok"]:
@@ -125,6 +125,12 @@ def main(argv=None) -> int:
         fail_path.write_text(json.dumps({"coverage_guard": guard, "axis": asdict(axis)}, indent=2), encoding="utf-8")
         raise RuntimeError(f"coverage guard failed; wrote {fail_path}")
     suppression = oracle_suppression(rows, seed=args.seed, bootstrap_b=2000)
+    secondary = LLMJudgeDomainClassifier(backend=gen_backend) if args.judge_cross_check else None
+    agreement = classifier_agreement(
+        rows, tasks, secondary,
+        primary_classifier_name="deterministic_marker_v2",
+        secondary_classifier_name="frozen_blinded_llm_judge" if secondary is not None else "none",
+    )
     fp = result_fingerprint(args.tasks, args.contrast_pairs, args.readability_prompts, backend="hf", model=args.model, k=args.k, seed=args.seed)
     payload = {
         "schema": "persona_breadth_l0_result_v1",
@@ -132,7 +138,9 @@ def main(argv=None) -> int:
         "model": args.model,
         "k": args.k,
         "fingerprint": fp,
-        "classifier": args.classifier,
+        "classifier": "deterministic_marker_v2",
+        "secondary_classifier_agreement": asdict(agreement),
+        "suppression_verdict_classifier": "deterministic_marker_v2",
         "coverage_guard_passed": True,
         "coverage_guard": guard,
         "metrics": aggregate_metrics(rows),

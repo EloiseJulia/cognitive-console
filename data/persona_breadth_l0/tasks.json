@@ -57,9 +57,9 @@
         "excel",
         "spreadsheet",
         "formula",
-        "sort",
-        "row",
-        "column"
+        "worksheet row",
+        "worksheet column",
+        "cell range"
       ],
       "acceptance_criteria": [
         "Frame appears before wire and clean",
@@ -173,12 +173,12 @@
       "oracle_domain": "queueing",
       "oracle_solution": "Triage capacity is 20 tickets/hour; specialist capacity is 12 tickets/hour. The specialist is the bottleneck.",
       "oracle_domain_markers": [
-        "queueing",
-        "queue",
+        "queueing theory",
         "service rate",
-        "capacity",
-        "throughput",
-        "bottleneck"
+        "tickets/hour",
+        "tickets per hour",
+        "serial queue",
+        "bottleneck station"
       ],
       "persona_domain_markers": [
         "staffing",
@@ -359,8 +359,9 @@
       "oracle_domain_markers": [
         "knapsack",
         "dynamic programming",
-        "optimization",
-        "0/1 knapsack"
+        "0/1 knapsack",
+        "knapsack DP",
+        "feasible subsets"
       ],
       "persona_domain_markers": [
         "ideate",
@@ -372,9 +373,9 @@
       "acceptance_criteria": [
         "Chooses A and D",
         "Reports value 8 and cost 5",
-        "Indicates optimization/knapsack reasoning"
+        "Indicates knapsack/dynamic-programming or exhaustive feasible-subset reasoning"
       ],
-      "oracle_determination": "Enumerating feasible subsets or 0/1 knapsack DP shows A+D has maximum value 8."
+      "oracle_determination": "Enumerating feasible subsets or 0/1 knapsack dynamic programming shows A+D has maximum value 8; generic greedy/value-ratio language is not sufficient oracle-domain evidence."
     }
   ]
 }

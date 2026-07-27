@@ -385,3 +385,60 @@ experiments:
     judge-cross-check, but the fingerprint/coverage guard failed closed. Report
     only the failure JSON values; do not tune or infer suppression/kappa from
     partial outputs.
+
+
+- experiment_id: breadth-l0-confirm2-6b999fd7ef3a012c-0001
+  parent: breadth-l0-failed-coverage-b191f526fbb42a9d-0001
+  hypothesis_id: H-BREADTH
+  claim_ids: []
+  type: diagnostic
+  status: done
+  code_commit: f737eaafa44a816acef384239c215f3af42b105c
+  dirty_tree: false
+  data_hash: sha256:8e8d36c47578d725c8563601b21db517889f0e199ae9c132667c0a7df3c22d9f
+  env_hash: null
+  config_hash: sha256:6b999fd7ef3a012cc9ffc98338adaf826590b669f6491866fe26aa7e01390907
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: data/persona_breadth_l0/tasks.json + breadth_focus_contrast_pairs.jsonl + readability_prompts.json
+  seed: 20260727
+  hardware: NVIDIA A800 80GB PCIe 80GB, borrowed server GPU index 1 only via CUDA_VISIBLE_DEVICES=1; Linux CUDA 12.0
+  started_at: '2026-07-27T12:51:04.640393+00:00'
+  ended_at: '2026-07-27T13:03:59.358815+00:00'
+  exit_code: 0
+  raw_metrics: results/breadth_confirm2/breadth_l0_hf_k5_seed20260727.json
+  summary_metrics:
+    classifier: deterministic_marker_v3_other_fallback
+    secondary_classifier: frozen_blinded_llm_judge
+    fingerprint: 8775522fb4106e5f
+    coverage_guard_passed: true
+    n_other_valid_samples: 3
+    other_fraction_valid_samples: 0.016666666666666666
+    max_other_fraction: 0.05
+    strict_suppression_rate: 0.08333333333333333
+    calibrated_suppression_rate: 0.16666666666666666
+    strict_item_ids: ['tutor_invariant_coins']
+    calibrated_item_ids: ['design_knapsack', 'tutor_invariant_coins']
+    coverage_ci_9833: (-0.1951388888888846, 0.5284722222222248)
+    oracle_reach_cohen_kappa: 0.8767123287671234
+    narrow_reach_cohen_kappa: 0.5900490539593553
+    domain_label_agreement: 0.75
+    breadth_axis_verdict: LINEARLY_READABLE_L0
+    selected_layer: 7
+    stable_layer_found: true
+    facade_ratio: 0.27147351965493816
+    facade_ci: [0.005913323151613872, 0.5370337161582625]
+    linearly_readable: true
+    expected_order: true
+    wall_clock_seconds_probe: 774.718422
+  artifacts:
+  - results/breadth_confirm2/breadth_l0_hf_k5_seed20260727.json
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    Re-run of the breadth-axis L0 probe after the deterministic classifier was
+    coverage-broadened with explicit other/unclassified fallback and a closed
+    other_fraction <= 0.05 guard. Metrics are copied only from the result JSON;
+    suppression verdict uses the deterministic classifier, with the blinded LLM
+    judge used only for agreement cross-check. Coverage guard passed with
+    n_other_valid_samples=3/180 (0.016666666666666666). This remains an L0
+    diagnostic until independent audit and later protocol gates decide paper use.

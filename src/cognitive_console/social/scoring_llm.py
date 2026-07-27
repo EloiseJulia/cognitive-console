@@ -136,10 +136,28 @@ class HFLocalJudgeBackend:
         if device is not None:
             self.model.to(device)
 
+    @staticmethod
+    def _render_user_chat_prompt(tokenizer, text: str, model_name: str = "unknown") -> str:
+        if hasattr(tokenizer, "apply_chat_template"):
+            try:
+                return tokenizer.apply_chat_template(
+                    [{"role": "user", "content": text}],
+                    tokenize=False,
+                    add_generation_prompt=True,
+                )
+            except Exception as exc:  # pragma: no cover - optional dependency
+                tok_cls = tokenizer.__class__.__name__
+                raise RuntimeError(
+                    "tokenizer.apply_chat_template failed for "
+                    f"model '{model_name}' (tokenizer={tok_cls})"
+                ) from exc
+        return text
+
     def score(self, prompt: str, request: JudgeRequest) -> StructuredJudgeOutput:  # pragma: no cover - optional
         torch = self.torch
         torch.manual_seed(self.seed)
-        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
+        rendered = self._render_user_chat_prompt(self.tokenizer, prompt, self.model_id)
+        inputs = self.tokenizer(rendered, return_tensors="pt").to(self.model.device)
         out = self.model.generate(
             **inputs,
             max_new_tokens=192,

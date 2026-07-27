@@ -16,7 +16,7 @@ from cognitive_console.social.scoring_llm import (
     measure_condition_blinding_bias,
     serialized_payload_has_disclosure_leak,
 )
-from cognitive_console.social.tasks import load_flagship_l0_tasks
+from cognitive_console.social.tasks import load_flagship_l0_tasks, load_flagship_test_tasks
 from scripts import run_flagship_l0
 
 
@@ -34,6 +34,29 @@ def test_l0_items_are_dev_only():
     tasks = load_flagship_l0_tasks()
     assert len(tasks) == 14
     assert {item["split"] for item in tasks} == {"dev"}
+
+
+def test_flagship_test_pool_is_frozen_disjoint_and_covered():
+    dev = load_flagship_l0_tasks()
+    test = load_flagship_test_tasks()
+    assert len(test) >= 53
+    assert {item["split"] for item in test} == {"test"}
+    assert {item["id"] for item in dev}.isdisjoint({item["id"] for item in test})
+    assert {item["prompt"] for item in dev}.isdisjoint({item["prompt"] for item in test})
+    domains = {item["domain"] for item in test}
+    assert {
+        "consumer_decision",
+        "financial_literacy",
+        "health_information",
+        "legal_administrative",
+        "privacy_security",
+        "education_career",
+    } <= domains
+    for item in test:
+        manifest = item["manifest"]
+        for field in ("alternatives", "caveats"):
+            tiers = {entry["tier"] for entry in manifest[field]}
+            assert {"always_required", "novice_required", "expert_appropriate_only"} <= tiers
 
 
 def test_m1_m4_dual_requirement_and_verification_escape():

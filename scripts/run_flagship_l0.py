@@ -32,6 +32,10 @@ from cognitive_console.social.scoring import FixtureJudge, HeuristicBlindJudge
 from cognitive_console.social.tasks import load_flagship_l0_tasks
 
 DEFAULT_MODEL = "Qwen/Qwen2.5-7B-Instruct"
+DEV_ONLY_NOTE = (
+    "The bundled 14-item flagship_l0 task pool is DEV-only for the D-0044 "
+    "pre-freeze power/MDE pilot and MUST NOT be reused as confirmatory TEST items."
+)
 
 
 def _rel(path: Path) -> str:
@@ -92,6 +96,9 @@ def run(args) -> dict:
         "judge": judge.name,
         "max_new_tokens": int(args.max_new_tokens),
         "prompt_template": "flagship_l0_v0",
+        "task_pool": "dev_power_pilot",
+        "task_pool_split": "dev",
+        "must_not_reuse_as_test": True,
     }
     fp = config_fingerprint(cfg)
     records: List[dict] = []
@@ -148,6 +155,7 @@ def run(args) -> dict:
             "k": int(args.k),
             "n_records": len(records),
         },
+        "dev_only_note": DEV_ONLY_NOTE,
         "condition_means": _summaries(records),
         "mde": mde,
         "records": records,
@@ -183,13 +191,15 @@ def write_outputs(payload: dict, out_dir: Path) -> Path:
                     "condition_means": payload["condition_means"],
                     "mde": payload["mde"],
                     "coverage": payload["coverage"],
+                    "dev_only_note": payload["dev_only_note"],
                 },
                 artifacts=[_rel(result_path)],
                 valid_for_paper=False,
                 validation_notes=(
                     "L0 DEV-power harness smoke/probe only; no TEST claim and no "
                     "human-validation gate. Frozen protocol D-0044 conditions and "
-                    "M1/M4 F6/F7 guardrails are implemented for pipeline validation."
+                    "M1/M4 F6/F7 guardrails are implemented for pipeline validation. "
+                    + DEV_ONLY_NOTE
                 ),
             )
         )

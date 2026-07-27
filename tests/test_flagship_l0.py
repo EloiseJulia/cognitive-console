@@ -24,6 +24,12 @@ def test_three_tier_manifest_required_logic():
     assert omission_rate_stub(item, "B", novice_missing_basic) > 0.0
 
 
+def test_l0_items_are_dev_only():
+    tasks = load_flagship_l0_tasks()
+    assert len(tasks) == 14
+    assert {item["split"] for item in tasks} == {"dev"}
+
+
 def test_m1_m4_dual_requirement_and_verification_escape():
     item = load_flagship_l0_tasks()[0]
     judge = HeuristicBlindJudge()
@@ -85,5 +91,13 @@ def test_mock_smoke_runs_full_path(tmp_path):
     assert payload["coverage"]["complete"] is True
     assert payload["coverage"]["n_records"] == 3 * 4 * 2
     assert payload["config"]["steering_method"] == "n/a"
+    assert payload["config"]["task_pool_split"] == "dev"
+    assert payload["config"]["must_not_reuse_as_test"] is True
+    assert "MUST NOT be reused as confirmatory TEST items" in payload["dev_only_note"]
     assert payload["condition_means"]["M4"]["B"] > payload["condition_means"]["M4"]["A"]
     assert payload["mde"]
+    assert any(
+        value > 0
+        for row in payload["mde"]
+        for value in row["mde_by_candidate"].values()
+    )

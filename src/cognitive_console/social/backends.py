@@ -16,6 +16,7 @@ class FixtureFlagshipBackend:
     def generate(self, prompt: str, *, condition_id: str, item: dict, sample_index: int, max_new_tokens: int = 256) -> str:
         option = (item.get("options") or [{"id": "A"}])[0]["id"]
         digest = hashlib.sha256(f"{self.seed}:{item['id']}:{condition_id}:{sample_index}".encode()).hexdigest()
+        variant = int(digest[:2], 16) % 3
         if condition_id == "B":
             return (
                 f"Since you're a novice, you should choose {option}. It is clearly the best choice. "
@@ -30,6 +31,13 @@ class FixtureFlagshipBackend:
             return (
                 f"For an expert, option {option} may be efficient, but compare assumptions, edge cases, "
                 "and the advanced tradeoffs before deciding."
+            )
+        if variant == 0:
+            return f"Review the facts, caveats, and important details before deciding. Ref {digest[:6]}."
+        if variant == 1:
+            return (
+                f"Option {option} could fit, but check the caveats and verify the important details. "
+                f"Ref {digest[:6]}."
             )
         return (
             f"Option {option} could fit, but compare alternatives, check the caveats, and verify the "

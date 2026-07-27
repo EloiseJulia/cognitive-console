@@ -32,6 +32,16 @@ from .adjudicate_c2b import BONFERRONI_CI_LEVEL, BootstrapCI, cluster_bootstrap_
 
 _CONDITIONS = ("no_persona", "narrow_persona", "oracle_persona")
 _EPS = 1e-12
+OTHER_DOMAIN = "other/unclassified"
+DEFAULT_MAX_OTHER_FRACTION = 0.05
+GENERAL_REASONING_MARKERS = (
+    "general_reasoning",
+    "general reasoning",
+    "baseline reasoning",
+    "basic algebra",
+    "algebraic manipulation",
+    "statistical reasoning",
+)
 
 
 @dataclass(frozen=True)
@@ -219,7 +229,11 @@ class RuleBasedDomainClassifier:
     """Deterministic marker classifier; replaceable by a frozen LLM judge later."""
 
     def __init__(self, extra_markers: Optional[Dict[str, Sequence[str]]] = None) -> None:
-        self.extra_markers = {k: [m.lower() for m in v] for k, v in (extra_markers or {}).items()}
+        merged = {"general_reasoning": list(GENERAL_REASONING_MARKERS)}
+        for domain, markers in (extra_markers or {}).items():
+            merged.setdefault(domain, [])
+            merged[domain].extend(markers)
+        self.extra_markers = {k: [m.lower() for m in v] for k, v in merged.items()}
 
     def classify(self, text: str, task: BreadthTask, sample_index: int = 0) -> ClassifiedSample:
         low = text.lower()
@@ -238,6 +252,8 @@ class RuleBasedDomainClassifier:
             invalid_reason = "empty output"
         elif len(re.findall(r"\w+", text)) < 3:
             invalid_reason = "too few tokens"
+        if invalid_reason == "" and not domains:
+            domains.append(OTHER_DOMAIN)
         return ClassifiedSample(
             sample_index=int(sample_index),
             text=text,
@@ -358,7 +374,7 @@ def classifier_agreement(
     tasks: Sequence[BreadthTask],
     secondary_classifier: Optional[DomainClassifier],
     *,
-    primary_classifier_name: str = "deterministic_marker_v2",
+    primary_classifier_name: str = "deterministic_marker_v3_other_fallback",
     secondary_classifier_name: str = "none",
     max_disagreements: int = 20,
 ) -> ClassifierAgreementResult:
@@ -612,13 +628,21 @@ def build_mock_activation_provider(broad_texts: Sequence[str], focus_texts: Sequ
     return provider
 
 
-def coverage_guard(rows: Sequence[ItemConditionResult], tasks: Sequence[BreadthTask], k: int) -> Dict[str, object]:
+def coverage_guard(
+    rows: Sequence[ItemConditionResult],
+    tasks: Sequence[BreadthTask],
+    k: int,
+    *,
+    max_other_fraction: float = DEFAULT_MAX_OTHER_FRACTION,
+) -> Dict[str, object]:
     expected_items = {t.item_id for t in tasks}
     by = results_by_item_condition(rows)
     missing_items = sorted(expected_items - set(by))
     missing_conditions = []
     short_cells = []
     unclassified_valid_samples = []
+    other_valid_samples = []
+    n_valid_samples = 0
     for item_id in sorted(expected_items):
         conds = by.get(item_id, {})
         for condition in _CONDITIONS:
@@ -629,9 +653,16 @@ def coverage_guard(rows: Sequence[ItemConditionResult], tasks: Sequence[BreadthT
             if len(row.samples) != k:
                 short_cells.append([item_id, condition, len(row.samples)])
             for s in row.samples:
-                if s.valid and not s.domains:
+                if not s.valid:
+                    continue
+                n_valid_samples += 1
+                if not s.domains:
                     unclassified_valid_samples.append([item_id, condition, s.sample_index])
-    ok = not (missing_items or missing_conditions or short_cells or unclassified_valid_samples)
+                elif OTHER_DOMAIN in s.domains:
+                    other_valid_samples.append([item_id, condition, s.sample_index])
+    other_fraction = (len(other_valid_samples) / n_valid_samples) if n_valid_samples else 0.0
+    too_many_other = other_fraction > float(max_other_fraction)
+    ok = not (missing_items or missing_conditions or short_cells or unclassified_valid_samples or too_many_other)
     return {
         "ok": ok,
         "expected_items": len(expected_items),
@@ -640,8 +671,15 @@ def coverage_guard(rows: Sequence[ItemConditionResult], tasks: Sequence[BreadthT
         "missing_items": missing_items,
         "missing_conditions": missing_conditions,
         "short_cells": short_cells,
-        "unclassified_valid_samples": unclassified_valid_samples[:20],
+        "unclassified_valid_samples": unclassified_valid_samples,
         "n_unclassified_valid_samples": len(unclassified_valid_samples),
+        "other_domain": OTHER_DOMAIN,
+        "other_valid_samples": other_valid_samples,
+        "n_other_valid_samples": len(other_valid_samples),
+        "n_valid_samples": n_valid_samples,
+        "other_fraction_valid_samples": float(other_fraction),
+        "max_other_fraction": float(max_other_fraction),
+        "too_many_other": bool(too_many_other),
     }
 
 
@@ -687,7 +725,7 @@ def run_mock_l0(tasks_path: Path, pairs_path: Path, read_path: Path, *, k: int =
     agreement = classifier_agreement(rows, tasks, secondary_classifier=None)
     return BreadthRunResult(
         schema="persona_breadth_l0_result_v1", backend="mock", model=model, k=int(k),
-        fingerprint=fp, classifier="deterministic_marker_v2",
+        fingerprint=fp, classifier="deterministic_marker_v3_other_fallback",
         secondary_classifier_agreement=agreement,
         coverage_guard_passed=True, coverage_guard=guard,
         metrics=aggregate_metrics(rows), suppression=suppression, breadth_axis=axis,

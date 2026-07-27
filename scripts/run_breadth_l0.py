@@ -122,13 +122,16 @@ def main(argv=None) -> int:
     guard = coverage_guard(rows, tasks, args.k)
     if not guard["ok"]:
         fail_path = args.output_dir / f"breadth_l0_{args.backend}_FAILED_COVERAGE.json"
-        fail_path.write_text(json.dumps({"coverage_guard": guard, "axis": asdict(axis)}, indent=2), encoding="utf-8")
+        fail_path.write_text(
+            json.dumps({"coverage_guard": guard, "axis": asdict(axis), "items": [asdict(r) for r in rows]}, indent=2),
+            encoding="utf-8",
+        )
         raise RuntimeError(f"coverage guard failed; wrote {fail_path}")
     suppression = oracle_suppression(rows, seed=args.seed, bootstrap_b=2000)
     secondary = LLMJudgeDomainClassifier(backend=gen_backend) if args.judge_cross_check else None
     agreement = classifier_agreement(
         rows, tasks, secondary,
-        primary_classifier_name="deterministic_marker_v2",
+        primary_classifier_name="deterministic_marker_v3_other_fallback",
         secondary_classifier_name="frozen_blinded_llm_judge" if secondary is not None else "none",
     )
     fp = result_fingerprint(args.tasks, args.contrast_pairs, args.readability_prompts, backend="hf", model=args.model, k=args.k, seed=args.seed)
@@ -138,9 +141,9 @@ def main(argv=None) -> int:
         "model": args.model,
         "k": args.k,
         "fingerprint": fp,
-        "classifier": "deterministic_marker_v2",
+        "classifier": "deterministic_marker_v3_other_fallback",
         "secondary_classifier_agreement": asdict(agreement),
-        "suppression_verdict_classifier": "deterministic_marker_v2",
+        "suppression_verdict_classifier": "deterministic_marker_v3_other_fallback",
         "coverage_guard_passed": True,
         "coverage_guard": guard,
         "metrics": aggregate_metrics(rows),

@@ -7,6 +7,8 @@ import numpy as np
 import pytest
 
 from cognitive_console.experiments.breadth_l0 import (
+    DEFAULT_MAX_OTHER_FRACTION,
+    OTHER_DOMAIN,
     ClassifiedSample,
     ItemConditionResult,
     LLMJudgeDomainClassifier,
@@ -23,6 +25,7 @@ from cognitive_console.experiments.breadth_l0 import (
     oracle_suppression,
     run_mock_l0,
     sample_conditions,
+    _marker_hit,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -107,6 +110,7 @@ def test_design_knapsack_greedy_text_classifies_consistently_without_oracle_cred
     assert not no_persona.uses_oracle_domain
     assert no_persona.uses_narrow_domain
     assert task.oracle_domain not in no_persona.domains
+    assert task.narrow_domain in no_persona.domains
 
 
 def test_tricky_markers_are_disjoint_under_word_boundary_matching():
@@ -130,6 +134,14 @@ def test_tricky_markers_are_disjoint_under_word_boundary_matching():
     assert not generic_opt.uses_oracle_domain
     dp = classifier.classify("Solve as 0/1 knapsack with dynamic programming; pick A and D.", knapsack)
     assert dp.uses_oracle_domain
+
+
+def test_oracle_and_narrow_markers_are_pairwise_disjoint_under_matcher():
+    for task in load_tasks(DATA / "tasks.json"):
+        for oracle_marker in task.oracle_domain_markers:
+            assert not _marker_hit(oracle_marker, task.persona_domain_markers), (task.item_id, oracle_marker)
+        for narrow_marker in task.persona_domain_markers:
+            assert not _marker_hit(narrow_marker, task.oracle_domain_markers), (task.item_id, narrow_marker)
 
 
 def test_classifier_agreement_reports_kappa_and_disagreements():
@@ -193,6 +205,95 @@ def test_coverage_guard_fails_closed_on_missing_classification():
     guard = coverage_guard([bad_row] + rows[1:], tasks, k=2)
     assert not guard["ok"]
     assert guard["n_unclassified_valid_samples"] == 1
+    assert guard["n_unclassified_valid_samples"] == len(guard["unclassified_valid_samples"])
+
+
+def test_coverage_guard_unclassified_count_equals_enumerated_list_length():
+    tasks = load_tasks(DATA / "tasks.json")[:1]
+    backend = MockBreadthBackend(tasks)
+    classifier = RuleBasedDomainClassifier()
+    rows = sample_conditions(backend, classifier, tasks, k=2)
+    bad_samples = [replace(s, domains=[]) for s in rows[0].samples]
+    bad_row = replace(rows[0], samples=bad_samples)
+    guard = coverage_guard([bad_row] + rows[1:], tasks, k=2)
+    assert not guard["ok"]
+    assert guard["n_unclassified_valid_samples"] == 2
+    assert guard["n_unclassified_valid_samples"] == len(guard["unclassified_valid_samples"])
+
+
+def test_rule_classifier_falls_back_to_reported_other_without_oracle_credit():
+    task = next(t for t in load_tasks(DATA / "tasks.json") if t.item_id == "excel_shortest_path")
+    sample = RuleBasedDomainClassifier().classify(
+        "I am not sure which formal method applies here, but I would inspect the options carefully.",
+        task,
+        sample_index=2,
+    )
+    assert sample.valid
+    assert sample.domains == [OTHER_DOMAIN]
+    assert not sample.uses_oracle_domain
+    assert not sample.uses_narrow_domain
+
+
+def test_coverage_guard_allows_only_low_other_fraction():
+    assert DEFAULT_MAX_OTHER_FRACTION == pytest.approx(0.05)
+    task = load_tasks(DATA / "tasks.json")[0]
+
+    def sample(i, domain):
+        return ClassifiedSample(i, "valid sample text", [domain], domain == task.oracle_domain, domain == task.narrow_domain, True)
+
+    low_other_rows = []
+    high_other_rows = []
+    for condition in ("no_persona", "narrow_persona", "oracle_persona"):
+        low_domains = [OTHER_DOMAIN, task.oracle_domain, task.narrow_domain, task.oracle_domain, task.narrow_domain]
+        high_domains = [OTHER_DOMAIN, OTHER_DOMAIN, OTHER_DOMAIN, task.oracle_domain, task.narrow_domain]
+        low_other_rows.append(ItemConditionResult(task.item_id, condition, "p", [sample(i, d) for i, d in enumerate(low_domains)]))
+        high_other_rows.append(ItemConditionResult(task.item_id, condition, "p", [sample(i, d) for i, d in enumerate(high_domains)]))
+
+    low_guard = coverage_guard(low_other_rows, [task], k=5, max_other_fraction=0.25)
+    assert low_guard["ok"]
+    assert low_guard["n_other_valid_samples"] == 3
+    assert low_guard["max_other_fraction"] == pytest.approx(0.25)
+
+    high_guard = coverage_guard(high_other_rows, [task], k=5, max_other_fraction=0.25)
+    assert not high_guard["ok"]
+    assert high_guard["too_many_other"]
+    assert high_guard["n_unclassified_valid_samples"] == 0
+
+
+def test_d0046_unclassified_phrasings_now_classify_to_method_or_other():
+    tasks = {t.item_id: t for t in load_tasks(DATA / "tasks.json")}
+    failed = json.loads((ROOT / "results" / "breadth_confirm" / "breadth_l0_hf_FAILED_COVERAGE.json").read_text(encoding="utf-8"))
+    transcripts = json.loads((ROOT / "results" / "breadth_l0_qwen" / "breadth_l0_hf_k5_seed20260727.json").read_text(encoding="utf-8"))
+    listed_unclassified = {tuple(x) for x in failed["coverage_guard"]["unclassified_valid_samples"]}
+    classifier = RuleBasedDomainClassifier()
+    checked = {}
+    reclassified_rows = []
+    for row in transcripts["items"]:
+        task = tasks[row["item_id"]]
+        reclassified_samples = []
+        for sample in row["samples"]:
+            classified = classifier.classify(sample["text"], task, sample_index=sample["sample_index"])
+            reclassified_samples.append(classified)
+            key = (row["item_id"], row["condition"], sample["sample_index"])
+            if key not in listed_unclassified:
+                continue
+            assert classified.valid
+            assert classified.domains
+            checked[key] = classified
+        reclassified_rows.append(ItemConditionResult(row["item_id"], row["condition"], row["prompt"], reclassified_samples))
+
+    assert len(checked) == len(listed_unclassified)
+    guard = coverage_guard(reclassified_rows, list(tasks.values()), k=5)
+    assert guard["ok"]
+    assert guard["n_unclassified_valid_samples"] == 0
+    assert guard["n_other_valid_samples"] == 3
+    assert checked[("design_knapsack", "no_persona", 0)].uses_narrow_domain
+    assert not checked[("design_knapsack", "no_persona", 0)].uses_oracle_domain
+    assert checked[("design_knapsack", "narrow_persona", 4)].uses_narrow_domain
+    assert not checked[("design_knapsack", "narrow_persona", 4)].uses_oracle_domain
+    assert checked[("pm_critical_path", "no_persona", 0)].uses_oracle_domain
+    assert checked[("pm_queue_bottleneck", "no_persona", 0)].uses_oracle_domain
+    assert checked[("design_assignment_problem", "narrow_persona", 0)].uses_oracle_domain
 
 
 def test_sample_conditions_uses_swappable_classifier_protocol():

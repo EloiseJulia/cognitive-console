@@ -1,13 +1,13 @@
-# DRAFT / INERT PRE-REGISTRATION — Novice Self-Disclosure, Autonomy Reduction, and Latent User-Model Routing
+# FROZEN PRE-REGISTRATION — Novice Self-Disclosure, Autonomy Reduction, and Latent User-Model Routing
 
-- **Document status:** **DRAFT / INERT / PRE-DATA**.
+- **Document status:** **FROZEN 2026-07-27 (owner-approved, decision D-0044).** Protocol, conditions (A control / B novice / E explain-simply / expert), M1-M4 operationalization (incl. the three-tier caveat manifest + M3 dual-requirement + M4 dual-requirement), success/kill (manipulation PRESENT requires B-A effect AND B>E on M1/M4), the latent read (token-blind probe) + control arms, the judge-blinding protocol, and the hard scope are now IMMUTABLE for this study line. Critic-hardened (10 fixes) + citations primary-source verified (Akbulut 2603.25326 scoop confirmed real). Owner authorized a small **L0 GPU pilot** (flagship DEV-power + variance/MDE estimation for N/δ; ~combined $5-15 with idea-1 L0). A full run and any DEV-informed N/δ finalization proceed under that authorization; closed-model/paid-API robustness + human-subjects validation remain owner-gated.
 - **Created:** 2026-07-27.
-- **Revision:** 2026-07-27 critic-response revision on PR #20.
-- **Study line:** NEW independent flagship line; does **not** modify, reinterpret, or depend on current frozen paper records.
-- **Freeze status:** **NOT frozen.** This document becomes actionable only after owner sign-off, independent novelty-critic acceptance of the revision, and Manager protocol-freeze decision.
-- **No run authorized:** no GPU, no paid API, no experiment execution, no human-subjects study authorized by this draft.
-- **Hard scope:** **open 7B/8B instruction models under this paired design**. This draft does **not** claim results about GPT-4o, Claude, Gemini, or closed production services.
-- **Owner gates:** paid/private APIs, closed-model robustness checks, GPU spend beyond the small open-model plan, protocol freeze, human-subjects validation, public release/submission.
+- **Revision:** 2026-07-27 critic-response revision (PR #20) + citation verification (PR #21).
+- **Study line:** NEW independent flagship line; does **not** modify, reinterpret, or depend on current frozen paper records (E-0003..E-0009, the existing preregs, adjudicate_c2b).
+- **Freeze status:** **FROZEN (D-0044).** DEV-phase power estimation may set N/δ within the frozen rule (pre-registered as a pre-freeze-of-N step); no other criterion may change post-data.
+- **L0 authorization:** owner approved one box for two L0 probes (this study's DEV-power pilot + idea-1 breadth axis). Harnesses to be built (no-GPU) + audited BEFORE booting the box.
+- **Hard scope:** **open 7B/8B instruction models under this paired design**. Does **not** claim results about GPT-4o, Claude, Gemini, or closed production services.
+- **Owner gates:** paid/private APIs, closed-model robustness checks, GPU spend beyond the approved L0 + open-model plan, human-subjects validation, public release/submission.
 
 ## Revision log (critic response)
 

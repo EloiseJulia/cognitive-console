@@ -5,6 +5,26 @@
 
 ---
 
+## 2026-07-27 · D-0044 · Flagship line #2 FROZEN (novice-manipulation prereg); L0 GPU pilot authorized
+- **New independent research line** (idea #2 from the owner brainstorm): "Does voluntary user expertise self-disclosure
+  causally trigger autonomy-reducing/manipulation-indicative LLM behavior, and is there a legible latent user-model axis
+  that routes but may not control it?" — generalizes legibility!=controllability from metacognitive to social-inference axes.
+- **Pipeline before freeze (all audited/verified):** owner brainstorm -> unifying frame (implicit user-conditioning as an
+  uncontrolled latent channel) -> 3 web prior-art sweeps (idea#2 flagship, idea#1 strong-second, idea#3 folded) ->
+  independent prereg DRAFT -> adversarial novelty-critic (caught: helpful-adaptation-vs-manipulation construct confound,
+  the Akbulut 2603.25326 DeepMind scoop, instruction-following confound, latent trivial-read, deployed over-claim,
+  judge sycophancy) -> 10 pre-freeze fixes -> primary-source citation verification (Akbulut scoop CONFIRMED REAL; venue
+  corrections; NO hallucinated ids).
+- **Freeze (Manager, owner-approved D-0044):** the critic-hardened + cite-verified prereg is FROZEN. Key hardening:
+  manipulation PRESENT requires B(novice)-A(control) effect AND B>E(explain-simply) on M1/M4; three-tier caveat manifest
+  separates helpful simplification from harmful omission; token-blind latent probe; judge condition-blinding; scope hard
+  to open 7B/8B. Best venue fit: FAccT/AIES/SafeAI (honest-null + pre-registration valued).
+- **L0 authorization (owner):** one box for TWO L0 probes — (a) flagship DEV-power pilot (estimate M1-M4 variance -> set
+  N/δ within the frozen rule) and (b) idea#1 breadth-axis L0 (12 items, does a narrow persona suppress oracle-domain
+  solutions + is a breadth direction extractable). Combined ~$5-15. Harnesses (task suites + runners + scorers) to be
+  BUILT no-GPU + audited BEFORE booting the box (avoid idle billing). Full run decided after L0.
+- **Separation:** does NOT touch the current frozen paper/records. DRAFT->FROZEN status updated in the prereg doc.
+
 ## 2026-07-26 · D-0043 · GPU session (owner-approved): Llama C1 done (E-0008) + PSR arm KILL (E-0009); box auto-off
 - **Owner** provisioned the RTX4090D box and authorized full-auto A→D. Both ran; box auto-powered-off after
   results were pushed to origin (cost control: safety-net `shutdown +240` + immediate shutdown; box confirmed

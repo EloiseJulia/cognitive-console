@@ -369,14 +369,14 @@ experiments:
   exit_code: 1
   raw_metrics: results/breadth_confirm/breadth_l0_hf_FAILED_COVERAGE.json
   summary_metrics:
-    coverage_guard: {"missing_conditions": [], "missing_items": [], "n_unclassified_valid_samples": 41, "ok": false, "short_cells": []}
+    coverage_guard: {"missing_conditions": [], "missing_items": [], "n_unclassified_valid_samples": 20, "ok": false, "short_cells": []}
     breadth_axis: {"linearly_readable": true, "selected_layer": 7, "stable_layer_found": true, "verdict": "LINEARLY_READABLE_L0"}
   artifacts:
   - results/breadth_confirm/breadth_l0_hf_FAILED_COVERAGE.json
   failure_reason: >-
     Deterministic marker classifier coverage guard failed closed before
-    suppression and LLM agreement metrics were computed; 41 valid samples were
-    unclassified. No suppression rate or kappa is available from this failed run.
+    suppression and LLM agreement metrics were computed; 20 enumerated valid
+    samples were unclassified. No suppression rate or kappa is available from this failed run.
   valid_for_paper: false
   validation_notes: >-
     L0 breadth confirmation attempted with deterministic marker classifier and

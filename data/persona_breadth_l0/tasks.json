@@ -142,11 +142,16 @@
       "oracle_solution": "Paths: A-B-D = 8, A-C-D = 7. Critical path A-B-D, duration 8 days.",
       "oracle_domain_markers": [
         "critical path",
+        "critical-path",
+        "critical-path analysis",
         "critical path method",
         "CPM",
         "longest path",
         "precedence constraint",
-        "earliest finish"
+        "earliest finish",
+        "latest finish time",
+        "scheduling method",
+        "finish times"
       ],
       "persona_domain_markers": [
         "stakeholder",
@@ -174,9 +179,17 @@
       "oracle_solution": "Triage capacity is 20 tickets/hour; specialist capacity is 12 tickets/hour. The specialist is the bottleneck.",
       "oracle_domain_markers": [
         "queueing theory",
+        "queuing theory",
         "service rate",
+        "processing rate",
+        "processing rates",
+        "throughput",
+        "throughput rate",
+        "throughput analysis",
         "tickets/hour",
         "tickets per hour",
+        "tickets per minute",
+        "operations management",
         "serial queue",
         "bottleneck station"
       ],
@@ -278,8 +291,12 @@
         "encourage",
         "student",
         "step by step",
+        "step-by-step",
         "intuition",
-        "tutor"
+        "tutor",
+        "puzzle",
+        "basic logic",
+        "binary states"
       ],
       "acceptance_criteria": [
         "Answers no",
@@ -306,6 +323,8 @@
       "persona_domain_markers": [
         "student",
         "encourage",
+        "example",
+        "examples",
         "intuition",
         "tutor",
         "explain gently"
@@ -330,6 +349,11 @@
         "assignment problem",
         "optimization",
         "minimum cost",
+        "minimum-cost assignment",
+        "minimize the total cost",
+        "lowest cost",
+        "cheapest job",
+        "worker-job combination",
         "enumeration",
         "Hungarian algorithm"
       ],
@@ -368,7 +392,15 @@
         "empathy",
         "prototype",
         "user journey",
-        "design thinking"
+        "design thinking",
+        "greedy algorithm",
+        "greedily",
+        "greedy",
+        "value-to-cost ratio",
+        "value/cost ratio",
+        "value cost ratio",
+        "VCR Method",
+        "prioritization matrix"
       ],
       "acceptance_criteria": [
         "Chooses A and D",

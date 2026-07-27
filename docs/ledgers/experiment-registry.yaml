@@ -205,3 +205,107 @@ experiments:
     the C2 negative within this tested model/budget scope to robust to method
     strength.
 
+
+
+- experiment_id: flagship-l0-d8a275ba814bb4fa-0001
+  parent: null
+  hypothesis_id: H-NM
+  claim_ids: []
+  type: diagnostic
+  status: done
+  code_commit: 857a315d6783dad8b5cfed35e919cbc527e65b0b
+  dirty_tree: false
+  data_hash: sha256:f4a039bbb96eb3b77ba4ab39e1726d08bfc7928456bccaddd356fb4d52844e36
+  env_hash: null
+  config_hash: sha256:d8a275ba814bb4fa00051face837ed4ea8f8b7a0d25eed4ae7d1c95f525ce6b9
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: src/cognitive_console/social/data/flagship_l0_tasks.json (14 DEV-only D-0044 pre-freeze power/MDE items)
+  seed: 20260727
+  hardware: NVIDIA A800 80GB PCIe 80GB, remote borrowed server GPU index 1 only via CUDA_VISIBLE_DEVICES=1; Linux CUDA 12.x
+  started_at: '2026-07-27T08:38:31.135076+00:00'
+  ended_at: '2026-07-27T09:04:22.265997+00:00'
+  exit_code: 0
+  raw_metrics: results/flagship_l0_qwen/flagship_l0_results.json
+  summary_metrics:
+    condition_means:
+      M1:
+        A: 0.24285714285714285
+        B: 0.32071428571428573
+        E: 0.27642857142857147
+        C: 0.2714285714285714
+      M4:
+        A: 0.0
+        B: 0.0
+        E: 0.0
+        C: 0.0
+    directional_check:
+      M1_B_gt_A: true
+      M1_B_gt_E: true
+      M4_B_gt_A: false
+      M4_B_gt_E: false
+    mde: see raw_metrics.condition_means and raw_metrics.mde
+    coverage:
+      complete: true
+      n_items: 14
+      conditions: [A, B, E, C]
+      k: 5
+      n_records: 280
+  artifacts:
+  - results/flagship_l0_qwen/flagship_l0_results.json
+  - results/flagship_l0_qwen/experiment-registry.yaml
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    L0 DEV-power diagnostic only; DEV-only task pool must not be reused as
+    confirmatory TEST items. Metrics are copied only from the result JSON.
+    The runner saw no git metadata on the SFTP copy, so payload.git_commit is
+    null; canonical lineage pins the synced source to clean commit 857a315.
+
+
+- experiment_id: breadth-l0-3d89236decb7de02-0001
+  parent: null
+  hypothesis_id: H-BREADTH
+  claim_ids: []
+  type: diagnostic
+  status: done
+  code_commit: 857a315d6783dad8b5cfed35e919cbc527e65b0b
+  dirty_tree: false
+  data_hash: sha256:799337928ad9edf9e1ba90aee0f9362fe4d6fde500d7b6ea35c6b280e1329ca7
+  env_hash: null
+  config_hash: sha256:3d89236decb7de02
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: data/persona_breadth_l0/tasks.json + breadth_focus_contrast_pairs.jsonl + readability_prompts.json
+  seed: 20260727
+  hardware: NVIDIA A800 80GB PCIe 80GB, remote borrowed server GPU index 1 only via CUDA_VISIBLE_DEVICES=1; Linux CUDA 12.x
+  started_at: null
+  ended_at: null
+  exit_code: 0
+  raw_metrics: results/breadth_l0_qwen/breadth_l0_hf_k5_seed20260727.json
+  summary_metrics:
+    classifier: judge
+    known_bias: same-model self-judge; Qwen2.5-7B-Instruct judged its own outputs
+    strict_suppression_rate: 0.08333333333333333
+    calibrated_suppression_rate: 0.08333333333333333
+    strict_item_ids: ['design_knapsack']
+    calibrated_item_ids: ['design_knapsack']
+    coverage_diff_mean: -0.16666666666666666
+    coverage_ci_9833: [-0.5, 0.16666666666666666]
+    breadth_axis_verdict: LINEARLY_READABLE_L0
+    selected_layer: 7
+    stable_layer_found: true
+    facade_ratio: 0.27147351965493816
+    facade_ci: [0.005913323151613872, 0.5370337161582625]
+    linearly_readable: true
+    expected_order: true
+    coverage_guard_passed: true
+  artifacts:
+  - results/breadth_l0_qwen/breadth_l0_hf_k5_seed20260727.json
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    L0 breadth-axis feasibility diagnostic only. The classifier was the local
+    LLM judge using the same Qwen model that generated the outputs, so the
+    oracle-domain suppression rate is explicitly biased by self-judging and
+    must not be treated as independent behavioral evidence. Metrics are copied
+    only from the result JSON. The runner does not emit wall-clock timestamps;
+    canonical lineage pins the synced source to clean commit 857a315.

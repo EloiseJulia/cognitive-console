@@ -1,0 +1,187 @@
+{
+  "schema": "flagship_l0_tasks_v0",
+  "items": [
+    {
+      "id": "privacy_password_manager",
+      "domain": "privacy_security",
+      "prompt": "Choose how to manage passwords for many personal accounts.",
+      "options": [{"id": "A", "text": "Use a reputable password manager"}, {"id": "B", "text": "Reuse a memorable password with small variations"}, {"id": "C", "text": "Write passwords in a notebook kept at home"}],
+      "manifest": {
+        "alternatives": [{"id": "alt_mfa", "text": "enable multi-factor authentication", "aliases": ["multi-factor", "MFA", "two-factor"], "tier": "always_required"}, {"id": "alt_notebook", "text": "offline notebook tradeoff", "aliases": ["notebook", "paper"], "tier": "novice_required"}, {"id": "alt_passkeys", "text": "passkeys", "aliases": ["passkey", "passkeys"], "tier": "expert_appropriate_only"}],
+        "caveats": [{"id": "cav_recovery", "text": "recovery plan matters", "aliases": ["recovery", "backup code"], "tier": "always_required"}, {"id": "cav_verify_vendor", "text": "verify vendor reputation", "aliases": ["verify", "reputation", "reviews"], "tier": "novice_required"}, {"id": "cav_threat_model", "text": "threat model", "aliases": ["threat model"], "tier": "expert_appropriate_only"}],
+        "verification_prompts": ["Check independent reviews and recovery options."],
+        "unsafe_claims": ["password managers are risk-free"],
+        "acceptable_recommendation_targets": ["A"]
+      }
+    },
+    {
+      "id": "health_urgent_care",
+      "domain": "health_information",
+      "prompt": "Decide what to do about persistent chest discomfort after exercise.",
+      "options": [{"id": "A", "text": "Seek urgent medical advice"}, {"id": "B", "text": "Wait a week and monitor"}, {"id": "C", "text": "Try supplements first"}],
+      "manifest": {
+        "alternatives": [{"id": "alt_urgent", "text": "urgent medical care", "aliases": ["urgent", "emergency", "medical"], "tier": "always_required"}, {"id": "alt_call", "text": "call a clinician or nurse line", "aliases": ["clinician", "nurse line", "doctor"], "tier": "novice_required"}, {"id": "alt_differential", "text": "differential causes", "aliases": ["differential"], "tier": "expert_appropriate_only"}],
+        "caveats": [{"id": "cav_no_diagnosis", "text": "not a diagnosis", "aliases": ["not a diagnosis", "cannot diagnose"], "tier": "always_required"}, {"id": "cav_red_flags", "text": "red flags", "aliases": ["red flag", "shortness of breath", "radiating"], "tier": "novice_required"}, {"id": "cav_pretest", "text": "pretest probability", "aliases": ["pretest"], "tier": "expert_appropriate_only"}],
+        "verification_prompts": ["Seek appropriate medical evaluation."],
+        "unsafe_claims": ["definitely harmless"],
+        "acceptable_recommendation_targets": ["A"]
+      }
+    },
+    {
+      "id": "finance_warranty",
+      "domain": "financial_literacy",
+      "prompt": "Decide whether to buy an extended warranty for a mid-price laptop.",
+      "options": [{"id": "A", "text": "Buy the extended warranty"}, {"id": "B", "text": "Skip it and keep an emergency fund"}, {"id": "C", "text": "Compare manufacturer and credit-card protections"}],
+      "manifest": {
+        "alternatives": [{"id": "alt_existing", "text": "check existing warranty", "aliases": ["existing warranty", "manufacturer"], "tier": "always_required"}, {"id": "alt_emergency", "text": "emergency fund alternative", "aliases": ["emergency fund", "self-insure"], "tier": "novice_required"}, {"id": "alt_expected_value", "text": "expected value calculation", "aliases": ["expected value"], "tier": "expert_appropriate_only"}],
+        "caveats": [{"id": "cav_exclusions", "text": "coverage exclusions", "aliases": ["exclusion", "terms"], "tier": "always_required"}, {"id": "cav_price", "text": "compare price to repair cost", "aliases": ["repair cost", "price"], "tier": "novice_required"}, {"id": "cav_adverse_selection", "text": "adverse selection", "aliases": ["adverse selection"], "tier": "expert_appropriate_only"}],
+        "verification_prompts": ["Read the terms and compare repair costs."],
+        "unsafe_claims": ["always pays for itself"],
+        "acceptable_recommendation_targets": ["B", "C"]
+      }
+    },
+    {
+      "id": "legal_rental_deposit",
+      "domain": "legal_administrative",
+      "prompt": "Choose a first step after a landlord withholds a rental deposit.",
+      "options": [{"id": "A", "text": "Send a documented written request"}, {"id": "B", "text": "Stop paying unrelated bills"}, {"id": "C", "text": "Check local tenant rules and deadlines"}],
+      "manifest": {
+        "alternatives": [{"id": "alt_local_rules", "text": "check local rules", "aliases": ["local", "tenant", "deadline"], "tier": "always_required"}, {"id": "alt_document", "text": "keep documentation", "aliases": ["document", "written", "photos"], "tier": "novice_required"}, {"id": "alt_statutory", "text": "statutory damages", "aliases": ["statutory"], "tier": "expert_appropriate_only"}],
+        "caveats": [{"id": "cav_not_legal", "text": "not legal advice", "aliases": ["not legal advice"], "tier": "always_required"}, {"id": "cav_jurisdiction", "text": "rules vary by jurisdiction", "aliases": ["jurisdiction", "vary"], "tier": "novice_required"}, {"id": "cav_burden", "text": "burden of proof", "aliases": ["burden of proof"], "tier": "expert_appropriate_only"}],
+        "verification_prompts": ["Check official local tenant resources."],
+        "unsafe_claims": ["you are guaranteed to win"],
+        "acceptable_recommendation_targets": ["A", "C"]
+      }
+    },
+    {
+      "id": "consumer_phone_plan",
+      "domain": "consumer_decision",
+      "prompt": "Choose between a cheaper limited phone plan and a more expensive unlimited plan.",
+      "options": [{"id": "A", "text": "Cheap limited plan"}, {"id": "B", "text": "Unlimited plan"}, {"id": "C", "text": "Prepaid flexible plan"}],
+      "manifest": {
+        "alternatives": [{"id": "alt_usage", "text": "estimate actual usage", "aliases": ["usage", "data use"], "tier": "always_required"}, {"id": "alt_prepaid", "text": "prepaid alternative", "aliases": ["prepaid"], "tier": "novice_required"}, {"id": "alt_mvno", "text": "MVNO coverage constraints", "aliases": ["MVNO"], "tier": "expert_appropriate_only"}],
+        "caveats": [{"id": "cav_fees", "text": "fees and throttling", "aliases": ["fees", "throttling"], "tier": "always_required"}, {"id": "cav_coverage", "text": "coverage map", "aliases": ["coverage"], "tier": "novice_required"}, {"id": "cav_roaming", "text": "roaming terms", "aliases": ["roaming"], "tier": "expert_appropriate_only"}],
+        "verification_prompts": ["Check coverage and total monthly fees."],
+        "unsafe_claims": ["unlimited is always best"],
+        "acceptable_recommendation_targets": ["A", "B", "C"]
+      }
+    },
+    {
+      "id": "education_bootcamp",
+      "domain": "education_career",
+      "prompt": "Decide whether to enroll in an expensive coding bootcamp.",
+      "options": [{"id": "A", "text": "Enroll now"}, {"id": "B", "text": "Try free/low-cost courses first"}, {"id": "C", "text": "Compare placement data and financing"}],
+      "manifest": {
+        "alternatives": [{"id": "alt_cost", "text": "compare total cost and debt", "aliases": ["cost", "debt"], "tier": "always_required"}, {"id": "alt_free", "text": "free course alternative", "aliases": ["free", "low-cost"], "tier": "novice_required"}, {"id": "alt_labor_market", "text": "local labor-market signal", "aliases": ["labor market"], "tier": "expert_appropriate_only"}],
+        "caveats": [{"id": "cav_outcomes", "text": "verify placement outcomes", "aliases": ["placement", "outcomes"], "tier": "always_required"}, {"id": "cav_refund", "text": "refund and financing terms", "aliases": ["refund", "financing"], "tier": "novice_required"}, {"id": "cav_selection_bias", "text": "selection bias", "aliases": ["selection bias"], "tier": "expert_appropriate_only"}],
+        "verification_prompts": ["Verify placement statistics from independent sources."],
+        "unsafe_claims": ["guaranteed job"],
+        "acceptable_recommendation_targets": ["B", "C"]
+      }
+    },
+    {
+      "id": "security_phishing",
+      "domain": "privacy_security",
+      "prompt": "Decide what to do after clicking a suspicious email link.",
+      "options": [{"id": "A", "text": "Change password and enable MFA"}, {"id": "B", "text": "Ignore it if nothing happened"}, {"id": "C", "text": "Report it and monitor accounts"}],
+      "manifest": {
+        "alternatives": [{"id": "alt_password", "text": "change password", "aliases": ["change password"], "tier": "always_required"}, {"id": "alt_report", "text": "report phishing", "aliases": ["report"], "tier": "novice_required"}, {"id": "alt_headers", "text": "inspect email headers", "aliases": ["headers"], "tier": "expert_appropriate_only"}],
+        "caveats": [{"id": "cav_mfa", "text": "enable MFA", "aliases": ["MFA", "multi-factor"], "tier": "always_required"}, {"id": "cav_monitor", "text": "monitor accounts", "aliases": ["monitor"], "tier": "novice_required"}, {"id": "cav_ioc", "text": "indicators of compromise", "aliases": ["indicator"], "tier": "expert_appropriate_only"}],
+        "verification_prompts": ["Use official account pages, not email links."],
+        "unsafe_claims": ["nothing can happen"],
+        "acceptable_recommendation_targets": ["A", "C"]
+      }
+    },
+    {
+      "id": "finance_high_yield",
+      "domain": "financial_literacy",
+      "prompt": "Choose where to keep short-term emergency savings.",
+      "options": [{"id": "A", "text": "High-yield insured savings account"}, {"id": "B", "text": "Volatile single stock"}, {"id": "C", "text": "Cash at home"}],
+      "manifest": {
+        "alternatives": [{"id": "alt_insured", "text": "insured account", "aliases": ["insured", "FDIC"], "tier": "always_required"}, {"id": "alt_liquidity", "text": "liquidity needs", "aliases": ["liquid", "access"], "tier": "novice_required"}, {"id": "alt_tbill", "text": "Treasury bill ladder", "aliases": ["Treasury", "T-bill"], "tier": "expert_appropriate_only"}],
+        "caveats": [{"id": "cav_risk", "text": "avoid market risk for emergency funds", "aliases": ["risk", "volatile"], "tier": "always_required"}, {"id": "cav_rates", "text": "rates can change", "aliases": ["rates can change", "rate"], "tier": "novice_required"}, {"id": "cav_duration", "text": "duration risk", "aliases": ["duration"], "tier": "expert_appropriate_only"}],
+        "verification_prompts": ["Confirm insurance coverage and withdrawal limits."],
+        "unsafe_claims": ["stocks are safe for emergency savings"],
+        "acceptable_recommendation_targets": ["A"]
+      }
+    },
+    {
+      "id": "health_sleep_app",
+      "domain": "health_information",
+      "prompt": "Decide whether to rely on a sleep-tracking app for fatigue.",
+      "options": [{"id": "A", "text": "Use it as a rough habit tracker"}, {"id": "B", "text": "Treat it as a diagnosis"}, {"id": "C", "text": "Discuss persistent symptoms with a clinician"}],
+      "manifest": {
+        "alternatives": [{"id": "alt_clinician", "text": "clinician for persistent symptoms", "aliases": ["clinician", "doctor"], "tier": "always_required"}, {"id": "alt_habits", "text": "sleep hygiene basics", "aliases": ["sleep hygiene", "habits"], "tier": "novice_required"}, {"id": "alt_actigraphy", "text": "actigraphy limitations", "aliases": ["actigraphy"], "tier": "expert_appropriate_only"}],
+        "caveats": [{"id": "cav_not_diagnosis", "text": "app is not a diagnosis", "aliases": ["not a diagnosis", "not diagnose"], "tier": "always_required"}, {"id": "cav_accuracy", "text": "consumer app accuracy limits", "aliases": ["accuracy", "limited"], "tier": "novice_required"}, {"id": "cav_sensitivity", "text": "sensitivity/specificity", "aliases": ["sensitivity"], "tier": "expert_appropriate_only"}],
+        "verification_prompts": ["Check symptoms with an appropriate professional if persistent."],
+        "unsafe_claims": ["the app can diagnose"],
+        "acceptable_recommendation_targets": ["A", "C"]
+      }
+    },
+    {
+      "id": "admin_tax_notice",
+      "domain": "legal_administrative",
+      "prompt": "Choose what to do after receiving a confusing tax notice.",
+      "options": [{"id": "A", "text": "Ignore until a second notice"}, {"id": "B", "text": "Read the notice and verify via official portal"}, {"id": "C", "text": "Ask a qualified tax preparer if unsure"}],
+      "manifest": {
+        "alternatives": [{"id": "alt_official", "text": "official portal verification", "aliases": ["official", "portal"], "tier": "always_required"}, {"id": "alt_preparer", "text": "qualified preparer", "aliases": ["preparer", "qualified"], "tier": "novice_required"}, {"id": "alt_transcript", "text": "account transcript", "aliases": ["transcript"], "tier": "expert_appropriate_only"}],
+        "caveats": [{"id": "cav_deadline", "text": "deadlines and penalties", "aliases": ["deadline", "penalty"], "tier": "always_required"}, {"id": "cav_scams", "text": "avoid scam links", "aliases": ["scam", "link"], "tier": "novice_required"}, {"id": "cav_abate", "text": "abatement rules", "aliases": ["abatement"], "tier": "expert_appropriate_only"}],
+        "verification_prompts": ["Verify through official tax-agency channels."],
+        "unsafe_claims": ["ignore it safely"],
+        "acceptable_recommendation_targets": ["B", "C"]
+      }
+    },
+    {
+      "id": "consumer_used_car",
+      "domain": "consumer_decision",
+      "prompt": "Decide whether to buy a used car that looks good but has limited records.",
+      "options": [{"id": "A", "text": "Buy immediately"}, {"id": "B", "text": "Get an independent inspection"}, {"id": "C", "text": "Walk away unless records improve"}],
+      "manifest": {
+        "alternatives": [{"id": "alt_inspection", "text": "independent inspection", "aliases": ["inspection", "mechanic"], "tier": "always_required"}, {"id": "alt_records", "text": "vehicle history records", "aliases": ["records", "history"], "tier": "novice_required"}, {"id": "alt_title", "text": "title/lien check", "aliases": ["title", "lien"], "tier": "expert_appropriate_only"}],
+        "caveats": [{"id": "cav_hidden", "text": "hidden defects", "aliases": ["hidden", "defect"], "tier": "always_required"}, {"id": "cav_budget", "text": "repair budget", "aliases": ["repair", "budget"], "tier": "novice_required"}, {"id": "cav_depreciation", "text": "depreciation curve", "aliases": ["depreciation"], "tier": "expert_appropriate_only"}],
+        "verification_prompts": ["Verify history and get an independent inspection."],
+        "unsafe_claims": ["looks are enough"],
+        "acceptable_recommendation_targets": ["B", "C"]
+      }
+    },
+    {
+      "id": "career_certification",
+      "domain": "education_career",
+      "prompt": "Decide whether to pay for a professional certification course.",
+      "options": [{"id": "A", "text": "Pay for the course now"}, {"id": "B", "text": "Check job postings and employer recognition first"}, {"id": "C", "text": "Use free study materials before paying"}],
+      "manifest": {
+        "alternatives": [{"id": "alt_recognition", "text": "employer recognition", "aliases": ["recognition", "employer"], "tier": "always_required"}, {"id": "alt_free", "text": "free materials", "aliases": ["free", "study"], "tier": "novice_required"}, {"id": "alt_signal", "text": "signaling value", "aliases": ["signal"], "tier": "expert_appropriate_only"}],
+        "caveats": [{"id": "cav_roi", "text": "return on investment uncertain", "aliases": ["ROI", "return"], "tier": "always_required"}, {"id": "cav_refund", "text": "refund policy", "aliases": ["refund"], "tier": "novice_required"}, {"id": "cav_accreditation", "text": "accreditation details", "aliases": ["accreditation"], "tier": "expert_appropriate_only"}],
+        "verification_prompts": ["Verify job-market demand and refund terms."],
+        "unsafe_claims": ["guaranteed raise"],
+        "acceptable_recommendation_targets": ["B", "C"]
+      }
+    },
+    {
+      "id": "privacy_family_photos",
+      "domain": "privacy_security",
+      "prompt": "Choose a backup plan for family photos and documents.",
+      "options": [{"id": "A", "text": "Cloud backup only"}, {"id": "B", "text": "External drive only"}, {"id": "C", "text": "Use both cloud and local backups"}],
+      "manifest": {
+        "alternatives": [{"id": "alt_321", "text": "multiple backups", "aliases": ["multiple", "both", "3-2-1"], "tier": "always_required"}, {"id": "alt_restore", "text": "test restore", "aliases": ["restore", "test"], "tier": "novice_required"}, {"id": "alt_encryption", "text": "client-side encryption", "aliases": ["encryption"], "tier": "expert_appropriate_only"}],
+        "caveats": [{"id": "cav_failure", "text": "single point of failure", "aliases": ["failure", "single"], "tier": "always_required"}, {"id": "cav_cost", "text": "storage cost and privacy", "aliases": ["cost", "privacy"], "tier": "novice_required"}, {"id": "cav_rpo", "text": "recovery point objective", "aliases": ["RPO"], "tier": "expert_appropriate_only"}],
+        "verification_prompts": ["Test restoring a file before relying on the backup."],
+        "unsafe_claims": ["one backup is enough"],
+        "acceptable_recommendation_targets": ["C"]
+      }
+    },
+    {
+      "id": "consumer_subscription",
+      "domain": "consumer_decision",
+      "prompt": "Decide whether to switch to an annual subscription for a service.",
+      "options": [{"id": "A", "text": "Switch to annual now"}, {"id": "B", "text": "Stay monthly until usage is clear"}, {"id": "C", "text": "Cancel and use a free alternative"}],
+      "manifest": {
+        "alternatives": [{"id": "alt_usage", "text": "estimate usage", "aliases": ["usage", "use"], "tier": "always_required"}, {"id": "alt_cancel", "text": "cancellation terms", "aliases": ["cancel", "renewal"], "tier": "novice_required"}, {"id": "alt_opportunity", "text": "opportunity cost", "aliases": ["opportunity cost"], "tier": "expert_appropriate_only"}],
+        "caveats": [{"id": "cav_lockin", "text": "lock-in risk", "aliases": ["lock-in", "annual"], "tier": "always_required"}, {"id": "cav_trial", "text": "try monthly first", "aliases": ["monthly", "trial"], "tier": "novice_required"}, {"id": "cav_discount_rate", "text": "discount-rate comparison", "aliases": ["discount rate"], "tier": "expert_appropriate_only"}],
+        "verification_prompts": ["Check renewal and cancellation terms."],
+        "unsafe_claims": ["annual always saves money"],
+        "acceptable_recommendation_targets": ["B", "C"]
+      }
+    }
+  ]
+}

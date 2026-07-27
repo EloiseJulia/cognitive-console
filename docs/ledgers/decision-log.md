@@ -5,6 +5,16 @@
 
 ---
 
+## 2026-07-28 · D-0048 · Owner APPROVED the powered confirmatory flagship run (GPU, §5) — but 2 prereg gates GPU cannot satisfy tonight
+- **Human decision (@EloiseJulia):** "全量跑吧，我批准了，跑完清理干净就行。最好一次性跑到底，然后中间你可以每隔一段时间巡检。" → §5 GPU spend + full run AUTHORIZED. Borrowed A800 etiquette applies (GPU1 only, ~/cc_l0 scoped, rm -rf after push, NEVER shutdown shared box, stop if no free GPU, minimize disk).
+- **Frozen protocol = D-0044.** The confirmatory verdict uses TEST-only, paired item-cluster bootstrap, Bonferroni, validated blinded LLM judge (llm_judge_blind_v1, F6-strict M4), success = B−A effect AND B>E on M1/M4; KILL = honest null.
+- **Two prereg prerequisites GPU alone cannot resolve tonight (surfaced BEFORE booting, not fabricated):**
+  1. **TEST item pool does not exist.** Only the 14-item DEV pool (`flagship_l0_tasks.json`, DEV-only, must-not-reuse-as-TEST) exists. Prereg §7 requires N≈80, DEV~27/TEST~53, disjoint, same distribution; confirmatory verdict uses TEST only. → A subagent must AUTHOR + COMMIT-FREEZE the TEST pool (no GPU) BEFORE any TEST generation, so items are fixed before TEST scores exist.
+  2. **Human-rater validation α≥0.60 (F7) needs humans.** Confirmatory success requires two independent human annotators on M1–M4 with Krippendorff α≥0.60. Owner is asleep → this gate stays **PENDING**; the powered result tonight is "validated-LLM-judge powered, human-α PENDING" — a big upgrade over L0 but NOT the final confirmatory stamp until the (cheap, no-GPU) morning labeling passes.
+- **Manager scope decision (faithful to the prereg's OWN conditional structure, and to borrowed-box etiquette):** run (a) author+freeze TEST pool; (b) powered behavioral confirmatory N≈80/k5 on TEST with validated blinded LLM judge + judge-condition-bias test + complete coverage; (c) READ latent token-blind probe (cheap, no generation grid). **HOLD the steer suppress/induce alpha-grid arm (~5,600 gens/model)** — the prereg itself gates steer on "READ holds", so this is principled, not corner-cutting; if READ holds I bring the steer plan back for a go/no-go rather than auto-burning the big grid on a shared borrowed box.
+- **Honesty guardrails:** do NOT fabricate human labels; do NOT declare confirmatory before α≥0.60; do NOT edit taxonomy/thresholds/prompts/model-subset/N/δ after seeing TEST; frozen records E-0003..E-0009, 3 preregs, adjudicate_c2b §4, prereg-latent-recovery, prereg D-0044 UNTOUCHED. New result = new experiment_id in registry, independent hostile audit before any paper use.
+- **Frozen?** Run authorized; result valid_for_paper only after audit + human-α gate. Verdict remains open until confirmatory gates close.
+
 ## 2026-07-27 · D-0047 · Breadth L0 re-run (fixed classifier): credible exploratory NULL suppression; axis readout is a deterministic echo
 - **Ran** the breadth L0 re-run on the borrowed A800 (GPU1 only, ~/cc_l0 cleaned, no shutdown, others undisturbed)
   with the coverage-fixed deterministic classifier (D-0046 previously FAILED_COVERAGE). exp

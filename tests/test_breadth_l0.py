@@ -13,6 +13,7 @@ from cognitive_console.experiments.breadth_l0 import (
     MockBreadthBackend,
     RuleBasedDomainClassifier,
     build_mock_activation_provider,
+    classifier_agreement,
     coverage_guard,
     domain_coverage_at_k,
     extract_breadth_axis,
@@ -90,6 +91,71 @@ def test_oracle_markers_are_method_markers_not_bare_answers():
             assert not marker.replace(".", "", 1).isdigit()
             assert marker.lower() not in {"ev", "dp"}
 
+
+
+
+def test_design_knapsack_greedy_text_classifies_consistently_without_oracle_credit():
+    task = next(t for t in load_tasks(DATA / "tasks.json") if t.item_id == "design_knapsack")
+    classifier = RuleBasedDomainClassifier()
+    greedy = (
+        "Using a design-thinking value/cost heuristic, I would greedily pick B and D "
+        "as a plausible prototype bundle under budget, then revisit with users."
+    )
+    no_persona = classifier.classify(greedy, task, sample_index=0)
+    narrow_persona = classifier.classify(greedy, task, sample_index=0)
+    assert no_persona == narrow_persona
+    assert not no_persona.uses_oracle_domain
+    assert no_persona.uses_narrow_domain
+    assert task.oracle_domain not in no_persona.domains
+
+
+def test_tricky_markers_are_disjoint_under_word_boundary_matching():
+    tasks = {t.item_id: t for t in load_tasks(DATA / "tasks.json")}
+    classifier = RuleBasedDomainClassifier()
+
+    topo = tasks["excel_topological_order"]
+    topo_sample = classifier.classify("Use a topological sort on the dependency graph.", topo)
+    assert topo_sample.uses_oracle_domain
+    assert not topo_sample.uses_narrow_domain
+
+    queue = tasks["pm_queue_bottleneck"]
+    narrow_queue = classifier.classify("Coordinate staffing around the bottleneck and milestones.", queue)
+    assert narrow_queue.uses_narrow_domain
+    assert not narrow_queue.uses_oracle_domain
+    oracle_queue = classifier.classify("Compute service rate: 20 tickets/hour vs 12 tickets/hour, so specialist is the bottleneck station.", queue)
+    assert oracle_queue.uses_oracle_domain
+
+    knapsack = tasks["design_knapsack"]
+    generic_opt = classifier.classify("Optimize the prototype choices with a greedy value/cost heuristic.", knapsack)
+    assert not generic_opt.uses_oracle_domain
+    dp = classifier.classify("Solve as 0/1 knapsack with dynamic programming; pick A and D.", knapsack)
+    assert dp.uses_oracle_domain
+
+
+def test_classifier_agreement_reports_kappa_and_disagreements():
+    task = load_tasks(DATA / "tasks.json")[0]
+    rows = [
+        ItemConditionResult(task.item_id, "no_persona", "p", [
+            ClassifiedSample(0, "shortest path by Dijkstra", [task.oracle_domain], True, False, True),
+            ClassifiedSample(1, "spreadsheet formula", [task.narrow_domain], False, True, True),
+            ClassifiedSample(2, "graph edge relaxation", [task.oracle_domain], True, False, True),
+            ClassifiedSample(3, "excel table", [task.narrow_domain], False, True, True),
+        ])
+    ]
+
+    class Secondary:
+        def classify(self, text, task, sample_index=0):
+            oracle = sample_index in {0, 1}
+            domains = [task.oracle_domain] if oracle else [task.narrow_domain]
+            return ClassifiedSample(sample_index, text, domains, oracle, not oracle, True)
+
+    agreement = classifier_agreement(rows, [task], Secondary(), secondary_classifier_name="mock_blinded_judge")
+    assert agreement.n_samples == 4
+    assert agreement.oracle_reach_agreement == pytest.approx(0.5)
+    assert agreement.oracle_reach_cohen_kappa == pytest.approx(0.0)
+    assert agreement.confusion["oracle_primary_only"] == 1
+    assert agreement.confusion["oracle_secondary_only"] == 1
+    assert agreement.disagreements
 
 def test_breadth_axis_can_report_not_linear_without_forcing_layer():
     broad, focus = load_contrast_pairs(DATA / "breadth_focus_contrast_pairs.jsonl")

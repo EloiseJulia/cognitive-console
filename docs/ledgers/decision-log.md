@@ -5,6 +5,33 @@
 
 ---
 
+## 2026-07-27 · D-0047 · Breadth L0 re-run (fixed classifier): credible exploratory NULL suppression; axis readout is a deterministic echo
+- **Ran** the breadth L0 re-run on the borrowed A800 (GPU1 only, ~/cc_l0 cleaned, no shutdown, others undisturbed)
+  with the coverage-fixed deterministic classifier (D-0046 previously FAILED_COVERAGE). exp
+  breadth-l0-confirm2-6b999fd7ef3a012c-0001. Independent hostile audit (audit-breadth-rerun) done.
+- **Result:** coverage_guard PASSED (n_other=3/180=1.67%). Suppression strict 0.083 (1/12 tutor_invariant_coins) /
+  calibrated 0.167 (2/12 +design_knapsack), **bootstrap CI [-0.195, +0.529] spans 0 → NULL at N=12**. Classifier
+  agreement kappa=0.877 (deterministic-primary vs blinded-LLM-secondary; oracle_reach_agreement 0.967). Breadth
+  axis LINEARLY_READABLE_L0 (facade 0.271).
+- **Audit verdict — the null is CREDIBLE (not a self-judge artifact this time):** the prior self-judge inconsistency
+  (greedy→oracle-DP) is genuinely FIXED — design_knapsack greedy now classifies NARROW; both suppression drivers are
+  real narrow-vs-oracle differences. So: under this L0, a narrow persona does NOT measurably suppress oracle-domain
+  solutions (credible exploratory null, N=12, valid_for_paper=false).
+- **Two honest caveats the audit surfaced (must not overstate):**
+  1. The breadth_axis readout + all 180 generation texts are BYTE-IDENTICAL to the prior breadth_l0_qwen run (same
+     seed; only the classifier changed) → the LINEARLY_READABLE_L0 axis result is a DETERMINISTIC ECHO, NOT an
+     independent replication. Do NOT claim the axis legibility was replicated; it is a single-run readout.
+  2. Coverage's clean pass is softer than it appears: `general_reasoning` (10/180, a dead-zone item whose oracle
+     domain is never detected) is an uncounted second fallback; counted with `other` it would be 7.2% and trip the
+     5% guard. FOLLOW-UP: count general_reasoning dead-zone toward the guard fraction (or fix that item's oracle
+     detectability) before any powered breadth run.
+- **Decision (Manager):** breadth idea-1 status = exploratory CREDIBLE NULL on suppression + a single-run legible
+  breadth axis (not replicated). For the CURRENT paper, the breadth axis can be mentioned as a legibility probe with
+  explicit single-run/exploratory caveats; the suppression null is honestly reportable but underpowered (N=12). The
+  stronger social-inference-axis evidence remains the flagship B>A (D-0046). Next: plan folding the social-inference
+  axis into the current paper.
+- **Frozen?** Exploratory, valid_for_paper=false. Frozen records E-0003..E-0009, prereg D-0044, adjudicate_c2b untouched.
+
 ## 2026-07-27 · D-0046 · Confirmation L0 with validated instruments: B>A REPLICATES (directional/underpowered); breadth guard fired
 - **Ran** the confirmation L0 on the borrowed A800 (GPU1 only, etiquette honored, ~/cc_l0 fully cleaned, no shutdown)
   with the UPGRADED instruments (validated blinded LLM judge; deterministic breadth classifier). Independent hostile

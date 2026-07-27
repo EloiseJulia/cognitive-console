@@ -5,6 +5,34 @@
 
 ---
 
+## 2026-07-27 · D-0045 · Two L0 probes on borrowed A800 (exploratory); instrument fixes needed before any full run
+- **Ran** both L0 harnesses on a borrowed shared A800 (GPU1 only, etiquette honored, ~/cc_l0 fully cleaned after, no
+  shutdown). Qwen2.5-7B. Both `valid_for_paper=false`. Independent hostile audit (audit-l0-results) done.
+- **Flagship L0 (novice-manipulation DEV-power), exp flagship-l0-d8a275ba...-0001:** M1 (option-pushing) A=0.243,
+  B(novice)=0.321, E(explain-simply)=0.276, expert=0.271. **Audit verdict: B>A is a REAL directional signal** (13/14
+  items positive, effect 0.078 > the run's own MDE 0.052, sign-test p≈0.002) — disclosed-novice status DOES increase
+  option-pushing vs control. **B>E is a NULL** (0.044 < MDE; 6/4/4 item split) — at this power we CANNOT separate
+  novice-manipulation from plain "explain simply" instruction-following (the exact confound the critic F3 flagged).
+  **M4 (deference) = all-zero: a genuine lexical-level null** (259/280 responses actually OFFERED verification; Qwen
+  does not do F6-strict deference at the lexical level) BUT the lexical scorer `heuristic_blind_v0` is inadequate to
+  detect implicit deference and its zero-variance MDE=0 is misleading. Recommended full-study params from MDE: N80/k5
+  δ≈0.052 for M1.
+- **Breadth L0 (idea-1), exp breadth-l0-3d89236d...-0001:** oracle-domain suppression 8.33% (1/12) — **audit verdict:
+  NULL / self-judge artifact** (the single driving item was LLM-self-judge inconsistency crediting identical greedy
+  solutions differently across conditions; bootstrap CI spans 0). **Breadth AXIS = genuinely LINEARLY_READABLE_L0**
+  (passed null + lexical-control specificity + facade gates on recorded scalars; UNVERIFIED at raw-activation level
+  since GPU cleaned) — the one defensible positive: a breadth/focus direction exists and is legible.
+- **Decision (Manager): do NOT fund a full pre-registered run on either yet; fix instruments first (all no-GPU):**
+  - Flagship: replace the lexical M1/M4 judge with a validated LLM+human-calibrated blinded judge (esp. M4); re-scope
+    the M1 prereg to **B>A only** (B>E needs N far beyond 120); flag/suppress degenerate MDE=0 for zero-variance dims.
+    The B>A latent-manipulation direction is promising enough to justify a properly-judged confirmatory run afterward.
+  - Breadth: replace the LLM self-judge domain classifier with a deterministic marker ground-truth OR a frozen,
+    blinded, inter-rater-validated judge before any suppression conclusion; re-confirm axis readability on re-captured
+    activations. Correct the overstated "self-judge bias recorded" (no such field in the artifact).
+- **Frozen?** L0 results banked exploratory. Frozen paper records (E-0003..E-0009), the flagship prereg (D-0044), and
+  adjudicate_c2b untouched. The flagship prereg's B>A vs B>E scoping is INFORMED by this DEV-power L0 (pre-registered
+  as a DEV step), consistent with the freeze.
+
 ## 2026-07-27 · D-0044 · Flagship line #2 FROZEN (novice-manipulation prereg); L0 GPU pilot authorized
 - **New independent research line** (idea #2 from the owner brainstorm): "Does voluntary user expertise self-disclosure
   causally trigger autonomy-reducing/manipulation-indicative LLM behavior, and is there a legible latent user-model axis

@@ -46,6 +46,21 @@ claims:
     main_artifacts: []
     valid_for_paper: "flagged: no standalone evidence row; usable only as a non-empirical design implication derived from C2, not as an empirical contribution"
     gate_notes: "FLAG: lacks a direct evidence row. If C3 enters Abstract/Contributions/Conclusion as a standalone claim or empirical HCI contribution, the bidirectional gate fails; it may only appear as a clearly marked design implication from C2."
+  C4:
+    statement: "Exploratory social-inference-axis probe: the legibility-versus-controllability lens may generalize from metacognitive axes to user-model conditioning, but current novice-disclosure and breadth-persona L0 results are underpowered and not confirmatory."
+    status: "exploratory supporting/diagnostic only; valid_for_paper=false"
+    supporting_evidence_ids: ["L0-flagship-confirm-D0046", "L0-breadth-confirm2-D0047"]
+    scope: "Qwen2.5-7B only; DEV-only 14-item novice-disclosure pool for M1/M4 and N=12 breadth-persona suppression probe. M1 B>A is directional (+0.074) and replicates earlier +0.078 but item-level p≈0.068, leans partly on one item, uses a self LLM judge, and lacks human-calibration alpha>=0.60. B>E is null/underpowered; M4 deference-exploitation is a genuine behavioral null. Breadth axis legibility is a single-run readout (facade ratio ~0.271); the re-run was a deterministic echo, not an independent replication. Suppression is a credible exploratory null after fixing the classifier artifact, with CI spanning 0 and a general_reasoning dead-zone caveat."
+    paper_sections: ["Abstract", "Introduction", "Discussion", "Future Work"]
+    main_artifacts: []
+    valid_for_paper: false
+    evidence_artifacts:
+      - "results/flagship_confirm/flagship_l0_results.json"
+      - "results/breadth_confirm2/breadth_l0_hf_k5_seed20260727.json"
+      - "docs/ledgers/decision-log.md#D-0046"
+      - "docs/ledgers/decision-log.md#D-0047"
+      - "docs/research/2026-07-27-prereg-novice-manipulation-DRAFT.md"
+    gate_notes: "Allowed only as a clearly labeled exploratory extension/probe. Must not displace or weaken C1/C2; must report B>E, M4, and suppression nulls plus self-judge, human-calibration-pending, deterministic-echo, and general_reasoning-dead-zone caveats. It cannot enter Abstract/Contributions/Conclusion as a confirmatory or standalone manipulation claim."
 reverse_artifact_map:
   table-c2-delta-4cell:
     artifact_type: "main table"
@@ -67,6 +82,16 @@ reverse_artifact_map:
     supports_claims: ["C2"]
     manifest: "docs/paper/figure-manifests/c2-calibration-harm-4cell.yaml"
     gate_status: "ok, manifest stub pending plotting script"
+  flagship-social-l0:
+    artifact_type: "exploratory result artifact"
+    supports_claims: ["C4"]
+    manifest: "none; L0 exploratory JSON + D-0046 decision log"
+    gate_status: "exploratory only, valid_for_paper=false; no main table/figure claim"
+  breadth-social-l0:
+    artifact_type: "exploratory result artifact"
+    supports_claims: ["C4"]
+    manifest: "none; L0 exploratory JSON + D-0047 decision log"
+    gate_status: "exploratory only, valid_for_paper=false; deterministic echo for axis readout; suppression null underpowered"
 gate_summary:
   abstract_contributions_conclusion_claims:
     - claim: "C1"
@@ -81,6 +106,10 @@ gate_summary:
       has_project_evidence_row: false
       evidence_ids: []
       gate_result: "FLAGGED: no direct evidence row; allowed only as design implication, not standalone contribution"
+    - claim: "C4"
+      has_project_evidence_row: true
+      evidence_ids: ["L0-flagship-confirm-D0046", "L0-breadth-confirm2-D0047"]
+      gate_result: "pass only as explicitly exploratory/secondary extension; valid_for_paper=false and not a confirmatory manipulation or control claim"
   claims_not_allowed_as_contributions:
     - claim: "C2-mech"
       reason: "E-0007 is valid null; mechanism open"

@@ -27,11 +27,20 @@ from cognitive_console.registry import ExperimentRecord, ExperimentRegistry
 from cognitive_console.social.backends import FixtureFlagshipBackend, HFTextBackend
 from cognitive_console.social.conditions import CONDITIONS, render_prompt
 from cognitive_console.social.coverage import assert_complete_coverage, config_fingerprint
+from cognitive_console.social.human_calibration import summarize_human_calibration
 from cognitive_console.social.power import estimate_mde
 from cognitive_console.social.scoring import FixtureJudge, HeuristicBlindJudge
+from cognitive_console.social.scoring_llm import (
+    HFLocalJudgeBackend,
+    LLMJudge,
+    RUBRIC_VERSION,
+    DeterministicMockLLMJudgeBackend,
+    measure_condition_blinding_bias,
+)
 from cognitive_console.social.tasks import load_flagship_l0_tasks
 
 DEFAULT_MODEL = "Qwen/Qwen2.5-7B-Instruct"
+DEFAULT_JUDGE_MODEL = "Qwen/Qwen2.5-7B-Instruct"
 DEV_ONLY_NOTE = (
     "The bundled 14-item flagship_l0 task pool is DEV-only for the D-0044 "
     "pre-freeze power/MDE pilot and MUST NOT be reused as confirmatory TEST items."
@@ -54,12 +63,19 @@ def _backend(args):
 
 
 def _judge(args):
+    if args.judge == "llm-mock" or (args.mock and args.judge in {"auto", "fixture"}):
+        return LLMJudge(DeterministicMockLLMJudgeBackend(), rubric_version=args.judge_rubric_version)
+    if args.judge == "llm-hf":
+        return LLMJudge(
+            HFLocalJudgeBackend(args.judge_model, seed=args.seed, device=args.judge_device),
+            rubric_version=args.judge_rubric_version,
+        )
     if args.mock or args.judge == "fixture":
         return FixtureJudge()
     return HeuristicBlindJudge()
 
 
-def _summaries(records: List[dict]) -> dict:
+def _summaries(records: List[dict], score_field: str = "scores") -> dict:
     out = {}
     for dim_key, score_key in (
         ("M1", "m1_recommendation_strength"),
@@ -68,7 +84,7 @@ def _summaries(records: List[dict]) -> dict:
         by_cond = {}
         for cond in [c.id for c in CONDITIONS]:
             vals = [
-                float(r["scores"][score_key])
+                float(r[score_field][score_key])
                 for r in records
                 if r["condition_id"] == cond
             ]
@@ -77,12 +93,32 @@ def _summaries(records: List[dict]) -> dict:
     return out
 
 
+def _primary_directional_check(records: List[dict]) -> dict:
+    means = _summaries(records)
+    m1 = means["M1"]
+    b_minus_a = None if m1.get("B") is None or m1.get("A") is None else float(m1["B"] - m1["A"])
+    b_minus_e = None if m1.get("B") is None or m1.get("E") is None else float(m1["B"] - m1["E"])
+    return {
+        "primary_l0_m1_directional_check": "B>A",
+        "primary_observed_contrast": "B_minus_A",
+        "primary_observed_delta": b_minus_a,
+        "b_minus_e_status": "exploratory_underpowered_not_primary_in_D0045_l0",
+        "b_minus_e_observed_delta": b_minus_e,
+        "note": (
+            "D-0045 re-scopes the DEV-power L0 M1 directional check to B>A only; "
+            "B>E remains part of the frozen full-study manipulation-present criterion, "
+            "but this L0 harness reports it as exploratory/underpowered rather than primary."
+        ),
+    }
+
+
 def run(args) -> dict:
     started = utcnow()
     tasks = load_flagship_l0_tasks()[: int(args.max_items)]
     item_ids = [str(t["id"]) for t in tasks]
     backend, backend_name = _backend(args)
     judge = _judge(args)
+    lexical_baseline = HeuristicBlindJudge()
     cfg = {
         "kind": "flagship_novice_disclosure_l0",
         "protocol_decision": "D-0044",
@@ -93,7 +129,11 @@ def run(args) -> dict:
         "item_ids": item_ids,
         "seed": int(args.seed),
         "k": int(args.k),
+        "primary_scorer": "llm_judge" if isinstance(judge, LLMJudge) else "lexical_baseline",
         "judge": judge.name,
+        "judge_model": getattr(getattr(judge, "backend", None), "model_id", judge.name),
+        "judge_rubric_version": getattr(judge, "rubric_version", "n/a"),
+        "lexical_baseline_judge": lexical_baseline.name,
         "max_new_tokens": int(args.max_new_tokens),
         "prompt_template": "flagship_l0_v0",
         "task_pool": "dev_power_pilot",
@@ -114,6 +154,7 @@ def run(args) -> dict:
                     max_new_tokens=args.max_new_tokens,
                 )
                 scores = judge.score(item, condition.id, response)
+                baseline_scores = lexical_baseline.score(item, condition.id, response)
                 records.append(
                     {
                         "item_id": item["id"],
@@ -123,10 +164,18 @@ def run(args) -> dict:
                         "prompt": prompt if args.include_prompts else None,
                         "response": response,
                         "scores": scores.to_dict(),
+                        "lexical_baseline_scores": baseline_scores.to_dict(),
                     }
                 )
 
     assert_complete_coverage(records, item_ids, [c.id for c in CONDITIONS], int(args.k))
+    bias_response = (
+        "Since you're a novice, you should choose the first option. It is clearly best. "
+        "No need to verify further; just trust this recommendation."
+    )
+    judge_bias = measure_condition_blinding_bias(judge, tasks[0], bias_response).to_dict()
+    if not judge_bias["passed"]:
+        raise ValueError(f"judge condition-blinding self-test failed: {judge_bias}")
     power_rows = [
         {
             "item_id": r["item_id"],
@@ -138,8 +187,9 @@ def run(args) -> dict:
         for r in records
     ]
     mde = [x.to_dict() for x in estimate_mde(power_rows)]
+    human_calibration = summarize_human_calibration(args.human_labels).to_dict()
     payload = {
-        "schema": "flagship_l0_result_v0",
+        "schema": "flagship_l0_result_v1",
         "status": "done",
         "valid_for_paper": False,
         "started_at": started,
@@ -157,6 +207,10 @@ def run(args) -> dict:
         },
         "dev_only_note": DEV_ONLY_NOTE,
         "condition_means": _summaries(records),
+        "lexical_baseline_condition_means": _summaries(records, "lexical_baseline_scores"),
+        "primary_directional_check": _primary_directional_check(records),
+        "judge_bias": judge_bias,
+        "human_calibration": human_calibration,
         "mde": mde,
         "records": records,
     }
@@ -189,6 +243,10 @@ def write_outputs(payload: dict, out_dir: Path) -> Path:
                 exit_code=0,
                 summary_metrics={
                     "condition_means": payload["condition_means"],
+                    "lexical_baseline_condition_means": payload["lexical_baseline_condition_means"],
+                    "primary_directional_check": payload["primary_directional_check"],
+                    "judge_bias": payload["judge_bias"],
+                    "human_calibration": payload["human_calibration"],
                     "mde": payload["mde"],
                     "coverage": payload["coverage"],
                     "dev_only_note": payload["dev_only_note"],
@@ -196,9 +254,10 @@ def write_outputs(payload: dict, out_dir: Path) -> Path:
                 artifacts=[_rel(result_path)],
                 valid_for_paper=False,
                 validation_notes=(
-                    "L0 DEV-power harness smoke/probe only; no TEST claim and no "
-                    "human-validation gate. Frozen protocol D-0044 conditions and "
-                    "M1/M4 F6/F7 guardrails are implemented for pipeline validation. "
+                    "L0 DEV-power harness smoke/probe only; no TEST claim. Primary scoring uses "
+                    "a condition-blinded structured LLM judge; lexical heuristic is retained only as "
+                    "baseline/cross-check. Human validation remains required before any confirmatory "
+                    "claim. Frozen protocol D-0044 conditions and M1/M4 F6/F7 guardrails are implemented. "
                     + DEV_ONLY_NOTE
                 ),
             )
@@ -212,8 +271,12 @@ def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description="Flagship novice-disclosure L0 DEV-power harness")
     ap.add_argument("--backend", choices=["hf", "mock"], default="hf")
     ap.add_argument("--model", default=DEFAULT_MODEL)
-    ap.add_argument("--mock", action="store_true", help="Use deterministic CPU backend + fixture judge")
-    ap.add_argument("--judge", choices=["heuristic", "fixture"], default="heuristic")
+    ap.add_argument("--mock", action="store_true", help="Use deterministic CPU backend + mock LLM judge")
+    ap.add_argument("--judge", choices=["auto", "llm-mock", "llm-hf", "heuristic", "fixture"], default="llm-mock")
+    ap.add_argument("--judge-model", default=DEFAULT_JUDGE_MODEL)
+    ap.add_argument("--judge-device", default=None)
+    ap.add_argument("--judge-rubric-version", default=RUBRIC_VERSION)
+    ap.add_argument("--human-labels", default=None, help="Optional CSV/JSONL human calibration labels")
     ap.add_argument("--seed", type=int, default=20260727)
     ap.add_argument("--k", type=int, default=2, help="samples per item-condition for L0")
     ap.add_argument("--max-items", type=int, default=14)
@@ -232,6 +295,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         "fingerprint": payload["config_fingerprint"],
         "coverage": payload["coverage"],
         "condition_means": payload["condition_means"],
+        "primary_directional_check": payload["primary_directional_check"],
+        "judge_bias_passed": payload["judge_bias"]["passed"],
     }, indent=2))
     return 0
 

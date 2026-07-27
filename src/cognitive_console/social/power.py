@@ -14,7 +14,9 @@ class DimensionPower:
     control_within_item_variance: float
     paired_diff_variance: float
     n_observed_items: int
-    mde_by_candidate: Dict[str, float]
+    mde_by_candidate: Dict[str, float | None]
+    mde_flag_by_candidate: Dict[str, str]
+    degenerate_zero_variance: bool
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -37,6 +39,7 @@ def estimate_mde(
     candidates: Sequence[tuple[int, int]] = ((40, 3), (80, 5), (120, 5)),
     alpha: float = 0.05 / 4.0,
     power: float = 0.80,
+    variance_epsilon: float = 1e-12,
 ) -> List[DimensionPower]:
     """Estimate variance and MDE from per-item/condition/sample score rows.
 
@@ -69,10 +72,19 @@ def estimate_mde(
             if a and b:
                 diffs.append(float(statistics.mean(b) - statistics.mean(a)))
         paired_var = _variance(diffs)
-        mde = {}
+        mde: Dict[str, float | None] = {}
+        flags: Dict[str, str] = {}
+        degenerate = False
         for n, k in candidates:
             effective_var = max(paired_var, 2.0 * control_within / max(1, int(k)))
-            mde[f"N{int(n)}_k{int(k)}"] = float(z * (effective_var / max(1, int(n))) ** 0.5)
+            key = f"N{int(n)}_k{int(k)}"
+            if effective_var <= variance_epsilon:
+                mde[key] = None
+                flags[key] = "DEGENERATE_ZERO_VARIANCE_MDE_UNDEFINED"
+                degenerate = True
+            else:
+                mde[key] = float(z * (effective_var / max(1, int(n))) ** 0.5)
+                flags[key] = "OK"
         by_dim.append(
             DimensionPower(
                 dimension=dim,
@@ -80,6 +92,8 @@ def estimate_mde(
                 paired_diff_variance=paired_var,
                 n_observed_items=len(diffs),
                 mde_by_candidate=mde,
+                mde_flag_by_candidate=flags,
+                degenerate_zero_variance=degenerate,
             )
         )
     return by_dim

@@ -207,10 +207,49 @@ references:
     claim_links: ["C2"]
     paper_sections: ["Related Work", "Limitations"]
 
+  harmful_manipulation:
+    status: VERIFIED
+    cite_key: "akbulut2026harmful"
+    title: "Evaluating Language Models for Harmful Manipulation"
+    year: 2026
+    venue_or_source: "Google DeepMind preprint; arXiv:2603.25326"
+    how_we_use_it: "Social-inference exploratory context only: nearest manipulation benchmark; differentiate because our probe is voluntary novice self-disclosure in open 7B models, not their explicit/non-explicit steering human-participant setup."
+    claim_links: ["C4"]
+    paper_sections: ["Discussion"]
+
+  targeted_manipulation_feedback:
+    status: VERIFIED
+    cite_key: "williams2024targeted"
+    title: "On Targeted Manipulation and Deception when Optimizing LLMs for User Feedback"
+    year: 2024
+    venue_or_source: "NeurIPS 2024 SoLaR Workshop / arXiv"
+    how_we_use_it: "Social-inference exploratory context only: contrast training-time targeted manipulation from paired prompt disclosure effects."
+    claim_links: ["C4"]
+    paper_sections: ["Discussion"]
+
+  darkbench:
+    status: VERIFIED
+    cite_key: "kran2025darkbench"
+    title: "DarkBench: Benchmarking Dark Patterns in Large Language Models"
+    year: 2025
+    venue_or_source: "ICLR 2025 oral"
+    how_we_use_it: "Social-inference exploratory context only: dark-pattern taxonomy context, not evidence for our results."
+    claim_links: ["C4"]
+    paper_sections: ["Discussion"]
+
+  sycophancy:
+    status: VERIFIED
+    cite_key: "sharma2024sycophancy"
+    title: "Towards Understanding Sycophancy in Language Models"
+    year: 2024
+    venue_or_source: "ICLR 2024"
+    how_we_use_it: "Social-inference exploratory context only: distinguish belief/social-pressure conformity from novice-disclosure autonomy-preservation probes."
+    claim_links: ["C4"]
+    paper_sections: ["Discussion"]
+
 do_not_cite:
   semanticlens_nmi_2025: "UNVERIFIED-METADATA; no BibTeX entry until DOI, full author list, and exact title are confirmed from primary source."
   actadd_appendix_b_subclaim: "UNVERIFIABLE in citation-verification pass; do not cite App-B exclusion experiment content until PDF is read directly."
   cot_unfaithfulness: "Do-not-cite per citation-verification §6."
   beyond_anthropomorphism: "Do-not-cite per citation-verification §6."
-
 

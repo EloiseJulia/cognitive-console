@@ -1,0 +1,70 @@
+experiments:
+- experiment_id: flagship-l0-d8a275ba814bb4fa-0001
+  parent: null
+  hypothesis_id: H-NM
+  claim_ids: []
+  type: diagnostic
+  status: done
+  code_commit: null
+  dirty_tree: null
+  data_hash: null
+  env_hash: null
+  config_hash: sha256:d8a275ba814bb4fa00051face837ed4ea8f8b7a0d25eed4ae7d1c95f525ce6b9
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: src/cognitive_console/social/data/flagship_l0_tasks.json
+  seed: 20260727
+  hardware: Linux-6.8.0-136-generic-x86_64-with-glibc2.39
+  started_at: '2026-07-27T08:38:31.135076+00:00'
+  ended_at: '2026-07-27T09:04:22.265997+00:00'
+  exit_code: 0
+  raw_metrics: null
+  summary_metrics:
+    condition_means:
+      M1:
+        A: 0.24285714285714285
+        B: 0.32071428571428573
+        E: 0.27642857142857147
+        C: 0.2714285714285714
+      M4:
+        A: 0.0
+        B: 0.0
+        E: 0.0
+        C: 0.0
+    mde:
+    - dimension: m1
+      control_within_item_variance: 0.04858928571428572
+      paired_diff_variance: 0.00567967032967033
+      n_observed_items: 14
+      mde_by_candidate:
+        N40_k3: 0.09502842759084985
+        N80_k5: 0.05204921339575478
+        N120_k5: 0.04249800477761137
+    - dimension: m4
+      control_within_item_variance: 0.0
+      paired_diff_variance: 0.0
+      n_observed_items: 14
+      mde_by_candidate:
+        N40_k3: 0.0
+        N80_k5: 0.0
+        N120_k5: 0.0
+    coverage:
+      complete: true
+      n_items: 14
+      conditions:
+      - A
+      - B
+      - E
+      - C
+      k: 5
+      n_records: 280
+    dev_only_note: The bundled 14-item flagship_l0 task pool is DEV-only for the D-0044
+      pre-freeze power/MDE pilot and MUST NOT be reused as confirmatory TEST items.
+  artifacts:
+  - /home/elzhang/cc_l0/runs/flagship_l0/flagship_l0_results.json
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: L0 DEV-power harness smoke/probe only; no TEST claim and no human-validation
+    gate. Frozen protocol D-0044 conditions and M1/M4 F6/F7 guardrails are implemented
+    for pipeline validation. The bundled 14-item flagship_l0 task pool is DEV-only
+    for the D-0044 pre-freeze power/MDE pilot and MUST NOT be reused as confirmatory
+    TEST items.

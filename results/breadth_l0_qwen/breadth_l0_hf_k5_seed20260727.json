@@ -1,0 +1,2706 @@
+{
+  "schema": "persona_breadth_l0_result_v1",
+  "backend": "hf",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "k": 5,
+  "fingerprint": "3d89236decb7de02",
+  "classifier": "judge",
+  "coverage_guard_passed": true,
+  "coverage_guard": {
+    "ok": true,
+    "expected_items": 12,
+    "expected_conditions": [
+      "no_persona",
+      "narrow_persona",
+      "oracle_persona"
+    ],
+    "k": 5,
+    "missing_items": [],
+    "missing_conditions": [],
+    "short_cells": [],
+    "unclassified_valid_samples": [],
+    "n_unclassified_valid_samples": 0
+  },
+  "metrics": {
+    "no_persona": {
+      "mean_domain_coverage_at_k": 1.0833333333333333,
+      "oracle_reach_rate_at_k": 0.9166666666666666,
+      "per_item_domain_coverage_at_k": {
+        "excel_shortest_path": 1,
+        "excel_topological_order": 1,
+        "contract_expected_value": 1,
+        "contract_bayes_update": 1,
+        "pm_critical_path": 2,
+        "pm_queue_bottleneck": 1,
+        "communications_binary_search": 1,
+        "communications_active_learning": 2,
+        "tutor_invariant_coins": 1,
+        "tutor_counterexample_average": 0,
+        "design_assignment_problem": 1,
+        "design_knapsack": 1
+      },
+      "per_item_oracle_reach_at_k": {
+        "excel_shortest_path": true,
+        "excel_topological_order": true,
+        "contract_expected_value": true,
+        "contract_bayes_update": true,
+        "pm_critical_path": true,
+        "pm_queue_bottleneck": true,
+        "communications_binary_search": true,
+        "communications_active_learning": true,
+        "tutor_invariant_coins": true,
+        "tutor_counterexample_average": false,
+        "design_assignment_problem": true,
+        "design_knapsack": true
+      }
+    },
+    "narrow_persona": {
+      "mean_domain_coverage_at_k": 0.9166666666666666,
+      "oracle_reach_rate_at_k": 0.8333333333333334,
+      "per_item_domain_coverage_at_k": {
+        "excel_shortest_path": 2,
+        "excel_topological_order": 1,
+        "contract_expected_value": 1,
+        "contract_bayes_update": 1,
+        "pm_critical_path": 1,
+        "pm_queue_bottleneck": 1,
+        "communications_binary_search": 1,
+        "communications_active_learning": 1,
+        "tutor_invariant_coins": 1,
+        "tutor_counterexample_average": 0,
+        "design_assignment_problem": 1,
+        "design_knapsack": 0
+      },
+      "per_item_oracle_reach_at_k": {
+        "excel_shortest_path": true,
+        "excel_topological_order": true,
+        "contract_expected_value": true,
+        "contract_bayes_update": true,
+        "pm_critical_path": true,
+        "pm_queue_bottleneck": true,
+        "communications_binary_search": true,
+        "communications_active_learning": true,
+        "tutor_invariant_coins": true,
+        "tutor_counterexample_average": false,
+        "design_assignment_problem": true,
+        "design_knapsack": false
+      }
+    },
+    "oracle_persona": {
+      "mean_domain_coverage_at_k": 1.0,
+      "oracle_reach_rate_at_k": 0.9166666666666666,
+      "per_item_domain_coverage_at_k": {
+        "excel_shortest_path": 1,
+        "excel_topological_order": 1,
+        "contract_expected_value": 1,
+        "contract_bayes_update": 1,
+        "pm_critical_path": 1,
+        "pm_queue_bottleneck": 1,
+        "communications_binary_search": 1,
+        "communications_active_learning": 2,
+        "tutor_invariant_coins": 1,
+        "tutor_counterexample_average": 0,
+        "design_assignment_problem": 1,
+        "design_knapsack": 1
+      },
+      "per_item_oracle_reach_at_k": {
+        "excel_shortest_path": true,
+        "excel_topological_order": true,
+        "contract_expected_value": true,
+        "contract_bayes_update": true,
+        "pm_critical_path": true,
+        "pm_queue_bottleneck": true,
+        "communications_binary_search": true,
+        "communications_active_learning": true,
+        "tutor_invariant_coins": true,
+        "tutor_counterexample_average": false,
+        "design_assignment_problem": true,
+        "design_knapsack": true
+      }
+    }
+  },
+  "suppression": {
+    "strict_suppression_rate": 0.08333333333333333,
+    "calibrated_suppression_rate": 0.08333333333333333,
+    "strict_item_ids": [
+      "design_knapsack"
+    ],
+    "calibrated_item_ids": [
+      "design_knapsack"
+    ],
+    "coverage_diff_narrow_minus_no_persona": [
+      -1.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      -1.0,
+      1.0,
+      0.0,
+      -1.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "coverage_bootstrap": {
+      "point": -0.16666666666666666,
+      "ci_lo": -0.5,
+      "ci_hi": 0.16666666666666666,
+      "ci_level": 0.9833333333333333,
+      "b": 2000,
+      "cluster": true
+    }
+  },
+  "breadth_axis": {
+    "method": "caa",
+    "axis": "breadth_focus",
+    "selected_layer": 7,
+    "stable_layer_found": true,
+    "unstable_reason": "",
+    "separation_by_layer": {
+      "0": 0.0,
+      "1": 16.69741505880915,
+      "2": 20.673782080577833,
+      "3": 13.88968432870746,
+      "4": 14.881535715900709,
+      "5": 16.043003520024588,
+      "6": 15.712719772542453,
+      "7": 16.2705000055948,
+      "8": 14.338040114502428,
+      "9": 12.524932679331723,
+      "10": 12.00482259581231,
+      "11": 11.169417818209583,
+      "12": 11.891400476258514,
+      "13": 15.357285897874384,
+      "14": 16.211997355924993,
+      "15": 14.030441625699808,
+      "16": 13.353735902092355,
+      "17": 14.270485671290405,
+      "18": 13.255840167131995,
+      "19": 9.779812981931583,
+      "20": 8.848583229226907,
+      "21": 8.20689808144416,
+      "22": 7.339870299342044,
+      "23": 6.6066402308912355,
+      "24": 6.375499567260284,
+      "25": 6.010304050393497,
+      "26": 5.633398249301703,
+      "27": 5.583608893088458,
+      "28": 4.982906549089701
+    },
+    "layer_selection": {
+      "chosen": 7,
+      "ranked": [
+        7,
+        14,
+        6
+      ],
+      "min_layer": 6,
+      "top_k": 3,
+      "candidates": {
+        "0": {
+          "layer": 0,
+          "separation": 0.0,
+          "pole_reach": 0.0,
+          "pole_null_p95": 0.0,
+          "valid": false,
+          "reject_reason": "below depth floor (layer 0 < 6); non-positive pos/neg separation; pole_reach <= 0 (pole not on +\u00fb side of neutral)"
+        },
+        "1": {
+          "layer": 1,
+          "separation": 16.69741505880915,
+          "pole_reach": 1.0248742795697448,
+          "pole_null_p95": 0.061100327613298124,
+          "valid": false,
+          "reject_reason": "below depth floor (layer 1 < 6)"
+        },
+        "2": {
+          "layer": 2,
+          "separation": 20.673782080577833,
+          "pole_reach": 1.776999836967657,
+          "pole_null_p95": 0.09960589695781841,
+          "valid": false,
+          "reject_reason": "below depth floor (layer 2 < 6)"
+        },
+        "3": {
+          "layer": 3,
+          "separation": 13.88968432870746,
+          "pole_reach": 1.973859571390369,
+          "pole_null_p95": 0.11931719549410691,
+          "valid": false,
+          "reject_reason": "below depth floor (layer 3 < 6)"
+        },
+        "4": {
+          "layer": 4,
+          "separation": 14.881535715900709,
+          "pole_reach": 2.381684677483228,
+          "pole_null_p95": 0.15563045590597294,
+          "valid": false,
+          "reject_reason": "below depth floor (layer 4 < 6)"
+        },
+        "5": {
+          "layer": 5,
+          "separation": 16.043003520024588,
+          "pole_reach": 2.9716687561822805,
+          "pole_null_p95": 0.2148134985882541,
+          "valid": false,
+          "reject_reason": "below depth floor (layer 5 < 6)"
+        },
+        "6": {
+          "layer": 6,
+          "separation": 15.712719772542453,
+          "pole_reach": 4.563661174419529,
+          "pole_null_p95": 0.3714970715163252,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "7": {
+          "layer": 7,
+          "separation": 16.2705000055948,
+          "pole_reach": 5.02659653497942,
+          "pole_null_p95": 0.391554504956786,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "8": {
+          "layer": 8,
+          "separation": 14.338040114502428,
+          "pole_reach": 6.233162620773552,
+          "pole_null_p95": 0.3895205660945098,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "9": {
+          "layer": 9,
+          "separation": 12.524932679331723,
+          "pole_reach": 6.227159790947201,
+          "pole_null_p95": 0.46160964449149783,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "10": {
+          "layer": 10,
+          "separation": 12.00482259581231,
+          "pole_reach": 7.687044604850414,
+          "pole_null_p95": 0.509622476694406,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "11": {
+          "layer": 11,
+          "separation": 11.169417818209583,
+          "pole_reach": 7.736941630759526,
+          "pole_null_p95": 0.5399247905705531,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "12": {
+          "layer": 12,
+          "separation": 11.891400476258514,
+          "pole_reach": 7.706121864950554,
+          "pole_null_p95": 0.5485773059454752,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "13": {
+          "layer": 13,
+          "separation": 15.357285897874384,
+          "pole_reach": 7.80878327487366,
+          "pole_null_p95": 0.6035897618904822,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "14": {
+          "layer": 14,
+          "separation": 16.211997355924993,
+          "pole_reach": 7.476713734799242,
+          "pole_null_p95": 0.7232093306502094,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "15": {
+          "layer": 15,
+          "separation": 14.030441625699808,
+          "pole_reach": 9.209586077161244,
+          "pole_null_p95": 0.8137545480494592,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "16": {
+          "layer": 16,
+          "separation": 13.353735902092355,
+          "pole_reach": 9.126098680476678,
+          "pole_null_p95": 0.8216951742532794,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "17": {
+          "layer": 17,
+          "separation": 14.270485671290405,
+          "pole_reach": 10.455008406659708,
+          "pole_null_p95": 0.9051007963953996,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "18": {
+          "layer": 18,
+          "separation": 13.255840167131995,
+          "pole_reach": 11.941700200923147,
+          "pole_null_p95": 1.0368276308023319,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "19": {
+          "layer": 19,
+          "separation": 9.779812981931583,
+          "pole_reach": 13.933960091106123,
+          "pole_null_p95": 1.5233150370647468,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "20": {
+          "layer": 20,
+          "separation": 8.848583229226907,
+          "pole_reach": 19.593995905286164,
+          "pole_null_p95": 1.7229326527373767,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "21": {
+          "layer": 21,
+          "separation": 8.20689808144416,
+          "pole_reach": 29.94087414244514,
+          "pole_null_p95": 2.4195922878621836,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "22": {
+          "layer": 22,
+          "separation": 7.339870299342044,
+          "pole_reach": 41.18598541772293,
+          "pole_null_p95": 2.984493289879232,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "23": {
+          "layer": 23,
+          "separation": 6.6066402308912355,
+          "pole_reach": 51.783905859407355,
+          "pole_null_p95": 3.49198757765908,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "24": {
+          "layer": 24,
+          "separation": 6.375499567260284,
+          "pole_reach": 63.178930768753006,
+          "pole_null_p95": 4.273875332721796,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "25": {
+          "layer": 25,
+          "separation": 6.010304050393497,
+          "pole_reach": 74.23188529231724,
+          "pole_null_p95": 5.057437623349096,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "26": {
+          "layer": 26,
+          "separation": 5.633398249301703,
+          "pole_reach": 92.77047273892623,
+          "pole_null_p95": 5.502881777347725,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "27": {
+          "layer": 27,
+          "separation": 5.583608893088458,
+          "pole_reach": 108.42063473062575,
+          "pole_null_p95": 6.885822689845378,
+          "valid": true,
+          "reject_reason": ""
+        },
+        "28": {
+          "layer": 28,
+          "separation": 4.982906549089701,
+          "pole_reach": 86.18994343363254,
+          "pole_null_p95": 5.15998154564932,
+          "valid": true,
+          "reject_reason": ""
+        }
+      }
+    },
+    "facade_ratio": 0.27147351965493816,
+    "facade_ci": [
+      0.005913323151613872,
+      0.5370337161582625
+    ],
+    "broad_reach": 1.3645878532361797,
+    "focus_reach": -0.04827956820278345,
+    "pole_reach": 5.02659653497942,
+    "broad_null_p95": 0.26408694542046235,
+    "lexical_control_reach": -0.2515471670397469,
+    "expected_order": true,
+    "linearly_readable": true,
+    "verdict": "LINEARLY_READABLE_L0"
+  },
+  "items": [
+    {
+      "item_id": "excel_shortest_path",
+      "condition": "no_persona",
+      "prompt": "Solve the task carefully. Use the best method you can.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: A sheet lists directed roads with travel times: A-B 4, A-C 2, C-B 1, B-D 5, C-D 8, B-E 2, E-D 1. Find the fastest route from A to D and its total time.\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To find the fastest route from A to D, we can use Dijkstra's algorithm, which is well-suited for finding the shortest path in a graph with non-negative weights.\n\nApplying Dijkstra's algorithm:\n\n1. Start at node A.\n2. Initialize distances: A=0, B=\u221e, C=\u221e, D=\u221e, E=\u221e.\n3. Process nodes in order of increasing distance:\n   - From A: Update B (A-B 4) and C (A-C 2).\n   - From C: Update B (C-B 1, but already better via A) and D (C-D 8).\n   - From B: Update D (B-D 5, better than C-D).\n   - From D: No further updates needed as all neighbors are processed.\n   - From E: Not connected to A, no update.\n\nThe",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To find the fastest route from A to D, we can use Dijkstra's algorithm, which is well-suited for finding the shortest path in a graph with non-negative weights.\n\nApplying Dijkstra's algorithm:\n\n1. Start at node A.\n2. Initialize distances: A=0, B=\u221e, C=\u221e, D=\u221e, E=\u221e.\n3. Process nodes in order of increasing distance:\n   - From A: Update B (A-B 4) and C (A-C 2).\n   - From C: Update B (C-B 1, but already better via A) and D (C-D 8).\n   - From B: Update D (B-D 5, better than C-D).\n   - From D: No further updates needed as all neighbors are processed.\n   - From E: Not connected to A, no update.\n\nThe",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To solve this problem, we can use Dijkstra's algorithm, which is well-suited for finding the shortest (or fastest) path in a graph with non-negative weights.\n\n**Solution:**\n\n1. **Graph Representation:**\n   - A -> B: 4\n   - A -> C: 2\n   - C -> B: 1\n   - B -> D: 5\n   - C -> D: 8\n   - B -> E: 2\n   - E -> D: 1\n\n2. **Applying Dijkstra's Algorithm:**\n   - Start at node A.\n   - Calculate the tentative distance to each neighbor of A:\n     - A to B: 4\n     - A to C: 2\n   - Mark A as visited.\n   - Select the unvisited node with the smallest tentative distance (C, distance",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To solve this problem, we can use Dijkstra's algorithm, which is well-suited for finding the shortest (or fastest) path in a graph with non-negative weights.\n\n**Solution:**\n\n1. **Graph Representation:**\n   - A -> B: 4\n   - A -> C: 2\n   - C -> B: 1\n   - B -> D: 5\n   - C -> D: 8\n   - B -> E: 2\n   - E -> D: 1\n\n2. **Applying Dijkstra's Algorithm:**\n   - Start at node A.\n   - Calculate the tentative distance to each neighbor of A:\n     - A to B: 4\n     - A to C: 2\n   - Mark A as visited.\n   - Select the unvisited node with the smallest tentative distance (C, distance",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To solve this problem, we can use Dijkstra's algorithm, which is well-suited for finding the shortest (or fastest) path in a graph with non-negative weights.\n\n**Solution:**\n\n1. **Graph Representation:**\n   - A -> B: 4\n   - A -> C: 2\n   - C -> B: 1\n   - B -> D: 5\n   - C -> D: 8\n   - B -> E: 2\n   - E -> D: 1\n\n2. **Applying Dijkstra's Algorithm:**\n   - Start at node A.\n   - Initialize distances: `dist(A) = 0`, `dist(B) = \u221e`, `dist(C) = \u221e`, `dist(D) = \u221e`, `dist(E) = \u221e`.\n   - Process nodes in order of increasing",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "excel_shortest_path",
+      "condition": "narrow_persona",
+      "prompt": "Act as an Excel expert. Stay within spreadsheet formulas and workflows.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: A sheet lists directed roads with travel times: A-B 4, A-C 2, C-B 1, B-D 5, C-D 8, B-E 2, E-D 1. Find the fastest route from A to D and its total time.\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To find the fastest route from A to D and its total time, you can use Dijkstra's algorithm. However, for simplicity and given the small number of nodes, we can also solve this using Excel with a combination of formulas.\n\nAssuming your data is in cells A1:B7 as follows:\n\n|   | A    | B    | C    | D    | E    |\n|---|------|------|------|------|------|\n| 1 |     | A-B  | A-C  | C-B  | B-D  |\n| 2 |     | 4    | 2    | 1    | 5    |\n| 3 |     |      |      | C-D  | B-E  |\n| 4 |     |      |      | 8    | 2    |\n| 5 |     |      |",
+          "domains": [
+            "graph_algorithms",
+            "spreadsheet"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To find the fastest route from A to D and its total time, you can use Dijkstra's algorithm. However, for simplicity and given the small number of nodes, we can also solve this using Excel with a combination of formulas.\n\nAssuming your data is in cells A1:B7 as follows:\n\n|   | A    | B    | C    | D    | E    |\n|---|------|------|------|------|------|\n| 1 |     | A-B  | A-C  | C-B  | B-D  |\n| 2 |     | 4    | 2    | 1    | 5    |\n| 3 |     |      |      | C-D  | B-E  |\n| 4 |     |      |      | 8    | 2    |\n| 5 |     |      |",
+          "domains": [
+            "graph_algorithms",
+            "spreadsheet"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To find the fastest route from A to D and its total time, you can use Dijkstra's algorithm. However, for simplicity and given the small number of nodes, we can also solve this using Excel with a combination of formulas.\n\nAssuming your data is in cells A1:B7 as follows:\n\n|   | A    | B    | C    | D    | E    |\n|---|------|------|------|------|------|\n| 1 |     | A-B  | A-C  | C-B  | B-D  |\n| 2 |     | 4    | 2    | 1    | 5    |\n| 3 |     |      |      | C-D  | B-E  |\n| 4 |     |      |      | 8    | 2    |\n| 5 |     |      |",
+          "domains": [
+            "graph_algorithms",
+            "spreadsheet"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To find the fastest route from A to D and its total time, you can use Dijkstra's algorithm. However, for simplicity and given the small number of nodes, we can also solve this using Excel with a combination of formulas.\n\nAssuming your data is in cells A1:B7 as follows:\n\n|   | A    | B    | C    | D    | E    |\n|---|------|------|------|------|------|\n| 1 |     | A-B  | A-C  | C-B  | B-D  |\n| 2 |     | 4    | 2    | 1    | 5    |\n| 3 |     |      |      | C-D  | B-E  |\n| 4 |     |      |      | 8    | 2    |\n| 5 |     |      |",
+          "domains": [
+            "graph_algorithms",
+            "spreadsheet"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To find the fastest route from A to D and its total time, you can use Dijkstra's algorithm. However, for simplicity and given the small number of nodes, we can also solve this using Excel with a combination of formulas.\n\nAssuming your data is in cells A1:B7 as follows:\n\n|   | A    | B    | C    | D    | E    |\n|---|------|------|------|------|------|\n| 1 |     | A-B  | A-C  | C-B  | B-D  |\n| 2 |     | 4    | 2    | 1    | 5    |\n| 3 |     |      |      | C-D  | B-E  |\n| 4 |     |      |      | 8    | 2    |\n| 5 |     |      |",
+          "domains": [
+            "graph_algorithms",
+            "spreadsheet"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "excel_shortest_path",
+      "condition": "oracle_persona",
+      "prompt": "Act as a graph algorithms expert. Use the cleanest graph method.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: A sheet lists directed roads with travel times: A-B 4, A-C 2, C-B 1, B-D 5, C-D 8, B-E 2, E-D 1. Find the fastest route from A to D and its total time.\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To solve this problem, we can use Dijkstra's algorithm, which is well-suited for finding the shortest (or fastest in this case) path in a weighted graph with non-negative weights.\n\n### Graph Representation:\n- Nodes: A, B, C, D, E\n- Edges with weights:\n  - A \u2192 B: 4\n  - A \u2192 C: 2\n  - C \u2192 B: 1\n  - B \u2192 D: 5\n  - C \u2192 D: 8\n  - B \u2192 E: 2\n  - E \u2192 D: 1\n\n### Dijkstra's Algorithm Steps:\n\n1. **Initialization**:\n   - Set the distance to the starting node (A) as 0 and to all other nodes as infinity.\n   - Create a set of unvisited nodes.\n\n2. **Algorithm Execution**:\n   -",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To solve this problem, we can use Dijkstra's algorithm, which is well-suited for finding the shortest (or fastest in this case) path in a weighted graph with non-negative weights.\n\n### Graph Representation:\n- Nodes: A, B, C, D, E\n- Edges with weights:\n  - A \u2192 B: 4\n  - A \u2192 C: 2\n  - C \u2192 B: 1\n  - B \u2192 D: 5\n  - C \u2192 D: 8\n  - B \u2192 E: 2\n  - E \u2192 D: 1\n\n### Dijkstra's Algorithm Steps:\n\n1. **Initialization**:\n   - Set the distance to the starting node (A) as 0 and to all other nodes as infinity.\n   - Create a set of unvisited nodes.\n\n2. **Algorithm Execution**:\n   -",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To solve this problem, we can use Dijkstra's algorithm, which is well-suited for finding the shortest (or fastest in this case) path in a weighted graph with non-negative weights.\n\n### Graph Representation:\nLet's represent the graph using an adjacency list:\n\n```\nA -> B(4), C(2)\nC -> B(1), D(8)\nB -> D(5), E(2)\nE -> D(1)\n```\n\n### Dijkstra's Algorithm Steps:\n1. Initialize distances to all nodes as infinity, except the starting node (A), which is set to 0.\n2. Create a priority queue (min-heap) and insert all nodes with their initial distances.\n3. While the priority queue is not empty:\n   - Extract the node with the smallest distance.\n   - For each neighbor of the current node, calculate the tentative distance through the",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To solve this problem, we can use Dijkstra's algorithm, which is well-suited for finding the shortest (or fastest in this case) path in a weighted graph with non-negative weights.\n\n### Graph Representation:\nLet's represent the graph using an adjacency list:\n\n```\nA -> B(4), C(2)\nC -> B(1), D(8)\nB -> D(5), E(2)\nE -> D(1)\n```\n\n### Dijkstra's Algorithm Steps:\n1. Initialize distances to all nodes as infinity, except the starting node (A), which is set to 0.\n2. Create a priority queue (min-heap) and insert all nodes with their initial distances.\n3. While the priority queue is not empty:\n   - Extract the node with the smallest distance.\n   - For each neighbor of the current node, calculate the tentative distance through the",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To solve this problem, we can use Dijkstra's algorithm, which is well-suited for finding the shortest (or fastest in this case) path in a weighted graph with non-negative weights.\n\n### Graph Representation:\nLet's represent the graph using an adjacency list:\n\n```\nA -> B(4), C(2)\nC -> B(1), D(8)\nB -> D(5), E(2)\nE -> D(1)\n```\n\n### Dijkstra's Algorithm Steps:\n1. Initialize distances to all nodes as infinity, except the starting node (A), which is set to 0.\n2. Create a priority queue (min-heap) and insert all nodes with their initial distances.\n3. While the priority queue is not empty:\n   - Extract the node with the smallest distance.\n   - For each neighbor of the current node, calculate the tentative distance through the",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "excel_topological_order",
+      "condition": "no_persona",
+      "prompt": "Solve the task carefully. Use the best method you can.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Tasks have dependencies: clean before paint; wire before inspect; frame before wire and clean; paint and inspect before deliver. Give a valid execution order.\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "Frame \u2192 Wire \u2192 Inspect \u2192 Clean \u2192 Paint \u2192 Deliver\n\nMethod: Topological Sorting in Graph Theory",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "Frame \u2192 Wire \u2192 Inspect \u2192 Clean \u2192 Paint \u2192 Deliver\n\nMethod: Topological Sorting in Graph Theory",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "Frame \u2192 Wire \u2192 Inspect \u2192 Clean \u2192 Paint \u2192 Deliver\n\nMethod: Topological Sorting in Graph Theory",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "Frame \u2192 Wire \u2192 Inspect \u2192 Clean \u2192 Paint \u2192 Deliver\n\nMethod: Topological Sorting in Graph Theory",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "Valid execution order:  \n1. Frame  \n2. Wire  \n3. Inspect  \n4. Clean  \n5. Paint  \n6. Deliver  \n\nMethod/Domain: Topological Sorting in Graph Theory",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "excel_topological_order",
+      "condition": "narrow_persona",
+      "prompt": "Act as an Excel expert. Stay within spreadsheet formulas and workflows.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Tasks have dependencies: clean before paint; wire before inspect; frame before wire and clean; paint and inspect before deliver. Give a valid execution order.\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To determine a valid execution order for tasks with given dependencies, you can use topological sorting. This method is commonly used in project management to organize tasks based on their dependencies.\n\nHere\u2019s how you can achieve this using Excel:\n\n1. **List all tasks** in one column (e.g., A2:A8).\n2. **Create a dependency list** in another column (e.g., B2:B8), where each task references its dependencies. For example:\n   - `Clean` depends on nothing: `=A2`\n   - `Paint` depends on `Clean`: `=IFERROR(INDEX($A$2:$A$8, MATCH(0, COUNTIF($B$2:B2, $A$2:$A$8), 0)), A3)`\n   - `Inspect` depends on `Wire`: `=IFERROR(INDEX($A$",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To determine a valid execution order for tasks with given dependencies, you can use topological sorting. This method is commonly used in project management to organize tasks based on their dependencies.\n\nHere\u2019s a step-by-step solution:\n\n1. **List all tasks**: \n   - Frame\n   - Wire\n   - Clean\n   - Paint\n   - Inspect\n   - Deliver\n\n2. **Identify dependencies**:\n   - Frame -> Wire\n   - Frame -> Clean\n   - Wire -> Paint\n   - Wire -> Inspect\n   - Clean -> Paint\n   - Clean -> Inspect\n   - Paint -> Deliver\n   - Inspect -> Deliver\n\n3. **Create a graph or use a list to represent tasks and their dependencies**:\n   - Frame (depends on none)\n   - Wire (depends on Frame)\n   - Clean (depends on Frame)\n   - Paint",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To determine a valid execution order for tasks with given dependencies, you can use topological sorting. This method is commonly used in project management to organize tasks based on their dependencies.\n\nHere\u2019s a step-by-step solution:\n\n1. **List all tasks and their dependencies:**\n   - Frame (F)\n   - Wire (W) depends on Frame (F)\n   - Clean (C) depends on Frame (F)\n   - Paint (P) depends on Clean (C)\n   - Inspect (I) depends on Wire (W)\n   - Deliver (D) depends on Paint (P) and Inspect (I)\n\n2. **Create a graph or adjacency list to represent dependencies:**\n   - F -> W, C\n   - C -> P\n   - W -> I\n   - P, I -> D\n\n3. **Use a topological sort algorithm to find",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To determine a valid execution order for tasks with given dependencies, we can use topological sorting. This method is commonly used in project management to organize tasks based on their dependencies.\n\nGiven dependencies:\n1. Clean before Paint\n2. Wire before Inspect\n3. Frame before Wire and Clean\n4. Paint and Inspect before Deliver\n\nA possible valid execution order could be:\n\n1. Frame\n2. Wire (depends on Frame)\n3. Clean (depends on Frame)\n4. Paint (depends on Clean)\n5. Inspect (depends on Wire)\n6. Deliver (depends on Paint and Inspect)\n\nSo, the valid execution order is:\n\n1. Frame\n2. Wire\n3. Clean\n4. Paint\n5. Inspect\n6. Deliver",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To determine a valid execution order for tasks with given dependencies, you can use topological sorting. This method is commonly used in project management to organize tasks based on their dependencies.\n\nHere's the valid execution order based on the dependencies provided:\n\n1. Frame\n2. Wire\n3. Clean\n4. Paint\n5. Inspect\n6. Deliver\n\nThis order respects all the given dependencies:\n- Frame must be done before Wire.\n- Wire must be done before Clean.\n- Clean must be done before Paint.\n- Paint and Inspect must be done before Deliver.\n\nThis sequence ensures that each task is completed only after its prerequisites are met.",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "excel_topological_order",
+      "condition": "oracle_persona",
+      "prompt": "Act as a graph algorithms expert. Use dependency-graph reasoning.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Tasks have dependencies: clean before paint; wire before inspect; frame before wire and clean; paint and inspect before deliver. Give a valid execution order.\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To solve this task, we can use topological sorting on a dependency graph. This method is commonly used in project management and scheduling to determine a valid sequence of tasks given their dependencies.\n\nHere's the dependency graph based on the given tasks:\n\n- `frame` -> `wire`\n- `clean` -> `wire`\n- `clean` -> `paint`\n- `wire` -> `inspect`\n- `paint` -> `deliver`\n- `inspect` -> `deliver`\n\nUsing topological sorting, we can derive the following valid execution order:\n\n1. **frame**\n2. **clean**\n3. **wire**\n4. **paint**\n5. **inspect**\n6. **deliver**\n\nThis order respects all the given dependencies.",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To solve this task, we can use topological sorting on a dependency graph. This method is commonly used in project management and scheduling to determine a valid sequence of tasks based on their dependencies.\n\nHere's the dependency graph based on the given tasks:\n\n- `frame` -> `wire`\n- `clean` -> `wire`\n- `clean` -> `paint`\n- `wire` -> `inspect`\n- `paint` -> `deliver`\n- `inspect` -> `deliver`\n\nUsing topological sorting, we can derive the following valid execution order:\n\n1. **frame**\n2. **clean**\n3. **wire**\n4. **paint**\n5. **inspect**\n6. **deliver**\n\nThis order respects all the given dependencies.",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To solve this task, we can use topological sorting on a dependency graph. This method is commonly used in project management and scheduling to determine a valid sequence of tasks based on their dependencies.\n\nHere's the dependency graph based on the given tasks:\n\n- `frame` -> `wire`\n- `clean` -> `wire`\n- `clean` -> `paint`\n- `wire` -> `inspect`\n- `paint` -> `deliver`\n- `inspect` -> `deliver`\n\nThe valid execution order can be determined by performing a topological sort on this graph. The result is:\n\n1. `frame`\n2. `clean`\n3. `wire`\n4. `paint`\n5. `inspect`\n6. `deliver`\n\nThis order respects all the given dependencies.",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To solve this task, we can use topological sorting on a dependency graph. This method is commonly used in project management and scheduling to determine a valid sequence of tasks given their dependencies.\n\nHere's the dependency graph based on the given tasks:\n\n- `frame` -> `wire`\n- `clean` -> `wire`\n- `clean` -> `paint`\n- `wire` -> `inspect`\n- `paint` -> `deliver`\n- `inspect` -> `deliver`\n\nThe valid execution order can be determined by performing a topological sort on this graph. The result is:\n\n1. `frame`\n2. `clean`\n3. `wire`\n4. `paint`\n5. `inspect`\n6. `deliver`\n\nThis order respects all the given dependencies.",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To solve this task, we can use topological sorting on a dependency graph. This method is commonly used in project management and scheduling to determine a valid sequence of tasks given their dependencies.\n\nHere's the dependency graph based on the given tasks:\n\n- `frame` -> `wire`\n- `clean` -> `wire`\n- `clean` -> `paint`\n- `wire` -> `inspect`\n- `paint` -> `deliver`\n- `inspect` -> `deliver`\n\nThe valid execution order can be determined by performing a topological sort on this graph. The result is:\n\n1. `frame`\n2. `clean`\n3. `wire`\n4. `paint`\n5. `inspect`\n6. `deliver`\n\nThis order respects all the given dependencies.",
+          "domains": [
+            "graph_algorithms"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "contract_expected_value",
+      "condition": "no_persona",
+      "prompt": "Solve the task carefully. Use the best method you can.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Toy contract choice: Clause A costs $20 if a 30% delay occurs. Clause B costs $8 always plus $5 if delay occurs. Pick the lower expected cost clause.\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To determine which clause has the lower expected cost, we need to calculate the expected cost for each clause.\n\n**Clause A:**\n- Fixed cost: $20\n- Additional cost if delayed: $0 (since it only specifies the fixed cost and does not mention additional costs for delay)\n\n**Clause B:**\n- Fixed cost: $8\n- Additional cost if delayed: $5\n\nLet's assume the probability of a delay is \\( p \\).\n\n**Expected Cost Calculation:**\n\nFor **Clause A**, the expected cost is simply the fixed cost since there's no additional cost for delay:\n\\[ \\text{Expected Cost}_A = 20 \\]\n\nFor **Clause B**, the expected cost is the sum of the fixed cost and the additional cost weighted by the probability of delay:\n\\[ \\text{Expected Cost}_B = 8 + 5p \\]\n\nTo find",
+          "domains": [
+            "expected_value"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To determine which clause has the lower expected cost, we need to calculate the expected cost for each clause.\n\n**Clause A:**\n- Fixed cost: $20\n- Additional cost if delayed: $0 (since it only specifies the fixed cost and does not mention additional costs for delay)\n\n**Clause B:**\n- Fixed cost: $8\n- Additional cost if delayed: $5\n\nLet's assume the probability of a delay is \\( p \\).\n\n**Expected Cost Calculation:**\n\nFor **Clause A**, the expected cost is simply the fixed cost since there's no additional cost for delay:\n\\[ \\text{Expected Cost}_A = 20 \\]\n\nFor **Clause B**, the expected cost is the sum of the fixed cost and the expected additional cost due to delay:\n\\[ \\text{Expected Cost}_B = 8 + 5p \\]\n\nTo find the lower",
+          "domains": [
+            "expected_value"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To determine which clause has the lower expected cost, we need to calculate the expected cost for each clause under the assumption that a delay might occur.\n\n**Clause A:**\n- Fixed cost: $20\n- Additional cost if delayed: $0 (since it only specifies the fixed cost and does not mention additional costs for delay)\n\n**Clause B:**\n- Fixed cost: $8\n- Additional cost if delayed: $5\n\nLet's assume the probability of a delay is \\( p \\).\n\n**Expected Cost Calculation:**\n\nFor Clause A:\n\\[ \\text{Expected Cost}_A = 20 \\]\n\nFor Clause B:\n\\[ \\text{Expected Cost}_B = 8 + 5p \\]\n\nTo find the lower expected cost, we compare these two expressions:\n\n1. If \\( p = 0 \\) (no delay):\n   - Clause A: $2",
+          "domains": [
+            "expected_value"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To determine which clause has the lower expected cost, we need to calculate the expected cost for both clauses.\n\n**Clause A:**\n- Fixed cost: $20\n- Additional cost if delayed: $0 (since it only specifies the fixed cost and does not mention additional costs for delay)\n\n**Clause B:**\n- Fixed cost: $8\n- Additional cost if delayed: $5\n\nLet's assume the probability of a delay is \\( p \\).\n\n**Expected Cost Calculation:**\n\nFor Clause A:\n\\[ \\text{Expected Cost}_A = 20 \\]\n\nFor Clause B:\n\\[ \\text{Expected Cost}_B = 8 + 5p \\]\n\nTo find the lower expected cost, we compare these two expressions:\n\n1. If \\( p = 0 \\) (no delay):\n   - Clause A: $20\n   - Clause B: $",
+          "domains": [
+            "expected_value"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To determine which clause has the lower expected cost, we need to calculate the expected cost for both clauses.\n\n**Clause A:**\n- Fixed cost: $20\n- Additional cost if delayed: $0 (since it only specifies the fixed cost and does not mention additional costs for delay)\n\n**Clause B:**\n- Fixed cost: $8\n- Additional cost if delayed: $5\n\nLet's assume the probability of a delay is \\( p \\).\n\n**Expected Cost Calculation:**\n\nFor Clause A:\n\\[ \\text{Expected Cost}_A = 20 \\]\n\nFor Clause B:\n\\[ \\text{Expected Cost}_B = 8 + 5p \\]\n\nTo find the lower expected cost, we compare these two expressions:\n\n1. If \\( p = 0 \\) (no delay):\n   - Clause A: $20\n   - Clause B: $",
+          "domains": [
+            "expected_value"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "contract_expected_value",
+      "condition": "narrow_persona",
+      "prompt": "Act as a contract analyst. Discuss only clause wording and legal risk.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Toy contract choice: Clause A costs $20 if a 30% delay occurs. Clause B costs $8 always plus $5 if delay occurs. Pick the lower expected cost clause.\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To determine which clause has the lower expected cost, we need to calculate the expected cost for both clauses under the assumption that a delay might occur.\n\n**Clause A:**\n- Fixed cost: $20\n- Additional cost if delayed: $0 (since it's only triggered by a delay, and no additional cost is specified beyond the initial $20)\n\nExpected Cost for Clause A:\n\\[ \\text{Expected Cost}_A = \\$20 \\]\n\n**Clause B:**\n- Fixed cost: $8\n- Additional cost if delayed: $5\n\nLet \\( p \\) be the probability of a delay occurring. The expected cost for Clause B can be calculated as follows:\n\\[ \\text{Expected Cost}_B = \\$8 + p \\times \\$5 \\]\n\nTo compare the expected costs, we set up the inequality:\n\\[ \\text{Expected Cost}_A \\le",
+          "domains": [
+            "expected_value"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To determine which clause has the lower expected cost, we need to calculate the expected cost for both clauses under the assumption that a delay might occur.\n\n**Clause A:**\n- Fixed cost: $20\n- Additional cost if delayed: $0 (since it's only triggered by a delay, and no additional cost is specified beyond the initial $20)\n\nExpected Cost for Clause A:\n\\[ \\text{Expected Cost}_A = \\$20 \\]\n\n**Clause B:**\n- Fixed cost: $8\n- Additional cost if delayed: $5\n\nLet \\( p \\) be the probability of a delay occurring. The expected cost for Clause B can be calculated as follows:\n\\[ \\text{Expected Cost}_B = \\$8 + p \\times \\$5 \\]\n\nTo compare the expected costs, we set up the inequality:\n\\[ \\text{Expected Cost}_A < \\",
+          "domains": [
+            "expected_value"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To determine which clause has the lower expected cost, we need to calculate the expected cost for both clauses under the assumption that a delay might occur.\n\n**Clause A:**\n- Fixed cost: $20\n- Additional cost if delayed: $0 (since it's only triggered by a delay, and no additional cost is specified beyond the initial $20 if a delay occurs)\n\nExpected Cost for Clause A:\n\\[ \\text{Expected Cost}_A = \\$20 \\]\n\n**Clause B:**\n- Fixed cost: $8\n- Additional cost if delayed: $5\n\nLet \\( p \\) be the probability of a delay occurring. The expected cost for Clause B can be calculated as follows:\n\\[ \\text{Expected Cost}_B = \\$8 + p \\times \\$5 \\]\n\nTo compare the expected costs, we set up the inequality:\n\\[ \\text{Expected Cost",
+          "domains": [
+            "expected_value"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To determine which clause has the lower expected cost, we need to calculate the expected cost for both clauses under the assumption that a delay might occur.\n\n**Clause A:**\n- Fixed cost: $20\n- Additional cost if delayed: $0 (since it's only triggered by a delay, and no additional cost is specified beyond the initial $20 if a delay occurs)\n\nExpected Cost for Clause A:\n\\[ \\text{Expected Cost}_A = \\$20 \\]\n\n**Clause B:**\n- Fixed cost: $8\n- Additional cost if delayed: $5\n\nLet \\( p \\) be the probability of a delay occurring. The expected cost for Clause B can be calculated as follows:\n\\[ \\text{Expected Cost}_B = \\$8 + p \\times \\$5 \\]\n\nTo compare the expected costs, we set up the inequality:\n\\[ \\text{Expected Cost",
+          "domains": [
+            "expected_value"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To determine which clause has the lower expected cost, we need to calculate the expected cost for both clauses under the assumption that a delay might occur.\n\n**Clause A:**\n- Fixed cost: $20\n- Additional cost if delayed: $0 (since it's only triggered by a delay, and no additional cost is specified beyond the initial $20 if a delay occurs)\n\nExpected Cost of Clause A:\n\\[ \\text{Expected Cost}_A = \\$20 \\]\n\n**Clause B:**\n- Fixed cost: $8\n- Additional cost if delayed: $5\n\nLet \\( p \\) be the probability of a delay occurring. The expected cost for Clause B can be calculated as follows:\n\\[ \\text{Expected Cost}_B = \\$8 + p \\times \\$5 \\]\n\nTo compare the expected costs, we set up the inequality:\n\\[ \\text{Expected Cost",
+          "domains": [
+            "expected_value"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "contract_expected_value",
+      "condition": "oracle_persona",
+      "prompt": "Act as a decision analyst. Compute expected values.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Toy contract choice: Clause A costs $20 if a 30% delay occurs. Clause B costs $8 always plus $5 if delay occurs. Pick the lower expected cost clause.\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To determine which clause has the lower expected cost, we can calculate the expected value for each clause.\n\n**Clause A:**\n- Cost if a 30% delay occurs: $20\n- Probability of a 30% delay: 30% or 0.3\n\nExpected cost for Clause A:\n\\[ \\text{Expected Cost}_A = (0.3 \\times 20) + (0.7 \\times 0) = 6 \\]\n\n**Clause B:**\n- Fixed cost: $8\n- Additional cost if delay occurs: $5\n- Probability of a delay: 30% or 0.3\n\nExpected additional cost for Clause B:\n\\[ \\text{Expected Additional Cost}_B = 0.3 \\times 5 = 1.5 \\]\n\nTotal expected cost for Clause B:\n\\[ \\text",
+          "domains": [
+            "expected_value"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To determine which clause has the lower expected cost, we can calculate the expected value for each clause.\n\n**Clause A:**\n- Cost if a 30% delay occurs: $20\n- Probability of a 30% delay: 30% or 0.3\n\nExpected cost for Clause A:\n\\[ \\text{Expected Cost}_A = (0.3 \\times 20) + (0.7 \\times 0) = 6 \\]\n\n**Clause B:**\n- Fixed cost: $8\n- Additional cost if delay occurs: $5\n- Probability of a delay: 30% or 0.3\n\nExpected additional cost for Clause B:\n\\[ \\text{Expected Additional Cost}_B = 0.3 \\times 5 = 1.5 \\]\n\nTotal expected cost for Clause B:\n\\[ \\text",
+          "domains": [
+            "expected_value"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To determine which clause has the lower expected cost, we can calculate the expected value for each clause.\n\n**Clause A:**\n- Cost if a 30% delay occurs: $20\n- Probability of a 30% delay: 30% or 0.3\n\nExpected cost for Clause A:\n\\[ \\text{Expected Cost}_A = (0.3 \\times 20) + (0.7 \\times 0) = 6 \\]\n\n**Clause B:**\n- Fixed cost: $8\n- Additional cost if delay occurs: $5\n- Probability of a delay: 30% or 0.3\n\nExpected additional cost for Clause B:\n\\[ \\text{Expected Additional Cost}_B = 0.3 \\times 5 = 1.5 \\]\n\nTotal expected cost for Clause B:\n\\[ \\text",
+          "domains": [
+            "expected_value"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To determine which clause has the lower expected cost, we can calculate the expected value for each clause.\n\n**Clause A:**\n- Cost if a 30% delay occurs: $20\n- Probability of a 30% delay: 30% or 0.3\n\nExpected cost for Clause A:\n\\[ \\text{Expected Cost}_A = (0.3 \\times 20) + (0.7 \\times 0) = 6 \\]\n\n**Clause B:**\n- Fixed cost: $8\n- Additional cost if delay occurs: $5\n- Probability of a delay: 30% or 0.3\n\nExpected additional cost for Clause B:\n\\[ \\text{Expected Additional Cost}_B = 0.3 \\times 5 = 1.5 \\]\n\nTotal expected cost for Clause B:\n\\[ \\text",
+          "domains": [
+            "expected_value"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To determine which clause has the lower expected cost, we can calculate the expected value for each clause.\n\n**Clause A:**\n- Cost if a 30% delay occurs: $20\n- Probability of a 30% delay: 30% or 0.3\n\nExpected cost for Clause A:\n\\[ \\text{Expected Cost}_A = (0.3 \\times 20) + (0.7 \\times 0) = 6 \\]\n\n**Clause B:**\n- Fixed cost: $8\n- Additional cost if delay occurs: $5\n- Probability of a delay: 30% or 0.3\n\nExpected additional cost for Clause B:\n\\[ \\text{Expected Additional Cost}_B = 0.3 \\times 5 = 1.5 \\]\n\nTotal expected cost for Clause B:\n\\[ \\text",
+          "domains": [
+            "expected_value"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "contract_bayes_update",
+      "condition": "no_persona",
+      "prompt": "Solve the task carefully. Use the best method you can.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Toy vendor warranty: prior chance a part is defective is 10%. A cheap test is positive with 80% sensitivity and 20% false-positive rate. If the test is positive, should you treat defect as more likely than not?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To determine if a part is more likely to be defective given a positive test result, we can use Bayes' Theorem.\n\n**Bayes' Theorem:**\n\\[ P(D|T+) = \\frac{P(T+|D)P(D)}{P(T+)} \\]\n\nWhere:\n- \\( P(D|T+) \\) is the probability that the part is defective given a positive test result.\n- \\( P(T+|D) \\) is the sensitivity of the test (probability of a positive test given the part is defective), which is 80% or 0.8.\n- \\( P(D) \\) is the prior probability that a part is defective, which is 10% or 0.1.\n- \\( P(T+) \\) is the total probability of a positive test result, which can be calculated using the law of total",
+          "domains": [
+            "bayesian_statistics"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To determine if a part is more likely to be defective given a positive test result, we can use Bayes' Theorem.\n\n**Bayes' Theorem:**\n\\[ P(D|T+) = \\frac{P(T+|D)P(D)}{P(T+)} \\]\n\nWhere:\n- \\( P(D|T+) \\) is the probability that the part is defective given a positive test result.\n- \\( P(T+|D) \\) is the sensitivity of the test (probability of a positive test given the part is defective), which is 80% or 0.8.\n- \\( P(D) \\) is the prior probability that a part is defective, which is 10% or 0.1.\n- \\( P(T+) \\) is the total probability of a positive test, which can be calculated using the law of total probability",
+          "domains": [
+            "bayesian_statistics"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To determine if a defective part is more likely than not given a positive test result, we can use Bayes' Theorem.\n\n**Method Used:** Bayes' Theorem\n\nLet's define:\n- \\( P(D) \\): Prior probability that a part is defective = 10% or 0.10.\n- \\( P(T|D) \\): Probability of testing positive given the part is defective (sensitivity) = 80% or 0.80.\n- \\( P(T|\\neg D) \\): Probability of testing positive given the part is not defective (false-positive rate) = 20% or 0.20.\n- \\( P(\\neg D) \\): Prior probability that a part is not defective = 90% or 0.90.\n\nWe need to find \\( P(D|T) \\), the probability",
+          "domains": [
+            "bayesian_statistics"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To determine if a defective part is more likely than not given a positive test result, we can use Bayes' Theorem.\n\n**Method Used:** Bayes' Theorem\n\nLet's define:\n- \\( P(D) \\): Prior probability that a part is defective = 10% or 0.10.\n- \\( P(T|D) \\): Probability of a positive test given the part is defective (sensitivity) = 80% or 0.80.\n- \\( P(T|\\neg D) \\): Probability of a positive test given the part is not defective (false-positive rate) = 20% or 0.20.\n- \\( P(\\neg D) \\): Prior probability that a part is not defective = 90% or 0.90.\n\nWe need to find \\( P(D|T) \\),",
+          "domains": [
+            "bayesian_statistics"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To determine if a defective part is more likely than not given a positive test result, we can use Bayes' Theorem.\n\n**Method Used:** Bayes' Theorem\n\nLet:\n- \\( P(D) \\) = Prior probability that a part is defective = 0.10\n- \\( P(T|D) \\) = Probability of a positive test given the part is defective (sensitivity) = 0.80\n- \\( P(T|\\neg D) \\) = Probability of a positive test given the part is not defective (false-positive rate) = 0.20\n- \\( P(\\neg D) \\) = Prior probability that a part is not defective = 0.90\n\nWe need to find \\( P(D|T) \\), the probability that a part is defective given a positive test result.\n\nUsing Bayes' The",
+          "domains": [
+            "bayesian_statistics"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "contract_bayes_update",
+      "condition": "narrow_persona",
+      "prompt": "Act as a contract analyst. Discuss only warranty language and obligations.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Toy vendor warranty: prior chance a part is defective is 10%. A cheap test is positive with 80% sensitivity and 20% false-positive rate. If the test is positive, should you treat defect as more likely than not?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To determine if a defect should be treated as more likely than not after a positive test result, we can use Bayes' Theorem. This method is commonly applied in probability and statistics to update the probability of a hypothesis as more evidence or information becomes available.\n\nGiven:\n- Prior probability of a part being defective (P(D)) = 10% = 0.10\n- Sensitivity of the test (P(T+|D)) = 80% = 0.80\n- False-positive rate of the test (P(T+|\u00acD)) = 20% = 0.20\n\nWe need to find the posterior probability that a part is defective given a positive test result (P(D|T+)).\n\nUsing Bayes' Theorem:\n\n\\[ P(D|T+) = \\frac{P(T+|D) \\cdot",
+          "domains": [
+            "bayesian_statistics"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To determine if a defect should be treated as more likely than not after a positive test result, we can apply Bayes' Theorem. This method is commonly used in probability and statistics to update the probability of a hypothesis as more evidence or information becomes available.\n\nGiven:\n- Prior probability of a part being defective (P(D)) = 10% = 0.10\n- Sensitivity of the test (P(T+|D)) = 80% = 0.80\n- False-positive rate of the test (P(T+|\u00acD)) = 20% = 0.20\n\nWe need to find the posterior probability that a part is defective given a positive test result (P(D|T+)).\n\nUsing Bayes' Theorem:\n\n\\[ P(D|T+) = \\frac{P(T+|D) \\cdot",
+          "domains": [
+            "bayesian_statistics"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To determine if a defect should be treated as more likely than not given a positive test result, we can apply Bayes' Theorem. This method is commonly used in probability and statistics to update the probability of a hypothesis as more evidence or information becomes available.\n\nGiven:\n- Prior probability of a part being defective (P(D)) = 10% = 0.10\n- Sensitivity of the test (P(T+|D)) = 80% = 0.80\n- False-positive rate of the test (P(T+|\u00acD)) = 20% = 0.20\n\nWe need to find the posterior probability that a part is defective given a positive test result (P(D|T+)).\n\nUsing Bayes' Theorem:\n\n\\[ P(D|T+) = \\frac{P(T+|D) \\cdot",
+          "domains": [
+            "bayesian_statistics"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To determine if a defect should be treated as more likely than not given a positive test result, we can apply Bayes' Theorem. This method is commonly used in probability and statistics to update the probability of a hypothesis as more evidence or information becomes available.\n\nLet's define:\n- \\( P(D) \\): Prior probability that a part is defective = 10% or 0.10.\n- \\( P(T+|D) \\): Probability of a positive test result given the part is defective (sensitivity) = 80% or 0.80.\n- \\( P(T+|\\neg D) \\): Probability of a positive test result given the part is not defective (false-positive rate) = 20% or 0.20.\n- \\( P(\\neg D) \\): Prior probability that a part is not defective = 90",
+          "domains": [
+            "bayesian_statistics"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To determine if a defect should be treated as more likely than not given a positive test result, we can apply Bayes' Theorem. This method is commonly used in probability and statistics to update the probability of a hypothesis as more evidence or information becomes available.\n\nGiven:\n- Prior probability of a part being defective (P(D)) = 10% = 0.10\n- Sensitivity of the test (P(T+|D)) = 80% = 0.80\n- False-positive rate of the test (P(T+|\u00acD)) = 20% = 0.20\n\nWe need to find the posterior probability that a part is defective given a positive test result (P(D|T+)).\n\nUsing Bayes' Theorem:\n\n\\[ P(D|T+) = \\frac{P(T+|D) \\cdot",
+          "domains": [
+            "bayesian_statistics"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "contract_bayes_update",
+      "condition": "oracle_persona",
+      "prompt": "Act as a Bayesian statistician. Use Bayes' rule.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Toy vendor warranty: prior chance a part is defective is 10%. A cheap test is positive with 80% sensitivity and 20% false-positive rate. If the test is positive, should you treat defect as more likely than not?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To determine if a part is more likely to be defective given a positive test result, we can use Bayes' theorem. Let's define the events:\n\n- \\( D \\): The part is defective.\n- \\( \\neg D \\): The part is not defective.\n- \\( T^+ \\): The test result is positive.\n\nGiven:\n- Prior probability of a part being defective, \\( P(D) = 0.10 \\).\n- Sensitivity of the test (true positive rate), \\( P(T^+|D) = 0.80 \\).\n- False-positive rate of the test, \\( P(T^+|\\neg D) = 0.20 \\).\n\nWe need to find the posterior probability that the part is defective given a positive test result, \\( P(D|T^+) \\).\n\nUsing Bayes' theorem:\n\\[ P(D|T",
+          "domains": [
+            "bayesian_statistics"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To determine if a part is more likely to be defective given a positive test result, we can use Bayes' theorem. Let's define the events:\n\n- \\( D \\): The part is defective.\n- \\( \\neg D \\): The part is not defective.\n- \\( T^+ \\): The test result is positive.\n\nGiven:\n- \\( P(D) = 0.10 \\) (prior probability of a part being defective)\n- \\( P(T^+|D) = 0.80 \\) (sensitivity, true positive rate)\n- \\( P(T^+|\\neg D) = 0.20 \\) (false positive rate)\n\nWe need to find \\( P(D|T^+) \\), the posterior probability that the part is defective given a positive test result.\n\nUsing Bayes' theorem:\n\\[ P(D|T^+) =",
+          "domains": [
+            "bayesian_statistics"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To determine if a part is more likely to be defective given a positive test result, we can use Bayes' theorem. Let's define the events:\n\n- \\( D \\): The part is defective.\n- \\( \\neg D \\): The part is not defective.\n- \\( T^+ \\): The test result is positive.\n\nGiven:\n- Prior probability of a part being defective, \\( P(D) = 0.10 \\).\n- Sensitivity of the test (true positive rate), \\( P(T^+|D) = 0.80 \\).\n- False-positive rate of the test, \\( P(T^+|\\neg D) = 0.20 \\).\n\nWe need to find the posterior probability that the part is defective given a positive test result, \\( P(D|T^+) \\).\n\nUsing Bayes' theorem:\n\\[ P(D|T",
+          "domains": [
+            "bayesian_statistics"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To determine if a part is more likely to be defective given a positive test result, we can use Bayes' theorem. Let's define the events:\n\n- \\( D \\): The part is defective.\n- \\( \\neg D \\): The part is not defective.\n- \\( T^+ \\): The test result is positive.\n\nGiven:\n- Prior probability of a part being defective, \\( P(D) = 0.10 \\).\n- Sensitivity of the test (true positive rate), \\( P(T^+|D) = 0.80 \\).\n- False-positive rate of the test, \\( P(T^+|\\neg D) = 0.20 \\).\n\nWe need to find the posterior probability that the part is defective given a positive test result, \\( P(D|T^+) \\).\n\nUsing Bayes' theorem:\n\\[ P(D|T",
+          "domains": [
+            "bayesian_statistics"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To determine if a part is more likely to be defective given a positive test result, we can use Bayes' theorem. Let's define the events:\n\n- \\( D \\): The part is defective.\n- \\( \\neg D \\): The part is not defective.\n- \\( T^+ \\): The test result is positive.\n\nGiven:\n- Prior probability of a part being defective, \\( P(D) = 0.10 \\).\n- Sensitivity of the test (true positive rate), \\( P(T^+|D) = 0.80 \\).\n- False-positive rate of the test, \\( P(T^+|\\neg D) = 0.20 \\).\n\nWe need to find the posterior probability that the part is defective given a positive test result, \\( P(D|T^+) \\).\n\nUsing Bayes' theorem:\n\\[ P(D|T",
+          "domains": [
+            "bayesian_statistics"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "pm_critical_path",
+      "condition": "no_persona",
+      "prompt": "Solve the task carefully. Use the best method you can.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Project tasks: A=2 days, B=4 days after A, C=3 days after A, D=2 days after B and C. What is the minimum project duration?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To find the minimum project duration, we can use a scheduling method to determine the sequence and dependencies of tasks.\n\n1. Task A starts immediately and takes 2 days.\n2. Task B starts 4 days after A, so it starts on day 4 and takes 4 days.\n3. Task C starts 3 days after A, so it starts on day 3 and takes 3 days.\n4. Task D starts after both B and C are completed. Task B finishes on day 8 (4+4), and Task C finishes on day 6 (3+3). Therefore, Task D starts on day 8 (the later of the two finish times) and takes 2 days.\n\nThe project duration is determined by the latest finish time of all tasks, which is when Task D finishes. \n\n- Task A finishes on day 2.\n- Task B finishes on",
+          "domains": [
+            "critical_path",
+            "project_management"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To find the minimum project duration, we can use the Critical Path Method (CPM) from project management.\n\n1. **Identify dependencies and durations:**\n   - A = 2 days\n   - B = 4 days, starts 2 days after A\n   - C = 3 days, starts 2 days after A\n   - D = 2 days, starts after both B and C\n\n2. **Calculate start and finish times:**\n   - A starts at day 0 and finishes at day 2.\n   - B starts at day 2 and finishes at day 6.\n   - C starts at day 2 and finishes at day 5.\n   - D starts at the latest of B and C's finish times, which is day 6, and finishes at day 8.\n\nThe critical path is A \u2192 B \u2192 D or A \u2192",
+          "domains": [
+            "critical_path",
+            "project_management"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To find the minimum project duration, we can use the Critical Path Method (CPM) from project management.\n\n1. **Identify dependencies and durations:**\n   - A = 2 days\n   - B = 4 days, starts 2 days after A\n   - C = 3 days, starts 2 days after A\n   - D = 2 days, starts after both B and C\n\n2. **Calculate start and finish times:**\n   - A starts at day 0 and finishes at day 2.\n   - B starts at day 2 and finishes at day 6.\n   - C starts at day 2 and finishes at day 5.\n   - D starts at the latest of B and C's finish times, which is day 6, and finishes at day 8.\n\nThe critical path is A \u2192 B \u2192 D or A \u2192",
+          "domains": [
+            "critical_path",
+            "project_management"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To find the minimum project duration, we can use the Critical Path Method (CPM) from project management.\n\n1. **Identify dependencies and durations:**\n   - A = 2 days\n   - B = 4 days, starts 2 days after A\n   - C = 3 days, starts 2 days after A\n   - D = 2 days, starts after both B and C\n\n2. **Calculate start and finish times:**\n   - A starts at day 0 and finishes at day 2.\n   - B starts at day 2 and finishes at day 6.\n   - C starts at day 2 and finishes at day 5.\n   - D starts at the latest of B and C's finish times, which is day 6, and finishes at day 8.\n\nThe critical path is A \u2192 B \u2192 D or A \u2192",
+          "domains": [
+            "critical_path",
+            "project_management"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To find the minimum project duration, we can use the Critical Path Method (CPM) from project management.\n\n1. **Identify dependencies and durations:**\n   - A = 2 days\n   - B = 4 days, starts 2 days after A\n   - C = 3 days, starts 2 days after A\n   - D = 2 days, starts after both B and C\n\n2. **Calculate start and finish times:**\n   - A starts at day 0 and finishes at day 2.\n   - B starts at day 2 and finishes at day 6.\n   - C starts at day 2 and finishes at day 5.\n   - D starts at the latest of B and C's finish times, which is day 6, and finishes at day 8.\n\nThe critical path is A \u2192 B \u2192 D or A \u2192",
+          "domains": [
+            "critical_path",
+            "project_management"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "pm_critical_path",
+      "condition": "narrow_persona",
+      "prompt": "Act as a project manager. Use only PM status-report heuristics.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Project tasks: A=2 days, B=4 days after A, C=3 days after A, D=2 days after B and C. What is the minimum project duration?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "Project Duration: 8 days\n\nMethod: Critical Path Method (CPM)",
+          "domains": [
+            "critical_path"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "Project Duration: 8 days\n\nMethod: Critical Path Method (CPM)",
+          "domains": [
+            "critical_path"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "Project Duration: 8 days\n\nMethod: Critical Path Method (CPM)",
+          "domains": [
+            "critical_path"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "Project Duration: 8 days\n\nMethod: Critical Path Method (CPM)",
+          "domains": [
+            "critical_path"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "Project Duration: 8 days\n\nMethod: Critical Path Method (CPM)",
+          "domains": [
+            "critical_path"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "pm_critical_path",
+      "condition": "oracle_persona",
+      "prompt": "Act as an operations researcher. Use critical-path analysis.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Project tasks: A=2 days, B=4 days after A, C=3 days after A, D=2 days after B and C. What is the minimum project duration?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To determine the minimum project duration using critical-path analysis, we first need to establish the sequence of tasks and their dependencies.\n\n1. Task A takes 2 days.\n2. Task B starts after A and takes 4 days.\n3. Task C starts after A and takes 3 days.\n4. Task D starts after both B and C and takes 2 days.\n\nWe can represent this as follows:\n\n- A -> B (B depends on A)\n- A -> C (C depends on A)\n- B and C -> D (D depends on both B and C)\n\nNow, let's calculate the earliest start and finish times for each task:\n\n- Task A: \n  - Start: Day 0\n  - Finish: Day 2\n\n- Task B:\n  - Start: Day 2 (after A finishes)\n  - Finish: Day 6 (2 days after",
+          "domains": [
+            "critical_path"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To determine the minimum project duration using critical-path analysis, we first need to establish the sequence of tasks and their dependencies.\n\nGiven:\n- Task A takes 2 days.\n- Task B starts 4 days after A and takes 0 days (implied, since no duration is given).\n- Task C starts 3 days after A and takes 0 days.\n- Task D starts after both B and C and takes 2 days.\n\nWe can represent this as follows:\n\n1. **Task A** (2 days) -> **Task B** (0 days) -> **Task D** (2 days)\n2. **Task A** (2 days) -> **Task C** (0 days) -> **Task D** (2 days)\n\nThe critical path is the longest sequence of tasks from start to finish. Here, both paths from A to D are identical in terms of duration:\n\n",
+          "domains": [
+            "critical_path"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To determine the minimum project duration using critical-path analysis, we first need to establish the sequence of tasks and their dependencies.\n\nGiven:\n- Task A: 2 days\n- Task B: 4 days after A\n- Task C: 3 days after A\n- Task D: 2 days after both B and C\n\nWe can represent this as a network diagram:\n\n```\nA (2) -> B (4) -> D (2)\nA (2) -> C (3) -> D (2)\n```\n\nFrom this, we can see that:\n- Task A starts first and takes 2 days.\n- Tasks B and C start immediately after A and take 4 and 3 days respectively.\n- Task D depends on both B and C, so it will start only after both B and C are completed.\n\nThe critical path is the longest sequence of tasks from start",
+          "domains": [
+            "critical_path"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To determine the minimum project duration using critical-path analysis, we first need to establish the sequence of tasks and their dependencies.\n\nGiven:\n- Task A: 2 days\n- Task B: 4 days after A\n- Task C: 3 days after A\n- Task D: 2 days after both B and C\n\nWe can represent this as a network diagram:\n\n```\nA (2) -> B (4) -> D (2)\nA (2) -> C (3) -> D (2)\n```\n\nFrom this, we can see that:\n- Task A starts first and takes 2 days.\n- Tasks B and C start immediately after A and take 4 and 3 days respectively.\n- Task D depends on both B and C, so it will start only after both B and C are completed.\n\nThe critical path is the longest sequence of tasks from start",
+          "domains": [
+            "critical_path"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To determine the minimum project duration using critical-path analysis, we first need to establish the sequence of tasks and their dependencies.\n\nGiven:\n- Task A: 2 days\n- Task B: 4 days after A\n- Task C: 3 days after A\n- Task D: 2 days after both B and C\n\nWe can represent this as a network diagram:\n\n```\nA (2) -> B (4) -> D (2)\nA (2) -> C (3) -> D (2)\n```\n\nFrom this, we can see that:\n- Task A starts first and takes 2 days.\n- Tasks B and C start immediately after A and take 4 and 3 days respectively.\n- Task D depends on both B and C, so it will start only after both B and C are completed.\n\nThe critical path is the longest sequence of tasks from start",
+          "domains": [
+            "critical_path"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "pm_queue_bottleneck",
+      "condition": "no_persona",
+      "prompt": "Solve the task carefully. Use the best method you can.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: A support desk has one triage worker taking 3 minutes per ticket and one specialist taking 5 minutes per ticket. Tickets pass triage then specialist. Which station is the throughput bottleneck?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To determine the throughput bottleneck, we need to compare the processing rates of the triage and specialist stations.\n\n- Triage rate: \\( \\frac{1 \\text{ ticket}}{3 \\text{ minutes}} = \\frac{1}{3} \\text{ tickets per minute} \\)\n- Specialist rate: \\( \\frac{1 \\text{ ticket}}{5 \\text{ minutes}} = \\frac{1}{5} \\text{ tickets per minute} \\)\n\nThe station with the lower rate is the bottleneck. Here, the triage station processes tickets at a rate of \\( \\frac{1}{3} \\) tickets per minute, while the specialist station processes at \\( \\frac{1}{5} \\) tickets per minute.\n\nSince \\( \\frac{1}{5} < \\frac{1}{3} \\), the throughput bottleneck is the **special",
+          "domains": [
+            "queueing"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To determine the throughput bottleneck, we need to compare the processing rates of the triage and specialist stations.\n\n- Triage rate: \\( \\frac{1 \\text{ ticket}}{3 \\text{ minutes}} = \\frac{1}{3} \\text{ tickets per minute} \\)\n- Specialist rate: \\( \\frac{1 \\text{ ticket}}{5 \\text{ minutes}} = \\frac{1}{5} \\text{ tickets per minute} \\)\n\nThe station with the lower rate is the bottleneck. Here, the triage station processes tickets at a rate of \\( \\frac{1}{3} \\) tickets per minute, while the specialist station processes at \\( \\frac{1}{5} \\) tickets per minute.\n\nSince \\( \\frac{1}{5} < \\frac{1}{3} \\), the throughput bottleneck is the **special",
+          "domains": [
+            "queueing"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To determine the throughput bottleneck, we need to compare the processing rates of the triage and specialist stations.\n\n**Triage Station:**\n- Time per ticket: 3 minutes\n- Throughput (tickets per minute): \\( \\frac{1}{3} \\) tickets/minute\n\n**Specialist Station:**\n- Time per ticket: 5 minutes\n- Throughput (tickets per minute): \\( \\frac{1}{5} \\) tickets/minute\n\nThe station with the lower throughput rate is the bottleneck. Here, the specialist station has a throughput of \\( \\frac{1}{5} \\) tickets/minute, which is lower than the triage station's throughput of \\( \\frac{1}{3} \\) tickets/minute.\n\n**Conclusion:** The throughput bottleneck is at the specialist station.\n\nMethod/Domain Used: Queuing Theory / Operations Management",
+          "domains": [
+            "queueing"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To determine the throughput bottleneck, we need to compare the processing rates of the triage and specialist stations.\n\n**Triage Station:**\n- Time per ticket: 3 minutes\n- Throughput (tickets per minute): \\( \\frac{1}{3} \\) tickets/minute\n\n**Specialist Station:**\n- Time per ticket: 5 minutes\n- Throughput (tickets per minute): \\( \\frac{1}{5} \\) tickets/minute\n\nThe station with the lower throughput rate is the bottleneck. Here, the specialist station has a throughput of \\( \\frac{1}{5} \\) tickets/minute, which is lower than the triage station's throughput of \\( \\frac{1}{3} \\) tickets/minute.\n\n**Conclusion:** The throughput bottleneck is at the specialist station.\n\nMethod/Domain Used: Queuing Theory / Operations Management",
+          "domains": [
+            "queueing"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To determine the throughput bottleneck, we need to compare the processing rates of the triage and specialist stations.\n\n- Triage rate: \\( \\frac{1 \\text{ ticket}}{3 \\text{ minutes}} = \\frac{1}{3} \\text{ tickets per minute} \\)\n- Specialist rate: \\( \\frac{1 \\text{ ticket}}{5 \\text{ minutes}} = \\frac{1}{5} \\text{ tickets per minute} \\)\n\nThe station with the lower rate is the bottleneck. Here, the triage station processes tickets at a rate of \\( \\frac{1}{3} \\) tickets per minute, while the specialist station processes at \\( \\frac{1}{5} \\) tickets per minute.\n\nSince \\( \\frac{1}{5} < \\frac{1}{3} \\), the throughput bottleneck is the **special",
+          "domains": [
+            "queueing"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "pm_queue_bottleneck",
+      "condition": "narrow_persona",
+      "prompt": "Act as a project manager. Give only staffing and coordination advice.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: A support desk has one triage worker taking 3 minutes per ticket and one specialist taking 5 minutes per ticket. Tickets pass triage then specialist. Which station is the throughput bottleneck?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To determine the throughput bottleneck, calculate the throughput for each station.\n\n1. **Triage Station**: \n   - Time per ticket: 3 minutes\n   - Throughput (tickets per minute): \\( \\frac{1}{3} \\) tickets/minute\n\n2. **Specialist Station**:\n   - Time per ticket: 5 minutes\n   - Throughput (tickets per minute): \\( \\frac{1}{5} \\) tickets/minute\n\nThe **specialist station** has a lower throughput (\\( \\frac{1}{5} \\) tickets/minute) compared to the triage station (\\( \\frac{1}{3} \\) tickets/minute). Therefore, the **specialist station** is the throughput bottleneck.\n\n**Method Used:** Queuing Theory / Throughput Analysis",
+          "domains": [
+            "queueing"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To determine the throughput bottleneck, calculate the throughput for each station.\n\n- **Triage Station**: 60 minutes / 3 minutes per ticket = 20 tickets per hour\n- **Specialist Station**: 60 minutes / 5 minutes per ticket = 12 tickets per hour\n\nThe **specialist station** is the throughput bottleneck with a lower capacity of 12 tickets per hour compared to the triage station's 20 tickets per hour.\n\n**Solution Method:** Queuing Theory (specifically, analyzing service rates in a two-station process)",
+          "domains": [
+            "queueing"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To determine the throughput bottleneck, calculate the throughput for each station.\n\n1. **Triage Station:**\n   - Time per ticket: 3 minutes\n   - Throughput (tickets per minute): \\( \\frac{1}{3} \\) tickets/minute\n\n2. **Specialist Station:**\n   - Time per ticket: 5 minutes\n   - Throughput (tickets per minute): \\( \\frac{1}{5} \\) tickets/minute\n\nThe **specialist station** has a lower throughput (\\( \\frac{1}{5} \\) tickets/minute) compared to the triage station (\\( \\frac{1}{3} \\) tickets/minute), making it the throughput bottleneck.\n\n**Method Used:** Queuing Theory / Throughput Analysis",
+          "domains": [
+            "queueing"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To determine the throughput bottleneck, calculate the throughput for each station:\n\n1. **Triage Station**: 60 minutes / 3 minutes per ticket = 20 tickets per hour\n2. **Specialist Station**: 60 minutes / 5 minutes per ticket = 12 tickets per hour\n\nThe **Specialist Station** is the throughput bottleneck with a lower capacity of 12 tickets per hour compared to the Triage Station's 20 tickets per hour.\n\n**Solution**: Increase the number of specialists or consider cross-training to improve the Specialist Station's throughput. This can be achieved through process optimization or adding more staff to this station.\n\nMethod/Domain: Queuing Theory & Operations Management",
+          "domains": [
+            "queueing"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To determine the throughput bottleneck, calculate the throughput for each station:\n\n1. **Triage Station**: 60 minutes / 3 minutes per ticket = 20 tickets per hour.\n2. **Specialist Station**: 60 minutes / 5 minutes per ticket = 12 tickets per hour.\n\nThe **specialist station** is the throughput bottleneck with a lower capacity of 12 tickets per hour compared to the triage station's 20 tickets per hour.\n\n**Solution Method**: Throughput Analysis",
+          "domains": [
+            "queueing"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "pm_queue_bottleneck",
+      "condition": "oracle_persona",
+      "prompt": "Act as an operations researcher. Analyze service rates and bottlenecks.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: A support desk has one triage worker taking 3 minutes per ticket and one specialist taking 5 minutes per ticket. Tickets pass triage then specialist. Which station is the throughput bottleneck?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To determine the throughput bottleneck, we can use queuing theory, specifically analyzing the service rates at each station.\n\n- Triage worker service rate: \\( \\frac{1}{3} \\) tickets per minute.\n- Specialist service rate: \\( \\frac{1}{5} \\) tickets per minute.\n\nThe bottleneck occurs where the service rate is the lowest, limiting the overall throughput of the system.\n\nSince \\( \\frac{1}{3} > \\frac{1}{5} \\), the specialist station is the throughput bottleneck.",
+          "domains": [
+            "queueing"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To determine the throughput bottleneck, we can use queuing theory, specifically analyzing the service rates at each station.\n\n- Triage worker service rate: \\( \\frac{1}{3} \\) tickets per minute.\n- Specialist service rate: \\( \\frac{1}{5} \\) tickets per minute.\n\nThe bottleneck occurs where the service rate is the lowest, limiting the overall throughput of the system.\n\nSince \\( \\frac{1}{3} > \\frac{1}{5} \\), the specialist station is the throughput bottleneck.",
+          "domains": [
+            "queueing"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To determine the throughput bottleneck, we can use queuing theory, specifically analyzing the service rates at each station.\n\n- **Triage Worker**: Service rate = 1 ticket / 3 minutes = 1/3 tickets per minute.\n- **Specialist**: Service rate = 1 ticket / 5 minutes = 1/5 tickets per minute.\n\nThe throughput of the system is limited by the station with the lowest service rate. Here, the specialist has a lower service rate (1/5 tickets per minute) compared to the triage worker (1/3 tickets per minute).\n\n**Conclusion**: The specialist station is the throughput bottleneck.",
+          "domains": [
+            "queueing"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To determine the throughput bottleneck, we can use queuing theory, specifically analyzing the service rates at each station.\n\n- Triage worker service rate: \\( \\frac{1}{3} \\) tickets per minute.\n- Specialist service rate: \\( \\frac{1}{5} \\) tickets per minute.\n\nThe bottleneck occurs where the service rate is the lowest, limiting the overall throughput of the system.\n\nSince \\( \\frac{1}{3} > \\frac{1}{5} \\), the specialist station is the throughput bottleneck.",
+          "domains": [
+            "queueing"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To determine the throughput bottleneck, we can use queuing theory, specifically analyzing the service rates at each station.\n\n- Triage worker service rate: \\( \\frac{1}{3} \\) tickets per minute.\n- Specialist service rate: \\( \\frac{1}{5} \\) tickets per minute.\n\nThe bottleneck occurs where the service rate is the lowest, limiting the overall throughput of the system.\n\nSince \\( \\frac{1}{3} > \\frac{1}{5} \\), the specialist station is the throughput bottleneck.",
+          "domains": [
+            "queueing"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "communications_binary_search",
+      "condition": "no_persona",
+      "prompt": "Solve the task carefully. Use the best method you can.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: You must identify one faulty box among 16 boxes using yes/no questions. What is the minimum number of questions needed in the worst case?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "This problem can be solved using a binary search-like approach, which is commonly applied in information theory and decision-making processes. The method involves dividing the set of boxes into two equal parts and asking questions that help narrow down the possibilities.\n\nGiven 16 boxes, we can use the concept of binary logarithm to determine the minimum number of yes/no questions needed in the worst case. The formula is:\n\n\\[ \\lceil \\log_2(n) \\rceil \\]\n\nwhere \\( n \\) is the number of boxes, and \\( \\lceil \\cdot \\rceil \\) denotes the ceiling function (rounding up to the nearest integer).\n\nFor 16 boxes:\n\n\\[ \\lceil \\log_2(16) \\rceil = \\lceil 4 \\rceil = 4 \\]\n\nTherefore, the minimum number of questions needed in the worst case is **",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "This problem can be solved using a binary search-like approach, which is commonly applied in information theory and decision-making processes. The method involves dividing the set of boxes into two equal parts and asking questions that help narrow down the possibilities.\n\nGiven 16 boxes, we can use the concept of binary logarithm to determine the minimum number of yes/no questions needed in the worst case. The formula is:\n\n\\[ \\lceil \\log_2(n) \\rceil \\]\n\nwhere \\( n \\) is the number of boxes, and \\( \\lceil \\cdot \\rceil \\) denotes the ceiling function (rounding up to the nearest integer).\n\nFor 16 boxes:\n\n\\[ \\lceil \\log_2(16) \\rceil = \\lceil 4 \\rceil = 4 \\]\n\nTherefore, the minimum number of questions needed in the worst case is **",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "This problem can be solved using a binary search-like approach, which is commonly applied in information theory and decision-making processes. The method involves dividing the set of boxes into two equal parts and asking questions that help narrow down the possibilities.\n\nGiven 16 boxes, we can use the concept of binary logarithm to determine the minimum number of yes/no questions needed in the worst case. The formula is:\n\n\\[ \\lceil \\log_2(n) \\rceil \\]\n\nwhere \\( n \\) is the number of boxes, and \\( \\lceil \\cdot \\rceil \\) denotes the ceiling function (rounding up to the nearest integer).\n\nFor 16 boxes:\n\n\\[ \\lceil \\log_2(16) \\rceil = \\lceil 4 \\rceil = 4 \\]\n\nTherefore, the minimum number of questions needed in the worst case is **",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "This problem can be solved using a binary search-like approach, which is commonly applied in information theory and decision-making processes. The method involves dividing the set of boxes into two equal parts and asking questions that help narrow down the possibilities.\n\nGiven 16 boxes, we can use the concept of binary logarithm to determine the minimum number of yes/no questions needed in the worst case. The formula is:\n\n\\[ \\lceil \\log_2(n) \\rceil \\]\n\nwhere \\( n \\) is the number of boxes, and \\( \\lceil \\cdot \\rceil \\) denotes the ceiling function (rounding up to the nearest integer).\n\nFor 16 boxes:\n\n\\[ \\lceil \\log_2(16) \\rceil = \\lceil 4 \\rceil = 4 \\]\n\nTherefore, the minimum number of questions needed in the worst case is **",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "This problem can be solved using a binary search-like approach, which is commonly applied in information theory and decision-making processes. The method involves dividing the set of boxes into two equal parts and asking questions that help narrow down the possibilities.\n\nGiven 16 boxes, we can use the concept of binary logarithm to determine the minimum number of yes/no questions needed in the worst case. The formula is:\n\n\\[ \\lceil \\log_2(n) \\rceil \\]\n\nwhere \\( n \\) is the number of boxes, and \\( \\lceil \\cdot \\rceil \\) denotes the ceiling function (rounding up to the nearest integer).\n\nFor 16 boxes:\n\n\\[ \\lceil \\log_2(16) \\rceil = \\lceil 4 \\rceil = 4 \\]\n\nTherefore, the minimum number of questions needed in the worst case is **",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "communications_binary_search",
+      "condition": "narrow_persona",
+      "prompt": "Act as a communications coach. Focus only on phrasing empathetic questions.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: You must identify one faulty box among 16 boxes using yes/no questions. What is the minimum number of questions needed in the worst case?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To identify one faulty box among 16 using yes/no questions, you can use a binary search approach. The minimum number of questions needed in the worst case is 4.\n\nThis method is based on binary decision-making and information theory.",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To identify one faulty box among 16 using yes/no questions, you can use a binary search approach. The minimum number of questions needed in the worst case is 4.\n\nThis method is based on binary decision-making and information theory.",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To identify one faulty box among 16 using yes/no questions, you can use a binary search approach. The minimum number of questions needed in the worst case is 4.\n\nThis method is based on binary decision-making and information theory.",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To identify one faulty box among 16 using yes/no questions, you can use a binary search approach. The minimum number of questions needed in the worst case is 4.\n\nThis method is based on binary decision-making and information theory.",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To identify one faulty box among 16 using yes/no questions, you can use a binary search approach. The minimum number of questions needed in the worst case is 4.\n\nThis method is based on binary search, commonly used in computer science and information theory for efficient searching.",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "communications_binary_search",
+      "condition": "oracle_persona",
+      "prompt": "Act as an information theorist. Use binary search/entropy.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: You must identify one faulty box among 16 boxes using yes/no questions. What is the minimum number of questions needed in the worst case?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "The problem can be solved using information theory and binary search principles. Specifically, we can use the concept of entropy to determine the minimum number of yes/no questions required to identify a single faulty box among 16.\n\nGiven:\n- There are 16 boxes.\n- One box is faulty.\n- We can ask yes/no questions.\n\nThe solution involves calculating the minimum number of bits (questions) needed to distinguish between 16 possibilities.\n\n\\[ \\text{Minimum number of questions} = \\lceil \\log_2(16) \\rceil = \\lceil 4 \\rceil = 4 \\]\n\nThus, the minimum number of questions needed in the worst case is **4**. This is based on the binary search principle and information entropy.",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "The problem can be solved using information theory and binary search principles. Specifically, we can use the concept of entropy to determine the minimum number of yes/no questions required to identify a single faulty box among 16.\n\nGiven:\n- There are 16 boxes.\n- One box is faulty.\n- We can ask yes/no questions.\n\nTo find the minimum number of questions needed in the worst case, we calculate the smallest integer \\( n \\) such that \\( 2^n \\geq 16 \\).\n\n\\[\n2^4 = 16\n\\]\n\nThus, the minimum number of questions needed in the worst case is 4.\n\nMethod Used: Information Theory (specifically, binary search and entropy principles).",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "The task can be approached using information theory and binary search principles. Specifically, we can use the concept of entropy to determine the minimum number of yes/no questions required to identify a single faulty box among 16.\n\nGiven:\n- There are 16 boxes.\n- One box is faulty.\n- We can ask yes/no questions.\n\nTo solve this, we need to find the minimum number of questions such that we can distinguish between 16 possibilities (since there are 16 boxes).\n\nThe number of possible outcomes after \\( n \\) yes/no questions is \\( 2^n \\). We need \\( 2^n \\geq 16 \\).\n\nSolving for \\( n \\):\n\\[ 2^n \\geq 16 \\]\n\\[ 2^n \\geq 2^4 \\]\n\\[ n \\geq 4 \\]\n\nThus, the minimum number of",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "The task can be approached using information theory and binary search principles. Specifically, we can use the concept of entropy to determine the minimum number of yes/no questions required to identify a single faulty box among 16.\n\nGiven:\n- There are 16 boxes.\n- One box is faulty.\n- We can ask yes/no questions.\n\nTo solve this, we need to find the minimum number of questions such that we can distinguish between 16 possibilities (since there are 16 boxes).\n\nThe number of possible outcomes after \\( n \\) yes/no questions is \\( 2^n \\). We need \\( 2^n \\geq 16 \\).\n\nSolving for \\( n \\):\n\\[ 2^n \\geq 16 \\]\n\\[ 2^4 = 16 \\]\n\nThus, \\( n = 4 \\).\n\nTherefore, the minimum number of questions needed",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "The task can be approached using information theory and binary search principles. Specifically, we can use the concept of entropy to determine the minimum number of yes/no questions required to identify a single faulty box among 16.\n\nGiven:\n- There are 16 boxes.\n- One box is faulty.\n- We need to find the minimum number of yes/no questions in the worst case.\n\nSolution:\nTo solve this, we calculate the minimum number of bits (yes/no questions) needed to distinguish between 16 possibilities. This is equivalent to finding the smallest integer \\( n \\) such that \\( 2^n \\geq 16 \\).\n\n\\[\n2^4 = 16\n\\]\n\nThus, \\( n = 4 \\).\n\nTherefore, the minimum number of yes/no questions needed in the worst case is **4**.",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "communications_active_learning",
+      "condition": "no_persona",
+      "prompt": "Solve the task carefully. Use the best method you can.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: A user may want one of 8 equally likely product categories. You can ask yes/no questions before recommending. What question strategy minimizes worst-case questions?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "This problem can be solved using an information-theoretic approach, specifically a binary search strategy, which is optimal for minimizing the worst-case number of questions in a scenario with equally likely outcomes.\n\n**Question Strategy:**\n\n1. Divide the 8 categories into two groups of 4.\n2. Ask: \"Is the desired category in the first group of 4?\"\n\nIf the answer is \"yes,\" repeat the process with the first group of 4; if \"no,\" repeat with the second group of 4.\n\n**Worst-Case Analysis:**\n\n- First question: 1 question.\n- If the answer is \"yes,\" you have 4 categories left. Repeat the process:\n  - Second question: Divide 4 into 2 and ask: \"Is it in the first group of 2?\"\n  - If \"yes,\" third question: \"Is it the first or",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "This problem can be solved using an information-theoretic approach, specifically a binary search strategy, which is optimal for minimizing the worst-case number of questions in a scenario with equally likely outcomes.\n\n**Question Strategy:**\nAsk questions that divide the 8 categories into two equal groups (4 vs. 4) at each step.\n\n**Example Questions:**\n1. Is the category among the first four? (If yes, narrow down to 4 categories; if no, narrow down to the last 4.)\n2. Is the category among the first two of the remaining four? (Continue dividing until the category is identified.)\n\nThis method ensures that in the worst case, you will need at most 3 questions to identify the correct category.",
+          "domains": [
+            "communications",
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "This problem can be solved using an information-theoretic approach, specifically a binary search strategy, which is optimal for minimizing the worst-case number of questions in a scenario with equally likely outcomes.\n\n**Question Strategy:**\n\n1. Divide the 8 categories into two groups of 4.\n2. Ask: \"Is the desired category in the first group of 4?\"\n\nIf the answer is \"yes,\" repeat the process with the first group of 4; if \"no,\" repeat with the second group of 4.\n\n**Worst-Case Analysis:**\n\n- First question: 1 question.\n- If the answer is \"yes,\" you have 4 categories left. Repeat the process:\n  - Second question: Divide 4 into 2 groups of 2 and ask: \"Is the desired category in the first group of 2?\"\n  - If \"yes,\" third question:",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "This problem can be solved using an information-theoretic approach, specifically a binary search strategy, which is optimal for minimizing the worst-case number of questions in a scenario with equally likely outcomes.\n\n**Question Strategy:**\n\n1. Divide the 8 categories into two groups of 4.\n2. Ask: \"Is the desired category in the first group of 4?\"\n\nIf the answer is \"yes,\" repeat the process with the first group of 4; if \"no,\" repeat with the second group of 4.\n\n**Worst-Case Analysis:**\n\n- First question: 1 question.\n- If the answer is \"yes,\" you have 4 categories left. Repeat the process:\n  - Second question: Divide 4 into 2 groups of 2 and ask: \"Is the desired category in the first group of 2?\"\n  - If \"yes,\" third question:",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "This problem can be solved using an information-theoretic approach, specifically a binary search strategy, which is optimal for minimizing the worst-case number of questions in a scenario with equally likely outcomes.\n\n**Question Strategy:**\n\n1. Divide the 8 categories into two groups of 4.\n2. Ask: \"Is the desired category in the first group of 4?\"\n\nIf the answer is \"yes,\" repeat the process with the first group of 4 categories. If \"no,\" repeat with the second group of 4 categories.\n\n3. For the next step, divide the remaining 4 categories into two groups of 2.\n4. Ask: \"Is the desired category in the first group of 2?\"\n\n5. Finally, for the last step, you will have 2 categories left. Ask: \"Is the desired category the first one in this pair?\"\n\nThis strategy ensures that in",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "communications_active_learning",
+      "condition": "narrow_persona",
+      "prompt": "Act as a communications coach. Focus only on rapport and wording.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: A user may want one of 8 equally likely product categories. You can ask yes/no questions before recommending. What question strategy minimizes worst-case questions?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "Use an information theory approach, specifically a binary search strategy. This method minimizes the worst-case number of questions needed to identify the correct category.\n\nQuestion Strategy:\n1. Divide the 8 categories into two groups of 4.\n2. Ask a question that splits these groups based on a key characteristic (e.g., \"Is your preferred category among electronics or home appliances?\").\n\nThis approach ensures the minimum worst-case scenario of 3 questions, leveraging the efficiency of binary division.",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "Binary search method.\n\nStart with: \"Is the preferred category among the first four categories?\"",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "Use an information theory-based approach, specifically a binary search strategy. This method minimizes the worst-case number of questions needed to identify the correct category.\n\nQuestion Strategy:\n1. Divide the 8 categories into two groups of 4.\n2. Ask a question that splits these groups based on a key characteristic (e.g., \"Is your preferred category among electronics or home appliances?\").\n\nThis strategy ensures the minimum worst-case scenario of 3 questions to identify the correct category.",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "Binary search-like strategy can minimize the worst-case number of questions. This approach is commonly used in information theory and computer science.\n\nQuestion strategy:\n1. Divide the 8 categories into two groups of 4.\n2. Ask: \"Is the desired category in the first group of 4?\"\n\nThis method, rooted in decision theory, ensures the worst-case scenario requires at most 3 questions to identify the correct category.",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "Binary search-like strategy can minimize the worst-case number of questions. This approach is commonly used in information theory and computer science.\n\nQuestion strategy:\n1. Divide the 8 categories into two groups of 4.\n2. Ask: \"Is the desired category in the first group of 4?\"\n\nThis method, rooted in decision theory, ensures the worst-case scenario requires at most 3 questions to identify the correct category.",
+          "domains": [
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "communications_active_learning",
+      "condition": "oracle_persona",
+      "prompt": "Act as an information theorist. Use balanced splits.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: A user may want one of 8 equally likely product categories. You can ask yes/no questions before recommending. What question strategy minimizes worst-case questions?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "This problem can be approached using the concept of decision trees in information theory and algorithmic decision-making. The goal is to minimize the worst-case number of yes/no questions needed to identify one of 8 equally likely product categories.\n\nThe optimal strategy involves using a binary search-like approach, which can be formalized using Shannon's entropy and decision tree analysis.\n\n**Solution:**\nUse a decision tree with balanced splits at each node. This means each yes/no question should ideally split the remaining possibilities into two equal groups.\n\n**Question Strategy:**\n1. Start with the root node containing all 8 categories.\n2. Ask a question that splits the 8 categories into two groups of 4.\n3. Depending on the answer, move to the next node containing 4 categories.\n4. Repeat the process, splitting the remaining categories into two groups of 2.\n5. Finally, ask one more question",
+          "domains": [
+            "communications",
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "This problem can be approached using the concept of decision trees in information theory and algorithmic decision-making. The goal is to minimize the worst-case number of yes/no questions needed to identify one of 8 equally likely product categories.\n\nThe optimal strategy involves using a binary search-like approach, which can be formalized using Shannon's entropy and decision tree analysis.\n\n**Solution:**\nUse a decision tree with balanced splits at each node. This means each yes/no question should ideally split the remaining possibilities into two equal groups.\n\n**Steps:**\n1. Start with 8 categories.\n2. Ask a question that splits these into two groups of 4.\n3. Depending on the answer, repeat the process with the group of 4, splitting it into two groups of 2.\n4. Finally, ask a question to distinguish between the last two categories.\n\n**Worst-case number of questions:**\n-",
+          "domains": [
+            "communications",
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "This problem can be approached using the concept of decision trees in information theory and algorithmic decision-making. The goal is to minimize the worst-case number of yes/no questions needed to identify one of 8 equally likely product categories.\n\nThe optimal strategy involves using a binary search-like approach, which can be formalized using Shannon's entropy and decision tree analysis.\n\n**Solution:**\nUse a **binary decision tree** to minimize the worst-case number of questions. This approach ensures that each question splits the remaining possibilities as evenly as possible.\n\n**Question Strategy:**\n1. Start with the root node asking a question that divides the 8 categories into two groups of 4.\n2. Depending on the answer, move to the next level where you again divide the remaining 4 categories into two groups of 2.\n3. Finally, ask a question to distinguish between the last pair of categories.\n\n**Worst",
+          "domains": [
+            "communications",
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To minimize the worst-case number of yes/no questions needed to determine which of 8 equally likely product categories a user wants, we can use a binary search-like approach, specifically a decision tree method. This is a well-known problem in information theory and computer science, often solved using a Shannon entropy-based strategy.\n\n### Strategy:\n1. **Divide and Conquer**: Split the categories into two roughly equal groups with each yes/no question. This ensures that the information gained from each question is maximized.\n\n2. **Balanced Splits**: At each step, split the remaining categories into two sets as evenly as possible. For 8 categories, the first split could be between categories 1-4 and 5-8.\n\n### Example Questions:\n1. **First Question**: \"Is the category among 1, 2, 3, or 4?\"\n   - If yes,",
+          "domains": [
+            "communications",
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To minimize the worst-case number of yes/no questions needed to determine which of 8 equally likely product categories a user wants, we can use a binary search-like approach, specifically a decision tree method. This is a well-known problem in information theory and computer science, often solved using a Shannon entropy-based strategy.\n\n### Strategy:\n1. **Divide and Conquer**: Split the categories into two roughly equal groups with each yes/no question. This ensures that the information gained from each question is maximized.\n\n2. **Balanced Splits**: At each step, split the remaining categories into two sets of approximately equal size. This helps in minimizing the maximum number of questions required in the worst case.\n\n### Example Questions:\n- **First Question**: Is the category among {1, 2, 3, 4} or {5, 6, 7, 8}?\n-",
+          "domains": [
+            "communications",
+            "information_theory"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "tutor_invariant_coins",
+      "condition": "no_persona",
+      "prompt": "Solve the task carefully. Use the best method you can.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Start with 10 coins heads-up. A move flips exactly two coins. Can you end with exactly 9 heads?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "This problem can be solved using the concept of parity from combinatorics.\n\n### Solution:\nNo, it is not possible to end with exactly 9 heads.\n\n### Explanation:\n- Initially, all 10 coins are heads-up (H).\n- Each move flips exactly two coins, which means the total number of heads will change by an even number (either +2, -2, or 0 heads depending on the initial state of the flipped coins).\n\nStarting with 10 heads (an even number), any sequence of moves will always result in an even number of heads because each move changes the count by an even number. Therefore, it's impossible to reach exactly 9 heads (an odd number) through such moves.\n\n### Method Used:\n- **Parity Analysis** from Combinatorics.",
+          "domains": [
+            "invariant_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "This problem can be solved using the concept from combinatorics and parity.\n\n### Solution:\nNo, it is not possible to end with exactly 9 heads.\n\n### Explanation:\n- Initially, all 10 coins are heads-up (H).\n- Each move flips exactly two coins, which means the total number of heads will change by an even number (either +2, -2, or 0 heads depending on the initial state of the flipped coins).\n\nStarting with 10 heads (an even number), any sequence of moves will always result in an even number of heads because each move changes the count by an even number. Therefore, it's impossible to reach exactly 9 heads (an odd number) through such moves.\n\n### Method Used:\n- **Parity Analysis** from Combinatorics.",
+          "domains": [
+            "invariant_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "This problem can be solved using the concept from combinatorics and parity.\n\n### Solution:\nNo, it is not possible to end with exactly 9 heads.\n\n**Explanation:**\n- Initially, all 10 coins are heads-up (H).\n- Each move flips exactly two coins, which means the total number of heads will change by an even number (either +2, -2, or 0 heads depending on the initial state of the flipped coins).\n\nStarting with 10 heads (an even number), any sequence of moves will always result in an even number of heads because each move changes the count by an even number. Therefore, it's impossible to reach exactly 9 heads (an odd number) through such moves.\n\n### Method Used: Parity Analysis in Combinatorics",
+          "domains": [
+            "invariant_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "This problem can be solved using the concept from combinatorics and parity.\n\n### Solution:\nNo, it is not possible to end with exactly 9 heads.\n\n### Explanation:\n- Initially, all 10 coins are heads-up (H).\n- Each move flips exactly two coins, which means the total number of heads will change by an even number (either +2, -2, or 0 heads depending on the initial state of the flipped coins).\n\nStarting with 10 heads (an even number), any sequence of moves will always result in an even number of heads because each move changes the count by an even number. Therefore, it's impossible to reach exactly 9 heads (an odd number) through such moves.\n\n### Method Used:\n- **Parity Analysis** from Combinatorics.",
+          "domains": [
+            "invariant_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "This problem can be solved using the concept from combinatorics and parity.\n\n### Solution:\nNo, it is not possible to end with exactly 9 heads.\n\n### Explanation:\n- Initially, all 10 coins are heads-up (H).\n- Each move flips exactly two coins, which means the total number of heads will change by an even number (either +2, -2, or 0 heads depending on the initial state of the flipped coins).\n\nStarting with 10 heads (an even number), any sequence of moves will always result in an even number of heads because each move changes the count by an even number. Therefore, it's impossible to reach exactly 9 heads (an odd number) through such moves.\n\n### Method Used:\n- **Parity Analysis** from Combinatorics.",
+          "domains": [
+            "invariant_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "tutor_invariant_coins",
+      "condition": "narrow_persona",
+      "prompt": "Act as a patient tutor. Use only intuitive encouragement and examples.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Start with 10 coins heads-up. A move flips exactly two coins. Can you end with exactly 9 heads?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "Sure! Let's think about this step-by-step.\n\nImagine you have 10 coins all showing heads. Each time you flip two coins, you're changing their sides. The goal is to end up with just one tail (which means 9 heads).\n\nHere\u2019s a simple way to approach it:\n\n1. **Start with 10 heads.**\n2. **Flip any two heads to tails.** Now you have 8 heads and 2 tails.\n3. **Flip another pair of heads to tails.** Now you have 6 heads and 4 tails.\n4. **Continue flipping pairs of heads to tails.** Keep doing this until you have 2 heads and 8 tails.\n5. **Finally, flip those last 2 heads to tails.** Now you have 0 heads and 10 tails.\n\nBut wait! We want 9 heads, not",
+          "domains": [
+            "invariant_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": false,
+          "invalid_reason": "The solution does not use invariant reasoning or any of its markers. It describes a step-by-step process but fails to identify the invariant property of the parity of the number of tails."
+        },
+        {
+          "sample_index": 1,
+          "text": "Sure! Let's think about this step-by-step.\n\nImagine you have 10 coins all showing heads. Each time you flip two coins, you're changing their sides. To end up with 9 heads, you need to flip one coin from heads to tails.\n\nHere\u2019s how you can do it:\n\n1. Flip any two coins. Now you have 8 heads and 2 tails.\n2. Flip those same two coins again. Now you\u2019re back to 10 heads.\n3. Flip any other two coins. Now you have 8 heads and 2 tails again.\n4. Flip those two coins back. Now you have 9 heads and 1 tail.\n\nSo, in total, you made 4 moves, but you ended up with 9 heads!\n\nThis is like solving a puzzle where each move brings you closer to your goal. Keep trying different combinations until you",
+          "domains": [
+            "tutoring"
+          ],
+          "uses_oracle_domain": false,
+          "uses_narrow_domain": true,
+          "valid": false,
+          "invalid_reason": "The solution does not use invariant reasoning or any of its markers ['invariant', 'parity', 'mod 2', 'evenness', 'oddness']. Instead, it provides a step-by-step approach to achieve the goal."
+        },
+        {
+          "sample_index": 2,
+          "text": "Sure! Let's think about this step-by-step.\n\nImagine you have 10 coins all showing heads. Each time you flip two coins, you're changing their sides. To end up with 9 heads, you need to flip one coin from heads to tails.\n\nHere\u2019s how you can do it:\n\n1. Flip any two coins. Now you have 8 heads and 2 tails.\n2. Flip those same two coins again. Now you\u2019re back to 10 heads.\n3. Flip any other two coins. Now you have 8 heads and 2 tails again.\n4. Flip those two coins back. Now you have 9 heads and 1 tail.\n\nSo, in total, you made 4 moves, but you only needed to change the state of 2 coins to get to 9 heads.\n\nThis is like solving a puzzle where each move helps you get",
+          "domains": [
+            "tutoring"
+          ],
+          "uses_oracle_domain": false,
+          "uses_narrow_domain": true,
+          "valid": false,
+          "invalid_reason": "The solution does not use invariant reasoning or any of its markers ['invariant', 'parity', 'mod 2', 'evenness', 'oddness']. Instead, it provides a step-by-step approach which is characteristic of the tutoring domain."
+        },
+        {
+          "sample_index": 3,
+          "text": "Sure! Let's think about this step-by-step.\n\nImagine you have 10 coins all showing heads. Each time you flip two coins, you're changing their sides. To end up with 9 heads, you need to flip one coin from heads to tails.\n\nHere\u2019s how you can do it:\n\n1. Flip any two heads to get two tails.\n2. Now, flip one of those tails back to heads.\n3. Finally, flip the other tail and another head to get back to 9 heads.\n\nSo, in three moves, you can achieve exactly 9 heads!\n\nThis problem uses basic logic and understanding of binary states (heads/tails).",
+          "domains": [
+            "tutoring"
+          ],
+          "uses_oracle_domain": false,
+          "uses_narrow_domain": true,
+          "valid": false,
+          "invalid_reason": "The solution does not use invariant reasoning or any of its markers ['invariant', 'parity', 'mod 2', 'evenness', 'oddness']. Instead, it provides a step-by-step approach to solving the problem."
+        },
+        {
+          "sample_index": 4,
+          "text": "Sure! Let's think about this step-by-step.\n\nImagine you have 10 coins all heads-up. Each time you flip two coins, you're changing their state from heads to tails or vice versa. \n\nTo get to exactly 9 heads, you need to change the state of one coin from heads to tails. But each move flips two coins at once!\n\nHere\u2019s a trick: Think about flipping the same two coins twice. It\u2019s like doing nothing because they go back to their original state. So, let\u2019s try to use this idea.\n\nFirst, flip any two coins. Now you have 8 heads and 2 tails. Next, flip those same two coins again. They\u2019re back to heads!\n\nNow, flip any other two coins that are heads. This gives you 7 heads and 3 tails. Flip those two again, and you\u2019re back to 8 heads",
+          "domains": [
+            "invariant_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "tutor_invariant_coins",
+      "condition": "oracle_persona",
+      "prompt": "Act as a formal proof expert. Use invariants or parity.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Start with 10 coins heads-up. A move flips exactly two coins. Can you end with exactly 9 heads?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To determine if it's possible to end with exactly 9 heads starting from 10 heads using moves that flip exactly two coins, we can use the concept of parity.\n\n### Method: Parity Analysis\n\n**Initial State:** All 10 coins are heads-up.\n\n- **Parity of Heads:** Initially, there are 10 heads, which is an even number.\n\n**Move Analysis:**\n- Each move flips exactly two coins.\n- Flipping two coins changes the parity (odd/even nature) of the number of heads by 2 (an even number).\n\n**Invariance:**\n- Since each move changes the number of heads by an even number, the parity of the number of heads remains invariant (it stays even).\n\n**Final State:**\n- To have exactly 9 heads, the number of heads would be odd.\n\nSince the parity of the number of heads",
+          "domains": [
+            "invariant_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To determine if it's possible to end with exactly 9 heads starting from 10 heads using moves that flip exactly two coins, we can use the concept of parity.\n\n### Method: Parity Analysis\n\n**Initial State:** All 10 coins are heads-up.\n\n- **Parity of Heads:** Initially, there are 10 heads, which is an even number.\n\n**Move Analysis:**\n- Each move flips exactly two coins.\n- Flipping two coins changes the parity (odd/even nature) of the number of heads by 2 (an even number).\n\n**Invariance:**\n- Since each move changes the number of heads by an even number, the parity of the number of heads remains invariant (it stays even).\n\n**Final State:**\n- To have exactly 9 heads, the number of heads would be odd.\n\nSince the parity of the number of heads",
+          "domains": [
+            "invariant_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To determine if it's possible to end with exactly 9 heads starting from 10 heads using moves that flip exactly two coins, we can use the concept of parity.\n\n### Method: Parity Analysis\n\n**Initial State:** All 10 coins are heads-up.\n\n- **Parity of Heads:** Initially, there are 10 heads, which is an even number.\n\nEach move flips exactly two coins:\n- Flipping two heads results in 2 tails (even to even).\n- Flipping one head and one tail results in 0 change in the number of heads (odd to odd).\n- Flipping two tails results in 2 heads (even to even).\n\nIn all cases, the parity (evenness or oddness) of the number of heads does not change. Therefore, the number of heads will always remain even after any number of moves.\n\n**Target State:** Exactly",
+          "domains": [
+            "invariant_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To determine if it's possible to end with exactly 9 heads starting from 10 heads using moves that flip exactly two coins, we can use the concept of parity.\n\n### Method: Parity Analysis\n\n**Initial State:** All 10 coins are heads-up.\n\n- **Parity of Heads:** Initially, there are 10 heads, which is an even number.\n\nEach move flips exactly two coins:\n- Flipping two heads results in 2 tails (even to even).\n- Flipping one head and one tail results in 2 heads (odd to odd).\n- Flipping two tails results in 2 heads (even to even).\n\nIn all cases, the parity (evenness or oddness) of the number of heads does not change. Since the initial number of heads is even, the number of heads will always remain even after any number of moves.\n\n**Target State",
+          "domains": [
+            "invariant_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To determine if it's possible to end with exactly 9 heads starting from 10 heads using moves that flip exactly two coins, we can use the concept of parity.\n\n### Method: Parity Analysis\n\n**Initial State:** All 10 coins are heads-up.\n\n- **Parity of Heads:** Initially, there are 10 heads, which is an even number.\n\nEach move flips exactly two coins:\n- Flipping two heads results in 2 tails (even to even).\n- Flipping one head and one tail results in 0 change in the number of heads (odd to odd).\n- Flipping two tails results in 2 heads (even to even).\n\nIn all cases, the parity (evenness or oddness) of the number of heads does not change. Therefore, the number of heads will always remain even after any number of moves.\n\n**Target State:** Exactly",
+          "domains": [
+            "invariant_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "tutor_counterexample_average",
+      "condition": "no_persona",
+      "prompt": "Solve the task carefully. Use the best method you can.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Claim: if two datasets have the same average, then after adding the same new number to both, their averages remain equal. Is the claim always true?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "The claim is true. This can be verified using basic algebra.\n\nLet's denote:\n- The original averages of the two datasets as \\(A_1\\) and \\(A_2\\).\n- Both averages are given to be equal, so \\(A_1 = A_2 = A\\).\n- Let the sum of the numbers in the first dataset be \\(S_1\\) and in the second dataset be \\(S_2\\).\n- Let the number added to both datasets be \\(x\\).\n\nSince the averages are equal:\n\\[ A = \\frac{S_1}{n_1} \\]\n\\[ A = \\frac{S_2}{n_2} \\]\n\nAfter adding \\(x\\) to both datasets:\n- New sum for the first dataset: \\(S_1 + x\\)\n- New sum for the second dataset: \\(S_2 + x\\",
+          "domains": [
+            "counterexample_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": false,
+          "invalid_reason": "The solution does not use counterexample reasoning or any of its method markers. It provides a proof by algebraic manipulation instead."
+        },
+        {
+          "sample_index": 1,
+          "text": "The claim is true. This can be verified using basic algebra.\n\nLet's denote:\n- The original averages of the two datasets as \\(A_1\\) and \\(A_2\\).\n- Both averages are given to be equal, so \\(A_1 = A_2 = A\\).\n- Let the sum of the numbers in the first dataset be \\(S_1\\) and in the second dataset be \\(S_2\\).\n- Let the number added to both datasets be \\(x\\).\n\nSince the averages are equal:\n\\[ A = \\frac{S_1}{n_1} \\]\n\\[ A = \\frac{S_2}{n_2} \\]\n\nAfter adding \\(x\\) to both datasets:\n- New sum for the first dataset: \\(S_1 + x\\)\n- New sum for the second dataset: \\(S_2 + x\\",
+          "domains": [
+            "counterexample_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": false,
+          "invalid_reason": "The solution does not use counterexample reasoning or any of its method markers. It provides a proof by algebraic manipulation instead."
+        },
+        {
+          "sample_index": 2,
+          "text": "The claim is always true. This can be verified using basic algebra.\n\nLet's denote:\n- The original averages of the two datasets as \\(A_1\\) and \\(A_2\\).\n- Both averages are given to be equal, so \\(A_1 = A_2 = A\\).\n- Let the sum of the numbers in the first dataset be \\(S_1\\) and in the second dataset be \\(S_2\\).\n- Let the number added to both datasets be \\(x\\).\n\nSince the averages are equal:\n\\[ A = \\frac{S_1}{n_1} \\]\n\\[ A = \\frac{S_2}{n_2} \\]\n\nAfter adding \\(x\\) to both datasets:\n- New sum for the first dataset: \\(S_1 + x\\)\n- New sum for the second dataset: \\(S_2 + x",
+          "domains": [
+            "counterexample_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": false,
+          "invalid_reason": "The solution does not use counterexample reasoning or provide a disproof, instead it attempts to prove the claim."
+        },
+        {
+          "sample_index": 3,
+          "text": "The claim is always true. This can be verified using basic algebra.\n\nLet's denote:\n- The original averages of the two datasets as \\(A_1\\) and \\(A_2\\).\n- Both averages are given to be equal, so \\(A_1 = A_2 = A\\).\n- Let the sum of the numbers in the first dataset be \\(S_1\\) and in the second dataset be \\(S_2\\).\n- Let the number added to both datasets be \\(x\\).\n\nSince the averages are equal:\n\\[ A = \\frac{S_1}{n_1} \\]\n\\[ A = \\frac{S_2}{n_2} \\]\n\nAfter adding \\(x\\) to both datasets:\n- New sum for the first dataset: \\(S_1 + x\\)\n- New sum for the second dataset: \\(S_2 + x",
+          "domains": [
+            "counterexample_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": false,
+          "invalid_reason": "The solution does not use counterexample reasoning or provide a disproof, instead it attempts to prove the claim."
+        },
+        {
+          "sample_index": 4,
+          "text": "The claim is always true. This can be verified using basic algebra.\n\nLet's denote:\n- The average of dataset A as \\( \\bar{A} \\)\n- The average of dataset B as \\( \\bar{B} \\)\n- Both averages are given to be equal, i.e., \\( \\bar{A} = \\bar{B} \\)\n- Let the new number added to both datasets be \\( x \\)\n\nAfter adding \\( x \\) to each dataset:\n- The new average of dataset A becomes \\( \\frac{n\\bar{A} + x}{n+1} \\)\n- The new average of dataset B becomes \\( \\frac{n\\bar{B} + x}{n+1} \\)\n\nSince \\( \\bar{A} = \\bar{B} \\), we can substitute \\( \\bar{B} \\) with \\( \\bar",
+          "domains": [
+            "counterexample_reasoning",
+            "tutoring"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": false,
+          "invalid_reason": "Missing counterexample to disprove the claim and lack of encouragement/intuitive explanation in the tutoring approach."
+        }
+      ]
+    },
+    {
+      "item_id": "tutor_counterexample_average",
+      "condition": "narrow_persona",
+      "prompt": "Act as a patient tutor. Use only reassuring explanation and examples.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Claim: if two datasets have the same average, then after adding the same new number to both, their averages remain equal. Is the claim always true?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "The claim is true! Let's see why with an example.\n\nSuppose you have two datasets:\n- Dataset A: 2, 4, 6 (average = 4)\n- Dataset B: 3, 5, 7 (average = 5)\n\nNow, let's add the same number, say 1, to each dataset.\n\n- New Dataset A: 3, 5, 7 (new average = 5)\n- New Dataset B: 4, 6, 8 (new average = 6)\n\nNotice that the new average of Dataset A is now 5, which is the original average of Dataset B plus 1. Similarly, the new average of Dataset B is now 6, which is the original average of Dataset A plus 1.\n\nIn general, if you add the same number \\( x \\) to each element in",
+          "domains": [
+            "counterexample_reasoning",
+            "tutoring"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": false,
+          "invalid_reason": "Missing counterexample and explanation of why the claim is not always true."
+        },
+        {
+          "sample_index": 1,
+          "text": "The claim is true! Let's see why with an example.\n\nSuppose you have two datasets:\n- Dataset A: 2, 4, 6 (average = 4)\n- Dataset B: 3, 5, 7 (average = 5)\n\nNow, let's add the same number, say 8, to each dataset.\n\n- New Dataset A: 2, 4, 6, 8 (new average = (2+4+6+8)/4 = 5)\n- New Dataset B: 3, 5, 7, 8 (new average = (3+5+7+8)/4 = 5.25)\n\nOops, I made a mistake in my example! Let's correct it:\n\n- New Dataset A: 2, 4, 6, 8 (new average = (",
+          "domains": [
+            "counterexample_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": false,
+          "invalid_reason": "Solution does not provide a counterexample to disprove the claim and instead shows a calculation error."
+        },
+        {
+          "sample_index": 2,
+          "text": "The claim is always true. Here's why:\n\nLet's say we have two datasets:\n- Dataset A: \\(a_1, a_2, \\ldots, a_n\\) with an average of \\(\\bar{A}\\).\n- Dataset B: \\(b_1, b_2, \\ldots, b_m\\) with an average of \\(\\bar{B}\\).\n\nGiven that \\(\\bar{A} = \\bar{B}\\), we can write:\n\\[\n\\bar{A} = \\frac{a_1 + a_2 + \\ldots + a_n}{n}\n\\]\n\\[\n\\bar{B} = \\frac{b_1 + b_2 + \\ldots + b_m}{m}\n\\]\n\nNow, let's add the same number \\(x\\) to each dataset.\n\nFor Dataset A, the new",
+          "domains": [
+            "counterexample_reasoning",
+            "tutoring"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": false,
+          "invalid_reason": "The solution does not use counterexample reasoning or provide a gentle explanation for a student."
+        },
+        {
+          "sample_index": 3,
+          "text": "The claim is always true. Here's why:\n\nLet's say we have two datasets:\n- Dataset A: \\(a_1, a_2, \\ldots, a_n\\) with an average of \\(\\bar{A}\\).\n- Dataset B: \\(b_1, b_2, \\ldots, b_m\\) with an average of \\(\\bar{B}\\).\n\nGiven that \\(\\bar{A} = \\bar{B}\\), we can write:\n\\[\n\\bar{A} = \\frac{a_1 + a_2 + \\ldots + a_n}{n}\n\\]\n\\[\n\\bar{B} = \\frac{b_1 + b_2 + \\ldots + b_m}{m}\n\\]\n\nNow, let's add the same number \\(x\\) to each dataset.\n\nFor Dataset A, the new",
+          "domains": [
+            "counterexample_reasoning",
+            "tutoring"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": false,
+          "invalid_reason": "The solution does not use counterexample reasoning or provide a gentle explanation for a student."
+        },
+        {
+          "sample_index": 4,
+          "text": "The claim is always true. Here's why:\n\nLet's say we have two datasets:\n- Dataset A: \\(a_1, a_2, \\ldots, a_n\\) with an average of \\(\\bar{A}\\).\n- Dataset B: \\(b_1, b_2, \\ldots, b_m\\) with an average of \\(\\bar{B}\\).\n\nGiven that \\(\\bar{A} = \\bar{B}\\), we can write:\n\\[\n\\bar{A} = \\frac{a_1 + a_2 + \\ldots + a_n}{n}\n\\]\n\\[\n\\bar{B} = \\frac{b_1 + b_2 + \\ldots + b_m}{m}\n\\]\n\nNow, let's add the same number \\(x\\) to each dataset.\n\nFor Dataset A, the new",
+          "domains": [
+            "counterexample_reasoning",
+            "tutoring"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": false,
+          "invalid_reason": "The solution does not use counterexample reasoning or provide a gentle explanation for a student."
+        }
+      ]
+    },
+    {
+      "item_id": "tutor_counterexample_average",
+      "condition": "oracle_persona",
+      "prompt": "Act as a formal reasoning expert. Use proof or counterexample.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Claim: if two datasets have the same average, then after adding the same new number to both, their averages remain equal. Is the claim always true?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "The claim is true.\n\n**Method/Domain:** Statistical Reasoning\n\nLet's denote the two datasets as \\(A\\) and \\(B\\), with averages \\(\\mu_A\\) and \\(\\mu_B\\) respectively. Given that \\(\\mu_A = \\mu_B\\), we can express this as:\n\\[\n\\mu_A = \\frac{\\sum A_i}{n} \\quad \\text{and} \\quad \\mu_B = \\frac{\\sum B_i}{n}\n\\]\nwhere \\(A_i\\) and \\(B_i\\) are elements of datasets \\(A\\) and \\(B\\), and \\(n\\) is the number of elements in each dataset.\n\nNow, let's add the same new number \\(x\\) to both datasets. The new averages will be:\n\\[\n\\mu'_A = \\frac{\\sum A_i + x}{n+1} \\quad",
+          "domains": [
+            "counterexample_reasoning",
+            "tutoring"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": false,
+          "invalid_reason": "The solution does not use counterexample_reasoning or tutoring methods as indicated by the domain markers."
+        },
+        {
+          "sample_index": 1,
+          "text": "The claim is true.\n\n**Method/Domain:** Statistical Reasoning\n\nLet's denote the two datasets as \\(A\\) and \\(B\\), with averages \\(\\mu_A\\) and \\(\\mu_B\\) respectively. Given that \\(\\mu_A = \\mu_B\\), we can express this as:\n\\[\n\\mu_A = \\frac{\\sum A_i}{n} \\quad \\text{and} \\quad \\mu_B = \\frac{\\sum B_i}{n}\n\\]\nwhere \\(A_i\\) and \\(B_i\\) are elements of datasets \\(A\\) and \\(B\\), and \\(n\\) is the number of elements in each dataset.\n\nNow, let's add the same new number \\(x\\) to both datasets. The new averages will be:\n\\[\n\\mu'_A = \\frac{\\sum A_i + x}{n+1} \\quad",
+          "domains": [
+            "counterexample_reasoning",
+            "tutoring"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": true,
+          "valid": false,
+          "invalid_reason": "The solution does not use counterexample_reasoning or tutoring methods as indicated by the domain markers."
+        },
+        {
+          "sample_index": 2,
+          "text": "The claim is true. This can be proven using algebraic manipulation.\n\nLet the two datasets be \\(A = \\{a_1, a_2, \\ldots, a_n\\}\\) and \\(B = \\{b_1, b_2, \\ldots, b_m\\}\\).\n\nGiven:\n- The average of dataset \\(A\\) is \\(\\frac{1}{n} \\sum_{i=1}^{n} a_i = \\mu_A\\).\n- The average of dataset \\(B\\) is \\(\\frac{1}{m} \\sum_{i=1}^{m} b_i = \\mu_B\\).\n- \\(\\mu_A = \\mu_B = \\mu\\).\n\nAfter adding a new number \\(x\\) to both datasets, the new datasets become:\n- \\(A' = A \\cup \\{x\\}\\",
+          "domains": [
+            "counterexample_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": false,
+          "invalid_reason": "The solution does not use counterexample reasoning or any of its method markers. It provides a proof by algebraic manipulation instead."
+        },
+        {
+          "sample_index": 3,
+          "text": "The claim is true. This can be proven using algebraic manipulation.\n\nLet the two datasets be \\(A = \\{a_1, a_2, \\ldots, a_n\\}\\) and \\(B = \\{b_1, b_2, \\ldots, b_m\\}\\).\n\nGiven:\n- The average of dataset \\(A\\) is \\(\\frac{1}{n} \\sum_{i=1}^{n} a_i = \\mu_A\\).\n- The average of dataset \\(B\\) is \\(\\frac{1}{m} \\sum_{i=1}^{m} b_i = \\mu_B\\).\n- \\(\\mu_A = \\mu_B = \\mu\\).\n\nAfter adding a new number \\(x\\) to both datasets, the new datasets become:\n- \\(A' = A \\cup \\{x\\}\\",
+          "domains": [
+            "counterexample_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": false,
+          "invalid_reason": "The solution does not use counterexample reasoning or any of its method markers. It provides a proof by algebraic manipulation instead."
+        },
+        {
+          "sample_index": 4,
+          "text": "The claim is true. This can be proven using algebraic manipulation.\n\nLet the two datasets be \\(A = \\{a_1, a_2, \\ldots, a_n\\}\\) and \\(B = \\{b_1, b_2, \\ldots, b_m\\}\\).\n\nGiven:\n- The average of dataset \\(A\\) is \\(\\frac{1}{n} \\sum_{i=1}^{n} a_i = \\mu_A\\).\n- The average of dataset \\(B\\) is \\(\\frac{1}{m} \\sum_{i=1}^{m} b_i = \\mu_B\\).\n- \\(\\mu_A = \\mu_B = \\mu\\).\n\nAfter adding a new number \\(x\\) to both datasets, the new datasets become:\n- \\(A' = A \\cup \\{x\\}\\",
+          "domains": [
+            "counterexample_reasoning"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": false,
+          "invalid_reason": "The solution does not use counterexample reasoning or any of its method markers. It provides a proof by algebraic manipulation instead."
+        }
+      ]
+    },
+    {
+      "item_id": "design_assignment_problem",
+      "condition": "no_persona",
+      "prompt": "Solve the task carefully. Use the best method you can.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Assign two workers to two jobs. Costs: Ann-X=4, Ann-Y=1, Bo-X=2, Bo-Y=3. Each worker gets one job. What minimum-cost assignment?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "This problem can be solved using the Hungarian Algorithm, which is commonly used for solving assignment problems.\n\n**Solution:**\n\nAssign Bo to Job X (cost = 2) and Ann to Job Y (cost = 1). The total minimum cost is 2 + 1 = 3.\n\nMethod/Domain: Hungarian Algorithm (Assignment Problem)",
+          "domains": [
+            "optimization"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "This problem can be solved using the Hungarian Algorithm, which is commonly used for solving assignment problems.\n\n**Solution:**\n\nAssign Bo to Job X (cost = 2) and Ann to Job Y (cost = 1). The total minimum cost is 2 + 1 = 3.",
+          "domains": [
+            "optimization"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "To solve this problem, we can use the Hungarian Algorithm, which is commonly applied in assignment problems to find the minimum cost assignment.\n\n**Solution:**\n\n- Assign Bo to Job X with a cost of 2.\n- Assign Ann to Job Y with a cost of 1.\n\nThe total minimum cost is \\(2 + 1 = 3\\).",
+          "domains": [
+            "optimization"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To solve this problem, we can use the Hungarian Algorithm, which is commonly applied in assignment problems to find the minimum cost assignment.\n\n**Solution:**\n\n- Assign Ann to Job Y with a cost of 1.\n- Assign Bo to Job X with a cost of 2.\n\nThe total minimum cost is \\(1 + 2 = 3\\).",
+          "domains": [
+            "optimization"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To solve this problem, we can use the Hungarian Algorithm, which is commonly applied in assignment problems to find the minimum cost assignment.\n\n**Solution:**\n\n- Assign Bo to Job X with a cost of 2.\n- Assign Ann to Job Y with a cost of 1.\n\nThe total minimum cost is \\(2 + 1 = 3\\).",
+          "domains": [
+            "optimization"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "design_assignment_problem",
+      "condition": "narrow_persona",
+      "prompt": "Act as a design thinking facilitator. Use only brainstorming language.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Assign two workers to two jobs. Costs: Ann-X=4, Ann-Y=1, Bo-X=2, Bo-Y=3. Each worker gets one job. What minimum-cost assignment?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "Let's start by listing out the costs for each worker-job combination:\n\n- Ann-X = 4\n- Ann-Y = 1\n- Bo-X = 2\n- Bo-Y = 3\n\nTo minimize the total cost, we should try to assign each worker to the job with the lowest cost.\n\nFirst, let's see if we can assign Ann and Bo to their cheapest jobs without conflict:\n\n- Ann's cheapest job is Y (cost = 1)\n- Bo's cheapest job is X (cost = 2)\n\nAssigning Ann to Y and Bo to X gives us a total cost of:\n1 (Ann-Y) + 2 (Bo-X) = 3\n\nThis looks like an optimal solution since no other combination would result in a lower total cost.\n\nMinimum-cost assignment: \n- Ann to Job Y\n- Bo to Job X\n\nTotal cost: 3",
+          "domains": [
+            "optimization"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "Let's start by listing out the costs for each worker-job combination:\n\n- Ann-X = 4\n- Ann-Y = 1\n- Bo-X = 2\n- Bo-Y = 3\n\nTo minimize the total cost, we should try to assign each worker to the job with the lowest cost.\n\nFirst, let's see if we can assign Ann to the cheapest job:\n- Ann-Y is the cheapest at 1.\n\nNow, we need to assign Bo to a job. Since Ann-Y is taken, we look at the remaining options:\n- Bo-X = 2\n- Bo-Y = 3\n\nBo-X is cheaper than Bo-Y, so we assign Bo to X.\n\nThus, the minimum-cost assignment is:\n- Ann to Y (cost = 1)\n- Bo to X (cost = 2)\n\nTotal cost: 1 + 2 = 3",
+          "domains": [
+            "optimization"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "Let's map out the costs and find the optimal assignment:\n\n- Ann to X: $4\n- Ann to Y: $1\n- Bo to X: $2\n- Bo to Y: $3\n\nTo minimize cost, we should assign each worker to the job with the lowest cost:\n\n- Assign Ann to Y (cost = $1)\n- Assign Bo to X (cost = $2)\n\nTotal minimum cost: $1 + $2 = $3\n\nThis is an application of the Hungarian Algorithm in the domain of operations research and optimization.",
+          "domains": [
+            "optimization"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "Let's map out the costs and find the optimal assignment:\n\n- Ann to X: $4\n- Ann to Y: $1\n- Bo to X: $2\n- Bo to Y: $3\n\nTo minimize cost, we should assign each worker to the job with the lowest cost:\n\n- Assign Ann to Y (cost = $1)\n- Assign Bo to X (cost = $2)\n\nTotal minimum cost: $1 + $2 = $3\n\nThis is an application of the Hungarian Algorithm in the domain of operations research and optimization.",
+          "domains": [
+            "optimization"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "Let's map out the costs and find the optimal assignment:\n\n- Ann to X: $4\n- Ann to Y: $1\n- Bo to X: $2\n- Bo to Y: $3\n\nTo minimize cost, we should assign each worker to the job with the lowest cost:\n\n- Assign Ann to Y (cost = $1)\n- Assign Bo to X (cost = $2)\n\nTotal minimum cost: $1 + $2 = $3\n\nThis is an application of the Hungarian Algorithm in the domain of operations research and optimization.",
+          "domains": [
+            "optimization"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "design_assignment_problem",
+      "condition": "oracle_persona",
+      "prompt": "Act as an optimization expert. Solve the assignment problem.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Assign two workers to two jobs. Costs: Ann-X=4, Ann-Y=1, Bo-X=2, Bo-Y=3. Each worker gets one job. What minimum-cost assignment?\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "This is a classic assignment problem that can be solved using the Hungarian algorithm. For this small problem, we can solve it directly:\n\n- Ann to Job Y: Cost = 1\n- Bo to Job X: Cost = 2\n\nTotal minimum cost: 1 + 2 = 3",
+          "domains": [
+            "optimization"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "This is a classic assignment problem that can be solved using the Hungarian Algorithm. Here's the minimum-cost assignment:\n\n1. Assign Bo to Job X with a cost of 2.\n2. Assign Ann to Job Y with a cost of 1.\n\nTotal minimum cost: 2 + 1 = 3.",
+          "domains": [
+            "optimization"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "This is a classic assignment problem that can be solved using the Hungarian Algorithm. Here's the minimum-cost assignment:\n\n1. Assign Bo to Job X with a cost of 2.\n2. Assign Ann to Job Y with a cost of 1.\n\nTotal minimum cost: 2 + 1 = 3.",
+          "domains": [
+            "optimization"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "This is a classic assignment problem that can be solved using the Hungarian Algorithm. Here's the minimum-cost assignment:\n\n1. Assign Bo to Job X with a cost of 2.\n2. Assign Ann to Job Y with a cost of 1.\n\nTotal minimum cost: 2 + 1 = 3.",
+          "domains": [
+            "optimization"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "This is a classic assignment problem that can be solved using the Hungarian Algorithm. Here's the minimum-cost assignment:\n\n1. Assign Bo to Job X with a cost of 2.\n2. Assign Ann to Job Y with a cost of 1.\n\nTotal minimum cost: 2 + 1 = 3.",
+          "domains": [
+            "optimization"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "design_knapsack",
+      "condition": "no_persona",
+      "prompt": "Solve the task carefully. Use the best method you can.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Choose features under budget 5. Feature A: value 6 cost 4. B: value 4 cost 3. C: value 3 cost 2. D: value 2 cost 1. Maximize total value.\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To maximize total value under a budget of 5, we can use a greedy algorithm approach, specifically focusing on the value-to-cost ratio.\n\n**Solution:**\n- Select Feature D (cost 1, value 2) 5 times.\n\n**Total Cost:** 5 * 1 = 5\n**Total Value:** 5 * 2 = 10\n\nThis solution maximizes the total value while staying within the budget.",
+          "domains": [
+            "dynamic_programming"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "To maximize total value under a budget of 5, we can use a greedy algorithm approach, specifically focusing on the value-to-cost ratio.\n\n**Solution:**\nChoose features C and D.\n\n- Feature C: Value 3, Cost 2\n- Feature D: Value 2, Cost 1\n\nTotal cost: 2 + 1 = 3 (within budget)\nTotal value: 3 + 2 = 5\n\nThis selection maximizes the total value while staying within the budget.",
+          "domains": [
+            "dynamic_programming"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": false,
+          "invalid_reason": "The solution uses a greedy algorithm approach instead of dynamic programming or 0/1 knapsack method."
+        },
+        {
+          "sample_index": 2,
+          "text": "To maximize total value under a budget of 5, we can use a greedy algorithm approach, specifically focusing on the value-to-cost ratio.\n\n**Solution:**\n- Select Feature D (cost 1, value 2) 5 times.\n\nThis selection maximizes the total value without exceeding the budget. Total value = 5 * 2 = 10.",
+          "domains": [
+            "dynamic_programming"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "To maximize total value under a budget of 5, we can use a greedy algorithm approach, specifically focusing on the value-to-cost ratio.\n\n**Solution:**\n- Select Feature D (cost 1, value 2) 5 times.\n\nThis selection maximizes the total value without exceeding the budget. Total value = 5 * 2 = 10.",
+          "domains": [
+            "dynamic_programming"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "To maximize total value under a budget of 5, we can use a greedy algorithm approach, specifically focusing on the value-to-cost ratio.\n\n**Solution:**\n- Select Feature D (cost 1, value 2) 5 times.\n\nThis selection maximizes the total value without exceeding the budget. Total value = 5 * 2 = 10.",
+          "domains": [
+            "dynamic_programming"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    },
+    {
+      "item_id": "design_knapsack",
+      "condition": "narrow_persona",
+      "prompt": "Act as a design thinking facilitator. Use only ideation and user-empathy framing.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Choose features under budget 5. Feature A: value 6 cost 4. B: value 4 cost 3. C: value 3 cost 2. D: value 2 cost 1. Maximize total value.\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "To maximize total value within a budget of 5, let's use the **Value Cost Ratio (VCR) Method**.\n\nFirst, calculate the VCR for each feature:\n- Feature A: VCR = 6/4 = 1.5\n- Feature B: VCR = 4/3 \u2248 1.33\n- Feature C: VCR = 3/2 = 1.5\n- Feature D: VCR = 2/1 = 2\n\nNext, prioritize features based on their VCR:\n1. Feature D (VCR = 2)\n2. Features A and C (VCR = 1.5)\n\nNow, select features starting from the highest VCR until the budget is reached:\n1. Add Feature D (cost 1, value 2): Total cost = 1, Total value = ",
+          "domains": [
+            "general_reasoning"
+          ],
+          "uses_oracle_domain": false,
+          "uses_narrow_domain": false,
+          "valid": false,
+          "invalid_reason": "The solution does not use dynamic_programming or design_thinking methods."
+        },
+        {
+          "sample_index": 1,
+          "text": "To maximize total value within a budget of 5, let's use the **Value Cost Ratio (VCR) Method**.\n\nFirst, calculate the VCR for each feature:\n- Feature A: VCR = 6/4 = 1.5\n- Feature B: VCR = 4/3 \u2248 1.33\n- Feature C: VCR = 3/2 = 1.5\n- Feature D: VCR = 2/1 = 2\n\nNext, prioritize features based on their VCR:\n1. Feature D (VCR = 2)\n2. Features A and C (VCR = 1.5)\n\nSince we have a budget of 5 and Feature D costs 1, we can afford to include it first. This leaves us with a remaining budget of 4.\n\nWith the remaining budget, we",
+          "domains": [
+            "general_reasoning"
+          ],
+          "uses_oracle_domain": false,
+          "uses_narrow_domain": false,
+          "valid": false,
+          "invalid_reason": "The solution does not use dynamic_programming or design_thinking methods. It uses a value cost ratio approach which is a form of greedy algorithm, not explicitly listed in the allowed domains."
+        },
+        {
+          "sample_index": 2,
+          "text": "To maximize total value within a budget of 5, let's use the **Value Cost Ratio (VCR) Method**.\n\n1. **Calculate VCR for each feature:**\n   - Feature A: \\( \\frac{6}{4} = 1.5 \\)\n   - Feature B: \\( \\frac{4}{3} \\approx 1.33 \\)\n   - Feature C: \\( \\frac{3}{2} = 1.5 \\)\n   - Feature D: \\( \\frac{2}{1} = 2 \\)\n\n2. **Sort features by VCR in descending order:**\n   - Feature D: 2\n   - Feature A and C: 1.5\n   - Feature B: 1.33\n\n3. **Select features starting from highest VCR until budget is reached:**\n   - Add",
+          "domains": [
+            "general_reasoning"
+          ],
+          "uses_oracle_domain": false,
+          "uses_narrow_domain": false,
+          "valid": false,
+          "invalid_reason": "The solution does not use dynamic_programming or design_thinking methods."
+        },
+        {
+          "sample_index": 3,
+          "text": "To maximize total value within a budget of 5, let's use the **Value Cost Ratio (VCR) Method**.\n\n1. **Calculate VCR for each feature:**\n   - Feature A: \\( \\frac{6}{4} = 1.5 \\)\n   - Feature B: \\( \\frac{4}{3} \\approx 1.33 \\)\n   - Feature C: \\( \\frac{3}{2} = 1.5 \\)\n   - Feature D: \\( \\frac{2}{1} = 2 \\)\n\n2. **Sort features by VCR in descending order:**\n   - Feature D: 2\n   - Feature A and C: 1.5\n   - Feature B: 1.33\n\n3. **Select features starting from highest VCR until budget is reached:**\n   - Add",
+          "domains": [
+            "general_reasoning"
+          ],
+          "uses_oracle_domain": false,
+          "uses_narrow_domain": false,
+          "valid": false,
+          "invalid_reason": "The solution does not use dynamic_programming or design_thinking methods."
+        },
+        {
+          "sample_index": 4,
+          "text": "To maximize total value within a budget of 5, let's use a prioritization matrix approach, focusing on both value and cost.\n\n1. **Feature A**: Value 6, Cost 4\n   - Value/Cost Ratio: 6/4 = 1.5\n\n2. **Feature B**: Value 4, Cost 3\n   - Value/Cost Ratio: 4/3 \u2248 1.33\n\n3. **Feature C**: Value 3, Cost 2\n   - Value/Cost Ratio: 3/2 = 1.5\n\n4. **Feature D**: Value 2, Cost 1\n   - Value/Cost Ratio: 2/1 = 2\n\nGiven the budget constraint of 5, we can select:\n\n- **Feature D** (Cost 1, Value 2)\n- **Feature",
+          "domains": [
+            "general_reasoning"
+          ],
+          "uses_oracle_domain": false,
+          "uses_narrow_domain": false,
+          "valid": false,
+          "invalid_reason": "The solution does not use dynamic_programming or design_thinking methods. It uses a prioritization matrix approach instead."
+        }
+      ]
+    },
+    {
+      "item_id": "design_knapsack",
+      "condition": "oracle_persona",
+      "prompt": "Act as an optimization expert. Solve the knapsack problem.\nReturn a concise solution. If useful, name the method/domain you used.\nTask: Choose features under budget 5. Feature A: value 6 cost 4. B: value 4 cost 3. C: value 3 cost 2. D: value 2 cost 1. Maximize total value.\nAttempt index: 0",
+      "samples": [
+        {
+          "sample_index": 0,
+          "text": "This is a classic 0/1 Knapsack Problem. We can solve it using dynamic programming.\n\n**Solution:**\n\nDefine `dp[i]` as the maximum value that can be achieved with a budget of `i`.\n\n- Initialize `dp[0] = 0`.\n- For each feature, update the `dp` array from the highest budget to the lowest.\n\nHere's the step-by-step solution:\n\n1. **Initialize dp array:**\n   ```python\n   dp = [0] * 6  # Budget range from 0 to 5\n   ```\n\n2. **Update dp array for each feature:**\n   - Feature A (value 6, cost 4)\n     ```python\n     for i in range(5, 3, -1):  # From 5 to 3 (inclusive)\n         dp[i] = max(dp[i",
+          "domains": [
+            "dynamic_programming"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 1,
+          "text": "This is a classic 0/1 Knapsack Problem. We can solve it using dynamic programming.\n\n**Solution:**\n\nDefine `dp[i]` as the maximum value that can be achieved with a budget of `i`.\n\n- Initialize `dp[0] = 0`.\n- For each feature, update the `dp` array from the highest budget to the lowest.\n\nHere's the step-by-step solution:\n\n1. **Initialization:**\n   - `dp = [0, 0, 0, 0, 0, 0]`\n\n2. **Update dp array:**\n   - Feature A (value 6, cost 4): \n     - `dp[4] = max(dp[4], dp[0] + 6) = 6`\n     - `dp[5] = max(dp[5], dp[1] + ",
+          "domains": [
+            "dynamic_programming"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 2,
+          "text": "This problem can be solved using a greedy algorithm, specifically the fractional knapsack approach, since we aim to maximize the total value and the items can be divided into fractions.\n\nGiven:\n- Budget: 5\n- Features:\n  - A: Value = 6, Cost = 4\n  - B: Value = 4, Cost = 3\n  - C: Value = 3, Cost = 2\n  - D: Value = 2, Cost = 1\n\nSteps:\n1. Calculate the value-to-cost ratio for each feature.\n2. Select features based on the highest value-to-cost ratio until the budget is reached.\n\nCalculations:\n- A: Ratio = 6/4 = 1.5\n- B: Ratio = 4/3 \u2248 1.33\n- C: Ratio = 3/2 = ",
+          "domains": [
+            "dynamic_programming"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 3,
+          "text": "This problem can be solved using a greedy algorithm, specifically the fractional knapsack approach, since we aim to maximize the total value and the items can be divided into fractions.\n\nGiven:\n- Budget: 5\n- Features:\n  - A: Value = 6, Cost = 4\n  - B: Value = 4, Cost = 3\n  - C: Value = 3, Cost = 2\n  - D: Value = 2, Cost = 1\n\nSteps:\n1. Calculate the value-to-cost ratio for each feature.\n2. Select features based on the highest value-to-cost ratio until the budget is reached.\n\nCalculations:\n- A: Ratio = 6/4 = 1.5\n- B: Ratio = 4/3 \u2248 1.33\n- C: Ratio = 3/2 = ",
+          "domains": [
+            "dynamic_programming"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        },
+        {
+          "sample_index": 4,
+          "text": "This is a classic 0/1 Knapsack Problem. We can solve it using dynamic programming.\n\n**Solution:**\n\nDefine `dp[i]` as the maximum value that can be achieved with a budget of `i`.\n\n- Initialize `dp[0] = 0`.\n- For each feature, update the `dp` array from the highest budget to the lowest.\n\nHere's the step-by-step solution:\n\n1. **Initialize dp array:**\n   ```\n   dp = [0, 0, 0, 0, 0, 0]\n   ```\n\n2. **Feature A (value 6, cost 4):**\n   - Update `dp[4]` and `dp[5]`:\n     ```\n     dp[4] = max(dp[4], 6) = 6\n     dp[5] = max(dp[5",
+          "domains": [
+            "dynamic_programming"
+          ],
+          "uses_oracle_domain": true,
+          "uses_narrow_domain": false,
+          "valid": true,
+          "invalid_reason": ""
+        }
+      ]
+    }
+  ]
+}

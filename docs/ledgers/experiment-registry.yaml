@@ -1,6 +1,30 @@
 # Experiment Registry
 # Immutable log. Every run (incl. failed/cancelled/invalidated) gets a unique experiment_id.
 # Fields per AI-Instruction Part I §8.1. No outputs/final2/really_final folder-science.
+# - experiment_id: exp-0001
+#   parent: null
+#   hypothesis_id: H1
+#   claim_ids: [C1]
+#   type: exploratory        # confirmatory | exploratory | diagnostic
+#   status: planned          # planned | running | done | failed | cancelled | invalidated
+#   code_commit: null
+#   dirty_tree: null
+#   data_hash: null
+#   env_hash: null
+#   config_hash: null
+#   model: null
+#   dataset: null
+#   seed: null
+#   hardware: null
+#   started_at: null
+#   ended_at: null
+#   exit_code: null
+#   raw_metrics: null
+#   summary_metrics: null
+#   artifacts: []
+#   failure_reason: null
+#   valid_for_paper: false
+#   validation_notes: null
 
 experiments:
 - experiment_id: c1-facade-1dcc4fa7-0001

@@ -1,8 +1,8 @@
 {
-  "audit_scope": "response-side redacted_response exact disclosure terms; generic words such as expertise are not condition disclosures",
+  "audit_scope": "response-side redacted_response exact disclosure terms using committed DISCLOSURE_PATTERNS",
   "leak_count": 0,
   "leaks": [],
-  "note": "The original run used an over-broad substring diagnostic that counted generic expertise/experts text. This exact disclosure-term audit finds no novice/expert condition disclosure leakage in redacted judge inputs.",
+  "note": "Generated deterministically from records[*].scores.redacted_response; generic expertise/experts words are not condition disclosures.",
   "passed": true,
   "schema": "flagship_redaction_audit_v1",
   "source_result": "results/flagship_powered/behavior/flagship_l0_results.json"

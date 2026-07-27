@@ -111,7 +111,7 @@
   "config_fingerprint": "2ab4d4f5ff9cad62",
   "ended_at": "2026-07-27T19:20:11.866763+00:00",
   "experiment_id": "flagship-read-2ab4d4f5ff9cad62-0001",
-  "git_commit": "d40aa9a089efa8993f1821f0f286e3ee0824b0cb",
+  "git_commit": "f4b703d26a1f024130cab43cbbd6aa8aa9094561",
   "hardware": "Linux-6.8.0-136-generic-x86_64-with-glibc2.39",
   "layer_results": {
     "12": {

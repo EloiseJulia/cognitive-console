@@ -1,0 +1,143 @@
+experiments:
+- experiment_id: flagship-read-2ab4d4f5ff9cad62-0001
+  parent: null
+  hypothesis_id: H-NM
+  claim_ids: []
+  type: diagnostic
+  status: done
+  code_commit: d40aa9a089efa8993f1821f0f286e3ee0824b0cb
+  dirty_tree: null
+  data_hash: null
+  env_hash: null
+  config_hash: sha256:2ab4d4f5ff9cad62d24430f92924dcde3ce7a018e3b8a7689d277ecb59ec567e
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: src/cognitive_console/social/data/flagship_l0_tasks.json + src/cognitive_console/social/data/flagship_test_tasks.json
+  seed: 20260727
+  hardware: Linux-6.8.0-136-generic-x86_64-with-glibc2.39
+  started_at: '2026-07-27T19:19:44.918857+00:00'
+  ended_at: '2026-07-27T19:20:11.866763+00:00'
+  exit_code: 0
+  raw_metrics: null
+  summary_metrics:
+    selected_layer: 8
+    layer_results:
+      '8':
+        literal:
+          accuracy: 1.0
+          auc: 1.0
+          cohens_d: 16.73366648134333
+          mean_pos_projection: 1.8639903399679396
+          mean_neg_projection: 0.4945476673267506
+        token_blind:
+          accuracy: 0.9074074074074074
+          auc: 0.9540466392318244
+          cohens_d: 2.419580141153996
+          mean_pos_projection: 1.2244439191288419
+          mean_neg_projection: 0.9533389541837904
+        auc_drop_pp: 4.595336076817558
+        dev_separation: 17.124249568497255
+        vector_norm: 1.3802518844604492
+      '12':
+        literal:
+          accuracy: 1.0
+          auc: 1.0
+          cohens_d: 11.56586814158076
+          mean_pos_projection: 2.3755897283554077
+          mean_neg_projection: 0.2604847412418436
+        token_blind:
+          accuracy: 0.8888888888888888
+          auc: 0.9451303155006858
+          cohens_d: 2.1792861086429003
+          mean_pos_projection: 1.4611530778584656
+          mean_neg_projection: 0.7914070553249783
+        auc_drop_pp: 5.4869684499314175
+        dev_separation: 13.120185678779363
+        vector_norm: 2.089059352874756
+      '16':
+        literal:
+          accuracy: 1.0
+          auc: 1.0
+          cohens_d: 38.394771262207435
+          mean_pos_projection: 8.040608679806745
+          mean_neg_projection: -2.787924854843705
+        token_blind:
+          accuracy: 1.0
+          auc: 1.0
+          cohens_d: 5.13388465891795
+          mean_pos_projection: 4.759059248147188
+          mean_neg_projection: -3.7477226610536927
+        auc_drop_pp: 0.0
+        dev_separation: 48.834517054530565
+        vector_norm: 10.904629707336426
+      '20':
+        literal:
+          accuracy: 1.0
+          auc: 1.0
+          cohens_d: 15.858881668895373
+          mean_pos_projection: 14.440180354648167
+          mean_neg_projection: -2.752416479366797
+        token_blind:
+          accuracy: 1.0
+          auc: 1.0
+          cohens_d: 6.879077128233535
+          mean_pos_projection: 10.032598053967511
+          mean_neg_projection: -1.8585639452492748
+        auc_drop_pp: 0.0
+        dev_separation: 16.133706463164735
+        vector_norm: 17.156206130981445
+      '24':
+        literal:
+          accuracy: 1.0
+          auc: 1.0
+          cohens_d: 10.859142744943815
+          mean_pos_projection: 47.02803618819625
+          mean_neg_projection: 11.849337542498553
+        token_blind:
+          accuracy: 1.0
+          auc: 1.0
+          cohens_d: 6.10684210212191
+          mean_pos_projection: 37.75570212470161
+          mean_neg_projection: 11.428132984373304
+        auc_drop_pp: 0.0
+        dev_separation: 11.643732594060436
+        vector_norm: 34.83420944213867
+      '28':
+        literal:
+          accuracy: 1.0
+          auc: 1.0
+          cohens_d: 7.408316740401753
+          mean_pos_projection: 3.3600076569451227
+          mean_neg_projection: -54.36595839041251
+        token_blind:
+          accuracy: 1.0
+          auc: 1.0
+          cohens_d: 4.8745184050554045
+          mean_pos_projection: -10.846387721874096
+          mean_neg_projection: -52.14970712308531
+        auc_drop_pp: 0.0
+        dev_separation: 8.342860671122907
+        vector_norm: 59.6367301940918
+    random_direction_null:
+      n: 200
+      token_blind_auc_p95: 0.7856652949245542
+      token_blind_auc_mean: 0.49283436213991777
+    condition_projection_means:
+      A_control: 1.171221046536057
+      B_novice: 1.8639903399679396
+      E_explain_simple: 1.55133499039544
+      C_expert: 0.4945476673267506
+      B_minus_C: 1.369442672641189
+      B_minus_A: 0.6927692934318825
+      B_minus_E: 0.3126553495724995
+    read_verdict:
+      status: READ_HOLDS
+      criterion: AUC>=0.80 on literal and token-blind, token-blind drop<=10pp, above
+        random null, novice projection positive
+      recommend_steer_arm: true
+      note: READ only; steer alpha-grid was not run.
+  artifacts:
+  - results/flagship_powered/read/flagship_read_results.json
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: D-0044 token-blind READ probe only; no steering alpha-grid run
+    and no paper-valid claim before audit.

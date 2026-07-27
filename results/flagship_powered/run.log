@@ -1,0 +1,73 @@
+START 2026-07-28T01:27:18+08:00
+CUDA_VISIBLE_DEVICES=1
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   0%|          | 1/339 [00:00<00:56,  5.94it/s]Loading weights:   1%|          | 4/339 [00:00<00:20, 16.19it/s]Loading weights:   5%|▍         | 16/339 [00:00<00:05, 55.99it/s]Loading weights:  10%|█         | 34/339 [00:00<00:03, 98.91it/s]Loading weights:  15%|█▌        | 52/339 [00:00<00:02, 124.02it/s]Loading weights:  19%|█▉        | 66/339 [00:00<00:02, 123.08it/s]Loading weights:  26%|██▌       | 88/339 [00:00<00:01, 131.01it/s]Loading weights:  33%|███▎      | 112/339 [00:01<00:01, 138.23it/s]Loading weights:  40%|████      | 136/339 [00:01<00:01, 153.24it/s]Loading weights:  45%|████▍     | 152/339 [00:01<00:01, 148.77it/s]Loading weights:  51%|█████     | 172/339 [00:01<00:01, 151.18it/s]Loading weights:  55%|█████▌    | 188/339 [00:01<00:01, 147.42it/s]Loading weights:  61%|██████▏   | 208/339 [00:01<00:00, 137.60it/s]Loading weights:  65%|██████▌   | 222/339 [00:01<00:00, 134.55it/s]Loading weights:  72%|███████▏  | 244/339 [00:01<00:00, 134.73it/s]Loading weights:  79%|███████▉  | 268/339 [00:02<00:00, 135.75it/s]Loading weights:  85%|████████▍ | 288/339 [00:02<00:00, 148.17it/s]Loading weights:  90%|████████▉ | 304/339 [00:02<00:00, 136.24it/s]Loading weights:  94%|█████████▍| 318/339 [00:02<00:00, 136.67it/s]Loading weights: 100%|██████████| 339/339 [00:02<00:00, 132.16it/s]
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   0%|          | 1/339 [00:00<01:10,  4.77it/s]Loading weights:   1%|          | 2/339 [00:00<01:01,  5.51it/s]Loading weights:   8%|▊         | 28/339 [00:00<00:03, 79.01it/s]Loading weights:  12%|█▏        | 42/339 [00:00<00:03, 95.47it/s]Loading weights:  19%|█▉        | 64/339 [00:00<00:02, 115.15it/s]Loading weights:  26%|██▌       | 88/339 [00:00<00:01, 128.48it/s]Loading weights:  33%|███▎      | 112/339 [00:01<00:01, 132.73it/s]Loading weights:  40%|████      | 136/339 [00:01<00:01, 139.54it/s]Loading weights:  47%|████▋     | 160/339 [00:01<00:01, 140.26it/s]Loading weights:  54%|█████▍    | 184/339 [00:01<00:01, 145.15it/s]Loading weights:  59%|█████▊    | 199/339 [00:01<00:01, 139.31it/s]Loading weights:  65%|██████▍   | 220/339 [00:01<00:00, 136.87it/s]Loading weights:  72%|███████▏  | 244/339 [00:02<00:00, 138.94it/s]Loading weights:  76%|███████▌  | 258/339 [00:02<00:00, 131.52it/s]Loading weights:  83%|████████▎ | 280/339 [00:02<00:00, 134.90it/s]Loading weights:  90%|████████▉ | 304/339 [00:02<00:00, 151.29it/s]Loading weights:  94%|█████████▍| 320/339 [00:02<00:00, 147.41it/s]Loading weights: 100%|██████████| 339/339 [00:02<00:00, 129.84it/s]
+{
+  "result": "results/flagship_powered/behavior/flagship_l0_results.json",
+  "fingerprint": "e9c69c0e317a6cc3",
+  "coverage": {
+    "complete": true,
+    "n_items": 54,
+    "conditions": [
+      "A",
+      "B",
+      "E",
+      "C"
+    ],
+    "k": 5,
+    "n_records": 1080
+  },
+  "condition_means": {
+    "M1": {
+      "A": 0.4807407407407408,
+      "B": 0.48222222222222216,
+      "E": 0.4940740740740741,
+      "C": 0.4381481481481481
+    },
+    "M2": {
+      "A": 0.0,
+      "B": 0.0,
+      "E": 0.0,
+      "C": 0.0
+    },
+    "M3": {
+      "A": 0.0,
+      "B": 0.0,
+      "E": 0.0,
+      "C": 0.0
+    },
+    "M4": {
+      "A": 0.0,
+      "B": 0.0,
+      "E": 0.0,
+      "C": 0.0
+    }
+  },
+  "primary_directional_check": {
+    "primary_l0_m1_directional_check": "B>A",
+    "primary_observed_contrast": "B_minus_A",
+    "primary_observed_delta": 0.0014814814814813615,
+    "b_minus_e_status": "exploratory_underpowered_not_primary_in_D0045_l0",
+    "b_minus_e_observed_delta": -0.011851851851851947,
+    "note": "D-0045 re-scopes the DEV-power L0 M1 directional check to B>A only; B>E remains part of the frozen full-study manipulation-present criterion, but this L0 harness reports it as exploratory/underpowered rather than primary."
+  },
+  "judge_bias_passed": true
+}
+BEHAVIOR_DONE 2026-07-28T03:19:44+08:00
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:  12%|█▏        | 41/339 [00:00<00:00, 408.45it/s]Loading weights:  33%|███▎      | 112/339 [00:00<00:00, 579.09it/s]Loading weights:  60%|██████    | 204/339 [00:00<00:00, 730.72it/s]Loading weights:  86%|████████▋ | 293/339 [00:00<00:00, 791.58it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 759.42it/s]
+{
+  "result": "results/flagship_powered/read/flagship_read_results.json",
+  "fingerprint": "2ab4d4f5ff9cad62",
+  "experiment_id": "flagship-read-2ab4d4f5ff9cad62-0001",
+  "selected_layer": 8,
+  "read_verdict": {
+    "status": "READ_HOLDS",
+    "criterion": "AUC>=0.80 on literal and token-blind, token-blind drop<=10pp, above random null, novice projection positive",
+    "recommend_steer_arm": true,
+    "note": "READ only; steer alpha-grid was not run."
+  }
+}
+READ_DONE 2026-07-28T03:20:12+08:00

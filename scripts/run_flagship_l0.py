@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import platform
+import re
 import sys
 from pathlib import Path
 from typing import List, Optional
@@ -29,7 +30,7 @@ from cognitive_console.social.conditions import CONDITIONS, render_prompt
 from cognitive_console.social.coverage import assert_complete_coverage, config_fingerprint
 from cognitive_console.social.human_calibration import summarize_human_calibration
 from cognitive_console.social.power import estimate_mde
-from cognitive_console.social.scoring import FixtureJudge, HeuristicBlindJudge
+from cognitive_console.social.scoring import DISCLOSURE_PATTERNS, FixtureJudge, HeuristicBlindJudge
 from cognitive_console.social.scoring_llm import (
     HFLocalJudgeBackend,
     LLMJudge,
@@ -214,6 +215,19 @@ def _behavioral_verdict(stats: dict, human_calibration: dict) -> dict:
         dim for dim, row in stats["B_minus_A"].items()
         if row.get("passes_effect_rule_without_human_alpha")
     }
+
+
+def _has_response_side_disclosure_leak(text: str) -> bool:
+    redacted = str(text)
+    if any(pattern.search(redacted) for pattern in DISCLOSURE_PATTERNS):
+        return True
+    return bool(
+        re.search(
+            r"\bnovice\b|\bexpert\b|novice_disclosure|expert_disclosure",
+            redacted,
+            re.I,
+        )
+    )
     be_pass = {
         dim for dim, row in stats["B_minus_E"].items()
         if row.get("passes_identity_specific_rule_without_human_alpha")
@@ -339,8 +353,7 @@ def run(args) -> dict:
     stats = _paired_bootstrap_report(records, n_boot=args.bootstrap_resamples, seed=args.seed)
     redacted_leak_count = sum(
         1 for r in records
-        if "novice" in str(r["scores"].get("redacted_response", "")).lower()
-        or "expert" in str(r["scores"].get("redacted_response", "")).lower()
+        if _has_response_side_disclosure_leak(r["scores"].get("redacted_response", ""))
     )
     payload = {
         "schema": "flagship_l0_result_v1",

@@ -18,13 +18,15 @@
    behavioral prompt-unreachability. C2 as written is not entailed by the cited theory — a hostile
    reviewer's sharpest attack. Mitigation: separate internal-state claim (theory-backed) from behavioral
    claim (must be empirically demonstrated, cannot be asserted from Mishra). Must fix before Charter Freeze.
-8. **[MED-NEW] Citation framing errors.** **Partly resolved from existing docs:** SemanticLens/Labarta is
-   corrected as **two distinct works**: Labarta et al. "From Attribution to Action" is documented in
-   `docs/research/2026-07-23-novelty-falsification.md` and D-0003 as a **vision/CLIP, expert-debugging**
-   tool (not an LLM latent UI for non-experts), while "SemanticLens" is a separate Fraunhofer HHI
-   Nat.Mach.Intell.'25 artifact. **Still open:** ActAdd Appendix-B sub-claim remains **[NEEDS EVIDENCE]**;
-   the available docs only verify that the specific exclusion-experiment claim was *not* checked at the
-   section level, so do not cite App-B specifics until the primary PDF/appendix is read.
+8. **[RESOLVED 2026-07-28] Citation framing errors.** **Fully resolved:** SemanticLens/Labarta is
+   corrected as **two distinct works** (see docs/research/2026-07-23-novelty-falsification.md, D-0003).
+   **ActAdd App-B sub-claim: VERIFIED SAFE.** Submission-polish subagent checked arXiv:2308.10248v5 via
+   ar5iv HTML: the single `\cite{turner2023actadd}` in main.tex is a **general main-body claim** only —
+   "activation addition...motivates the idea that interpretable latent coordinates can be operationalized
+   as controls." The paper's main body explicitly demonstrates topic-steering with activation vectors;
+   this claim does not depend on Appendix-B exclusion experiments. No App-B-specific claims appear
+   anywhere in main.tex. The WARNING in references.bib has been updated to reflect this finding.
+   **Status: CLOSED. No further action needed.**
 3. **[HIGH] Effect fragility / mechanism.** Phase 0 may show steering changes only surface style, or
    axes non-linear/orthogonal → dual-channel "coordination" narrative collapses. Mitigation: Plan B
    (limit probe) / Plan D (measurement paper) fallbacks in Charter §8.

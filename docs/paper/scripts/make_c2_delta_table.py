@@ -63,9 +63,9 @@ def main() -> None:
     lines.append(r"  \caption{Frozen prompt-vs-latent behavioral adjudication across CAA/ITI $\times$ Qwen/Llama. The table supports Claim C2 and is generated from frozen robustness-arm artifacts; CAA$\times$Qwen reproduces the original Qwen adjudication. $\Delta$ is TEST paired steer--prompt outcome; intervals are Bonferroni two-sided CIs at level " + f"{ci_level:.5f}" + r"; the pre-registered meaningful margin is $\delta=" + f"{delta:.2f}" + r"$.}")
     lines.append(r"  \label{tab:c2-delta-4cell}")
     lines.append(r"  \scriptsize")
-    lines.append(r"  \begin{tabular}{lllrrrlll}")
+    lines.append(r"  \begin{tabular}{lllrrrll}")
     lines.append(r"    \toprule")
-    lines.append(r"    Method & Model & Axis & $N_{dev}$ & $N_{test}$ & $\alpha$ & Best prompt & $\Delta$ [CI] & Gate / pass \\")
+    lines.append(r"    Method & Model & Axis & $N_{dev}$ & $N_{test}$ & $\alpha$ & $\Delta$ [CI] & Gate / pass \\")
     lines.append(r"    \midrule")
     last_cell = None
     for r in rows:
@@ -80,13 +80,13 @@ def main() -> None:
             "    "
             + " & ".join([
                 tex_escape(r["method"]), tex_escape(r["model"]), tex_escape(r["axis"]),
-                str(r["n_dev"]), str(r["n_test"]), f"{r['alpha']:g}", tex_escape(r["prompt"]),
+                str(r["n_dev"]), str(r["n_test"]), f"{r['alpha']:g}",
                 tex_escape(ci), tex_escape(f"{gate} / {passed}"),
             ])
             + r" \\")
     lines.append(r"    \bottomrule")
     lines.append(r"  \end{tabular}")
-    lines.append(r"  \par\smallskip\raggedright\scriptsize\emph{Rounding note.} Pass/fail is computed from the unrounded frozen JSON. Displayed means and intervals are rounded to three decimals; a fail can therefore have a small positive displayed estimate or boundary. A pass requires an unrounded CI excluding 0, mean $\ge \delta=0.05$, and the coherence gate to pass, so ITI$\times$Qwen deliberation remains fail because its mean is below $\delta$.")
+    lines.append(r"  \par\smallskip\raggedright\scriptsize\emph{Notes.} Pass/fail is computed from the unrounded frozen JSON. Displayed means and intervals are rounded to three decimals; a fail can therefore have a small positive displayed estimate or boundary. A pass requires an unrounded CI excluding 0, mean $\ge \delta=0.05$, and the coherence gate to pass, so ITI$\times$Qwen deliberation remains fail because its mean is below $\delta$. The DEV-selected best prompt for each axis/model is identified by its artifact-registry ID; full prompt text is provided in the supplementary manifest (\texttt{c2-delta-4cell.yaml}).")
     lines.append(r"\end{table*}")
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")

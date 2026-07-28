@@ -4,26 +4,26 @@
   \caption{Frozen prompt-vs-latent behavioral adjudication across CAA/ITI $\times$ Qwen/Llama. The table supports Claim C2 and is generated from frozen robustness-arm artifacts; CAA$\times$Qwen reproduces the original Qwen adjudication. $\Delta$ is TEST paired steer--prompt outcome; intervals are Bonferroni two-sided CIs at level 0.98333; the pre-registered meaningful margin is $\delta=0.05$.}
   \label{tab:c2-delta-4cell}
   \scriptsize
-  \begin{tabular}{lllrrrlll}
+  \begin{tabular}{lllrrrll}
     \toprule
-    Method & Model & Axis & $N_{dev}$ & $N_{test}$ & $\alpha$ & Best prompt & $\Delta$ [CI] & Gate / pass \\
+    Method & Model & Axis & $N_{dev}$ & $N_{test}$ & $\alpha$ & $\Delta$ [CI] & Gate / pass \\
     \midrule
-    CAA & Qwen2.5-7B & Deliberation & 20 & 40 & 2 & delib-strong-09 & +0.015 [-0.040, +0.070] & ok / fail \\
-    CAA & Qwen2.5-7B & Skepticism & 20 & 40 & 6 & skep-strong-06 & -0.080 [-0.225, +0.045] & ok / fail \\
-    CAA & Qwen2.5-7B & Uncertainty & 27 & 53 & 8 & unc-strong-01 & -0.228 [-0.370, -0.092] & ok / fail \\
+    CAA & Qwen2.5-7B & Deliberation & 20 & 40 & 2 & +0.015 [-0.040, +0.070] & ok / fail \\
+    CAA & Qwen2.5-7B & Skepticism & 20 & 40 & 6 & -0.080 [-0.225, +0.045] & ok / fail \\
+    CAA & Qwen2.5-7B & Uncertainty & 27 & 53 & 8 & -0.228 [-0.370, -0.092] & ok / fail \\
     \addlinespace
-    CAA & Llama-3-8B & Deliberation & 20 & 40 & 4 & delib-strong-02 & +0.025 [-0.030, +0.075] & ok / fail \\
-    CAA & Llama-3-8B & Skepticism & 20 & 40 & 2 & skep-strong-11 & +0.000 [-0.190, +0.200] & ok / fail \\
-    CAA & Llama-3-8B & Uncertainty & 27 & 53 & 8 & unc-strong-09 & -0.072 [-0.103, -0.034] & ok / fail \\
+    CAA & Llama-3-8B & Deliberation & 20 & 40 & 4 & +0.025 [-0.030, +0.075] & ok / fail \\
+    CAA & Llama-3-8B & Skepticism & 20 & 40 & 2 & +0.000 [-0.190, +0.200] & ok / fail \\
+    CAA & Llama-3-8B & Uncertainty & 27 & 53 & 8 & -0.072 [-0.103, -0.034] & ok / fail \\
     \addlinespace
-    ITI & Qwen2.5-7B & Deliberation & 20 & 40 & 4 & delib-strong-09 & +0.020 [+0.000, +0.055] & ok / fail \\
-    ITI & Qwen2.5-7B & Skepticism & 20 & 40 & 2 & skep-strong-06 & -0.100 [-0.270, +0.060] & ok / fail \\
-    ITI & Qwen2.5-7B & Uncertainty & 27 & 53 & 12 & unc-strong-01 & -0.103 [-0.136, -0.069] & ok / fail \\
+    ITI & Qwen2.5-7B & Deliberation & 20 & 40 & 4 & +0.020 [+0.000, +0.055] & ok / fail \\
+    ITI & Qwen2.5-7B & Skepticism & 20 & 40 & 2 & -0.100 [-0.270, +0.060] & ok / fail \\
+    ITI & Qwen2.5-7B & Uncertainty & 27 & 53 & 12 & -0.103 [-0.136, -0.069] & ok / fail \\
     \addlinespace
-    ITI & Llama-3-8B & Deliberation & 20 & 40 & 2 & delib-strong-02 & +0.015 [-0.040, +0.060] & ok / fail \\
-    ITI & Llama-3-8B & Skepticism & 20 & 40 & 2 & skep-strong-11 & +0.000 [-0.195, +0.205] & ok / fail \\
-    ITI & Llama-3-8B & Uncertainty & 27 & 53 & 6 & unc-strong-09 & -0.084 [-0.115, -0.049] & ok / fail \\
+    ITI & Llama-3-8B & Deliberation & 20 & 40 & 2 & +0.015 [-0.040, +0.060] & ok / fail \\
+    ITI & Llama-3-8B & Skepticism & 20 & 40 & 2 & +0.000 [-0.195, +0.205] & ok / fail \\
+    ITI & Llama-3-8B & Uncertainty & 27 & 53 & 6 & -0.084 [-0.115, -0.049] & ok / fail \\
     \bottomrule
   \end{tabular}
-  \par\smallskip\raggedright\scriptsize\emph{Rounding note.} Pass/fail is computed from the unrounded frozen JSON. Displayed means and intervals are rounded to three decimals; a fail can therefore have a small positive displayed estimate or boundary. A pass requires an unrounded CI excluding 0, mean $\ge \delta=0.05$, and the coherence gate to pass, so ITI$\times$Qwen deliberation remains fail because its mean is below $\delta$.
+  \par\smallskip\raggedright\scriptsize\emph{Notes.} Pass/fail is computed from the unrounded frozen JSON. Displayed means and intervals are rounded to three decimals; a fail can therefore have a small positive displayed estimate or boundary. A pass requires an unrounded CI excluding 0, mean $\ge \delta=0.05$, and the coherence gate to pass, so ITI$\times$Qwen deliberation remains fail because its mean is below $\delta$. The DEV-selected best prompt for each axis/model is identified by its artifact-registry ID; full prompt text is provided in the supplementary manifest (\texttt{c2-delta-4cell.yaml}).
 \end{table*}

@@ -1,8 +1,14 @@
-# PREREG — C2 Multi-seed Hardening (E-0011 family) — **DRAFT / Awaiting Manager freeze**
+# PREREG — C2 Multi-seed Hardening (E-0011 family) — **FROZEN**
 
-> **Status: DRAFT 2026-07-28** — Prepared by implement subagent.
-> NOT frozen. Manager must review and explicitly set status to FROZEN before any run
-> executes with E-0011 experiment IDs.
+> **Status: FROZEN 2026-07-28 (Manager, D-0054).** Owner-approved GPU run (D-0052 GO).
+> Frozen after independent hostile audit `audit-c2-multiseed-boot2` returned **BOOT-READY**
+> (verified: per-seed no-pooling §4b, unconditional true-pass surfacing §4c, N_FROZEN=5 guard,
+> numeric E-0006 harness check wired to KILL_HARNESS, seed threading fully wired, E-0006
+> byte-reproduction). Frozen seed set = {20260723 (=E-0006 reuse, harness check), 20260724,
+> 20260725, 20260726, 20260727}. The §4 verdict ladder (KILL_HARNESS / DROP_SINGLE_SEED_CAVEAT
+> [requires all 5/5] / SEED_MOSTLY_ROBUST [≥4/5] / SEED_SENSITIVE / INSUFFICIENT_SEEDS) and its
+> two guardrails are BYTE-FROZEN; no criterion may change post-data. Protocol reuse of the frozen
+> `prereg-c2b-adjudication` §4/§5 is byte-identical; only `--seed` varies.
 >
 > This document DOES NOT modify, supersede, or touch:
 > - `docs/ledgers/prereg-c2b-adjudication.md` (FROZEN 2026-07-23)
@@ -11,9 +17,11 @@
 > - `src/cognitive_console/experiments/adjudicate_c2b.py` §4 judgment logic
 >
 > **Purpose:** Provide a pre-run specification for a multi-seed sensitivity analysis
-> of the E-0006 result (NON_TRANSFER_GENERALIZED), so that if the negative holds
-> across ≥4/5 seeds with consistent uncertainty harm, the "single-seed caveat"
-> can be formally retired.
+> of the E-0006 result (NON_TRANSFER_GENERALIZED). Per the frozen §4a strict rule, the
+> "single-seed caveat" can be formally retired (`DROP_SINGLE_SEED_CAVEAT`) ONLY if the
+> negative holds on ALL 5/5 seeds with uncertainty harm CI_hi<0 in all cells on all seeds
+> and no strong-positive flip on any seed; ≥4/5 yields `SEED_MOSTLY_ROBUST` (caveat softened,
+> NOT dropped); any true positive on any seed is surfaced unconditionally (§4c).
 
 ---
 

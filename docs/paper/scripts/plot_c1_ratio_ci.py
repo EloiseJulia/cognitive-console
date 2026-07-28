@@ -44,7 +44,7 @@ def main() -> None:
     ax.set_ylim(0, max(max(his), 1.0) * 1.15)
     ax.grid(axis="y", alpha=0.25)
     ax.legend(frameon=False, fontsize=8, loc="upper left")
-    ax.text(0.99, 0.97, "Source: c1-facade-d710b4b4-0001", transform=ax.transAxes,
+    ax.text(0.99, 0.97, "Numbers derived from frozen C1 facade artifact", transform=ax.transAxes,
             ha="right", va="top", fontsize=7)
     fig.tight_layout()
     OUT.parent.mkdir(parents=True, exist_ok=True)

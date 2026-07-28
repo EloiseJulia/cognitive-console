@@ -58,7 +58,7 @@ def main() -> None:
     ax.set_ylabel("TEST paired Δ in uncertainty (steer − prompt; 1 − Brier)")
     ax.set_title("C2 calibration harm across CAA/ITI × Qwen/Llama")
     ax.grid(axis="y", alpha=0.25)
-    ax.text(0.99, 0.03, "Source: results/arm_full (E-0006)", transform=ax.transAxes,
+    ax.text(0.99, 0.03, "Numbers derived from frozen robustness-arm artifacts", transform=ax.transAxes,
             ha="right", va="bottom", fontsize=7)
     fig.tight_layout()
     OUT.parent.mkdir(parents=True, exist_ok=True)

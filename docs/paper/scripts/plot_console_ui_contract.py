@@ -58,7 +58,7 @@ def _reader_text(text: object) -> str:
         "valid_for_paper=false": "exploratory, not used as confirmatory evidence",
         "not_implemented": "not implemented in this run",
         "not_run_required_before_confirmatory_claim": "human-rater calibration pending",
-        "human-alpha PENDING -> not-yet-confirmatory": "human-rater calibration pending",
+        "human-alpha PENDING -> not-yet-confirmatory": "not yet confirmatory",
     }
     out = str(text)
     for old, new in replacements.items():

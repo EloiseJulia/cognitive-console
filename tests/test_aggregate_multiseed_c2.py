@@ -5,6 +5,7 @@ Uses small synthetic JSON fixtures — no real model outputs, no GPU.
 
 from __future__ import annotations
 
+import copy
 import json
 from pathlib import Path
 from typing import Any, Dict, List
@@ -295,22 +296,14 @@ def test_aggregate_strong_positive_flip_forces_seed_sensitive(tmp_path):
 
 
 def test_aggregate_harness_failure_forces_kill_harness(tmp_path):
+    # seed=20260723 with synthetic data (different from E-0006) → numeric mismatch → KILL_HARNESS
     records = _make_seed_records_all_non_transfer(5, tmp_path)
-    # Harness check seed explicitly marked as not reproducing E-0006.
-    fail_arm_json = _write_seed_dir(
-        tmp_path / "harness_case",
-        20260723,
-        arm_verdict="NON_TRANSFER_GENERALIZED",
-        mean_diffs_by_cell={ck: {"uncertainty_awareness": -0.15} for ck in CELL_KEYS},
-        harness_repro_ok=False,
-    )
-    fail_arm_data = A.load_arm_summary(fail_arm_json)
-    fail_record = A.build_seed_record(20260723, fail_arm_json, fail_arm_data)
-    records = [r for r in records if r["seed"] != 20260723] + [fail_record]
-
-    agg = A.aggregate_across_seeds(records)
+    agg = A.aggregate_across_seeds(records, e0006_ref_dir=A._E0006_REF_PATH)
     cd = agg["caveat_drop_rule"]
     assert cd["harness_fail_reasons"]
+    numeric_fails = [r for r in cd["harness_fail_reasons"]
+                     if r.get("reason") == "e0006_numeric_repro_fail"]
+    assert numeric_fails, "expected e0006_numeric_repro_fail in harness_fail_reasons"
     assert cd["outcome"] == "KILL_HARNESS"
 
 
@@ -463,3 +456,383 @@ def test_output_json_numbers_from_json_not_hardcoded(tmp_path):
     for v in vals["mean_diff_values"]:
         assert v == pytest.approx(expected_md)
     assert vals["mean_diff_across_seeds"] == pytest.approx(expected_md)
+
+
+# --------------------------------------------------------------------------- #
+# Tests: any_true_pass guardrail — §4c (new)
+# --------------------------------------------------------------------------- #
+
+def test_any_true_pass_block_always_present_and_empty_when_no_pass(tmp_path):
+    """any_true_pass must be present (as empty list) even when no seed has a pass."""
+    records = _make_seed_records_all_non_transfer(3, tmp_path)
+    agg = A.aggregate_across_seeds(records)
+    assert "any_true_pass" in agg
+    assert agg["any_true_pass"] == []
+    assert agg["has_any_true_pass"] is False
+
+
+def test_any_true_pass_surfaced_with_true_pass(tmp_path):
+    """When one seed×cell×axis has a true pass, it must appear in any_true_pass."""
+    records = _make_seed_records_all_non_transfer(5, tmp_path / "base")
+    pass_arm_json = _write_seed_dir(
+        tmp_path / "pass_case",
+        20260724,
+        arm_verdict="NON_TRANSFER_GENERALIZED",
+        mean_diffs_by_cell={
+            "caa__qwen2.5-7b": {"deliberation": 0.20, "uncertainty_awareness": -0.15},
+            **{ck: {"uncertainty_awareness": -0.15} for ck in CELL_KEYS if ck != "caa__qwen2.5-7b"},
+        },
+    )
+    pass_arm_data = A.load_arm_summary(pass_arm_json)
+    pass_record = A.build_seed_record(20260724, pass_arm_json, pass_arm_data)
+    records = [r for r in records if r["seed"] != 20260724] + [pass_record]
+
+    agg = A.aggregate_across_seeds(records)
+    assert agg["has_any_true_pass"] is True
+    tp_list = agg["any_true_pass"]
+    assert len(tp_list) >= 1
+    tp = next(
+        (e for e in tp_list
+         if e["seed"] == 20260724
+         and e["cell_key"] == "caa__qwen2.5-7b"
+         and e["axis"] == "deliberation"),
+        None,
+    )
+    assert tp is not None, "Expected true pass entry not found in any_true_pass"
+    assert tp["mean_diff"] == pytest.approx(0.20)
+    assert tp["ci_lo"] is not None
+    assert tp["ci_hi"] is not None
+
+
+def test_any_true_pass_blocks_drop_and_mostly_robust(tmp_path):
+    """A true pass in any seed×cell×axis must prevent DROP and MOSTLY_ROBUST verdicts."""
+    # All seeds NON_TRANSFER, all CI_hi<0 — normally DROP_SINGLE_SEED_CAVEAT.
+    # Inject one pass → outcome must not be DROP or MOSTLY_ROBUST.
+    records = _make_seed_records_all_non_transfer(5, tmp_path / "base")
+    pass_arm_json = _write_seed_dir(
+        tmp_path / "pass_block",
+        20260725,
+        arm_verdict="NON_TRANSFER_GENERALIZED",
+        mean_diffs_by_cell={
+            "caa__qwen2.5-7b": {"deliberation": 0.20, "uncertainty_awareness": -0.15},
+            **{ck: {"uncertainty_awareness": -0.15} for ck in CELL_KEYS if ck != "caa__qwen2.5-7b"},
+        },
+    )
+    pass_arm_data = A.load_arm_summary(pass_arm_json)
+    pass_record = A.build_seed_record(20260725, pass_arm_json, pass_arm_data)
+    records = [r for r in records if r["seed"] != 20260725] + [pass_record]
+
+    agg = A.aggregate_across_seeds(records)
+    outcome = agg["caveat_drop_rule"]["outcome"]
+    assert outcome not in ("DROP_SINGLE_SEED_CAVEAT", "SEED_MOSTLY_ROBUST"), (
+        f"True pass must block DROP/MOSTLY_ROBUST, got {outcome}"
+    )
+    assert agg["has_any_true_pass"] is True
+
+
+def test_any_true_pass_visible_in_json_and_md_output(tmp_path):
+    """main() output must contain any_true_pass in JSON and surfacing text in MD."""
+    pass_arm_json = _write_seed_dir(
+        tmp_path,
+        20260723,
+        mean_diffs_by_cell={
+            "caa__qwen2.5-7b": {"deliberation": 0.20, "uncertainty_awareness": -0.15},
+            **{ck: {"uncertainty_awareness": -0.15} for ck in CELL_KEYS if ck != "caa__qwen2.5-7b"},
+        },
+    )
+    # Need a second seed to avoid n_seeds < 2 ValueError
+    second_arm_json = _write_seed_dir(
+        tmp_path / "seed_20260724",
+        20260724,
+        mean_diffs_by_cell={ck: {"uncertainty_awareness": -0.15} for ck in CELL_KEYS},
+    )
+    out_dir = tmp_path / "out_pass"
+    rc = A.main([
+        "--arm-summaries", str(pass_arm_json), str(second_arm_json),
+        "--seeds", "20260723", "20260724",
+        "--out-dir", str(out_dir),
+    ])
+    assert rc == 0
+
+    result = json.loads((out_dir / "multiseed_c2_aggregate.json").read_text(encoding="utf-8"))
+    assert "any_true_pass" in result["aggregation"]
+    assert len(result["aggregation"]["any_true_pass"]) >= 1
+
+    md = (out_dir / "multiseed_c2_aggregate.md").read_text(encoding="utf-8")
+    assert "any_true_pass" in md or "TRUE PASSES" in md
+    assert "single_seed_positive_surfaced" in md
+
+
+def test_cell_flagged_single_seed_positive_surfaced(tmp_path):
+    """Cell with a true pass must be flagged; unaffected cells must not."""
+    records = _make_seed_records_all_non_transfer(3, tmp_path / "base")
+    pass_arm_json = _write_seed_dir(
+        tmp_path / "pass_cell",
+        20260723,
+        mean_diffs_by_cell={
+            "caa__qwen2.5-7b": {"deliberation": 0.20, "uncertainty_awareness": -0.15},
+            **{ck: {"uncertainty_awareness": -0.15} for ck in CELL_KEYS if ck != "caa__qwen2.5-7b"},
+        },
+    )
+    pass_arm_data = A.load_arm_summary(pass_arm_json)
+    pass_record = A.build_seed_record(20260723, pass_arm_json, pass_arm_data)
+    records = [r for r in records if r["seed"] != 20260723] + [pass_record]
+
+    agg = A.aggregate_across_seeds(records)
+    cas = agg["cell_axis_stats"]
+    assert cas["caa__qwen2.5-7b"]["single_seed_positive_surfaced"] is True
+    for ck in CELL_KEYS:
+        if ck != "caa__qwen2.5-7b":
+            assert cas[ck]["single_seed_positive_surfaced"] is False
+
+
+def test_no_pooling_single_seed_positive_not_averaged_away(tmp_path):
+    """Anti-pooling (§4b): a pass in seed A must survive even if seed B has negative diff.
+
+    cross-seed average of deliberation would be 0.0 — pooling would lose the pass signal.
+    any_true_pass must still contain seed A's pass.
+    """
+    arm_json_A = _write_seed_dir(
+        tmp_path / "A",
+        20260723,
+        mean_diffs_by_cell={
+            "caa__qwen2.5-7b": {"deliberation": 0.20, "uncertainty_awareness": -0.15},
+            **{ck: {"uncertainty_awareness": -0.15} for ck in CELL_KEYS if ck != "caa__qwen2.5-7b"},
+        },
+    )
+    arm_json_B = _write_seed_dir(
+        tmp_path / "B",
+        20260724,
+        mean_diffs_by_cell={
+            "caa__qwen2.5-7b": {"deliberation": -0.20, "uncertainty_awareness": -0.15},
+            **{ck: {"uncertainty_awareness": -0.15} for ck in CELL_KEYS if ck != "caa__qwen2.5-7b"},
+        },
+    )
+    rec_A = A.build_seed_record(20260723, arm_json_A, A.load_arm_summary(arm_json_A))
+    rec_B = A.build_seed_record(20260724, arm_json_B, A.load_arm_summary(arm_json_B))
+
+    agg = A.aggregate_across_seeds([rec_A, rec_B])
+
+    # Confirm the cross-seed average for deliberation is indeed 0 (pooling would mask pass)
+    delib_avg = agg["cell_axis_stats"]["caa__qwen2.5-7b"]["deliberation"]["mean_diff_across_seeds"]
+    assert delib_avg == pytest.approx(0.0)
+
+    # The pass from seed A must still be surfaced (not pooled away)
+    assert agg["has_any_true_pass"] is True
+    tp = next(
+        (e for e in agg["any_true_pass"]
+         if e["seed"] == 20260723
+         and e["cell_key"] == "caa__qwen2.5-7b"
+         and e["axis"] == "deliberation"),
+        None,
+    )
+    assert tp is not None, "True pass from seed A must not be averaged away (§4b anti-pooling)"
+
+
+# --------------------------------------------------------------------------- #
+# Helper: build seed_record for seed=20260723 copying exact E-0006 values
+# --------------------------------------------------------------------------- #
+
+def _make_seed_record_matching_e0006(tmp_path: Path) -> Dict[str, Any]:
+    """Copy the real E-0006 arm/cell JSONs into tmp_path and build a seed_record."""
+    ref_dir = A._E0006_REF_PATH
+    seed_dir = tmp_path / "e0006_copy"
+    seed_dir.mkdir(parents=True, exist_ok=True)
+
+    arm_ref = ref_dir / "arm_matrix_summary.json"
+    arm_json = seed_dir / "arm_matrix_summary.json"
+    arm_json.write_text(arm_ref.read_text(encoding="utf-8"), encoding="utf-8")
+
+    for ck in A._FROZEN_CELL_KEYS:
+        cell_ref = ref_dir / f"cell_{ck}" / "c2b_adjudication_results.json"
+        cell_dir = seed_dir / f"cell_{ck}"
+        cell_dir.mkdir(exist_ok=True)
+        (cell_dir / "c2b_adjudication_results.json").write_text(
+            cell_ref.read_text(encoding="utf-8"), encoding="utf-8"
+        )
+
+    arm_data = A.load_arm_summary(arm_json)
+    return A.build_seed_record(20260723, arm_json, arm_data)
+
+
+# --------------------------------------------------------------------------- #
+# Tests: N=1 / N_FROZEN guard (MAJOR-1)
+# --------------------------------------------------------------------------- #
+
+def test_aggregate_single_seed_raises(tmp_path):
+    """n_seeds=1 must raise ValueError; single-seed path must not reach DROP."""
+    arm_json = _write_seed_dir(
+        tmp_path, 20260723,
+        mean_diffs_by_cell={ck: {"uncertainty_awareness": -0.15} for ck in CELL_KEYS},
+    )
+    arm_data = A.load_arm_summary(arm_json)
+    record = A.build_seed_record(20260723, arm_json, arm_data)
+    with pytest.raises(ValueError, match="at least 2"):
+        A.aggregate_across_seeds([record])
+
+
+def test_aggregate_zero_seeds_raises(tmp_path):
+    """n_seeds=0 must also raise ValueError."""
+    with pytest.raises(ValueError, match="at least 2"):
+        A.aggregate_across_seeds([])
+
+
+def test_aggregate_4_seeds_all_conditions_insufficient_seeds(tmp_path):
+    """n_seeds=4 with all strict DROP conditions met → INSUFFICIENT_SEEDS, never DROP."""
+    records = []
+    for i in range(4):
+        s = 20260800 + i  # use non-harness seeds to avoid arm_verdict check
+        arm_json = _write_seed_dir(
+            tmp_path, s,
+            mean_diffs_by_cell={
+                ck: {"uncertainty_awareness": -0.15, "deliberation": 0.01, "skepticism": -0.05}
+                for ck in CELL_KEYS
+            },
+        )
+        arm_data = A.load_arm_summary(arm_json)
+        records.append(A.build_seed_record(s, arm_json, arm_data))
+    agg = A.aggregate_across_seeds(records)
+    cd = agg["caveat_drop_rule"]
+    # All strict conditions hold (all 4 are NON_TRANSFER, all CI_hi<0, no flip)
+    assert cd["strict_all_non_transfer_generalized"] is True
+    assert cd["uncertainty_harm_ci_negative_all_cells_all_seeds"] is True
+    assert cd["any_strong_positive_flip"] is False
+    # But n_seeds=4 < N_FROZEN=5 → must NOT be DROP
+    assert cd["outcome"] != "DROP_SINGLE_SEED_CAVEAT", (
+        "INSUFFICIENT_SEEDS or lower expected when n_seeds < N_FROZEN"
+    )
+    assert cd["outcome"] == "INSUFFICIENT_SEEDS"
+    assert cd["insufficient_seeds_warning"] is not None
+    assert "未达全 seed 集" in cd["insufficient_seeds_warning"] or cd["insufficient_seeds_warning"]
+
+
+def test_aggregate_5_seeds_all_conditions_still_drops(tmp_path):
+    """n_seeds=5 (== N_FROZEN) with all strict conditions → DROP_SINGLE_SEED_CAVEAT."""
+    records = []
+    for i in range(5):
+        s = 20260800 + i
+        arm_json = _write_seed_dir(
+            tmp_path, s,
+            mean_diffs_by_cell={
+                ck: {"uncertainty_awareness": -0.15, "deliberation": 0.01, "skepticism": -0.05}
+                for ck in CELL_KEYS
+            },
+        )
+        arm_data = A.load_arm_summary(arm_json)
+        records.append(A.build_seed_record(s, arm_json, arm_data))
+    agg = A.aggregate_across_seeds(records)
+    cd = agg["caveat_drop_rule"]
+    assert cd["outcome"] == "DROP_SINGLE_SEED_CAVEAT"
+    assert cd["insufficient_seeds_warning"] is None
+
+
+def test_aggregate_empty_truth_cannot_trigger_drop(tmp_path):
+    """Regression: empty all() on 0 seeds must NOT be reachable (raise before).
+
+    This documents that the n_seeds<2 guard prevents all() over empty iterables
+    from returning vacuous True and spuriously triggering DROP.
+    """
+    with pytest.raises(ValueError):
+        A.aggregate_across_seeds([])
+    with pytest.raises(ValueError):
+        arm_json = _write_seed_dir(tmp_path, 99, mean_diffs_by_cell={})
+        arm_data = A.load_arm_summary(arm_json)
+        A.aggregate_across_seeds([A.build_seed_record(99, arm_json, arm_data)])
+
+
+def test_n_frozen_constant_matches_prereg_seed_list():
+    """N_FROZEN must equal 5 (20260723–20260727 per DRAFT §3)."""
+    assert A.N_FROZEN == 5
+
+
+# --------------------------------------------------------------------------- #
+# Tests: harness numeric reproduction check (MAJOR-2)
+# --------------------------------------------------------------------------- #
+
+def test_harness_numeric_mismatch_triggers_kill_harness(tmp_path):
+    """seed=20260723 with mean_diff deviated > tol → KILL_HARNESS via numeric check."""
+    e0006_record = _make_seed_record_matching_e0006(tmp_path / "ref")
+
+    # Deviate one value by 2e-5 (well above tol=1e-6)
+    wrong_record = copy.deepcopy(e0006_record)
+    wrong_record["cells"][0]["axis_stats"]["uncertainty_awareness"]["mean_diff"] += 2e-5
+
+    # Need a second seed to avoid ValueError
+    other_arm_json = _write_seed_dir(
+        tmp_path / "other",
+        20260724,
+        mean_diffs_by_cell={ck: {"uncertainty_awareness": -0.15} for ck in CELL_KEYS},
+    )
+    other_data = A.load_arm_summary(other_arm_json)
+    other_record = A.build_seed_record(20260724, other_arm_json, other_data)
+
+    agg = A.aggregate_across_seeds([wrong_record, other_record],
+                                   e0006_ref_dir=A._E0006_REF_PATH)
+    cd = agg["caveat_drop_rule"]
+    assert cd["outcome"] == "KILL_HARNESS"
+    numeric_fails = [r for r in cd["harness_fail_reasons"]
+                     if r.get("reason") == "e0006_numeric_repro_fail"]
+    assert numeric_fails, "expected e0006_numeric_repro_fail"
+    mismatches = numeric_fails[0]["mismatches"]
+    assert any(m["field"] == "mean_diff" for m in mismatches)
+
+
+def test_harness_numeric_exact_match_no_kill_harness(tmp_path):
+    """seed=20260723 with byte-exact E-0006 values → no numeric harness failure."""
+    e0006_record = _make_seed_record_matching_e0006(tmp_path / "ref")
+
+    other_arm_json = _write_seed_dir(
+        tmp_path / "other",
+        20260724,
+        mean_diffs_by_cell={ck: {"uncertainty_awareness": -0.15} for ck in CELL_KEYS},
+    )
+    other_data = A.load_arm_summary(other_arm_json)
+    other_record = A.build_seed_record(20260724, other_arm_json, other_data)
+
+    agg = A.aggregate_across_seeds([e0006_record, other_record],
+                                   e0006_ref_dir=A._E0006_REF_PATH)
+    cd = agg["caveat_drop_rule"]
+    numeric_fails = [r for r in cd["harness_fail_reasons"]
+                     if r.get("reason") == "e0006_numeric_repro_fail"]
+    assert not numeric_fails, (
+        f"Exact E-0006 values should not trigger numeric harness fail; got: {numeric_fails}"
+    )
+
+
+def test_harness_numeric_check_skipped_when_no_ref_dir(tmp_path):
+    """When e0006_ref_dir is None, numeric check is skipped (old behavior)."""
+    records = _make_seed_records_all_non_transfer(5, tmp_path)
+    # Without e0006_ref_dir: no numeric check → synthetic data does not cause KILL_HARNESS
+    agg = A.aggregate_across_seeds(records)  # default e0006_ref_dir=None
+    numeric_fails = [r for r in agg["caveat_drop_rule"]["harness_fail_reasons"]
+                     if r.get("reason") == "e0006_numeric_repro_fail"]
+    assert not numeric_fails
+
+
+def test_mean_diff_across_seeds_is_descriptive_not_in_verdict(tmp_path):
+    """mean_diff_across_seeds must be present but must NOT affect caveat outcome.
+
+    Inject one seed with a positive mean_diff (averaged to 0.0 across seeds) —
+    the positive signal must surface via any_true_pass, not via mean.
+    The outcome must reflect the per-seed logic, not the pooled average.
+    """
+    arm_json_pos = _write_seed_dir(
+        tmp_path / "pos",
+        20260800,
+        mean_diffs_by_cell={"caa__qwen2.5-7b": {"deliberation": 0.20, "uncertainty_awareness": -0.15},
+                             **{ck: {"uncertainty_awareness": -0.15} for ck in CELL_KEYS if ck != "caa__qwen2.5-7b"}},
+    )
+    arm_json_neg = _write_seed_dir(
+        tmp_path / "neg",
+        20260801,
+        mean_diffs_by_cell={"caa__qwen2.5-7b": {"deliberation": -0.20, "uncertainty_awareness": -0.15},
+                             **{ck: {"uncertainty_awareness": -0.15} for ck in CELL_KEYS if ck != "caa__qwen2.5-7b"}},
+    )
+    rec_pos = A.build_seed_record(20260800, arm_json_pos, A.load_arm_summary(arm_json_pos))
+    rec_neg = A.build_seed_record(20260801, arm_json_neg, A.load_arm_summary(arm_json_neg))
+    agg = A.aggregate_across_seeds([rec_pos, rec_neg])
+    delib_avg = agg["cell_axis_stats"]["caa__qwen2.5-7b"]["deliberation"]["mean_diff_across_seeds"]
+    # Average is 0.0 — pooling would mask the pass
+    assert delib_avg == pytest.approx(0.0)
+    # But any_true_pass must still surface the positive signal from rec_pos
+    assert agg["has_any_true_pass"] is True

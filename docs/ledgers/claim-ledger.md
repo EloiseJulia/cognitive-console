@@ -9,9 +9,11 @@ Status values: proposed | partially-supported | supported | contradicted | withd
 ---
 
 ## C1 — Representational Legibility Gap / Semantic Facade (RQ1) — CORE-empirical
-- **Statement:** For chosen cognitive axes, the strongest human-readable prompt's mid-layer activation
-  projects onto the CAA vector direction far below vector-only AND far above a random-direction null
-  baseline, with a pre-registered meaningfully large gap (a measurable legibility/representation gap).
+- **Statement:** In the two-model C1 readout, the cross-model-invariant facade claim is restricted to
+  **deliberation + skepticism**: the strongest human-readable prompt's mid-layer activation projects onto
+  the CAA vector direction far below vector-only and above a random-direction null. **Uncertainty and focus
+  are explicitly model-dependent, not invariant** (uncertainty: Qwen 0.713 hold vs Llama 1.000 no-facade;
+  focus: Llama 0.471 hold vs Qwen 2.844 overshoot).
 - **Scope:** Llama-3-8B-Instruct, Qwen2.5-7B-Instruct; axes = Deliberation/Skepticism/Uncertainty/Focus.
 - **Type:** empirical regularity (diagnostic → confirmatory after protocol freeze)
 - **Status:** **partially-supported / 2-MODEL support at 3/4 aggregate, EXPLORATORY, with per-axis

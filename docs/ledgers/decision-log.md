@@ -5,6 +5,20 @@
 
 ---
 
+## 2026-07-28 · D-0052 · Owner §5 rulings: multi-seed C2 GO (w/ 2 guardrails), WS③ NO-GO, venue defer; WS① independent-ground-truth acceptance test
+- **① Multi-seed C2 harden: GO (owner-approved GPU, §5).** Before freezing the prereg, encode two guardrails and confirm the 4-tier rule satisfies them:
+  - **(a) Per-seed negative, NO pooling:** a confirmatory negative must be judged PER SEED; pooling/averaging raw outcomes across seeds to declare the negative is FORBIDDEN (would bury a single-seed true positive).
+  - **(b) Strong-positive unconditional surfacing:** any seed×cell×axis true PASS must be explicitly surfaced and separately reported, never masked by any aggregate status.
+  - Sequence: encode (a)(b) in DRAFT + enforce in aggregate script/tests → **Manager freezes prereg** → **independent hostile audit of frozen prereg+harness** → boot 4 NEW seeds (20260724–20260727) + reuse E-0006 as the 5th data point. NEVER touch E-0005/E-0006. (Guardrail-encoding dispatched on feature/41-c2-multiseed-guardrails.)
+- **② WS③ calibration-harm mechanism arm: NO-GO** (owner agrees with Manager recommendation). Stays in Future Work; honest-fail discipline (E-0007 already demoted the off-manifold-distance mechanism; no re-mining on same data).
+- **③ Venue: DEFER** until WS① (user study) is locked; then decide (IUI primary / CHI experience / FAccT-AIES alternative).
+- **WS① user-study protocol — binding acceptance test (must pass, not just satisfy R2 wording):** revision closing the circularity (R2-BLOCKER-5) must pass an INDEPENDENT-GROUND-TRUTH test:
+  - Primary DV (calibrated reliance) must be computable WITHOUT referencing any console-displayed signal; the "correct reliance" benchmark must be INDEPENDENT of treatment (held-out task ground truth / human verification / independent oracle), NOT derived from the same model evidence the console shows.
+  - Baseline = "latent slider / plain console WITHOUT boundary signals" to isolate boundary-INSTRUMENTATION itself, not "console vs nothing".
+  - Success = decision-quality / calibrated-reliance improvement against INDEPENDENT ground truth, NOT "trust matches console" or compliance.
+  - **If the circularity is structurally unfixable within current budget/time → STOP and escalate to owner to change the DV design; do NOT force-sign.**
+  - After closing: present full protocol + R1/R2(/R3) critic trail + owner-decision items (IRB/budget/platform/venue) for signature (§5).
+
 ## 2026-07-28 · D-0051 · WS② merged (audited); WS① under critic-driven revision (§5)
 - **Audits ran on all three doc workstreams (discipline held — each caught real issues):**
   - **PR #40 (WS②a-prep, multi-seed C2):** hostile audit → NEEDS-FIX. MAJOR: DRAFT §4a caveat-drop rule (uncertainty CI_hi<0 ≥3/5) inconsistent with implementation/tests (all-seeds<0). No frozen asset touched; seed threading independently re-verified fully wired; smoke reproduced E-0006 uncertainty harm exactly; no fake E-0011 row. **Manager ruling:** adopt the STRICTER rule (dropping the single-seed caveat strengthens our negative → be conservative). Fixed to 4-tier {KILL_HARNESS / DROP_SINGLE_SEED_CAVEAT (all 5/5 NON_TRANSFER + all-cell all-seed uncertainty CI_hi<0 + no strong-positive flip guardrail) / SEED_MOSTLY_ROBUST (≥4/5) / SEED_SENSITIVE}, verdict keyed to run_arm_matrix arm_verdict field. Re-verified (18 aggregate tests pass, three-way consistent). **MERGED to main.**

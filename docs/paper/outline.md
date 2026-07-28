@@ -3,7 +3,7 @@
 Status: writing scaffold, not paper freeze. Route follows D-0035/D-0036/D-0041: **IUI-first if no human study**, with CHI as secondary empirical-track option and CSCW only if a human/collaboration study returns. This supersedes the stale CHI-first line in `docs/paper/reframe-2026-07-24-reality-check.md` without editing that frozen/history document.
 
 ## Working title
-Legible Is Not Controllable: A Frozen Reality Check for Prompt-vs-Latent Behavioral Control in LLMs
+Legible Need Not Be Controllable: A Frozen Reality Check for Prompt-vs-Latent Behavioral Control in LLMs
 
 ## Novelty unit
 A frozen, fairness-controlled, independently-audited behavioral adjudication showing that representational legibility does **not** transfer to control, generalized across 2 steering methods × 2 model families, with a replicated calibration-harm sub-finding.

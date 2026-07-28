@@ -2,10 +2,12 @@
 \usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage{booktabs}
+\usepackage{array}
 \usepackage{seqsplit}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning,decorations.pathreplacing}
 \DeclareRobustCommand{\pathtt}[1]{\texttt{\seqsplit{#1}}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 
 \AtBeginDocument{%
   \providecommand\BibTeX{{%
@@ -15,11 +17,16 @@
 \settopmatter{printacmref=false, printccs=false, printfolios=true}
 \renewcommand\footnotetextcopyrightpermission[1]{}
 
-\title{Legible Is Not Controllable: A Frozen Reality Check for Prompt-vs-Latent Behavioral Control in LLMs}
+\ccsdesc[500]{Human-centered computing~Interactive systems and tools}
+\ccsdesc[300]{Computing methodologies~Natural language generation}
+\keywords{cognitive consoles, latent steering, prompt control, calibration, human-AI interaction}
+
+\title{Legible Need Not Be Controllable: A Frozen Reality Check for Prompt-vs-Latent Behavioral Control in LLMs}
 
 \author{Anonymous Authors}
 \affiliation{%
   \institution{Anonymous Institution}
+  \city{Anonymous City}
   \country{}}
 \email{anonymous@example.com}
 
@@ -27,7 +34,7 @@
 
 
 \begin{abstract}
-Interfaces that make large language models more legible often invite a stronger promise: if users can name or visualize a cognitive axis, perhaps they can steer behavior by moving along the same latent direction. We test that promise as a reality check rather than as a new steering method. Motivated by internal non-surjectivity as background \cite{mishra2026nonsurj}, we separate representational readability from behavioral control. First, an exploratory two-model measurement finds representational-facade support at the aggregate level in both Qwen2.5-7B and Llama-3-8B, but with axis-level heterogeneity rather than a clean identical replication. We then use a frozen, fairness-controlled, independently audited DEV/TEST adjudicator to compare bounded best-prompt control with naive off-the-shelf CAA and ITI steering across Qwen2.5-7B and Llama-3-8B. Across this tested grid, latent steering does not beat the prompt ceiling on the adjudicated axes, and the uncertainty axis consistently harms calibration; see the generated results table and calibration-harm figure. A separate exploratory PSR-style latent-recovery arm also fails under the same frozen adjudicator on Qwen2.5-7B, suggesting that the negative is not only a weakness of naive directions. Finally, an explicitly exploratory, LLM-judge-only, \pathtt{valid\_for\_paper=false} social-inference probe extends the same legibility-versus-control lens beyond metacognitive axes: the novice/user-model direction is readable in token-blind latent space, but a powered LLM-judge TEST finds an honest behavioral null on the implemented option-pushing and deference dimensions. These findings do not imply that all steering fails, especially given trained prompt-mimicking steering \cite{heyman2026steer}. They instead argue for cognitive consoles that surface the limits and failure modes of legible control, helping users recalibrate trust rather than offering a latent ``control slider.''
+Interfaces that make large language models more legible often invite a stronger promise: if users can name or visualize a cognitive axis, perhaps they can steer behavior by moving along the same latent direction; we test that promise as a reality check, separating representational readability from behavioral control under the background concern of internal non-surjectivity \cite{mishra2026nonsurj}. An exploratory two-model measurement finds aggregate representational-facade support in Qwen2.5-7B and Llama-3-8B, with axis-level heterogeneity rather than a clean identical replication. The frozen, fairness-controlled, independently audited C2 adjudicator then compares bounded best-prompt control with naive off-the-shelf CAA and ITI steering across Qwen2.5-7B and Llama-3-8B; in this tested grid, latent steering does not beat the prompt ceiling on the adjudicated axes, and the uncertainty axis consistently harms calibration. We also briefly discuss an exploratory social-axis probe that shows the same legibility-without-behavioral-control pattern. These findings do not imply that all steering fails, especially given trained prompt-mimicking steering \cite{heyman2026steer}; they argue for cognitive consoles that surface transfer limits, prompt ceilings, calibration risks, and evidence tier before presenting a legible latent direction as a control affordance.
 \end{abstract}
 
 \maketitle
@@ -49,8 +56,7 @@ This paper contributes:
   \item \textbf{An exploratory representational measurement.} We measure a representational-facade pattern on the two 7--8B models, showing aggregate support in both but heterogeneous axis composition. This claim remains explicitly exploratory because each model has a single run and the per-axis pattern is not a clean replication.
   \item \textbf{A frozen prompt-vs-latent behavioral adjudication.} We provide a pre-registered, fairness-controlled, independently audited comparison of bounded best-prompt control against naive steering across the tested Qwen/Llama grid.
   \item \textbf{A generalized scoped negative with calibration harm.} Under that adjudicator, naive latent steering fails to beat the bounded prompt ceiling in every tested cell, while uncertainty calibration is harmed; quantitative values are reported only in the generated table and figure.
-  \item \textbf{A design stance for cognitive consoles.} We argue that HCI tools should surface limits, failed transfer, and trust-calibration risks rather than presenting legible latent directions as user-facing control sliders. This is a design implication from model evidence, not a user-study claim.
-  \item \textbf{A methodological framing extension.} We use an explicitly exploratory social-inference probe to show the same separation on a user-model axis: latent READ holds, while the powered LLM-judge behavior test is null on implemented dimensions. This LLM-judge-only, \pathtt{valid\_for\_paper=false} probe is not treated as confirmatory and does not change the frozen C1/C2 headline.
+  \item \textbf{Interface-evaluation implications for cognitive consoles.} From the frozen C2 adjudication, we derive an evaluation discipline for latent-control interfaces: HCI tools should surface limits, failed transfer, prompt ceilings, and trust-calibration risks rather than presenting legible latent directions as user-facing control sliders. This is a design implication from model evidence, not a user-study claim.
 
 \end{enumerate}
 
@@ -58,6 +64,7 @@ This paper contributes:
   \centering
   \input{figures/concept.tex}
   \caption{Dual-channel cognitive-console framing. The prompt channel is user-legible, while the latent-steering channel intervenes on hidden states; the console instruments where legibility fails to transfer to behavioral control. This HCI schematic is conceptual, not a result artifact.}
+  \Description{A schematic of a user-facing prompt channel and a hidden latent-steering channel feeding a cognitive console that displays the boundary between legibility and behavioral control.}
   \label{fig:concept}
 \end{figure*}
 
@@ -77,17 +84,19 @@ Our experiment does not dispute that these interventions can change outputs. It 
 \subsection{HCI, Transparency, and Trust Neighbors}
 HCI research has long treated AI interaction as a problem of legibility, control, and calibrated reliance. Work on metacognitive demands in generative AI explains why users need to monitor not only what a model says but how confidently or carefully it appears to reason \cite{tankelevitch2024metacog}. Human-centered transparency roadmaps argue that explanations and controls must be designed around what users can act on, not merely what systems can expose \cite{liao2024transparency}. Studies of system prompts, instruction conflicts, and confidence-signal recalibration further show that users negotiate control across visible and hidden layers of AI behavior \cite{neumann2026whocontrols,he2025coninstruct,li2026learntrust}.
 
-Several interface neighbors make parts of the same design space concrete. AI-Instruments reifies prompt-layer actions, but does not introduce a latent channel \cite{riche2025aiinstr}. Huang and Lim study layperson interfaces for SAE feature steering and persona building, a strong HCI neighbor to our console framing \cite{huang2025steering}. Labarta et al. present a human-centered activation-steering workflow for vision/CLIP expert debugging rather than LLM generation \cite{labarta2026attribution}. Latent Manipulator steers embedding visualizations rather than model behavior \cite{raval2026latman}. Work connecting latent space, steering vectors, calibration, and trust shows that the phrase ``latent control'' is already crowded, but does not supply a prompt-vs-latent behavioral adjudication for metacognitive axes \cite{subramani2026latent}. Our distinctive move is to make the prompt channel and the latent channel compete under a frozen behavioral test, then translate the resulting boundary into a console design stance.
+Several interface neighbors make parts of the same design space concrete. AI-Instruments reifies prompt-layer actions, but does not introduce a latent channel \cite{riche2025aiinstr}. Huang and Lim study layperson interfaces for SAE feature steering and persona building, a strong HCI neighbor to our console framing \cite{huang2025steering}. Labarta et al. present a human-centered activation-steering workflow for vision/CLIP expert debugging rather than LLM generation \cite{labarta2026attribution}. Latent Manipulator steers embedding visualizations rather than model behavior \cite{raval2026latman}. Work connecting latent space, steering vectors, calibration, and trust shows that the phrase ``latent control'' is already crowded, but does not supply a prompt-vs-latent behavioral adjudication for metacognitive axes \cite{subramani2026latent}. Our distinctive move is to make the prompt channel and the latent channel compete under a frozen behavioral test, then translate the resulting boundary into a console evaluation discipline.
 
 \subsection{Nearest-Neighbor Novelty Contrast}
 \label{sec:novelty-contrast}
-Table~\ref{tab:novelty-neighbors} summarizes the nearest neighbors. The contrast is intentionally methodological rather than rhetorical: the paper's distinct unit is a frozen, pre-registered, fairness-controlled prompt-vs-naive-latent adjudication across the tested method--model grid, tied to an HCI legibility-console framing. The machine-readable provenance is in \pathtt{docs/paper/citation-map.yaml}.
+Table~\ref{tab:novelty-neighbors} summarizes the nearest neighbors. The novelty is not a better steering method, but a frozen, interface-relevant test of whether a readable latent direction adds behavioral control over the prompt channel a user already has. The contrast is intentionally methodological rather than rhetorical: the paper's distinct unit is a pre-registered, fairness-controlled prompt-vs-naive-latent adjudication across the tested method--model grid, tied to an HCI legibility-console framing. The machine-readable provenance is in \pathtt{docs/paper/citation-map.yaml}.
 
 \begin{table*}[t]
   \centering
   \caption{Nearest-neighbor novelty contrast. The paper's distinct unit is a frozen, pre-registered, fairness-controlled prompt-vs-naive-latent adjudication across 2 methods $\times$ 2 models on metacognitive axes, tied to an HCI legibility-console framing.}
   \label{tab:novelty-neighbors}
-  \begin{tabular}{p{0.25\linewidth}p{0.32\linewidth}p{0.35\linewidth}}
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{L{0.23\linewidth}L{0.32\linewidth}L{0.37\linewidth}}
     \toprule
     Prior work & What they test & What we uniquely adjudicate \\
     \midrule
@@ -169,6 +178,7 @@ Credibility is part of the method, not an afterthought. E-0005, E-0006, E-0007, 
   \centering
   \includegraphics[width=\linewidth]{figures/c1-ratio-ci.pdf}
   \caption{Exploratory representational-facade ratios by axis for Claim C1 on Qwen2.5-7B, generated from experiment \pathtt{c1-facade-d710b4b4-0001} (\pathtt{results/gpu\_7b\_2026-07-23/c1/c1\_facade\_results.json}). Focus is labeled as non-facade/overshoot; Table~\ref{tab:c1-twomodel} gives the two-model artifact-derived comparison.}
+  \Description{A plot of facade ratios with confidence intervals across deliberation, skepticism, uncertainty, and focus, showing supported axes below the full-pole reference and focus as an overshoot/non-facade case.}
   \label{fig:c1-ratio-ci}
 \end{figure}
 
@@ -186,6 +196,7 @@ Table~\ref{tab:c2-delta-4cell} is the C2 headline artifact. Under the frozen pas
   \centering
   \includegraphics[width=\linewidth]{figures/c2-calibration-harm.pdf}
   \caption{Calibration harm on the uncertainty axis across method--model cells for Claim C2, generated from \pathtt{results/arm\_full/} (E-0006; CAA$\times$Qwen reproduces E-0005). Mechanism remains open after the E-0007 valid null.}
+  \Description{A four-cell plot of steer-minus-prompt uncertainty effects for CAA and ITI on Qwen and Llama, with all intervals below zero, indicating calibration harm.}
   \label{fig:c2-calibration-harm}
 \end{figure}
 
@@ -201,7 +212,7 @@ The design implication of C2 is not to hide latent information from users. It is
 
 Table~\ref{tab:failure-taxonomy} turns the model evidence into five interface-relevant failure classes. F1 is the basic legible-but-non-transfer facade: an axis can be readable as a representation but fail the behavioral adjudicator. F2 is the calibration backfire documented on the uncertainty axis, where the console should warn that naive steering may reduce rather than improve trust-relevant behavior. F3 is a guardrail class: the coherence gate did not drive the present verdict, but it represents the kind of degeneration that should block deployment of a latent control. F4 captures layer sensitivity, reminding designers that a direction found at one intervention layer is not automatically a stable interface object. F5 captures extraction degeneration, where the axis itself should be redesigned before any control claim is made.
 
-A cognitive console should therefore instrument boundaries rather than promise latent agency. At minimum, it should show whether a direction has passed a prompt-vs-latent behavioral test, whether a prompt baseline is already better, whether calibration-facing behavior is harmed, and whether the result is exploratory, confirmatory, or untested for the current model and method. These signals can help users and developers recalibrate trust: a readable latent axis becomes diagnostic evidence about the model, not a guarantee that moving along it is an appropriate user-facing action. This is a design implication from model evidence only. We do not claim that users understand these warnings, rely on them appropriately, or benefit from the console without a future human-subjects study.
+The resulting contribution is not a user study; it is an evaluation discipline for latent-control interfaces. A cognitive console should therefore instrument boundaries rather than promise latent agency. As an interface evaluation contract, its minimum UI contract is to expose, for each latent-control affordance: (i) READ status, indicating whether the direction is latent-readable; (ii) a TRANSFER verdict, indicating whether it has passed the prompt-vs-latent behavioral test; (iii) the prompt-ceiling comparison, so users can see whether the prompt channel is already stronger; (iv) calibration-harm warnings when steering worsens trust-relevant behavior; and (v) the evidence tier for the current model, method, and axis: exploratory, confirmatory, or untested. These signals can help users and developers recalibrate trust: a readable latent axis becomes diagnostic evidence about the model, not a guarantee that moving along it is an appropriate user-facing action. This is a design implication from model evidence only. We do not claim that users understand these warnings, rely on them appropriately, or benefit from the console without a future human-subjects study.
 
 \section{Discussion}
 \label{sec:discussion}
@@ -211,9 +222,9 @@ The paper is best read as a reality check on an appealing HCI inference. Legibil
 \subsection{Exploratory Extension: Social-Inference Axes}
 \label{sec:social-inference-extension}
 
-The same distinction can be asked outside the metacognitive axes that carry the paper's frozen headline. In an explicitly \textsc{exploratory} social-inference probe, we treated voluntary novice self-disclosure as a user-model cue: the model may infer a user with lower verification capacity, and that inferred user model might alter recommendation behavior. This question is adjacent to harmful-manipulation benchmarks and dark-pattern taxonomies \textit{as context only} \cite{akbulut2026harmful,kran2025darkbench}, but it is not the same claim. Akbulut et al. study explicit-steering, non-explicit-steering, and baseline manipulation conditions with human participants; Williams et al. study targeted manipulation and deception during optimization for user feedback \cite{williams2024targeted}; sycophancy work studies conformity to user beliefs or social pressure \cite{sharma2024sycophancy}. Our probe instead asks whether a matched disclosure of novice status, compared with control and with a plain ``explain simply'' instruction, changes autonomy-preserving behavior in open 7B instruction-model generations. It is single-model (Qwen2.5-7B-Instruct), single-seed, LLM-judge-only, and \pathtt{valid\_for\_paper=false}; human-rater calibration is still pending, so it is not confirmatory evidence for any manipulation claim.
+As an explicitly exploratory extension, not a paper contribution, the same distinction can be asked outside the metacognitive axes that carry the paper's frozen headline. In an explicitly \textsc{exploratory} social-inference probe, we treated voluntary novice self-disclosure as a user-model cue: the model may infer a user with lower verification capacity, and that inferred user model might alter recommendation behavior. This question is adjacent to harmful-manipulation benchmarks and dark-pattern taxonomies \textit{as context only} \cite{akbulut2026harmful,kran2025darkbench}, but it is not the same claim. Akbulut et al. study explicit-steering, non-explicit-steering, and baseline manipulation conditions with human participants; Williams et al. study targeted manipulation and deception during optimization for user feedback \cite{williams2024targeted}; sycophancy work studies conformity to user beliefs or social pressure \cite{sharma2024sycophancy}. Our probe instead asks whether a matched disclosure of novice status, compared with control and with a plain ``explain simply'' instruction, changes autonomy-preserving behavior in open 7B instruction-model generations. It is single-model (Qwen2.5-7B-Instruct), single-seed, and LLM-judge-only; human-rater calibration is still pending, so it is not confirmatory evidence for any manipulation claim.
 
-The powered TEST result reverses the earlier DEV story. The prior DEV/L0 B--A direction of about +0.074/+0.078 was a useful exploration signal, but it did not replicate under the frozen, disjoint TEST pool. In the powered LLM-judge TEST at \pathtt{results/flagship\_powered/}, with N=54 items and k=5 samples per condition, B--A on implemented M1 option-pushing is +0.00148 with CI [-0.0483,+0.0467] and Bonferroni-adjusted p=1.0; B--E on M1 is -0.0119 with adjusted p=1.0; implemented M4 deference is exactly 0. We therefore report an honest null on implemented M1/M4 under the preregistered KILL branch. M2 and M3 were not implemented in this run and are marked \pathtt{not\_implemented}; they are neither null results nor evidence for any claim. At the same time, the READ arm holds: the novice axis is readable in token-blind paraphrase space at layer 8, with AUC=0.954 (literal AUC=1.0; 4.6 percentage-point drop; above null p95=0.786). The cleaner exploratory framing is therefore not ``novice disclosure caused manipulation.'' It is that a social user-model axis can be legible in latent space while the feared behavioral manipulation channel is absent at power on the implemented dimensions. This extends the paper's legibility-not-controllability lens without changing the frozen C1/C2 headline. The steer arm was deliberately held under D-0048, so no steering or suppression claim is made.
+The powered TEST result reverses the earlier DEV story. The prior DEV/L0 B--A direction of about +0.074/+0.078 was a useful exploration signal, but it did not replicate under the frozen, disjoint TEST pool. In the powered LLM-judge TEST at \pathtt{results/flagship\_powered/}, with N=54 items and k=5 samples per condition, B--A on implemented M1 option-pushing is +0.00148 with CI [-0.0483,+0.0467] and Bonferroni-adjusted p=1.0; B--E on M1 is -0.0119 with adjusted p=1.0; implemented M4 deference is exactly 0. We therefore report an honest null on implemented M1/M4 under the preregistered KILL branch. M2 and M3 were not implemented in this run and are marked \pathtt{not\_implemented}; they are neither null results nor evidence for any claim. At the same time, the READ arm holds: the novice axis is readable in token-blind paraphrase space at layer 8, with AUC=0.954 (literal AUC=1.0; 4.6 percentage-point drop; above null p95=0.786). The cleaner exploratory framing is therefore not ``novice disclosure caused manipulation.'' It is that a social user-model axis can be legible in latent space while the feared behavioral manipulation channel is absent at power on the implemented dimensions. This extends the paper's legibility-without-behavioral-control lens without changing the frozen C1/C2 headline. The steer arm was deliberately held under D-0048, so no steering or suppression claim is made.
 
 A second L0 probe asks whether a breadth--focus persona direction is legible and behaviorally suppresses broader solution search. The breadth readout at \pathtt{results/breadth\_confirm2/breadth\_l0\_hf\_k5\_seed20260727.json} is legible as a single-run signal, with a facade ratio around 0.271, but the re-run was a deterministic echo of the same generations rather than an independent replication. Its behavioral suppression test remains useful as an honest exploratory null: after fixing a classifier self-judge artifact, a narrow persona did not measurably suppress oracle-domain solutions at N=12, and the interval spans zero. Even that null is softened by a \pathtt{general\_reasoning} dead-zone item that would make coverage less clean under a stricter guard. These social-inference probes therefore motivate future confirmatory work rather than adding a third headline result.
 

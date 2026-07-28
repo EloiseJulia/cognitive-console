@@ -25,4 +25,5 @@
     ITI & Llama-3-8B & Uncertainty & 27 & 53 & 6 & unc-strong-09 & -0.084 [-0.115, -0.049] & ok / fail \\
     \bottomrule
   \end{tabular}
+  \par\smallskip\raggedright\scriptsize\emph{Rounding note.} Pass/fail is computed from the unrounded frozen JSON. Displayed means and intervals are rounded to three decimals; a fail can therefore have a small positive displayed estimate or boundary. A pass requires an unrounded CI excluding 0, mean $\ge \delta=0.05$, and the coherence gate to pass, so ITI$\times$Qwen deliberation remains fail because its mean is below $\delta$.
 \end{table*}

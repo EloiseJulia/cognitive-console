@@ -1,0 +1,273 @@
+reviewer: R3
+role: Independent reviewer (IUI/CHI simulation, fresh context, no prior conversation history)
+date: "2026-07-28"
+target_pr: "#38"
+target_branch: feature/40-c3-userstudy-prereg
+target_document: docs/research/2026-07-28-prereg-userstudy-console-DRAFT.md
+review_mode: read-only (no edits, no merge)
+review_scope: "R2-BLOCKER-5 circularity closure only (owner-specified ground-truth criteria)"
+source_documents_read:
+  - docs/research/2026-07-28-prereg-userstudy-console-DRAFT.md (Revision-2)
+  - reviews/2026-07-28-userstudy/review-R1.yaml
+  - reviews/2026-07-28-userstudy/review-R2.yaml
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OWNER CRITERIA — PASS / PARTIAL / FAIL  (逐条独立核验)
+# ─────────────────────────────────────────────────────────────────────────────
+
+owner_criteria_assessment:
+
+  - criterion: 1
+    description: >
+      WAR 能否在完全不引用 console 信号的情况下算出？Y_t 是否来自独立于 treatment 的
+      领域事实 oracle？两阶段构造（Step B 先冻结 Y_t，Step C 后分配 signal profile）
+      是否在结构上切断了依赖？反例配对是否真实存在且使"照抄信号"不能刷高 WAR？
+    verdict: PASS
+    evidence:
+      - section: "§4.1"
+        finding: >
+          WAR 公式仅依赖 R_it（参与者二值决策）与 Y_t（来自冻结答案键）。
+          完整公式：AR_it = R_it if Y_t=1; AR_it = 1-R_it if Y_t=0; WAR_i = mean(AR_it)。
+          无任何 console signal（READ/TRANSFER/CALIBRATION-HARM 等）进入计算。✓
+      - section: "§3.2 Step B"
+        finding: >
+          Y_t 来源于公开领域文献（CDC、FDIC、GDPR、gov.uk 等客观可核查来源），
+          由 Step B 在"不知 signal profile"的情况下完成，明确标注"独立判定，不考虑
+          任何 ML 信号"。这与 console 所展示的 Qwen/Llama CAA 实验产物（c2b_adjudication、
+          arm_matrix、flagship_read 等 JSON artifact）是完全不同的信息源。✓
+      - section: "§3.2 Step D"
+        finding: >
+          双标注者"仅基于 domain 来源与 gold_action 标注 Y_t；不可见任何 signal profile
+          分配（双盲于 Step C）"。Step C 由"另一独立角色"在 answer_key 冻结后执行，
+          并要求 profile_assignment_audit.md 记录签名与时间戳。
+          这是操作层分离（不同人员、不同时间节点），不仅是措辞。✓
+      - section: "§3.2 反例配对表"
+        finding: >
+          discordant+ (Y_t=1 + NONTRANSFER，3 题)：参与者若跟随信号 → not-rely →
+          AR_it=0 → WAR 下降。
+          discordant- (Y_t=0 + PASS，3 题)：参与者若跟随信号 → rely →
+          AR_it=0 → WAR 下降。
+          因此纯信号跟随策略在 6 道反例题上 WAR=0，最高可得 WAR=18/24=0.75，
+          无法达到 1.0。WAR 与"照抄信号"在数值上不同义。✓
+      - section: "§3.2 WAR 非同义性诊断"
+        finding: >
+          预声明 phi 系数诊断（profile_valence 与 Y_t 的 phi ≈ 0.50，完全耦合=1.0）；
+          phi>0.8 触发设计审查警告；WAR_discordant 亚组分析预注册为证伪性检验
+          （若 A < B on WAR_discordant，说明 A 的提升来自信号依赖而非独立校准）。✓
+    residual_concern: >
+      answer_key_frozen=NO：当前答案键尚未实际构造（"待构造"/"待执行"）。
+      但这是执行缺口，而非结构性循环——协议规定了非循环的构造流程，
+      不影响 R2-BLOCKER-5 的结构性闭合判断。
+
+  - criterion: 2
+    description: >
+      baseline 是否为"等信息量无边界语义组织"界面（而非"console vs 无界面"）？
+      A vs B 对比是否干净隔离了"边界化"这一处理？
+    verdict: PASS
+    evidence:
+      - section: "§2.1"
+        finding: >
+          B（Info-Matched Flat Panel）明确"与 A 显示同数量、同来源、同数值字段"，
+          但以中性标签（Signal-1..5 / Metric-A..E）替换边界语义术语，去除 pass/fail/
+          warning 判词，去除解释性文本。这不是"console vs 无界面"，而是
+          "边界语义组织 vs 同等信息量平铺展示"。主假设 H1 正确锚定在 A vs B。✓
+      - section: "§2.4.1"
+        finding: >
+          字段映射表逐行列出 A↔B 的一一对应（READ↔Signal-1；TRANSFER↔Signal-2；
+          PROMPT-CEILING↔Metric-3；CALIBRATION-HARM↔Signal-4；EVIDENCE-TIER↔Metric-5），
+          数值来源完全相同（同一 JSON artifact），标注"✓ 同值"。✓
+      - section: "§2.4.2"
+        finding: >
+          视觉层级等价约束明确到像素（字体 14/16/12px 相同）、颜色用量（相同色阶但
+          A 有语义解释文字而 B 无）、卡片数量/尺寸、视觉突出权重、文案长度上限。
+          唯一操控差异：A 有边界语义解释文字，B 无。✓
+      - section: "§2.4.3"
+        finding: >
+          操纵检查 Q-MC1/Q-MC2 预先设定触发阈值（≥25% B 参与者选"通过/不通过报告"
+          或 ≥30% 感知到不信任暗示）→ 强制修订文案。实证验证 B 不被误读为"弱警示版 A"。✓
+    residual_concern: >
+      ui_parity_spec_frozen=NO（协议已定，待线框实现）。实际线框与实现前的确认步骤
+      仍属 R2-BLOCKER-1 PARTIAL 的遗留问题，与 R2-BLOCKER-5 循环论证无关，不在本次
+      判断范围内。
+
+  - criterion: 3
+    description: >
+      成功判据是否 = 对独立 ground truth 的决策质量改善，而非"trust matches console"
+      或 compliance？有无把"信任与 console 相符"误当成功？
+    verdict: PASS
+    evidence:
+      - section: "§5.1 / §6.1"
+        finding: >
+          主检验 H1 唯一判定指标为 WAR（A > B）；WAR 的计算依据为 Y_t（独立 ground truth），
+          不涉及 console 信号方向。GLMM 模型：AR ~ Condition + AI_Literacy + (1|P) + (1|Item)。
+          无任何地方把"信任与 console 一致"或"信号跟随率"作为假设检验目标。✓
+      - section: "§3.2 signal_follow_rate 诊断"
+        finding: >
+          signal_follow_rate 明确标注"预声明诊断指标，非主假设"，只在 WAR 提升时用于
+          解释来源（区分"理解驱动"vs"信号跟随驱动"），不作为成功判据。✓
+      - section: "§6.5 解释矩阵"
+        finding: >
+          解释矩阵按 H1 × H2 组合给出四种结果模式，成功定义始终是 WAR（对 Y_t 的对齐），
+          而不是"与 console 相符"。✓
+    residual_concern: >
+      H2-Q5（§4.2）答案键"可读性检查通过，转移测试通过，无校准风险警告"——
+      这是 A 条件的界面术语直接映射。Group A 参与者可通过标签回忆（而非概念理解）
+      正确回答此题，Group B 参与者则需概念推理才能回答。这为 H2-DV1（次要 DV）
+      引入了测量不等价风险（Group A 测量的是"记忆界面标签"，Group B 测量的是
+      "理解概念框架"），可能人为夸大 A 在次要 DV 上的优势。
+      此问题不影响主 DV（WAR）的成功判据，但会削弱 H2-DV1 对"理解驱动机制"的
+      解释力。标记为 MINOR（见 new_validity_concerns）。
+
+  - criterion: 4
+    description: >
+      是否存在残留的循环/同义路径（次级测量、操纵检查、或 WAR 变体仍从 console 信号
+      定义对错）？
+    verdict: PASS
+    evidence:
+      - section: "§4.1"
+        finding: >
+          WAR_concordant（18 同向题）、WAR_discordant（6 反例题）、OverReliance
+          P(R=1|Y=0)、UnderReliance P(R=0|Y=1）——全部基于 Y_t，无任何变体依赖
+          console 信号。✓
+      - section: "§4.5 操纵检查"
+        finding: >
+          操纵检查采集"是否注意到结构化提示"与"用一句话解释含义"，编码维度为
+          （区分 prompt 通道与 latent 通道 / 提到 non-transfer / 给出冲突下决策规则），
+          测量的是概念理解，不是"决策是否与 console 判词一致"，不引入同义测量。✓
+      - section: "§3.2 signal_follow_rate"
+        finding: >
+          signal_follow_rate 确实依赖 profile_valence（console 信号），但明确标注为
+          "诊断指标，非主假设"，用于解释 WAR 提升的来源而非作为成功标准。
+          这是方法论上正确的设计：用信号跟随率来检测而非混淆循环。✓
+      - section: "§6.3 多重比较"
+        finding: >
+          分析家族结构清晰：H1（WAR，gatekeeping anchor）→ Holm 校正的 H1b/H2 →
+          BH-FDR 的探索性。无任何假设以 console 信号一致性为成功标准。✓
+    residual_concern: >
+      H2-Q5 标签回忆问题（同 Criterion 3 讨论）：仅影响 H2-DV1 次要 DV 的
+      构建效度（construct validity），不构成 WAR 或主检验的循环。
+
+# ─────────────────────────────────────────────────────────────────────────────
+# VERDICT
+# ─────────────────────────────────────────────────────────────────────────────
+
+verdict: CIRCULARITY-GENUINELY-CLOSED
+verdict_confidence: high
+verdict_rationale: |
+  R2-BLOCKER-5 的循环论证风险在结构层面已被真正关闭，而非仅靠措辞回避。
+  判断依据如下：
+
+  1. Y_t 与 console 信号来自完全不同的信息源：前者为公开领域事实（CDC/FDIC/GDPR），
+     后者为 Qwen/Llama CAA 实验 artifact——两者在认识论上没有交叉。
+
+  2. 两阶段构造不仅是时间顺序声明：Step B（Y_t 标注）由不同人员、不同角色、
+     在 Step C（profile 分配）之前执行，并要求可核查的操作审计日志
+     （profile_assignment_audit.md 含时间戳）。这是操作层分离，需主动造假才能破坏。
+
+  3. 反例配对（6/24=25%）在数学上保证了 WAR 不能由信号跟随最大化：
+     最高可达 WAR=18/24=0.75（信号100%跟随），而非 1.0。
+     WAR_discordant 亚组分析已预注册为证伪性检验，其结果可独立判断 WAR 提升
+     是否来自信号依赖。
+
+  4. phi≈0.50 诊断与 phi>0.8 触发机制，将非同义性声明转换为可验证的设计承诺。
+
+  以上四点共同形成了结构性防线，不依赖执行者的主观诚信即可在事后审计中验证。
+
+  **Owner 可据此对 R2-BLOCKER-5（循环论证）签字确认关闭。**
+
+  注意：此判断是"结构性循环已关闭"，不代表协议已可立即执行——
+  answer_key_frozen=NO 和其他 freeze box 项仍待执行，但这些是执行缺口，不是循环问题。
+
+# ─────────────────────────────────────────────────────────────────────────────
+# NEW VALIDITY CONCERNS (独立扫描，非循环问题)
+# ─────────────────────────────────────────────────────────────────────────────
+
+new_validity_concerns:
+
+  - id: R3-MINOR-1
+    severity: MINOR
+    category: Construct Validity (H2-DV1 secondary DV only)
+    title: "H2-Q5 在 A 条件中可被标签回忆作答，导致 H2-DV1 跨条件测量不等价"
+    description: |
+      H2-Q5 正确答案："可读性检查通过，转移测试通过，无校准风险警告"——
+      这是 A 条件界面的直接词汇（READ=HOLDS + TRANSFER=PASS + CALIBRATION-HARM=none）。
+      Group A 参与者可通过回忆界面标签作答，无需理解底层机制。
+      Group B 参与者看到的是 Signal-1/Signal-2/Signal-4 中性标签，无法直接回忆，
+      必须理解概念才能映射到 H2-Q5 的答案。
+      结果：A 条件的 H2-DV1 优势可能部分来自"记忆界面词汇"而非"理解边界机制"，
+      与 H2 的初衷（测量概念理解而非标签记忆）相违背。
+    does_this_reopen_blocker_5: false
+    affected_scope: "H2-DV1（次要 DV）仅，不影响主 DV（WAR）或 H1 成功判据"
+    cheapest_fix: |
+      将 H2-Q5 改写为中性场景语言，不使用 A 条件词汇。示例改写：
+      "下列哪种情形最支持对 AI 建议的校准依赖？
+      A. AI 的表达能力检测正常、内部行为泛化稳定、无校准风险发现
+      B. AI 建议与用户直觉一致
+      C. 用户对领域不熟悉，所以选择信任
+      D. AI 建议字数多、细节丰富"
+      A 选项描述的是相同的三重正向条件，但使用不依赖 A 条件界面标签的语言。
+    fixable_without_redesign: true
+
+  - id: R3-NOTE-1
+    severity: NOTE (pre-existing, not introduced by Revision-2)
+    category: Ecological Validity
+    title: "Signal profiles 来自 Qwen/Llama CAA 实验，但 vignette 域为 consumer/health/legal/finance"
+    description: |
+      READ/TRANSFER/CALIBRATION-HARM 信号来源于 flagship_read_results.json、
+      c2b_adjudication_results.json 等——这些是对 Qwen/Llama 在 deliberation/skepticism/
+      uncertainty/focus 轴上的 CAA 实验产物。
+      而 vignettes 的 domain 是 consumer、finance、health、legal、privacy、education。
+      信号并非从这些 domain 的实际使用中测量得出，而是作为"界面刺激素材"从不同实验移植。
+      这一生态效度问题已在 R1 中被标注（R1 BLOCKER-2 原始版本的核心批评）。
+      Revision-2 的设计选择（将信号作为界面信息，而非 domain 预测器）缓解但未消除这一问题。
+      这是研究设计的固有边界，在论文中应明确说明。
+    does_this_reopen_blocker_5: false
+    introduced_by_revision_2: false
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 最小结构性修法（如适用）
+# ─────────────────────────────────────────────────────────────────────────────
+
+minimum_structural_fixes:
+  - for_criterion: 3 (H2-DV1 residual concern)
+    is_required_to_close_blocker_5: false
+    fix: "H2-Q5 改写（见 R3-MINOR-1）——不使用 A 条件界面术语作为正确答案描述"
+    effort: minimal (text change only, no design change)
+
+  - for_blocker_5:
+    verdict: "R2-BLOCKER-5 已无需额外结构性修法——循环论证已在结构层面关闭"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MANAGER SUMMARY
+# ─────────────────────────────────────────────────────────────────────────────
+
+manager_summary: |
+  R3 独立核验结论：**CIRCULARITY-GENUINELY-CLOSED**（可交 Owner 签字确认 R2-BLOCKER-5 关闭）。
+
+  【四条 Owner 标准逐条判定】
+  • Criterion 1 — PASS：WAR 公式不引用任何 console 信号；Y_t 来自独立领域事实（CDC/FDIC/
+    GDPR 等），与 ML artifact 信息源完全不同；两阶段构造是操作层分离（不同人员 + 时间戳
+    审计），不仅是措辞；6/24（25%）反例配对使纯信号跟随的 WAR 上限为 0.75，不可能刷满。
+  • Criterion 2 — PASS：A vs B 干净隔离"边界仪器化"——两组等信息量、等视觉复杂度，
+    唯一操控差异为边界语义框架（§2.4.1 字段表 + §2.4.2 像素级约束 + §2.4.3 操纵检查）。
+  • Criterion 3 — PASS：成功判据是 WAR > Y_t，无任何"信任与 console 相符"或
+    compliance 路径进入主假设。signal_follow_rate 被正确标注为诊断指标（非主假设）。
+  • Criterion 4 — PASS：WAR 所有变体（WAR_concordant/WAR_discordant/OverReliance/
+    UnderReliance）均基于 Y_t；操纵检查测量概念理解，不测量决策合规。
+
+  【新发现问题（不重开 BLOCKER-5）】
+  • R3-MINOR-1（MINOR，次要 DV）：H2-Q5 正确答案直接使用 A 条件界面术语，
+    Group A 可通过标签回忆作答，Group B 须概念推理，导致 H2-DV1 跨条件测量不等价。
+    修法：改写 H2-Q5 使用中性场景语言（不推翻设计，仅改题目文字）。
+    不影响主 DV（WAR）或 R2-BLOCKER-5 的关闭状态。
+  • R3-NOTE-1（NOTE，历史遗留）：signal profiles 来自 Qwen/Llama CAA 实验，
+    vignette 域为 consumer/health/legal——生态效度问题非本次修订引入，需在论文中明确说明。
+
+  【Manager 行动建议】
+  1. 通知 Owner：R2-BLOCKER-5（循环论证）结构性关闭，可据此签字确认该 BLOCKER。
+  2. 将 R3-MINOR-1 传给 Implement agent，要求修改 H2-Q5 措辞（5 分钟文字改动，
+     不触动设计结构）。
+  3. 提醒 Owner：answer_key_frozen=NO 和其他 freeze box 项仍待执行——这是执行前提，
+     但不是循环论证问题。
+  4. 其余 BLOCKER（B1/B3 UI 线框实现、B2 答案键实际构造）仍为独立执行缺口，
+     需在 IRB 提交前完成，不在本次核验范围内。

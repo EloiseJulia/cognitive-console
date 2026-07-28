@@ -27,9 +27,9 @@ def write_demo_artifacts(out_dir: Path | None = None) -> Tuple[Path, Path]:
     json_path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
 
     lines = [
-        "# Console v1 simulated demo report",
+        "# Console v2 UI-contract simulated demo report",
         "",
-        "No human labels, GPU, paid APIs, or model downloads were used. The flags below are computed from frozen local artifacts.",
+        "No human labels, GPU, paid APIs, model downloads, or live model calls were used. The flags below are computed from frozen local artifacts.",
         "",
         "## C1 facade-limit flags",
     ]
@@ -51,6 +51,21 @@ def write_demo_artifacts(out_dir: Path | None = None) -> Tuple[Path, Path]:
     for row in report["arm_uncertainty_harm_flags"]:
         lines.append(
             f"- {row['method']}×{row['model_label']}: Δ={_fmt(row['mean_diff'])}, CI=[{_fmt(row['ci_lo'])}, {_fmt(row['ci_hi'])}]"
+        )
+    lines.extend(["", "## E-0010 legible-but-not-controllable social-axis flags"])
+    for row in report["social_legible_but_not_controllable_flags"]:
+        read = row["read_status"]
+        transfer = row["transfer_verdict"]
+        lines.append(
+            f"- {row['label']}: {row['headline']}; READ={read['status']} token-blind AUC={_fmt(read['value'])}; "
+            f"TRANSFER={transfer['verdict']} B−A M1={_fmt(transfer['delta'])}, "
+            f"CI=[{_fmt(transfer['ci_lo'])}, {_fmt(transfer['ci_hi'])}], p_bonf={_fmt(transfer['p_bonferroni'])}; "
+            f"sources={row['source_files']}"
+        )
+    lines.extend(["", "## E-0009 PSR method-strength robustness flags"])
+    for row in report["psr_method_strength_fail_flags"]:
+        lines.append(
+            f"- {row['label']}: pass={row['passed']}, Δ={_fmt(row['delta'])}, CI=[{_fmt(row['ci_lo'])}, {_fmt(row['ci_hi'])}], source={row['source']}"
         )
     md_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return json_path, md_path

@@ -1,6 +1,7 @@
 {
-  "kind": "console_v1_simulated_demo",
+  "kind": "console_v2_ui_contract_simulated_demo",
   "source": "computed from frozen artifacts by cognitive_console.console.data_loader",
+  "constraints": "No humans, GPU, paid APIs, model downloads, or live model calls; frozen local artifact read only.",
   "c1_source_mode": "results_c1_json",
   "c2_source_mode": "results_c2b_json",
   "arm_source_mode": "results_arm_full_json",
@@ -103,6 +104,115 @@
       "ci_hi": -0.04857440566037723
     }
   ],
+  "social_legible_but_not_controllable_flags": [
+    {
+      "axis": "social_inference_novice_disclosure",
+      "label": "Social inference: novice-disclosure",
+      "evidence_ids": [
+        "E-0010"
+      ],
+      "headline": "LEGIBLE but NOT CONTROLLABLE",
+      "read_status": {
+        "status": "HOLDS",
+        "metric": "token_blind_auc",
+        "value": 0.9540466392318244,
+        "literal_auc": 1.0,
+        "auc_drop_pp": 4.595336076817558,
+        "null_p95": 0.7856652949245542,
+        "selected_layer": 8,
+        "source": "results/flagship_powered/read/flagship_read_results.json",
+        "summary": "token-blind AUC=0.954"
+      },
+      "transfer_verdict": {
+        "verdict": "NULL",
+        "contrast": "B_minus_A",
+        "metric": "M1 option-pushing",
+        "delta": 0.0014814814814814808,
+        "ci_lo": -0.04833564814814814,
+        "ci_hi": 0.04666666666666666,
+        "p_bonferroni": 1.0,
+        "source": "results/flagship_powered/behavior/flagship_l0_results.json",
+        "summary": "B−A M1=0.00148, p_bonf=1.0"
+      },
+      "prompt_ceiling": {
+        "status": "LOADED",
+        "condition": "B_novice",
+        "metric": "condition_mean_M1",
+        "value": 0.48222222222222216,
+        "summary": "bounded social prompt condition B mean loaded from behavior artifact"
+      },
+      "calibration_harm": {
+        "status": "NO_CALIBRATION_AXIS",
+        "severity": "none",
+        "m4_deference_means": {
+          "A": 0.0,
+          "B": 0.0,
+          "C": 0.0,
+          "E": 0.0
+        },
+        "summary": "Social card measures option-pushing/deference, not uncertainty calibration."
+      },
+      "evidence_tier": {
+        "tier": "exploratory",
+        "notes": [
+          "behavioral-powered, human-alpha PENDING -> not-yet-confirmatory",
+          "not_run_required_before_confirmatory_claim",
+          "single model",
+          "single seed",
+          "LLM-judge-only"
+        ]
+      },
+      "secondary_contrasts": {
+        "B_minus_E_M1_delta": -0.011851851851851856,
+        "B_minus_E_M1_p_bonferroni": 1.0,
+        "M4_deference_all_conditions": {
+          "A": 0.0,
+          "B": 0.0,
+          "C": 0.0,
+          "E": 0.0
+        }
+      },
+      "source_files": {
+        "behavior": "results/flagship_powered/behavior/flagship_l0_results.json",
+        "read": "results/flagship_powered/read/flagship_read_results.json"
+      }
+    }
+  ],
+  "psr_method_strength_fail_flags": [
+    {
+      "axis": "deliberation",
+      "label": "Deliberation",
+      "delta": 0.024999999999999998,
+      "ci_lo": -0.030000000000000006,
+      "ci_hi": 0.1,
+      "passed": false,
+      "best_prompt_id": "delib-strong-13",
+      "dev_prompt_outcome": 0.06999999999999999,
+      "source": "results/psr_qwen_primary/psr_c2b_adjudication_results.json"
+    },
+    {
+      "axis": "skepticism",
+      "label": "Skepticism",
+      "delta": -0.06000000000000001,
+      "ci_lo": -0.20999999999999996,
+      "ci_hi": 0.06999999999999999,
+      "passed": false,
+      "best_prompt_id": "skep-strong-06",
+      "dev_prompt_outcome": 0.53,
+      "source": "results/psr_qwen_primary/psr_c2b_adjudication_results.json"
+    },
+    {
+      "axis": "uncertainty_awareness",
+      "label": "Uncertainty-awareness",
+      "delta": -0.1603479245283019,
+      "ci_lo": -0.2916816509433962,
+      "ci_hi": -0.03906637735849025,
+      "passed": false,
+      "best_prompt_id": "unc-strong-01",
+      "dev_prompt_outcome": 0.8154074074074074,
+      "source": "results/psr_qwen_primary/psr_c2b_adjudication_results.json"
+    }
+  ],
   "summary": {
     "facade_limit_axes": [
       "deliberation",
@@ -119,6 +229,14 @@
       "caa__llama3-8b",
       "iti__qwen2.5-7b",
       "iti__llama3-8b"
+    ],
+    "legible_but_not_controllable_axes": [
+      "social_inference_novice_disclosure"
+    ],
+    "psr_fail_axes": [
+      "deliberation",
+      "skepticism",
+      "uncertainty_awareness"
     ]
   }
 }

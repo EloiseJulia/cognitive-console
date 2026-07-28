@@ -125,6 +125,64 @@ Outcome interpretation:
 
 ---
 
+### 4b. Anti-pooling clause for confirmatory negative judgment (mandatory)
+
+**Any confirmatory negative judgment MUST be evaluated per-seed independently.**
+The following is explicitly **prohibited**:
+
+- Pooling raw outcome records from multiple seeds before computing a negative verdict.
+- Computing `mean(d)` by averaging raw outcome values across seeds and using that
+  aggregate mean to reach a negative conclusion.
+- Using any cross-seed statistical summary (pooled CI, mean-across-seeds, etc.) as a
+  sufficient condition for a negative judgment.
+
+Each seed's `arm_verdict` and per-cell / per-axis pass/fail status MUST be derived
+from that seed's own JSON artifacts, using the single-seed adjudicator
+(`adjudicate_c2b.py §4`). The four-status ladder in §4a operates exclusively on
+*per-seed verdict counts*, not on pooled statistics.
+
+**Implementation note (pre-run check):** `aggregate_multiseed_c2.py` determines
+`caveat_drop_rule` outcome by counting per-seed `arm_verdict == NON_TRANSFER_GENERALIZED`
+and per-seed `ci_hi < 0` flags from each seed's own JSON.  The `mean_diff_across_seeds`
+field in the output is **descriptive only** and is never used for verdict determination.
+No pooling path exists in the aggregation logic; this was verified before writing this
+document.
+
+---
+
+### 4c. Unconditional true-pass surfacing
+
+If **any** seed × cell × axis combination shows a true PASS (`passed=True` in the
+adjudication JSON for that seed), the aggregate output **must unconditionally and
+prominently surface it**, regardless of the overall §4a outcome:
+
+1. The output artifacts (`multiseed_c2_aggregate.json` and `.md`) must contain an
+   **`any_true_pass`** block at the top level, listing each
+   `(seed, cell_key, axis, mean_diff, ci_lo, ci_hi)` true pass.
+   This block is **always present** (empty list if no passes occurred).
+
+2. **If `any_true_pass` is non-empty:**
+   - The `caveat_drop_rule.outcome` of `DROP_SINGLE_SEED_CAVEAT` and
+     `SEED_MOSTLY_ROBUST` are **blocked** — a true positive in any
+     seed × cell × axis prevents a clean caveat-drop decision.
+   - Each affected cell must be flagged `single_seed_positive_surfaced = true` in
+     `cell_axis_stats`, and the negative conclusion for that cell **must not** be
+     labeled confirmatory.
+   - The `.md` output must display a prominent warning at the top of the document.
+
+3. The §4a "no strong-positive flip" guardrail already encodes the blocking logic.
+   §4c makes the **disclosure obligation** explicit and independent: even if the final
+   verdict is `SEED_SENSITIVE`, the individual passes must be surfaced for the paper
+   record.
+
+**Rationale:** Arithmetic averaging can obscure a single-seed positive signal.
+A cell that shows a true pass in one seed cannot be collectively labeled "negative"
+without explicit disclosure.  The `any_true_pass` block ensures such signals are
+always visible in the paper audit trail, even when the headline verdict is
+`SEED_SENSITIVE`.
+
+---
+
 ## 5. Analysis script
 
 `scripts/aggregate_multiseed_c2.py` — manifest-driven, reads all numbers from

@@ -195,6 +195,10 @@ def aggregate_across_seeds(seed_records: List[Dict[str, Any]]) -> Dict[str, Any]
     uncertainty_ci_negative_counts: Dict[str, int] = {
         ck: 0 for ck in _FROZEN_CELL_KEYS
     }
+    # any_true_pass_details: unconditional surfacing of every (seed,cell,axis) true PASS
+    # (prereg §4c). This list is always present in the output; empty means no passes.
+    any_true_pass_details: List[Dict[str, Any]] = []
+    # strong_positive_flip_details: kept for backward-compat; same events, fewer fields.
     strong_positive_flip_details: List[Dict[str, Any]] = []
     for r in seed_records:
         for c in r.get("cells", []):
@@ -209,7 +213,8 @@ def aggregate_across_seeds(seed_records: List[Dict[str, Any]]) -> Dict[str, Any]
             axis_stats = c.get("axis_stats", {})
             axis_passes = c.get("axis_passes", {})
             for axis in _FROZEN_AXES:
-                axis_stat_passed = bool(axis_stats.get(axis, {}).get("passed", False))
+                astats = axis_stats.get(axis, {})
+                axis_stat_passed = bool(astats.get("passed", False))
                 axis_summary_passed = bool(axis_passes.get(axis, False))
                 if axis_stat_passed or axis_summary_passed:
                     strong_positive_flip_details.append({
@@ -217,8 +222,25 @@ def aggregate_across_seeds(seed_records: List[Dict[str, Any]]) -> Dict[str, Any]
                         "cell_key": cell_key,
                         "axis": axis,
                     })
+                    any_true_pass_details.append({
+                        "seed": int(r["seed"]),
+                        "cell_key": cell_key,
+                        "axis": axis,
+                        "mean_diff": astats.get("mean_diff"),
+                        "ci_lo": astats.get("ci_lo"),
+                        "ci_hi": astats.get("ci_hi"),
+                    })
 
     any_strong_positive_flip = bool(strong_positive_flip_details)
+
+    # Per-cell §4c flags: mark cells that had ≥1 true pass (per-seed, not pooled).
+    cells_with_true_pass = {e["cell_key"] for e in any_true_pass_details}
+    for ck in _FROZEN_CELL_KEYS:
+        cell_axis_stats[ck]["single_seed_positive_surfaced"] = ck in cells_with_true_pass
+        cell_axis_stats[ck]["positive_surfaced_passes"] = [
+            e for e in any_true_pass_details if e["cell_key"] == ck
+        ]
+
     uncertainty_harm_ci_negative_all_cells_all_seeds = all(
         uncertainty_ci_negative_counts[ck] == n_seeds
         for ck in _FROZEN_CELL_KEYS
@@ -265,6 +287,8 @@ def aggregate_across_seeds(seed_records: List[Dict[str, Any]]) -> Dict[str, Any]
         caveat_status = "SEED_SENSITIVE"
 
     return {
+        "any_true_pass": any_true_pass_details,
+        "has_any_true_pass": bool(any_true_pass_details),
         "n_seeds": n_seeds,
         "arm_verdict_counts": verdict_counts,
         "n_seeds_non_transfer_generalized": n_seeds_non_transfer,
@@ -320,6 +344,35 @@ def write_aggregate_md(payload: Dict[str, Any], out_path: Path) -> None:
     lines.append(f"- arm_verdict_counts: {agg['arm_verdict_counts']}")
     lines.append(f"- n_seeds NON_TRANSFER_GENERALIZED: **{agg['n_seeds_non_transfer_generalized']}**")
     lines.append("")
+    # --- §4c: any_true_pass block (unconditional, always at top) ---
+    any_tp = agg.get("any_true_pass", [])
+    lines.append("## True-pass surfacing (unconditional guard — prereg §4c)")
+    lines.append("")
+    if not any_tp:
+        lines.append(
+            "- `any_true_pass: []` — no true pass detected in any seed×cell×axis."
+        )
+    else:
+        lines.append(
+            "> ⚠ **TRUE PASSES DETECTED** — negative conclusions for affected cells "
+            "are NOT confirmatory. Each true pass is listed below."
+        )
+        lines.append("")
+        lines.append("| seed | cell_key | axis | mean_diff | ci_lo | ci_hi |")
+        lines.append("|---|---|---|---|---|---|")
+        for tp in any_tp:
+            lines.append(
+                f"| {tp['seed']} | {tp['cell_key']} | {tp['axis']} "
+                f"| {_fmt(tp.get('mean_diff'))} "
+                f"| {_fmt(tp.get('ci_lo'))} "
+                f"| {_fmt(tp.get('ci_hi'))} |"
+            )
+        lines.append("")
+        cells_flagged = sorted({tp["cell_key"] for tp in any_tp})
+        lines.append(
+            f"- Cells flagged `single_seed_positive_surfaced`: **{cells_flagged}**"
+        )
+    lines.append("")
     lines.append("## Caveat-drop evaluation")
     cd = agg["caveat_drop_rule"]
     lines.append(f"- {cd['description']}")
@@ -351,6 +404,13 @@ def write_aggregate_md(payload: Dict[str, Any], out_path: Path) -> None:
     lines.append("")
     for cell_key in _FROZEN_CELL_KEYS:
         lines.append(f"### Cell: `{cell_key}`")
+        cell_cs = agg["cell_axis_stats"][cell_key]
+        if cell_cs.get("single_seed_positive_surfaced"):
+            lines.append("")
+            lines.append(
+                "> ⚠ **`single_seed_positive_surfaced`** — this cell has ≥1 true pass "
+                "in at least one seed×axis; its negative conclusion is NOT confirmatory."
+            )
         lines.append("")
         lines.append("| axis | seeds_with_data | n_pass | mean_diff_values | mean_across_seeds | all_CI_hi<0 |")
         lines.append("|---|---|---|---|---|---|")

@@ -9,8 +9,8 @@
 
 | 证据块 | 结论 | 关键数字 | 状态 |
 |---|---|---:|---|
-| C1 facade / Qwen | prompt 只到达 axis pole 的一部分 | 3/4 轴 hold：delib 0.583 [0.488,0.680]；skep 0.548 [0.434,0.670]；unc 0.713 [0.517,0.910]；focus 2.844 overshoot | exploratory，valid_for_paper=false（E-0003） |
-| C1 facade / Llama | 聚合 3/4 复现，但轴组成不同 | delib 0.872；skep 0.628；focus 0.471 hold；uncertainty 1.000 [0.839,1.147] 不 hold | exploratory，轴异质性 caveat（E-0008） |
+| C1 facade / Qwen | prompt 只到达 axis pole 的一部分 | 聚合 3/4 轴 hold；focus 轴为 overshoot/no facade | exploratory，valid_for_paper=false（E-0003） |
+| C1 facade / Llama | 聚合 3/4 复现，但轴组成不同 | 聚合 3/4；uncertainty 不 hold，focus hold | exploratory，轴异质性 caveat（E-0008） |
 | C2 2×2 冻结裁决 | latent 不超过 best-prompt ceiling | 4 cells 全 0/3；uncertainty Δ：-0.228, -0.072, -0.103, -0.084，CI 全排除 0 | core scoped negative（E-0005/E-0006） |
 | 方法强度与社会轴 | PSR 仍 KILL；社会轴 READ 但行为 null | PSR uncertainty -0.160 [-0.292,-0.039]；social B−A M1=+0.00148, p_bonf=1.0；READ AUC=0.954 | exploratory / valid_for_paper=false（E-0009/E-0010） |
 
@@ -54,7 +54,7 @@ Mishra et al. 的 non-surjectivity 只作为背景动机：activation steering �
 
 ## 5. 核心贡献
 
-1. **C1：facade 测量。** 给出一个可复建的 representational measurement：prompt_reach / pole_reach。跨模型不变只保留 deliberation + skepticism；uncertainty 与 focus 为 model-dependent（uncertainty: Qwen 0.713 hold vs Llama 1.000 no-facade；focus: Llama 0.471 hold vs Qwen 2.844 overshoot）；只能作为 exploratory measurement。
+1. **C1：facade 测量。** 给出一个可复建的 representational measurement：prompt_reach / pole_reach。跨模型不变只保留 deliberation + skepticism；uncertainty 与 focus 为 model-dependent（uncertainty 在 Qwen 成立、Llama 不成立；focus 在 Llama 成立、Qwen 过冲且无 facade）；只能作为 exploratory measurement。
 2. **C2：冻结行为裁决的 scoped negative。** DEV/TEST、best-prompt ceiling、steering alpha、paired item-cluster bootstrap、Bonferroni、coherence gate 和 δ 判据全部冻结；2×2 全失败，uncertainty calibration harm 四格复现。
 3. **方法学纪律本身。** 负结果没有被改写为正结果；OOD 机制臂失败后降级到 Future Work；PSR 只作为探索性 robustness；每个重要结果有 hostile audit。
 4. **Console 设计立场。** Console 不应承诺“latent 超能力滑块”，而应显示 READ/TRANSFER/prompt ceiling/calibration harm/evidence tier，帮助信任再校准。
@@ -107,12 +107,12 @@ Breadth 轴来自 `results/breadth_confirm2/` 与 D-0047：facade ratio 0.271 �
 |---|---|---:|---|
 | Qwen2.5-7B | deliberation | 0.583 [0.488,0.680] | facade hold |
 | Qwen2.5-7B | skepticism | 0.548 [0.434,0.670] | facade hold |
-| Qwen2.5-7B | uncertainty | 0.713 [0.517,0.910] | facade hold |
-| Qwen2.5-7B | focus | 2.844 [2.061,3.549] | overshoot/no facade |
+| Qwen2.5-7B | uncertainty | facade hold（见生成表） | 与 Llama 形成 model-dependent 对照 |
+| Qwen2.5-7B | focus | overshoot/no facade（见生成表） | 与 Llama 形成 model-dependent 对照 |
 | Llama-3-8B | deliberation | 0.872 [0.798,0.937] | facade hold |
 | Llama-3-8B | skepticism | 0.628 [0.581,0.673] | facade hold |
-| Llama-3-8B | uncertainty | 1.000 [0.839,1.147] | no facade |
-| Llama-3-8B | focus | 0.471 [0.306,0.630] | facade hold |
+| Llama-3-8B | uncertainty | no facade（见生成表） | 与 Qwen 形成 model-dependent 对照 |
+| Llama-3-8B | focus | facade hold（见生成表） | 与 Qwen 形成 model-dependent 对照 |
 
 结论：C1 支持“若干 metacognitive axes 有 representational facade”，但跨模型不变只到 deliberation + skepticism；uncertainty 与 focus 明确是 model-dependent，不支持 axis-invariant general law。Deliberation layer-16 sensitivity 也需保留 caveat（E-0003）。
 
@@ -199,7 +199,7 @@ Console 的目标不是“把 latent 方向包装成 slider”，而是显示**�
 
 | ID | Claim/用途 | 模型/方法 | 关键结果 | 审计/状态 | valid_for_paper |
 |---|---|---|---|---|---|
-| E-0003 | C1 Qwen facade | Qwen2.5-7B | 3/4 hold：0.583、0.548、0.713；focus 2.844 overshoot | Manager verified；device/dtype cache 修复 | false / exploratory |
+| E-0003 | C1 Qwen facade | Qwen2.5-7B | 3/4 hold（uncertainty hold，focus overshoot/no facade） | Manager verified；device/dtype cache 修复 | false / exploratory |
 | E-0004 | 早期 C2b lexical proxy | Qwen2.5-7B CAA crude proxy | 3/4 latent 未超 prompt；proxy ceiling saturated | audit rejected proxy basis；superseded by E-0005 | false / invalid |
 | E-0005 | C2 frozen Qwen×CAA | Qwen2.5-7B CAA | 0/3 pass；uncertainty -0.228 [-0.370,-0.092] | hostile audit VALID_NEGATIVE | honest negative / scoped |
 | E-0006 | C2 2×2 generalized | CAA/ITI × Qwen/Llama | 四格全 0/3；uncertainty harm 四格 CI 排除 0 | hostile audit VALID_ARM_EVIDENCE | core supported scoped negative |

@@ -1,0 +1,85 @@
+{
+  "generated_at": "2026-07-28T16:22:52.116654+00:00",
+  "backend": "hf",
+  "seed": 20260727,
+  "arm_rule": "any-pass => SCOPE_NARROWED_POSITIVE; else >=(n_cells-1) zero-pass => NON_TRANSFER_GENERALIZED; else INCONCLUSIVE",
+  "cells": [
+    {
+      "cell_key": "caa__qwen2.5-7b",
+      "method": "caa",
+      "model_label": "qwen2.5-7b",
+      "model_id": "Qwen/Qwen2.5-7B-Instruct",
+      "out_dir": "/home/elzhang/cc_l0/repo/results/E-0011/seed_20260727/cell_caa__qwen2.5-7b",
+      "result_file": "/home/elzhang/cc_l0/repo/results/E-0011/seed_20260727/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+      "config_fingerprint": "d280b28ef57a882a",
+      "verdict": "KILL_PLAN_D",
+      "axis_passes": {
+        "deliberation": false,
+        "skepticism": false,
+        "uncertainty_awareness": false
+      },
+      "axes_passed": 0,
+      "transcripts_dir": "/home/elzhang/cc_l0/repo/results/E-0011/seed_20260727/cell_caa__qwen2.5-7b/transcripts",
+      "transcripts_present": true
+    },
+    {
+      "cell_key": "caa__llama3-8b",
+      "method": "caa",
+      "model_label": "llama3-8b",
+      "model_id": "NousResearch/Meta-Llama-3-8B-Instruct",
+      "out_dir": "/home/elzhang/cc_l0/repo/results/E-0011/seed_20260727/cell_caa__llama3-8b",
+      "result_file": "/home/elzhang/cc_l0/repo/results/E-0011/seed_20260727/cell_caa__llama3-8b/c2b_adjudication_results.json",
+      "config_fingerprint": "b3f541d08aff0fb6",
+      "verdict": "KILL_PLAN_D",
+      "axis_passes": {
+        "deliberation": false,
+        "skepticism": false,
+        "uncertainty_awareness": false
+      },
+      "axes_passed": 0,
+      "transcripts_dir": "/home/elzhang/cc_l0/repo/results/E-0011/seed_20260727/cell_caa__llama3-8b/transcripts",
+      "transcripts_present": true
+    },
+    {
+      "cell_key": "iti__qwen2.5-7b",
+      "method": "iti",
+      "model_label": "qwen2.5-7b",
+      "model_id": "Qwen/Qwen2.5-7B-Instruct",
+      "out_dir": "/home/elzhang/cc_l0/repo/results/E-0011/seed_20260727/cell_iti__qwen2.5-7b",
+      "result_file": "/home/elzhang/cc_l0/repo/results/E-0011/seed_20260727/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
+      "config_fingerprint": "b479d8f9c03854d2",
+      "verdict": "KILL_PLAN_D",
+      "axis_passes": {
+        "deliberation": false,
+        "skepticism": false,
+        "uncertainty_awareness": false
+      },
+      "axes_passed": 0,
+      "transcripts_dir": "/home/elzhang/cc_l0/repo/results/E-0011/seed_20260727/cell_iti__qwen2.5-7b/transcripts",
+      "transcripts_present": true
+    },
+    {
+      "cell_key": "iti__llama3-8b",
+      "method": "iti",
+      "model_label": "llama3-8b",
+      "model_id": "NousResearch/Meta-Llama-3-8B-Instruct",
+      "out_dir": "/home/elzhang/cc_l0/repo/results/E-0011/seed_20260727/cell_iti__llama3-8b",
+      "result_file": "/home/elzhang/cc_l0/repo/results/E-0011/seed_20260727/cell_iti__llama3-8b/c2b_adjudication_results.json",
+      "config_fingerprint": "4551466804bdcfdb",
+      "verdict": "KILL_PLAN_D",
+      "axis_passes": {
+        "deliberation": false,
+        "skepticism": false,
+        "uncertainty_awareness": false
+      },
+      "axes_passed": 0,
+      "transcripts_dir": "/home/elzhang/cc_l0/repo/results/E-0011/seed_20260727/cell_iti__llama3-8b/transcripts",
+      "transcripts_present": true
+    }
+  ],
+  "arm_verdict": "NON_TRANSFER_GENERALIZED",
+  "n_cells": 4,
+  "zero_pass_cells": 4,
+  "min_zero_pass_cells_for_generalized": 3,
+  "any_cell_has_pass": false
+}

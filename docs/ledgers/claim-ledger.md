@@ -34,10 +34,18 @@ Status values: proposed | partially-supported | supported | contradicted | withd
   consistently HARMFUL (uncertainty axis negative, CI excludes 0, in all 4 method×model cells).
 - **Scope:** {CAA,ITI}×{Qwen2.5-7B, Llama-3-8B}; frozen instrument (prereg-c2b-adjudication.md +
   prereg-robustness-mechanism-arm.md). Single-family caveat REMOVED (now 2 methods × 2 models).
+  **Not an impossibility theorem for activation steering in general; scoped to bounded prompt effort vs
+  naive/off-the-shelf CAA/ITI. PSR robustness arm (E-0009) is exploratory only; it pre-empts the
+  "method too weak" attack but does not upgrade the frozen headline.**
 - **Type:** pre-registered empirical (qualified NEGATIVE, GENERALIZED; reported as core reality-check claim)
-- **Status:** **SUPPORTED as a pre-registered negative, GENERALIZED across methods+models.** Evidence
-  **E-0005** (Qwen/CAA, VALID_NEGATIVE) + **E-0006** (2×2 arm, VALID_ARM_EVIDENCE, arm_verdict=
-  NON_TRANSFER_GENERALIZED, all 4 cells 0/3). cell1 reproduces E-0005 byte-for-byte. Judgment FROZEN.
+- **Status:** **SUPPORTED as a pre-registered negative, GENERALIZED across methods+models, and now confirmed
+  robust across 5 pre-registered seeds (D-0055).** Core evidence: **E-0005** (Qwen/CAA, VALID_NEGATIVE) +
+  **E-0006** (2×2 arm, VALID_ARM_EVIDENCE, arm_verdict=NON_TRANSFER_GENERALIZED, all 4 cells 0/3).
+  **E-0011** (multi-seed robustness, valid_for_paper=true per D-0055): 5/5 seeds NON_TRANSFER_GENERALIZED;
+  uncertainty CI_hi<0 in all 4 cells × all 5 seeds; any_true_pass=false → **DROP_SINGLE_SEED_CAVEAT
+  enacted (D-0055); single-seed caveat RETIRED.** cell1 reproduces E-0005 byte-for-byte. Judgment FROZEN.
+  **Disclosure:** E-0011 uses the same item pool as E-0006 across seeds (GSM8K test / TruthfulQA validation,
+  first-N deterministic slice); only DEV/TEST split membership varies by seed (NOT independent item draws).
   **This closes the unanimous critic BLOCKER (external validity / single-method×single-model).**
 - **Falsified if:** a manifold-respecting / stronger latent intervention beats best-prompt behavior — tested
   ONLY via a SEPARATE independent pre-registered arm (never edits E-0005/E-0006).

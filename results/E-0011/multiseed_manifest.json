@@ -1,0 +1,22 @@
+[
+  {
+    "seed": 20260723,
+    "arm_summary_json": "results/arm_full/arm_matrix_summary.json"
+  },
+  {
+    "seed": 20260724,
+    "arm_summary_json": "results/E-0011/seed_20260724/arm_matrix_summary.json"
+  },
+  {
+    "seed": 20260725,
+    "arm_summary_json": "results/E-0011/seed_20260725/arm_matrix_summary.json"
+  },
+  {
+    "seed": 20260726,
+    "arm_summary_json": "results/E-0011/seed_20260726/arm_matrix_summary.json"
+  },
+  {
+    "seed": 20260727,
+    "arm_summary_json": "results/E-0011/seed_20260727/arm_matrix_summary.json"
+  }
+]

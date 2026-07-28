@@ -34,6 +34,12 @@ results/arm_full/**/checkpoints/
 results/arm_full/**/c1/
 results/*.tgz
 
+# E-0011 multi-seed: exclude large subdirs/files, keep small JSON products only
+results/E-0011/**/transcripts/
+results/E-0011/**/checkpoints/
+results/E-0011/**/c1/
+results/E-0011/**/activations/
+
 # LaTeX paper build artifacts
 docs/paper/build/
 docs/paper/*.aux

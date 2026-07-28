@@ -10,15 +10,15 @@ claims:
     gate_notes: "E-0003 and E-0008 both have valid_for_paper=false for confirmatory use. Mark exploratory everywhere; say aggregate support replicates but axis composition does not."
   C2:
     statement: "Legibility does not transfer to behavioral controllability for naive/bounded CAA/ITI steering: across CAA/ITI x Qwen2.5-7B/Llama-3-8B, steering fails to beat the bounded best-prompt ceiling on all tested axes and harms uncertainty calibration in all four cells."
-    status: "supported as a pre-registered negative generalized across tested methods and models"
-    supporting_evidence_ids: ["E-0005", "E-0006", "E-0009"]
-    scope: "Frozen C2b adjudicator; core headline is {CAA, ITI} x {Qwen2.5-7B, Llama-3-8B}; axes deliberation, skepticism, uncertainty_awareness; bounded prompt effort; naive/off-the-shelf steering. E-0009 is exploratory supporting evidence only for robustness to method strength on Qwen2.5-7B."
+    status: "supported as a pre-registered negative generalized across tested methods and models; single-seed caveat RETIRED (D-0055): pre-registered negative replicates robustly across 5/5 seeds (E-0011)"
+    supporting_evidence_ids: ["E-0005", "E-0006", "E-0009", "E-0011"]
+    scope: "Frozen C2b adjudicator; core headline is {CAA, ITI} x {Qwen2.5-7B, Llama-3-8B}; axes deliberation, skepticism, uncertainty_awareness; bounded prompt effort; naive/off-the-shelf steering. E-0009 is exploratory supporting evidence only for robustness to method strength on Qwen2.5-7B. E-0011 is exploratory-confirmatory robustness arm (5 seeds, same item pool, only DEV/TEST split varies — NOT independent item draws)."
     paper_sections: ["Abstract", "Introduction", "Methods", "Results", "Limitations", "Conclusion"]
     main_artifacts: ["table-c2-delta-4cell", "fig-calibration-harm-4cell"]
     valid_for_paper: true
     exploratory_supporting_evidence_ids: ["E-0009"]
-    core_evidence_ids: ["E-0005", "E-0006"]
-    gate_notes: "Passes Abstract/Contributions/Conclusion evidence gate via E-0005 and E-0006. Uncertainty calibration-harm/non-transfer claims are anchored to these C2 behavioral deltas (not inferred from C1 facade ratios). E-0009 is single-model/single-seed/valid_for_paper=false exploratory support; it must not overwrite or upgrade the frozen headline."
+    core_evidence_ids: ["E-0005", "E-0006", "E-0011"]
+    gate_notes: "Passes Abstract/Contributions/Conclusion evidence gate via E-0005 and E-0006 (frozen core). E-0011 (valid_for_paper=true per D-0055) added as core robustness companion: 5/5 seeds NON_TRANSFER_GENERALIZED, uncertainty CI_hi<0 in all 4 cells × all 5 seeds, any_true_pass=false, DROP_SINGLE_SEED_CAVEAT enacted. Disclosure required: E-0011 item pool is shared with E-0006 (same first-N deterministic slice; only DEV/TEST split varies by seed, NOT independent item draws). Uncertainty calibration-harm/non-transfer claims are anchored to the C2 behavioral deltas (not inferred from C1 facade ratios). E-0009 is single-model/single-seed/valid_for_paper=false exploratory support; it must not overwrite or upgrade the frozen headline. Scope guard preserved: bounded prompt vs naive/off-the-shelf CAA/ITI; 2 models × 2 methods; NOT an impossibility theorem."
   C2-mech:
     statement: "Calibration harm might be explained by off-manifold steering distance."
     status: "hypothesis/future work only; directly tested and not supported"
@@ -104,8 +104,8 @@ gate_summary:
       gate_result: "pass only with exploratory/two-model aggregate and axis-heterogeneity caveat"
     - claim: "C2"
       has_project_evidence_row: true
-      evidence_ids: ["E-0005", "E-0006", "E-0009"]
-      gate_result: "pass via E-0005/E-0006 core; E-0009 is exploratory supporting evidence only"
+      evidence_ids: ["E-0005", "E-0006", "E-0009", "E-0011"]
+      gate_result: "pass via E-0005/E-0006 frozen core; E-0011 (valid_for_paper=true, D-0055) added as robustness companion (5/5 seeds NON_TRANSFER_GENERALIZED, DROP_SINGLE_SEED_CAVEAT enacted, item-pool-shared disclosure required); E-0009 is exploratory supporting evidence only"
     - claim: "C3"
       has_project_evidence_row: false
       evidence_ids: []

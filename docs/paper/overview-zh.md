@@ -11,12 +11,12 @@
 |---|---|---:|---|
 | C1 facade / Qwen | prompt 只到达 axis pole 的一部分 | 聚合 3/4 轴 hold；focus 轴为 overshoot/no facade | exploratory，valid_for_paper=false（E-0003） |
 | C1 facade / Llama | 聚合 3/4 复现，但轴组成不同 | 聚合 3/4；uncertainty 不 hold，focus hold | exploratory，轴异质性 caveat（E-0008） |
-| C2 2×2 冻结裁决 | latent 不超过 best-prompt ceiling | 4 cells 全 0/3；uncertainty Δ：-0.228, -0.072, -0.103, -0.084，CI 全排除 0 | core scoped negative（E-0005/E-0006） |
+| C2 2×2 冻结裁决 + 5-seed 鲁棒性 | latent 不超过 best-prompt ceiling；5/5 seed 均 NON_TRANSFER | 4 cells 全 0/3；uncertainty Δ：-0.228, -0.072, -0.103, -0.084，CI 全排除 0；uncertainty CI_hi<0 在全 4 cells × 全 5 seeds；any_true_pass=false | core scoped negative（E-0005/E-0006）；multi-seed robustness（E-0011，item pool 与 E-0006 共享，仅 DEV/TEST split 随 seed 变） |
 | 方法强度与社会轴 | PSR 仍 KILL；社会轴 READ 但行为 null | PSR uncertainty -0.160 [-0.292,-0.039]；social B−A M1=+0.00148, p_bonf=1.0；READ AUC=0.954 | exploratory / valid_for_paper=false（E-0009/E-0010） |
 
 **Novelty 一句话：** 不是提出又一个 steering 方法，而是把“prompt 通道”和“latent 通道”放进同一个冻结、审计过的行为裁决器里竞争，再把失败边界翻译成 cognitive console 的 UI/evaluation contract。
 
-**当前状态：** C2 的 2×2 negative + calibration harm 是最硬的 paper core；C1 是探索性两模型测量；PSR 和社会推断轴用于 pre-empt / discussion，不升级为 confirmatory；OOD 机制臂为 valid null，机制降级为 Future Work。
+**当前状态：** C2 的 2×2 negative + calibration harm 是最硬的 paper core；C2 的 single-seed caveat 已正式退役（D-0055）：预注册多 seed 检验（E-0011，5/5 seeds NON_TRANSFER_GENERALIZED，uncertainty CI_hi<0 全 4 cells × 全 5 seeds，any_true_pass=false）在相同冻结裁决器下复现，DROP_SINGLE_SEED_CAVEAT 已生效。**披露：** E-0011 与 E-0006 共享 item pool（同一 first-N 确定性切片），仅 DEV/TEST split 随 seed 变，非独立 item 抽样。C1 是探索性两模型测量；PSR 和社会推断轴用于 pre-empt / discussion，不升级为 confirmatory；OOD 机制臂为 valid null，机制降级为 Future Work。
 
 ## 2. 背景与动机
 

@@ -68,6 +68,7 @@ def _make_arm_summary(
     seed: int,
     arm_verdict: str = "NON_TRANSFER_GENERALIZED",
     cells_overrides: Dict[str, int] = None,
+    harness_repro_ok: bool | None = None,
 ) -> Dict[str, Any]:
     """Build a minimal arm_matrix_summary.json payload."""
     cells = []
@@ -84,7 +85,7 @@ def _make_arm_summary(
         })
     any_pass = any(c["axes_passed"] > 0 for c in cells)
     zero_pass = sum(1 for c in cells if c["axes_passed"] == 0)
-    return {
+    payload = {
         "generated_at": "2026-07-28T00:00:00+00:00",
         "backend": "hf",
         "seed": seed,
@@ -96,6 +97,9 @@ def _make_arm_summary(
         "min_zero_pass_cells_for_generalized": 3,
         "any_cell_has_pass": any_pass,
     }
+    if harness_repro_ok is not None:
+        payload["harness_repro_ok"] = harness_repro_ok
+    return payload
 
 
 def _write_seed_dir(
@@ -103,11 +107,12 @@ def _write_seed_dir(
     seed: int,
     arm_verdict: str = "NON_TRANSFER_GENERALIZED",
     mean_diffs_by_cell: Dict[str, Dict[str, float]] = None,
+    harness_repro_ok: bool | None = None,
 ) -> Path:
     """Write arm_matrix_summary.json + cell subdirs for one seed."""
     seed_dir = tmp / f"seed_{seed}"
     seed_dir.mkdir(parents=True)
-    arm_data = _make_arm_summary(seed, arm_verdict=arm_verdict)
+    arm_data = _make_arm_summary(seed, arm_verdict=arm_verdict, harness_repro_ok=harness_repro_ok)
     arm_json = seed_dir / "arm_matrix_summary.json"
     arm_json.write_text(json.dumps(arm_data, indent=2), encoding="utf-8")
     for ck in CELL_KEYS:
@@ -234,25 +239,79 @@ def test_aggregate_all_non_transfer_5_seeds(tmp_path):
     assert agg["n_seeds_non_transfer_generalized"] == 5
     cd = agg["caveat_drop_rule"]
     # uncertainty harm CI_hi = -0.15 + 0.05 = -0.10 < 0 → all_ci_negative=True
-    assert cd["uncertainty_harm_ci_negative_all_cells"] is True
+    assert cd["uncertainty_harm_ci_negative_all_cells_all_seeds"] is True
     assert cd["non_transfer_in_4_of_5_seeds"] is True
+    assert cd["any_strong_positive_flip"] is False
     assert cd["outcome"] == "DROP_SINGLE_SEED_CAVEAT"
 
 
-def test_aggregate_caveat_retained_when_few_non_transfer(tmp_path):
-    """If only 3/5 seeds are NON_TRANSFER, caveat must be retained."""
+def test_aggregate_4_of_5_non_transfer_becomes_seed_mostly_robust(tmp_path):
+    """If 4/5 seeds are NON_TRANSFER and CI condition holds, classify as mostly robust."""
     records = []
     seeds = [20260723 + i for i in range(5)]
     for i, s in enumerate(seeds):
-        verdict = "NON_TRANSFER_GENERALIZED" if i < 3 else "SCOPE_NARROWED_POSITIVE"
-        arm_json = _write_seed_dir(tmp_path, s, arm_verdict=verdict)
+        verdict = "NON_TRANSFER_GENERALIZED" if i < 4 else "SCOPE_NARROWED_POSITIVE"
+        arm_json = _write_seed_dir(
+            tmp_path,
+            s,
+            arm_verdict=verdict,
+            mean_diffs_by_cell={
+                ck: {"uncertainty_awareness": -0.15} for ck in CELL_KEYS
+            },
+        )
         arm_data = A.load_arm_summary(arm_json)
         records.append(A.build_seed_record(s, arm_json, arm_data))
     agg = A.aggregate_across_seeds(records)
-    assert agg["n_seeds_non_transfer_generalized"] == 3
+    assert agg["n_seeds_non_transfer_generalized"] == 4
     cd = agg["caveat_drop_rule"]
-    assert cd["non_transfer_in_4_of_5_seeds"] is False
-    assert cd["outcome"] == "RETAIN_CAVEAT_OR_HONEST_FAIL"
+    assert cd["strict_all_non_transfer_generalized"] is False
+    assert cd["non_transfer_in_4_of_5_seeds"] is True
+    assert cd["uncertainty_harm_ci_negative_all_cells_3_of_5"] is True
+    assert cd["outcome"] == "SEED_MOSTLY_ROBUST"
+
+
+def test_aggregate_strong_positive_flip_forces_seed_sensitive(tmp_path):
+    records = _make_seed_records_all_non_transfer(5, tmp_path)
+    # Inject one seed×cell×axis PASS (strong-positive flip) from JSON axis "passed" flag.
+    flip_seed = 20260726
+    flip_arm_json = _write_seed_dir(
+        tmp_path / "flip_case",
+        flip_seed,
+        arm_verdict="NON_TRANSFER_GENERALIZED",
+        mean_diffs_by_cell={
+            **{ck: {"uncertainty_awareness": -0.15} for ck in CELL_KEYS},
+            "caa__qwen2.5-7b": {"uncertainty_awareness": -0.15, "deliberation": 0.20},
+        },
+    )
+    flip_arm_data = A.load_arm_summary(flip_arm_json)
+    flip_record = A.build_seed_record(flip_seed, flip_arm_json, flip_arm_data)
+    records = [r for r in records if r["seed"] != flip_seed] + [flip_record]
+
+    agg = A.aggregate_across_seeds(records)
+    cd = agg["caveat_drop_rule"]
+    assert cd["any_strong_positive_flip"] is True
+    assert cd["strong_positive_flip_details"]
+    assert cd["outcome"] == "SEED_SENSITIVE"
+
+
+def test_aggregate_harness_failure_forces_kill_harness(tmp_path):
+    records = _make_seed_records_all_non_transfer(5, tmp_path)
+    # Harness check seed explicitly marked as not reproducing E-0006.
+    fail_arm_json = _write_seed_dir(
+        tmp_path / "harness_case",
+        20260723,
+        arm_verdict="NON_TRANSFER_GENERALIZED",
+        mean_diffs_by_cell={ck: {"uncertainty_awareness": -0.15} for ck in CELL_KEYS},
+        harness_repro_ok=False,
+    )
+    fail_arm_data = A.load_arm_summary(fail_arm_json)
+    fail_record = A.build_seed_record(20260723, fail_arm_json, fail_arm_data)
+    records = [r for r in records if r["seed"] != 20260723] + [fail_record]
+
+    agg = A.aggregate_across_seeds(records)
+    cd = agg["caveat_drop_rule"]
+    assert cd["harness_fail_reasons"]
+    assert cd["outcome"] == "KILL_HARNESS"
 
 
 def test_aggregate_mean_diff_across_seeds_computed(tmp_path):

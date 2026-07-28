@@ -129,6 +129,7 @@ def build_seed_record(
         "seed": int(seed),
         "arm_summary_path": str(arm_summary_path),
         "arm_verdict": str(arm_data.get("arm_verdict", "UNKNOWN")),
+        "harness_repro_ok": arm_data.get("harness_repro_ok"),
         "zero_pass_cells": int(arm_data.get("zero_pass_cells", 0)),
         "any_cell_has_pass": bool(arm_data.get("any_cell_has_pass", False)),
         "cells": cell_records,
@@ -145,12 +146,9 @@ def aggregate_across_seeds(seed_records: List[Dict[str, Any]]) -> Dict[str, Any]
 
     # Per-seed arm verdict tally
     verdict_counts: Dict[str, int] = {}
-    zero_pass_count = 0  # seeds where arm_verdict == NON_TRANSFER_GENERALIZED
     for r in seed_records:
         v = str(r["arm_verdict"])
         verdict_counts[v] = verdict_counts.get(v, 0) + 1
-        if v == "NON_TRANSFER_GENERALIZED":
-            zero_pass_count += 1
 
     # Per-cell per-axis stats across seeds
     cell_axis_stats: Dict[str, Dict[str, Dict[str, Any]]] = {}
@@ -192,37 +190,107 @@ def aggregate_across_seeds(seed_records: List[Dict[str, Any]]) -> Dict[str, Any]
                 ),
             }
 
-    # "Caveat can be dropped" rule (see prereg-c2b-multiseed-DRAFT.md)
-    # NON_TRANSFER in >=4/5 seeds AND uncertainty harm CI<0 in majority of seeds
-    # for ALL 4 cells.
+    # Caveat status rule (see prereg-c2b-multiseed-DRAFT.md §4a)
     n_seeds_non_transfer = verdict_counts.get("NON_TRANSFER_GENERALIZED", 0)
-    uncertainty_harm_all_cells = all(
-        cell_axis_stats[ck]["uncertainty_awareness"].get("all_ci_negative") is True
+    uncertainty_ci_negative_counts: Dict[str, int] = {
+        ck: 0 for ck in _FROZEN_CELL_KEYS
+    }
+    strong_positive_flip_details: List[Dict[str, Any]] = []
+    for r in seed_records:
+        for c in r.get("cells", []):
+            cell_key = str(c.get("cell_key"))
+            if cell_key not in _FROZEN_CELL_KEYS:
+                continue
+            ua = c.get("axis_stats", {}).get("uncertainty_awareness", {})
+            ua_ci_hi = ua.get("ci_hi")
+            if ua_ci_hi is not None and float(ua_ci_hi) < 0:
+                uncertainty_ci_negative_counts[cell_key] += 1
+
+            axis_stats = c.get("axis_stats", {})
+            axis_passes = c.get("axis_passes", {})
+            for axis in _FROZEN_AXES:
+                axis_stat_passed = bool(axis_stats.get(axis, {}).get("passed", False))
+                axis_summary_passed = bool(axis_passes.get(axis, False))
+                if axis_stat_passed or axis_summary_passed:
+                    strong_positive_flip_details.append({
+                        "seed": int(r["seed"]),
+                        "cell_key": cell_key,
+                        "axis": axis,
+                    })
+
+    any_strong_positive_flip = bool(strong_positive_flip_details)
+    uncertainty_harm_ci_negative_all_cells_all_seeds = all(
+        uncertainty_ci_negative_counts[ck] == n_seeds
         for ck in _FROZEN_CELL_KEYS
     )
-    majority_threshold = (n_seeds + 1) // 2
+    uncertainty_harm_ci_negative_all_cells_3_of_5 = all(
+        uncertainty_ci_negative_counts[ck] >= 3
+        for ck in _FROZEN_CELL_KEYS
+    )
+    strict_all_non_transfer_generalized = (n_seeds_non_transfer == n_seeds)
+    robust_4_of_5_non_transfer_generalized = (n_seeds_non_transfer >= 4)
+
+    harness_fail_reasons: List[Dict[str, Any]] = []
+    for r in seed_records:
+        if int(r.get("seed", -1)) != 20260723:
+            continue
+        explicit_harness_ok = r.get("harness_repro_ok")
+        if explicit_harness_ok is False:
+            harness_fail_reasons.append({
+                "seed": 20260723,
+                "reason": "harness_repro_ok_false",
+            })
+        if str(r.get("arm_verdict")) != "NON_TRANSFER_GENERALIZED":
+            harness_fail_reasons.append({
+                "seed": 20260723,
+                "reason": "arm_verdict_not_non_transfer_generalized",
+                "arm_verdict": r.get("arm_verdict"),
+            })
+
+    if harness_fail_reasons:
+        caveat_status = "KILL_HARNESS"
+    elif (
+        strict_all_non_transfer_generalized
+        and uncertainty_harm_ci_negative_all_cells_all_seeds
+        and not any_strong_positive_flip
+    ):
+        caveat_status = "DROP_SINGLE_SEED_CAVEAT"
+    elif (
+        robust_4_of_5_non_transfer_generalized
+        and uncertainty_harm_ci_negative_all_cells_3_of_5
+        and not any_strong_positive_flip
+    ):
+        caveat_status = "SEED_MOSTLY_ROBUST"
+    else:
+        caveat_status = "SEED_SENSITIVE"
 
     return {
         "n_seeds": n_seeds,
         "arm_verdict_counts": verdict_counts,
         "n_seeds_non_transfer_generalized": n_seeds_non_transfer,
-        "majority_threshold": majority_threshold,
         "caveat_drop_rule": {
             "description": (
-                "Caveat 'single-seed' may be DROPPED iff: "
-                "(1) arm_verdict=NON_TRANSFER_GENERALIZED in >=4/5 seeds AND "
-                "(2) uncertainty_awareness mean(d) CI_hi < 0 in >=majority seeds for ALL 4 cells."
+                "Caveat status ladder: "
+                "KILL_HARNESS if seed=20260723 fails E-0006 harness; "
+                "DROP_SINGLE_SEED_CAVEAT iff all seeds are NON_TRANSFER_GENERALIZED, "
+                "all 4 cells have uncertainty_awareness CI_hi<0 in all seeds, and no seed×cell×axis PASS; "
+                "SEED_MOSTLY_ROBUST iff >=4/5 seeds are NON_TRANSFER_GENERALIZED, "
+                "all 4 cells have uncertainty_awareness CI_hi<0 in >=3/5 seeds, and no strong-positive flip; "
+                "else SEED_SENSITIVE."
             ),
-            "non_transfer_in_4_of_5_seeds": n_seeds_non_transfer >= 4,
-            "uncertainty_harm_ci_negative_all_cells": uncertainty_harm_all_cells,
-            "caveat_can_be_dropped": (
-                n_seeds_non_transfer >= 4 and uncertainty_harm_all_cells
+            "strict_all_non_transfer_generalized": strict_all_non_transfer_generalized,
+            "non_transfer_in_4_of_5_seeds": robust_4_of_5_non_transfer_generalized,
+            "uncertainty_harm_ci_negative_counts_per_cell": uncertainty_ci_negative_counts,
+            "uncertainty_harm_ci_negative_all_cells_all_seeds": (
+                uncertainty_harm_ci_negative_all_cells_all_seeds
             ),
-            "outcome": (
-                "DROP_SINGLE_SEED_CAVEAT"
-                if (n_seeds_non_transfer >= 4 and uncertainty_harm_all_cells)
-                else "RETAIN_CAVEAT_OR_HONEST_FAIL"
+            "uncertainty_harm_ci_negative_all_cells_3_of_5": (
+                uncertainty_harm_ci_negative_all_cells_3_of_5
             ),
+            "any_strong_positive_flip": any_strong_positive_flip,
+            "strong_positive_flip_details": strong_positive_flip_details,
+            "harness_fail_reasons": harness_fail_reasons,
+            "outcome": caveat_status,
         },
         "cell_axis_stats": cell_axis_stats,
     }
@@ -255,8 +323,21 @@ def write_aggregate_md(payload: Dict[str, Any], out_path: Path) -> None:
     lines.append("## Caveat-drop evaluation")
     cd = agg["caveat_drop_rule"]
     lines.append(f"- {cd['description']}")
+    lines.append(f"- strict all NON_TRANSFER_GENERALIZED: **{cd['strict_all_non_transfer_generalized']}**")
     lines.append(f"- non_transfer in ≥4/5 seeds: **{cd['non_transfer_in_4_of_5_seeds']}**")
-    lines.append(f"- uncertainty harm CI<0 in all cells: **{cd['uncertainty_harm_ci_negative_all_cells']}**")
+    lines.append(
+        f"- uncertainty CI_hi<0 counts per cell: "
+        f"**{cd['uncertainty_harm_ci_negative_counts_per_cell']}**"
+    )
+    lines.append(
+        f"- uncertainty CI_hi<0 all cells/all seeds: "
+        f"**{cd['uncertainty_harm_ci_negative_all_cells_all_seeds']}**"
+    )
+    lines.append(
+        f"- uncertainty CI_hi<0 all cells/≥3 seeds: "
+        f"**{cd['uncertainty_harm_ci_negative_all_cells_3_of_5']}**"
+    )
+    lines.append(f"- any strong-positive flip: **{cd['any_strong_positive_flip']}**")
     lines.append(f"- **Outcome: {cd['outcome']}**")
     lines.append("")
     lines.append("## Per-seed arm verdicts")

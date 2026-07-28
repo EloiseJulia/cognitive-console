@@ -91,51 +91,37 @@ genuinely independent runs with distinct DEV/TEST draws and generation RNG strea
 The following success/failure branches are proposed. **They must be frozen
 before any new seed is run.** Changing them after seeing results is not permitted.
 
-### 4a. Single-seed caveat DROP criteria (both must hold)
+### 4a. Single-seed caveat status ladder (frozen; Manager decision)
 
-A result qualifies for dropping the single-seed caveat iff **ALL of:**
+The aggregate emits one of four statuses:
 
-1. **arm_verdict = NON_TRANSFER_GENERALIZED in ≥ 4 of 5 seeds** (i.e., across
-   the {CAA,ITI}×{Qwen,Llama} 2×2, ≥3 of 4 cells show 0/3 axes passing in at
-   least 4 out of 5 seeds).
+1. **`KILL_HARNESS`** if seed=20260723 fails the E-0006 harness check (cannot
+   reproduce the expected E-0006 anchor behavior).
 
-2. **Uncertainty harm CI consistently negative:** For ALL 4 cells
-   (caa__qwen2.5-7b, caa__llama3-8b, iti__qwen2.5-7b, iti__llama3-8b), the
-   uncertainty_awareness mean(d) 98.33% CI upper bound (ci_hi) is negative
-   in ≥ 3 of 5 seeds (i.e., steering consistently harms calibration across
-   the majority of seeds for every cell).
+2. **`DROP_SINGLE_SEED_CAVEAT`** (strict, primary criterion) iff **ALL** hold:
+   - For all N seeds (N=5 including 20260723),
+     `arm_verdict == NON_TRANSFER_GENERALIZED`.
+   - For all 4 cells
+     (caa__qwen2.5-7b, caa__llama3-8b, iti__qwen2.5-7b, iti__llama3-8b),
+     uncertainty_awareness `ci_hi < 0` in all N seeds.
+   - Guardrail: no seed×cell×axis may show PASS / strong-positive (all seeds
+     must remain zero-pass with no axis crossing a success threshold).
 
-   Rationale: the uncertainty harm is the most replicable finding in E-0005/E-0006;
-   if it holds across seeds in all cells, it rules out lucky-split artefact.
+3. **`SEED_MOSTLY_ROBUST`** (softened, but caveat retained) iff:
+   - `arm_verdict == NON_TRANSFER_GENERALIZED` in ≥4/5 seeds;
+   - each of the 4 cells has uncertainty_awareness `ci_hi < 0` in ≥3/5 seeds;
+   - no strong-positive flip.
 
-**Outcome if criteria met:** `DROP_SINGLE_SEED_CAVEAT` → remove the single-seed
-caveat from E-0006's description and upgrade the paper's C2 claim to multi-seed
-robust. Bank as E-0011 (family of 5 runs + aggregate).
+4. **`SEED_SENSITIVE`** (honest fail, caveat retained): all remaining cases.
 
-### 4b. Seed-sensitive (honest fail) criteria
+For terminology stability, **`NON_TRANSFER_GENERALIZED` is taken directly from
+the `run_arm_matrix.py` output field `arm_verdict`**. This DRAFT no longer uses
+equivalent paraphrases such as "≥3/4 cells with 0/3 axes" as the decision key.
 
-**Outcome: `SEED_SENSITIVE` (honest fail)** if:
-- arm_verdict ≠ NON_TRANSFER_GENERALIZED in ≥ 2 seeds (i.e., at least 2 seeds
-  flip at least one cell to ≥1 axis passing).
-
-Report honestly as: "C2 negative is SEED-SENSITIVE — holds in majority of seeds
-but is not robust to all DEV/TEST draws; the E-0006 result may partially reflect
-the particular item split at seed 20260723."  Retain the caveat; do NOT upgrade
-the claim; report the seed-sensitivity as a limitation.
-
-### 4c. Inconclusive
-
-**Outcome: `INCONCLUSIVE`** if:
-- NON_TRANSFER in 3/5 seeds (neither the drop rule nor the seed-sensitive rule
-  triggers).
-
-Report as mixed evidence; no caveat change.
-
-### 4d. Kill
-
-**Outcome: `KILL`** if:
-- E-0006 harness correctness check FAILS (seed=20260723 does NOT reproduce
-  byte-for-byte) → stop immediately, triage before proceeding.
+Outcome interpretation:
+- Only `DROP_SINGLE_SEED_CAVEAT` authorizes removing the single-seed caveat.
+- `SEED_MOSTLY_ROBUST` and `SEED_SENSITIVE` both retain caveat; the latter is
+  the default honest-fail bucket.
 
 ---
 
@@ -156,10 +142,13 @@ Input manifest format:
 Output: `multiseed_c2_aggregate.json` + `multiseed_c2_aggregate.md`.
 
 The aggregation rule for `caveat_drop_rule` is implemented in
-`aggregate_multiseed_c2.aggregate_across_seeds()` and matches §4a above (≥4/5 seeds
-NON_TRANSFER AND uncertainty_awareness ci_hi<0 for all cells).
+`aggregate_multiseed_c2.aggregate_across_seeds()` and matches §4a above
+(`KILL_HARNESS` / `DROP_SINGLE_SEED_CAVEAT` / `SEED_MOSTLY_ROBUST` /
+`SEED_SENSITIVE`).
 
-Tests: `tests/test_aggregate_multiseed_c2.py` (16 tests, all passing).
+Tests: `tests/test_aggregate_multiseed_c2.py` (includes dedicated coverage for
+`DROP_SINGLE_SEED_CAVEAT` / `SEED_MOSTLY_ROBUST` / `SEED_SENSITIVE` /
+`KILL_HARNESS`).
 
 ---
 
@@ -260,8 +249,9 @@ rented box), but 5× the number of seeds.
    simplest non-cherry-picked choice. Manager may substitute others, but ALL
    seeds must be listed here before any run.
 
-2. **Aggregation thresholds confirmed?** The proposed rules (≥4/5 for caveat drop;
-   ≥2/5 non-NON_TRANSFER for seed-sensitive) are proposed pre-run. Manager may
+2. **Aggregation thresholds confirmed?** The proposed rules (strict all-5 for
+   caveat drop; 4/5 + 3/5 for mostly-robust; otherwise seed-sensitive) are
+   proposed pre-run. Manager may
    adjust these thresholds, but they must be frozen before seeing any new result
    beyond E-0006 (seed 20260723).
 

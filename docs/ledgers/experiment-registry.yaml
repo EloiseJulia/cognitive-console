@@ -652,8 +652,11 @@ experiments:
 # ─────────────────────────────────────────────────────────────────────────────
 # E-0011 family: multi-seed sensitivity analysis of E-0006 (seed=20260723 reused
 # from results/arm_full as harness check; seeds 20260724–20260727 = new runs on A800).
-# code_commit 09f87395 = short for the A800 run commit (full hash to be confirmed
-# by independent audit; short prefix is the identifier given in the run manifest).
+# code_commit 09f87395e7167753fc485323d8a47c17a5d7b7c4 = full A800 run commit hash (confirmed D-0055; short prefix 09f87395 was used in initial run manifest).
+# started_at=null for all per-seed entries: the A800 remote run did not capture a start
+# timestamp; ended_at timestamps are present and valid for all seeds; no data is missing.
+# harness_repro_ok (aggregate entry): confirms seed=20260723 reads E-0006 artifacts faithfully
+# within tol=1e-6; this is self-referential (prereg Option A), NOT an independent re-run (D-0055).
 # Protocol: reuse frozen prereg-c2b-adjudication §4/§5 byte-identical; only --seed varies.
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -664,7 +667,7 @@ experiments:
   - C2
   type: exploratory
   status: done
-  code_commit: 09f87395
+  code_commit: 09f87395e7167753fc485323d8a47c17a5d7b7c4
   dirty_tree: null
   data_hash: null
   env_hash: null
@@ -705,7 +708,7 @@ experiments:
   - C2
   type: exploratory
   status: done
-  code_commit: 09f87395
+  code_commit: 09f87395e7167753fc485323d8a47c17a5d7b7c4
   dirty_tree: null
   data_hash: null
   env_hash: null
@@ -746,7 +749,7 @@ experiments:
   - C2
   type: exploratory
   status: done
-  code_commit: 09f87395
+  code_commit: 09f87395e7167753fc485323d8a47c17a5d7b7c4
   dirty_tree: null
   data_hash: null
   env_hash: null
@@ -787,7 +790,7 @@ experiments:
   - C2
   type: exploratory
   status: done
-  code_commit: 09f87395
+  code_commit: 09f87395e7167753fc485323d8a47c17a5d7b7c4
   dirty_tree: null
   data_hash: null
   env_hash: null
@@ -828,7 +831,7 @@ experiments:
   - C2
   type: exploratory
   status: done
-  code_commit: 09f87395
+  code_commit: 09f87395e7167753fc485323d8a47c17a5d7b7c4
   dirty_tree: null
   data_hash: null
   env_hash: null
@@ -841,7 +844,7 @@ experiments:
     results/E-0011/seed_*/arm_matrix_summary.json). Same item pool across all seeds.
   seed: 20260723 20260724 20260725 20260726 20260727
   hardware: Aggregation script (CPU only); per-seed runs on A800
-  started_at: null
+  started_at: null  # Aggregation step has no meaningful start timestamp; per-seed started_at=null because A800 did not record start timestamps (ended_at timestamps are present and valid for all seeds)
   ended_at: '2026-07-29T01:17:31+08:00'
   exit_code: 0
   raw_metrics: null
@@ -850,7 +853,7 @@ experiments:
     n_seeds: 5
     n_seeds_non_transfer_generalized: 5
     has_any_true_pass: false
-    harness_repro_ok: true
+    harness_repro_ok: true  # harness_repro_ok: seed=20260723 reproduces E-0006 within tol=1e-6 (self-referential: reads E-0006 stored artifacts per prereg Option A; confirms aggregation pipeline faithfulness, NOT an independent re-run — see D-0055 MAJOR#2 clarification)
     harness_fail_reasons: []
     uncertainty_ci_hi_negative_counts:
       caa__qwen2.5-7b: 5
@@ -863,16 +866,19 @@ experiments:
   - results/E-0011/multiseed_c2_aggregate.md
   - results/E-0011/multiseed_manifest.json
   failure_reason: null
-  valid_for_paper: false
+  valid_for_paper: true  # Updated D-0055: independent hostile audit MERGEABLE; Manager decision valid_for_paper=true (exploratory-confirmatory robustness arm; 2 models × 2 methods; item-pool-shared with E-0006)
   validation_notes: >-
     Aggregate of 5-seed E-0011 family (E-0006 seed=20260723 reused as harness check +
     4 new seeds on A800). caveat_outcome=DROP_SINGLE_SEED_CAVEAT per prereg
     §4a strict rule (all 5/5 seeds NON_TRANSFER_GENERALIZED, all 4 cells
     uncertainty_awareness CI_hi<0 in all 5 seeds, no true pass). Harness check
-    passed (seed=20260723 reproduced E-0006 within tol=1e-6). SCOPE caveat remains:
-    single-model-family pair (Qwen2.5-7B + Llama-3-8B), 2 methods (CAA+ITI),
-    same underlying item pool across seeds (only DEV/TEST split varies).
-    valid_for_paper=PENDING independent hostile audit. Does NOT overwrite E-0005/E-0006.
+    passed (seed=20260723 reproduced E-0006 within tol=1e-6; self-referential per
+    prereg Option A — see D-0055 MAJOR#2 clarification). Protocol consistency
+    confirmed via parameter identity (D-0055 MAJOR#1 closed). SCOPE caveat: single-
+    model-family pair (Qwen2.5-7B + Llama-3-8B), 2 methods (CAA+ITI), same item pool
+    across seeds (only DEV/TEST split varies, NOT independent item draws).
+    valid_for_paper=true per D-0055 post independent hostile audit MERGEABLE.
+    Does NOT overwrite E-0005/E-0006.
 
 - experiment_id: flagship-read-2ab4d4f5ff9cad62-0001
   parent: null

@@ -1,0 +1,562 @@
+---
+# Submission-Readiness Gap List — Reviewer R1 (IUI-first / CHI-experience / FAccT-AIES)
+# Node: Submission Readiness  |  Date: 2026-07-28  |  Reviewer: R1 (independent, read-only)
+# Frozen-fact epoch confirmed before review.  Only reads; does not modify any paper file.
+
+metadata:
+  paper_title: "Legible Need Not Be Controllable: A Frozen Reality Check for Prompt-vs-Latent Behavioral Control in LLMs"
+  pdf_page_count: 9
+  build_status: clean  # 0 undefined citations, 0 errors; only ACM-refformat advisory + balance warning
+  format: sigconf (ACM two-column)
+  review_inputs_read:
+    - AGENTS.md
+    - docs/paper/main.tex
+    - docs/paper/claim-map.yaml
+    - docs/ledgers/claim-ledger.md
+    - docs/ledgers/evidence-ledger.md
+    - docs/paper/reframe-2026-07-24-reality-check.md
+    - docs/ledgers/open-risks.md
+    - docs/paper/overview-zh.md
+    - docs/paper/tables/c2-delta-4cell.tex
+    - docs/paper/tables/c1-twomodel.tex
+    - docs/paper/figure-manifests/console-ui-contract.yaml
+    - docs/paper/build/main.log (page count, warnings)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# VERDICT
+# ─────────────────────────────────────────────────────────────────────────────
+verdict:
+  overall: NOT_YET_READY
+  summary: >
+    The core science (C2 frozen negative + calibration-harm 2×2 grid, E-0005/E-0006) is
+    methodologically solid, independently audited, and honestly scoped.  C1 is correctly
+    labeled exploratory everywhere.  The scope guard (not-impossibility-theorem, PSR
+    pre-emption) is in place.  The novelty contrast table is present.
+    However, three gaps prevent clean IUI/CHI full-paper submission: (1) an unresolved
+    open-risk citation (ActAdd App-B) that could produce a factual error under hostile
+    scrutiny; (2) internal artifact-identifier tokens ("delib-strong-09" etc.) exposed in
+    the main-body Table 2 that will confuse every reviewer; (3) the supplementary-material
+    package promised repeatedly in the text has no described structure or reader-facing
+    appendix/README, making the reproducibility claim partially hollow.  Beyond these
+    fixable gaps, the paper faces a structural "NLP-not-HCI" rejection risk at IUI/CHI
+    main that requires a deliberate venue-positioning decision before submission.
+  predicted_score_range:
+    IUI_full_paper: "3–4 / 5 (borderline-to-accept without user study; strong methodology helps)"
+    CHI_experience_track: "3.5–4.5 / 5 (experience-of-negative framing fits this track well)"
+    FAccT_AIES: "3–4 / 5 (calibration-harm angle is relevant; HCI framing may lose points)"
+  top_3_rejection_risks:
+    - rank: 1
+      risk: >
+        "This is an ML/NLP paper, not an HCI paper."  The design implications (C3, failure
+        taxonomy, UI contract) are derived from model evidence only; no user evaluation
+        confirms that the console warnings help real users recalibrate trust.  At IUI/CHI
+        main, reviewers routinely desk-reject papers where the claimed HCI contribution
+        has no human-subjects grounding.
+    - rank: 2
+      risk: >
+        "Narrow scope / limited generalizability."  Two 7-8B models, two naive off-the-shelf
+        steering families, three axes, single seed per cell.  Even though the paper correctly
+        pre-empts with scope guards, a skeptical reviewer scores it low for ecological
+        validity and practical applicability to deployed systems.
+    - rank: 3
+      risk: >
+        "C3 contribution is too thin without a study."  Contribution item 4 in the
+        Introduction ("Interface-evaluation implications") rests entirely on the failure
+        taxonomy table and the static console figure.  A CHI/IUI reviewer expecting
+        empirical evidence of design value will mark this as 'design fiction' or 'future work.'
+
+top_3_highest_value_actions:
+  - priority: 1
+    action: >
+      Verify (or remove) any ActAdd Turner et al. Appendix-B specific claim in Related
+      Work / Methods.  This is the only open fact-accuracy risk that could produce a
+      verifiable error under hostile peer review.  If the App-B claim is used, read the
+      primary PDF appendix and confirm the wording; if in doubt, cite only the body claim.
+  - priority: 2
+    action: >
+      Replace / annotate internal prompt-artifact labels in Table 2 (c2-delta-4cell.tex).
+      The "Best prompt" column currently shows opaque identifiers (delib-strong-09,
+      skep-strong-06, unc-strong-01, etc.) that are meaningful only inside the artifact
+      store.  Add a table footnote or replace with a short description ("best DEV-selected
+      deliberation prompt; ID in supplementary manifest").
+  - priority: 3
+    action: >
+      Add a one-paragraph "Artifacts and Reproducibility" section (or appendix stub) that
+      tells readers concretely what supplementary material is provided, where manifests
+      live, and how to reproduce the main tables and figures.  Currently the text promises
+      "machine-readable manifests distributed with the supplementary material" five times
+      without a single pointer to what that package looks like.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RANKED GAP LIST
+# ─────────────────────────────────────────────────────────────────────────────
+gaps:
+
+  # ── BLOCKERS ────────────────────────────────────────────────────────────────
+
+  - id: B-01
+    severity: BLOCKER
+    category: "Citation accuracy / open risk"
+    location: "docs/ledgers/open-risks.md #8; docs/paper/main.tex §Related Work (activation-steering lineage)"
+    description: >
+      Open-risk #8 explicitly flags: "ActAdd Appendix-B sub-claim remains NEEDS EVIDENCE —
+      the available docs only verify that the specific exclusion-experiment claim was not
+      checked at the section level."  If any sentence in §Related Work or §Methods cites
+      Turner et al. for a specific Appendix-B finding, that citation may be factually
+      inaccurate.  A hostile reviewer who checks primary sources will find this.
+    cheapest_close_action: >
+      (a) Search main.tex for all uses of \cite{turner2023actadd}; (b) for each, confirm
+      whether the claim is a main-body claim (safe) or an App-B claim (needs primary PDF
+      verification); (c) if any App-B claim is used and cannot be verified, replace with
+      a main-body-verifiable paraphrase or soften to "Turner et al. demonstrate activation
+      addition as a general technique" without App-B specifics.
+    close_condition: >
+      Every \cite{turner2023actadd} in main.tex is traceable to a verified claim in the
+      primary PDF (body or appendix, confirmed by human or subagent that reads the PDF).
+
+  - id: B-02
+    severity: BLOCKER
+    category: "Venue positioning / HCI contribution"
+    location: "docs/paper/main.tex (global); docs/ledgers/open-risks.md #1"
+    description: >
+      The paper targets IUI as first venue, but it is a pure-model paper: no formative
+      study, no controlled user study, no expert evaluation, no think-aloud, no log
+      analysis.  Open-risk #1 ("This is NLP, not HCI") is rated HIGH and unmitigated beyond
+      framing.  IUI 2026 (and CHI main) have explicit expectations that design contributions
+      are grounded in human-subjects evidence.  Without a positioning statement that aligns
+      the paper's contribution type with what the target venue accepts, this is a likely
+      desk-reject or AC-filter at IUI; a borderline case at CHI.
+    cheapest_close_action: >
+      Before submission, make one of these decisions and implement it in the paper:
+      (a) Target CHI experience track explicitly — retitle/reframe Abstract+Introduction to
+      foreground "what we learned from building and testing a reality-check console," which
+      fits CHI experience better than IUI full paper;  OR
+      (b) Add a minimal expert/heuristic evaluation of the console (e.g., N=3–5 expert
+      walkthroughs with structured think-aloud, 1 page) and position as "design + evaluation"
+      — this would be the cheapest path to IUI;  OR
+      (c) Submit to FAccT/AIES where the calibration-harm finding is the primary draw and
+      the design implications are secondary — the paper already has the right framing for
+      this but needs a one-paragraph explicit FAccT alignment statement.
+    close_condition: >
+      A venue is chosen and the Abstract/Introduction first paragraph is rewritten to
+      foreground the contribution type expected by that venue.  If IUI: human evaluation
+      present.  If CHI experience: experience narrative explicit.  If FAccT/AIES: fairness/
+      accountability angle foregrounded.
+
+  # ── MAJOR ──────────────────────────────────────────────────────────────────
+
+  - id: M-01
+    severity: MAJOR
+    category: "Submission hygiene — internal identifiers in main body"
+    location: "docs/paper/tables/c2-delta-4cell.tex, column 'Best prompt'"
+    description: >
+      Table 2 (frozen prompt-vs-latent delta table) contains internal artifact identifiers
+      in the "Best prompt" column: delib-strong-09, skep-strong-06, unc-strong-01,
+      delib-strong-02, skep-strong-11, unc-strong-09, unc-strong-01, unc-strong-09.
+      These are meaningful only inside the experiment-registry / artifact store.
+      To a peer reviewer they are opaque tokens that look like unresolved placeholder text.
+      This is a professional presentation failure that signals the paper is not ready for
+      submission.
+    cheapest_close_action: >
+      Two options: (a) Replace with brief human-readable descriptions ("best DEV deliberation
+      prompt (see artifact manifest)") in the table cell; OR (b) Drop the "Best prompt"
+      column and add a footnote: "The DEV-selected best prompt for each axis/model is
+      identified by artifact-registry ID; see supplementary manifest for full text."
+      Option (b) is fastest; option (a) is more informative.
+    close_condition: >
+      No internal artifact identifiers (matching the pattern *-strong-\d\d) remain in any
+      main-body table or figure caption.
+
+  - id: M-02
+    severity: MAJOR
+    category: "Supplementary material / reproducibility promise unfulfilled"
+    location: "docs/paper/main.tex §Methods (Audit and Artifact Lineage), §Results (multiple)"
+    description: >
+      The paper makes six references to "machine-readable manifests distributed with the
+      supplementary material" but the 9-page PDF contains no appendix, no supplementary
+      README, and no description of the artifact package structure.  Reviewers who want to
+      verify the lineage promise will find nothing concrete to check.  This partially
+      undermines the paper's key differentiator ("frozen, audited, artifact-traceable
+      results").
+    cheapest_close_action: >
+      Add a short "Artifact Availability" section (≤4 sentences) at the end of §Methods
+      or as a 0.5-page appendix: list the four main manifests (c1-ratio-ci.yaml,
+      c1-twomodel.yaml, c2-delta-4cell.yaml, c2-calibration-harm-4cell.yaml), the rebuild
+      commands, and confirm that frozen JSON artifacts are included in supplementary.
+      Alternatively, include this information in a supplementary README.md that is
+      referenced by name in the paper.
+    close_condition: >
+      A reader can identify exactly which files constitute "the supplementary material" and
+      how to reproduce each main table and figure from them, without guessing.
+
+  - id: M-03
+    severity: MAJOR
+    category: "C3 contribution framing — no direct evidence row"
+    location: "docs/paper/main.tex Introduction contribution item 4; docs/paper/claim-map.yaml C3 gate_notes"
+    description: >
+      Contribution item 4 ("Interface-evaluation implications for cognitive consoles") is
+      the sole HCI-design contribution for IUI/CHI.  The claim-map.yaml explicitly flags:
+      "C3: no standalone evidence row; usable only as a non-empirical design implication."
+      For IUI reviewers, a contribution backed only by a static figure derived from model
+      evidence is weak.  The current wording in the Introduction and Design Implications
+      section is honest, but the phrasing "contributes… Interface-evaluation implications"
+      may invite a reviewer to score it as "we propose a design, not a contribution."
+    cheapest_close_action: >
+      Reword contribution item 4 to be explicit about its type: "A design stance and
+      evaluation discipline derived from model evidence, not a user-study claim: we derive
+      five interface-evaluation requirements for latent-control affordances from the frozen
+      C2 negative and instantiate them as a working console.  Human-subjects validation is
+      deferred and described in Future Work."  This sets reviewer expectations correctly
+      rather than overpromising.
+    close_condition: >
+      Contribution item 4 explicitly states "design implication from model evidence, not
+      empirical user study" within the contribution bullet itself, not only in §Limitations.
+
+  - id: M-04
+    severity: MAJOR
+    category: "Abstract structure — C1 heterogeneity detail buries headline"
+    location: "docs/paper/main.tex \begin{abstract}"
+    description: >
+      The abstract devotes ~50 words to C1 axis-level detail (uncertainty holds on Qwen but
+      not Llama; focus holds on Llama but overshoots on Qwen).  This detail is important
+      for the paper body, but in the abstract it delays the C2 headline and the design
+      implication.  IUI/CHI reviewers read the abstract in 30 seconds.  The result is that
+      the key message ("latent steering harms calibration across 2×2 grid") appears in the
+      third sentence, after two sentences of C1 qualification.
+    cheapest_close_action: >
+      Restructure the abstract: lead with the HCI design problem (1 sentence), state the
+      C2 headline result with the 2×2 grid and calibration harm (2 sentences), state the
+      C1 as a supporting exploratory finding (1 sentence), then give the design implication
+      (1-2 sentences).  Remove the per-axis model-specific C1 detail from the abstract;
+      leave it for the body.
+    close_condition: >
+      The abstract leads within its first two sentences with the problem statement and the
+      C2 headline, with C1 mentioned as supporting/exploratory in ≤1 sentence.
+
+  - id: M-05
+    severity: MAJOR
+    category: "PSR pre-emption — E-0009 arm not visible in abstract"
+    location: "docs/paper/main.tex \begin{abstract}; §Discussion"
+    description: >
+      The abstract hedges with "These findings do not imply that all steering fails,
+      especially given trained prompt-mimicking steering [heyman2026steer]" but does NOT
+      mention that the paper ran a PSR-style exploratory arm (E-0009) that also failed on
+      Qwen2.5-7B.  This arm directly pre-empts "your method was too weak" — arguably the
+      most important rebuttal to the top-3 rejection risk.  A reviewer who skims only the
+      abstract will think the paper is vulnerable to this attack.
+    cheapest_close_action: >
+      Add one sentence to the abstract after the Heyman hedge: "A separate exploratory
+      DEV-optimized latent-recovery arm also fails to beat the prompt ceiling on Qwen2.5-7B,
+      providing preliminary evidence that the negative result is not merely a consequence
+      of naive steering directions."  This costs ~25 words and pre-empts the most likely
+      reviewer attack without overextending the claim.
+    close_condition: >
+      The abstract explicitly acknowledges the PSR/method-strength pre-emption arm, even
+      in one sentence.
+
+  - id: M-06
+    severity: MAJOR
+    category: "Section structure complexity"
+    location: "docs/paper/main.tex (global structure)"
+    description: >
+      The paper has 10 named sections (Abstract, Introduction, Related Work, Methods,
+      Results, Design Implications, Discussion, Limitations, Future Work, Conclusion) for
+      9 pages.  IUI/CHI typically expect 6–8 sections for full papers.  The fragmentation
+      creates short sections (Limitations ≈ 4 paragraphs, Future Work ≈ 3 short paragraphs,
+      Conclusion ≈ 1 paragraph) that read as rushed.  Reviewers may perceive this as an
+      unpolished draft.
+    cheapest_close_action: >
+      Merge Limitations + Future Work into a combined "Limitations and Future Work" section.
+      Consider merging Discussion into Results or before Limitations.  Target: 7–8 sections
+      total.
+    close_condition: >
+      Total top-level section count is ≤ 8, with Limitations and Future Work merged.
+
+  # ── MINOR ──────────────────────────────────────────────────────────────────
+
+  - id: N-01
+    severity: MINOR
+    category: "Title — NLP-centric framing"
+    location: "docs/paper/main.tex \title{}"
+    description: >
+      "…Prompt-vs-Latent Behavioral Control in LLMs" positions the paper as ML/NLP.  For
+      IUI (first target venue), a subtitle or keyword that foregrounds the interface or HCI
+      evaluation discipline would aid desk classification and attract the right ACs.
+    cheapest_close_action: >
+      Consider: "Legible Need Not Be Controllable: A Frozen Reality Check for Latent-Control
+      Interfaces" (removes "in LLMs," adds "Interfaces").  Or add a subtitle: "…and an
+      Evaluation Discipline for Cognitive Consoles."  Exact wording subject to owner taste.
+    close_condition: >
+      Title or subtitle contains at least one HCI-signal word (interface, console, HCI,
+      evaluation, user-facing, design).
+
+  - id: N-02
+    severity: MINOR
+    category: "Claim–Evidence — C1 two-model framing overstates replication"
+    location: "docs/paper/main.tex §Introduction Contribution 1; §Results §C1"
+    description: >
+      Contribution item 1 ("We measure… cross-model support on deliberation and skepticism
+      but model-dependent uncertainty and focus") is correctly qualified in §Results but
+      may still be read as "we replicated C1 across two models" by a fast reader.  The
+      claim-map.yaml is explicit: "NOT a clean identical replication."  The axis
+      heterogeneity (uncertainty and focus FLIP across models) is a genuine limitation that
+      needs to be foregrounded, not buried.
+    cheapest_close_action: >
+      In Contribution item 1, add the explicit caveat inline: "…but axis composition is
+      model-dependent (uncertainty and focus flip across models), so this remains
+      exploratory evidence for a measurement pattern rather than a confirmed two-model law."
+    close_condition: >
+      Contribution item 1 contains the axis-flip caveat inline, not only in §Limitations.
+
+  - id: N-03
+    severity: MINOR
+    category: "Fig. 3 hardcoded trim — visual robustness"
+    location: "docs/paper/main.tex \includegraphics[…trim=0 390 0 35,clip]{figures/console-ui-contract.pdf}"
+    description: >
+      The console figure uses a hard-coded pixel trim (`trim=0 390 0 35`).  This is
+      fragile: if the source PDF dimensions change (e.g., after a regeneration), the
+      figure will be mis-cropped in the paper without any warning.  A reviewer may see a
+      blank or oddly cropped figure.
+    cheapest_close_action: >
+      Verify that the current figures/console-ui-contract.pdf renders correctly with the
+      existing trim values at the time of submission.  Add a comment in main.tex: `% trim
+      calibrated for console-ui-contract.pdf generated YYYY-MM-DD; re-verify if regenerated.`
+      Long-term: regenerate the PDF to match the desired crop natively, removing the trim.
+    close_condition: >
+      Fig. 3 renders the intended affordance cards without blank margin or clipping in the
+      final compiled PDF.
+
+  - id: N-04
+    severity: MINOR
+    category: "Mishra et al. citation status"
+    location: "docs/paper/main.tex \cite{mishra2026nonsurj}"
+    description: >
+      The citation key mishra2026nonsurj corresponds to arXiv 2604.09839 (a workshop paper
+      per the claim-map notes).  Workshop preprints are lower-weight citations.  A reviewer
+      may question whether C2a (internal non-surjectivity as motivation) rests on an
+      un-reviewed workshop claim.  The paper correctly labels it as background/motivation,
+      not empirical evidence — but the framing in Abstract ("under the background concern
+      of internal non-surjectivity") implies theoretical support that a workshop paper
+      may not carry.
+    cheapest_close_action: >
+      Add the workshop venue explicitly in the first in-text citation: "Mishra et al.
+      (workshop, 2026) show internal non-surjectivity…" or make it "(preprint/workshop)"
+      in the reference entry.  Reviewers who check will see it is a workshop paper anyway;
+      foregrounding this is more honest and reduces disappointment.
+    close_condition: >
+      The paper or bibliography entry explicitly identifies mishra2026nonsurj as a workshop
+      or preprint, and the in-text framing does not imply it carries the weight of a
+      refereed conference paper.
+
+  - id: N-05
+    severity: MINOR
+    category: "C4 social axis discussion — space budget"
+    location: "docs/paper/main.tex §Discussion §Exploratory Extension: Social-Inference Axes"
+    description: >
+      The social-axis subsection (~3 paragraphs) is correctly labeled exploratory and does
+      not overstate claims.  However, it occupies ~half a column in a 9-page paper where
+      the HCI design contribution (C3 / console) is already thin.  The breadth-axis
+      paragraph (deterministic echo, N=12 suppression null) adds very little signal for
+      a first submission.
+    cheapest_close_action: >
+      Trim the breadth-axis paragraph to 1–2 sentences, keeping only: "A breadth-focus
+      probe found a legible facade ratio but an underpowered suppression null (N=12); this
+      is noted for completeness."  Save the freed space for a fuller Artifacts or
+      Limitations subsection.
+    close_condition: >
+      Breadth-axis discussion is ≤ 3 sentences; overall social-axis subsection ≤ 1.5 column
+      paragraphs.
+
+  - id: N-06
+    severity: MINOR
+    category: "Fig. 2 (c2-calibration-harm) filename mismatch"
+    location: "docs/paper/main.tex \includegraphics{figures/c2-calibration-harm.pdf} vs figure-manifests/c2-calibration-harm-4cell.yaml"
+    description: >
+      main.tex references figures/c2-calibration-harm.pdf while the manifest is named
+      c2-calibration-harm-4cell.yaml and the glob shows the file as figures/c2-calibration-harm.pdf.
+      These match so the build succeeds.  However, the manifest name says "4cell" while
+      the included filename does not; a future regeneration might create c2-calibration-harm-4cell.pdf
+      and break the include silently.  Low severity because the current build passes.
+    cheapest_close_action: >
+      Rename figures/c2-calibration-harm.pdf to c2-calibration-harm-4cell.pdf and update
+      the \includegraphics path in main.tex to match the manifest filename.  This prevents
+      a future silent mismatch.
+    close_condition: >
+      Figure filename and manifest filename use the same stem (c2-calibration-harm-4cell).
+
+  - id: N-07
+    severity: MINOR
+    category: "Balance warning in build log"
+    location: "docs/paper/build/main.log — Package balance Warning"
+    description: >
+      "Package balance Warning: You have called \balance in second column."  This typically
+      means \balance was placed in the wrong column and the final page column balance may
+      be uneven in the generated PDF.  Not a rejection risk but looks unprofessional in the
+      final submission.
+    cheapest_close_action: >
+      Move \balance to the end of the content before \bibliographystyle, or remove it and
+      manually balance the last page in the final camera-ready.
+    close_condition: >
+      No balance warning in the build log, or the final page is visually balanced.
+
+  # ── QUICK-WINS ──────────────────────────────────────────────────────────────
+
+  - id: Q-01
+    severity: QUICK-WIN
+    category: "Abstract — C2 calibration harm numbers"
+    location: "docs/paper/main.tex \begin{abstract}"
+    description: >
+      The abstract says "the uncertainty axis consistently harms calibration" without
+      citing the specific numbers that make this compelling.  Including even one number
+      (e.g., "CIs exclude 0 in all four cells, with steer−prompt effects ranging from
+      −0.072 to −0.228") would let a reviewer grasp the effect size immediately.
+    cheapest_close_action: >
+      Add one parenthetical to the calibration harm sentence: "(steer−prompt uncertainty
+      effects: −0.072 to −0.228, all four method×model CIs exclude zero)."
+    close_condition: >
+      Abstract contains at least one quantitative calibration-harm datum.
+
+  - id: Q-02
+    severity: QUICK-WIN
+    category: "CCS descriptors — IUI fit"
+    location: "docs/paper/main.tex \ccsdesc"
+    description: >
+      Current CCS: Human-centered computing~Interactive systems and tools (500) +
+      Computing methodologies~Natural language generation (300).  For IUI, adding
+      "Human-centered computing~User studies" or "Human-centered computing~Empirical
+      studies in HCI" as a third descriptor (even at weight 100) signals the paper's
+      HCI identity to ACM digital library classification.
+    cheapest_close_action: >
+      Add: \ccsdesc[100]{Human-centered computing~Empirical studies in HCI}
+    close_condition: >
+      At least three CCS descriptors present, including one from Human-centered computing
+      related to empirical methods or user interfaces.
+
+  - id: Q-03
+    severity: QUICK-WIN
+    category: "Keyword alignment with IUI/CHI call"
+    location: "docs/paper/main.tex \keywords"
+    description: >
+      Current keywords: cognitive consoles, latent steering, prompt control, calibration,
+      human-AI interaction.  Adding "trust calibration" and "activation steering" would
+      improve ACM DL discoverability and signal the paper's exact niche to program chairs.
+    cheapest_close_action: >
+      Replace: \keywords{cognitive consoles, latent steering, prompt control, calibration,
+      human-AI interaction, trust calibration, activation steering}
+    close_condition: >
+      Keywords include "trust calibration" and "activation steering".
+
+  - id: Q-04
+    severity: QUICK-WIN
+    category: "Anonymous self-citation check"
+    location: "docs/paper/references.bib (all entries)"
+    description: >
+      The paper is submitted anonymously.  A quick scan should confirm that no reference
+      entry points to an author-deanonymizing URL, GitHub repo, or institutional preprint
+      server with author-identifying metadata.  This is standard submission hygiene but
+      has not been explicitly checked.
+    cheapest_close_action: >
+      Run a grep for author-identifying terms (e.g., institution name, author usernames,
+      GitHub handle) in references.bib; also check any \url{} or \href{} in main.tex.
+    close_condition: >
+      All URLs and citation entries that could identify the authors are anonymized or
+      replaced with "Anonymous, 20XX" per the target venue's double-blind policy.
+
+  - id: Q-05
+    severity: QUICK-WIN
+    category: "Table 2 rounding note — placement"
+    location: "docs/paper/tables/c2-delta-4cell.tex (rounding note paragraph)"
+    description: >
+      The rounding note ("Pass/fail is computed from the unrounded frozen JSON…") is
+      positioned as a \par\smallskip after the table.  This is correct, but it does not
+      explain the "Best prompt" column values (delib-strong-09, etc.) — see M-01.  If
+      M-01 is addressed, a combined note ("Best-prompt IDs are artifact-registry handles;
+      all pass/fail decisions use unrounded JSON values") would be cleaner than two
+      separate notes.
+    cheapest_close_action: >
+      After resolving M-01, merge the artifact-ID explanation into the existing rounding
+      note paragraph.
+    close_condition: >
+      Rounding note explains both the rounding policy and the best-prompt identifier
+      convention in one place.
+
+  - id: Q-06
+    severity: QUICK-WIN
+    category: "Fig. 1 (concept.tex) caption — 'HCI schematic is conceptual, not a result artifact'"
+    location: "docs/paper/main.tex \caption{…} for fig:concept"
+    description: >
+      The caption already says "This HCI schematic is conceptual, not a result artifact."
+      This is correct and defensible.  However, the figure is a full-width figure* that
+      occupies significant real estate for what is essentially a diagram with no quantitative
+      data.  IUI/CHI reviewers sometimes penalize wide figures that take space from the
+      evidential content.  No action required unless page pressure emerges.
+    cheapest_close_action: >
+      If page count becomes an issue after adding an artifacts section (M-02), consider
+      reducing Fig. 1 to a single-column figure and moving it to the introduction rather
+      than as a standalone wide figure.
+    close_condition: >
+      No action required unless page budget becomes binding; note for future revision.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CLAIM–EVIDENCE GATE SUMMARY (for Manager reference)
+# ─────────────────────────────────────────────────────────────────────────────
+claim_evidence_gate_check:
+  C1:
+    enters_abstract_contributions_conclusion: true
+    evidence_present: true
+    evidence_ids: ["E-0003", "E-0008"]
+    exploratory_label_in_abstract: true
+    exploratory_label_in_contribution_item: true  # "exploratory representational measurement"
+    exploratory_label_in_results: true
+    exploratory_label_in_limitations: true
+    gate_result: PASS_WITH_CAVEAT
+    caveat: "Axis-flip heterogeneity caveat (N-02) not in contribution item inline; only in Limitations."
+  C2:
+    enters_abstract_contributions_conclusion: true
+    evidence_present: true
+    evidence_ids: ["E-0005", "E-0006"]
+    exploratory_supporting: ["E-0009"]
+    gate_result: PASS
+    note: "Core evidence clean; E-0009 correctly labeled exploratory in text."
+  C3:
+    enters_abstract_contributions_conclusion: true
+    evidence_present: false
+    gate_result: FLAGGED
+    note: "Contribution item 4 is design implication only; no evidence row. Must be labeled as such IN the contribution bullet (M-03)."
+  C2_mech:
+    enters_abstract_contributions_conclusion: false
+    gate_result: PASS
+    note: "Correctly demoted to Future Work throughout."
+  C2a:
+    enters_abstract_contributions_conclusion: false
+    gate_result: PASS
+    note: "Correctly labeled background/citation throughout."
+  C4:
+    enters_abstract_contributions_conclusion: false  # only Discussion
+    gate_result: PASS
+    note: "Correctly labeled exploratory extension; honest null on M1/M4; READ_HOLDS; LLM-judge-only/human-alpha PENDING stated."
+
+scope_guard_check:
+  not_impossibility_theorem: PRESENT  # stated explicitly in Abstract, Introduction, Limitations
+  naive_CAA_ITI_bounded_scope: PRESENT  # stated in Abstract, Introduction, Methods, Limitations
+  PSR_Heyman_citation_and_preemption: PRESENT_IN_BODY  # missing from Abstract (M-05)
+  PSR_exploratory_arm_E0009_mentioned: PRESENT_IN_BODY  # Related Work + Discussion; missing from Abstract (M-05)
+  Sprejer_framed_as_corroboration_not_scoop: PASS
+
+artifact_lineage_check:
+  table_c2_delta_4cell: "PASS — auto-generated from frozen JSON; provenance note in caption"
+  table_c1_twomodel: "PASS — auto-generated from frozen C1 JSON artifacts"
+  fig_c1_ratio_ci: "PASS — generated from E-0003 artifact; manifest present"
+  fig_c2_calibration_harm: "PASS — generated from E-0006 arm artifacts; manifest stub present"
+  fig_console_ui_contract: "PASS — generated from frozen artifacts; full manifest present with 11 inputs"
+  supplementary_package_described: "FAIL — M-02: promised six times, never described structurally"
+
+submission_hygiene_check:
+  internal_IDs_in_body_text: "PASS — evidence IDs (E-XXXX) do NOT appear in main.tex prose"
+  internal_IDs_in_tables: "FAIL — M-01: prompt artifact IDs in c2-delta-4cell.tex Best-prompt column"
+  anonymous_author_block: "PASS — Anonymous Authors / Anonymous Institution"
+  copyright_none_set: "PASS"
+  ACM_refformat_advisory: "ADVISORY ONLY — expected for anonymous draft; not a submission error"
+  balance_warning: "MINOR — N-07"
+  no_undefined_citations: "PASS — zero undefined citations in build log"
+  no_missing_references: "PASS"

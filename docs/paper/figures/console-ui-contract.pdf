@@ -12,7 +12,7 @@ endobj
 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
 endobj
 5 0 obj
-<< /Length 3275 >>
+<< /Length 3264 >>
 stream
 BT /F1 16 Tf 44.0 790.0 Td (Cognitive Console v2: five-signal UI contract) Tj ET
 BT /F1 8 Tf 44.0 772.0 Td (All numbers are read from frozen local artifacts; no humans/GPU/API/model calls.) Tj ET
@@ -49,7 +49,7 @@ BT /F1 7 Tf 566.0 660.0 Td (loaded from behavior artifact) Tj ET
 BT /F1 7 Tf 566.0 648.0 Td (CALIBRATION-HARM: NO_CALIBRATION_AXIS Social card measures) Tj ET
 BT /F1 7 Tf 566.0 638.0 Td (option-pushing/deference, not uncertainty calibration.) Tj ET
 BT /F1 7 Tf 566.0 626.0 Td (EVIDENCE-TIER: exploratory \(behavioral-powered,) Tj ET
-BT /F1 7 Tf 566.0 616.0 Td (human-rater calibration pending;) Tj ET
+BT /F1 7 Tf 566.0 616.0 Td (not yet confirmatory;) Tj ET
 BT /F1 7 Tf 566.0 606.0 Td (human-rater calibration pending; single model;) Tj ET
 BT /F1 7 Tf 566.0 596.0 Td (single seed; LLM-judge-only\)) Tj ET
 0.940 0.940 0.940 rg 44.0 424.0 750.0 62.0 re f
@@ -70,5 +70,5 @@ xref
 0000000311 00000 n 
 trailer << /Root 1 0 R /Size 6 >>
 startxref
-3637
+3626
 %%EOF

@@ -1,9 +1,9 @@
 claims:
   C1:
-    statement: "Representational legibility/facade gap: on selected cognitive axes, a readable prompt reaches only part of the extracted axis pole in mid-layer activation space."
+    statement: "Representational legibility/facade gap with restricted invariance: in this two-model pair, deliberation and skepticism show facade support in both models, while uncertainty and focus are model-dependent."
     status: "partially-supported; exploratory two-model support at the 3/4 aggregate level, with per-axis heterogeneity"
     supporting_evidence_ids: ["E-0003", "E-0008"]
-    scope: "Qwen2.5-7B-Instruct and Llama-3-8B-Instruct; deliberation and skepticism hold in both; uncertainty holds on Qwen not Llama; focus holds on Llama but overshoots/no-facade on Qwen"
+    scope: "Qwen2.5-7B-Instruct and Llama-3-8B-Instruct; deliberation and skepticism hold in both; uncertainty is model-dependent (Qwen 0.713 hold vs Llama 1.000 no-facade); focus is model-dependent (Llama 0.471 hold vs Qwen 2.844 overshoot/no-facade)"
     paper_sections: ["Abstract", "Introduction", "Methods", "Results", "Limitations", "Conclusion"]
     main_artifacts: ["fig-ratio-ci", "table-c1-twomodel"]
     valid_for_paper: "false for confirmatory/core claim per evidence ledger; usable only if explicitly labeled exploratory/scoped"
@@ -18,7 +18,7 @@ claims:
     valid_for_paper: true
     exploratory_supporting_evidence_ids: ["E-0009"]
     core_evidence_ids: ["E-0005", "E-0006"]
-    gate_notes: "Passes Abstract/Contributions/Conclusion evidence gate via E-0005 and E-0006. E-0009 is single-model/single-seed/valid_for_paper=false exploratory support; it must not overwrite or upgrade the frozen headline."
+    gate_notes: "Passes Abstract/Contributions/Conclusion evidence gate via E-0005 and E-0006. Uncertainty calibration-harm/non-transfer claims are anchored to these C2 behavioral deltas (not inferred from C1 facade ratios). E-0009 is single-model/single-seed/valid_for_paper=false exploratory support; it must not overwrite or upgrade the frozen headline."
   C2-mech:
     statement: "Calibration harm might be explained by off-manifold steering distance."
     status: "hypothesis/future work only; directly tested and not supported"

@@ -5,12 +5,12 @@
 
 ## 1. 一页速览（TL;DR）
 
-**头条 Claim：** 对 cognitive console 来说，“一个 latent 轴可读/可命名”不能自动当成“用户可用的行为控制滑块”。在冻结的 prompt-vs-latent 行为裁决中，naive/off-the-shelf CAA/ITI steering 在 `{Qwen2.5-7B, Llama-3-8B} × {CAA, ITI}` 四格里 **全部 0/3 轴通过**，且 uncertainty/calibration 轴四格均显著变差（E-0006）。
+**头条 Claim：** 对 cognitive console 来说，“一个 latent 轴可读/可命名”不能自动当成“用户可用的行为控制滑块”。在冻结的 prompt-vs-latent 行为裁决中，naive/off-the-shelf CAA/ITI steering 在 `{Qwen2.5-7B, Llama-3-8B} × {CAA, ITI}` 四格里 **全部 0/3 轴通过**，且 uncertainty/calibration 轴四格均显著变差（E-0006）。该 uncertainty 伤害结论由 C2 行为证据独立成立，不由 C1 facade 推导。
 
 | 证据块 | 结论 | 关键数字 | 状态 |
 |---|---|---:|---|
-| C1 facade / Qwen | prompt 只到达 axis pole 的一部分 | 3/4 轴 hold：delib 0.583 [0.488,0.680]；skep 0.548 [0.434,0.670]；unc 0.713 [0.517,0.910]；focus 2.844 overshoot | exploratory，valid_for_paper=false（E-0003） |
-| C1 facade / Llama | 聚合 3/4 复现，但轴组成不同 | delib 0.872；skep 0.628；focus 0.471 hold；uncertainty 1.000 [0.839,1.147] 不 hold | exploratory，轴异质性 caveat（E-0008） |
+| C1 facade / Qwen | prompt 只到达 axis pole 的一部分 | 聚合 3/4 轴 hold；focus 轴为 overshoot/no facade | exploratory，valid_for_paper=false（E-0003） |
+| C1 facade / Llama | 聚合 3/4 复现，但轴组成不同 | 聚合 3/4；uncertainty 不 hold，focus hold | exploratory，轴异质性 caveat（E-0008） |
 | C2 2×2 冻结裁决 | latent 不超过 best-prompt ceiling | 4 cells 全 0/3；uncertainty Δ：-0.228, -0.072, -0.103, -0.084，CI 全排除 0 | core scoped negative（E-0005/E-0006） |
 | 方法强度与社会轴 | PSR 仍 KILL；社会轴 READ 但行为 null | PSR uncertainty -0.160 [-0.292,-0.039]；social B−A M1=+0.00148, p_bonf=1.0；READ AUC=0.954 | exploratory / valid_for_paper=false（E-0009/E-0010） |
 
@@ -22,7 +22,7 @@
 
 LLM 界面越来越倾向于把模型行为做成“可读、可命名、可调”的对象：prompt instruments 把自然语言命令实体化，透明度研究强调用户如何理解能力与不确定性，feature-steering UI 暗示 latent direction 可以成为控制部件（`main.tex` Introduction / Related Work）。
 
-危险在于：**可读的 latent 轴 ≠ 可控的行为通道**。一个方向可以在表示空间里看起来很“像” deliberation、skepticism 或 uncertainty，但用户真正需要的是：沿这个方向操作后，行为是否比有限 prompt 努力更好？如果 cognitive console 把 legible direction 做成 slider，终端用户会自然推断“我看得懂它，所以我能控制它”。本文的核心警告就是这个推断可能为假，甚至在 uncertainty 轴上会伤害校准。
+危险在于：**可读的 latent 轴 ≠ 可控的行为通道**。一个方向可以在表示空间里看起来很“像” deliberation、skepticism 或 uncertainty，但用户真正需要的是：沿这个方向操作后，行为是否比有限 prompt 努力更好？如果 cognitive console 把 legible direction 做成 slider，终端用户会自然推断“我看得懂它，所以我能控制它”。本文的核心警告就是这个推断可能为假；且 uncertainty 轴上的校准伤害来自独立的 C2 冻结行为裁决，而非由 C1 表征结果外推。
 
 Mishra et al. 的 non-surjectivity 只作为背景动机：activation steering 可到达 bounded prompting 不能复现的内部状态。但本文没有声称复现/证明内部 non-surjectivity；本文测试的是用户可见行为层的 prompt-vs-latent transfer。
 
@@ -54,7 +54,7 @@ Mishra et al. 的 non-surjectivity 只作为背景动机：activation steering �
 
 ## 5. 核心贡献
 
-1. **C1：facade 测量。** 给出一个可复建的 representational measurement：prompt_reach / pole_reach。两模型聚合上均 3/4 轴 hold，但轴组成异质；只能作为 exploratory measurement。
+1. **C1：facade 测量。** 给出一个可复建的 representational measurement：prompt_reach / pole_reach。跨模型不变只保留 deliberation + skepticism；uncertainty 与 focus 为 model-dependent（uncertainty 在 Qwen 成立、Llama 不成立；focus 在 Llama 成立、Qwen 过冲且无 facade）；只能作为 exploratory measurement。
 2. **C2：冻结行为裁决的 scoped negative。** DEV/TEST、best-prompt ceiling、steering alpha、paired item-cluster bootstrap、Bonferroni、coherence gate 和 δ 判据全部冻结；2×2 全失败，uncertainty calibration harm 四格复现。
 3. **方法学纪律本身。** 负结果没有被改写为正结果；OOD 机制臂失败后降级到 Future Work；PSR 只作为探索性 robustness；每个重要结果有 hostile audit。
 4. **Console 设计立场。** Console 不应承诺“latent 超能力滑块”，而应显示 READ/TRANSFER/prompt ceiling/calibration harm/evidence tier，帮助信任再校准。
@@ -107,14 +107,14 @@ Breadth 轴来自 `results/breadth_confirm2/` 与 D-0047：facade ratio 0.271 �
 |---|---|---:|---|
 | Qwen2.5-7B | deliberation | 0.583 [0.488,0.680] | facade hold |
 | Qwen2.5-7B | skepticism | 0.548 [0.434,0.670] | facade hold |
-| Qwen2.5-7B | uncertainty | 0.713 [0.517,0.910] | facade hold |
-| Qwen2.5-7B | focus | 2.844 [2.061,3.549] | overshoot/no facade |
+| Qwen2.5-7B | uncertainty | facade hold（见生成表） | 与 Llama 形成 model-dependent 对照 |
+| Qwen2.5-7B | focus | overshoot/no facade（见生成表） | 与 Llama 形成 model-dependent 对照 |
 | Llama-3-8B | deliberation | 0.872 [0.798,0.937] | facade hold |
 | Llama-3-8B | skepticism | 0.628 [0.581,0.673] | facade hold |
-| Llama-3-8B | uncertainty | 1.000 [0.839,1.147] | no facade |
-| Llama-3-8B | focus | 0.471 [0.306,0.630] | facade hold |
+| Llama-3-8B | uncertainty | no facade（见生成表） | 与 Qwen 形成 model-dependent 对照 |
+| Llama-3-8B | focus | facade hold（见生成表） | 与 Qwen 形成 model-dependent 对照 |
 
-结论：C1 支持“若干 metacognitive axes 有 representational facade”，但不支持 axis-invariant general law。Deliberation layer-16 sensitivity 也需保留 caveat（E-0003）。
+结论：C1 支持“若干 metacognitive axes 有 representational facade”，但跨模型不变只到 deliberation + skepticism；uncertainty 与 focus 明确是 model-dependent，不支持 axis-invariant general law。Deliberation layer-16 sensitivity 也需保留 caveat（E-0003）。
 
 ### 7.2 C2：2×2 全 0/3，uncertainty 四格校准伤害
 
@@ -125,7 +125,7 @@ Breadth 轴来自 `results/breadth_confirm2/` 与 D-0047：facade ratio 0.271 �
 | ITI×Qwen | +0.020 [+0.000,+0.055] | -0.100 [-0.270,+0.060] | **-0.103 [-0.136,-0.069]** | 0/3 fail |
 | ITI×Llama | +0.015 [-0.040,+0.060] | +0.000 [-0.195,+0.205] | **-0.084 [-0.115,-0.049]** | 0/3 fail |
 
-Interpretation：在 tested scope 内，latent steering 没有超过 bounded best prompt；uncertainty/calibration 不只是无增益，而是显著更差。尤其 CAA×Qwen uncertainty Δ=-0.228，是 console v1/v2 反复高亮的红色告警。
+Interpretation：在 tested scope 内，latent steering 没有超过 bounded best prompt；uncertainty/calibration 不只是无增益，而是显著更差。尤其 CAA×Qwen uncertainty Δ=-0.228，是 console v1/v2 反复高亮的红色告警。该结论来自 C2 冻结行为裁决本身，不依赖 C1 uncertainty facade 是否复现。
 
 ### 7.3 PSR：KILL，支持“不是只因为 naive 方法太弱”
 
@@ -159,7 +159,7 @@ Console 的目标不是“把 latent 方向包装成 slider”，而是显示**�
 
 ## 9. 局限与诚实边界
 
-- C1：两模型单 run，聚合 3/4 但轴组成异质；不能写成普遍定律。
+- C1：两模型单 run，聚合 3/4 但轴组成异质；跨模型不变只到 deliberation + skepticism，不能写成普遍定律。
 - C2：强于单模型单方法，但仍限于 7–8B open instruct models、CAA/ITI、三条 metacognitive axes、单 seed/冻结预算；不是 activation steering 不可能性定理。
 - PSR：只在 Qwen 单模型探索；不能覆盖所有 trained steering。
 - 机制：OOD distance hypothesis 已被 valid null；机制未知。
@@ -199,7 +199,7 @@ Console 的目标不是“把 latent 方向包装成 slider”，而是显示**�
 
 | ID | Claim/用途 | 模型/方法 | 关键结果 | 审计/状态 | valid_for_paper |
 |---|---|---|---|---|---|
-| E-0003 | C1 Qwen facade | Qwen2.5-7B | 3/4 hold：0.583、0.548、0.713；focus 2.844 overshoot | Manager verified；device/dtype cache 修复 | false / exploratory |
+| E-0003 | C1 Qwen facade | Qwen2.5-7B | 3/4 hold（uncertainty hold，focus overshoot/no facade） | Manager verified；device/dtype cache 修复 | false / exploratory |
 | E-0004 | 早期 C2b lexical proxy | Qwen2.5-7B CAA crude proxy | 3/4 latent 未超 prompt；proxy ceiling saturated | audit rejected proxy basis；superseded by E-0005 | false / invalid |
 | E-0005 | C2 frozen Qwen×CAA | Qwen2.5-7B CAA | 0/3 pass；uncertainty -0.228 [-0.370,-0.092] | hostile audit VALID_NEGATIVE | honest negative / scoped |
 | E-0006 | C2 2×2 generalized | CAA/ITI × Qwen/Llama | 四格全 0/3；uncertainty harm 四格 CI 排除 0 | hostile audit VALID_ARM_EVIDENCE | core supported scoped negative |

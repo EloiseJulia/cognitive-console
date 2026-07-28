@@ -19,3 +19,4 @@ required_caveats:
   - "Both E-0003 and E-0008 are EXPLORATORY and valid_for_paper=false for confirmatory use."
   - "C1 has two-model support at the aggregate 3/4 level, but per-axis composition differs."
   - "Model-invariant axes in this pair are deliberation and skepticism; uncertainty and focus are heterogeneous."
+  - "Uncertainty is model-dependent (Qwen 0.713 hold vs Llama 1.000 no-facade); focus is model-dependent (Llama 0.471 hold vs Qwen 2.844 overshoot/no-facade)."

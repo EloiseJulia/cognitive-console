@@ -7,12 +7,15 @@ import pytest
 
 from cognitive_console.console.data_loader import build_console_payload, build_demo_report
 from cognitive_console.console.demo import write_demo_artifacts
+from docs.paper.scripts.plot_console_ui_contract import main as plot_console_ui_contract
 
 
 REPO = Path(__file__).resolve().parent.parent
 C2B_JSON = REPO / "results" / "c2b_adjudication_hf_2026-07-24" / "c2b_adjudication_results.json"
 C1_JSON = REPO / "results" / "gpu_7b_2026-07-23" / "c1" / "c1_facade_results.json"
 EVIDENCE_LEDGER = REPO / "docs" / "ledgers" / "evidence-ledger.md"
+SOCIAL_BEHAVIOR_JSON = REPO / "results" / "flagship_powered" / "behavior" / "flagship_l0_results.json"
+SOCIAL_READ_JSON = REPO / "results" / "flagship_powered" / "read" / "flagship_read_results.json"
 
 
 def _read_json(path: Path) -> dict:
@@ -154,4 +157,51 @@ def test_simulated_demo_flags_match_frozen_artifacts(tmp_path: Path):
     json_path, md_path = write_demo_artifacts(tmp_path)
     written = _read_json(json_path)
     assert written["summary"] == report["summary"]
-    assert md_path.read_text(encoding="utf-8").startswith("# Console v1 simulated demo report")
+    assert md_path.read_text(encoding="utf-8").startswith("# Console v2 UI-contract simulated demo report")
+
+
+def test_ui_contract_social_card_reads_e0010_artifacts():
+    payload = build_console_payload()
+    behavior = _read_json(SOCIAL_BEHAVIOR_JSON)
+    read = _read_json(SOCIAL_READ_JSON)
+
+    card = next(
+        row for row in payload["ui_contract"]["cards"] if row["axis"] == "social_inference_novice_disclosure"
+    )
+    selected = read["layer_results"][str(read["selected_layer"])]
+    ba_m1 = behavior["paired_bootstrap"]["B_minus_A"]["M1"]
+
+    assert card["headline"] == "LEGIBLE but NOT CONTROLLABLE"
+    assert card["read_status"]["status"] == "HOLDS"
+    assert card["read_status"]["value"] == pytest.approx(selected["token_blind"]["auc"])
+    assert card["transfer_verdict"]["verdict"] == "NULL"
+    assert card["transfer_verdict"]["delta"] == pytest.approx(ba_m1["point_estimate"])
+    assert card["transfer_verdict"]["p_bonferroni"] == pytest.approx(ba_m1["p_bonferroni"])
+    assert card["evidence_tier"]["tier"] == "exploratory"
+    assert any("PENDING" in note for note in card["evidence_tier"]["notes"])
+
+
+def test_ui_contract_psr_panel_reads_method_strength_artifact():
+    payload = build_console_payload()
+    psr = payload["ui_contract"]["psr_method_strength"]
+    assert psr["evidence_id"] == "E-0009"
+    assert psr["verdict"] == "KILL_PLAN_D"
+    assert {row["axis"] for row in psr["rows"]} == {
+        "deliberation",
+        "skepticism",
+        "uncertainty_awareness",
+    }
+    assert all(row["passed"] is False for row in psr["rows"])
+    unc = next(row for row in psr["rows"] if row["axis"] == "uncertainty_awareness")
+    assert unc["delta"] == pytest.approx(-0.1603479245283019)
+    assert unc["ci_hi"] < 0
+
+
+def test_console_ui_contract_figure_script_runs():
+    out = REPO / "results" / "console_v1_demo" / "pytest-console-ui-contract.pdf"
+    try:
+        plot_console_ui_contract(["--out", out])
+        assert out.exists()
+        assert out.read_bytes().startswith(b"%PDF-1.4")
+    finally:
+        out.unlink(missing_ok=True)

@@ -34,3 +34,24 @@
 - C2 表中 uncertainty 轴明确显示负向 `Δ` 与红色边界警示。
 - 提供 README 启动说明。
 - 有最小单测覆盖：数据加载成功、映射取值来自文件而非常量。
+
+## 5. console-v2 UI-contract 扩展（feature/console-v2-ui-contract）
+
+- **定位不变**：扩展 v1，不重建；仍是 reality-check / boundary instrument，不是 latent 控制滑块。
+- **核心界面对象**：每个轴渲染为 latent-control affordance card，展示 5 个 artifact-derived signals：
+  1. `READ status`：C1 facade ratio/CI 或社会轴 token-blind READ AUC。
+  2. `TRANSFER verdict`：prompt-vs-latent 行为裁决，含 Δ、Bonferroni CI / p 值。
+  3. `PROMPT-CEILING`：bounded best-prompt 或冻结 prompt 条件的行为天花板。
+  4. `CALIBRATION-HARM`：steering 是否伤害校准；uncertainty 轴红色告警并链接 E-0006 2×2 复现。
+  5. `EVIDENCE-TIER`：exploratory / confirmatory / untested 与 caveat（单模型、单 seed、human-α pending 等）。
+- **新增冻结 artifact 来源**：
+  - `results/flagship_powered/behavior/flagship_l0_results.json`
+  - `results/flagship_powered/read/flagship_read_results.json`
+  - `results/psr_qwen_primary/psr_c2b_adjudication_results.json`
+  - 保留 v1 C1/C2/E-0006 artifact；C1 replication 读取 `results/llama_c1_facade_2026-07-24/c1_facade_results.json`。
+- **关键演示卡**：E-0010 social-inference axis 自动显示 `READ=HOLDS`（token-blind AUC 从 READ JSON 读取）且 `TRANSFER=NULL`（B−A M1 / CI / p_bonf 从 behavior JSON 读取），总判语为 `LEGIBLE but NOT CONTROLLABLE`。
+- **静态论文图**：`docs/paper/scripts/plot_console_ui_contract.py` 从冻结 artifact 重建 `docs/paper/figures/console-ui-contract.pdf`；不修改 `docs/paper/main.tex`。
+- **启动 / 生成命令**：
+  - Console: `python -m cognitive_console.console --host 127.0.0.1 --port 8000 --open`
+  - Demo report: `python -m cognitive_console.console.demo`
+  - Static figure: `python docs/paper/scripts/plot_console_ui_contract.py`

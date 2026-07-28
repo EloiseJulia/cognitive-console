@@ -16,7 +16,7 @@ def _render_html() -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Reality-check Console v1</title>
+  <title>Reality-check Console v2</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 0; background: #0f1220; color: #e9ecf7; }
     .wrap { max-width: 1100px; margin: 0 auto; padding: 24px; }
@@ -34,12 +34,19 @@ def _render_html() -> str:
     .card.red { border-color: #a33; background: #2a1616; }
     .card.amber { border-color: #8f6d2d; background: #2a2516; }
     .mini { font-size: 12px; color: #aab2d5; }
+    .signal { margin: 6px 0; padding-top: 6px; border-top: 1px solid #2e3558; }
+    .headline { font-weight: 800; color: #ffffff; margin-bottom: 8px; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <h1>Dual-channel Cognitive Console v1</h1>
+    <h1>Dual-channel Cognitive Console v2</h1>
     <div class="muted" id="positioning"></div>
+    <div class="panel">
+      <h2>0) UI contract: latent-control affordance cards</h2>
+      <div class="muted">Each card exposes five artifact-derived signals: READ, TRANSFER, PROMPT-CEILING, CALIBRATION-HARM, EVIDENCE-TIER.</div>
+      <div class="grid" id="ui-contract-grid"></div>
+    </div>
     <div class="panel">
       <h2>1) Dual-channel comparison (Prompt vs Latent)</h2>
       <div class="muted">Boundary instrument: compare behavior outcomes instead of assuming latent superiority.</div>
@@ -80,6 +87,14 @@ def _render_html() -> str:
         <tbody></tbody>
       </table>
     </div>
+    <div class="panel">
+      <h2>E-0009 PSR method-strength robustness</h2>
+      <div class="muted" id="psr-summary"></div>
+      <table id="psr-table">
+        <thead><tr><th>Axis</th><th>Δ</th><th>CI</th><th>Pass?</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
     <div class="muted" id="provenance"></div>
   </div>
   <script>
@@ -92,7 +107,25 @@ def _render_html() -> str:
         document.getElementById("c1-source").textContent = data.c1.source_mode;
         document.getElementById("c2-source").textContent = data.c2.source_mode;
         document.getElementById("provenance").textContent =
-          `C2 source (${data.c2.source_mode}): ${data.provenance.c2b_results} | C1 source (${data.c1.source_mode}): ${data.provenance.c1_results} | arm source (${data.arm.source_mode}): ${data.provenance.arm_summary} | fallback: ${data.provenance.evidence_ledger_fallback}`;
+          `C2 source (${data.c2.source_mode}): ${data.provenance.c2b_results} | C1 source (${data.c1.source_mode}): ${data.provenance.c1_results} | arm source (${data.arm.source_mode}): ${data.provenance.arm_summary} | social: ${data.provenance.social_behavior}, ${data.provenance.social_read} | PSR: ${data.provenance.psr_results} | fallback: ${data.provenance.evidence_ledger_fallback}`;
+
+        const cardGrid = document.getElementById("ui-contract-grid");
+        data.ui_contract.cards.forEach((card) => {
+          const div = document.createElement("div");
+          const isRed = card.calibration_harm && card.calibration_harm.severity === "red";
+          const isSocial = card.axis === "social_inference_novice_disclosure";
+          div.className = isRed ? "card red" : (isSocial ? "card amber" : "card");
+          div.innerHTML = `
+            <h3>${card.label}</h3>
+            <div class="headline">${card.headline}</div>
+            <div class="signal"><b>READ</b>: ${card.read_status.status} ${card.read_status.summary || ""}</div>
+            <div class="signal"><b>TRANSFER</b>: ${card.transfer_verdict.verdict} ${card.transfer_verdict.summary || ""}</div>
+            <div class="signal"><b>PROMPT-CEILING</b>: ${card.prompt_ceiling.summary || "n/a"}</div>
+            <div class="signal"><b>CALIBRATION-HARM</b>: ${card.calibration_harm.status} ${card.calibration_harm.summary || ""}</div>
+            <div class="signal"><b>EVIDENCE-TIER</b>: ${card.evidence_tier.tier}<div class="mini">${(card.evidence_tier.notes || []).join("; ")}</div></div>
+            <div class="mini">Evidence: ${(card.evidence_ids || []).join(", ")}</div>`;
+          cardGrid.appendChild(div);
+        });
 
         const chBody = document.querySelector("#channels-table tbody");
         data.c2.rows.forEach((r) => {
@@ -136,6 +169,15 @@ def _render_html() -> str:
           const harm = unc && unc.robust_degradation_flag;
           tr.innerHTML = `<td>${cell.method} × ${cell.model_label}<div class="mini">${cell.cell_key}</div></td><td class="${harm ? "warn" : ""}">${n(unc && unc.mean_diff)}</td><td>[${n(unc && unc.ci_lo)}, ${n(unc && unc.ci_hi)}]</td><td>${yesNo(harm)}</td>`;
           armBody.appendChild(tr);
+        });
+
+        const psr = data.ui_contract.psr_method_strength;
+        document.getElementById("psr-summary").textContent = `${psr.summary} verdict=${psr.verdict}; source=${psr.source_mode}`;
+        const psrBody = document.querySelector("#psr-table tbody");
+        psr.rows.forEach((r) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${r.label}</td><td>${n(r.delta)}</td><td>[${n(r.ci_lo)}, ${n(r.ci_hi)}]</td><td>${yesNo(r.passed)}</td>`;
+          psrBody.appendChild(tr);
         });
 
         return fetch("/api/demo");

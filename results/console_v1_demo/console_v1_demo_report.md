@@ -1,6 +1,6 @@
-# Console v1 simulated demo report
+# Console v2 UI-contract simulated demo report
 
-No human labels, GPU, paid APIs, or model downloads were used. The flags below are computed from frozen local artifacts.
+No human labels, GPU, paid APIs, model downloads, or live model calls were used. The flags below are computed from frozen local artifacts.
 
 ## C1 facade-limit flags
 - deliberation: ratio=0.583, CI=[0.488, 0.680], source=c1_results_json
@@ -20,3 +20,11 @@ No human labels, GPU, paid APIs, or model downloads were used. The flags below a
 - caa×llama3-8b: Δ=-0.072, CI=[-0.103, -0.034]
 - iti×qwen2.5-7b: Δ=-0.103, CI=[-0.136, -0.069]
 - iti×llama3-8b: Δ=-0.084, CI=[-0.115, -0.049]
+
+## E-0010 legible-but-not-controllable social-axis flags
+- Social inference: novice-disclosure: LEGIBLE but NOT CONTROLLABLE; READ=HOLDS token-blind AUC=0.954; TRANSFER=NULL B−A M1=0.001, CI=[-0.048, 0.047], p_bonf=1.000; sources={'behavior': 'results/flagship_powered/behavior/flagship_l0_results.json', 'read': 'results/flagship_powered/read/flagship_read_results.json'}
+
+## E-0009 PSR method-strength robustness flags
+- Deliberation: pass=False, Δ=0.025, CI=[-0.030, 0.100], source=results/psr_qwen_primary/psr_c2b_adjudication_results.json
+- Skepticism: pass=False, Δ=-0.060, CI=[-0.210, 0.070], source=results/psr_qwen_primary/psr_c2b_adjudication_results.json
+- Uncertainty-awareness: pass=False, Δ=-0.160, CI=[-0.292, -0.039], source=results/psr_qwen_primary/psr_c2b_adjudication_results.json

@@ -86,6 +86,7 @@ def main() -> None:
             + r" \\")
     lines.append(r"    \bottomrule")
     lines.append(r"  \end{tabular}")
+    lines.append(r"  \par\smallskip\raggedright\scriptsize\emph{Rounding note.} Pass/fail is computed from the unrounded frozen JSON. Displayed means and intervals are rounded to three decimals; a fail can therefore have a small positive displayed estimate or boundary. A pass requires an unrounded CI excluding 0, mean $\ge \delta=0.05$, and the coherence gate to pass, so ITI$\times$Qwen deliberation remains fail because its mean is below $\delta$.")
     lines.append(r"\end{table*}")
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")

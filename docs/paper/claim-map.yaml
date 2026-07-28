@@ -38,8 +38,8 @@ claims:
     valid_for_paper: "background citation only; not our empirical claim"
     gate_notes: "No project evidence row because it is not our claim. Must not enter Abstract/Contributions/Conclusion as an empirical contribution."
   C3:
-    statement: "A cognitive console should surface boundaries/limits of legible latent control and support trust recalibration rather than advertise a latent control slider."
-    status: "design implication only; no user study yet"
+    statement: "From the frozen C2 adjudication, a cognitive console should expose an interface-evaluation contract for latent-control affordances: READ status, TRANSFER verdict, prompt-ceiling comparison, calibration-harm warning, and evidence tier."
+    status: "design implication from C2 only; no standalone evidence row and no user study yet"
     supporting_evidence_ids: []
     scope: "Pure-model route; no formative or controlled user study; human study deferred/owner-gated"
     paper_sections: ["Abstract", "Introduction", "Design implications", "Limitations", "Conclusion"]
@@ -47,11 +47,11 @@ claims:
     valid_for_paper: "flagged: no standalone evidence row; usable only as a non-empirical design implication derived from C2, not as an empirical contribution"
     gate_notes: "FLAG: lacks a direct evidence row. If C3 enters Abstract/Contributions/Conclusion as a standalone claim or empirical HCI contribution, the bidirectional gate fails; it may only appear as a clearly marked design implication from C2."
   C4:
-    statement: "Exploratory social-inference-axis probe: the novice/user-model axis is legible in latent space (READ_HOLDS), but the powered LLM-judge TEST finds an honest behavioral null on implemented M1 option-pushing and M4 deference; M2/M3 are not implemented and support no claim."
-    status: "exploratory; behavioral honest-null on implemented M1/M4; READ_HOLDS; valid_for_paper=false"
+    statement: "Discussion-only exploratory social-inference-axis extension: the novice/user-model axis is legible in latent space (READ_HOLDS), but the powered LLM-judge TEST finds an honest behavioral null on implemented M1 option-pushing and M4 deference; M2/M3 are not implemented and support no claim."
+    status: "discussion-only exploratory extension; behavioral honest-null on implemented M1/M4; READ_HOLDS; valid_for_paper=false"
     supporting_evidence_ids: ["E-0010"]
     scope: "Qwen2.5-7B-Instruct only; single seed; frozen disjoint TEST pool N=54/k=5 for novice-disclosure behavior; LLM-judge-only with human-alpha PENDING, so not confirmatory. B-A M1=+0.00148 CI[-0.0483,+0.0467] p_bonf=1.0; B-E M1=-0.0119 p_bonf=1.0; M4=0. M2/M3 INVALID/not_implemented and must not be described as null dimensions. READ token-blind novice axis holds at layer 8 with AUC=0.954 (literal 1.0, drop 4.6pp, null p95=0.786). Prior DEV/L0 B>A=+0.074/+0.078 did not replicate at power and should be described as DEV noise, not a positive signal. Steer arm HELD per D-0048. Breadth axis remains contextual exploratory material only: single-run facade ratio ~0.271 plus underpowered suppression null with deterministic-echo and general_reasoning dead-zone caveats."
-    paper_sections: ["Abstract", "Introduction", "Discussion", "Future Work"]
+    paper_sections: ["Discussion", "Future Work"]
     main_artifacts: []
     valid_for_paper: false
     evidence_artifacts:

@@ -43,6 +43,14 @@ _REPO = Path(__file__).resolve().parents[1]
 _FROZEN_AXES = ["deliberation", "skepticism", "uncertainty_awareness"]
 _FROZEN_CELL_KEYS = ["caa__qwen2.5-7b", "caa__llama3-8b", "iti__qwen2.5-7b", "iti__llama3-8b"]
 
+# Number of pre-registered seeds (20260723–20260727).
+# DROP_SINGLE_SEED_CAVEAT requires ALL N_FROZEN seeds to be present; fewer seeds → INSUFFICIENT_SEEDS.
+N_FROZEN: int = 5
+# Frozen E-0006 reference artifact directory for harness reproduction numeric check.
+_E0006_REF_PATH: Path = _REPO / "results" / "arm_full"
+# Absolute tolerance for E-0006 numeric reproduction check (mean_diff / ci_lo / ci_hi).
+_HARNESS_REPRO_TOL: float = 1e-6
+
 
 def _utcnow() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -87,8 +95,74 @@ def _extract_axis_stats(cell_result: Dict[str, Any], axis: str) -> Dict[str, Any
 
 
 # --------------------------------------------------------------------------- #
-# Per-seed record
+# E-0006 harness numeric reproduction check
 # --------------------------------------------------------------------------- #
+
+def _load_e0006_cell_stats(ref_dir: Path) -> Dict[str, Dict[str, Dict[str, Any]]]:
+    """Load frozen E-0006 reference stats for all 4 cells × 3 axes.
+
+    Returns ``{cell_key: {axis: {mean_diff, ci_lo, ci_hi}}}``.
+    Values are always read from artifact files; nothing is hard-coded.
+    """
+    stats: Dict[str, Dict[str, Dict[str, Any]]] = {}
+    for cell_key in _FROZEN_CELL_KEYS:
+        cell_json = ref_dir / f"cell_{cell_key}" / "c2b_adjudication_results.json"
+        if not cell_json.exists():
+            raise FileNotFoundError(f"E-0006 reference cell JSON not found: {cell_json}")
+        data = json.loads(cell_json.read_text(encoding="utf-8"))
+        stats[cell_key] = {}
+        for row in data.get("axes", []):
+            axis = row.get("axis")
+            if axis in _FROZEN_AXES:
+                stats[cell_key][axis] = {
+                    "mean_diff": row.get("mean_diff"),
+                    "ci_lo": row.get("ci_lo"),
+                    "ci_hi": row.get("ci_hi"),
+                }
+    return stats
+
+
+def _verify_harness_repro_numeric(
+    seed_record: Dict[str, Any],
+    ref_dir: Path,
+    tol: float = _HARNESS_REPRO_TOL,
+) -> Tuple[bool, List[Dict[str, Any]]]:
+    """Compare seed=20260723 cell axis stats against frozen E-0006 reference.
+
+    Returns ``(ok, mismatches)``.  ``ok=True`` iff all 4 cells × 3 axes have
+    mean_diff, ci_lo, ci_hi within *tol* of the reference.
+    Reference values are always read from artifact files; nothing is hard-coded.
+    """
+    try:
+        ref_stats = _load_e0006_cell_stats(ref_dir)
+    except (FileNotFoundError, json.JSONDecodeError, OSError) as exc:
+        return False, [{"reason": f"e0006_ref_load_error: {exc}"}]
+
+    mismatches: List[Dict[str, Any]] = []
+    for c in seed_record.get("cells", []):
+        cell_key = c.get("cell_key", "")
+        if cell_key not in ref_stats:
+            continue
+        for axis in _FROZEN_AXES:
+            new_stats = c.get("axis_stats", {}).get(axis, {})
+            ref = ref_stats.get(cell_key, {}).get(axis, {})
+            for field in ("mean_diff", "ci_lo", "ci_hi"):
+                nv = new_stats.get(field)
+                rv = ref.get(field)
+                if nv is None or rv is None:
+                    mismatches.append({
+                        "cell_key": cell_key, "axis": axis, "field": field,
+                        "reason": "missing_value", "new": nv, "ref": rv,
+                    })
+                elif abs(float(nv) - float(rv)) > tol:
+                    mismatches.append({
+                        "cell_key": cell_key, "axis": axis, "field": field,
+                        "reason": "numeric_mismatch",
+                        "new": nv, "ref": rv,
+                        "abs_diff": abs(float(nv) - float(rv)),
+                        "tol": tol,
+                    })
+    return len(mismatches) == 0, mismatches
 
 def build_seed_record(
     seed: int,
@@ -140,9 +214,19 @@ def build_seed_record(
 # Cross-seed aggregation
 # --------------------------------------------------------------------------- #
 
-def aggregate_across_seeds(seed_records: List[Dict[str, Any]]) -> Dict[str, Any]:
+def aggregate_across_seeds(
+    seed_records: List[Dict[str, Any]],
+    e0006_ref_dir: Optional[Path] = None,
+) -> Dict[str, Any]:
     """Compute cross-seed summary statistics for each cell × axis."""
     n_seeds = len(seed_records)
+    if n_seeds < 2:
+        raise ValueError(
+            f"aggregate_across_seeds requires at least 2 seed records; got {n_seeds}. "
+            f"For single-seed harness validation, compare directly against the E-0006 "
+            f"reference at {_E0006_REF_PATH}. Do not use the aggregation DROP path for "
+            f"a single seed — harness check should be run against E-0006 directly."
+        )
 
     # Per-seed arm verdict tally
     verdict_counts: Dict[str, int] = {}
@@ -181,6 +265,7 @@ def aggregate_across_seeds(seed_records: List[Dict[str, Any]]) -> Dict[str, Any]
                 "n_seeds_pass": n_pass,
                 "mean_diff_values": mean_diffs,
                 "mean_diff_across_seeds": (
+                    # descriptive only — not used in any verdict condition (see prereg §4b)
                     sum(mean_diffs) / len(mean_diffs) if mean_diffs else None
                 ),
                 "ci_lo_values": ci_los,
@@ -256,12 +341,16 @@ def aggregate_across_seeds(seed_records: List[Dict[str, Any]]) -> Dict[str, Any]
     for r in seed_records:
         if int(r.get("seed", -1)) != 20260723:
             continue
-        explicit_harness_ok = r.get("harness_repro_ok")
-        if explicit_harness_ok is False:
-            harness_fail_reasons.append({
-                "seed": 20260723,
-                "reason": "harness_repro_ok_false",
-            })
+        # Numeric reproduction check against frozen E-0006 artifact.
+        # Only runs when e0006_ref_dir is provided (e.g., from main()).
+        if e0006_ref_dir is not None:
+            ok, mismatches = _verify_harness_repro_numeric(r, e0006_ref_dir)
+            if not ok:
+                harness_fail_reasons.append({
+                    "seed": 20260723,
+                    "reason": "e0006_numeric_repro_fail",
+                    "mismatches": mismatches,
+                })
         if str(r.get("arm_verdict")) != "NON_TRANSFER_GENERALIZED":
             harness_fail_reasons.append({
                 "seed": 20260723,
@@ -276,7 +365,12 @@ def aggregate_across_seeds(seed_records: List[Dict[str, Any]]) -> Dict[str, Any]
         and uncertainty_harm_ci_negative_all_cells_all_seeds
         and not any_strong_positive_flip
     ):
-        caveat_status = "DROP_SINGLE_SEED_CAVEAT"
+        if n_seeds == N_FROZEN:
+            caveat_status = "DROP_SINGLE_SEED_CAVEAT"
+        else:
+            # All strict conditions hold but fewer than N_FROZEN seeds are present.
+            # Cannot DROP until the full pre-registered seed set is complete.
+            caveat_status = "INSUFFICIENT_SEEDS"
     elif (
         robust_4_of_5_non_transfer_generalized
         and uncertainty_harm_ci_negative_all_cells_3_of_5
@@ -295,12 +389,22 @@ def aggregate_across_seeds(seed_records: List[Dict[str, Any]]) -> Dict[str, Any]
         "caveat_drop_rule": {
             "description": (
                 "Caveat status ladder: "
-                "KILL_HARNESS if seed=20260723 fails E-0006 harness; "
-                "DROP_SINGLE_SEED_CAVEAT iff all seeds are NON_TRANSFER_GENERALIZED, "
-                "all 4 cells have uncertainty_awareness CI_hi<0 in all seeds, and no seed×cell×axis PASS; "
+                f"KILL_HARNESS if seed=20260723 fails E-0006 numeric repro check "
+                f"(tol={_HARNESS_REPRO_TOL}) or arm_verdict != NON_TRANSFER_GENERALIZED; "
+                f"DROP_SINGLE_SEED_CAVEAT iff n_seeds == N_FROZEN={N_FROZEN} AND all seeds are "
+                "NON_TRANSFER_GENERALIZED, all 4 cells have uncertainty_awareness CI_hi<0 in all seeds, "
+                "and no seed×cell×axis PASS; "
+                f"INSUFFICIENT_SEEDS iff strict-all conditions hold but n_seeds < N_FROZEN={N_FROZEN} "
+                "(pending remaining seeds — cannot DROP until full seed set present); "
                 "SEED_MOSTLY_ROBUST iff >=4/5 seeds are NON_TRANSFER_GENERALIZED, "
                 "all 4 cells have uncertainty_awareness CI_hi<0 in >=3/5 seeds, and no strong-positive flip; "
                 "else SEED_SENSITIVE."
+            ),
+            "n_seeds_required_for_drop": N_FROZEN,
+            "insufficient_seeds_warning": (
+                f"INSUFFICIENT_SEEDS: n_seeds={n_seeds} < N_FROZEN={N_FROZEN}; "
+                f"cannot DROP until all {N_FROZEN} pre-registered seeds are present"
+                if n_seeds < N_FROZEN else None
             ),
             "strict_all_non_transfer_generalized": strict_all_non_transfer_generalized,
             "non_transfer_in_4_of_5_seeds": robust_4_of_5_non_transfer_generalized,
@@ -500,7 +604,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         seed_records.append(build_seed_record(seed, arm_path, arm_data))
         print(f"[aggregate] loaded seed={seed}: arm_verdict={arm_data.get('arm_verdict')}")
 
-    agg = aggregate_across_seeds(seed_records)
+    try:
+        agg = aggregate_across_seeds(seed_records, e0006_ref_dir=_E0006_REF_PATH)
+    except ValueError as exc:
+        print(f"[aggregate] ERROR: {exc}", file=sys.stderr)
+        return 1
 
     payload: Dict[str, Any] = {
         "generated_at": _utcnow(),

@@ -77,6 +77,17 @@ genuinely independent runs with distinct DEV/TEST draws and generation RNG strea
 > before seeds 20260724–20260727 are analyzed. Any discrepancy terminates the
 > run family and requires triage. This is a necessary but not sufficient condition
 > for valid multi-seed evidence.
+>
+> **Aggregation minimum N:** `aggregate_multiseed_c2.py` requires **at least
+> 2 seed records** (`n_seeds >= 2`); passing a single seed raises `ValueError`.
+> For single-seed harness validation, compare directly against the E-0006
+> reference at `results/arm_full/`; do not use the aggregation DROP path.
+>
+> **N_FROZEN constant:** the pre-registered seed count is `N_FROZEN = 5`
+> (encoded as a module-level constant in `aggregate_multiseed_c2.py`).
+> `DROP_SINGLE_SEED_CAVEAT` can ONLY be emitted when `n_seeds == N_FROZEN`.
+> If `n_seeds < N_FROZEN` but all strict conditions hold, the outcome is
+> `INSUFFICIENT_SEEDS` — indicating pending seeds, not a clean caveat drop.
 
 **Rationale for 5 seeds:**
 - 5 seeds with a pre-specified threshold (≥4/5) gives a concrete, falsifiable rule
@@ -93,26 +104,35 @@ before any new seed is run.** Changing them after seeing results is not permitte
 
 ### 4a. Single-seed caveat status ladder (frozen; Manager decision)
 
-The aggregate emits one of four statuses:
+The aggregate emits one of five statuses:
 
-1. **`KILL_HARNESS`** if seed=20260723 fails the E-0006 harness check (cannot
-   reproduce the expected E-0006 anchor behavior).
+1. **`KILL_HARNESS`** if seed=20260723 fails the E-0006 harness check:
+   - **Numeric reproduction check (primary):** all 4 cells × 3 axes mean_diff,
+     ci_lo, ci_hi must match the frozen E-0006 artifact (`results/arm_full/`)
+     within absolute tolerance `tol=1e-6`. Values are read from artifact files;
+     nothing is hard-coded. Mismatch → `KILL_HARNESS`.
+   - **Verdict check (secondary):** seed=20260723 arm_verdict must be
+     `NON_TRANSFER_GENERALIZED`. Deviation → `KILL_HARNESS`.
 
 2. **`DROP_SINGLE_SEED_CAVEAT`** (strict, primary criterion) iff **ALL** hold:
-   - For all N seeds (N=5 including 20260723),
-     `arm_verdict == NON_TRANSFER_GENERALIZED`.
-   - For all 4 cells
-     (caa__qwen2.5-7b, caa__llama3-8b, iti__qwen2.5-7b, iti__llama3-8b),
-     uncertainty_awareness `ci_hi < 0` in all N seeds.
-   - Guardrail: no seed×cell×axis may show PASS / strong-positive (all seeds
-     must remain zero-pass with no axis crossing a success threshold).
+   - **n_seeds == N_FROZEN = 5** (the full pre-registered seed set must be present;
+     fewer seeds → `INSUFFICIENT_SEEDS` instead).
+   - For all 5 seeds, `arm_verdict == NON_TRANSFER_GENERALIZED`.
+   - For all 4 cells, uncertainty_awareness `ci_hi < 0` in all 5 seeds.
+   - Guardrail: no seed×cell×axis may show PASS / strong-positive.
 
-3. **`SEED_MOSTLY_ROBUST`** (softened, but caveat retained) iff:
+3. **`INSUFFICIENT_SEEDS`** (pending, not a clean negative) iff:
+   - All strict DROP conditions hold (all seeds NON_TRANSFER, all CI_hi<0, no flip)
+     **but** `n_seeds < N_FROZEN=5`.
+   - Meaning: conditions are met so far, but the full pre-registered seed set has
+     not been run. Cannot retire the caveat until all 5 seeds are present.
+
+4. **`SEED_MOSTLY_ROBUST`** (softened, but caveat retained) iff:
    - `arm_verdict == NON_TRANSFER_GENERALIZED` in ≥4/5 seeds;
    - each of the 4 cells has uncertainty_awareness `ci_hi < 0` in ≥3/5 seeds;
    - no strong-positive flip.
 
-4. **`SEED_SENSITIVE`** (honest fail, caveat retained): all remaining cases.
+5. **`SEED_SENSITIVE`** (honest fail, caveat retained): all remaining cases.
 
 For terminology stability, **`NON_TRANSFER_GENERALIZED` is taken directly from
 the `run_arm_matrix.py` output field `arm_verdict`**. This DRAFT no longer uses
@@ -120,6 +140,7 @@ equivalent paraphrases such as "≥3/4 cells with 0/3 axes" as the decision key.
 
 Outcome interpretation:
 - Only `DROP_SINGLE_SEED_CAVEAT` authorizes removing the single-seed caveat.
+- `INSUFFICIENT_SEEDS` means "not yet" — all conditions hold but more seeds required.
 - `SEED_MOSTLY_ROBUST` and `SEED_SENSITIVE` both retain caveat; the latter is
   the default honest-fail bucket.
 
@@ -144,7 +165,8 @@ from that seed's own JSON artifacts, using the single-seed adjudicator
 **Implementation note (pre-run check):** `aggregate_multiseed_c2.py` determines
 `caveat_drop_rule` outcome by counting per-seed `arm_verdict == NON_TRANSFER_GENERALIZED`
 and per-seed `ci_hi < 0` flags from each seed's own JSON.  The `mean_diff_across_seeds`
-field in the output is **descriptive only** and is never used for verdict determination.
+field in the output is **descriptive only and is never used for verdict determination**
+(see code comment in `aggregate_across_seeds`).
 No pooling path exists in the aggregation logic; this was verified before writing this
 document.
 
@@ -188,6 +210,18 @@ always visible in the paper audit trail, even when the headline verdict is
 `scripts/aggregate_multiseed_c2.py` — manifest-driven, reads all numbers from
 JSON artifacts, zero hand-filling.
 
+Key guardrails implemented:
+- `n_seeds < 2` → raises `ValueError` (single-seed harness path is direct E-0006
+  comparison, not aggregation).
+- `DROP_SINGLE_SEED_CAVEAT` requires `n_seeds == N_FROZEN=5`; fewer seeds →
+  `INSUFFICIENT_SEEDS`.
+- Harness check for seed=20260723 is a **numeric comparison** of all 4 cells × 3
+  axes (mean_diff, ci_lo, ci_hi) against the frozen E-0006 artifact at
+  `results/arm_full/`, with absolute tolerance `1e-6`. Values are read from files;
+  nothing is hard-coded. Mismatch → `KILL_HARNESS`.
+- `mean_diff_across_seeds` is **descriptive only** — not used in any verdict
+  condition (comment in source + this note).
+
 Input manifest format:
 ```json
 [
@@ -201,12 +235,12 @@ Output: `multiseed_c2_aggregate.json` + `multiseed_c2_aggregate.md`.
 
 The aggregation rule for `caveat_drop_rule` is implemented in
 `aggregate_multiseed_c2.aggregate_across_seeds()` and matches §4a above
-(`KILL_HARNESS` / `DROP_SINGLE_SEED_CAVEAT` / `SEED_MOSTLY_ROBUST` /
-`SEED_SENSITIVE`).
+(`KILL_HARNESS` / `DROP_SINGLE_SEED_CAVEAT` / `INSUFFICIENT_SEEDS` /
+`SEED_MOSTLY_ROBUST` / `SEED_SENSITIVE`).
 
 Tests: `tests/test_aggregate_multiseed_c2.py` (includes dedicated coverage for
-`DROP_SINGLE_SEED_CAVEAT` / `SEED_MOSTLY_ROBUST` / `SEED_SENSITIVE` /
-`KILL_HARNESS`).
+all five ladder outcomes, N_FROZEN guard, numeric harness check mismatch/match,
+and empty-truth regression).
 
 ---
 
@@ -330,3 +364,13 @@ rented box), but 5× the number of seeds.
 - freeze_decision_id: (TBD)
 - seeds_frozen: (TBD)
 - aggregation_thresholds_frozen: (TBD)
+
+**2026-07-28 DRAFT changes (implement subagent):**
+- §3: Added N_FROZEN=5 constant note, INSUFFICIENT_SEEDS status, and n_seeds<2 ValueError note.
+- §4a: Expanded ladder from 4 to 5 outcomes; added INSUFFICIENT_SEEDS; made DROP require
+  n_seeds==N_FROZEN=5; replaced harness description with numeric comparison (tol=1e-6)
+  against E-0006 artifact. Status remains DRAFT.
+- §4b: Clarified that `mean_diff_across_seeds` is descriptive only (explicit note).
+- §5: Updated to reflect all five ladder outcomes, N_FROZEN guard, and numeric harness check.
+- These changes do NOT modify: §4b/§4c logic, E-0005/E-0006 records, frozen adjudication
+  protocol, or any result artifacts.

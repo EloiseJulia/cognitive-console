@@ -1,0 +1,562 @@
+reviewer: R1
+role: Independent hostile reviewer (IUI/CHI simulation)
+date: "2026-07-28"
+target_document: docs/research/2026-07-28-prereg-userstudy-console-DRAFT.md
+target_claim: C3
+verdict: REJECT_MAJOR_REVISION
+initial_score_range: "3–4 / 10"
+confidence: medium-high
+review_mode: read-only (no edits, no merges)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# I. INDEPENDENT RESTATEMENT OF CONTRIBUTION
+# ─────────────────────────────────────────────────────────────────────────────
+contribution_independent_restatement: |
+  If this study succeeds as written, it would show that:
+    (1) Participants assigned to a 5-signal boundary-instrument console (Console v2)
+        adopt AI suggestions more appropriately — higher WAR — than participants
+        assigned to a latent-control-slider (Condition B).
+    (2) Console v2 participants score higher on multiple-choice attribution and
+        conflict-understanding probes.
+
+  What it CANNOT show as designed:
+    - That understanding of the non-surjection gap (the theoretical crux of C3) drove
+      the improvement, rather than simply receiving more information.
+    - That the five signals individually contributed (no signal-ablation arm).
+    - That the effect generalises beyond Prolific English-speaking adults making
+      judgements on vignettes derived from Qwen/Llama CAA experiments.
+
+  Honest one-sentence contribution if the study succeeds:
+    "A richer status display for AI suggestions improves appropriate reliance
+     over a minimal latent-control-slider in an online controlled experiment."
+  
+  This is a useful but substantially weaker claim than C3's stated theoretical ambition
+  ("把非满射鸿沟本身变成可读可操作可校准的交互对象"). The protocol as written
+  measures trust calibration as an outcome but does not test whether the
+  non-surjection conceptual framing is the active mechanism.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# II. STRONGEST REJECT CASE
+# ─────────────────────────────────────────────────────────────────────────────
+strongest_reject_case: |
+  1. CONFOUND (information quantity vs. information quality / boundary-specificity):
+     Console v2 exposes 5 signals; the slider exposes 0 of those signals. Any advantage
+     could be a generic more-information effect, not evidence that "exposing the
+     non-surjection boundary" is the active ingredient. The No-console condition C is
+     listed as optional — even if retained, A vs. B comparison cannot isolate boundary-
+     information quality from sheer information quantity.
+     This confound is fatal to the theoretical C3 claim.
+
+  2. ECOLOGICAL VALIDITY FAILURE:
+     The vignettes surface transfer verdicts, calibration-harm warnings, and evidence
+     tiers computed on CAA/ITI steering experiments over deliberation/skepticism/
+     uncertainty axes on Qwen2.5-7B/Llama. Participants make reliance decisions in
+     consumer/finance/health/legal domains. The signal-to-domain mapping is artificial:
+     the displayed signals do not derive from, and were not validated on, those domains.
+     This breaks the internal validity of the "AI suggestion is correct/incorrect"
+     ground truth required for WAR.
+
+  3. STRAWMAN BASELINE:
+     The slider baseline was already identified in the opening report as an inferior
+     design (Huang & Lim already built it; the project explicitly moved beyond it).
+     Beating a design the project itself denounces as inadequate is not an informative
+     contribution at CHI/IUI. Reviewers will note the self-serving comparison.
+
+  4. THEORETICAL CLAIM ≠ EMPIRICAL TEST:
+     C3's claim-map entry says: "instrument that surfaces WHERE legible latent control
+     fails/degrades behavior and helps non-experts recalibrate trust and attribute
+     prompt↔latent conflict." WAR measures appropriateness-of-reliance, not whether
+     participants' mental model of prompt↔latent non-surjectivity changed. There is no
+     DV that measures mental-model update, comprehension of non-surjectivity, or
+     reduction in folk-theory reliance. The theory and the test are misaligned.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# III. STRONGEST ACCEPT CASE
+# ─────────────────────────────────────────────────────────────────────────────
+strongest_accept_case: |
+  - WAR is a principled, decomposable DV with precedent in automation-trust and
+    human-automation interaction literature (over-reliance and under-reliance as
+    separate sub-metrics).
+  - Between-subjects design is the correct choice for this type of interface comparison
+    given irreversible learning effects; the reasoning is sound.
+  - Multi-level mixed-effects analysis plan (AR ~ Condition + (1|P) + (1|Item)) is
+    appropriate for the data structure.
+  - Pre-registered with explicit stopping rules (fixed sample, no optional stopping),
+    Holm-Bonferroni for confirmatory family, BH-FDR for exploratory — methodologically
+    clean.
+  - Exclusion criteria are objective and pre-defined; prohibition on result-directional
+    exclusion is correctly stated.
+  - Stimulus lineage from frozen artifacts preserves reproducibility.
+  - If the study finds a null or reversed effect, it adds honest negative HCI evidence
+    to the paper — consistent with the project's honest-fail ethos.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# IV. RANKED FINDINGS
+# ─────────────────────────────────────────────────────────────────────────────
+findings:
+
+  - id: BLOCKER-1
+    severity: BLOCKER
+    category: Confound / Internal Validity
+    title: "More-information vs. boundary-specific information confound is fatal to C3 theoretical claim"
+    description: |
+      Console v2 provides 5 novel signals (READ, TRANSFER, prompt-ceiling, calibration-
+      harm, evidence-tier). The slider provides none. Any WAR advantage could reflect
+      generic information quantity rather than the specific added value of revealing the
+      non-surjection boundary. The No-console condition C is optional; even if retained,
+      it only tests "any interface" vs. none — not "boundary information" vs. "equal
+      information quantity without boundary framing." Without a matched-information
+      control (same number of signals, same visual complexity, but without the
+      boundary/non-surjection framing), the causal attribution to C3's theoretical claim
+      is impossible.
+    location: "§2 (conditions), §1 (H1 + H2), §4 (DVs)"
+    cheapest_action: |
+      Add a Condition D: "Full-signal display, no boundary framing" — shows the same 5
+      data fields with neutral labels and no transfer/calibration verdict language. This
+      isolates boundary framing from information quantity. Alternatively, restrict the
+      C3 claim to "richer boundary display > minimal slider" and explicitly acknowledge
+      the information-quantity alternative explanation in the paper.
+    close_condition: |
+      Either: (a) protocol adds a matched-information control condition that holds signal
+      count constant while removing non-surjection framing, OR (b) the theoretical C3
+      claim in the paper is explicitly scoped to "boundary-instrument > slider" without
+      attributing the mechanism to non-surjection understanding specifically, with the
+      alternative explanation prominently stated.
+    owner_action_required: true
+    blocks_execution: true
+
+  - id: BLOCKER-2
+    severity: BLOCKER
+    category: Ecological Validity
+    title: "Vignette stimuli are domain-mismatched; ground-truth AI correctness labels are undefined"
+    description: |
+      The vignettes derive signals from frozen ML steering experiments (CAA/ITI on
+      Qwen2.5-7B/Llama-3-8B, deliberation/skepticism/uncertainty axes). Participants
+      make reliance decisions in consumer/finance/health/legal/privacy/education domains.
+      WAR requires a binary label Y_t (AI suggestion correct/incorrect). The protocol
+      states "先前冻结的答案键与规范裁决流程生成（双人标注+分歧裁决）" but:
+        (a) The answer key is not defined in this draft — it is a placeholder.
+        (b) The correctness of AI suggestions in health/legal/finance is independent of
+            the ML steering experiment outcomes. The displayed console signals (transfer
+            verdict, calibration harm for uncertainty axis on Qwen) have no principled
+            mapping to whether a specific finance/health recommendation is correct.
+        (c) If the answer key is derived separately from real-world QA, the link between
+            the displayed console signals and that correctness is artificial.
+      This creates a fundamental incoherence: the instrument is designed to reveal
+      "where latent control fails on deliberation/uncertainty axes" but the ground-truth
+      correctness used to compute WAR is about factual accuracy in real-world domains.
+    location: "§3 (stimuli), §4.1 (WAR formula), §3.4 (answer key)"
+    cheapest_action: |
+      Specify the answer key construction procedure in detail before owner sign-off:
+      (a) define the domains and QA sources, (b) show how the five console signals were
+      mapped to each domain's vignette (or acknowledge that they are cross-domain
+      stylised representations), (c) conduct a pilot showing that participants in
+      condition A actually read the signals and find them interpretable in the domain
+      context. If the signals and domains cannot be coherently coupled, restrict vignettes
+      to NLP/AI domains where the ML findings directly apply.
+    close_condition: |
+      Freeze box includes: (a) complete answer key for all 24 vignettes with explicit
+      dual-annotation procedure, (b) explicit statement of how console signals were
+      derived or mapped to each vignette's domain, (c) pilot data (≥20 participants)
+      showing signal comprehension is above chance in each condition.
+    owner_action_required: true
+    blocks_execution: true
+
+  - id: BLOCKER-3
+    severity: BLOCKER
+    category: Baseline Validity / Contribution Framing
+    title: "Slider baseline is a self-serving strawman; a CHI/IUI reviewer will reject this immediately"
+    description: |
+      The project's own opening report explicitly describes the latent-control-slider as
+      an inferior, already-superseded design (Huang & Lim IASDR 2025). The preregistration
+      rationale for choosing this baseline is silent. A reviewer who reads the related work
+      section of the paper will ask: "Why compare against a design you already identified
+      as inadequate? Why not compare against a prompt-transparency tool (e.g., AI-Instruments
+      style) or an explanation-only interface?" Winning against a strawman does not establish
+      that the non-surjection framing adds value over well-designed alternatives.
+      
+      Additionally: the slider baseline is not concretely specified in this protocol. What
+      does a participant in condition B actually see and interact with? Without a UI
+      specification for condition B, the comparison is not reproducible.
+    location: "§2.1 (condition B description), §1 (H1)"
+    cheapest_action: |
+      (a) Add a concrete UI specification for condition B (screenshots/wireframes in the
+          freeze appendix). (b) In the protocol's judgment-calls section, add explicit
+          justification for why slider is the correct baseline (e.g., "it represents
+          the closest existing published design for non-expert latent control"). 
+          (c) Optionally add a second baseline: prompt-transparency-only (prompt ceiling
+          shown but no transfer/calibration signals) to isolate the incremental value of
+          the non-surjection framing.
+    close_condition: |
+      Protocol includes a concrete UI specification (wireframe or screenshot) for
+      condition B AND explicit justification for choosing it as the comparison baseline
+      with reference to the closest comparable published system.
+    owner_action_required: false
+    blocks_execution: true
+
+  - id: BLOCKER-4
+    severity: BLOCKER
+    category: Theoretical Alignment
+    title: "WAR measures reliance outcomes; no DV measures non-surjection mental model understanding"
+    description: |
+      C3's stated theoretical claim is that surfacing the non-surjection boundary "helps
+      non-experts recalibrate trust and attribute prompt↔latent conflict." WAR captures
+      whether appropriate reliance improves but cannot tell whether:
+        - Participants understood the prompt↔latent distinction
+        - Participants' folk-theory mental model was updated (or entrenched)
+        - The non-surjection framing was even attended to, let alone comprehended
+      H2's "prompt↔latent 冲突理解" tests exist but are listed as secondary DVs with
+      no operationalization detail (number of items, format, scoring, reliability targets).
+      If H1 is significant but H2 is null, what does that mean for C3? If H2 is significant
+      but H1 is null, what does that mean? The protocol has no declared interpretation
+      matrix. For CHI, the theoretical contribution requires at least one DV that taps
+      the proposed mechanism, not just the outcome.
+    location: "§4 (DVs), §1 (H2), §6.2"
+    cheapest_action: |
+      Operationalize H2 DVs in full: (a) provide 5–8 scenario-based comprehension items
+      with example stimuli, a priori scoring rubric, and target reliability α ≥ 0.70;
+      (b) add a 2-item manipulation check: "did you notice the transfer verdict?" and
+      "can you explain in one sentence what it means?" as free-text coded by two raters;
+      (c) declare a pattern-of-results interpretation table: what conclusion follows if
+      H1+H2 both significant / H1 only / H2 only / both null.
+    close_condition: |
+      Full operationalization of H2 DVs (with example items and scoring rubric) included
+      in the freeze document AND interpretation matrix declared.
+    owner_action_required: false
+    blocks_execution: true
+
+  - id: MAJOR-1
+    severity: MAJOR
+    category: Power / Effect Size Justification
+    title: "d=0.35–0.40 effect size assumption has no empirical grounding cited"
+    description: |
+      The protocol specifies a minimum detectable effect of d=0.35–0.40 but cites no
+      prior study from which this estimate derives. In HCI reliance studies:
+        - Studies with rich AI explanations (e.g., XAI studies on automation trust) often
+          find small-to-medium effects (d=0.20–0.50 range), but the variance is large.
+        - A novel 5-signal interface on a complex online task could easily produce d<0.20
+          (noise dominates) or d>0.60 (explanation is highly readable).
+      Without a pilot or citation to an analogous study, N=360 could be both over- and
+      under-powered. If the true effect is d=0.20, power at N=120/group is ~0.33.
+      The protocol says N can be as low as 100/group after exclusions — at d=0.35,
+      power drops to ~0.71, below the stated 0.80 target.
+    location: "§5 (power analysis)"
+    cheapest_action: |
+      Cite 2–3 analogous studies (AI explanation × appropriate reliance) and derive the
+      effect size from the closest comparator. If no close comparator exists, run a
+      20-participant pilot (10 A, 10 B) before full recruitment, compute observed d,
+      and update N accordingly (this is a pre-registered two-stage design, not p-hacking
+      if pre-declared).
+    close_condition: |
+      Either: (a) empirical citation for effect size estimate with similarity justification,
+      OR (b) pilot data from ≥10/group informing the power analysis before freeze.
+    owner_action_required: false
+    blocks_execution: false
+
+  - id: MAJOR-2
+    severity: MAJOR
+    category: Measurement / Operationalization
+    title: "H2 DVs are named but not operationalized; gaming risk for attribution probes"
+    description: |
+      §4.2 lists "错误归因准确度" and "prompt↔latent 冲突理解" as secondary DVs but
+      provides no items, format, scoring, or reliability targets. Problems:
+        (a) Multiple-choice attribution items can be answered by elimination without
+            understanding — especially if participants in condition A saw the correct
+            attribution label in the console signals.
+        (b) "场景化理解题总分（0-100）" has no construct definition — what exactly is
+            being measured? Reading comprehension? Mental model accuracy? Attribution
+            reasoning?
+        (c) Without psychometric pre-validation (at minimum a pilot check of item
+            difficulty and discrimination), these items may have floor/ceiling effects
+            that render H2 untestable.
+        (d) For condition A, the console explicitly names the failure source (transfer
+            fail, calibration harm) — attribution accuracy may simply measure memory
+            for displayed text, not genuine understanding.
+    location: "§4.2, §6.2"
+    cheapest_action: |
+      For each H2 DV: (a) write all items in the freeze document, (b) specify format
+      (MC vs open-ended), (c) state how memory-for-display is distinguished from
+      genuine comprehension (e.g., by asking items that require inference beyond displayed
+      labels), (d) set a target reliability, (e) mark items as comprehension-level
+      (apply/analyze) not recall-level.
+    close_condition: |
+      Full item bank for all H2 measures included in the protocol freeze, with explicit
+      argument that at least some items tap comprehension/application rather than recall.
+    owner_action_required: false
+    blocks_execution: false
+
+  - id: MAJOR-3
+    severity: MAJOR
+    category: Internal Validity / Condition B Specification
+    title: "Condition B (slider) is unspecified; interactivity level is undefined and changes the comparison fundamentally"
+    description: |
+      The protocol states condition B provides "latent 控制强度/方向 滑块与结果视图，
+      but not the five signals." Critical questions not answered:
+        (a) Is the slider interactive (participants can adjust it and see predicted
+            outcomes)? If yes, exploration could generate equivalent information to the
+            console signals.
+        (b) What exactly is displayed in the "results view" — model outputs? Probability
+            scores? Behavioral metrics?
+        (c) Does condition B display any information about AI correctness likelihood,
+            or only the latent control interface?
+        (d) Is the slider pre-set or does the participant control it during the trial?
+      Without specifying condition B, the comparison is not reproducible, and the
+      information-quantity confound (BLOCKER-1) cannot even be characterized.
+    location: "§2.1 (condition B)"
+    cheapest_action: |
+      Write a 1-page UI specification for condition B including: a wireframe/description,
+      list of information elements displayed, interactivity model, and explicit statement
+      of which of the five signals are absent vs. present.
+    close_condition: |
+      Condition B UI specification included in freeze document at the same level of
+      detail as the console-ui-contract.yaml for condition A.
+    owner_action_required: false
+    blocks_execution: true
+
+  - id: MAJOR-4
+    severity: MAJOR
+    category: Ecological Validity / Generalizability
+    title: "Vignette answer key construction procedure is a placeholder; answer key–signal coupling is undefined"
+    description: |
+      See BLOCKER-2 for full argument. Additionally: the 6 domains (consumer/finance/
+      health/legal/privacy/education) each require domain-appropriate QA benchmarks to
+      establish ground truth. Finance and health especially involve contested or
+      jurisdiction-dependent "correct" answers. The protocol's statement
+      "按预先冻结的答案键与规范裁决流程生成（双人标注+分歧裁决）" is a promise,
+      not a plan. Until the answer key exists and is frozen, WAR cannot be computed.
+    location: "§3.4"
+    cheapest_action: |
+      Provide: (a) the source QA dataset or benchmark for each domain (e.g., MedQA for
+      health, CivilComments for privacy), (b) the exact mapping from the frozen ML
+      artifact signals to each vignette card, (c) the double-annotation procedure with
+      IRR target (κ ≥ 0.80 suggested).
+    close_condition: |
+      Answer key for all 24 vignettes is frozen and double-annotated (κ reported)
+      before any participant recruitment.
+    owner_action_required: false
+    blocks_execution: true
+
+  - id: MAJOR-5
+    severity: MAJOR
+    category: WAR Validity
+    title: "WAR equal-weight assumption is unjustified; asymmetric error costs unaddressed"
+    description: |
+      WAR_i = mean_t(AR_it) treats over-reliance on an incorrect AI suggestion as
+      equally costly as under-reliance on a correct one. In health/legal/finance domains,
+      over-reliance costs are asymmetrically higher. The formula makes an implicit equal-
+      utility assumption that is neither justified nor acknowledged. Reviewers with
+      automation-trust expertise will flag this immediately.
+      
+      Additionally: the formula treats all 12 correct + 12 incorrect trials as equal-
+      weight items. If some vignettes are much easier (high signal-to-noise in the
+      displayed console) than others, the average is dominated by easy items, reducing
+      the measure's sensitivity to the boundary-information manipulation.
+    location: "§4.1"
+    cheapest_action: |
+      Add a brief justification of the equal-weight assumption (e.g., "laboratory
+      analogue study; no real stakes") or switch to a utility-weighted WAR with
+      pre-specified weights. Also report OverReliance and UnderReliance as co-primary
+      decomposed outcomes, and plan a sensitivity analysis with difficulty-weighted WAR.
+    close_condition: |
+      Either: (a) explicit justification of equal-weight assumption in the limitations
+      section of the protocol, OR (b) pre-specified domain-specific utility weights,
+      with both weighted and unweighted WAR declared as analysis plan.
+    owner_action_required: false
+    blocks_execution: false
+
+  - id: MINOR-1
+    severity: MINOR
+    category: Analysis Plan
+    title: "GLMM vs GEE choice must be pre-locked before registration, not left open"
+    description: |
+      §6.1 states "trial-level 混合效应逻辑回归（或等价 GEE，二选一预先锁定）" but
+      then does not lock the choice. This is a researcher degree of freedom. GLMM and
+      GEE can give different estimates and SEs, especially with small cluster sizes.
+      Must be locked before submission to any registration platform.
+    location: "§6.1"
+    cheapest_action: "Declare GLMM as primary (allows random slopes) and GEE as sensitivity."
+    close_condition: "§6.1 text updated to name GLMM as primary with GEE as pre-declared sensitivity."
+    owner_action_required: false
+    blocks_execution: false
+
+  - id: MINOR-2
+    severity: MINOR
+    category: IRB / Ethics
+    title: "IRB institution and consent form language not specified; 'light concealment' procedure is a placeholder"
+    description: |
+      §7 describes principles but not specifics: no IRB institution named, no consent
+      form draft, no specification of what is "lightly concealed" and what the debrief
+      script says. For CHI, the supplemental materials must include consent form and
+      IRB approval number. "轻度掩蔽研究假设" without detail raises APA 8.07 concerns.
+    location: "§7"
+    cheapest_action: |
+      Add: (a) target IRB institution, (b) two-sentence summary of what is concealed
+      (e.g., "participants are not told which condition they are in or that the study
+      compares interface designs"), (c) debrief script outline.
+    close_condition: "Draft consent form and debrief script added to freeze document."
+    owner_action_required: true
+    blocks_execution: false
+
+  - id: MINOR-3
+    severity: MINOR
+    category: Participant Characteristics
+    title: "No screening for AI/ML literacy or prior LLM experience"
+    description: |
+      The five console signals (transfer verdict, calibration harm, evidence tier) use
+      technical terminology. Participants with AI/ML background may interpret signals
+      differently from novices. The protocol screens for approval rate and task count
+      but not prior AI experience. This is a moderator that should be (a) measured and
+      (b) declared as a covariate or subgroup analysis target.
+    location: "§8"
+    cheapest_action: |
+      Add a brief AI-literacy screener (e.g., 3 questions about prior LLM use frequency
+      and self-rated ML knowledge) and declare it as a covariate in the analysis plan.
+    close_condition: "AI-literacy measure added as declared covariate in §6."
+    owner_action_required: false
+    blocks_execution: false
+
+  - id: MINOR-4
+    severity: MINOR
+    category: Stopping / Exclusion
+    title: "Attention check threshold is under-specified; '中位数 1/3' completion time is not a pre-determined value"
+    description: |
+      §6.4 rule 3: "注意力检查失败超过阈值（预设 2 题中错 ≥2）" — only 2 attention
+      checks total, requiring 2 failures to exclude. This is very lenient; a random
+      clicker has a non-trivial probability of passing. 
+      Rule 4: "完成时长低于预设下界（如 '<' 中位数 1/3）" — the threshold is defined
+      relative to observed median, meaning it is determined after data collection, not
+      pre-determined. This is a researcher degree of freedom.
+    location: "§6.4"
+    cheapest_action: |
+      (a) Increase attention check count to ≥4 items; exclude at ≥2 failures.
+      (b) Replace median-relative time cutoff with an absolute pilot-estimated minimum
+          (e.g., "<8 minutes" based on a 20-person pilot estimate).
+    close_condition: |
+      Attention check count ≥4 and absolute time cutoff value specified before freeze.
+    owner_action_required: false
+    blocks_execution: false
+
+  - id: QUESTION-1
+    severity: QUESTION
+    category: Design
+    title: "What does the participant experience look like end-to-end in each condition?"
+    description: |
+      The protocol specifies DVs, conditions, and analysis but does not describe the
+      participant experience flow: How is the task framed? Are participants told they
+      are evaluating an AI tool? Are they shown the console before or during the
+      reliance decision? Is the console visible while they make the decision, or shown
+      afterwards as feedback? The interaction sequence determines whether the signals
+      can causally influence reliance behavior.
+    cheapest_action: "Add a §3.5 'participant experience walkthrough' with a step-by-step trial flow."
+    close_condition: "Trial flow diagram or step-by-step protocol included in freeze document."
+
+  - id: QUESTION-2
+    severity: QUESTION
+    category: Design
+    title: "Is the vignette 'AI suggestion' generated from the frozen model artifacts or fabricated?"
+    description: |
+      The protocol says stimuli are "artifact-derived" but the actual AI suggestions
+      (the text that participants decide to rely on) must come from somewhere. Are they:
+      (a) actual model outputs from Qwen/Llama on health/finance/etc. tasks, or
+      (b) human-authored synthetic suggestions labelled correct/incorrect?
+      Option (b) is common in reliance studies but must be stated explicitly.
+      Option (a) raises ecological validity issues about using steering-experiment
+      outputs as "AI advisor" responses in consumer/health domains.
+    cheapest_action: "Add §3.6 specifying AI suggestion generation procedure."
+    close_condition: "Explicit statement of AI suggestion source in freeze document."
+
+  - id: QUESTION-3
+    severity: QUESTION
+    category: Theory
+    title: "Does a WAR advantage actually support C3 or C2? What distinguishes the HCI contribution from a mere XAI effectiveness study?"
+    description: |
+      If Console v2 improves WAR, that is consistent with (a) "boundary information
+      helps calibration" [C3-level], (b) "any explanation helps calibration" [generic XAI],
+      and (c) "more text on screen leads to slower, more careful decisions" [mere
+      caution effect]. For CHI/IUI, the contribution requires establishing which. The
+      current protocol cannot distinguish these. The theoretical linkage to the
+      non-surjection framing (C2→C3) requires either: (a) a mediation analysis through
+      a measured mental-model variable, (b) an ablation condition, or (c) a think-aloud
+      component. None of these are in the protocol.
+    cheapest_action: |
+      Add a brief think-aloud or post-task verbal probe (3 questions) asking what
+      information participants used to decide, what "transfer verdict" means to them,
+      and whether they understood the prompt-ceiling comparison. Pre-declare coding scheme.
+    close_condition: |
+      At least one process measure declared that can distinguish boundary-understanding
+      from generic caution or information-quantity effects.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# V. MUST-FIX BEFORE OWNER SIGN-OFF
+# ─────────────────────────────────────────────────────────────────────────────
+must_fix_before_owner_signoff:
+  - BLOCKER-1: Add matched-information control or explicitly scope down C3 claim
+  - BLOCKER-2: Fully specify vignette answer key construction with domain sources + signal mapping
+  - BLOCKER-3: Add concrete UI specification for condition B (Slider)
+  - BLOCKER-4: Operationalize H2 DVs with full item bank and interpretation matrix
+  - MAJOR-3: Same as BLOCKER-3 — condition B is unspecified and blocks reproducibility
+  - MAJOR-4: Same as BLOCKER-2 — answer key must be frozen before recruitment
+  - MINOR-2: IRB institution and debrief plan (required for human-subjects authorization)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# VI. TOP THREE REJECTION RISKS AT CHI/IUI
+# ─────────────────────────────────────────────────────────────────────────────
+top_3_rejection_risks:
+  - rank: 1
+    risk: "More-information confound makes C3 theoretical claim unsupported even if WAR significant"
+    mitigation_cost: medium
+    mitigation: >
+      Add a matched-information control condition OR explicitly reframe C3 as
+      "boundary display > slider on WAR" without mechanistic causal attribution.
+
+  - rank: 2
+    risk: "Vignette ecological validity: ML steering signals mapped to real-world advice domains
+           without principled coupling; WAR ground truth undefined in the protocol draft"
+    mitigation_cost: high
+    mitigation: >
+      Fully develop and pilot-test vignettes before freeze; restrict to domains
+      where AI correctness is objectively determinable; show signal-domain mapping is
+      interpretable (comprehension pilot ≥20 participants).
+
+  - rank: 3
+    risk: "Strawman baseline: a CHI/IUI reviewer who knows Huang & Lim will say
+           'beating a design your own paper criticizes proves nothing'"
+    mitigation_cost: low
+    mitigation: >
+      Add a second baseline that is not self-servingly weak (e.g., prompt-transparency-
+      only) OR provide explicit methodological justification for slider as the
+      correct adjacent-work comparison.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# VII. SUMMARY FOR MANAGER
+# ─────────────────────────────────────────────────────────────────────────────
+manager_summary: |
+  4 BLOCKERs, 5 MAJORs, 4 MINORs, 3 QUESTIONs. Verdict: REJECT — MAJOR REVISION.
+  Score range: 3–4/10. Confidence: medium-high.
+
+  Core problem: The protocol is scientifically tidy on methodology (WAR definition,
+  analysis plan, stopping rules, multi-level model) but the *theoretical claim*
+  (C3 = non-surjection boundary as interface object → trust calibration) is not
+  testable by this design. The design tests "console with 5 signals vs. slider with
+  0 signals" — that's an information-quantity confound, not a test of boundary-
+  instrument theory. The strawman baseline and undefined vignette ground truth
+  further undermine credibility at CHI/IUI.
+
+  MOST IMPORTANT ACTIONS before owner sign-off:
+  1. [BLOCKER-1] Either add a matched-information control condition (Condition D)
+     or explicitly scope down the C3 claim in the paper to avoid overclaiming the
+     theoretical mechanism.
+  2. [BLOCKER-2 + MAJOR-4] Write the complete vignette answer key and show the
+     signal-to-domain mapping. Do not recruit until this is frozen and piloted.
+  3. [BLOCKER-3 + MAJOR-3] Write a concrete UI specification for Condition B
+     (Slider) at the same level of detail as console-ui-contract.yaml.
+  4. [BLOCKER-4] Operationalize H2 DVs fully — item bank, scoring rubric,
+     interpretation matrix.
+  5. [MINOR-2] Name the IRB institution and draft debrief script.
+
+  If all 4 BLOCKERs are addressed, the protocol could reach 6–7/10 (weak accept
+  territory for a position/design paper at IUI; borderline for CHI full paper
+  without additional methodological novelty). The honest risk is that even with
+  fixes, C3 remains a contribution of modest theoretical depth unless the
+  non-surjection mechanism is directly probed (think-aloud, mental-model measure,
+  or ablation condition).

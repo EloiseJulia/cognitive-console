@@ -1,0 +1,168 @@
+reviewer: R2
+role: Independent reviewer (IUI/CHI simulation, fresh context)
+date: "2026-07-28"
+target_pr: "#38"
+target_branch: feature/40-c3-userstudy-prereg
+target_document: docs/research/2026-07-28-prereg-userstudy-console-DRAFT.md
+target_claim: C3
+review_mode: read-only (no protocol edits, no merge)
+verdict: NEEDS_ANOTHER_REVISION
+initial_score_range: "4.5-5.5 / 10"
+confidence: medium-high
+
+contribution_independent_restatement: |
+  当前版本已从“Console vs Slider”升级为三臂设计，并把 A vs B 设为机制主比较，
+  方向正确。若执行成功，可支持“边界语义组织优于等信息量平铺展示”的行为层结论，
+  并提供一定机制证据（归因/冲突理解/文本探测）。
+  但关键可发表风险仍在：ground-truth 与 signal-profile 的耦合设计存在循环论证隐患，
+  且 H2 与刺激/评分的冻结粒度仍未达到 prereg-grade 可复现标准。
+
+blocker_closure_assessment:
+  - id: BLOCKER-1
+    title: 信息量混淆（A vs B）
+    status: PARTIAL
+    evidence: |
+      DRAFT §2.1 已加入 Info-Matched Flat Panel(B)，明确“同数量/同来源/同数值”并移除
+      READ/TRANSFER 等术语与判词，方向正确。
+      但“视觉层级保持同复杂度”仍是文字承诺，尚无冻结线框/像素级规范/文案对照表；
+      仍可能由显著性、措辞强弱、版式引导造成残余混淆。
+    close_condition: |
+      冻结 A/B UI parity appendix（字段一一映射、字体/颜色/层级/排序、文案长度、警示显著性）
+      + 预试操纵检查证明参与者未把 B 误读为“弱警示版本 A”。
+
+  - id: BLOCKER-2
+    title: ground-truth 与答案键可复现性/循环论证
+    status: OPEN
+    evidence: |
+      DRAFT §3.2 提供了答案键流程（来源、双标注、α阈值）是明显进步；但 §3.2 Step C 同时规定：
+      Y_t=1 仅绑定 PASS，Y_t=0 仅绑定 NONTRANSFER/HARM/ROBUST-NONTRANSFER。
+      这使 signal profile 对 Y_t 具有准决定性，WAR 很容易退化为“是否跟随界面信号”的同义测量，
+      而非独立的“建议正确性”判别，存在 tautology 风险。
+      另外 freeze box 仍显示 answer_key_frozen=NO，未达到可执行预注册闭环。
+    close_condition: |
+      给出可复核的 24 题完整答案键与来源证据链，并将“Y_t 判定”与“profile 分配”解耦：
+      先独立冻结 Y_t，再按预先平衡规则分配 profile，且允许受控比例的非同向配对用于检验
+      参与者是否盲从信号；同时完成并公开双标注 α 实测与分歧裁决日志。
+
+  - id: BLOCKER-3
+    title: Slider baseline 规格与稻草人风险
+    status: PARTIAL
+    evidence: |
+      DRAFT §2.3 已给出滑块范围、步长、刷新行为、可见元素与禁显元素，且补充了
+      Huang & Lim 邻近基线论证，较 R1 明显改进。
+      但仍缺冻结线框/交互流程图/示例屏，且“最多 3 次调整”等关键设计没有来源依据或 pilot 依据；
+      可复现性仍不足，稻草人质疑仅部分缓解。
+    close_condition: |
+      冻结 C 条件 UI contract（线框/屏幕稿/状态机/交互日志字段）并补充设计参数依据
+      （文献或 pilot）；在 protocol 中声明“何种结果将被解释为并非稻草人胜利”。
+
+  - id: BLOCKER-4
+    title: H2 操作化与非满射理解测量
+    status: PARTIAL
+    evidence: |
+      DRAFT §4.2-§4.5 已补 item 数量、rubric、编码一致性目标与 H1×H2 解释矩阵，
+      并加入 think-aloud / post-task probe，方向正确。
+      但“逐题题干+正确键+干扰项来源+编码手册”尚未冻结；当前仍是框架级描述，
+      未达 preregistration-grade 的“第三方可直接复跑评分”标准。
+    close_condition: |
+      冻结完整 H2 item bank 与评分手册（含示例答案锚点、冲突情境判分边界），
+      并在 freeze 前完成编码员训练与小样本一致性演练记录。
+
+findings:
+  - id: R2-BLOCKER-5
+    severity: BLOCKER
+    category: Construct Validity / Circularity
+    title: "WAR 主指标存在 signal→Y_t 结构性同义风险（循环论证）"
+    description: |
+      当前规则把 profile 与 Y_t 绑定为同向关系（PASS→正确，NONTRANSFER/HARM→错误），
+      会把“看懂并跟随信号”与“做出正确依赖决策”混为一体，削弱 C3 机制结论的独立性。
+    cheapest_action: |
+      在冻结前加入最小反例配对与独立判定流程：先盲定 Y_t，再分配 profile；并报告
+      profile 与 Y_t 的耦合强度（phi/Cramer's V）作为设计诊断。
+    close_condition: |
+      证明 WAR 不仅由“跟随 profile 标签”驱动（在反例配对子集仍可解释），且评分规则可复核。
+    owner_action_required: true
+
+  - id: R2-MAJOR-1
+    severity: MAJOR
+    category: Power Justification
+    title: "d=0.35 与 N=450 的依据仍偏弱，三臂 gatekeeping 现实功效不透明"
+    description: |
+      DRAFT §5 给出目标效应与样本，但未给来自相近任务/指标方差的经验依据；
+      亦未报告在 gatekeeping 与多终点下的实际检出能力边界。
+    cheapest_action: |
+      增补最小可复现实功效附录：给 d=0.20/0.30/0.35 三档敏感性，并说明 H2 最小可检效应。
+    close_condition: |
+      参数依据与敏感性分析写入 freeze 文档，能解释“若真实效应更小时如何决策”。
+
+  - id: R2-MAJOR-2
+    severity: MAJOR
+    category: Participant Burden / Data Quality
+    title: "任务负担偏高，30-40 分钟估计可能过乐观并引入疲劳偏差"
+    description: |
+      24 trials + 每题理由 + 归因题抽样 + 4 次 micro think-aloud + 任务后探测，
+      对在线样本可能造成后段注意力下滑，影响 A/B/C 比较稳定性。
+    cheapest_action: |
+      在 freeze 前做 n≈20 计时预试，按真实中位时长与掉线率回调题量/文本长度阈值。
+    close_condition: |
+      预试报告显示时长与质量指标可接受，并将最终阈值写死（替换当前占位阈值）。
+
+  - id: R2-MAJOR-3
+    severity: MAJOR
+    category: Analysis Completeness
+    title: "多重比较与层级模型细节仍有自由度"
+    description: |
+      虽声明 Holm/BH，但 H2 含多 DV × 多比较，尚未明确 family 边界、主次终点层级、
+      缺失数据处理与模型收敛失败时的预案，存在分析路径弹性。
+    cheapest_action: |
+      增加 analysis lock table：每个假设→唯一模型/对比/校正家族/缺失处理/失败回退规则。
+    close_condition: |
+      第三方可据表格无歧义复现统计流程且不需临场判断。
+
+  - id: R2-MAJOR-4
+    severity: MAJOR
+    category: Ethics / IRB Readiness
+    title: "IRB 提交信息仍不完整"
+    description: |
+      DRAFT §7 给出原则，但未写机构与审查路径、debrief 文案、风险事件处理、
+      数据保留期限与跨境传输边界；当前更像伦理意向而非可提交包。
+    cheapest_action: |
+      冻结 IRB submission bundle（consent、debrief、data retention、contact、withdrawal 机制）。
+    close_condition: |
+      形成可直接递交的 IRB 附件清单并与 protocol 版本号绑定。
+
+  - id: R2-QUESTION-1
+    severity: QUESTION
+    category: Measurement Reliability
+    title: "二值与文本编码的 α>=0.80 在实际执行中是否可持续"
+    description: |
+      目标合理但对短文本开放题偏严格，需通过 coder training 与 codebook 示例证明可达。
+    cheapest_action: |
+      先做小样本编码演练并公开冲突类型统计。
+    close_condition: |
+      演练达到阈值或给出预注册降级规则（如 α<0.80 时仅报告稳健子指标）。
+
+must_fix_before_owner_signoff:
+  - BLOCKER-2 remains OPEN: 先冻结并解耦答案键与 profile 映射，关闭循环论证风险
+  - BLOCKER-1/3/4 are only PARTIAL: 冻结 A/B/C UI parity + slider UI contract + H2 完整题库与评分手册
+  - R2-BLOCKER-5: 提供 WAR 非同义性诊断（反例配对或等效独立检验）
+  - R2-MAJOR-4: 补齐 IRB 可提交材料（含 debrief 与数据治理细则）
+  - R2-MAJOR-2: 完成时长/疲劳预试并回写阈值
+  - R2-MAJOR-3: 锁定多重比较 family 与统计回退规则
+
+top_3_rejection_risks:
+  - rank: 1
+    risk: "Ground-truth 与 signal profile 的循环耦合使机制结论可被指为 tautology"
+    mitigation_cost: medium
+  - rank: 2
+    risk: "A/B/C 界面冻结不足导致‘等信息量’与‘非稻草人基线’不可审计"
+    mitigation_cost: medium
+  - rank: 3
+    risk: "任务负担与分析自由度共同放大噪声，弱化 H2 的可解释性"
+    mitigation_cost: low-medium
+
+manager_summary: |
+  R1 的四个 BLOCKER 没有全部关闭：B1/B3/B4 为 PARTIAL，B2 仍 OPEN。
+  新增一个实质 BLOCKER：WAR 可能与 profile 标签同义，存在循环论证。
+  当前版本比 R1 时显著进步（尤其三臂结构与 H2 框架），但尚未达到 owner 可签字状态。
+  建议结论：NEEDS-ANOTHER-REVISION。

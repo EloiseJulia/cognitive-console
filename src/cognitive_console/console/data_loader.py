@@ -363,7 +363,7 @@ def _calibration_harm_from_c2(row: Optional[Dict], arm_payload: Dict) -> Dict:
 
 def _card_verdict(read_signal: Dict, transfer_signal: Dict, calibration_harm: Dict) -> str:
     if read_signal.get("status") == "HOLDS" and transfer_signal.get("verdict") in {"FAIL", "NULL"}:
-        return "LEGIBLE but NOT CONTROLLABLE"
+        return "LEGIBLE: no added control demonstrated"
     if calibration_harm.get("status") == "HARM":
         return "CONTROL ATTEMPT HARMS CALIBRATION"
     if read_signal.get("status") == "HOLDS" and transfer_signal.get("verdict") == "PASS":

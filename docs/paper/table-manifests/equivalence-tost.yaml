@@ -1,0 +1,39 @@
+artifact_id: "table-equivalence-tost"
+artifact_type: "supplementary table (post-hoc)"
+posthoc_label: "POST-HOC / exploratory / NOT pre-registered (D-0056)"
+title: "TOST equivalence + MDE for frozen C2b arm results (E-0005/E-0006)"
+supports_claims: ["C2 (post-hoc characterisation only; does not change C2 verdict)"]
+generator: "scripts/posthoc_equivalence.py"
+manual_edits_allowed: false
+sesoi: 0.05
+tost_ci_level: 0.9
+bootstrap_b: 10000
+bootstrap_seed: 42
+bootstrap_mode: "item-cluster (resample items, consistent with prereg)"
+source_artifacts:
+  - path: "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json"
+    role: "CAAxQwen2.5-7B per_item_diff arrays"
+  - path: "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json"
+    role: "CAAxLlama-3-8B per_item_diff arrays"
+  - path: "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json"
+    role: "ITIxQwen2.5-7B per_item_diff arrays"
+  - path: "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json"
+    role: "ITIxLlama-3-8B per_item_diff arrays"
+intermediate_json: "results/posthoc_equivalence/posthoc_equivalence_e0006.json"
+columns:
+  - method
+  - model
+  - axis
+  - n_test
+  - prereg_mean_diff
+  - prereg_ci_lo_98.33pct
+  - prereg_ci_hi_98.33pct
+  - tost_ci_lo_90pct
+  - tost_ci_hi_90pct
+  - tost_verdict
+  - mde_superiority
+notes:
+  - "SESOI = ±0.05 symmetric to prereg δ per D-0056."
+  - "TOST verdict: CALIBRATION_HARM=CI90 below 0; EQUIVALENT=CI90 within SESOI; UNDERPOWERED=inconclusive."
+  - "MDE_superiority uses normal approx with z_bonf=2.394 and z_80=0.842."
+  - "Brier decomposition: DEFERRED (raw conf+correct pairs not in committed artifacts)."

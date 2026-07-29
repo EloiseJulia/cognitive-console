@@ -171,7 +171,7 @@ def test_ui_contract_social_card_reads_e0010_artifacts():
     selected = read["layer_results"][str(read["selected_layer"])]
     ba_m1 = behavior["paired_bootstrap"]["B_minus_A"]["M1"]
 
-    assert card["headline"] == "LEGIBLE but NOT CONTROLLABLE"
+    assert card["headline"] == "LEGIBLE: no added control demonstrated"
     assert card["read_status"]["status"] == "HOLDS"
     assert card["read_status"]["value"] == pytest.approx(selected["token_blind"]["auc"])
     assert card["transfer_verdict"]["verdict"] == "NULL"

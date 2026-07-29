@@ -30,7 +30,7 @@ Mishra et al. 的 non-surjectivity 只作为背景动机：activation steering �
 
 - **RQ1 / C1：facade 可读性。** 对选定 cognitive axes，最强可读 prompt 在中层 activation 上能否只到达 extracted axis pole 的一部分？指标是 `prompt_reach / pole_reach` ratio 及 CI。
 - **RQ2 / C2：prompt vs latent 行为控制。** 在同一冻结行为裁决器里，naive latent steering（CAA/ITI）是否能超过 DEV 选择的 bounded best prompt？
-- **RQ3 / C3：console 设计含义。** 如果 transfer 失败，console 应如何显示 READ、TRANSFER、prompt ceiling、calibration harm 和 evidence tier？
+- **RQ3 / C3：console 设计含义。** 如果 transfer 失败，console 应如何显示 READ、TRANSFER、bounded best-prompt baseline、calibration harm 和 evidence tier？
 - **探索扩展 / C4：社会推断轴。** novice self-disclosure 这种 user-model/social axis 是否呈现“latent 可读但行为操纵 null”的同构模式？
 
 本文**不押**：
@@ -55,9 +55,9 @@ Mishra et al. 的 non-surjectivity 只作为背景动机：activation steering �
 ## 5. 核心贡献
 
 1. **C1：facade 测量。** 给出一个可复建的 representational measurement：prompt_reach / pole_reach。跨模型不变只保留 deliberation + skepticism；uncertainty 与 focus 为 model-dependent（uncertainty 在 Qwen 成立、Llama 不成立；focus 在 Llama 成立、Qwen 过冲且无 facade）；只能作为 exploratory measurement。
-2. **C2：冻结行为裁决的 scoped negative。** DEV/TEST、best-prompt ceiling、steering alpha、paired item-cluster bootstrap、Bonferroni、coherence gate 和 δ 判据全部冻结；2×2 全失败，uncertainty calibration harm 四格复现。
+2. **C2：冻结行为裁决的 scoped negative。** DEV/TEST、bounded best-prompt baseline、steering alpha、paired item-cluster bootstrap、Bonferroni、coherence gate 和 δ 判据全部冻结；2×2 全失败，uncertainty calibration harm 四格复现。
 3. **方法学纪律本身。** 负结果没有被改写为正结果；OOD 机制臂失败后降级到 Future Work；PSR 只作为探索性 robustness；每个重要结果有 hostile audit。
-4. **Console 设计立场。** Console 不应承诺“latent 超能力滑块”，而应显示 READ/TRANSFER/prompt ceiling/calibration harm/evidence tier，帮助信任再校准。
+4. **Console 设计立场。** Console 不应承诺“latent 超能力滑块”，而应显示 READ/TRANSFER/bounded best-prompt baseline/calibration harm/evidence tier，帮助信任再校准。
 
 ## 6. 实验如何设计
 

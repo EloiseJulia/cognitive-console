@@ -10,11 +10,11 @@
 | 证据块 | 结论 | 关键数字 | 状态 |
 |---|---|---:|---|
 | C1 facade / Qwen | prompt 只到达 axis pole 的一部分 | 聚合 3/4 轴 hold；focus 轴为 overshoot/no facade | exploratory，valid_for_paper=false（E-0003） |
-| C1 facade / Llama | 聚合 3/4 复现，但轴组成不同 | 聚合 3/4；uncertainty 不 hold，focus hold | exploratory，轴异质性 caveat（E-0008） |
-| C2 2×2 冻结裁决 + 5-seed 鲁棒性 | latent 不超过 best-prompt ceiling；5/5 seed 均 NON_TRANSFER | 4 cells 全 0/3；uncertainty Δ：-0.228, -0.072, -0.103, -0.084，CI 全排除 0；uncertainty CI_hi<0 在全 4 cells × 全 5 seeds；any_true_pass=false | core scoped negative（E-0005/E-0006）；multi-seed robustness（E-0011，item pool 与 E-0006 共享，仅 DEV/TEST split 随 seed 变） |
+| C1 facade / Llama | 聚合 3/4 两模型测量结果一致，但轴组成不同 | 聚合 3/4；uncertainty 不 hold，focus hold | exploratory，轴异质性 caveat（E-0008） |
+| C2 2×2 冻结裁决 + 5-seed 鲁棒性 | latent 未显示任何超过 bounded best-prompt baseline 的额外控制（no demonstrated added control）；5/5 seed 均 NON_TRANSFER。只有 uncertainty 轴是稳健结果（CI 排除 0），deliberation 为混合（ITI 等价、CAA 欠功效），skepticism 为全欠功效（不能区分无效应与小于 SESOI 的效应） | 4 cells 全 0/3；uncertainty Δ：-0.228, -0.072, -0.103, -0.084，CI 全排除 0；post-hoc TOST（D-0056，exploratory）：uncertainty 4/4 CALIBRATION_HARM；deliberation ITI 2 cells EQUIVALENT；skepticism 4/4 UNDERPOWERED | core scoped negative（E-0005/E-0006）；multi-seed robustness（E-0011，item pool 与 E-0006 共享，仅 DEV/TEST split 随 seed 变）；post-hoc TOST（results/posthoc_equivalence/） |
 | 方法强度与社会轴 | PSR 仍 KILL；社会轴 READ 但行为 null | PSR uncertainty -0.160 [-0.292,-0.039]；social B−A M1=+0.00148, p_bonf=1.0；READ AUC=0.954 | exploratory / valid_for_paper=false（E-0009/E-0010） |
 
-**Novelty 一句话：** 不是提出又一个 steering 方法，而是把“prompt 通道”和“latent 通道”放进同一个冻结、审计过的行为裁决器里竞争，再把失败边界翻译成 cognitive console 的 UI/evaluation contract。
+**Novelty 一句话（锐化后）：** 不是提出又一个 steering 方法，而是把"prompt 通道"和"latent 通道"放进同一个冻结、审计过的行为裁决器里竞争，再把失败边界翻译成 cognitive console 的 UI/evaluation contract。与 Sprejer et al. 的区别：他们是并行工作（非前作），用 SAE features + MMLU，无预注册，用于外部佐证而非 scoop；与 Heyman 的区别：他们展示 trained steering 可以 mimic prompting，本文声明范围刻意限于 naive/off-the-shelf + bounded prompt，并用 PSR arm pre-empt "方法太弱"攻击；与 Mishra 的区别：他们证明内部非满射性（背景），本文测试行为层面的 transfer。
 
 **当前状态：** C2 的 2×2 negative + calibration harm 是最硬的 paper core；C2 的 single-seed caveat 已正式退役（D-0055）：预注册多 seed 检验（E-0011，5/5 seeds NON_TRANSFER_GENERALIZED，uncertainty CI_hi<0 全 4 cells × 全 5 seeds，any_true_pass=false）在相同冻结裁决器下复现，DROP_SINGLE_SEED_CAVEAT 已生效。**披露：** E-0011 与 E-0006 共享 item pool（同一 first-N 确定性切片），仅 DEV/TEST split 随 seed 变，非独立 item 抽样。C1 是探索性两模型测量；PSR 和社会推断轴用于 pre-empt / discussion，不升级为 confirmatory；OOD 机制臂为 valid null，机制降级为 Future Work。
 
@@ -97,7 +97,9 @@ Breadth 轴来自 `results/breadth_confirm2/` 与 D-0047：facade ratio 0.271 �
 
 ### 6.6 Console v2
 
-`docs/specs/console-v1.md` 把 console 定位为 reality-check / boundary instrument，不是 latent control slider。v2 UI-contract 每个 affordance card 显示 5 个 artifact-derived signals：READ status、TRANSFER verdict、PROMPT-CEILING、CALIBRATION-HARM、EVIDENCE-TIER。`results/console_v1_demo/console_v1_demo_report.md` 与 `docs/paper/figure-manifests/console-ui-contract.yaml` 说明静态图和 demo 从冻结 artifacts 读取，不手填数字。
+`docs/specs/console-v1.md` 把 console 定位为 reality-check / boundary instrument，不是 latent control slider。v2 UI-contract 每个 affordance card 显示 5 个 artifact-derived signals：READ status、TRANSFER verdict、BOUNDED BEST-PROMPT BASELINE（原"PROMPT-CEILING"，已重命名为中性术语）、CALIBRATION-HARM、EVIDENCE-TIER。`results/console_v1_demo/console_v1_demo_report.md` 与 `docs/paper/figure-manifests/console-ui-contract.yaml` 说明静态图和 demo 从冻结 artifacts 读取，不手填数字。
+
+**Console 标签更新（D-0056）：** `src/cognitive_console/console/data_loader.py._card_verdict` 已将分类式 `"LEGIBLE but NOT CONTROLLABLE"` 改为诚实的 `"LEGIBLE: no added control demonstrated"`（经生成器改，不手改 PDF 产物；幂等校验通过）。
 
 ## 7. 实验结果
 
@@ -125,7 +127,7 @@ Breadth 轴来自 `results/breadth_confirm2/` 与 D-0047：facade ratio 0.271 �
 | ITI×Qwen | +0.020 [+0.000,+0.055] | -0.100 [-0.270,+0.060] | **-0.103 [-0.136,-0.069]** | 0/3 fail |
 | ITI×Llama | +0.015 [-0.040,+0.060] | +0.000 [-0.195,+0.205] | **-0.084 [-0.115,-0.049]** | 0/3 fail |
 
-Interpretation：在 tested scope 内，latent steering 没有超过 bounded best prompt；uncertainty/calibration 不只是无增益，而是显著更差。尤其 CAA×Qwen uncertainty Δ=-0.228，是 console v1/v2 反复高亮的红色告警。该结论来自 C2 冻结行为裁决本身，不依赖 C1 uncertainty facade 是否复现。
+Interpretation：在 tested scope 内，latent steering **未显示任何超过 bounded best-prompt baseline 的额外控制（no demonstrated added control）**。只有 uncertainty/calibration 轴是稳健负结果：不只是无增益，而是显著更差（CI 排除 0）。deliberation 和 skepticism 的 non-transfer 是**欠功效非检出**，不是"证明无效应"。Post-hoc TOST equivalence（D-0056，exploratory，见生成表 `docs/paper/tables/equivalence-tost.tex`）：uncertainty 4/4 CALIBRATION_HARM（稳健）；deliberation ITI 2 cells EQUIVALENT（实际等价）、CAA 2 cells UNDERPOWERED；skepticism 4/4 UNDERPOWERED（方差过宽）。任何轴在任何 cell 均无 superiority。尤其 CAA×Qwen uncertainty Δ=-0.228，是 console v1/v2 反复高亮的红色告警。该结论来自 C2 冻结行为裁决本身，不依赖 C1 uncertainty facade 是否复现。
 
 ### 7.3 PSR：KILL，支持“不是只因为 naive 方法太弱”
 
@@ -151,7 +153,7 @@ Console 的目标不是“把 latent 方向包装成 slider”，而是显示**�
 
 1. **READ status**：轴是否 latent-readable（C1 ratio/CI 或 social READ AUC）。
 2. **TRANSFER verdict**：是否通过 prompt-vs-latent 行为裁决；social card 的 NULL 是 prompt condition B−A，不是 steering transfer。
-3. **PROMPT-CEILING**：bounded best prompt 已经达到什么水平。
+3. **BOUNDED BEST-PROMPT BASELINE**（原"PROMPT-CEILING"）：bounded best prompt 已经达到什么水平；renamed 为中性术语，避免"ceiling"的倾向性含义。
 4. **CALIBRATION-HARM**：uncertainty 轴若 steering 伤害校准，必须显式红色告警。
 5. **EVIDENCE-TIER**：confirmatory / exploratory / untested，显示单模型、单 seed、human-α pending 等 caveat。
 
@@ -160,7 +162,8 @@ Console 的目标不是“把 latent 方向包装成 slider”，而是显示**�
 ## 9. 局限与诚实边界
 
 - C1：两模型单 run，聚合 3/4 但轴组成异质；跨模型不变只到 deliberation + skepticism，不能写成普遍定律。
-- C2：强于单模型单方法，但仍限于 7–8B open instruct models、CAA/ITI、三条 metacognitive axes、单 seed/冻结预算；不是 activation steering 不可能性定理。
+- C2：强于单模型单方法，但仍限于 7–8B open instruct models、CAA/ITI、三条 metacognitive axes、单 seed/冻结预算；不是 activation steering 不可能性定理。**重要区分：** uncertainty 轴是稳健负结果（CI 排除 0）；deliberation/skepticism 是欠功效非检出，不是"证明等价/无效应"（见 post-hoc TOST 表，exploratory）。
+- Calibration harm 机制：off-manifold distance 已被 valid null；Brier 分解（reliability/resolution）**未做**——per-item confidence 在 A800 未提交 transcripts 中，可 re-run 恢复，不能从已提交 artifacts 推算；不得在 prose 里夸大校准机制。
 - PSR：只在 Qwen 单模型探索；不能覆盖所有 trained steering。
 - 机制：OOD distance hypothesis 已被 valid null；机制未知。
 - 社会轴：LLM-judge-only、human-α pending、M2/M3 not implemented、steer arm held；不能作为 confirmatory manipulation claim。
@@ -171,8 +174,9 @@ Console 的目标不是“把 latent 方向包装成 slider”，而是显示**�
 1. **Llama PSR 确认。** 若要把 PSR robustness 从 exploratory 推高，需要新 prereg + Llama 或更大预算。
 2. **更强 steering / trained methods。** 任何 multi-layer schedule、RepE、trained prompt-mimicking steering 都应新冻结，不得改写 E-0005/E-0006。
 3. **机制新包。** Calibration harm 可探索 confidence-format disruption、answer-style distribution shift、sampling×calibration scoring，但必须新预注册。
-4. **C1 结构。** 解释为什么 deliberation/skepticism 稳定，而 uncertainty/focus 翻转。
-5. **真人走查。** Owner-gated；需要伦理/招募/venue 决策，测试 boundary instrumentation 是否改善 calibrated reliance。
+4. **Brier 分解（未决）。** Uncertainty calibration harm 的 Brier 分解（reliability/resolution/base-rate）尚未完成——per-item (confidence, correctness) pairs 在 A800 未提交 transcripts 中，可 re-run 恢复。不能从已提交 artifacts 推算，不得在论文 prose 夸大校准机制。
+5. **C1 结构。** 解释为什么 deliberation/skepticism 稳定，而 uncertainty/focus 翻转。
+6. **真人走查。** Owner-gated；需要伦理/招募/venue 决策，测试 boundary instrumentation 是否改善 calibrated reliance。
 
 ## 11. 方法学与诚实哲学
 

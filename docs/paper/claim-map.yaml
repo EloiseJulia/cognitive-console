@@ -38,7 +38,7 @@ claims:
     valid_for_paper: "background citation only; not our empirical claim"
     gate_notes: "No project evidence row because it is not our claim. Must not enter Abstract/Contributions/Conclusion as an empirical contribution."
   C3:
-    statement: "From the frozen C2 adjudication, a cognitive console should expose an interface-evaluation contract for latent-control affordances: READ status, TRANSFER verdict, prompt-ceiling comparison, calibration-harm warning, and evidence tier."
+    statement: "From the frozen C2 adjudication, a cognitive console should expose an interface-evaluation contract for latent-control affordances: READ status, TRANSFER verdict, bounded best-prompt baseline comparison, calibration-harm warning, and evidence tier."
     status: "design implication from C2 only; no standalone evidence row and no user study yet"
     supporting_evidence_ids: []
     scope: "Pure-model route; no formative or controlled user study; human study deferred/owner-gated"

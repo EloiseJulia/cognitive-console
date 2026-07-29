@@ -5,6 +5,17 @@
 
 ---
 
+## 2026-07-29 · D-0056 · Review-response ML-side hardening (owner-approved autonomous; venue/user-study deferred)
+- **Trigger:** 3-stage chained review pipeline (reviewer Opus4.8 / reject GPT-5.6-Sol / area-chair Opus4.8 → **Weak Reject**; reviews under `reviews/2026-07-29-review-pipeline/`). Central fatal gap = no user study (owner-deferred). AC was fair: discounted "novelty collapse" (Sprejer is concurrent not prior), affirmed the calibration-harm result genuinely excludes zero in all 4 cells, and credited the honest scoping.
+- **Owner ruling:** do the non-gated, no-user-study ML-side fixable hardening now (Manager-autonomous, audited); defer venue/user-study strategic decision.
+- **Scope (branch feature/44-review-response):**
+  1. **Reframe null + equivalence:** post-hoc TOST equivalence + MDE per cell/axis on FROZEN E-0005/E-0006/E-0011 artifacts (SESOI=±δ=0.05, symmetric to prereg superiority threshold; labeled POST-HOC exploratory, NOT re-opening frozen prereg). Distinguish underpowered non-detection (deliberation/skepticism CIs include meaningful effects) from robust calibration-harm (uncertainty CI excludes zero). "does not beat" → "no demonstrated added control".
+  2. **Comparator transparency:** move best-prompt comparator protocol (16 authored strong prompts, α/layer, DEV/TEST) into main text; rename loaded term "ceiling" → neutral "bounded best-prompt baseline".
+  3. **Brier decomposition:** reliability/resolution/base-rate from frozen per-item data → defensible calibration claim, not construct confound.
+  4. **Console relabel:** categorical "NOT CONTROLLABLE" → honest "no added control demonstrated", via figure GENERATOR (plot_console_ui_contract.py), never hand-edit generated artifact (lineage).
+  5. **Novelty sharpen + de-inflate:** vs Sprejer(concurrent)/Heyman/Mishra; remove "generalized", n=1 "replication" inflation.
+- **Discipline:** new numbers only from artifact-driven scripts (no hand-copy in prose); new analyses POST-HOC and labeled; frozen records E-0003..E-0011 + preregs untouched; generated tables/figures via generators only; hostile audit before merge. Does NOT change core C2/C1 claim direction — hardens honesty/defensibility of existing claims.
+
 ## 2026-07-29 · D-0055 · E-0011 audit MERGEABLE; DROP_SINGLE_SEED_CAVEAT enacted; C2 caveat retired; E-0011 valid_for_paper=true
 - **Trigger:** independent hostile audit of E-0011 multi-seed results returned verdict = **MERGEABLE** (no BLOCKERs). Manager independently verified all MAJOR findings raised during audit.
 - **MAJOR#1 CLOSED — default-value identity (d20cced == 09f87395):** `scripts/run_arm_matrix.py` default arguments in E-0006 commit `d20cced` and E-0011 commit `09f87395` are byte-identical: `max_new_tokens=64`, `batch_size=16`, `temperature=0.7`, `n_extraction=28`. E-0011 passes these values explicitly in the run command (they match the defaults), so the generation configuration is identical to E-0006. All other protocol parameters (α grid, N per axis, k, bootstrap B, δ, coherence threshold, n_strong, model identifiers, steering families) were independently verified to be consistent across commits. Audit finding closed.

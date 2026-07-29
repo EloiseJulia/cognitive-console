@@ -1,0 +1,308 @@
+{
+  "posthoc_label": "POST-HOC / exploratory / NOT pre-registered (D-0056)",
+  "generated_at": "2026-07-29T03:53:37.926352+00:00",
+  "source": "scripts/posthoc_equivalence.py",
+  "arm_dir": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\arm_full",
+  "sesoi": 0.05,
+  "tost_ci_level": 0.9,
+  "bootstrap_b": 10000,
+  "bootstrap_seed": 42,
+  "brier_decomposition": {
+    "feasibility": "DEFERRED",
+    "reason": "per_item_prompt/per_item_steer arrays in committed artifacts are already-aggregated 1-Brier = 1-(conf-correct)^2 per item. Raw (confidence, correctness) pairs required for reliability/resolution/uncertainty decomposition (Murphy 1973) are in A800 generation transcripts (~/cc_l0/repo/results/.../) that were NOT committed to the repository. Brier decomposition CANNOT be computed from submitted artifacts. Requires targeted re-run or transcript retrieval. No decomposition numbers have been imputed or invented."
+  },
+  "cells": [
+    {
+      "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\arm_full\\cell_caa__qwen2.5-7b\\c2b_adjudication_results.json",
+      "method": "caa",
+      "model": "qwen2.5-7b",
+      "axes": [
+        {
+          "axis": "deliberation",
+          "n_test": 40,
+          "prereg_mean_diff": 0.015,
+          "prereg_ci_lo": -0.04,
+          "prereg_ci_hi": 0.07,
+          "prereg_ci_level": 0.9833333333333333,
+          "prereg_passed": false,
+          "tost_ci_lo": -0.025,
+          "tost_ci_hi": 0.05,
+          "tost_ci_level": 0.9,
+          "tost_sesoi": 0.05,
+          "tost_verdict": "UNDERPOWERED",
+          "mde": {
+            "n": 40,
+            "se_estimate": 0.02308,
+            "mde_superiority_80pct_power": 0.0747,
+            "mde_tost_max_equiv_80pct_power": -0.0074,
+            "tost_powered_for_equiv": false,
+            "mde_note": "mde_superiority: minimum |mean(d)| detectable at 80% power for the prereg Bonferroni test (two-sided CI at 98.33% excludes 0), using z_bonf=2.394 and z_80=0.842. mde_tost_max_equiv: max true |effect| \u2264 this for which 90% TOST CI would have 80% power to declare equivalence within SESOI=\u00b10.05; negative = study underpowered to rule out meaningful effects even if true effect=0."
+          }
+        },
+        {
+          "axis": "skepticism",
+          "n_test": 40,
+          "prereg_mean_diff": -0.08,
+          "prereg_ci_lo": -0.225,
+          "prereg_ci_hi": 0.045,
+          "prereg_ci_level": 0.9833333333333333,
+          "prereg_passed": false,
+          "tost_ci_lo": -0.175,
+          "tost_ci_hi": 0.015,
+          "tost_ci_level": 0.9,
+          "tost_sesoi": 0.05,
+          "tost_verdict": "UNDERPOWERED",
+          "mde": {
+            "n": 40,
+            "se_estimate": 0.058089,
+            "mde_superiority_80pct_power": 0.188,
+            "mde_tost_max_equiv_80pct_power": -0.0944,
+            "tost_powered_for_equiv": false,
+            "mde_note": "mde_superiority: minimum |mean(d)| detectable at 80% power for the prereg Bonferroni test (two-sided CI at 98.33% excludes 0), using z_bonf=2.394 and z_80=0.842. mde_tost_max_equiv: max true |effect| \u2264 this for which 90% TOST CI would have 80% power to declare equivalence within SESOI=\u00b10.05; negative = study underpowered to rule out meaningful effects even if true effect=0."
+          }
+        },
+        {
+          "axis": "uncertainty_awareness",
+          "n_test": 53,
+          "prereg_mean_diff": -0.227673,
+          "prereg_ci_lo": -0.369779,
+          "prereg_ci_hi": -0.091604,
+          "prereg_ci_level": 0.9833333333333333,
+          "prereg_passed": false,
+          "tost_ci_lo": -0.327834,
+          "tost_ci_hi": -0.131397,
+          "tost_ci_level": 0.9,
+          "tost_sesoi": 0.05,
+          "tost_verdict": "CALIBRATION_HARM",
+          "mde": {
+            "n": 53,
+            "se_estimate": 0.060493,
+            "mde_superiority_80pct_power": 0.1958,
+            "mde_tost_max_equiv_80pct_power": -0.1004,
+            "tost_powered_for_equiv": false,
+            "mde_note": "mde_superiority: minimum |mean(d)| detectable at 80% power for the prereg Bonferroni test (two-sided CI at 98.33% excludes 0), using z_bonf=2.394 and z_80=0.842. mde_tost_max_equiv: max true |effect| \u2264 this for which 90% TOST CI would have 80% power to declare equivalence within SESOI=\u00b10.05; negative = study underpowered to rule out meaningful effects even if true effect=0."
+          }
+        }
+      ]
+    },
+    {
+      "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\arm_full\\cell_caa__llama3-8b\\c2b_adjudication_results.json",
+      "method": "caa",
+      "model": "meta-llama-3-8b",
+      "axes": [
+        {
+          "axis": "deliberation",
+          "n_test": 40,
+          "prereg_mean_diff": 0.025,
+          "prereg_ci_lo": -0.03,
+          "prereg_ci_hi": 0.075,
+          "prereg_ci_level": 0.9833333333333333,
+          "prereg_passed": false,
+          "tost_ci_lo": -0.01,
+          "tost_ci_hi": 0.06,
+          "tost_ci_level": 0.9,
+          "tost_sesoi": 0.05,
+          "tost_verdict": "UNDERPOWERED",
+          "mde": {
+            "n": 40,
+            "se_estimate": 0.021706,
+            "mde_superiority_80pct_power": 0.0702,
+            "mde_tost_max_equiv_80pct_power": -0.004,
+            "tost_powered_for_equiv": false,
+            "mde_note": "mde_superiority: minimum |mean(d)| detectable at 80% power for the prereg Bonferroni test (two-sided CI at 98.33% excludes 0), using z_bonf=2.394 and z_80=0.842. mde_tost_max_equiv: max true |effect| \u2264 this for which 90% TOST CI would have 80% power to declare equivalence within SESOI=\u00b10.05; negative = study underpowered to rule out meaningful effects even if true effect=0."
+          }
+        },
+        {
+          "axis": "skepticism",
+          "n_test": 40,
+          "prereg_mean_diff": 0.0,
+          "prereg_ci_lo": -0.19,
+          "prereg_ci_hi": 0.2,
+          "prereg_ci_level": 0.9833333333333333,
+          "prereg_passed": false,
+          "tost_ci_lo": -0.135,
+          "tost_ci_hi": 0.14,
+          "tost_ci_level": 0.9,
+          "tost_sesoi": 0.05,
+          "tost_verdict": "UNDERPOWERED",
+          "mde": {
+            "n": 40,
+            "se_estimate": 0.082896,
+            "mde_superiority_80pct_power": 0.2683,
+            "mde_tost_max_equiv_80pct_power": -0.1561,
+            "tost_powered_for_equiv": false,
+            "mde_note": "mde_superiority: minimum |mean(d)| detectable at 80% power for the prereg Bonferroni test (two-sided CI at 98.33% excludes 0), using z_bonf=2.394 and z_80=0.842. mde_tost_max_equiv: max true |effect| \u2264 this for which 90% TOST CI would have 80% power to declare equivalence within SESOI=\u00b10.05; negative = study underpowered to rule out meaningful effects even if true effect=0."
+          }
+        },
+        {
+          "axis": "uncertainty_awareness",
+          "n_test": 53,
+          "prereg_mean_diff": -0.071528,
+          "prereg_ci_lo": -0.103443,
+          "prereg_ci_hi": -0.034012,
+          "prereg_ci_level": 0.9833333333333333,
+          "prereg_passed": false,
+          "tost_ci_lo": -0.094604,
+          "tost_ci_hi": -0.046753,
+          "tost_ci_level": 0.9,
+          "tost_sesoi": 0.05,
+          "tost_verdict": "CALIBRATION_HARM",
+          "mde": {
+            "n": 53,
+            "se_estimate": 0.014663,
+            "mde_superiority_80pct_power": 0.0474,
+            "mde_tost_max_equiv_80pct_power": 0.0135,
+            "tost_powered_for_equiv": true,
+            "mde_note": "mde_superiority: minimum |mean(d)| detectable at 80% power for the prereg Bonferroni test (two-sided CI at 98.33% excludes 0), using z_bonf=2.394 and z_80=0.842. mde_tost_max_equiv: max true |effect| \u2264 this for which 90% TOST CI would have 80% power to declare equivalence within SESOI=\u00b10.05; negative = study underpowered to rule out meaningful effects even if true effect=0."
+          }
+        }
+      ]
+    },
+    {
+      "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\arm_full\\cell_iti__qwen2.5-7b\\c2b_adjudication_results.json",
+      "method": "iti",
+      "model": "qwen2.5-7b",
+      "axes": [
+        {
+          "axis": "deliberation",
+          "n_test": 40,
+          "prereg_mean_diff": 0.02,
+          "prereg_ci_lo": 0.0,
+          "prereg_ci_hi": 0.055,
+          "prereg_ci_level": 0.9833333333333333,
+          "prereg_passed": false,
+          "tost_ci_lo": 0.005,
+          "tost_ci_hi": 0.04,
+          "tost_ci_level": 0.9,
+          "tost_sesoi": 0.05,
+          "tost_verdict": "EQUIVALENT",
+          "mde": {
+            "n": 40,
+            "se_estimate": 0.011983,
+            "mde_superiority_80pct_power": 0.0388,
+            "mde_tost_max_equiv_80pct_power": 0.0202,
+            "tost_powered_for_equiv": true,
+            "mde_note": "mde_superiority: minimum |mean(d)| detectable at 80% power for the prereg Bonferroni test (two-sided CI at 98.33% excludes 0), using z_bonf=2.394 and z_80=0.842. mde_tost_max_equiv: max true |effect| \u2264 this for which 90% TOST CI would have 80% power to declare equivalence within SESOI=\u00b10.05; negative = study underpowered to rule out meaningful effects even if true effect=0."
+          }
+        },
+        {
+          "axis": "skepticism",
+          "n_test": 40,
+          "prereg_mean_diff": -0.1,
+          "prereg_ci_lo": -0.27,
+          "prereg_ci_hi": 0.06,
+          "prereg_ci_level": 0.9833333333333333,
+          "prereg_passed": false,
+          "tost_ci_lo": -0.215,
+          "tost_ci_hi": 0.01,
+          "tost_ci_level": 0.9,
+          "tost_sesoi": 0.05,
+          "tost_verdict": "UNDERPOWERED",
+          "mde": {
+            "n": 40,
+            "se_estimate": 0.06943,
+            "mde_superiority_80pct_power": 0.2247,
+            "mde_tost_max_equiv_80pct_power": -0.1226,
+            "tost_powered_for_equiv": false,
+            "mde_note": "mde_superiority: minimum |mean(d)| detectable at 80% power for the prereg Bonferroni test (two-sided CI at 98.33% excludes 0), using z_bonf=2.394 and z_80=0.842. mde_tost_max_equiv: max true |effect| \u2264 this for which 90% TOST CI would have 80% power to declare equivalence within SESOI=\u00b10.05; negative = study underpowered to rule out meaningful effects even if true effect=0."
+          }
+        },
+        {
+          "axis": "uncertainty_awareness",
+          "n_test": 53,
+          "prereg_mean_diff": -0.102755,
+          "prereg_ci_lo": -0.135875,
+          "prereg_ci_hi": -0.069369,
+          "prereg_ci_level": 0.9833333333333333,
+          "prereg_passed": false,
+          "tost_ci_lo": -0.126104,
+          "tost_ci_hi": -0.079445,
+          "tost_ci_level": 0.9,
+          "tost_sesoi": 0.05,
+          "tost_verdict": "CALIBRATION_HARM",
+          "mde": {
+            "n": 53,
+            "se_estimate": 0.014236,
+            "mde_superiority_80pct_power": 0.0461,
+            "mde_tost_max_equiv_80pct_power": 0.0146,
+            "tost_powered_for_equiv": true,
+            "mde_note": "mde_superiority: minimum |mean(d)| detectable at 80% power for the prereg Bonferroni test (two-sided CI at 98.33% excludes 0), using z_bonf=2.394 and z_80=0.842. mde_tost_max_equiv: max true |effect| \u2264 this for which 90% TOST CI would have 80% power to declare equivalence within SESOI=\u00b10.05; negative = study underpowered to rule out meaningful effects even if true effect=0."
+          }
+        }
+      ]
+    },
+    {
+      "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\arm_full\\cell_iti__llama3-8b\\c2b_adjudication_results.json",
+      "method": "iti",
+      "model": "meta-llama-3-8b",
+      "axes": [
+        {
+          "axis": "deliberation",
+          "n_test": 40,
+          "prereg_mean_diff": 0.015,
+          "prereg_ci_lo": -0.04,
+          "prereg_ci_hi": 0.06,
+          "prereg_ci_level": 0.9833333333333333,
+          "prereg_passed": false,
+          "tost_ci_lo": -0.02,
+          "tost_ci_hi": 0.045,
+          "tost_ci_level": 0.9,
+          "tost_sesoi": 0.05,
+          "tost_verdict": "EQUIVALENT",
+          "mde": {
+            "n": 40,
+            "se_estimate": 0.02074,
+            "mde_superiority_80pct_power": 0.0671,
+            "mde_tost_max_equiv_80pct_power": -0.0016,
+            "tost_powered_for_equiv": false,
+            "mde_note": "mde_superiority: minimum |mean(d)| detectable at 80% power for the prereg Bonferroni test (two-sided CI at 98.33% excludes 0), using z_bonf=2.394 and z_80=0.842. mde_tost_max_equiv: max true |effect| \u2264 this for which 90% TOST CI would have 80% power to declare equivalence within SESOI=\u00b10.05; negative = study underpowered to rule out meaningful effects even if true effect=0."
+          }
+        },
+        {
+          "axis": "skepticism",
+          "n_test": 40,
+          "prereg_mean_diff": 0.0,
+          "prereg_ci_lo": -0.195,
+          "prereg_ci_hi": 0.205,
+          "prereg_ci_level": 0.9833333333333333,
+          "prereg_passed": false,
+          "tost_ci_lo": -0.14,
+          "tost_ci_hi": 0.14,
+          "tost_ci_level": 0.9,
+          "tost_sesoi": 0.05,
+          "tost_verdict": "UNDERPOWERED",
+          "mde": {
+            "n": 40,
+            "se_estimate": 0.086232,
+            "mde_superiority_80pct_power": 0.279,
+            "mde_tost_max_equiv_80pct_power": -0.1644,
+            "tost_powered_for_equiv": false,
+            "mde_note": "mde_superiority: minimum |mean(d)| detectable at 80% power for the prereg Bonferroni test (two-sided CI at 98.33% excludes 0), using z_bonf=2.394 and z_80=0.842. mde_tost_max_equiv: max true |effect| \u2264 this for which 90% TOST CI would have 80% power to declare equivalence within SESOI=\u00b10.05; negative = study underpowered to rule out meaningful effects even if true effect=0."
+          }
+        },
+        {
+          "axis": "uncertainty_awareness",
+          "n_test": 53,
+          "prereg_mean_diff": -0.084018,
+          "prereg_ci_lo": -0.115163,
+          "prereg_ci_hi": -0.048574,
+          "prereg_ci_level": 0.9833333333333333,
+          "prereg_passed": false,
+          "tost_ci_lo": -0.106671,
+          "tost_ci_hi": -0.060273,
+          "tost_ci_level": 0.9,
+          "tost_sesoi": 0.05,
+          "tost_verdict": "CALIBRATION_HARM",
+          "mde": {
+            "n": 53,
+            "se_estimate": 0.014227,
+            "mde_superiority_80pct_power": 0.046,
+            "mde_tost_max_equiv_80pct_power": 0.0146,
+            "tost_powered_for_equiv": true,
+            "mde_note": "mde_superiority: minimum |mean(d)| detectable at 80% power for the prereg Bonferroni test (two-sided CI at 98.33% excludes 0), using z_bonf=2.394 and z_80=0.842. mde_tost_max_equiv: max true |effect| \u2264 this for which 90% TOST CI would have 80% power to declare equivalence within SESOI=\u00b10.05; negative = study underpowered to rule out meaningful effects even if true effect=0."
+          }
+        }
+      ]
+    }
+  ]
+}

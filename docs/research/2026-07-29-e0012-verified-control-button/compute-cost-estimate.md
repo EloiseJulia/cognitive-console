@@ -36,22 +36,24 @@ From E-0006 / E-0011 benchmark data (frozen artifacts):
 
 **Conservative:**
 - 1 model × 3 button families × 5 layers × 7 α × 26 DEV items × 3 samples = 8,190 generations
-- Plus 16 prompt candidates × 26 DEV items × 3 samples = 1,248 prompt-baseline gens
-- **Total Stage 0 conservative: ~9,440 generations**
-- At A800 speeds (~400 gens/min with batch_size=16, max_new_tokens=64): ~24 minutes
-- **Wall time: ~30–45 min (including overhead)**
+- Plus 16 authored prompt candidates × 26 DEV items × 3 samples = 1,248 prompt-baseline gens
+- **[NEW — F-05] Auto-prompt optimization (Stage 0 DEV):** N_cand=50 × 26 DEV items × k=3 = 3,900 screening gens; + winner × 26 × k=5 = 130 re-eval gens = **4,030 gens**
+- **Total Stage 0 conservative: ~13,468 generations**
+- At A800 speeds (~400 gens/min with batch_size=16, max_new_tokens=64): ~34 minutes
+- **Wall time: ~40–55 min (including overhead)**
 
 **Aggressive:**
 - 2 models × 6 button families × 12 layers × 10 α × 26 DEV items × 5 samples = 187,200 generations
 - Plus 17 prompt candidates × 26 DEV items × 5 samples = 2,210 prompt gens
-- **Total Stage 0 aggressive: ~189,400 generations**
-- At A800 speeds: ~7.9 hours
-- **Wall time: ~10–12 hours (including overhead, checkpointing, 2-model overhead)**
+- Plus auto-prompt optimization (aggressive): N_cand=50 × 26 × k=5 × 2 models = ~13,000 gens
+- **Total Stage 0 aggressive: ~202,400 generations**
+- At A800 speeds: ~8.5 hours
+- **Wall time: ~11–13 hours (including overhead, checkpointing, 2-model overhead)**
 
 **Recommended Stage 0 scope (balanced):**
 - 1 model (Qwen2.5-7B) × 4 button families × 8 layers × 7 α × 26 DEV items × 3 samples = 43,680 gens
-- **Wall time: ~2–3 hours on A800 GPU1**
-- This is affordable within the borrowed-A800 etiquette (E-0006 used ~25 min/cell × 4 cells = ~2 hours)
+- Plus auto-prompt optimization: ~4,030 gens
+- **Wall time: ~2.5–3.5 hours on A800 GPU1**
 
 ---
 
@@ -77,19 +79,23 @@ From E-0006 / E-0011 benchmark data (frozen artifacts):
 - Button gens: 1 model × 1 button × 80 items (TEST + DEV) × 5 samples × 7 α (DEV sweep) = 2,800 gens
 - Prompt gens: 17 prompts × 80 items × 5 samples = 6,800 gens (DEV + TEST)
 - Unsteered baseline: 80 items × 5 samples = 400 gens
-- **Total Stage 1 conservative: ~10,000 generations** (0.9× one C2b cell)
-- **Wall time: ~20–25 min on A800**
+- **[NEW — F-05] Auto-prompt optimization (Stage 1 new pool DEV re-run):** N_cand=50 × 26 new DEV items × k=3 = 3,900 screening gens; + winner re-eval k=5 = 130 gens = **4,030 gens**
+  - *(Rationale: the auto-optimized prompt is re-derived on Stage 1's new pool DEV for distribution symmetry — see prereg §5-B. The final winner is one of the 17 candidates in the 6,800-gen prompt budget above; the 4,030 gens here cover the screening phase before the winner is known.)*
+- **[NEW — F-05] Brier raw storage:** per-item (confidence, correctness) pairs — no additional gens (stored from existing runs; data collection requirement, not additional GPU compute)
+- **Total Stage 1 conservative: ~14,030 generations** (vs original ~10,000)
+- **Wall time: ~35–40 min on A800**
 
 **Aggressive (2 models, 3 buttons, all 3 axes = 3× size of C2b):**
 - Button gens: 2 models × 3 buttons × (60+60+80) items × 5 samples × 7 α = 3 × 11,200 × 3 = 100,800 gens
 - Prompt gens: 18 prompts × (60+60+80) items × 5 samples × 2 models = 90,000 gens
-- **Total Stage 1 aggressive: ~190,800 generations** (≈ 17× E-0006)
+- Auto-prompt optimization: ~8,060 gens (2 models)
+- **Total Stage 1 aggressive: ~198,860 generations** (≈ 17× E-0006)
 - **Wall time: ~6–8 hours on A800**
 
 **Recommended Stage 1 scope:**
-- 1 model × 1–2 buttons × calibration axis + 1 other axis × k=5 = ~20,000–30,000 gens
-- **Wall time: ~1–2 hours on A800 GPU1**
-- Feasible within borrowed-A800 constraints (matches E-0006 footprint)
+- 1 model × 1–2 buttons × calibration axis + 1 other axis × k=5 = ~20,000–30,000 gens + ~4,030 gens auto-prompt
+- **Wall time: ~1.5–2.5 hours on A800 GPU1**
+- Feasible within borrowed-A800 constraints
 
 ---
 
@@ -124,11 +130,19 @@ From E-0006 / E-0011 benchmark data (frozen artifacts):
 
 ## Summary: Total Generation Counts and Wall Times
 
+> ⚠️ **Revised 2026-07-30 (F-05):** Auto-prompt optimization cost added to Stage 0 and Stage 1. See revision log below.
+
 | Scenario | Stage 0 | Stage 1 | Stage 2 | Total gens | A800 GPU1 wall time |
 |---|---|---|---|---|---|
-| **Conservative** | 9,440 | 10,000 | 3,200 | **~22,640** | **~1.5–2 hours** |
-| **Recommended** | 43,680 | 25,000 | 20,000 | **~88,680** | **~4–6 hours** |
-| **Aggressive** | 189,400 | 190,800 | 80,000 | **~460,200** | **~18–22 hours** |
+| **Conservative** | 13,468 | 14,030 | 3,200 | **~30,698** | **~2.0–2.5 hours** |
+| **Recommended** | 47,710 | 29,030 | 20,000 | **~96,740** | **~4.5–7 hours** |
+| **Aggressive** | 202,400 | 198,860 | 80,000 | **~481,260** | **~20–24 hours** |
+
+**Conservative track vs original estimate:**
+- Original: ~22,640 gens / ~1.5–2h
+- Revised: ~30,698 gens / **~2.0–2.5h**
+- Delta: +8,058 gens (~36% increase in gens; ~25–30 min additional wall time)
+- **Assessment:** Conservative track remains within borrowed-A800 etiquette at the boundary (~2–2.5h). The original ~2h estimate understated the cost by omitting auto-prompt screening. No §5 budget escalation is required for this revision; however, Manager should flag to owner that the actual session is more likely to run ~2.0–2.5h than the originally stated ~1.5h.
 
 ---
 
@@ -145,9 +159,9 @@ From E-0006 / E-0011 benchmark data (frozen artifacts):
 
 | Scenario | Fits A800 (borrowed)? | Comment |
 |---|---|---|
-| Conservative | **YES** — 1.5–2 hours | Single GPU1 session; matches E-0006 footprint |
-| Recommended | **MARGINAL** — 4–6 hours | Fits if GPU1 is consistently free; risk of interruption |
-| Aggressive | **NO** — 18–22 hours | Too long for borrowed-machine etiquette; needs owner-controlled compute |
+| Conservative | **YES (boundary)** — ~2.0–2.5 hours | Single GPU1 session; at the ~2h etiquette boundary after auto-prompt cost added; marginally within borrowed-A800 constraints |
+| Recommended | **MARGINAL** — ~4.5–7 hours | Fits if GPU1 is consistently free; risk of interruption |
+| Aggressive | **NO** — 20–24 hours | Too long for borrowed-machine etiquette; needs owner-controlled compute |
 
 **D-0057 ruling confirms:** the GPU search program is §5-gated. The conservative track is within borrowed-A800 etiquette IF the owner approves GPU boot. The recommended and aggressive tracks likely require owner-controlled compute or a cloud instance.
 
@@ -181,8 +195,8 @@ The new item pool must be documented and frozen BEFORE any Stage 1 generation be
 ## Summary Recommendation to Owner
 
 The **conservative track** (Stage 0 DEV mining → Stage 1 adjudication → Stage 2 transfer, calibration axis, Qwen2.5-7B primary) is:
-- Technically feasible on borrowed A800 within ~2 hours per stage
-- Affordable (~$4–6 equivalent if cloud)
+- Technically feasible on borrowed A800 within ~2.0–2.5 hours total (revised upward from original ~1.5–2h estimate after auto-prompt cost added)
+- Affordable (~$4–6 equivalent if cloud; revised estimate adds <$2)
 - Scientifically sufficient for the initial VERIFIED-CONTROL claim
 
 The **recommended track** adds a second model and a second axis at modest additional cost and is still within borrowed-A800 etiquette for a scheduled session.
@@ -194,3 +208,18 @@ The **aggressive track** needs owner compute. If the conservative or recommended
 2. Selection of which A800 session to use (or cloud compute approval)
 3. Confirmation of new item pool source
 4. Freeze of E-0012 prereg (document 4)
+
+---
+
+## Revision Log — 2026-07-30 (F-05)
+
+**Responding to pre-run critic review finding F-05** (MAJOR: auto-optimized prompt Stage 1 re-optimization cost omitted from conservative estimate).
+
+**Changes made:**
+- Added "Auto-prompt optimization" rows to Stage 0 and Stage 1 generation counts (APE-variant: N_cand=50 × ≤26 DEV items × k=3 = 3,900 screening gens; + winner k=5 re-eval = 130 gens; ≈ 4,030 gens per stage).
+- Added note that Brier raw storage (per-item confidence/correctness pairs) has zero additional GPU compute cost — it is a data collection and storage requirement only.
+- Updated summary table: conservative total revised from ~22,640 to ~30,698 gens; wall time revised from ~1.5–2h to ~2.0–2.5h.
+- Updated A800 Feasibility table: conservative track re-labeled "YES (boundary)" at ~2.0–2.5h.
+- Updated Summary Recommendation: conservative track wall time corrected.
+
+**Assessment**: The revised conservative track (~2.0–2.5h) remains within borrowed-A800 etiquette at its boundary. The additional cost (~8,058 gens / ~25–30 min) does not cross the threshold requiring §5 budget re-escalation. Manager should inform owner of the revised estimate before GPU session scheduling.

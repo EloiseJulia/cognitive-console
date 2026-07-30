@@ -52,7 +52,12 @@ The Calibration Button comparator family MUST include at minimum:
 
 **In addition**, to match the DEV-optimization budget given to the steering channel, the prompt family should include:
 9. A **paraphrase family** (3–4 variants of the strongest prompt above) to test whether surface phrasing drives the result.
-10. An **auto-optimized prompt**: use a prompt-optimization method (e.g., greedy token refinement on DEV items, or a meta-prompt that asks the model to generate a calibration-maximizing instruction) to produce the strongest achievable prompt-only baseline. This is important for blocking the "you didn't try hard enough" objection.
+10. An **auto-optimized prompt** (procedure fully pre-specified in prereg §5-B; summarized here for reference):
+    - **Algorithm**: APE-variant — generate N_cand=50 candidate prompts from a frozen meta-prompt template via single LLM call (Qwen2.5-7B-Instruct, temperature=0.9, top_p=0.9, seed=42); evaluate all 50 on DEV items at k=3; select top-1 by mean(1−Brier); re-evaluate winner at k=5.
+    - **Budget**: ≤3,900 gens for candidate screening + 130 gens for winner re-evaluation per stage.
+    - **Stopping rule**: evaluate all N_cand=50 candidates; no early stopping, no iterative refinement.
+    - **Stage 1 re-run**: the auto-optimized prompt is re-derived fresh on Stage 1's new pool DEV (not transferred from Stage 0).
+    - **Purpose**: blocks the "you didn't try hard enough" objection by showing the strongest achievable prompt-only baseline under a pre-committed, reproducible search procedure. This is important for the "prompt-unreachable" claim — the procedure being pre-specified and frozen before Stage 0 is what gives the kill rule (item 5 of §5 in the prereg) its force.
 
 Baseline family size recommendation: **16 authored prompts** (matching the C2b adjudicator) **+ 1 auto-optimized prompt** = 17 total candidates. The best-performing on DEV is the "bounded best-prompt baseline."
 
@@ -161,12 +166,12 @@ The rule is: **the prompt comparator must be allowed to attempt the exact target
 ## 8. Edge Cases and Protocol Guards
 
 ### 8.1 What If the Auto-Optimized Prompt Beats the Button?
-This is an expected possibility. If APE/DSP-style prompt optimization on DEV achieves better `1 − Brier` than the button, the button is prompt-reachable (by a sufficiently engineered prompt). In this case:
+This is an expected possibility. The auto-optimized prompt procedure (APE-variant, N_cand=50, seed=42 — see prereg §5-B for full specification) runs on the same DEV pool as the button's α selection. If the auto-optimized prompt achieves better mean(1−Brier) on DEV than the button:
 - The button does NOT earn VERIFIED-CONTROL.
 - Report it as TRANSFER (it improves over naive prompting but not over engineered prompting).
-- This is an honest, informative result.
+- This is an honest, informative result: the calibration target is prompt-reachable by a sufficiently engineered auto-optimized instruction.
 
-**Pre-register:** if the auto-optimized prompt outperforms the button on DEV, the button is classified as TRANSFER or UNDERPOWERED, not VERIFIED-CONTROL. This must be in the prereg to prevent post-hoc reclassification.
+**Pre-registered kill rule** (from prereg §5 rule 5): if `mean_1minus_Brier(auto_optimized_prompt, DEV, k=5) ≥ mean_1minus_Brier(button, DEV, k=5, frozen_α)`, the button is classified TRANSFER, NOT VERIFIED-CONTROL. This determination is made at DEV freeze time, before any TEST evaluation. The kill rule's force depends entirely on the auto-optimized prompt procedure being frozen before Stage 0 data is collected (see prereg §5-B) — if the procedure is under-specified, the kill rule is an escape hatch rather than a pre-registered barrier.
 
 ### 8.2 The Prompt Wins on DEV but Button Wins on TEST
 This would suggest a DEV overfitting artifact. The prereg must specify: DEV performance determines which comparator is used in TEST. If the prompt wins on DEV, the prompt is the baseline; if the button wins on DEV AND also wins the paired TEST comparison, it is VERIFIED-CONTROL.

@@ -161,7 +161,8 @@ def cmd_run(args: argparse.Namespace) -> None:
         model_name = args.model or "Qwen/Qwen2.5-7B-Instruct"
         _hf_device = "cuda" if _torch.cuda.is_available() else "cpu"
         print(f"[e0012] device={_hf_device!r} (CUDA_VISIBLE_DEVICES={__import__('os').environ.get('CUDA_VISIBLE_DEVICES','unset')!r})")
-        hf_backend = SteeredHFBackend(model_name=model_name, device=_hf_device)
+        hf_backend = SteeredHFBackend(model_name=model_name, device=_hf_device,
+                                       dtype=("float16" if _hf_device == "cuda" else "float32"))
         # N-01 fix: wrap in SteeredHFTextCapableSampler (not BackendOutcomeSampler)
         # so _eval_items_with_raw_pairs records real (confidence, correctness) pairs
         # (synthetic_proxy=False) for the §9.2 Brier safety guards.

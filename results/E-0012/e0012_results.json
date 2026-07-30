@@ -1,0 +1,39 @@
+{
+  "experiment_id": "e0012-2026-07-30",
+  "generated_at": "2026-07-30T14:11:53.852202+00:00",
+  "verdict": "TRANSFER",
+  "notes": "Kill rule triggered at Stage 0 DEV freeze: auto-optimized prompt \u2265 button DEV score. Button classified TRANSFER, not VERIFIED-CONTROL.",
+  "backend": "hf",
+  "valid_for_paper": true,
+  "l_c1": 20,
+  "layer_sweep": [
+    18,
+    19,
+    20,
+    21,
+    22
+  ],
+  "alpha_grid": [
+    2.0,
+    4.0,
+    6.0,
+    8.0,
+    12.0,
+    16.0,
+    24.0
+  ],
+  "n_search_cap": 105,
+  "pool_seed": 12,
+  "pool_offset": 500,
+  "n_dev": 27,
+  "n_test": 53,
+  "ape_winner_dev_k3": 0.819753086419753,
+  "ape_winner_dev_k5": 0.8269814814814814,
+  "kill_rule": "TRANSFER",
+  "n_stage0_candidates_total": 105,
+  "n_stage0_passing_cutoff": 13,
+  "n_stage1_candidates": 0,
+  "stage1_passes": [],
+  "wall_clock_seconds": 12695.252868890762,
+  "brier_raw_pairs_path": "results/E-0012/brier_raw_pairs.jsonl"
+}

@@ -1,0 +1,1052 @@
+[
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 18,
+    "alpha": 2.0,
+    "dev_score_steer": 0.4948,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0183,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 18,
+    "alpha": 4.0,
+    "dev_score_steer": 0.5042,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0088,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 18,
+    "alpha": 6.0,
+    "dev_score_steer": 0.511,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0021,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 18,
+    "alpha": 8.0,
+    "dev_score_steer": 0.4805,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0325,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 18,
+    "alpha": 12.0,
+    "dev_score_steer": 0.5283,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0153,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 18,
+    "alpha": 16.0,
+    "dev_score_steer": 0.4589,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0542,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 18,
+    "alpha": 24.0,
+    "dev_score_steer": 0.3829,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.1302,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 18,
+    "alpha": 2.0,
+    "dev_score_steer": 0.517,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.004,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 18,
+    "alpha": 4.0,
+    "dev_score_steer": 0.5089,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0041,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 18,
+    "alpha": 6.0,
+    "dev_score_steer": 0.5031,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.01,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 18,
+    "alpha": 8.0,
+    "dev_score_steer": 0.546,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.033,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 18,
+    "alpha": 12.0,
+    "dev_score_steer": 0.5243,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0112,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 18,
+    "alpha": 16.0,
+    "dev_score_steer": 0.495,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.018,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 18,
+    "alpha": 24.0,
+    "dev_score_steer": 0.4967,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0164,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 18,
+    "alpha": 2.0,
+    "dev_score_steer": 0.5067,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0063,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 18,
+    "alpha": 4.0,
+    "dev_score_steer": 0.5132,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0002,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 18,
+    "alpha": 6.0,
+    "dev_score_steer": 0.5209,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0078,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 18,
+    "alpha": 8.0,
+    "dev_score_steer": 0.5016,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0114,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 18,
+    "alpha": 12.0,
+    "dev_score_steer": 0.5958,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0827,
+    "coherence_ok": true,
+    "passes_cutoff": true
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 18,
+    "alpha": 16.0,
+    "dev_score_steer": 0.6175,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.1045,
+    "coherence_ok": true,
+    "passes_cutoff": true
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 18,
+    "alpha": 24.0,
+    "dev_score_steer": 0.4837,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0294,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 19,
+    "alpha": 2.0,
+    "dev_score_steer": 0.5288,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0158,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 19,
+    "alpha": 4.0,
+    "dev_score_steer": 0.5377,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0246,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 19,
+    "alpha": 6.0,
+    "dev_score_steer": 0.5597,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0466,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 19,
+    "alpha": 8.0,
+    "dev_score_steer": 0.5802,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0671,
+    "coherence_ok": true,
+    "passes_cutoff": true
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 19,
+    "alpha": 12.0,
+    "dev_score_steer": 0.6294,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.1164,
+    "coherence_ok": true,
+    "passes_cutoff": true
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 19,
+    "alpha": 16.0,
+    "dev_score_steer": 0.6524,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.1394,
+    "coherence_ok": true,
+    "passes_cutoff": true
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 19,
+    "alpha": 24.0,
+    "dev_score_steer": 0.704,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.1909,
+    "coherence_ok": true,
+    "passes_cutoff": true
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 19,
+    "alpha": 2.0,
+    "dev_score_steer": 0.5134,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0003,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 19,
+    "alpha": 4.0,
+    "dev_score_steer": 0.516,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.003,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 19,
+    "alpha": 6.0,
+    "dev_score_steer": 0.5258,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0127,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 19,
+    "alpha": 8.0,
+    "dev_score_steer": 0.5438,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0308,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 19,
+    "alpha": 12.0,
+    "dev_score_steer": 0.5478,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0347,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 19,
+    "alpha": 16.0,
+    "dev_score_steer": 0.5146,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0015,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 19,
+    "alpha": 24.0,
+    "dev_score_steer": 0.5565,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0434,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 19,
+    "alpha": 2.0,
+    "dev_score_steer": 0.5177,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0047,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 19,
+    "alpha": 4.0,
+    "dev_score_steer": 0.5292,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0161,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 19,
+    "alpha": 6.0,
+    "dev_score_steer": 0.5481,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.035,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 19,
+    "alpha": 8.0,
+    "dev_score_steer": 0.5668,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0538,
+    "coherence_ok": true,
+    "passes_cutoff": true
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 19,
+    "alpha": 12.0,
+    "dev_score_steer": 0.5666,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0536,
+    "coherence_ok": true,
+    "passes_cutoff": true
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 19,
+    "alpha": 16.0,
+    "dev_score_steer": 0.5807,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0676,
+    "coherence_ok": true,
+    "passes_cutoff": true
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 19,
+    "alpha": 24.0,
+    "dev_score_steer": 0.5695,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0565,
+    "coherence_ok": true,
+    "passes_cutoff": true
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 20,
+    "alpha": 2.0,
+    "dev_score_steer": 0.5198,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0068,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 20,
+    "alpha": 4.0,
+    "dev_score_steer": 0.517,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.004,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 20,
+    "alpha": 6.0,
+    "dev_score_steer": 0.5407,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0276,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 20,
+    "alpha": 8.0,
+    "dev_score_steer": 0.5516,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0385,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 20,
+    "alpha": 12.0,
+    "dev_score_steer": 0.5524,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0393,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 20,
+    "alpha": 16.0,
+    "dev_score_steer": 0.5514,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0383,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 20,
+    "alpha": 24.0,
+    "dev_score_steer": 0.5993,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0863,
+    "coherence_ok": true,
+    "passes_cutoff": true
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 20,
+    "alpha": 2.0,
+    "dev_score_steer": 0.5159,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0028,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 20,
+    "alpha": 4.0,
+    "dev_score_steer": 0.5111,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0019,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 20,
+    "alpha": 6.0,
+    "dev_score_steer": 0.5143,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0012,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 20,
+    "alpha": 8.0,
+    "dev_score_steer": 0.5174,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0043,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 20,
+    "alpha": 12.0,
+    "dev_score_steer": 0.5165,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0034,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 20,
+    "alpha": 16.0,
+    "dev_score_steer": 0.5176,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0046,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 20,
+    "alpha": 24.0,
+    "dev_score_steer": 0.5119,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0012,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 20,
+    "alpha": 2.0,
+    "dev_score_steer": 0.513,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0001,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 20,
+    "alpha": 4.0,
+    "dev_score_steer": 0.5198,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0067,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 20,
+    "alpha": 6.0,
+    "dev_score_steer": 0.5299,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0169,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 20,
+    "alpha": 8.0,
+    "dev_score_steer": 0.5428,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0297,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 20,
+    "alpha": 12.0,
+    "dev_score_steer": 0.5418,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0287,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 20,
+    "alpha": 16.0,
+    "dev_score_steer": 0.5022,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0108,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 20,
+    "alpha": 24.0,
+    "dev_score_steer": 0.5206,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0075,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 21,
+    "alpha": 2.0,
+    "dev_score_steer": 0.5131,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0001,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 21,
+    "alpha": 4.0,
+    "dev_score_steer": 0.5132,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0001,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 21,
+    "alpha": 6.0,
+    "dev_score_steer": 0.5197,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0066,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 21,
+    "alpha": 8.0,
+    "dev_score_steer": 0.5211,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.008,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 21,
+    "alpha": 12.0,
+    "dev_score_steer": 0.5355,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0224,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 21,
+    "alpha": 16.0,
+    "dev_score_steer": 0.4895,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0235,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 21,
+    "alpha": 24.0,
+    "dev_score_steer": 0.5137,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0007,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 21,
+    "alpha": 2.0,
+    "dev_score_steer": 0.5097,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0034,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 21,
+    "alpha": 4.0,
+    "dev_score_steer": 0.517,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.004,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 21,
+    "alpha": 6.0,
+    "dev_score_steer": 0.5191,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.006,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 21,
+    "alpha": 8.0,
+    "dev_score_steer": 0.554,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.041,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 21,
+    "alpha": 12.0,
+    "dev_score_steer": 0.5389,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0259,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 21,
+    "alpha": 16.0,
+    "dev_score_steer": 0.5192,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0062,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 21,
+    "alpha": 24.0,
+    "dev_score_steer": 0.5298,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0168,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 21,
+    "alpha": 2.0,
+    "dev_score_steer": 0.515,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0019,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 21,
+    "alpha": 4.0,
+    "dev_score_steer": 0.514,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0009,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 21,
+    "alpha": 6.0,
+    "dev_score_steer": 0.5177,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0046,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 21,
+    "alpha": 8.0,
+    "dev_score_steer": 0.5409,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0278,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 21,
+    "alpha": 12.0,
+    "dev_score_steer": 0.5425,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0294,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 21,
+    "alpha": 16.0,
+    "dev_score_steer": 0.5043,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0088,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 21,
+    "alpha": 24.0,
+    "dev_score_steer": 0.5431,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.03,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 22,
+    "alpha": 2.0,
+    "dev_score_steer": 0.5141,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0011,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 22,
+    "alpha": 4.0,
+    "dev_score_steer": 0.5161,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0031,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 22,
+    "alpha": 6.0,
+    "dev_score_steer": 0.5344,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0213,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 22,
+    "alpha": 8.0,
+    "dev_score_steer": 0.543,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0299,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 22,
+    "alpha": 12.0,
+    "dev_score_steer": 0.5349,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0218,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 22,
+    "alpha": 16.0,
+    "dev_score_steer": 0.5217,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0087,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-PROBE",
+    "layer": 22,
+    "alpha": 24.0,
+    "dev_score_steer": 0.5303,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0172,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 22,
+    "alpha": 2.0,
+    "dev_score_steer": 0.5198,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0068,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 22,
+    "alpha": 4.0,
+    "dev_score_steer": 0.515,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.002,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 22,
+    "alpha": 6.0,
+    "dev_score_steer": 0.539,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.026,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 22,
+    "alpha": 8.0,
+    "dev_score_steer": 0.5555,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0424,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 22,
+    "alpha": 12.0,
+    "dev_score_steer": 0.5682,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0551,
+    "coherence_ok": true,
+    "passes_cutoff": true
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 22,
+    "alpha": 16.0,
+    "dev_score_steer": 0.5243,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0112,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-LOGIT-MARGIN",
+    "layer": 22,
+    "alpha": 24.0,
+    "dev_score_steer": 0.6059,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0928,
+    "coherence_ok": true,
+    "passes_cutoff": true
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 22,
+    "alpha": 2.0,
+    "dev_score_steer": 0.513,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0001,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 22,
+    "alpha": 4.0,
+    "dev_score_steer": 0.5213,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0082,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 22,
+    "alpha": 6.0,
+    "dev_score_steer": 0.5119,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.0012,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 22,
+    "alpha": 8.0,
+    "dev_score_steer": 0.532,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0189,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 22,
+    "alpha": 12.0,
+    "dev_score_steer": 0.5309,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0179,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 22,
+    "alpha": 16.0,
+    "dev_score_steer": 0.4901,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": -0.023,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  },
+  {
+    "family": "BTN-CAL-CONTRA-REEXTRACT",
+    "layer": 22,
+    "alpha": 24.0,
+    "dev_score_steer": 0.5323,
+    "dev_score_prompt": 0.5131,
+    "dev_improvement": 0.0192,
+    "coherence_ok": true,
+    "passes_cutoff": false
+  }
+]

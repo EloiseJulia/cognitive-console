@@ -1,17 +1,28 @@
 # PRE-REGISTRATION SKELETON — E-0012 Verified Control Button (Calibration Axis)
 
-**Status: DRAFT / PROPOSAL — NOT FROZEN**
+**Status: FROZEN 2026-07-29 (Manager, D-0059) — conservative track (Calibration button)**
 **Document ID: prereg-e0012-verified-control-button-DRAFT**
-**Author: Research/Design subagent (feature/45-e0012-research)**
+**Author: Research/Design subagent (feature/45-e0012-research); frozen by Manager**
 **Date: 2026-07-29**
 
-> ⚠️ THIS IS A PROPOSAL SKELETON. It becomes a frozen prereg ONLY after:
-> (a) Owner approves at §5 (GPU program + compute + venue strategy), AND
-> (b) Manager confirms no §5 item is pending, AND
-> (c) An independent audit session verifies the prereg before boot.
+> ✅ **FROZEN for the CONSERVATIVE track (Calibration button, Qwen2.5-7B).** Owner §5 GPU GO recorded (D-0058).
+> **Frozen pins:** code commit **4e7e088** (main, post-merge PR #45); **L_c1 = 20** (uncertainty_awareness
+> chosen non-degenerate layer, Qwen2.5-7B, from E-0003 `results/gpu_7b_2026-07-23/c1/`), Stage 0 layer sweep
+> {18,19,20,21,22}; **Stage 1 item pool = Option A** TriviaQA validation calibration subset, N=80, seed/offset
+> DISJOINT from E-0006 (owner-confirmed); **prompt comparator family = 18 authored prompts** in
+> `data/e0012_prompts/calibration_prompts.yaml` (owner-reviewed as strong / non-strawman); **APE §5-B spec byte-frozen**
+> (N_cand=50, seed=42, frozen meta-prompt, k=3 DEV screen, k=5 winner+kill-rule symmetric); **button families = 3**
+> non-trained (BTN-CAL-PROBE / BTN-CAL-LOGIT-MARGIN / BTN-CAL-CONTRA-REEXTRACT); **§9 guards frozen** (accuracy ≥0.9×,
+> coherence ≤1.5× w/ measured baseline, Brier reliability δ_rel=0.02 + gaming test on REAL (conf,correct) pairs,
+> cross-axis δ_cross_fail=−0.10 → UNSAFE terminal). Stage 1 reuses the frozen `prereg-c2b-adjudication` §4 judgment
+> byte-identical (δ=0.05, Bonferroni 1−0.05/M, coherence ≤1.5×, paired item-cluster bootstrap B≥10000). No criterion
+> may change post-data; NO_BUTTON_FOUND is a pre-accepted honest outcome. Independent gate satisfied: pre-run critic
+> (READY-TO-FREEZE) + 2 harness hostile-audit rounds (H-01..H-06, N-01/N-02 fixed; hard-fail guard ensures the real
+> GPU run either uses real pairs or fails loudly — no silent proxy degradation). Frozen records E-0003..E-0011 and
+> the C2b adjudicator are untouched.
 >
-> No GPU experiments may start before the prereg is frozen AND owner-approved.
-> Do NOT modify frozen records (E-0005/E-0006/E-0009/E-0011) or the frozen C2b adjudicator.
+> Do NOT modify frozen records (E-0005/E-0006/E-0009/E-0011) or the frozen C2b adjudicator. Any change to this
+> protocol after freeze = a NEW prereg. Recommended/aggressive tracks + Stage 2 transfer remain §5-gated.
 
 ---
 
@@ -421,16 +432,16 @@ where mean_outcome uses the same behavioral metric as C2b for each axis (deliber
 
 ## 14. Freeze Checklist (for Manager + Owner, when ready)
 
-- [ ] Item pool source specified, frozen, documented
-- [ ] Prompt comparator family (≥ 16 prompts) authored and committed
-- [ ] Button families and exclusion rule confirmed
-- [ ] Stage 0 scope (model × layer × family × α) confirmed
-- [ ] New DEV/TEST split rule for Stage 1 pool confirmed
-- [ ] Analysis script committed to branch before Stage 1 runs
-- [ ] Commit hash recorded in freeze block
-- [ ] Independent audit of prereg completed
-- [ ] Owner §5 GPU approval obtained
-- [ ] Status changed from DRAFT to FROZEN
+- [x] Item pool source specified, frozen, documented — Option A TriviaQA validation calibration subset, N=80, disjoint from E-0006 (owner-confirmed)
+- [x] Prompt comparator family (≥ 16 prompts) authored and committed — 18 prompts, `data/e0012_prompts/calibration_prompts.yaml`, owner-reviewed as strong/non-strawman
+- [x] Button families and exclusion rule confirmed — 3 non-trained families; SAE conditional (excluded if no pre-trained SAE); Residual-PCA deferred
+- [x] Stage 0 scope (model × layer × family × α) confirmed — Qwen2.5-7B, layers {18–22} (L_c1=20), 3 families, α{2,4,6,8,12,16,24}, N_search cap 105
+- [x] New DEV/TEST split rule for Stage 1 pool confirmed — TriviaQA N=80, DEV/TEST per harness
+- [x] Analysis script committed to branch before Stage 1 runs — harness + runner committed (main 4e7e088)
+- [x] Commit hash recorded in freeze block — 4e7e088
+- [x] Independent audit of prereg completed — pre-run critic READY-TO-FREEZE + 2 harness audit rounds (H-01..H-06, N-01/N-02 fixed)
+- [x] Owner §5 GPU approval obtained — D-0058 (conservative track GO)
+- [x] Status changed from DRAFT to FROZEN — D-0059
 
 ---
 

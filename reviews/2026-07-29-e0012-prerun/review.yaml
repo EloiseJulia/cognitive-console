@@ -1,0 +1,519 @@
+---
+# Independent Pre-Full-Run Design Review — E-0012 "Verified Control Button"
+# Reviewer role: hostile methods auditor + simulated CHI top-venue reviewer
+# Review date: 2026-07-30
+# Branch: feature/45-e0012-research / PR #45
+# Documents read: AGENTS.md, AI-Instruction.md Part I §5/§6/§10,
+#   decision-log.md (D-0057; D-0058 not found — absent from log),
+#   novelty-falsification.md, prompt-fairness-protocol.md,
+#   compute-cost-estimate.md, prereg-e0012-verified-control-button-DRAFT.md,
+#   prereg-c2b-adjudication.md (frozen C2b adjudicator),
+#   docs/ledgers/claim-ledger.md, docs/paper/main.tex
+# Posture: treat all self-assessments as UNVERIFIED; independently derive verdict
+
+metadata:
+  reviewer_type: "independent hostile auditor + CHI methods reviewer simulation"
+  documents_reviewed:
+    - docs/research/2026-07-29-e0012-verified-control-button/novelty-falsification.md
+    - docs/research/2026-07-29-e0012-verified-control-button/prompt-fairness-protocol.md
+    - docs/research/2026-07-29-e0012-verified-control-button/compute-cost-estimate.md
+    - docs/research/2026-07-29-e0012-verified-control-button/prereg-e0012-verified-control-button-DRAFT.md
+    - docs/ledgers/prereg-c2b-adjudication.md
+    - docs/ledgers/decision-log.md (D-0057; D-0058 absent)
+    - docs/ledgers/claim-ledger.md
+    - docs/paper/main.tex
+  note_on_D0058: >
+    D-0058 referenced in the review mandate does not exist in decision-log.md.
+    This review is based on D-0057 and downstream design documents only.
+    Manager should clarify whether D-0058 was intended.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RANKED FINDINGS
+# ─────────────────────────────────────────────────────────────────────────────
+
+findings:
+
+  - id: F-01
+    severity: BLOCKER
+    title: "Auto-optimized prompt procedure is not pre-specified — prompt-fairness argument is attackable"
+    documents: ["prompt-fairness-protocol.md §3.1 item 10", "prereg-e0012-DRAFT §5"]
+    description: >
+      The "hardest prompt comparator" — the auto-optimized prompt — is described only as
+      "APE-style, greedy token refinement, or a meta-prompt" with no exact algorithm, search
+      budget (number of iterations/candidates), seed, or stopping rule. This is the single most
+      critical component of the prompt-fairness argument: the claim that the button is
+      "prompt-unreachable" depends entirely on how strong the comparator is. If a reviewer
+      can trivially name a stronger auto-optimization setup than what was run, the VERIFIED-CONTROL
+      claim collapses. Under current wording, the comparator's strength is post-hoc adjustable
+      (more iterations if the button loses; fewer if the button barely wins).
+    specific_attack: >
+      "You used APE with 5 iterations; we ran DSPy with 50 iterations and a calibration-specific
+      meta-prompt, and the prompt wins. Your 'prompt-unreachable' claim depends on the search
+      budget being too small."
+    kill_rule_coverage: >
+      The prereg's rule "if auto-optimized prompt beats button on DEV → TRANSFER" only works
+      if the auto-optimized prompt procedure is frozen before any Stage 0/1 data is generated.
+      With an under-specified procedure, this kill rule is a post-hoc escape hatch, not a
+      pre-registered barrier.
+    cheapest_fix: >
+      Before freezing the prereg, specify exactly: (a) which auto-optimization algorithm
+      (e.g., APE: generate N=50 candidate prompts via LLM meta-prompt, evaluate all on DEV,
+      select top-1; DSPy with k=20 iterations; or equivalent), (b) the exact prompt template
+      used to generate candidates, (c) seed for candidate generation, (d) evaluation budget
+      (max candidate count and DEV evaluations), and (e) the stopping rule. Commit this spec
+      as a named section in the frozen prereg, not in a separate document.
+
+  - id: F-02
+    severity: BLOCKER
+    title: "Stage 0 DEV mining = behavioral-outcome selection of direction; 'non-trained' distinction
+      needs explicit pre-registered framing or Heyman risk is uncontrolled"
+    documents: ["prereg-e0012-DRAFT §3", "novelty-falsification.md §1.1", "prompt-fairness-protocol.md §3"]
+    description: >
+      The prereg correctly distinguishes direction DERIVATION (non-trained) from direction SELECTION
+      (DEV behavioral outcome). But this distinction is implicit, not explicitly pre-registered.
+      Stage 0's mechanism is: rank all (family, layer, α) triples by DEV improvement in 1−Brier,
+      advance the top ≤3. This IS outcome-based selection of which direction to advance — even
+      for "non-trained" button families. A CHI methods reviewer will ask: "if Stage 0 evaluates
+      105+ (family × layer × α) combinations and selects the best 3 by behavioral outcome, how
+      is this different from outcome-optimizing the direction over a grid search?"
+
+      Specific grey area: BTN-CAL-CONTRA-REEXTRACT explicitly uses "calibration-labeled pairs" to
+      derive its contrastive direction. The prereg flags this as "MEDIUM — PSR-adjacent if pair
+      selection was outcome-optimized." But pair selection from E-0005/E-0006 DEV data IS
+      outcome-informed (those items carry behavioral labels). The "fixed pair selection rule
+      pre-specified in prereg" clause is present but the actual rule is not written.
+
+      BTN-CAL-PROBE: "trained on synthetic (high-conf-correct, low-conf-wrong) pairs using
+      cross-entropy on confidence logit." If those synthetic pairs are drawn from the E-0006 DEV
+      behavioral outcomes, the direction is trained on behavioral labels from the adjudication
+      pool's source distribution — this approaches PSR.
+    specific_attack: >
+      "You claim the button is 'non-trained' but you ran a 105-combination grid search on DEV
+      and selected the winner by calibration score improvement. The direction selection is entirely
+      outcome-driven. Heyman already showed outcome-optimized steering can mimic prompting — your
+      'non-trained' label is a category distinction without operational teeth."
+    kill_rule_coverage: >
+      The prereg lists exclusion rules (§3) and labels each family's Heyman risk. But these are
+      labels, not operational kill rules. The distinction needs to be operationalized as: "the
+      direction's mathematical derivation procedure is frozen and fully specified before any DEV
+      evaluation runs; Stage 0 selects which pre-specified direction to advance, not how to
+      compute it."
+    cheapest_fix: >
+      (1) Add an explicit section to the frozen prereg: "Direction Derivation vs Direction
+      Selection: the direction derivation procedure for each button family is fully specified
+      below and constitutes a pre-commitment. Stage 0 DEV evaluation selects WHICH pre-specified
+      direction to advance; it does NOT modify the direction's mathematical form. This is
+      analogous to selecting among pre-specified architectures, not to hyperparameter optimization
+      of the direction itself."
+      (2) For BTN-CAL-CONTRA-REEXTRACT: specify the exact pair selection rule (e.g., "pairs are
+      the top-40 / bottom-40 items by Brier score from E-0005/E-0006 data, selected by a fixed
+      rule before Stage 0 runs; no outcome-based tuning of the direction vector itself") and
+      commit it as part of the frozen prereg.
+      (3) For BTN-CAL-PROBE: specify exactly what data is used to train the probe (synthetic
+      pairs constructed by a deterministic rule, NOT from E-0006 behavioral outcomes) and commit
+      the synthetic pair construction script hash.
+
+  - id: F-03
+    severity: MAJOR
+    title: "Stage 0 search space is not fully pre-specified; Bonferroni in Stage 1 corrects for M≤3
+      but not for the Stage 0 search multiplicity"
+    documents: ["prereg-e0012-DRAFT §7 Stage 0", "compute-cost-estimate.md Stage 0", "prereg-e0012-DRAFT §4"]
+    description: >
+      The prereg pre-registers button families (5 families), a layer range (approximately ±2 to 12
+      layers), and an α grid {2,4,6,8,12,16,24}. However, the exact Stage 0 scope (which k to use,
+      exactly which layers, exactly which families to include) is TBD at freeze time per the compute
+      estimate ("Conservative: 3 families × 5 layers × 7 α" vs "Recommended: 4 families × 8 layers
+      × 7 α"). If the scope is TBD at prereg freeze time, Stage 0 is not fully pre-registered.
+
+      More importantly: Stage 1 Bonferroni corrects for M × n_axes comparisons where M ≤ 3 is the
+      number advancing from Stage 0. But Stage 0 evaluated potentially 105–315 (family × layer × α)
+      combinations. The effective false-discovery rate across the full Stage 0 search space is NOT
+      controlled by Stage 1's Bonferroni. This is the classic winner's curse / multiple testing
+      problem in DEV-stage screening.
+
+      The new item pool in Stage 1 partially mitigates this (out-of-sample validation is the right
+      design), but it doesn't eliminate the concern because: (a) the button direction embeds
+      information from the Stage 0 DEV pool distribution, and (b) the search-space multiplicity
+      inflates the chance of finding a spurious DEV winner that fails Stage 1.
+    specific_attack: >
+      "Your Stage 0 evaluated 100+ candidates and selected the top 3 by DEV improvement. Even with
+      a new Stage 1 pool, you've already selected for overfitting to the DEV distribution. The
+      Stage 1 Bonferroni only controls family-wise error over 3 pre-specified hypotheses, but those
+      3 were selected from 100+ by exactly the criterion being tested. This is not the same as a
+      pre-registered confirmatory test."
+    cheapest_fix: >
+      (1) Fully pre-specify the Stage 0 scope (exact families, exact layer indices, exact k value,
+      exact α grid) in the frozen prereg — remove TBD items.
+      (2) Add a sentence acknowledging: "Stage 0 is EXPLORATORY and does not control family-wise
+      error. The Stage 1 item pool (distinct from Stage 0 DEV pool) is the pre-registered
+      confirmatory test; Stage 1 Bonferroni controls family-wise error over M pre-committed
+      hypotheses. The DEV selection process in Stage 0 introduces search multiplicity that is
+      acknowledged as a limitation; Stage 1 out-of-sample validation is the primary protection."
+      (3) Consider adding a Stage 0 count cap: "Stage 0 evaluates at most N_search combinations,
+      with N_search pre-specified." This limits the search multiplicity and signals discipline.
+
+  - id: F-04
+    severity: MAJOR
+    title: "Brier decomposition 'worsening reliability → BUTTON_FOUND_BUT_UNSAFE' has no quantitative
+      threshold; criterion is non-operational"
+    documents: ["prereg-e0012-DRAFT §9.2", "prompt-fairness-protocol.md §7.4"]
+    description: >
+      The prereg states: "A button that improves overall Brier by increasing confidence on correct
+      items only (without improving calibration on uncertain items) is classified BUTTON_FOUND_BUT_UNSAFE
+      if the reliability component worsens." The BUTTON_FOUND_BUT_UNSAFE verdict is correctly
+      conceived, but "reliability component worsens" has no pre-registered quantitative threshold.
+      Without a threshold, this criterion is post-hoc: the reviewer can always set the bar where
+      the result looks best. A decomposed Brier reliability component is itself an estimate with
+      sampling variance; without a pre-specified δ, the threshold is an observer degree of freedom.
+    specific_attack: >
+      "Your BUTTON_FOUND_BUT_UNSAFE criterion says 'reliability worsens' — by how much? 0.001?
+      0.01? 0.05? Your verdict depends on where you draw that line, which you did not pre-specify."
+    cheapest_fix: >
+      Pre-register a specific threshold: e.g., "BUTTON_FOUND_BUT_UNSAFE is triggered if the
+      Brier reliability component worsens by more than δ_rel = 0.02 (in Brier-scaled units) from
+      the unsteered baseline, evaluated on the same TEST items." This value can be discussed in
+      the prereg rationale. Alternatively: "reliability must not worsen more than the overall
+      Brier improvement (i.e., ΔBrier_reliability < ΔBrier_total is required for a genuine
+      calibration improvement)." Either is defensible and operational.
+
+  - id: F-05
+    severity: MAJOR
+    title: "Auto-optimized prompt Stage 1 re-optimization cost is omitted from conservative
+      compute estimate — owner cost approval may be based on under-estimate"
+    documents: ["compute-cost-estimate.md §Stage 1"]
+    description: >
+      The conservative Stage 1 estimate includes "17 prompts × 80 items × 5 samples = 6,800 gens"
+      for the prompt baseline. But the auto-optimized prompt must be re-optimized on the Stage 1
+      new pool's DEV (not transferred from Stage 0 which used E-0005/E-0006 DEV). Re-optimizing
+      APE/DSPy-style on ~26 new DEV items involves multiple rounds of candidate generation and
+      evaluation, potentially adding 500–5,000 generations depending on budget, which is NOT in
+      the 22K conservative estimate. The owner's §5 GPU approval is based on these numbers.
+      If the auto-optimized prompt procedure is later specified as "20 iterations × 26 DEV items
+      × 5 samples = 2,600 gens per round × optimization overhead," the true Stage 1 cost could
+      be 1.5–2× the estimate. This is not necessarily disqualifying, but the cost approval should
+      include this.
+    cheapest_fix: >
+      Once the auto-optimized prompt procedure is specified (fix F-01), add its Stage 1 generation
+      cost to the estimate table under a new row "Auto-prompt optimization (Stage 1 DEV)" and
+      update the conservative total and wall time accordingly. Present the corrected estimate to
+      the owner before §5 GPU approval.
+
+  - id: F-06
+    severity: MAJOR
+    title: "Non-calibration axis degradation (§9.4) is 'reported but not part of pass/fail' — 
+      console safety framing requires this to affect GENERAL_CONTROL classification"
+    documents: ["prereg-e0012-DRAFT §9.4"]
+    description: >
+      Section 9.4 states: "If the Calibration Button is applied to DEV items from the deliberation
+      or skepticism axes, it must NOT degrade those axes beyond δ = −0.05 ... reported but NOT
+      part of the pass/fail criterion." But the paper's HCI framing argues for console design that
+      surfaces side effects and trust-recalibration. If the Calibration Button passes the calibration
+      adjudication but catastrophically degrades deliberation accuracy, and this does NOT affect the
+      pass/fail verdict, then the prereg allows a side-effect-dangerous button to earn VERIFIED-CONTROL
+      status. This is inconsistent with the paper's own console-safety thesis.
+    specific_attack: >
+      "Your Calibration Button degrades deliberation accuracy by 0.15 (3× your δ threshold) but
+      you still classify it VERIFIED-CONTROL because cross-axis degradation is 'not part of pass/fail.'
+      How does a console that safely exposes a 'verified control' justify exposing a button that
+      harms other axes?"
+    cheapest_fix: >
+      Amend §9.4: "Cross-axis degradation exceeding δ = −0.05 on any tested axis triggers a
+      BUTTON_FOUND_BUT_UNSAFE verdict regardless of the primary calibration adjudication result,
+      OR (weaker version): if VERIFIED-CONTROL is declared but cross-axis degradation ≥ 2×δ on
+      any axis, the classification is downgraded to LOCAL (model-specific, axis-narrow)." This
+      ensures the console-safety framing is operationally enforceable.
+
+  - id: F-07
+    severity: MINOR
+    title: "Accuracy guard: abstention handling and denominator under-specified"
+    documents: ["prereg-e0012-DRAFT §9.1", "prompt-fairness-protocol.md §7.3"]
+    description: >
+      The accuracy guard is: "accuracy(steer) ≥ 0.9 × accuracy(unsteered_baseline)." But
+      what is "accuracy" when the button induces abstentions or "I don't know" responses?
+      If a steered response says "I don't know" on 30% of items, accuracy could be defined as:
+      (a) fraction correct among answered items (could stay high), or (b) fraction correct among
+      ALL items (abstentions count as wrong — could drop sharply). Both are coherent but
+      produce different verdicts.
+    cheapest_fix: >
+      Specify: "accuracy = fraction of TEST items with a correct extractable answer (items where
+      the model abstains or gives no extractable answer are scored as 0 accuracy for this
+      computation)." This prevents the loophole of abstaining on hard items while claiming
+      high accuracy on answered items.
+
+  - id: F-08
+    severity: MINOR
+    title: "BTN-CAL-PROBE 'trained on synthetic pairs' requires explicit justification that
+      pairs do NOT embed E-0006 behavioral labels"
+    documents: ["prereg-e0012-DRAFT §3 BTN-CAL-PROBE"]
+    description: >
+      BTN-CAL-PROBE is labeled "Weakly trained (probe trained on synthetic pairs, NOT on
+      behavioral outcome)" but the boundary between "synthetic pairs" and "behavioral labels"
+      is not drawn precisely. If the synthetic pairs (high-conf-correct, low-conf-wrong) are
+      constructed from E-0006 DEV transcripts (which DO contain behavioral outcome labels),
+      the probe direction is indirectly trained on behavioral outcomes. The current description
+      does not exclude this.
+    cheapest_fix: >
+      Add to the BTN-CAL-PROBE specification: "Synthetic pairs are constructed from a rule-based
+      generator (e.g., inject confidence tokens of 0.9/0.1 into fixed template completions) that
+      is entirely independent of any E-0006/E-0005 behavioral outcomes. Specifically, [exact
+      pair construction procedure, token distributions, and any data source used] is documented
+      in the frozen prereg." If model-generated pairs are used, specify that the generation is
+      seeded and independent of E-0005/E-0006 data.
+
+  - id: F-09
+    severity: MINOR
+    title: "BUTTON_FOUND_BUT_UNSAFE has no explicit 'no-upgrade-path' closure; risk of
+      post-hoc escalation"
+    documents: ["prereg-e0012-DRAFT §8"]
+    description: >
+      The BUTTON_FOUND_BUT_UNSAFE verdict notes "NOT deployed as console control" and "Reported
+      as a safety caveat." But it does not say: "This verdict has no upgrade path; the button
+      cannot be re-tested with modifications to earn VERIFIED-CONTROL from this experiment."
+      Without this closure, a future decision could argue "we fixed the safety issue (e.g., by
+      adding an accuracy floor to the button itself) and now it should be VERIFIED-CONTROL."
+      This creates a path from exploratory finding to confirmatory claim via incremental
+      modification.
+    cheapest_fix: >
+      Add: "BUTTON_FOUND_BUT_UNSAFE is a TERMINAL verdict for this experiment (E-0012). Any
+      safety-modified variant requires a new, independent pre-registered experiment. No
+      reclassification of a BUTTON_FOUND_BUT_UNSAFE result as VERIFIED-CONTROL is permitted
+      within E-0012."
+
+  - id: F-10
+    severity: MINOR
+    title: "≤3 candidates advance from Stage 0 — tie-breaking rule and >3 overflow unspecified"
+    documents: ["prereg-e0012-DRAFT §7 Stage 0", "§1 Research Question"]
+    description: >
+      The prereg says "≤3 promising (button, layer, α) triples" advance to Stage 1. But it
+      does not specify: (a) how to select among candidates if >3 meet the DEV cutoff
+      (highest DEV improvement? first alphabetically? random?), or (b) whether ALL families
+      must be represented or one family can dominate. Without this, the Stage 0 → Stage 1
+      selection is a post-hoc decision if >3 candidates pass the cutoff.
+    cheapest_fix: >
+      Add: "If more than 3 candidates meet the Stage 0 cutoff, select the top-3 by DEV
+      1−Brier improvement (ties broken by lower coherence ratio). If candidates from the
+      same family appear multiple times in the top-3, retain only the best per family
+      (to encourage family diversity). This selection rule is frozen before Stage 0 runs."
+
+  - id: F-11
+    severity: QUESTION
+    title: "DEV pool for Stage 0 direction derivation vs Stage 1 DEV for α/prompt selection:
+      are these always from different distributions?"
+    documents: ["prereg-e0012-DRAFT §6", "§7 Stage 0", "compute-cost-estimate.md §Critical Dependency"]
+    description: >
+      Stage 0 uses E-0005/E-0006 DEV items for candidate discovery.
+      Stage 1 uses a FRESH item pool (new DEV/TEST split from a new source).
+      This is the correct design to prevent forking paths.
+      BUT: the button direction for BTN-CAL-CONTRA-REEXTRACT is derived from E-0005/E-0006
+      behavioral data, while Stage 1 α and best-prompt selection happen on the new pool's DEV.
+      The new pool may have different difficulty distribution than E-0005/E-0006.
+      This is not a flaw in the design (directions should generalize), but it is a potential
+      confound: a direction optimized for the E-0006 distribution might not generalize to a
+      SciQ or different TriviaQA split.
+    resolution_needed: >
+      The prereg should explicitly acknowledge: "The button direction is derived from
+      E-0005/E-0006 DEV distribution; Stage 1 tests generalization to a new pool. Failure
+      of Stage 1 could reflect direction non-generalization rather than button invalidity.
+      This is reported as a limitation and does not affect the Stage 1 pass/fail verdict
+      (which is a generalization test by design)."
+
+  - id: F-12
+    severity: QUESTION
+    title: "D-0058 referenced in review mandate does not exist in decision-log.md"
+    documents: ["docs/ledgers/decision-log.md"]
+    description: >
+      The review task references D-0057 and D-0058 as context decisions. D-0057 (NON-GATED
+      research/design pass approval) is present. D-0058 is absent from the decision log.
+      This reviewer proceeded based on D-0057 and the four research documents. If D-0058
+      contains additional constraints or scope changes relevant to E-0012, this review may
+      be incomplete.
+    resolution_needed: >
+      Manager should clarify whether D-0058 was intended (perhaps a future decision not yet
+      recorded) and update this review if the content of D-0058 changes any finding.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MANDATORY ITEMS BEFORE FREEZE
+# ─────────────────────────────────────────────────────────────────────────────
+
+mandatory_before_freeze:
+  - "F-01: Specify exact auto-optimized prompt procedure (algorithm, budget, seed, stopping rule)
+    in the frozen prereg."
+  - "F-02: Add explicit pre-registered framing of 'direction derivation vs direction selection'
+    distinction; specify exact pair-selection rule for BTN-CAL-CONTRA-REEXTRACT; confirm BTN-CAL-PROBE
+    synthetic pairs are independent of E-0006 behavioral outcomes."
+  - "F-03: Fully pre-specify Stage 0 scope (exact families, layer indices, k, α grid); add
+    acknowledgment of Stage 0 search multiplicity as a pre-registered limitation."
+  - "F-04: Add quantitative threshold for BUTTON_FOUND_BUT_UNSAFE Brier reliability criterion."
+  - "F-06: Amend §9.4 so that cross-axis degradation ≥ threshold affects the pass/fail or
+    GENERAL_CONTROL classification."
+  - "F-07: Specify accuracy denominator (abstentions count as incorrect)."
+
+recommended_before_freeze:
+  - "F-05: Update compute estimate to include auto-optimized prompt Stage 1 re-optimization cost;
+    present corrected estimate to owner before §5 GPU approval."
+  - "F-08: Document BTN-CAL-PROBE synthetic pair construction independence from E-0006 outcomes."
+  - "F-09: Add BUTTON_FOUND_BUT_UNSAFE terminal verdict / no-upgrade-path closure."
+  - "F-10: Add Stage 0 → Stage 1 tie-breaking and overflow selection rule."
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DIMENSION-BY-DIMENSION VERDICTS
+# ─────────────────────────────────────────────────────────────────────────────
+
+dimension_verdicts:
+
+  prompt_fairness_latent_beyond_prompt:
+    verdict: NEEDS-REVISION
+    summary: >
+      The 17-prompt structure is sound in concept. The auto-optimized prompt is the right move
+      and the DEV-simultaneous-freeze protocol is correct. BUT: the auto-optimized prompt
+      procedure is not pre-specified (F-01 BLOCKER), which means the strongest comparator is
+      currently an aspirational placeholder, not a frozen protocol. The "prompt-unreachable"
+      claim will not survive CHI review without this specificity. The accuracy guard + Brier
+      decomposition together adequately address the abstain/hedge trivial-solution risks, IF
+      the Brier reliability threshold is also specified (F-04 MAJOR).
+
+  non_trained_definition_vs_heyman:
+    verdict: NEEDS-REVISION
+    summary: >
+      The non-trained/discovered distinction is conceptually sound and the novelty-falsification
+      document correctly identifies the collapse risk. The prereg's button family table lists
+      Heyman-novelty impact per family. BUT the operational distinction between direction
+      derivation (non-trained) and direction selection (outcome-based DEV screening in Stage 0)
+      is implicit and needs to be explicitly pre-registered (F-02 BLOCKER). Without this,
+      a hostile reviewer can argue Stage 0 IS outcome-optimization of the direction. BTN-CAL-PROBE
+      and BTN-CAL-CONTRA-REEXTRACT need additional specification to credibly claim non-trained status.
+
+  forking_paths_HARKing:
+    verdict: NEEDS-REVISION
+    summary: >
+      The three-tier funnel (Stage 0 DEV → Stage 1 frozen one-shot → Stage 2 transfer) is the
+      right design. New item pool in Stage 1 is the correct forking-paths barrier. Full candidate
+      count reporting is pre-registered. The major gap: Stage 0 scope is not fully pre-specified
+      (F-03 MAJOR), which means the search space is partially TBD. The Bonferroni correction in
+      Stage 1 correctly covers M candidates but does not address Stage 0 search multiplicity —
+      this needs a pre-registered acknowledgment and cap. The success-direction bias (looking for
+      a positive) is a real risk; the current guards are the same as C2b (which looked for a
+      negative), and no additional safeguards are specified for confirmation-bias direction.
+
+  safety_guards:
+    verdict: NEEDS-REVISION
+    summary: >
+      Accuracy guard and coherence gate are well-designed. Brier decomposition requirement is
+      present and correctly addresses the E-0005/E-0006 deferred-raw-data lesson. The gaps:
+      Brier reliability threshold is non-operational (F-04 MAJOR), accuracy abstention denominator
+      is unspecified (F-07 MINOR), and cross-axis degradation is not part of pass/fail (F-06 MAJOR).
+      For a console-safety framing, allowing a button with catastrophic cross-axis degradation to
+      earn VERIFIED-CONTROL is inconsistent with the paper's thesis.
+
+  NO_BUTTON_FOUND_honest_preacceptance:
+    verdict: ACCEPTABLE
+    summary: >
+      This is the best-designed dimension. NO_BUTTON_FOUND is genuinely pre-accepted as a valid
+      honest result with stated paper value. The taxonomy contribution is pre-argued as independent
+      of finding a positive. The three-stage funnel correctly surfaces NO_BUTTON_FOUND at Stage 0
+      (zero candidates meet DEV cutoff). Minor gap: BUTTON_FOUND_BUT_UNSAFE needs no-upgrade-path
+      closure (F-09 MINOR) to prevent post-hoc escalation.
+
+  cost_feasibility:
+    verdict: ACCEPTABLE-WITH-CORRECTION
+    summary: >
+      Conservative ~22K gens / ~2h A800 estimate is plausible for Stage 0+1+2 conservative track
+      without auto-prompt optimization overhead. The estimate is a reasonable lower bound for owner
+      approval. HOWEVER, it omits the auto-optimized prompt re-optimization cost in Stage 1 (F-05
+      MAJOR), which could add 1,000–5,000 gens. This should be corrected before final §5 cost
+      approval. The borrowed-A800 etiquette constraints are correctly identified.
+
+  non_breakage_C1_C2:
+    verdict: SOLID
+    summary: >
+      E-0012 is cleanly separated from E-0005/E-0006. The prereg explicitly states C2
+      (NON_TRANSFER_GENERALIZED) is not modified. The claim-ledger C2 already pre-allocates
+      "Falsified if: a stronger latent intervention beats best-prompt behavior — tested ONLY via
+      a SEPARATE independent pre-registered arm." E-0012 is exactly that arm. D-0057 explicitly
+      confirms no frozen records are touched. If E-0012 finds a positive, the narrative rebalancing
+      is an authoring task, not a protocol violation. C1 is entirely orthogonal.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OVERALL VERDICT
+# ─────────────────────────────────────────────────────────────────────────────
+
+verdict: NEEDS-REVISION-BEFORE-FREEZE
+
+verdict_justification: >
+  Two BLOCKERs prevent freezing: F-01 (auto-optimized prompt under-specified) and F-02
+  (non-trained/selection distinction implicit). Both are correctable with targeted specification
+  additions and do not require re-thinking the experimental design. Four MAJORs (F-03, F-04, F-05,
+  F-06) are also addressable before freeze without design changes. All can be resolved in 1–2 days
+  of focused doc work. The experimental design itself is sound: the three-stage funnel, new item
+  pool, one-shot TEST, and pre-acceptance of NO_BUTTON_FOUND are all correct. The paper's claim
+  protection (C1/C2 non-breakage) is solid.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# INDEPENDENT JUDGMENT: CAN THIS EXPERIMENT PRODUCE A PUBLISHABLE CONTRIBUTION?
+# ─────────────────────────────────────────────────────────────────────────────
+
+publishability_judgment:
+  judgment: CONDITIONALLY YES — in both outcome branches
+  rationale: >
+    BRANCH A (button found): If a non-trained button passes the frozen adjudicator against a
+    seriously-constructed auto-optimized prompt comparator, this IS a publishable positive result
+    for CHI. The evaluation discipline (frozen adjudicator + prompt-fairness + READ/TRANSFER/
+    VERIFIED taxonomy) is novel vs all reviewed prior work. The finding would resolve the paper's
+    main reviewer weakness (underpowered null / no positive). With the BLOCKERs/MAJORs fixed, the
+    protocol would be defensible at the CHI methods review level.
+
+    BRANCH B (no button found): Pre-registered NO_BUTTON_FOUND is publishable as a boundary result:
+    "we searched a broad space of discovered non-trained interventions and found none that pass the
+    frozen prompt-fair adjudicator for calibration." This strengthens the evaluation discipline
+    contribution and the READ/TRANSFER/VERIFIED taxonomy as an empirically-grounded framework.
+
+    KEY CAVEAT: the publishability of Branch A hinges entirely on F-01 (auto-optimized prompt
+    specification). If the comparator remains weak, a CHI reviewer will correctly say "you didn't
+    try hard enough with prompts" and the VERIFIED-CONTROL claim will be rejected. This is the
+    single highest-leverage fix.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TOP 3 RISKS (pre-GPU boot)
+# ─────────────────────────────────────────────────────────────────────────────
+
+top_3_risks:
+
+  - rank: 1
+    risk: "Prompt-comparator too weak → spurious VERIFIED-CONTROL"
+    description: >
+      Auto-optimized prompt procedure under-specified (F-01). If the optimization budget is small
+      and the button "wins" only because a stronger prompt would have beaten it, the VERIFIED-CONTROL
+      claim is a false positive. This risk is EXECUTION-blocking: must fix before any GPU runs.
+      This is the highest-probability and highest-impact failure mode.
+
+  - rank: 2
+    risk: "No non-trained button found → paper lacks positive empirical anchor"
+    description: >
+      The novelty-falsification document correctly identifies this as HIGH execution risk. If Stage 0
+      finds no candidate meeting the DEV cutoff, or if all Stage 0 candidates fail Stage 1, the
+      paper reverts to a pure negative with the taxonomy as the contribution. The current paper
+      (main.tex) already reads this way. E-0012 would not upgrade it. This is the central
+      strategic risk, not a protocol flaw — but it means the GPU budget is a real gamble.
+
+  - rank: 3
+    risk: "BTN-CAL-CONTRA-REEXTRACT or BTN-CAL-PROBE classified as PSR-family post-hoc → Heyman collapse"
+    description: >
+      If the winning button, on inspection, turns out to require behavioral-outcome-informed
+      direction derivation (F-02), the VERIFIED-CONTROL novelty claim collapses to "PSR applied
+      to calibration axis under a frozen adjudicator." This is publishable but is a weaker novelty
+      story. The fix (specifying the non-training criterion exactly before running) prevents
+      post-hoc dispute, but it requires careful pre-specification of each button family's
+      derivation procedure.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# REVIEWER NOTE
+# ─────────────────────────────────────────────────────────────────────────────
+
+reviewer_note: >
+  This review found no structural flaws in the experimental logic. The three-stage funnel,
+  new item pool design, NO_BUTTON_FOUND pre-acceptance, and C1/C2 non-breakage are all correctly
+  engineered. The BLOCKERs (F-01, F-02) are specification gaps, not design errors — they require
+  writing precision, not redesign. The fixes are compatible with the current experimental structure
+  and can be resolved in 1–2 focused documentation iterations before freezing the prereg. The
+  Manager should dispatch the revision as a targeted doc-only patch to this branch, then request
+  a re-check of BLOCKERs before owner §5 GPU approval.

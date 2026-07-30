@@ -30,6 +30,7 @@ Pre-registered constants (FROZEN at prereg freeze):
 
 from __future__ import annotations
 
+import abc
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -93,11 +94,15 @@ class Stage0Candidate:
     button_family: str
     layer: int
     alpha: float
-    dev_score_steer: float      # mean(1−Brier) with steering on DEV
+    dev_score_steer: float      # mean(1−Brier) with steering on DEV (k=3)
     dev_score_prompt: float     # mean(1−Brier) for DEV-best prompt (comparator)
     dev_improvement: float      # steer − prompt (must be ≥ δ to advance)
     coherence_ok: bool          # coherence gate result
     passes_cutoff: bool         # dev_improvement ≥ δ AND coherence_ok
+    # H-05: actual degeneracy ratio (mean_degen / baseline_degen); used for tie-breaking
+    coherence_ratio: float = 0.0
+    # H-01: k=5 re-evaluation on DEV for symmetric kill-rule comparison; set after selection
+    dev_score_steer_k5: Optional[float] = None
 
 
 @dataclass
@@ -121,16 +126,16 @@ def _select_stage1_candidates(
 
     Selection rule (FROZEN):
     1. Keep only candidates with passes_cutoff=True.
-    2. Sort by dev_improvement desc; ties by coherence (lower is better).
+    2. Sort by dev_improvement desc; ties by coherence_ratio asc (lower=better);
+       remaining ties by button family name alphabetically (per prereg §7).
     3. Retain ≤ max_n; at most one per button family (diversity constraint).
     """
     passing = [c for c in candidates if c.passes_cutoff]
     if not passing:
         return []
 
-    # Sort: descending improvement, ascending coherence (placeholder: coherence not
-    # stored per-candidate here; ties broken by family name alphabetically)
-    passing.sort(key=lambda c: (-c.dev_improvement, c.button_family))
+    # H-05: sort key includes coherence_ratio (ascending — lower ratio = better coherence)
+    passing.sort(key=lambda c: (-c.dev_improvement, c.coherence_ratio, c.button_family))
 
     # Diversity: at most one per family
     selected: List[Stage0Candidate] = []
@@ -149,6 +154,45 @@ def _select_stage1_candidates(
 
 
 # --------------------------------------------------------------------------- #
+# GPU/HF raw-text sampler seam (H-02 / H-06)
+# --------------------------------------------------------------------------- #
+class TextCapableSampler(adj.OutcomeSampler, abc.ABC):
+    """OutcomeSampler that also exposes raw generated texts for Brier decomposition.
+
+    GPU/HF backends MUST implement this interface so that
+    _eval_items_with_raw_pairs can extract true (confidence, correctness) pairs
+    from the raw text for the BrierRawStore, as required by prereg §9.2.
+
+    TODO(GPU-path — required before A800 boot):
+        Wrap SteeredHFBackend in a TextCapableSampler subclass.  The
+        implementation must:
+          1. Call adjudicate_c2b.format_task_input() to build the prompt.
+          2. Generate k responses via SteeredHFBackend.generate() with the
+             corresponding SteerConfig.
+          3. Score each response with adjudicate_c2b.score_sample_outcome() to
+             obtain outcomes (for SampleBatch) AND retain the raw text strings.
+          4. Return (SampleBatch, [text_0, text_1, ..., text_{k-1}]) from
+             sample_with_texts().
+        This ensures raw texts are available for parse_confidence() /
+        item_is_correct() so the BrierRawStore receives real (conf, correct)
+        pairs instead of the 1-Brier proxy used by the synthetic offline path.
+    """
+
+    @abc.abstractmethod
+    def sample_with_texts(
+        self,
+        axis: str,
+        item: Dict,
+        instruction: str,
+        alpha: float,
+        k: int,
+        direction: np.ndarray,
+        layer: int,
+    ) -> Tuple["adj.SampleBatch", List[str]]:
+        """Return (SampleBatch, list-of-k-raw-texts) for one item."""
+
+
+# --------------------------------------------------------------------------- #
 # Per-item outcome extraction with raw-pair recording
 # --------------------------------------------------------------------------- #
 def _eval_items_with_raw_pairs(
@@ -163,44 +207,75 @@ def _eval_items_with_raw_pairs(
     channel: str,
     raw_store: Optional[BrierRawStore] = None,
 ) -> List[adj.SampleBatch]:
-    """Evaluate items and, for the uncertainty_awareness axis, record raw pairs."""
+    """Evaluate items and, for the uncertainty_awareness axis, record raw pairs.
+
+    For GPU/HF backends (sampler is a TextCapableSampler): extracts real
+    (confidence, correctness) pairs from raw generated text via parse_confidence()
+    and item_is_correct(), stores them with synthetic_proxy=False.
+
+    For synthetic backends: stores 1-Brier outcome as a proxy confidence with
+    synthetic_proxy=True.  These proxy records are ISOLATED from real GPU safety
+    decisions (require_real=True guard in decompose_channel).
+    """
+    is_gpu_capable = isinstance(sampler, TextCapableSampler)
     batches = []
     for item in items:
-        batch = sampler.sample(
-            axis=axis,
-            item=item,
-            instruction=instruction,
-            alpha=alpha,
-            k=k,
-            direction=direction,
-            layer=layer,
-        )
+        if is_gpu_capable:
+            # H-02/H-06 GPU path: get real raw texts from the backend
+            batch, raw_texts = sampler.sample_with_texts(  # type: ignore[attr-defined]
+                axis=axis,
+                item=item,
+                instruction=instruction,
+                alpha=alpha,
+                k=k,
+                direction=direction,
+                layer=layer,
+            )
+        else:
+            batch = sampler.sample(
+                axis=axis,
+                item=item,
+                instruction=instruction,
+                alpha=alpha,
+                k=k,
+                direction=direction,
+                layer=layer,
+            )
+            raw_texts = None
         batches.append(batch)
 
         # Record raw (confidence, correctness) pairs for Brier decomposition
         if raw_store is not None and axis == "uncertainty_awareness":
-            from cognitive_console.experiments.adjudicate_c2b import format_task_input  # noqa
-            # Each outcome in the SampleBatch is 1-Brier = 1-(conf-correct)^2
-            # We need to back-derive conf and correct from the generated text.
-            # For synthetic backends, we use the batch outcomes directly.
-            # For real backends, we record from the generated text via scorers.
-            # Here we store a proxy using mean outcome as a summary.
-            # NOTE: For full fidelity with real backend, the sampler should be
-            # extended to return raw texts. This is sufficient for the offline path.
-            for outcome in batch.outcomes:
-                # Conservative approximation: we cannot back-derive conf/correct
-                # from 1-Brier alone, so we record the outcome directly as
-                # a confidence proxy.  The BrierRawStore expects (conf, correct).
-                # For the synthetic path, use outcome as approximate confidence.
-                # A real implementation should return raw texts from the backend.
-                raw_store.record(
-                    item_id=str(item.get("id", "")),
-                    channel=channel,
-                    alpha=alpha,
-                    layer=layer,
-                    confidence=float(np.clip(outcome, 0.0, 1.0)),
-                    correctness=int(outcome >= 0.5),
-                )
+            if raw_texts is not None:
+                # GPU path: extract true pairs from generated text (synthetic_proxy=False)
+                for text in raw_texts:
+                    conf = parse_confidence(text)
+                    if conf is None:
+                        conf = 0.5  # no stated confidence → maximally uninformative
+                    correct = item_is_correct(item, text)
+                    raw_store.record(
+                        item_id=str(item.get("id", "")),
+                        channel=channel,
+                        alpha=alpha,
+                        layer=layer,
+                        confidence=conf,
+                        correctness=int(correct),
+                        synthetic_proxy=False,
+                    )
+            else:
+                # Synthetic-only path: use 1-Brier outcome as proxy (OFFLINE TEST ONLY).
+                # synthetic_proxy=True → these records MUST NOT be used for real GPU
+                # safety decisions (guarded by BrierRawStore.decompose_channel(require_real=True)).
+                for outcome in batch.outcomes:
+                    raw_store.record(
+                        item_id=str(item.get("id", "")),
+                        channel=channel,
+                        alpha=alpha,
+                        layer=layer,
+                        confidence=float(np.clip(outcome, 0.0, 1.0)),
+                        correctness=int(outcome >= 0.5),
+                        synthetic_proxy=True,
+                    )
     return batches
 
 
@@ -244,6 +319,22 @@ def run_stage0(
             best_prompt_score = score
             best_prompt_text = ptext
 
+    # H-03: Measure actual unsteered baseline degeneracy on DEV.
+    # Use instruction="" and alpha=0 (true unsteered) — layer is irrelevant at alpha=0.
+    # This replaces the hardcoded 0.1 constant so the coherence gate ceiling is
+    # anchored to the actual model's baseline on this run.
+    baseline_dev_batches = _eval_items_with_raw_pairs(
+        sampler, axis, dev_items, "", 0.0,
+        np.zeros(1), L_C1,  # alpha=0 → layer doesn't affect output
+        K_STAGE0, channel="baseline_dev",
+    )
+    stage0_baseline_degen = float(
+        np.mean([b.mean_degeneracy() for b in baseline_dev_batches])
+    )
+    # Guard against zero baseline (prevents coherence gate collapse to ≤ EPS_FLOOR only)
+    if stage0_baseline_degen <= 0.0:
+        stage0_baseline_degen = adj.COHERENCE_EPS_FLOOR
+
     # Step 2: Evaluate all (family, layer, α) combinations — full N_search cap
     all_candidates: List[Stage0Candidate] = []
     n_search = 0
@@ -270,11 +361,11 @@ def run_stage0(
                 steer_score = _mean_outcome(steer_batches)
                 improvement = steer_score - best_prompt_score
 
-                # Check coherence gate (simplified: all batches within 1.5×)
+                # H-03/H-05: use measured baseline_degen; compute coherence_ratio
                 mean_degen = float(np.mean([b.mean_degeneracy() for b in steer_batches]))
-                baseline_degen = 0.1  # approximate baseline (improved by full pipeline)
+                coherence_ratio = mean_degen / stage0_baseline_degen  # H-05: stored for tie-break
                 coherence_ok = (
-                    mean_degen <= adj.COHERENCE_MAX_RATIO * baseline_degen + adj.COHERENCE_EPS_FLOOR
+                    mean_degen <= adj.COHERENCE_MAX_RATIO * stage0_baseline_degen + adj.COHERENCE_EPS_FLOOR
                 )
 
                 passes = bool(
@@ -290,20 +381,37 @@ def run_stage0(
                     dev_improvement=improvement,
                     coherence_ok=coherence_ok,
                     passes_cutoff=passes,
+                    coherence_ratio=coherence_ratio,       # H-05
                 ))
                 n_search += 1
 
     advancing = _select_stage1_candidates(all_candidates, MAX_STAGE1_CANDIDATES)
 
-    # Kill rule evaluation
+    # H-01: Kill rule — re-evaluate best advancing candidate at k=5 (K_STAGE1) on DEV
+    # so that both sides of the kill rule comparison use the same k=5 estimate.
+    # Previously used k=3 (K_STAGE0) score which was asymmetric vs APE winner k=5.
     kill_result = "SKIPPED"
     kill_reason = "APE not run (synthetic backend or skipped)"
     if ape_result is not None and advancing:
-        # Use the best advancing candidate's DEV score for kill rule
         best_adv = advancing[0]
+        # Look up direction for the best advancing candidate
+        adv_layer_dirs = directions_by_layer.get(best_adv.layer, [])
+        adv_dir_map = {bd.family: bd for bd in adv_layer_dirs}
+        best_bd = adv_dir_map.get(best_adv.button_family)
+        best_direction = best_bd.direction if best_bd is not None else np.zeros(1)
+
+        # Re-evaluate at k=K_STAGE1=5 using frozen α (same DEV pool)
+        k5_batches = _eval_items_with_raw_pairs(
+            sampler, axis, dev_items, best_prompt_text, best_adv.alpha,
+            best_direction, best_adv.layer, K_STAGE1,  # k=5 — symmetric with APE winner
+            channel="steer_dev_k5",
+        )
+        button_dev_score_k5 = _mean_outcome(k5_batches)
+        best_adv.dev_score_steer_k5 = button_dev_score_k5  # store on candidate for inspection
+
         kill_result, kill_reason = apply_kill_rule(
             auto_prompt_dev_score_k5=ape_result.auto_prompt_dev_score_k5,
-            button_dev_score_k5=best_adv.dev_score_steer,
+            button_dev_score_k5=button_dev_score_k5,  # H-01: now truly k=5
         )
         if ape_result:
             ape_result.kill_rule_result = kill_result
@@ -425,6 +533,9 @@ class Stage1CandidateResult:
     final_verdict: str              # per-candidate verdict contribution
     brier_decomp_steer: Optional[BrierDecomposition]
     brier_decomp_baseline: Optional[BrierDecomposition]
+    # H-02: True iff brier_decomp_* are computed from real (conf, correct) GPU pairs.
+    # False means synthetic-proxy approximation — not authoritative for GPU safety.
+    is_brier_from_real_pairs: bool = False
 
 
 # Avoid circular import by using a forward reference
@@ -449,29 +560,44 @@ def run_stage1_candidate(
     direction: np.ndarray,
     axis: str = "uncertainty_awareness",
     raw_store: Optional[BrierRawStore] = None,
+    bonferroni_ci_level: float = adj.BONFERRONI_CI_LEVEL,
 ) -> Stage1CandidateResult:
     """Run Stage 1 ONE-SHOT TEST for a single advancing candidate.
 
     Uses the frozen adjudicator math from adjudicate_c2b verbatim.
+
+    Args:
+        bonferroni_ci_level: Per prereg §4/§7: 1 − 0.05/max(1, M) where M is
+            the number of advancing candidates (n_axes=1 for E-0012).
+            Caller (run_e0012_harness) computes this dynamically.  Defaults to
+            the C2b 3-axis level for backward compatibility but callers MUST
+            pass the correct dynamic value.
     """
     test_items = list(test_items)
     layer = candidate.layer
     alpha = candidate.alpha
 
+    # H-02/H-06: Use candidate-specific channel names so multiple Stage 1
+    # candidates' raw-pair records don't collide in the shared BrierRawStore.
+    cand_key = f"{candidate.button_family}_{candidate.layer}_{int(candidate.alpha)}"
+    chan_steer = f"s1_steer_{cand_key}"
+    chan_prompt = f"s1_prompt_{cand_key}"
+    chan_baseline = f"s1_baseline_{cand_key}"
+
     # Run steered TEST items
     steer_batches = _eval_items_with_raw_pairs(
         sampler, axis, test_items, best_prompt_text, alpha,
-        direction, layer, K_STAGE1, channel="steer", raw_store=raw_store,
+        direction, layer, K_STAGE1, channel=chan_steer, raw_store=raw_store,
     )
     # Run prompted (prompt-only, alpha=0) TEST items
     prompt_batches = _eval_items_with_raw_pairs(
         sampler, axis, test_items, best_prompt_text, 0.0,
-        np.zeros(1), layer, K_STAGE1, channel="prompt", raw_store=raw_store,
+        np.zeros(1), layer, K_STAGE1, channel=chan_prompt, raw_store=raw_store,
     )
     # Run unsteered baseline TEST items
     baseline_batches = _eval_items_with_raw_pairs(
         sampler, axis, test_items, "", 0.0,
-        np.zeros(1), layer, K_STAGE1, channel="baseline", raw_store=raw_store,
+        np.zeros(1), layer, K_STAGE1, channel=chan_baseline, raw_store=raw_store,
     )
 
     # Paired differences: d_i = steer_i − prompt_i (per item)
@@ -479,8 +605,9 @@ def run_stage1_candidate(
         s.mean_outcome() - p.mean_outcome()
         for s, p in zip(steer_batches, prompt_batches)
     ])
+    # H-04: use dynamically computed CI level (1 − 0.05/M), not hardcoded C2b 3-axis level
     ci = adj.cluster_bootstrap_ci(
-        d_items, b=adj.BOOTSTRAP_B, ci_level=adj.BONFERRONI_CI_LEVEL, seed=0
+        d_items, b=adj.BOOTSTRAP_B, ci_level=bonferroni_ci_level, seed=0
     )
 
     # Coherence gate (same as C2b)
@@ -502,11 +629,35 @@ def run_stage1_candidate(
         "passes": bool(passes),
     }
 
-    # Brier decomposition (§9.2)
-    steer_outcomes = [b.mean_outcome() for b in steer_batches]
-    baseline_outcomes = [b.mean_outcome() for b in baseline_batches]
-    steer_decomp = brier_decompose(steer_outcomes, [int(o >= 0.5) for o in steer_outcomes])
-    base_decomp = brier_decompose(baseline_outcomes, [int(o >= 0.5) for o in baseline_outcomes])
+    # H-02: Brier decomposition (§9.2) — use raw-pair store when available.
+    # GPU path (raw_store has real pairs): uses true (confidence, correctness) pairs
+    #   extracted from generated text via parse_confidence / item_is_correct.
+    # Synthetic path (raw_store has proxy or is None): uses 1-Brier outcome as proxy.
+    #   SYNTHETIC-ONLY — NOT authoritative for real GPU safety decisions.
+    steer_decomp: Optional[BrierDecomposition]
+    base_decomp: Optional[BrierDecomposition]
+    is_brier_from_real_pairs = False
+
+    if raw_store is not None and raw_store.has_real_pairs(chan_steer) and raw_store.has_real_pairs(chan_baseline):
+        # GPU path: decompose from real (confidence, correctness) pairs
+        steer_decomp = raw_store.decompose_channel(chan_steer, require_real=True)
+        base_decomp = raw_store.decompose_channel(chan_baseline, require_real=True)
+        if steer_decomp is not None and base_decomp is not None:
+            is_brier_from_real_pairs = True
+        else:
+            # Shouldn't happen if has_real_pairs returned True, fall through to proxy
+            steer_decomp = None
+            base_decomp = None
+    # Synthetic proxy fallback (OFFLINE ONLY — isolated from GPU safety decisions)
+    if not is_brier_from_real_pairs:
+        steer_outcomes = [b.mean_outcome() for b in steer_batches]
+        baseline_outcomes = [b.mean_outcome() for b in baseline_batches]
+        # SYNTHETIC PROXY: mean_outcome = 1-Brier; treating it as confidence and
+        # deriving correctness as int(o >= 0.5) is an approximation valid only for
+        # offline smoke tests.  Not valid for real GPU safety adjudication.
+        steer_decomp = brier_decompose(steer_outcomes, [int(o >= 0.5) for o in steer_outcomes])
+        base_decomp = brier_decompose(baseline_outcomes, [int(o >= 0.5) for o in baseline_outcomes])
+        is_brier_from_real_pairs = False
 
     # Accuracy guard (§9.1): abstentions count as incorrect per §F-07 fix
     acc_steer = _compute_accuracy(steer_batches)
@@ -534,6 +685,7 @@ def run_stage1_candidate(
         final_verdict=final_verdict,
         brier_decomp_steer=steer_decomp,
         brier_decomp_baseline=base_decomp,
+        is_brier_from_real_pairs=is_brier_from_real_pairs,
     )
 
 
@@ -698,6 +850,10 @@ def run_e0012_harness(
 
         # Stage 1: one-shot TEST for each advancing candidate
         stage1_results: List[Stage1CandidateResult] = []
+        # H-04: dynamic Bonferroni correction over M=len(advancing) candidates × 1 axis
+        # per prereg §4/§7: ci_level = 1 − 0.05 / max(1, M × n_axes=1)
+        m = max(1, len(stage0.advancing))
+        bonferroni_ci_level = 1.0 - 0.05 / m
         for cand in stage0.advancing:
             layer_dirs = directions_by_layer.get(cand.layer, [])
             dir_map = {bd.family: bd for bd in layer_dirs}
@@ -712,6 +868,7 @@ def run_e0012_harness(
                 direction=direction,
                 axis=axis,
                 raw_store=raw_store,
+                bonferroni_ci_level=bonferroni_ci_level,  # H-04
             )
             stage1_results.append(result)
 

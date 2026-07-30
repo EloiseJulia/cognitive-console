@@ -152,6 +152,10 @@ class BrierRawPair:
     confidence: float     # verbalized confidence ∈ [0, 1]
     correctness: int      # 0 or 1
     one_minus_brier: float  # per-item outcome used in adjudication
+    # H-02: True iff confidence/correctness are 1-Brier proxy values (synthetic backend).
+    # Real GPU pairs must have synthetic_proxy=False; proxy pairs MUST NOT be used
+    # for authoritative safety decisions on real GPU runs.
+    synthetic_proxy: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -180,8 +184,16 @@ class BrierRawStore:
         layer: int,
         confidence: float,
         correctness: int,
+        synthetic_proxy: bool = False,
     ) -> None:
-        """Append one raw (confidence, correctness) pair to the store."""
+        """Append one raw (confidence, correctness) pair to the store.
+
+        Args:
+            synthetic_proxy: True iff confidence/correctness are derived from
+                the 1-Brier outcome proxy (synthetic backend).  Must be False
+                for real GPU pairs.  Records with synthetic_proxy=True MUST NOT
+                be used for authoritative safety decisions on real GPU runs.
+        """
         one_minus_brier = 1.0 - (float(confidence) - float(correctness)) ** 2
         pair = BrierRawPair(
             item_id=str(item_id),
@@ -191,6 +203,7 @@ class BrierRawStore:
             confidence=float(confidence),
             correctness=int(correctness),
             one_minus_brier=float(one_minus_brier),
+            synthetic_proxy=bool(synthetic_proxy),
         )
         self._handle.write(json.dumps(pair.to_dict()) + "\n")
         self._handle.flush()
@@ -203,7 +216,14 @@ class BrierRawStore:
 
     def load_all(self) -> List[BrierRawPair]:
         """Read all stored pairs from disk."""
-        self.close()
+        # Flush buffered writes before reading — do NOT close the handle here,
+        # as more records may still be written after load_all() is called
+        # (e.g. between Stage 1 candidates).  Closing here would break subsequent
+        # record() calls (the old self.close() caused this exact failure).
+        try:
+            self._handle.flush()
+        except (OSError, ValueError):
+            pass  # already closed — safe to ignore
         pairs: List[BrierRawPair] = []
         if not self.path.exists():
             return pairs
@@ -213,20 +233,39 @@ class BrierRawStore:
                 if not line:
                     continue
                 d = json.loads(line)
+                # Backward-compatible: records written before H-02 fix lack synthetic_proxy
+                d.setdefault("synthetic_proxy", False)
                 pairs.append(BrierRawPair(**d))
         return pairs
 
     def filter_channel(self, channel: str) -> List[BrierRawPair]:
         return [p for p in self.load_all() if p.channel == channel]
 
+    def has_real_pairs(self, channel: str) -> bool:
+        """Return True iff the channel has at least one non-proxy (real GPU) pair."""
+        return any(
+            not p.synthetic_proxy
+            for p in self.load_all()
+            if p.channel == channel
+        )
+
     def decompose_channel(
         self,
         channel: str,
         n_bins: int = 10,
+        require_real: bool = False,
     ) -> Optional[BrierDecomposition]:
-        """Compute Brier decomposition for all pairs in a given channel."""
+        """Compute Brier decomposition for all pairs in a given channel.
+
+        Args:
+            require_real: If True, return None when only synthetic-proxy pairs
+                exist (safe guard: prevents proxy data from being used for
+                authoritative GPU safety decisions).
+        """
         pairs = self.filter_channel(channel)
         if not pairs:
+            return None
+        if require_real and all(p.synthetic_proxy for p in pairs):
             return None
         confs = [p.confidence for p in pairs]
         corrs = [p.correctness for p in pairs]

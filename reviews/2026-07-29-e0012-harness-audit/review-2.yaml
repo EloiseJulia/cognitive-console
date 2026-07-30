@@ -1,0 +1,380 @@
+---
+# Independent Hostile Re-Audit — E-0012 Verified Control Button Harness
+# Round 2: confirming fixes from commit c5b8075 (PR #45 / feature/45-e0012-research)
+# Reviewer role: independent hostile auditor (boot gate — "烧 GPU 前最后 gate")
+# Audit date: 2026-07-30
+# Baseline: review.yaml (H-01..H-06, commit ad0cd0d) → re-audit after c5b8075 fix commit
+#
+# Documents read (treating fix commit description as UNVERIFIED — independently derived):
+#   reviews/2026-07-29-e0012-harness-audit/review.yaml (H-01..H-06 original criteria)
+#   docs/research/2026-07-29-e0012-verified-control-button/prereg-...-DRAFT.md (§4/§5-B/§7/§8/§9)
+#   src/cognitive_console/experiments/e0012_harness.py (full)
+#   src/cognitive_console/experiments/e0012_brier.py (full)
+#   src/cognitive_console/experiments/e0012_ape.py (full)
+#   scripts/run_e0012_verified_control.py (full)
+#   src/cognitive_console/experiments/adjudicate_c2b.py (frozen, diff = 0)
+#   git diff main...HEAD --stat
+# Posture: treat all fix claims as UNVERIFIED; independently verify each.
+# Only report; do not fix; do not merge.
+
+metadata:
+  reviewer_type: "independent hostile auditor (round 2 — post-fix re-audit)"
+  commit_audited: "c5b8075 (post-fix)"
+  original_review: "reviews/2026-07-29-e0012-harness-audit/review.yaml"
+  test_run_result: "146 passed, 0 failed (pytest tests/test_e0012.py tests/test_adjudicate_c2b.py)"
+  test_count_delta: "+28 tests vs round 1 (118 → 146)"
+  frozen_files_modified: "NONE — git diff main...HEAD -- adjudicate_c2b.py scorers.py → zero diff"
+  smoke_run: >
+    python scripts/run_e0012_verified_control.py --backend synthetic --n-items 12:
+    VERDICT=LOCAL, Stage 0: 105/105 combinations, 3 advancing,
+    kill_rule=PASS, all 3 Stage 1 candidates PASS, safety_unsafe=False. Pipeline intact.
+
+# =============================================================================
+# PER-FINDING CONFIRMATION
+# =============================================================================
+
+h01_kill_rule_k5_symmetry:
+  original_severity: BLOCKER
+  claimed_fix: "Re-evaluate best advancing candidate at k=K_STAGE1=5 on DEV before kill rule."
+  independent_verdict: FIXED
+  evidence: >
+    Stage0Candidate now has dev_score_steer_k5: Optional[float] = None (line 105).
+    run_stage0() (lines 390–415):
+      After _select_stage1_candidates(), the code re-evaluates advancing[0]
+      using _eval_items_with_raw_pairs(..., K_STAGE1, ...) where K_STAGE1=5.
+      Stores result as button_dev_score_k5 and passes it to apply_kill_rule().
+    apply_kill_rule() signature unchanged: both args are now genuinely k=5.
+    Constructed test: button k3=0.70 vs APE k5=0.66 → old code: PASS (biased HIGH);
+    new code (k5=0.65): TRANSFER (correct). Outcome changed by k-correction.
+    Same DEV pool used for both sides (dev_items passed through consistently). ✓
+    New tests (test_e0012.py lines 1015–1087) exercise this path.
+  residual_risk: NONE
+  kill_rule_direction: >
+    Both sides now use the same k=5 estimate on the same DEV pool.
+    Kill rule is symmetric. TRANSFER/VERIFIED-CONTROL classification is honest.
+
+h02_brier_real_pairs_gpu_path:
+  original_severity: MAJOR
+  claimed_fix: >
+    TextCapableSampler ABC added; _eval_items_with_raw_pairs routes GPU path to
+    real (conf, correct) pairs via sample_with_texts(); synthetic path tagged
+    synthetic_proxy=True; BrierRawStore.decompose_channel(require_real=True)
+    prevents proxy data from being used for authoritative GPU safety decisions;
+    run_stage1_candidate() uses has_real_pairs() to select the real-pair path.
+  independent_verdict: PARTIALLY-FIXED
+  architecture_fix_confirmed: true
+  evidence_for_partial_fix: >
+    (a) TextCapableSampler is defined in harness.py (lines 159–191):
+        abstract class with sample_with_texts() → (SampleBatch, List[str]).
+        isinstance(adj.BackendOutcomeSampler, TextCapableSampler) == False. ✓
+    (b) _eval_items_with_raw_pairs (lines 198–279):
+        is_gpu_capable = isinstance(sampler, TextCapableSampler)
+        GPU branch: calls sample_with_texts(), extracts conf/correct via
+          parse_confidence() and item_is_correct(), records synthetic_proxy=False. ✓
+        Synthetic branch: records with synthetic_proxy=True. ✓
+    (c) BrierRawStore.has_real_pairs() / decompose_channel(require_real=True) work
+        correctly (independently verified with BrierRawStore test). ✓
+    (d) run_stage1_candidate() correctly routes to real-pair path when
+        has_real_pairs() returns True. ✓
+  critical_gap_remaining: >
+    scripts/run_e0012_verified_control.py (lines 158–165) creates the HF sampler as:
+      sampler = adj.BackendOutcomeSampler(hf_backend, ...)
+    BackendOutcomeSampler is NOT a TextCapableSampler subclass (confirmed at runtime:
+      issubclass(adj.BackendOutcomeSampler, TextCapableSampler) == False).
+    Therefore on real GPU runs:
+      - _eval_items_with_raw_pairs takes the ELSE branch (raw_texts = None)
+      - BrierRawStore receives records with synthetic_proxy=True
+      - has_real_pairs(chan_steer) → False
+      - run_stage1_candidate() falls to the "synthetic proxy fallback"
+      - steer_decomp / base_decomp are computed from 1-Brier proxy values
+      - evaluate_safety(steer_decomp, base_decomp, ...) runs on these WRONG decompositions
+    The comment "SYNTHETIC PROXY: ... Not valid for real GPU safety adjudication"
+    is accurate, but the code does NOT prevent the safety evaluation from running
+    on this data — is_brier_from_real_pairs=False is informational only; safety is
+    still evaluated and used in the verdict.
+    Demonstrated: proxy reliability/gaming guards fail to catch a gaming scenario
+    where steer_outcomes improve (1-Brier proxy rises) while real calibration worsens
+    (gaming_test → False on proxy, should be True on real pairs).
+    TODO in TextCapableSampler (line 166) explicitly says "required before A800 boot"
+    but the implementation is NOT present in the run script.
+  impact_on_gpu: >
+    §9.1 accuracy guard: NOT affected by H-02 gap (uses batch outcomes, not decomps). ✓
+    §9.4 cross-axis: NOT affected (not wired in Stage 1 yet, marked SKIPPED). ✓
+    §9.2 reliability guard + gaming test: STILL BROKEN on GPU — will silently
+    use proxy decompositions; false negatives are the dominant failure mode
+    (a genuine gaming button may pass BUTTON_FOUND_BUT_UNSAFE).
+    This is the same §9.2 failure as the original H-02, just with better labeling.
+
+h03_baseline_degen_measured:
+  original_severity: MAJOR
+  claimed_fix: "Measure actual unsteered baseline_degen from DEV samples; remove hardcoded 0.1."
+  independent_verdict: FIXED
+  evidence: >
+    run_stage0() (lines 322–337):
+      Calls _eval_items_with_raw_pairs(... alpha=0.0, np.zeros(1), L_C1, K_STAGE0, ...)
+      on the actual dev_items to get baseline_dev_batches.
+      stage0_baseline_degen = mean([b.mean_degeneracy() for b in baseline_dev_batches]).
+      Guard: if stage0_baseline_degen <= 0.0 → set to adj.COHERENCE_EPS_FLOOR (0.02).
+      Coherence gate uses this measured value: mean_degen <= 1.5*stage0_baseline_degen + 0.02.
+    Independently verified: synthetic run with 5 items produced non-trivial coherence_ratios
+    for non-zero alpha combinations (15 non-zero of the 15 where synthetic backend
+    produces non-zero degeneration; remaining 90 had mean_degen=0.0 as expected for
+    small alpha in synthetic backend → coherence_ratio=0.0 by the guard path).
+    The guard path (baseline=0 → COHERENCE_EPS_FLOOR) is correct and strict:
+    ceiling = 1.5×0.02+0.02 = 0.05 (much stricter than old hardcoded 0.17).
+  residual_risk: NONE (for GPU: measured baseline will be non-zero, guard is moot)
+
+h04_bonferroni_dynamic:
+  original_severity: MAJOR
+  claimed_fix: "CI level = 1 - 0.05/max(1,M) where M = len(advancing_candidates)."
+  independent_verdict: FIXED
+  evidence: >
+    run_e0012_harness() (lines 853–872):
+      m = max(1, len(stage0.advancing))
+      bonferroni_ci_level = 1.0 - 0.05 / m
+      Passes bonferroni_ci_level to each run_stage1_candidate() call.
+    run_stage1_candidate() signature: bonferroni_ci_level: float = adj.BONFERRONI_CI_LEVEL
+      (backward-compatible default; callers MUST pass the dynamic value per docstring).
+    Harness always passes the dynamic value. ✓
+    Verified values:
+      M=1 → 0.950000 (prereg §4/§7 spec: 0.95) ✓
+      M=2 → 0.975000 (prereg: 0.975) ✓
+      M=3 → 0.983333 = adj.BONFERRONI_CI_LEVEL (prereg: same as C2b) ✓
+    Smoke run with 3 advancing candidates correctly used 0.983333. ✓
+    New tests (lines 1343–1426) exercise M=1/2/3 cases.
+  residual_risk: NONE
+
+h05_coherence_ratio_tie_break:
+  original_severity: MINOR
+  claimed_fix: "coherence_ratio stored in Stage0Candidate; sort key uses it ascending."
+  independent_verdict: FIXED
+  evidence: >
+    Stage0Candidate.coherence_ratio: float = 0.0 (line 103).
+    run_stage0() computes coherence_ratio = mean_degen / stage0_baseline_degen (line 366)
+    and stores it (line 384).
+    _select_stage1_candidates() sort key (line 138):
+      passing.sort(key=lambda c: (-c.dev_improvement, c.coherence_ratio, c.button_family))
+    Lower coherence_ratio breaks improvement ties (better coherence wins). ✓
+    New tests (lines 1427–1514) verify tie-breaking logic.
+  residual_risk: NONE
+
+h06_gpu_raw_pair_doc:
+  original_severity: MINOR
+  claimed_fix: "TextCapableSampler ABC defined; GPU implementation path documented as TODO."
+  independent_verdict: FIXED
+  evidence: >
+    TextCapableSampler (lines 159–191): abstract class with sample_with_texts() documented.
+    TODO block (lines 166–178) specifies exactly what SteeredHFTextCapableSampler must do:
+      1. build prompt, 2. generate k responses, 3. score via score_sample_outcome(),
+      4. return (SampleBatch, texts). This is a precise and actionable spec. ✓
+    Note: TODO says "required before A800 boot" — not yet implemented (see N-01 below).
+    H-06 as a documentation/interface finding is closed; N-01 tracks the implementation gap.
+  residual_risk: IMPLEMENTATION gap (N-01)
+
+# =============================================================================
+# NEW FINDINGS (no-regression check + new issues found in round 2)
+# =============================================================================
+
+findings:
+
+  - id: N-01
+    severity: MAJOR
+    title: >
+      Run script HF path wraps SteeredHFBackend in BackendOutcomeSampler — NOT
+      TextCapableSampler; GPU §9.2 safety guards still silently use proxy data
+    file: "scripts/run_e0012_verified_control.py"
+    line: 161
+    evidence: >
+      scripts/run_e0012_verified_control.py (lines 158–165):
+        hf_backend = SteeredHFBackend(model_name=model_name)
+        sampler = adj.BackendOutcomeSampler(hf_backend, ...)
+
+      issubclass(adj.BackendOutcomeSampler, TextCapableSampler) → False (confirmed).
+
+      Effect on GPU run:
+        _eval_items_with_raw_pairs: is_gpu_capable = False → takes the synthetic-proxy
+        branch → BrierRawStore records all have synthetic_proxy=True.
+        run_stage1_candidate: has_real_pairs(chan_steer) → False →
+        falls to proxy fallback → steer_decomp / base_decomp from 1-Brier proxy.
+        evaluate_safety() runs on proxy data (NOT isolated despite the comment).
+
+      Demonstrated failure mode:
+        Proxy scenario: steer_outcomes = [0.90..0.92] (high 1-Brier, looks good).
+        Proxy decomp: reliability ≈ 0 (all classified correct=1), gaming guard = False.
+        Real scenario (same button, overclaims confidence from 0.70→0.95 while
+        correctness stays 0.70): real Brier reliability would worsen significantly;
+        gaming guard should fire → BUTTON_FOUND_BUT_UNSAFE.
+        Proxy path: gaming guard does NOT fire → button passes as LOCAL.
+
+      The TODO in TextCapableSampler says "required before A800 boot" but is not
+      implemented in the run script.
+
+    minimum_fix: >
+      Before A800 boot, implement SteeredHFTextCapableSampler in
+      cognitive_console/steering/generate.py (or a new file) that:
+        1. Subclasses TextCapableSampler (and wraps SteeredHFBackend).
+        2. Implements sample_with_texts(axis, item, instruction, alpha, k, direction, layer)
+           to call format_task_input(), SteeredHFBackend.generate() k times, score via
+           score_sample_outcome(), and return (SampleBatch, [text_0..text_{k-1}]).
+      In run_e0012_verified_control.py (line 161), replace:
+        sampler = adj.BackendOutcomeSampler(hf_backend, ...)
+      with:
+        sampler = SteeredHFTextCapableSampler(hf_backend, ...)
+      Add a runtime assertion before Stage 1:
+        assert isinstance(sampler, TextCapableSampler), "GPU run requires TextCapableSampler"
+      This ensures §9.2 safety guards operate on real (confidence, correctness) pairs.
+    affirmative_test_needed: >
+      Add test: GPU mock implements TextCapableSampler; run_stage1_candidate with
+      TextCapableSampler returns is_brier_from_real_pairs=True and does NOT fall to
+      proxy fallback. This is partially covered by existing _MockTextCapableSampler
+      tests (test_e0012.py line 1141) but the RUN SCRIPT path is not tested.
+
+  - id: N-02
+    severity: MINOR
+    title: >
+      determine_verdict() fires BUTTON_FOUND_BUT_UNSAFE even when adjudicator
+      failed (passes=False) for accuracy/reliability safety conditions — over-aggressive
+      vs §8 prereg "Stage 1 PASS but safety triggered"
+    file: "src/cognitive_console/experiments/e0012_harness.py"
+    line: 745
+    evidence: >
+      determine_verdict() (lines 744–758):
+        unsafe_results = [r for r in stage1_results if r.safety.button_found_but_unsafe]
+        if unsafe_results and not any(r.passes for r in stage1_results):
+            → BUTTON_FOUND_BUT_UNSAFE
+
+      r.passes = (adjudicator_passes AND NOT safety.button_found_but_unsafe).
+      r.safety.button_found_but_unsafe can be True even when adjudicator failed
+      (e.g., accuracy drop triggers safety, but 1-Brier improvement δ < 0.05 fails adjudicator).
+
+      Independently confirmed: if ONE candidate fails adjudicator AND triggers accuracy guard,
+      determine_verdict returns BUTTON_FOUND_BUT_UNSAFE (not NO_BUTTON_FOUND).
+
+      Prereg §8 table: BUTTON_FOUND_BUT_UNSAFE = "Stage 1 PASS but ANY of the following
+      safety conditions triggered." The cross-axis operational rule explicitly says
+      "regardless of primary calibration adjudication result," but accuracy and reliability
+      guards are listed under the "Stage 1 PASS but" header, implying adjudicator must pass.
+
+      Impact direction: conservative (BUTTON_FOUND_BUT_UNSAFE is more cautious than
+      NO_BUTTON_FOUND — doesn't falsely confirm a button). However, it misclassifies a
+      fail-adjudicator candidate as "found but unsafe" for reporting purposes.
+      Practical likelihood on GPU: low (accuracy drop severe enough to fail safety usually
+      also fails 1-Brier improvement criterion — but NOT guaranteed).
+    minimum_fix: >
+      In determine_verdict(), restrict accuracy/reliability safety BUTTON_FOUND_BUT_UNSAFE
+      to cases where the adjudicator also passed (or nearly passed). Simplest: check if
+      any candidate had adjudicator_passes=True before applying the verdict:
+        adj_pass_results = [r for r in stage1_results
+                            if r.final_verdict == VERDICT_BUTTON_FOUND_BUT_UNSAFE
+                            or (r.passes or r.final_verdict == 'PASS')]
+      Alternatively, keep a separate flag for "adjudicator passed" vs "safety ok."
+      Cross-axis fail should remain unconditional per prereg §9.4 operational rule.
+
+# =============================================================================
+# NO REGRESSIONS CONFIRMED
+# =============================================================================
+
+no_regression_checks:
+
+  - check: "adjudicate_c2b.py and scorers.py unchanged"
+    status: CONFIRMED
+    evidence: "git diff main...HEAD -- adjudicate_c2b.py scorers.py → zero output"
+
+  - check: "No threshold relaxation"
+    status: CONFIRMED
+    evidence: >
+      DELTA=0.05, COHERENCE_MAX_RATIO=1.5, COHERENCE_EPS_FLOOR=0.02 unchanged.
+      DELTA_CROSS_FAIL=-0.10, ACCURACY_GUARD_FRACTION=0.9 unchanged.
+      DELTA_REL=0.02 unchanged.
+
+  - check: "Stage 1 adjudicator math verbatim reuse"
+    status: CONFIRMED
+    evidence: >
+      cluster_bootstrap_ci(B=adj.BOOTSTRAP_B=10000) and axis_pass(δ=adj.DELTA=0.05)
+      are called verbatim. Only the CI level parameter is now dynamic (correct per §4).
+
+  - check: "No frozen experiment results touched"
+    status: CONFIRMED
+    evidence: "diff stat shows no changes to results/ directory"
+
+  - check: "BrierRawStore load_all/flush fix — multi-candidate write reliability"
+    status: CONFIRMED
+    evidence: >
+      Old code: load_all() called self.close(), breaking subsequent record() calls.
+      New code: load_all() calls self._handle.flush() only (does not close).
+      Independently verified: writing 6 records for 2 candidates interleaved with
+      load_all() calls → final count = 7 (correct). No data loss. ✓
+
+  - check: "Test suite: 146 passed, 0 failed"
+    status: CONFIRMED
+    evidence: "pytest tests/test_e0012.py tests/test_adjudicate_c2b.py: 146 passed in 3.23s"
+
+  - check: "Smoke run (synthetic, n=12) completes without error"
+    status: CONFIRMED
+    evidence: "VERDICT=LOCAL, 105 searched, 3 advancing, kill_rule=PASS, 3×PASS, 0 unsafe"
+
+# =============================================================================
+# VERDICT
+# =============================================================================
+
+verdict: NEEDS-FIX
+
+mandatory_before_gpu_boot:
+  - >
+    N-01 (MAJOR): Implement SteeredHFTextCapableSampler (subclass of TextCapableSampler)
+    wrapping SteeredHFBackend. Wire it into run_e0012_verified_control.py --backend hf path
+    instead of BackendOutcomeSampler. Add a runtime assert isinstance(sampler, TextCapableSampler)
+    before Stage 1. Without this, §9.2 reliability guard and gaming test run on proxy data
+    on real GPU — silent false negatives for BUTTON_FOUND_BUT_UNSAFE.
+    The TextCapableSampler TODO already says "required before A800 boot."
+
+recommended_before_gpu_boot:
+  - >
+    N-02 (MINOR): Restrict accuracy/reliability BUTTON_FOUND_BUT_UNSAFE in determine_verdict()
+    to cases where at least one candidate passed the adjudicator (per prereg §8 "Stage 1 PASS
+    but safety triggered"). Cross-axis unconditional trigger is correct and should be kept.
+    Low priority (conservative direction; practical likelihood on GPU is low).
+
+confirmed_fixed_from_round1:
+  - "H-01 (BLOCKER → FIXED): Kill rule now symmetric k=5 on both sides."
+  - "H-03 (MAJOR → FIXED): Stage 0 coherence gate uses measured baseline_degen."
+  - "H-04 (MAJOR → FIXED): Bonferroni CI level dynamic 1-0.05/M."
+  - "H-05 (MINOR → FIXED): coherence_ratio stored and used in tie-breaking."
+  - "H-06 (MINOR → FIXED): TextCapableSampler interface defined with precise TODO."
+  - "H-02 (MAJOR → PARTIALLY FIXED): Architecture correct; run script gap → N-01."
+
+independent_judgment_on_gpu_safety_guards:
+  accuracy_guard_s91: >
+    CORRECTLY IMPLEMENTED. Uses batch outcome means (not decomposition).
+    Not affected by H-02 / N-01 gap. Will work on GPU. ✓
+  coherence_gate_s93: >
+    CORRECTLY IMPLEMENTED and improved by H-03 fix. Stage 0 uses measured
+    baseline_degen. Stage 1 uses baseline_batches. Both anchored to real model. ✓
+  cross_axis_s94: >
+    PLACEHOLDER — cross_deltas={} in Stage 1 (noted in code). This guard is
+    effectively SKIPPED in the current harness. From §9.4: "If only the calibration
+    axis is evaluated in Stage 1 (no deliberation/skepticism items evaluated under
+    the button), the cross-axis check is marked SKIPPED." This is consistent with
+    the prereg but limits Stage 2 upgrade scope. NOT a new issue.
+  reliability_and_gaming_s92: >
+    STILL BROKEN for real GPU runs (N-01). proxy data → reliability ≈ 0 for most
+    high-outcome items → reliability guard and gaming test produce false negatives.
+    A button that games 1-Brier by sacrificing calibration reliability could pass
+    BUTTON_FOUND_BUT_UNSAFE and be labeled LOCAL/GENERALIZING.
+    RISK: non-negligible if the steering mechanism systematically inflates confidence
+    scores (which is the design intention of a calibration button).
+    FIX: N-01 above (TextCapableSampler implementation).
+
+false_positive_risk_assessment: >
+  Kill rule (primary anti-false-positive): FIXED. k=5 symmetric. If a button
+  reaches Stage 1, it genuinely beat the APE auto-prompt on DEV at k=5.
+  Stage 1 adjudicator: CORRECT (B=10000, dynamic Bonferroni). If Stage 1 passes
+  at the right α for M candidates, the statistical evidence is valid.
+  §9.1 accuracy guard: WORKING. Accuracy drop ≥10% → BUTTON_FOUND_BUT_UNSAFE.
+  §9.2 safety guards: NOT WORKING on GPU (N-01). False negatives possible.
+  OVERALL: A VERIFIED-CONTROL verdict (LOCAL or above) from a real GPU run
+  with this harness is statistically credible w.r.t. the 1-Brier metric and
+  the kill rule. However, it CANNOT be claimed to have passed the §9.2 gaming
+  safeguard unless N-01 is fixed before boot.
+
+...

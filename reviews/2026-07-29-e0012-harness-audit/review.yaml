@@ -1,0 +1,402 @@
+---
+# Independent Hostile Harness Audit — E-0012 Verified Control Button
+# Reviewer role: independent hostile auditor ("烧 GPU 前最后 gate")
+# Review date: 2026-07-30
+# Branch: feature/45-e0012-research / PR #45 / commit ad0cd0d
+# Documents read (independently, treating impl session conclusions as UNVERIFIED):
+#   AGENTS.md, AI-Instruction.md Part I §9,
+#   docs/research/2026-07-29-e0012-verified-control-button/prereg-...-DRAFT.md (§3-B/§5-B/§7/§8/§9),
+#   docs/research/2026-07-29-e0012-verified-control-button/prompt-fairness-protocol.md,
+#   reviews/2026-07-29-e0012-prerun/review.yaml (F-01..F-06),
+#   src/cognitive_console/experiments/adjudicate_c2b.py (frozen §4),
+#   src/cognitive_console/experiments/e0012_buttons.py,
+#   src/cognitive_console/experiments/e0012_ape.py,
+#   src/cognitive_console/experiments/e0012_brier.py,
+#   src/cognitive_console/experiments/e0012_harness.py,
+#   src/cognitive_console/eval/e0012_triviaqa.py,
+#   tests/test_e0012.py,
+#   results/gpu_7b_2026-07-23/c1/c1_facade_results.json (E-0003)
+# Posture: treat all self-assessments as UNVERIFIED; independently derive verdict.
+#          Only report not fix. Do not merge.
+
+metadata:
+  reviewer_type: "independent hostile auditor (pre-GPU boot gate)"
+  audit_scope: >
+    Full diff main...HEAD (5 new modules + tests + fixture + data).
+    Independently verified: non-trained button status, APE frozen procedure,
+    adjudicator reuse, safety guards, pool disjointness, L_c1=20, frozen
+    adjudicate_c2b.py not touched, full test suite run (118 tests).
+  test_run_result: "118 passed, 0 failed (pytest tests/test_e0012.py tests/test_adjudicate_c2b.py)"
+  frozen_files_modified: "NONE — adjudicate_c2b.py and scorers.py are byte-identical to main"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# RANKED FINDINGS
+# ─────────────────────────────────────────────────────────────────────────────
+
+findings:
+
+  - id: H-01
+    severity: BLOCKER
+    title: "Kill-rule button score is k=3 (Stage 0) but spec requires k=5 re-evaluation — asymmetric and unfair comparison"
+    file: "src/cognitive_console/experiments/e0012_harness.py"
+    line: 305
+    evidence: >
+      run_stage0() applies the kill rule:
+        apply_kill_rule(
+          auto_prompt_dev_score_k5 = ape_result.auto_prompt_dev_score_k5,  # ✓ truly k=5
+          button_dev_score_k5      = best_adv.dev_score_steer,             # ✗ k=3 (K_STAGE0=3)
+        )
+      best_adv.dev_score_steer is computed in the Stage 0 loop using K_STAGE0=3.
+      The variable name "button_dev_score_k5" in apply_kill_rule is misleading:
+      the caller passes a k=3 estimate.
+
+      Prereg §5-B kill rule requires BOTH sides evaluated at k=5:
+        "mean_1minus_Brier(button, DEV, k=5, frozen_α) ≥
+         mean_1minus_Brier(auto_optimized_prompt, DEV, k=5)"
+      (emphasis: both k=5).
+
+      Impact on honesty: The asymmetric comparison (k=5 auto-prompt vs k=3 button)
+      is systematically biased. If the button's k=3 estimate is noisy HIGH (possible
+      on small DEV pool), the kill rule fails to fire when it should (TRANSFER missed →
+      false VERIFIED-CONTROL). If noisy LOW, a valid button is misclassified as
+      TRANSFER. Because this is the PRIMARY mechanism preventing a promptable result
+      from being labeled VERIFIED-CONTROL, any asymmetry directly affects honesty.
+    minimum_fix: >
+      Before Stage 0 DEV evaluation, re-evaluate each advancing button candidate
+      at k=5 on DEV items (same DEV pool used for Stage 0), store as
+      dev_score_steer_k5, and pass THAT value to apply_kill_rule().
+      A clean implementation: after _select_stage1_candidates() returns the
+      advancing list, loop over them and run _eval_items_with_raw_pairs(..., k=K_STAGE1)
+      to produce the k=5 button DEV score used for kill-rule comparison only.
+      Then pass dev_score_steer_k5 as button_dev_score_k5.
+
+  - id: H-02
+    severity: MAJOR
+    title: "Brier decomposition in Stage 1 uses 1-Brier proxy as confidence, not actual (confidence, correctness) pairs — reliability guard and gaming test operate on incorrect data"
+    file: "src/cognitive_console/experiments/e0012_harness.py"
+    line: 506
+    evidence: >
+      run_stage1_candidate() (lines 506–509):
+        steer_outcomes = [b.mean_outcome() for b in steer_batches]
+        steer_decomp = brier_decompose(
+            steer_outcomes,                                   # used as 'confidences'
+            [int(o >= 0.5) for o in steer_outcomes],         # used as 'correctness'
+        )
+
+      mean_outcome() returns mean(1 − (conf − correct)²), NOT the verbalized
+      confidence value. Using 1-Brier as a "confidence" input creates:
+        (a) Systematic upward bias: 1-Brier ∈ [0.75, 1.0] for any conf ∈ [0.5, 1.0]
+            correct=1 — all these items are classified as "correct" (int ≥ 0.5 = 1),
+            inflating resolution and suppressing reliability signal.
+        (b) Brier computed INSIDE brier_decompose becomes mean((1-Brier_orig − 1)²)
+            ≠ mean Brier_orig. The decomposition identity B = rel − res + unc holds
+            internally but for WRONG inputs, so computed reliability ≠ real reliability.
+
+      Consequence: check_reliability_guard and check_gaming_test compare
+      wrong decompositions. A button that genuinely worsens calibration reliability
+      could pass the guard (false negative), or a safe button could be blocked
+      (false positive). Either direction breaks §9.2's pre-registered honesty guarantee.
+
+      The same approximation appears in _eval_items_with_raw_pairs (line 196-203)
+      for the raw_store, with explicit comment: "conservative approximation: we
+      cannot back-derive conf/correct from 1-Brier alone." This is correct for the
+      synthetic path but the problem is that Stage 1 safety adjudication also uses
+      this approximation for real GPU runs.
+    minimum_fix: >
+      For the GPU path: extend BackendOutcomeSampler / SampleBatch to return
+      raw texts alongside outcome scores. In _eval_items_with_raw_pairs, call
+      parse_confidence() and item_is_correct() on raw texts to get true
+      (confidence, correctness) pairs. Store these in raw_store and pass them
+      to brier_decompose. For the synthetic path, the approximation is acceptable
+      (offline test only), but the real path MUST use actual pairs before Stage 1
+      results can be trusted for safety decisions.
+
+  - id: H-03
+    severity: MAJOR
+    title: "Stage 0 coherence gate uses hardcoded baseline_degen=0.1 instead of measured baseline — gate ceiling is approximate and unanchored"
+    file: "src/cognitive_console/experiments/e0012_harness.py"
+    line: 275
+    evidence: >
+      In run_stage0() Stage 0 loop:
+        baseline_degen = 0.1  # approximate baseline (improved by full pipeline)
+        coherence_ok = (
+            mean_degen <= adj.COHERENCE_MAX_RATIO * baseline_degen + adj.COHERENCE_EPS_FLOOR
+        )
+        # = mean_degen <= 1.5 × 0.1 + 0.02 = 0.17 (fixed ceiling regardless of model)
+
+      The spec (§9.3 / C2b §3) requires:
+        "coherence ≤ 1.5× unsteered baseline"
+      The unsteered baseline degeneracy must be MEASURED from the actual unsteered
+      model on DEV items, not assumed. If real model baseline_degen ≪ 0.1 (e.g., 0.02
+      for a well-behaved model), the ceiling becomes 1.5×0.02+0.02=0.05 — far stricter
+      than 0.17. Degenerate candidates (mean_degen ∈ [0.05, 0.17]) would pass Stage 0
+      screening incorrectly.
+      Conversely, if baseline_degen ≫ 0.1, the ceiling is too permissive.
+
+      Stage 1 correctly measures baseline_degen from actual baseline_batches (line 488).
+      Stage 0 should do the same. The discrepancy means Stage 0 and Stage 1 coherence
+      gates are applied with different effective thresholds.
+    minimum_fix: >
+      Compute baseline_degen at the START of run_stage0 from actual unsteered
+      baseline samples, then use it for all coherence checks within Stage 0.
+      Concretely: run _eval_items_with_raw_pairs(... alpha=0.0, np.zeros(1), ...)
+      once per layer (or globally) to get baseline batches, compute
+      baseline_degen = mean([b.mean_degeneracy() for b in baseline_batches]).
+      Remove the hardcoded constant.
+
+  - id: H-04
+    severity: MAJOR
+    title: "Bonferroni CI level for Stage 1 single-axis uses 0.05/3 (C2b 3-axis correction) instead of 0.05/M for M advancing candidates on 1 axis"
+    file: "src/cognitive_console/experiments/e0012_harness.py"
+    line: 483
+    evidence: >
+      run_stage1_candidate() calls:
+        ci = adj.cluster_bootstrap_ci(
+            d_items,
+            b=adj.BOOTSTRAP_B,
+            ci_level=adj.BONFERRONI_CI_LEVEL,   # = 1 − 0.05/3 ≈ 0.9833
+            seed=0,
+        )
+
+      adj.BONFERRONI_CI_LEVEL is the C2b 3-axis Bonferroni level. The prereg §4
+      explicitly states for E-0012:
+        "If Stage 1 tests only calibration axis, use α = 0.05 / 1 (single-axis)"
+      and §7 Stage 1:
+        "If M candidates advance from Stage 0 to Stage 1, Bonferroni-correct over
+         M × n_axes comparisons."
+
+      E-0012 tests n_axes=1 (uncertainty_awareness only). For M=1 advancing candidate,
+      α_per_test = 0.05/1 → CI level = 0.95. The code uses 0.9833 (3× more conservative).
+      For M=2: spec → 0.975, code → 0.9833 (1.5× over-conservative).
+      For M=3: spec → 0.9833 = code (correct only for this case).
+
+      Consequence: For M=1 or M=2 advancing candidates, Stage 1 requires a NARROWER
+      CI than the prereg prescribes. A button that genuinely exceeds δ=0.05 at the
+      pre-registered significance level (CI excludes 0 at α=0.05/M) could fail Stage 1
+      because the code requires CI to exclude 0 at the stricter α=0.05/3.
+      This creates false negatives (valid buttons failing Stage 1 due to over-correction).
+    minimum_fix: >
+      Parameterize the CI level dynamically in run_stage1_candidate or in
+      run_e0012_harness based on M (len(stage0.advancing)) and n_axes=1:
+        bonferroni_ci_level = 1.0 - 0.05 / max(1, len(advancing_candidates))
+      Pass this to cluster_bootstrap_ci. If M=0 (shouldn't reach Stage 1),
+      handle as no-op. This matches §4 and §7 Stage 1 exactly.
+
+  - id: H-05
+    severity: MINOR
+    title: "Stage 0 selection tie-breaking: coherence ratio not stored per candidate; spec tie-break order not fully implemented"
+    file: "src/cognitive_console/experiments/e0012_harness.py"
+    line: 133
+    evidence: >
+      _select_stage1_candidates() sorts:
+        passing.sort(key=lambda c: (-c.dev_improvement, c.button_family))
+      Comment: "ties broken by family name alphabetically"
+
+      Prereg §7 Stage 0 F-03 specifies:
+        "ties broken by lower coherence ratio, then by button family name alphabetically"
+
+      Stage0Candidate has coherence_ok (bool) but not coherence_ratio (float).
+      The actual coherence ratio is computed inside run_stage0() but not stored.
+      Therefore tie-breaking skips the coherence-ratio step and goes directly to
+      alphabetical family name. This is only relevant when multiple candidates share
+      the same dev_improvement to ≥4 decimal places, but the spec requires it.
+    minimum_fix: >
+      Add coherence_ratio: float field to Stage0Candidate. Store the actual
+      mean_degen / baseline_degen value (before the gate check) so tie-breaking can
+      use it. Update _select_stage1_candidates sort key:
+        passing.sort(key=lambda c: (-c.dev_improvement, c.coherence_ratio, c.button_family))
+
+  - id: H-06
+    severity: MINOR
+    title: "Real-backend raw pair recording uses 1-Brier proxy — acknowledged but no GPU implementation path documented"
+    file: "src/cognitive_console/experiments/e0012_harness.py"
+    line: 186
+    evidence: >
+      _eval_items_with_raw_pairs() records raw pairs as:
+        confidence = float(np.clip(outcome, 0.0, 1.0))   # 1-Brier, not verbalized conf
+        correctness = int(outcome >= 0.5)                 # proxy, not true behavioral correctness
+      Comment says: "A real implementation should return raw texts from the backend."
+
+      This is acceptable for the synthetic offline path. However, there is no
+      documented GPU implementation plan — no TODO, no issue reference, no GPU
+      backend extension spec. If the GPU run starts without fixing this, the
+      JSONL raw pair store will silently contain incorrect values, and the Brier
+      decomposition computed post-hoc from the raw store will be wrong (same
+      issue as H-02 but from the stored artifact).
+
+      §9.2 requires per-item raw (confidence, correctness) pairs be stored
+      "from the outset." A JSONL full of 1-Brier proxies does not satisfy this.
+    minimum_fix: >
+      Document the GPU implementation path in the code as a TODO with the exact
+      expected API extension: e.g., "SampleBatch must carry raw_texts alongside
+      outcomes; BackendOutcomeSampler.sample() must return generated text for
+      parse_confidence/item_is_correct to extract the true pair." This prevents
+      silent bad data collection during the GPU run. Ideally, implement before boot.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# INDEPENDENTLY VERIFIED: CORRECT / NO ISSUE FOUND
+# ─────────────────────────────────────────────────────────────────────────────
+
+verified_correct:
+
+  - check: "L_C1 = 20 — E-0003 chosen_layer"
+    status: CONFIRMED
+    evidence: >
+      results/gpu_7b_2026-07-23/c1/c1_facade_results.json shows
+      axis="uncertainty_awareness", chosen_layer=20, stable_layer_found=true.
+      Harness constant L_C1=20 (e0012_harness.py line 64) matches exactly.
+
+  - check: "adjudicate_c2b.py §4 not modified"
+    status: CONFIRMED
+    evidence: >
+      git diff main...HEAD -- src/cognitive_console/experiments/adjudicate_c2b.py
+      src/cognitive_console/eval/scorers.py → zero diff. Frozen §4 is byte-identical.
+
+  - check: "BTN-CAL-PROBE non-trained — no behavioral outcome labels used"
+    status: CONFIRMED
+    evidence: >
+      build_probe_synthetic_pairs() constructs labels from verbalized confidence
+      templates (0.9 / 0.1 strings), seeded from TriviaQA-train items.
+      Labels ∈ {0, 1} encode expressed verbal confidence level ONLY.
+      No reference to E-0005/E-0006 outcomes, correctness fields, or Brier scores
+      anywhere in the probe direction derivation code path.
+      Non-trained boundary is intact.
+
+  - check: "BTN-CAL-CONTRA-REEXTRACT — deterministic sort, no outcome gradient"
+    status: CONFIRMED
+    evidence: >
+      select_contra_pairs() sorts by baseline_score descending, tie-break by
+      item index ascending. Direction = mean(activations_positive) − mean(activations_negative).
+      No gradient computation, no optimization loop, no behavioral outcome target.
+      Rule is pre-specified and committed before Stage 0 (§3-B-2 satisfied).
+
+  - check: "APE frozen parameters — N_cand=50, seed=42, k_screen=3, k_winner=5, no early stopping, frozen meta-prompt"
+    status: CONFIRMED
+    evidence: >
+      e0012_ape.py: APE_N_CAND=50, APE_SEED=42, APE_K_SCREEN=3, APE_K_WINNER=5.
+      evaluate_candidates_on_dev() iterates ALL candidates (no break/early return).
+      frozen_meta_prompt() returns template with N_cand=50 injected, matches §5-B verbatim.
+      Meta-prompt template FROZEN as module-level constant.
+
+  - check: "Stage 1 adjudicator calls — cluster_bootstrap_ci(B=10000, Bonferroni), axis_pass(δ=0.05, coherence)"
+    status: CONFIRMED
+    evidence: >
+      run_stage1_candidate() (line 482-492):
+        ci = adj.cluster_bootstrap_ci(d_items, b=adj.BOOTSTRAP_B, ci_level=adj.BONFERRONI_CI_LEVEL, seed=0)
+        passes = adj.axis_pass(ci.point, ci.ci_lo, ci.ci_hi, coherence_ok)
+      adj.BOOTSTRAP_B=10000, adj.DELTA=0.05, adj.COHERENCE_MAX_RATIO=1.5.
+      No thresholds are modified. The §4 math is called verbatim.
+      NOTE: CI level is 0.9833 (over-corrected for single axis — see H-04),
+      but the mathematical primitives themselves are unaltered.
+
+  - check: "N_SEARCH_CAP=105 enforcement — never exceeds 3×5×7"
+    status: CONFIRMED
+    evidence: >
+      N_SEARCH_CAP = 3 × 5 × 7 = 105, computed dynamically.
+      Stage 0 loop has `if n_search >= N_SEARCH_CAP: break` inside innermost alpha loop.
+      On the next outer-loop iteration the check fires immediately. Hard cap is enforced.
+      Test test_n_search_never_exceeds_cap confirms this at runtime.
+
+  - check: "All Stage 0 candidates reported (anti-forking-paths)"
+    status: CONFIRMED
+    evidence: >
+      Stage0Result.all_candidates stores ALL evaluated (family, layer, α) triples.
+      Advancing list is a subset; the full list is always retained.
+      Test test_all_stage0_candidates_reported verifies len(all_candidates) == n_search.
+
+  - check: "Accuracy guard — abstentions count as incorrect"
+    status: CONFIRMED
+    evidence: >
+      _compute_accuracy() returns mean(float(b.mean_outcome() >= 0.5) for b in batches).
+      Items where mean_outcome < 0.5 (low confidence / wrong / abstention) count as 0.
+      §F-07 requirement satisfied.
+
+  - check: "Cross-axis δ_cross_fail = -0.10 → BUTTON_FOUND_BUT_UNSAFE terminal"
+    status: CONFIRMED
+    evidence: >
+      DELTA_CROSS_FAIL = -0.10. evaluate_safety() sets unsafe=True and cross_fail=True
+      when delta < -0.10 for any tested axis. determine_verdict() propagates
+      VERDICT_BUTTON_FOUND_BUT_UNSAFE. F-06 is correctly implemented.
+      §8 notes "TERMINAL verdict … no upgrade path." Code does not upgrade.
+
+  - check: "TriviaQA pool disjoint from E-0006 — seed=12, offset=500"
+    status: CONFIRMED
+    evidence: >
+      e0012_triviaqa.py: E0012_POOL_SEED=12 (≠ E-0006 seed=0),
+      E0012_POOL_OFFSET=500 (skips first 500 validation items, guaranteeing
+      non-overlap with E-0006 items sampled at seed=0 with no offset).
+      load_e0012_triviaqa_real() uses remaining = list(ds)[500:] before sampling.
+
+  - check: "Brier reliability guard δ_rel=0.02 and gaming test — correct formulas"
+    status: CONFIRMED
+    evidence: >
+      check_reliability_guard: delta = steer.reliability - baseline.reliability > 0.02 → triggered.
+      check_gaming_test: delta_brier_rel > delta_brier_total → triggered.
+      Both match §9.2 F-04 specification exactly. DELTA_REL=0.02 is a frozen constant.
+
+  - check: "F-01..F-06 from pre-run critic review — all addressed in code and prereg"
+    status: CONFIRMED
+    evidence: >
+      F-01: APE procedure fully specified in §5-B + e0012_ape.py (N_cand=50, seed=42,
+            frozen meta-prompt, k=3 screen, k=5 re-eval, no early stopping). ✓
+      F-02: §3-B operational definitions + probe/contra specs in code. ✓
+      F-03: Stage 0 scope locked: 3 families × 5 layers × 7 α = 105. ✓
+      F-04: δ_rel=0.02 + gaming test in e0012_brier.py. ✓
+      F-05: Compute estimate updated (doc only). ✓
+      F-06: δ_cross_fail=-0.10 in harness, terminal verdict. ✓
+
+  - check: "Test suite — all 118 pass"
+    status: CONFIRMED
+    evidence: >
+      pytest tests/test_e0012.py tests/test_adjudicate_c2b.py: 118 passed, 0 failed.
+      Covers button direction derivation, probe independence, CONTRA pair selection,
+      APE screening/kill-rule, Brier decomposition, reliability guard, gaming test,
+      Stage 0 selection, verdict ladder, TriviaQA fixture, end-to-end smoke.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# VERDICT
+# ─────────────────────────────────────────────────────────────────────────────
+
+verdict: NEEDS-FIX
+
+mandatory_before_gpu_boot:
+  - "H-01 (BLOCKER): Fix kill-rule button score to use k=5 DEV re-evaluation, not k=3 Stage 0 score."
+  - "H-02 (MAJOR): Fix Stage 1 Brier decomposition to use actual (confidence, correctness) pairs on GPU path; add GPU implementation plan to _eval_items_with_raw_pairs."
+  - "H-03 (MAJOR): Replace hardcoded baseline_degen=0.1 with measured baseline from actual unsteered DEV runs."
+  - "H-04 (MAJOR): Parameterize Stage 1 Bonferroni CI level as 1 - 0.05/M where M = len(advancing_candidates)."
+
+recommended_before_gpu_boot:
+  - "H-05 (MINOR): Add coherence_ratio to Stage0Candidate; use it in tie-breaking."
+  - "H-06 (MINOR): Document or implement real-backend raw pair recording path."
+
+independent_judgment_on_false_positive_risk: >
+  The core architectural claims are sound:
+  - BTN-CAL-PROBE genuinely does not use behavioral outcome labels (verbal confidence
+    templates only). Non-trained boundary is intact.
+  - BTN-CAL-CONTRA pair selection is deterministic and pre-committed; no direction
+    optimization occurs.
+  - Stage 0 selects among pre-specified directions by DEV performance (direction
+    selection, not direction training). The F-02 architectural distinction is correctly
+    implemented.
+  - The frozen adjudicator (cluster_bootstrap_ci + axis_pass) is called without
+    modification, with B=10000 and δ=0.05.
+
+  However, the harness CANNOT produce fully credible results in its current state:
+  - H-01 (kill rule k-asymmetry) directly undermines the primary anti-false-positive
+    mechanism. A k=3-noisy button score being compared against k=5 auto-prompt is
+    asymmetric enough to change the kill-rule outcome, especially on small DEV pools
+    (~26 items). Any VERIFIED-CONTROL result produced without fixing H-01 is
+    formally uninterpretable.
+  - H-02 (Brier proxy) means the §9.2 safety guards (reliability worsening, gaming
+    test) are evaluated on incorrect decomposition inputs. A genuine gaming pathway
+    (button improves 1-Brier by sacrificing calibration reliability) could slip past
+    the BUTTON_FOUND_BUT_UNSAFE gate.
+  - H-04 (over-corrected Bonferroni) means a genuine single-candidate Stage 1 PASS
+    at the pre-registered threshold (CI excludes 0 at α=0.05/1) could incorrectly
+    return FAIL at the stricter α=0.05/3. This is anti-false-positive (safe direction)
+    but inconsistent with the pre-registered specification.
+
+  Fix H-01, H-02, H-03, H-04 first, then the harness has a credible design and
+  can be trusted to produce honest results.
+
+...

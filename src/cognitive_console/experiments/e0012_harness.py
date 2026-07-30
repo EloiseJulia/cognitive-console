@@ -650,6 +650,28 @@ def run_stage1_candidate(
             base_decomp = None
     # Synthetic proxy fallback (OFFLINE ONLY — isolated from GPU safety decisions)
     if not is_brier_from_real_pairs:
+        # N-01 hard-fail: GPU/HF backends (TextCapableSampler) MUST produce real
+        # (confidence, correctness) pairs for §9.2 safety guards.  If we reached
+        # this fallback with a TextCapableSampler in use, something went wrong
+        # (raw_store not provided, or has_real_pairs returned False unexpectedly).
+        # Silently using the 1-Brier proxy for a real GPU run is NOT acceptable —
+        # the gaming guard can produce false negatives on proxy data.
+        # Synthetic (non-TextCapableSampler) paths remain unaffected.
+        if isinstance(sampler, TextCapableSampler):
+            _real_steer = raw_store.has_real_pairs(chan_steer) if raw_store is not None else False
+            _real_base = raw_store.has_real_pairs(chan_baseline) if raw_store is not None else False
+            raise RuntimeError(
+                f"GPU safety guard hard-fail (N-01): sampler is a TextCapableSampler "
+                f"but real (confidence, correctness) pairs are unavailable for §9.2 "
+                f"Brier decomposition. "
+                f"raw_store={'present' if raw_store is not None else 'None (not provided)'}. "
+                f"has_real_pairs: steer[{chan_steer!r}]={_real_steer}, "
+                f"baseline[{chan_baseline!r}]={_real_base}. "
+                "§9.2 gaming/reliability guards cannot safely run on 1-Brier proxy data "
+                "for real GPU runs. "
+                "Ensure run_e0012_verified_control.py uses SteeredHFTextCapableSampler "
+                "and raw_store_path is provided to run_e0012_harness."
+            )
         steer_outcomes = [b.mean_outcome() for b in steer_batches]
         baseline_outcomes = [b.mean_outcome() for b in baseline_batches]
         # SYNTHETIC PROXY: mean_outcome = 1-Brier; treating it as confidence and
@@ -741,8 +763,30 @@ def determine_verdict(
             notes="Zero candidates passed Stage 0 cutoff (improvement ≥ δ AND coherence OK).",
         )
 
-    # Find any BUTTON_FOUND_BUT_UNSAFE triggers (overrides all positive verdicts)
-    unsafe_results = [r for r in stage1_results if r.safety.button_found_but_unsafe]
+    # N-02 fix: BUTTON_FOUND_BUT_UNSAFE requires the Stage 1 adjudicator to have
+    # passed (prereg §8: "Stage 1 PASS but ANY of the following safety conditions
+    # triggered").  If the adjudicator itself failed, the result is NO_BUTTON_FOUND
+    # (or falls through below), not BUTTON_FOUND_BUT_UNSAFE.
+    # Exception: cross-axis fail is unconditional per prereg §9.4 operational rule
+    # ("regardless of primary calibration adjudication result").
+    def _adj_passed_for_result(r: "Stage1CandidateResult") -> bool:
+        """Extract raw adjudicator pass from axis_adj_result (stored as a dict)."""
+        aaj = r.axis_adj_result
+        if aaj is None:
+            return False
+        if isinstance(aaj, dict):
+            return bool(aaj.get("passes", False))
+        return bool(getattr(aaj, "passes", False))
+
+    def _qualifies_for_unsafe_verdict(r: "Stage1CandidateResult") -> bool:
+        # Cross-axis fail is unconditional (§9.4); accuracy/reliability guards
+        # require adjudicator to also have passed (§8).
+        return r.safety.cross_axis_fail or _adj_passed_for_result(r)
+
+    unsafe_results = [
+        r for r in stage1_results
+        if r.safety.button_found_but_unsafe and _qualifies_for_unsafe_verdict(r)
+    ]
     if unsafe_results and not any(r.passes for r in stage1_results):
         winner = unsafe_results[0].candidate
         return E0012Verdict(

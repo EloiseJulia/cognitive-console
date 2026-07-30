@@ -95,6 +95,7 @@ from cognitive_console.experiments.e0012_harness import (
     VERDICT_NO_BUTTON_FOUND,
     VERDICT_TRANSFER,
     VERDICT_LOCAL,
+    SafetyResult,
     Stage0Candidate,
     Stage1CandidateResult,
     TextCapableSampler,
@@ -1572,3 +1573,383 @@ class TestGPURawPairDocumentation:
         text_wrong = "The answer is London. Confidence: 60%."
         assert item_is_correct(item, text_correct) == 1
         assert item_is_correct(item, text_wrong) == 0
+
+
+# ═══════════════════════════════════════════════════════════════════════════ #
+# N-01: SteeredHFTextCapableSampler — HF path uses real pairs; hard-fail guard
+# ═══════════════════════════════════════════════════════════════════════════ #
+class _FakeHFBackend:
+    """Minimal fake SteeredHFBackend for N-01 tests (no torch, no model load).
+
+    Subclasses SteeredHFBackend only for isinstance checks; overrides generate()
+    so no model is actually loaded.
+    """
+    # We duck-type rather than subclass to avoid __init__ validation.
+    # isinstance() checks in SteeredHFTextCapableSampler use type(hf_backend),
+    # so we must actually subclass SteeredHFBackend.
+    pass
+
+
+def _make_fake_hf_backend(text_return: str = "Answer: Paris. Confidence: 80%."):
+    """Return a SteeredHFBackend subclass instance whose generate() returns fixed text."""
+    from cognitive_console.steering.generate import SteeredHFBackend
+
+    class _Fake(SteeredHFBackend):
+        def __init__(self, _text):
+            # Bypass model loading: set attributes without calling super().__init__
+            self.model_name = "fake"
+            self.device = "cpu"
+            self.dtype = "float32"
+            self.max_length = 512
+            self.seed = None
+            self._model = None
+            self._tokenizer = None
+            self._config = None
+            self._layers = None
+            self._text = _text
+
+        def generate(self, prompt, steer=None, max_new_tokens=128, **kwargs):
+            return self._text
+
+    return _Fake(text_return)
+
+
+class TestN01SteeredHFTextCapableSampler:
+    """N-01: SteeredHFTextCapableSampler produces real pairs; hard-fail guard fires."""
+
+    # ── (a) HF path produces real pairs ─────────────────────────────────── #
+
+    def test_steered_hf_sampler_is_text_capable_sampler(self):
+        """SteeredHFTextCapableSampler IS a TextCapableSampler subclass."""
+        from cognitive_console.experiments.e0012_steer_hf import SteeredHFTextCapableSampler
+        fake = _make_fake_hf_backend("Answer: Paris. Confidence: 80%.")
+        sampler = SteeredHFTextCapableSampler(fake)
+        assert isinstance(sampler, TextCapableSampler), (
+            "N-01: SteeredHFTextCapableSampler must be a TextCapableSampler"
+        )
+        assert isinstance(sampler, adj.OutcomeSampler)
+
+    def test_hf_path_has_real_pairs_true(self, tmp_path):
+        """HF path (SteeredHFTextCapableSampler) → has_real_pairs()=True."""
+        from cognitive_console.experiments.e0012_steer_hf import SteeredHFTextCapableSampler
+        from cognitive_console.experiments.e0012_brier import BrierRawStore
+        items = _make_items(8)
+        fake = _make_fake_hf_backend("Answer: Paris. Confidence: 80%.")
+        sampler = SteeredHFTextCapableSampler(fake)
+        dev_items, test_items = split_e0012_pool(items, split_seed=42)
+        authored = _make_authored(2)
+        raw_path = tmp_path / "brier_n01_hf.jsonl"
+
+        run_e0012_harness(
+            sampler=sampler,
+            dev_items=dev_items,
+            test_items=test_items,
+            authored_prompts=authored,
+            hidden_dim=16,
+            raw_store_path=raw_path,
+        )
+        assert raw_path.exists(), "N-01: raw_store_path should be written by HF run"
+        store = BrierRawStore(raw_path)
+        all_pairs = store.load_all()
+        store.close()
+        assert len(all_pairs) > 0, "N-01: HF run must produce raw pair records"
+        real_pairs = [p for p in all_pairs if not p.synthetic_proxy]
+        assert len(real_pairs) > 0, (
+            "N-01: HF path (SteeredHFTextCapableSampler) must produce synthetic_proxy=False pairs"
+        )
+
+    def test_hf_path_synthetic_proxy_false(self, tmp_path):
+        """HF path records have synthetic_proxy=False (not the 1-Brier approximation)."""
+        from cognitive_console.experiments.e0012_steer_hf import SteeredHFTextCapableSampler
+        from cognitive_console.experiments.e0012_brier import BrierRawStore
+        items = _make_items(8)
+        fake = _make_fake_hf_backend("Answer: Paris. Confidence: 70%.")
+        sampler = SteeredHFTextCapableSampler(fake)
+        dev_items, test_items = split_e0012_pool(items, split_seed=42)
+        authored = _make_authored(2)
+        raw_path = tmp_path / "brier_n01_proxy_flag.jsonl"
+
+        run_e0012_harness(
+            sampler=sampler,
+            dev_items=dev_items,
+            test_items=test_items,
+            authored_prompts=authored,
+            hidden_dim=16,
+            raw_store_path=raw_path,
+        )
+        store = BrierRawStore(raw_path)
+        all_pairs = store.load_all()
+        store.close()
+        # All uncertainty_awareness records from a TextCapableSampler must be real
+        assert all(not p.synthetic_proxy for p in all_pairs), (
+            "N-01: HF path must produce only synthetic_proxy=False pairs"
+        )
+
+    def test_hf_stage1_is_brier_from_real_pairs_true(self, tmp_path):
+        """Stage1CandidateResult.is_brier_from_real_pairs=True for HF sampler."""
+        from cognitive_console.experiments.e0012_steer_hf import SteeredHFTextCapableSampler
+        items = _make_items(16)
+        fake = _make_fake_hf_backend("Answer: Paris. Confidence: 80%.")
+        sampler = SteeredHFTextCapableSampler(fake)
+        dev_items, test_items = split_e0012_pool(items, split_seed=42)
+        authored = _make_authored(2)
+        raw_path = tmp_path / "brier_n01_flag.jsonl"
+
+        verdict_obj = run_e0012_harness(
+            sampler=sampler,
+            dev_items=dev_items,
+            test_items=test_items,
+            authored_prompts=authored,
+            hidden_dim=16,
+            raw_store_path=raw_path,
+        )
+        for r in verdict_obj.stage1_results:
+            assert r.is_brier_from_real_pairs, (
+                "N-01: Stage 1 with SteeredHFTextCapableSampler must use real pairs "
+                f"(is_brier_from_real_pairs=False for candidate {r.candidate.button_family})"
+            )
+
+    def test_sample_with_texts_returns_k_texts(self):
+        """sample_with_texts returns exactly k texts per call."""
+        from cognitive_console.experiments.e0012_steer_hf import SteeredHFTextCapableSampler
+        items = _make_items(4)
+        fake = _make_fake_hf_backend("Answer: Paris. Confidence: 75%.")
+        sampler = SteeredHFTextCapableSampler(fake)
+        item = items[0]
+        batch, texts = sampler.sample_with_texts(
+            axis="uncertainty_awareness",
+            item=item,
+            instruction="Be calibrated.",
+            alpha=4.0,
+            k=5,
+            direction=np.zeros(1),
+            layer=20,
+        )
+        assert isinstance(batch, adj.SampleBatch)
+        assert len(texts) == 5
+        assert all(isinstance(t, str) and len(t) > 0 for t in texts)
+        assert len(batch.outcomes) == 5
+        assert len(batch.degeneracies) == 5
+
+    # ── (b) Hard-fail guard: non-synthetic + no real pairs → raise ──────── #
+
+    def test_hard_fail_when_text_capable_sampler_no_raw_store(self, tmp_path):
+        """TextCapableSampler with raw_store=None → RuntimeError in run_stage1_candidate."""
+        items = _make_items(8)
+        inner = _make_sampler(items)
+        gpu_sampler = _MockTextCapableSampler(inner, "Answer: Paris. Confidence: 70%.")
+        dev_items, test_items = split_e0012_pool(items, split_seed=42)
+        authored = _make_authored(2)
+        cand = Stage0Candidate(
+            button_family="btn-cal-probe", layer=20, alpha=4.0,
+            dev_score_steer=0.65, dev_score_prompt=0.55,
+            dev_improvement=0.10, coherence_ok=True, passes_cutoff=True,
+        )
+        # Call run_stage1_candidate directly with raw_store=None
+        # → is_brier_from_real_pairs stays False → proxy fallback with TextCapableSampler
+        # → must raise RuntimeError (hard-fail N-01 guard)
+        with pytest.raises(RuntimeError, match="GPU safety guard hard-fail"):
+            run_stage1_candidate(
+                candidate=cand,
+                sampler=gpu_sampler,
+                test_items=test_items,
+                best_prompt_text="Be calibrated.",
+                direction=np.zeros(1),
+                axis="uncertainty_awareness",
+                raw_store=None,  # no store → no real pairs → hard-fail
+            )
+
+    def test_hard_fail_when_text_capable_sampler_store_has_no_real_pairs(self, tmp_path):
+        """TextCapableSampler + raw_store with only proxy records → RuntimeError."""
+        from cognitive_console.experiments.e0012_brier import BrierRawStore
+        items = _make_items(8)
+        inner = _make_sampler(items)
+        # _MockTextCapableSampler sample_with_texts is called by the GPU path
+        # and WILL produce real pairs normally.
+        # To force has_real_pairs()=False we would need the store to have only proxy;
+        # this can't happen with a proper TextCapableSampler.
+        # Instead, verify that run_stage1_candidate with raw_store=None hard-fails,
+        # which exercises the same guard path (is_brier_from_real_pairs stays False).
+        gpu_sampler = _MockTextCapableSampler(inner, "Answer: Paris. Confidence: 70%.")
+        _, test_items = split_e0012_pool(items, split_seed=42)
+        cand = Stage0Candidate(
+            button_family="btn-cal-probe", layer=20, alpha=4.0,
+            dev_score_steer=0.65, dev_score_prompt=0.55,
+            dev_improvement=0.10, coherence_ok=True, passes_cutoff=True,
+        )
+        with pytest.raises(RuntimeError, match="GPU safety guard hard-fail"):
+            run_stage1_candidate(
+                candidate=cand,
+                sampler=gpu_sampler,
+                test_items=test_items,
+                best_prompt_text="",
+                direction=np.zeros(1),
+                raw_store=None,
+            )
+
+    def test_no_hard_fail_for_synthetic_sampler_no_raw_store(self):
+        """Synthetic (non-TextCapableSampler) with raw_store=None does NOT hard-fail."""
+        items = _make_items(8)
+        sampler = _make_sampler(items)  # BackendOutcomeSampler — not TextCapableSampler
+        assert not isinstance(sampler, TextCapableSampler)
+        _, test_items = split_e0012_pool(items, split_seed=42)
+        cand = Stage0Candidate(
+            button_family="btn-cal-probe", layer=20, alpha=4.0,
+            dev_score_steer=0.65, dev_score_prompt=0.55,
+            dev_improvement=0.10, coherence_ok=True, passes_cutoff=True,
+        )
+        # Must NOT raise; proxy fallback is acceptable for synthetic offline runs
+        result = run_stage1_candidate(
+            candidate=cand,
+            sampler=sampler,
+            test_items=test_items,
+            best_prompt_text="Be calibrated.",
+            direction=np.zeros(1),
+            raw_store=None,
+        )
+        assert not result.is_brier_from_real_pairs, (
+            "Synthetic path without raw_store must have is_brier_from_real_pairs=False"
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════ #
+# N-02: determine_verdict BUTTON_FOUND_BUT_UNSAFE logic
+# ═══════════════════════════════════════════════════════════════════════════ #
+class TestN02VerdictUnsafeLogic:
+    """N-02: BUTTON_FOUND_BUT_UNSAFE requires adjudicator pass (§8).
+    Exception: cross-axis fail is unconditional (§9.4).
+    """
+
+    def _make_stage0(self):
+        from cognitive_console.experiments.e0012_harness import Stage0Result
+        cand = Stage0Candidate(
+            button_family="btn-cal-probe", layer=20, alpha=4.0,
+            dev_score_steer=0.60, dev_score_prompt=0.50,
+            dev_improvement=0.10, coherence_ok=True, passes_cutoff=True,
+        )
+        return Stage0Result(
+            all_candidates=[cand],
+            advancing=[cand],
+            n_search=7,
+            ape_result=None,
+            best_prompt_text="Be calibrated.",
+            kill_rule_result="SKIPPED",
+            kill_rule_reason="",
+            verdict_at_stage0="CONTINUE",
+        ), cand
+
+    def _make_s1_result(
+        self,
+        cand,
+        adj_passed: bool,
+        acc_ok: bool = True,
+        cross_fail: bool = False,
+    ):
+        """Build a Stage1CandidateResult with controlled adjudicator pass + safety."""
+        from cognitive_console.experiments.e0012_harness import Stage1CandidateResult, SafetyResult
+        # Safety: accuracy guard
+        acc_steer = 0.8 if acc_ok else 0.3
+        acc_baseline = 0.8
+        reasons = []
+        unsafe = False
+        if not acc_ok:
+            reasons.append("§9.1 accuracy guard: steer < 0.9×baseline")
+            unsafe = True
+        if cross_fail:
+            reasons.append("§9.4 cross-axis fail: axis='deliberation' delta=-0.15")
+            unsafe = True
+        safety = SafetyResult(
+            accuracy_guard_ok=acc_ok,
+            accuracy_steer=acc_steer,
+            accuracy_baseline=acc_baseline,
+            reliability_guard_triggered=False,
+            gaming_test_triggered=False,
+            cross_axis_fail=cross_fail,
+            cross_axis_deltas={"deliberation": -0.15} if cross_fail else {},
+            button_found_but_unsafe=unsafe,
+            reasons=reasons,
+        )
+        # axis_adj_result stored as dict (matching run_stage1_candidate behavior)
+        axis_adj = {"axis": "uncertainty_awareness", "mean_d": 0.06,
+                    "ci_lo": 0.01, "ci_hi": 0.11, "ci_level": 0.95,
+                    "coherence_ok": True, "passes": adj_passed}
+        # passes field: adjudicator pass AND NOT safety (mirrors run_stage1_candidate)
+        passes_combined = adj_passed and not unsafe
+        return Stage1CandidateResult(
+            candidate=cand,
+            axis_adj_result=axis_adj,
+            passes=passes_combined,
+            safety=safety,
+            final_verdict="BUTTON_FOUND_BUT_UNSAFE" if (adj_passed and unsafe) else
+                          ("PASS" if passes_combined else "FAIL"),
+            brier_decomp_steer=None,
+            brier_decomp_baseline=None,
+        )
+
+    def test_adj_fail_acc_guard_yields_no_button_found(self):
+        """adjudicator FAIL + accuracy guard → NO_BUTTON_FOUND (not UNSAFE, §8)."""
+        stage0, cand = self._make_stage0()
+        r = self._make_s1_result(cand, adj_passed=False, acc_ok=False, cross_fail=False)
+        assert r.safety.button_found_but_unsafe
+        assert not r.safety.cross_axis_fail
+        assert not r.passes
+        verdict = determine_verdict(stage0, [r], stage2_dimensions_passed=None)
+        assert verdict.verdict == VERDICT_NO_BUTTON_FOUND, (
+            f"N-02: adjudicator FAIL + accuracy guard should be NO_BUTTON_FOUND, "
+            f"got {verdict.verdict!r}"
+        )
+
+    def test_adj_pass_acc_guard_yields_unsafe(self):
+        """adjudicator PASS + accuracy guard → BUTTON_FOUND_BUT_UNSAFE (§8)."""
+        stage0, cand = self._make_stage0()
+        r = self._make_s1_result(cand, adj_passed=True, acc_ok=False, cross_fail=False)
+        assert r.safety.button_found_but_unsafe
+        assert not r.passes  # blocked by safety
+        verdict = determine_verdict(stage0, [r], stage2_dimensions_passed=None)
+        assert verdict.verdict == VERDICT_BUTTON_FOUND_BUT_UNSAFE, (
+            f"N-02: adjudicator PASS + accuracy guard should be BUTTON_FOUND_BUT_UNSAFE, "
+            f"got {verdict.verdict!r}"
+        )
+
+    def test_adj_fail_cross_axis_yields_unsafe(self):
+        """adjudicator FAIL + cross-axis fail → BUTTON_FOUND_BUT_UNSAFE (§9.4 unconditional)."""
+        stage0, cand = self._make_stage0()
+        r = self._make_s1_result(cand, adj_passed=False, acc_ok=True, cross_fail=True)
+        assert r.safety.button_found_but_unsafe
+        assert r.safety.cross_axis_fail
+        verdict = determine_verdict(stage0, [r], stage2_dimensions_passed=None)
+        assert verdict.verdict == VERDICT_BUTTON_FOUND_BUT_UNSAFE, (
+            f"N-02: adjudicator FAIL + cross-axis fail should still be "
+            f"BUTTON_FOUND_BUT_UNSAFE (§9.4 unconditional), got {verdict.verdict!r}"
+        )
+
+    def test_adj_pass_no_safety_yields_local(self):
+        """adjudicator PASS + no safety triggers → LOCAL (control case)."""
+        stage0, cand = self._make_stage0()
+        r = self._make_s1_result(cand, adj_passed=True, acc_ok=True, cross_fail=False)
+        assert not r.safety.button_found_but_unsafe
+        assert r.passes
+        verdict = determine_verdict(stage0, [r], stage2_dimensions_passed=None)
+        assert verdict.verdict == VERDICT_LOCAL, (
+            f"N-02: adjudicator PASS + no safety should be LOCAL, got {verdict.verdict!r}"
+        )
+
+    def test_adj_fail_no_safety_yields_no_button(self):
+        """adjudicator FAIL + no safety triggers → NO_BUTTON_FOUND (control case)."""
+        stage0, cand = self._make_stage0()
+        r = self._make_s1_result(cand, adj_passed=False, acc_ok=True, cross_fail=False)
+        assert not r.safety.button_found_but_unsafe
+        assert not r.passes
+        verdict = determine_verdict(stage0, [r], stage2_dimensions_passed=None)
+        assert verdict.verdict == VERDICT_NO_BUTTON_FOUND, (
+            f"N-02: adjudicator FAIL + no safety should be NO_BUTTON_FOUND, "
+            f"got {verdict.verdict!r}"
+        )
+
+    def test_adj_pass_both_acc_and_cross_axis_yields_unsafe(self):
+        """adjudicator PASS + accuracy guard + cross-axis → BUTTON_FOUND_BUT_UNSAFE."""
+        stage0, cand = self._make_stage0()
+        r = self._make_s1_result(cand, adj_passed=True, acc_ok=False, cross_fail=True)
+        assert r.safety.button_found_but_unsafe
+        verdict = determine_verdict(stage0, [r], stage2_dimensions_passed=None)
+        assert verdict.verdict == VERDICT_BUTTON_FOUND_BUT_UNSAFE

@@ -156,11 +156,21 @@ def cmd_run(args: argparse.Namespace) -> None:
         hidden_dim = 16
     else:
         from cognitive_console.steering.generate import SteeredHFBackend  # noqa
+        from cognitive_console.experiments.e0012_steer_hf import SteeredHFTextCapableSampler  # noqa
         model_name = args.model or "Qwen/Qwen2.5-7B-Instruct"
         hf_backend = SteeredHFBackend(model_name=model_name)
-        sampler = adj.BackendOutcomeSampler(
+        # N-01 fix: wrap in SteeredHFTextCapableSampler (not BackendOutcomeSampler)
+        # so _eval_items_with_raw_pairs records real (confidence, correctness) pairs
+        # (synthetic_proxy=False) for the §9.2 Brier safety guards.
+        sampler = SteeredHFTextCapableSampler(
             hf_backend, max_new_tokens=256, do_sample=True,
             temperature=0.7, seed=run_seed
+        )
+        # Assert GPU path is TextCapableSampler so hard-fail guard in
+        # run_stage1_candidate() can enforce real-pair requirement.
+        from cognitive_console.experiments.e0012_harness import TextCapableSampler  # noqa
+        assert isinstance(sampler, TextCapableSampler), (
+            "GPU run requires a TextCapableSampler; got " + type(sampler).__name__
         )
         hidden_dim = 3584  # Qwen2.5-7B hidden dim
 

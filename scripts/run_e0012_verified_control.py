@@ -155,10 +155,13 @@ def cmd_run(args: argparse.Namespace) -> None:
         sampler = make_synthetic_sampler(all_items)
         hidden_dim = 16
     else:
+        import torch as _torch  # noqa
         from cognitive_console.steering.generate import SteeredHFBackend  # noqa
         from cognitive_console.experiments.e0012_steer_hf import SteeredHFTextCapableSampler  # noqa
         model_name = args.model or "Qwen/Qwen2.5-7B-Instruct"
-        hf_backend = SteeredHFBackend(model_name=model_name)
+        _hf_device = "cuda" if _torch.cuda.is_available() else "cpu"
+        print(f"[e0012] device={_hf_device!r} (CUDA_VISIBLE_DEVICES={__import__('os').environ.get('CUDA_VISIBLE_DEVICES','unset')!r})")
+        hf_backend = SteeredHFBackend(model_name=model_name, device=_hf_device)
         # N-01 fix: wrap in SteeredHFTextCapableSampler (not BackendOutcomeSampler)
         # so _eval_items_with_raw_pairs records real (confidence, correctness) pairs
         # (synthetic_proxy=False) for the §9.2 Brier safety guards.

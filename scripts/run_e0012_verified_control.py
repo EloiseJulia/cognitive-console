@@ -46,6 +46,7 @@ from cognitive_console.experiments.e0012_harness import (
     LAYER_SWEEP,
     ALPHA_GRID,
     N_SEARCH_CAP,
+    CROSS_AXIS_SKIP_REASON,
     VERDICT_NO_BUTTON_FOUND,
     VERDICT_BUTTON_FOUND_BUT_UNSAFE,
     VERDICT_TRANSFER,
@@ -343,6 +344,13 @@ def cmd_run(args: argparse.Namespace) -> None:
         "n_stage0_passing_cutoff": sum(1 for c in stage0.all_candidates if c.passes_cutoff) if stage0 else 0,
         "n_stage1_candidates": len(verdict_obj.stage1_results),
         "stage1_passes": [r.passes for r in verdict_obj.stage1_results],
+        "cross_axis_check": (
+            "SKIPPED"
+            if not verdict_obj.stage1_results
+            or all(r.cross_axis_check == "SKIPPED" for r in verdict_obj.stage1_results)
+            else "CHECKED"
+        ),
+        "cross_axis_skip_reason": CROSS_AXIS_SKIP_REASON,
         "stage1_results_detail": [
             {
                 "family": r.candidate.button_family,
@@ -357,7 +365,21 @@ def cmd_run(args: argparse.Namespace) -> None:
                 "coherence_degeneracy_steer": r.coherence_degeneracy_steer,
                 "coherence_degeneracy_baseline": r.coherence_degeneracy_baseline,
                 "cross_axis_check": r.cross_axis_check,
+                "cross_axis_skip_reason": r.cross_axis_skip_reason,
                 "cross_axis_deltas": r.safety.cross_axis_deltas,
+                "safety": {
+                    "accuracy_guard_ok": r.safety.accuracy_guard_ok,
+                    "accuracy_steer": r.safety.accuracy_steer,
+                    "accuracy_baseline": r.safety.accuracy_baseline,
+                    "reliability_guard_triggered": r.safety.reliability_guard_triggered,
+                    "gaming_test_triggered": r.safety.gaming_test_triggered,
+                    "cross_axis_check": r.cross_axis_check,
+                    "cross_axis_skip_reason": r.cross_axis_skip_reason,
+                    "cross_axis_fail": r.safety.cross_axis_fail,
+                    "cross_axis_deltas": r.safety.cross_axis_deltas,
+                    "button_found_but_unsafe": r.safety.button_found_but_unsafe,
+                    "reasons": r.safety.reasons,
+                },
                 "safety_reasons": r.safety.reasons,
             }
             for r in verdict_obj.stage1_results

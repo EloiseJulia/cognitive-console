@@ -75,6 +75,11 @@ STAGE0_DEV_IMPROVEMENT_DELTA: float = adj.DELTA  # 0.05
 ACCURACY_GUARD_FRACTION: float = 0.9       # §9.1
 DELTA_CROSS_WARN: float = -0.05            # §9.4 warn level
 DELTA_CROSS_FAIL: float = -0.10            # §9.4 BUTTON_FOUND_BUT_UNSAFE level
+CROSS_AXIS_SKIP_REASON: str = (
+    "SKIPPED per prereg §9.4 calibration-only Stage 1 Note: no deliberation/"
+    "skepticism DEV items are evaluated in the conservative run; Stage 2 must "
+    "include cross-axis evaluation before GENERAL_CONTROL."
+)
 
 # Verdict labels (§8)
 VERDICT_NO_BUTTON_FOUND = "NO_BUTTON_FOUND"
@@ -544,6 +549,7 @@ class Stage1CandidateResult:
     coherence_degeneracy_steer: float = 0.0
     coherence_degeneracy_baseline: float = 0.0
     cross_axis_check: Any = "SKIPPED"
+    cross_axis_skip_reason: str = CROSS_AXIS_SKIP_REASON
 
 
 def _compute_cross_axis_deltas(
@@ -767,6 +773,9 @@ def run_stage1_candidate(
         coherence_degeneracy_steer=mean_degen_steer,
         coherence_degeneracy_baseline=mean_degen_baseline,
         cross_axis_check=cross_axis_check,
+        cross_axis_skip_reason=(
+            CROSS_AXIS_SKIP_REASON if cross_axis_check == "SKIPPED" else ""
+        ),
     )
 
 
@@ -927,18 +936,6 @@ def run_e0012_harness(
     if raw_store_path is not None:
         raw_store = BrierRawStore(raw_store_path)
 
-    cross_axis_dev_items: Dict[str, Sequence[Dict]] = {}
-    try:
-        from cognitive_console.eval.c2b_tasks import load_c2b_task  # noqa: PLC0415
-        for cross_axis in ("deliberation", "skepticism"):
-            task = load_c2b_task(cross_axis, use_fixture=True)
-            split = adj.split_dev_test([str(it["id"]) for it in task.items])
-            by_id = {str(it["id"]): it for it in task.items}
-            dev_cross = [by_id[item_id] for item_id in split.dev_ids]
-            cross_axis_dev_items[cross_axis] = dev_cross
-    except Exception:
-        cross_axis_dev_items = {}
-
     try:
         # Derive directions for all families × all layers
         directions_by_layer: Dict[int, List[ButtonDirection]] = {}
@@ -986,7 +983,7 @@ def run_e0012_harness(
                 axis=axis,
                 raw_store=raw_store,
                 bonferroni_ci_level=bonferroni_ci_level,  # H-04
-                cross_axis_dev_items=cross_axis_dev_items,
+                cross_axis_dev_items=None,
             )
             stage1_results.append(result)
 

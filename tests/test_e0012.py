@@ -86,6 +86,7 @@ from cognitive_console.experiments.e0012_brier import (
 from cognitive_console.experiments.e0012_harness import (
     ACCURACY_GUARD_FRACTION,
     ALPHA_GRID,
+    CROSS_AXIS_SKIP_REASON,
     DELTA_CROSS_FAIL,
     DELTA_CROSS_WARN,
     K_STAGE0,
@@ -728,6 +729,90 @@ class TestSafetyGuards:
         assert result.safety.button_found_but_unsafe
         assert result.cross_axis_check["deliberation"] < DELTA_CROSS_FAIL
         assert result.cross_axis_check["skepticism"] < DELTA_CROSS_FAIL
+
+    def test_conservative_harness_path_skips_cross_axis_without_generations(self, monkeypatch):
+        from cognitive_console.experiments import e0012_harness as harness
+
+        def _forbid_fixture_load(*args, **kwargs):
+            raise AssertionError("conservative E-0012 run must not load cross-axis fixtures")
+
+        monkeypatch.setattr("cognitive_console.eval.c2b_tasks.load_c2b_task", _forbid_fixture_load)
+
+        class _CalibrationOnlySampler(adj.OutcomeSampler):
+            def __init__(self):
+                self.axes: List[str] = []
+
+            def sample(self, axis, item, instruction, alpha, k, direction, layer):
+                self.axes.append(axis)
+                if axis != "uncertainty_awareness":
+                    raise AssertionError(f"unexpected cross-axis generation: {axis}")
+                prompt_gain = 0.10 if instruction else 0.0
+                outcome = min(0.95, 0.40 + prompt_gain + 0.03 * float(alpha))
+                return adj.SampleBatch(outcomes=[outcome] * k, degeneracies=[0.1] * k)
+
+        items = _make_items(12)
+        dev_items, test_items = split_e0012_pool(items, split_seed=42)
+        sampler = _CalibrationOnlySampler()
+        verdict_obj = harness.run_e0012_harness(
+            sampler=sampler,
+            dev_items=dev_items,
+            test_items=test_items,
+            authored_prompts=_make_authored(2),
+            hidden_dim=16,
+        )
+
+        assert verdict_obj.stage1_results
+        assert set(sampler.axes) == {"uncertainty_awareness"}
+        assert all(r.cross_axis_check == "SKIPPED" for r in verdict_obj.stage1_results)
+        assert all(r.cross_axis_skip_reason == CROSS_AXIS_SKIP_REASON for r in verdict_obj.stage1_results)
+
+    def test_skipped_cross_axis_does_not_flip_passing_verdict_to_unsafe(self):
+        from cognitive_console.experiments.e0012_harness import Stage0Result
+
+        cand = Stage0Candidate(
+            button_family=BTN_PROBE,
+            layer=20,
+            alpha=4.0,
+            dev_score_steer=0.60,
+            dev_score_prompt=0.50,
+            dev_improvement=0.10,
+            coherence_ok=True,
+            passes_cutoff=True,
+        )
+        stage0 = Stage0Result(
+            all_candidates=[cand],
+            advancing=[cand],
+            n_search=1,
+            ape_result=None,
+            best_prompt_text="Be calibrated.",
+            kill_rule_result="SKIPPED",
+            kill_rule_reason="",
+            verdict_at_stage0="CONTINUE",
+        )
+        steer, base = self._ok_decomps()
+        safety = evaluate_safety(
+            steer,
+            base,
+            accuracy_steer=0.80,
+            accuracy_baseline=0.75,
+            cross_axis_deltas=None,
+        )
+        result = Stage1CandidateResult(
+            candidate=cand,
+            axis_adj_result={"passes": True, "coherence_ok": True},
+            passes=True,
+            safety=safety,
+            final_verdict="PASS",
+            brier_decomp_steer=steer,
+            brier_decomp_baseline=base,
+            cross_axis_check="SKIPPED",
+            cross_axis_skip_reason=CROSS_AXIS_SKIP_REASON,
+        )
+
+        verdict = determine_verdict(stage0, [result], stage2_dimensions_passed=None)
+        assert not result.safety.cross_axis_fail
+        assert not result.safety.button_found_but_unsafe
+        assert verdict.verdict == VERDICT_LOCAL
 
 
 # ═══════════════════════════════════════════════════════════════════════════ #

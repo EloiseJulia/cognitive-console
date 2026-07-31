@@ -1023,3 +1023,73 @@ experiments:
   valid_for_paper: false
   validation_notes: D-0044 token-blind READ probe only. READ_HOLDS in this run and suggests asking Manager whether to authorize
     steer alpha-grid; no steering run was performed.
+
+- experiment_id: e0012-2026-07-30
+  parent: null
+  hypothesis_id: H-E0012-VERIFIED-CONTROL
+  claim_ids: []
+  type: exploratory
+  status: done
+  code_commit: 8af62ce  # = frozen 9dc37ab (prereg D-0059) + ops-only device fix + ops-only dtype=float16 fix (infra-only per D-0060; no protocol/harness/algorithm/threshold changed)
+  dirty_tree: false
+  data_hash: null
+  env_hash: null
+  config_hash: null
+  model: Qwen/Qwen2.5-7B-Instruct (fp16, CUDA)
+  dataset: TriviaQA validation calibration subset; pool_seed=12, pool_offset=500; N=80; 27 DEV / 53 TEST; DISJOINT from E-0006 (owner-confirmed, D-0059)
+  seed: 42  # APE seed; pool split seed embedded in pool_seed=12/pool_offset=500
+  hardware: NVIDIA A800 80GB PCIe, borrowed server GPU index 1 only (CUDA_VISIBLE_DEVICES=1); elzhang@10.172.211.158; dtype=float16 (infra fix D-0060)
+  started_at: null  # not recorded in log
+  ended_at: '2026-07-30T22:11:53.852202+08:00'
+  exit_code: 0
+  raw_metrics:
+    verdict: TRANSFER
+    kill_rule: TRANSFER
+    ape_winner_dev_k3: 0.8198
+    ape_winner_dev_k5: 0.8270
+    n_stage0_candidates_total: 105
+    n_stage0_passing_cutoff: 13
+    n_stage1_candidates: 0
+    l_c1: 20
+    layer_sweep: [18, 19, 20, 21, 22]
+    alpha_grid: [2.0, 4.0, 6.0, 8.0, 12.0, 16.0, 24.0]
+    pool_seed: 12
+    pool_offset: 500
+    n_dev: 27
+    n_test: 53
+    wall_clock_seconds: 12695.25  # ~3.53 hours (fp16; float32 partial discarded per D-0060)
+    backend: hf
+    brier_raw_pairs_total_records: 9963
+    synthetic_proxy_true_count: 0  # integrity: ALL 9963 records synthetic_proxy=false (real pairs throughout)
+    synthetic_proxy_false_count: 9963
+  summary_metrics:
+    verdict: TRANSFER
+    kill_rule_triggered: true
+    kill_rule_condition: "APE auto-optimized prompt DEV k5 (0.8270) >= button best DEV k5 (button evaluated at frozen alpha) → button classified TRANSFER not VERIFIED-CONTROL"
+    n_search_cap: 105
+    n_evaluated: 105
+    n_passing_cutoff: 13
+    n_advancing_to_stage1: 0
+    stage1_run: false
+  artifacts:
+  - results/E-0012/e0012_results.json
+  - results/E-0012/e0012_stage0_candidates.json
+  - results/E-0012/brier_raw_pairs.jsonl
+  - results/E-0012/run_e0012.log
+  failure_reason: null
+  valid_for_paper: false  # TRANSFER verdict; valid_for_paper=PENDING independent hostile audit of results; see D-0060 + evidence-ledger E-0012
+  validation_notes: >-
+    E-0012 verified-control-button conservative track (Calibration axis, Qwen2.5-7B-Instruct fp16).
+    VERDICT=TRANSFER per frozen prereg-e0012-verified-control-button-DRAFT §8 kill rule (D-0059/D-0060).
+    Kill rule: APE auto-optimized prompt DEV k5=0.8270 >= button best DEV score at frozen alpha;
+    button classified TRANSFER not VERIFIED-CONTROL; Stage1 was not run (0 candidates advanced).
+    Stage0: 105/105 combinations evaluated (3 families × 5 layers × 7 alphas); 13 pass DEV cutoff
+    (delta>=0.05); 0 advance to Stage1 (kill rule fired before Stage1).
+    Integrity: brier_raw_pairs.jsonl 9963 records ALL synthetic_proxy=false (real pairs throughout,
+    no proxy fallback activated; N-01 hard-fail guard confirmed effective).
+    Code_commit lineage: run_commit=8af62ce = frozen prereg commit 9dc37ab + infra-only device fix +
+    infra-only dtype=float16 fix (D-0060); no protocol/harness/algorithm/threshold change.
+    SCOPE: single model (Qwen2.5-7B), calibration axis only, conservative track; recommended/aggressive
+    tracks and Stage2 remain §5-gated. Does NOT modify C1/C2 frozen headline or E-0005/E-0006 records.
+    TRANSFER is an honest pre-accepted outcome per prereg §8; legibility != controllability boundary confirmed.
+    valid_for_paper=PENDING independent hostile audit of results.

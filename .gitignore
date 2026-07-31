@@ -40,6 +40,12 @@ results/E-0011/**/checkpoints/
 results/E-0011/**/c1/
 results/E-0011/**/activations/
 
+# E-0012 verified-control-button: exclude large subdirs if present; commit small JSON products
+# brier_raw_pairs.jsonl (1.8MB, audit artifact) is committed; exclude regenerable large dirs
+results/E-0012/**/transcripts/
+results/E-0012/**/checkpoints/
+results/E-0012/**/activations/
+
 # LaTeX paper build artifacts
 docs/paper/build/
 docs/paper/*.aux

@@ -5,6 +5,12 @@
 
 (none yet)
 
+## 2026-07-31 · E-0012 frozen harness diverged from frozen §5-B APE sampling spec (freeze-integrity failure; caught by results audit, no bad claim shipped)
+- Frozen prereg §5-B (D-0059) mandates APE candidate generation at **temperature=0.9, top_p=0.9, seed=42, do_sample** (single meta-prompt call, N_cand=50). But the frozen harness `generate_candidates_real` (`e0012_ape.py`) called `backend.generate(meta_prompt, steer, max_new_tokens=4096)` passing **none** of these; `SteeredHFBackend.generate` defaults to `do_sample=False` (GREEDY). → the model-generated APE comparator (E-0012b) was produced GREEDILY, not per the frozen stochastic procedure. Compounded by non-persistence of candidates (winner=authored CAL-09 fallback).
+- **Consequence:** E-0012b TRANSFER→LOCAL flip was an artifact; audit NOT-SOUND. No positive claim shipped — caught at the results-audit gate. Fixed in track A (D-0064); sound v3 re-run (D-0065) still gives LOCAL vs the frozen comparator, but audit ruled SOUND-BUT-OVERCLAIMS (a human prompt @0.827 beats the button @0.697).
+- **Why earlier harness audits (H-01..H-06) missed it:** they validated the offline/synthetic path + a frozen-diff-empty check; the real-model generation sampling path was never exercised end-to-end vs §5-B until the GPU run. **Lesson: a "frozen==frozen" byte-diff does NOT prove the frozen code implements the frozen SPEC — add a spec-conformance test (assert do_sample/temperature/top_p/seed actually reach the backend) BEFORE freezing any protocol whose parameters live in prose. Always persist the full comparator candidate set + source(model|authored_fallback) + padding count, or the comparator is unauditable by construction.** (Both lessons now enforced by tests added in D-0064.)
+
+
 ## 2026-07-26 · PSR arm first GPU attempt: double-model-load CUDA OOM (caught by smoke gate, no bad verdict)
 - `run_psr_arm.py` loaded TWO Qwen2.5-7B copies (basis-extraction provider + steered-generation backend) → ~30GB
   > 24GB VRAM → CUDA OOM before PSR DEV evals. The MANDATORY GPU smoke gate caught it; the full arm did NOT run

@@ -1,21 +1,0 @@
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-[e0012] backend='hf' output=results/E-0012 seed=42
-[e0012] L_c1=20 layer_sweep=(18, 19, 20, 21, 22) alpha_grid=(2.0, 4.0, 6.0, 8.0, 12.0, 16.0, 24.0)
-[e0012] N_search_cap=105
-[e0012] Loaded E-0012 pool: 80 items
-[e0012] Split: 27 DEV / 53 TEST
-[e0012] Loaded 18 authored calibration prompts
-[e0012] device='cuda' (CUDA_VISIBLE_DEVICES='1')
-[e0012] Running APE (N_cand=50, seed=42)
-Fetching 4 files:   0%|          | 0/4 [00:00<?, ?it/s]Fetching 4 files:  25%|██▌       | 1/4 [01:51<05:35, 111.84s/it]Fetching 4 files:  50%|█████     | 2/4 [01:56<01:37, 48.88s/it] Fetching 4 files:  75%|███████▌  | 3/4 [01:56<00:26, 26.69s/it]Fetching 4 files: 100%|██████████| 4/4 [02:00<00:00, 17.44s/it]Fetching 4 files: 100%|██████████| 4/4 [02:00<00:00, 30.05s/it]
-Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:  12%|█▏        | 42/339 [00:00<00:00, 388.48it/s]Loading weights:  28%|██▊       | 96/339 [00:00<00:00, 439.49it/s]Loading weights:  43%|████▎     | 146/339 [00:00<00:00, 464.31it/s]Loading weights:  57%|█████▋    | 193/339 [00:00<00:00, 451.38it/s]Loading weights:  71%|███████▏  | 242/339 [00:00<00:00, 455.44it/s]Loading weights:  86%|████████▌ | 292/339 [00:00<00:00, 466.84it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 472.68it/s]
-[e0012] APE winner DEV score (k=3): 0.8198
-[e0012] APE winner DEV score (k=5): 0.8270
-[e0012] Running Stage 0 + Stage 1...
-
-[e0012] ═══ VERDICT: TRANSFER ═══
-[e0012] Notes: Kill rule triggered at Stage 0 DEV freeze: auto-optimized prompt ≥ button DEV score. Button classified TRANSFER, not VERIFIED-CONTROL.
-[e0012] Stage 0: 105/105 combinations evaluated, 13 pass cutoff, 0 advancing to Stage 1
-[e0012] Kill rule: TRANSFER
-[e0012] Results written to results/E-0012/e0012_results.json
-[e0012] Stage 0 candidate table written to results/E-0012/e0012_stage0_candidates.json

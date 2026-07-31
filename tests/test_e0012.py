@@ -60,11 +60,14 @@ from cognitive_console.experiments.e0012_ape import (
     APE_META_PROMPT_TEMPLATE,
     APE_N_CAND,
     APE_SEED,
+    APE_TEMPERATURE,
+    APE_TOP_P,
     APERunResult,
     CandidateEval,
     apply_kill_rule,
     evaluate_candidates_on_dev,
     frozen_meta_prompt,
+    generate_candidates_real,
     generate_candidates_synthetic,
     KILL_RULE_RESULT_PASS,
     KILL_RULE_RESULT_TRANSFER,
@@ -322,6 +325,43 @@ class TestAPECandidateGeneration:
         c42 = generate_candidates_synthetic(50, 42)
         c0 = generate_candidates_synthetic(50, 0)
         assert c42 != c0
+
+    def test_real_generation_passes_frozen_sampling_params(self):
+        class _Backend:
+            def __init__(self):
+                self.calls = []
+
+            def generate(self, prompt, steer, **kwargs):
+                self.calls.append({"prompt": prompt, "steer": steer, "kwargs": kwargs})
+                return "1. Prompt one\n2. Prompt two"
+
+        backend = _Backend()
+        generate_candidates_real(backend, n_cand=2, seed=APE_SEED)
+        assert len(backend.calls) == 1
+        kwargs = backend.calls[0]["kwargs"]
+        assert kwargs["do_sample"] is True
+        assert kwargs["temperature"] == APE_TEMPERATURE == 0.9
+        assert kwargs["top_p"] == APE_TOP_P == 0.9
+        assert kwargs["seed"] == APE_SEED == 42
+
+    def test_real_generation_padding_records_authored_provenance(self):
+        class _Backend:
+            def generate(self, prompt, steer, **kwargs):
+                return "1. Model prompt"
+
+        trace = generate_candidates_real(
+            _Backend(),
+            n_cand=3,
+            seed=APE_SEED,
+            authored_prompts=["Authored A", "Authored B"],
+            return_trace=True,
+        )
+        assert trace.n_model_parseable == 1
+        assert trace.n_padded == 2
+        assert [c["source"] for c in trace.candidates] == [
+            "model", "authored_fallback", "authored_fallback"
+        ]
+        assert all(c["normalized_hash"] for c in trace.candidates)
 
 
 class TestAPEScreening:
@@ -652,6 +692,42 @@ class TestSafetyGuards:
 
     def test_accuracy_guard_fraction_frozen(self):
         assert ACCURACY_GUARD_FRACTION == 0.9
+
+    def test_run_stage1_cross_axis_guard_fires_on_dev_delta_below_fail(self):
+        class _CrossAxisSampler(adj.OutcomeSampler):
+            def sample(self, axis, item, instruction, alpha, k, direction, layer):
+                if axis in ("deliberation", "skepticism"):
+                    outcome = 0.70 if alpha > 0.0 else 0.90
+                else:
+                    outcome = 0.80
+                return adj.SampleBatch(outcomes=[outcome] * k, degeneracies=[0.1] * k)
+
+        cand = Stage0Candidate(
+            button_family=BTN_PROBE,
+            layer=20,
+            alpha=4.0,
+            dev_score_steer=0.60,
+            dev_score_prompt=0.50,
+            dev_improvement=0.10,
+            coherence_ok=True,
+            passes_cutoff=True,
+        )
+        cross_items = {
+            "deliberation": [{"id": "d1", "prompt": "Q", "answer": "1"}],
+            "skepticism": [{"id": "s1", "prompt": "Q", "answer_letter": "A", "choices": {"A": "ok"}}],
+        }
+        result = run_stage1_candidate(
+            candidate=cand,
+            sampler=_CrossAxisSampler(),
+            test_items=_make_items(3),
+            best_prompt_text="Be calibrated.",
+            direction=np.zeros(1),
+            cross_axis_dev_items=cross_items,
+        )
+        assert result.safety.cross_axis_fail
+        assert result.safety.button_found_but_unsafe
+        assert result.cross_axis_check["deliberation"] < DELTA_CROSS_FAIL
+        assert result.cross_axis_check["skepticism"] < DELTA_CROSS_FAIL
 
 
 # ═══════════════════════════════════════════════════════════════════════════ #

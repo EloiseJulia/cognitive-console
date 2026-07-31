@@ -582,6 +582,7 @@ class SteeredHFBackend(GenBackend):
         max_new_tokens: int = 128,
         do_sample: bool = False,
         temperature: float = 1.0,
+        top_p: Optional[float] = None,
         seed: Optional[int] = None,
     ) -> str:
         import torch
@@ -618,6 +619,8 @@ class SteeredHFBackend(GenBackend):
             )
             if do_sample:
                 gen_kwargs["temperature"] = float(temperature)
+                if top_p is not None:
+                    gen_kwargs["top_p"] = float(top_p)
             with torch.no_grad():
                 out = self._model.generate(**enc, **gen_kwargs)
         finally:

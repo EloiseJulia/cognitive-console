@@ -23,7 +23,7 @@ so the full APE pipeline exercises offline.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 
@@ -51,6 +51,28 @@ APE_META_PROMPT_TEMPLATE: str = (
 def frozen_meta_prompt(n_cand: int = APE_N_CAND) -> str:
     """Return the frozen meta-prompt for APE candidate generation."""
     return APE_META_PROMPT_TEMPLATE.format(N_cand=n_cand)
+
+
+def normalized_prompt_hash(text: str) -> str:
+    """Stable hash of whitespace/case-normalized prompt text for provenance."""
+    import hashlib
+    import re
+
+    normalized = re.sub(r"\s+", " ", text.strip().lower())
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+@dataclass
+class APEGenerationTrace:
+    """Candidate-generation provenance needed to audit §5-B compliance."""
+    raw_model_output: str
+    candidates: List[Dict[str, Any]]
+    n_model_parseable: int
+    n_padded: int
+
+    @property
+    def texts(self) -> List[str]:
+        return [str(c["text"]) for c in self.candidates]
 
 
 # --------------------------------------------------------------------------- #
@@ -136,7 +158,8 @@ def generate_candidates_real(
     n_cand: int = APE_N_CAND,
     seed: int = APE_SEED,
     authored_prompts: Optional[Sequence[str]] = None,
-) -> List[str]:
+    return_trace: bool = False,
+) -> Union[List[str], APEGenerationTrace]:
     """Generate APE candidate prompts from the real model (A800 only).
 
     ``backend`` must be a GenBackend (alpha=0 for unsteered generation).
@@ -149,12 +172,29 @@ def generate_candidates_real(
     dummy_dir = _np.zeros(1)  # alpha=0 → unsteered
     steer = SteerConfig(direction=dummy_dir, alpha=0.0, layer=1)
     meta_prompt = frozen_meta_prompt(n_cand)
+    gen_kwargs = dict(
+        max_new_tokens=4096,
+        do_sample=True,
+        temperature=APE_TEMPERATURE,
+        top_p=APE_TOP_P,
+        seed=seed,
+    )
     try:
-        raw_output = backend.generate(meta_prompt, steer, max_new_tokens=4096)
+        raw_output = backend.generate(meta_prompt, steer, **gen_kwargs)
     except TypeError:
-        raw_output = backend.generate(meta_prompt, None, max_new_tokens=4096)
+        raw_output = backend.generate(meta_prompt, None, **gen_kwargs)
 
     candidates = _parse_numbered_candidates(raw_output, n_cand)
+    n_model_parseable = len(candidates)
+    provenance: List[Dict[str, Any]] = [
+        {
+            "candidate_id": i,
+            "text": text,
+            "source": "model",
+            "normalized_hash": normalized_prompt_hash(text),
+        }
+        for i, text in enumerate(candidates)
+    ]
 
     # Pad with authored if needed (§5-B: pad with ranked authored prompts)
     if authored_prompts and len(candidates) < n_cand:
@@ -164,8 +204,22 @@ def generate_candidates_real(
                 break
             if ap.strip().lower() not in existing:
                 candidates.append(ap)
+                provenance.append({
+                    "candidate_id": len(provenance),
+                    "text": ap,
+                    "source": "authored_fallback",
+                    "normalized_hash": normalized_prompt_hash(ap),
+                })
                 existing.add(ap.strip().lower())
-    return candidates[:n_cand]
+    candidates = candidates[:n_cand]
+    provenance = provenance[:n_cand]
+    trace = APEGenerationTrace(
+        raw_model_output=raw_output,
+        candidates=provenance,
+        n_model_parseable=n_model_parseable,
+        n_padded=sum(1 for c in provenance if c["source"] == "authored_fallback"),
+    )
+    return trace if return_trace else candidates
 
 
 def _parse_numbered_candidates(text: str, n_cand: int) -> List[str]:
@@ -327,6 +381,9 @@ class APERunResult:
     all_candidate_evals: List[CandidateEval]
     n_cand_generated: int
     n_cand_padded: int          # how many were padded from authored family
+    raw_model_output: str = ""
+    candidate_provenance: List[Dict[str, Any]] = field(default_factory=list)
+    n_model_parseable: int = 0
     kill_rule_result: str = ""  # set after comparing against button DEV
     kill_rule_reason: str = ""
 
@@ -343,6 +400,9 @@ def run_ape(
     direction: Any,
     layer: int,
     authored_count: int = 0,
+    raw_model_output: str = "",
+    candidate_provenance: Optional[Sequence[Dict[str, Any]]] = None,
+    n_model_parseable: Optional[int] = None,
 ) -> APERunResult:
     """Execute the full §5-B APE procedure: screen → select → re-evaluate.
 
@@ -362,6 +422,17 @@ def run_ape(
         winner, dev_items, sampler, axis, direction, layer, k=APE_K_WINNER
     )
 
+    provenance = list(candidate_provenance) if candidate_provenance is not None else [
+        {
+            "candidate_id": i,
+            "text": prompt,
+            "source": "model",
+            "normalized_hash": normalized_prompt_hash(prompt),
+        }
+        for i, prompt in enumerate(candidates)
+    ]
+    n_parseable = len(candidates) if n_model_parseable is None else int(n_model_parseable)
+
     return APERunResult(
         auto_prompt_text=winner.prompt_text,
         auto_prompt_dev_score_k3=winner.dev_score,
@@ -369,4 +440,7 @@ def run_ape(
         all_candidate_evals=evals,
         n_cand_generated=len(candidates),
         n_cand_padded=authored_count,
+        raw_model_output=raw_model_output,
+        candidate_provenance=provenance,
+        n_model_parseable=n_parseable,
     )

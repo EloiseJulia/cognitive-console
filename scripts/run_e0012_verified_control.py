@@ -46,6 +46,7 @@ from cognitive_console.experiments.e0012_harness import (
     LAYER_SWEEP,
     ALPHA_GRID,
     N_SEARCH_CAP,
+    CROSS_AXIS_SKIP_REASON,
     VERDICT_NO_BUTTON_FOUND,
     VERDICT_BUTTON_FOUND_BUT_UNSAFE,
     VERDICT_TRANSFER,
@@ -57,6 +58,7 @@ from cognitive_console.experiments.e0012_ape import (
     generate_candidates_real,
     run_ape,
     frozen_meta_prompt,
+    normalized_prompt_hash,
 )
 from cognitive_console.experiments.e0012_brier import BrierRawStore
 from cognitive_console.eval.e0012_triviaqa import (
@@ -184,12 +186,49 @@ def cmd_run(args: argparse.Namespace) -> None:
     axis = "uncertainty_awareness"
     if args.backend == "synthetic":
         candidates = generate_candidates_synthetic(APE_N_CAND, APE_SEED)
+        raw_model_output = "SYNTHETIC_OFFLINE_GENERATOR"
+        candidate_provenance = [
+            {
+                "candidate_id": i,
+                "text": text,
+                "source": "model",
+                "normalized_hash": normalized_prompt_hash(text),
+            }
+            for i, text in enumerate(candidates)
+        ]
+        n_model_parseable = len(candidates)
+        n_cand_padded = 0
     else:
         # F-01: §5-B protocol compliance — generate via frozen meta-prompt using the real model,
         # not the pre-authored calibration bank. authored_texts serves as §5-B pad-fallback only.
         authored_texts = [text for _, text in authored_prompts]
-        candidates = generate_candidates_real(hf_backend, APE_N_CAND, APE_SEED,
-                                              authored_prompts=authored_texts)
+        try:
+            gen_trace = generate_candidates_real(hf_backend, APE_N_CAND, APE_SEED,
+                                                 authored_prompts=authored_texts,
+                                                 return_trace=True)
+        except TypeError:
+            gen_trace = generate_candidates_real(hf_backend, APE_N_CAND, APE_SEED,
+                                                 authored_prompts=authored_texts)
+        if hasattr(gen_trace, "texts"):
+            candidates = gen_trace.texts
+            raw_model_output = gen_trace.raw_model_output
+            candidate_provenance = gen_trace.candidates
+            n_model_parseable = gen_trace.n_model_parseable
+            n_cand_padded = gen_trace.n_padded
+        else:
+            candidates = list(gen_trace)
+            raw_model_output = ""
+            candidate_provenance = [
+                {
+                    "candidate_id": i,
+                    "text": text,
+                    "source": "model",
+                    "normalized_hash": normalized_prompt_hash(text),
+                }
+                for i, text in enumerate(candidates)
+            ]
+            n_model_parseable = len(candidates)
+            n_cand_padded = 0
 
     # Use first authored prompt layer/direction for APE screening
     layer_for_ape = L_C1
@@ -200,6 +239,10 @@ def cmd_run(args: argparse.Namespace) -> None:
         axis=axis,
         direction=np.zeros(1),
         layer=layer_for_ape,
+        authored_count=n_cand_padded,
+        raw_model_output=raw_model_output,
+        candidate_provenance=candidate_provenance,
+        n_model_parseable=n_model_parseable,
     )
     print(f"[e0012] APE winner DEV score (k=3): {ape_result.auto_prompt_dev_score_k3:.4f}")
     print(f"[e0012] APE winner DEV score (k=5): {ape_result.auto_prompt_dev_score_k5:.4f}")
@@ -260,6 +303,18 @@ def cmd_run(args: argparse.Namespace) -> None:
                 ape_winner_candidate_id = _ev.candidate_id
                 break
 
+    def _int_attr(obj: Any, name: str, default: int) -> int:
+        value = getattr(obj, name, default)
+        return value if isinstance(value, int) else default
+
+    def _str_attr(obj: Any, name: str, default: str) -> str:
+        value = getattr(obj, name, default)
+        return value if isinstance(value, str) else default
+
+    def _list_attr(obj: Any, name: str, default: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        value = getattr(obj, name, default)
+        return value if isinstance(value, list) else default
+
     # Serialize results
     result_dict = {
         "experiment_id": f"e0012-{date.today().isoformat()}",
@@ -280,6 +335,8 @@ def cmd_run(args: argparse.Namespace) -> None:
         "ape_winner_dev_k5": ape_result.auto_prompt_dev_score_k5,
         "ape_winner_prompt_text": ape_winner_prompt_text,           # F-04
         "ape_winner_candidate_id": ape_winner_candidate_id,         # F-04
+        "n_cand_generated": _int_attr(ape_result, "n_cand_generated", len(candidates)),
+        "n_cand_padded": _int_attr(ape_result, "n_cand_padded", n_cand_padded),
         "button_best_dev_k5": button_best_dev_k5,                   # F-03
         "button_best_k5_family_layer_alpha": button_best_k5_family_layer_alpha,  # F-03
         "kill_rule": stage0.kill_rule_result if stage0 else "N/A",
@@ -287,6 +344,46 @@ def cmd_run(args: argparse.Namespace) -> None:
         "n_stage0_passing_cutoff": sum(1 for c in stage0.all_candidates if c.passes_cutoff) if stage0 else 0,
         "n_stage1_candidates": len(verdict_obj.stage1_results),
         "stage1_passes": [r.passes for r in verdict_obj.stage1_results],
+        "cross_axis_check": (
+            "SKIPPED"
+            if not verdict_obj.stage1_results
+            or all(r.cross_axis_check == "SKIPPED" for r in verdict_obj.stage1_results)
+            else "CHECKED"
+        ),
+        "cross_axis_skip_reason": CROSS_AXIS_SKIP_REASON,
+        "stage1_results_detail": [
+            {
+                "family": r.candidate.button_family,
+                "layer": r.candidate.layer,
+                "alpha": r.candidate.alpha,
+                "passes": r.passes,
+                "coherence_ok": bool(
+                    r.axis_adj_result.get("coherence_ok", False)
+                    if isinstance(r.axis_adj_result, dict) else False
+                ),
+                "coherence_ratio": r.coherence_ratio,
+                "coherence_degeneracy_steer": r.coherence_degeneracy_steer,
+                "coherence_degeneracy_baseline": r.coherence_degeneracy_baseline,
+                "cross_axis_check": r.cross_axis_check,
+                "cross_axis_skip_reason": r.cross_axis_skip_reason,
+                "cross_axis_deltas": r.safety.cross_axis_deltas,
+                "safety": {
+                    "accuracy_guard_ok": r.safety.accuracy_guard_ok,
+                    "accuracy_steer": r.safety.accuracy_steer,
+                    "accuracy_baseline": r.safety.accuracy_baseline,
+                    "reliability_guard_triggered": r.safety.reliability_guard_triggered,
+                    "gaming_test_triggered": r.safety.gaming_test_triggered,
+                    "cross_axis_check": r.cross_axis_check,
+                    "cross_axis_skip_reason": r.cross_axis_skip_reason,
+                    "cross_axis_fail": r.safety.cross_axis_fail,
+                    "cross_axis_deltas": r.safety.cross_axis_deltas,
+                    "button_found_but_unsafe": r.safety.button_found_but_unsafe,
+                    "reasons": r.safety.reasons,
+                },
+                "safety_reasons": r.safety.reasons,
+            }
+            for r in verdict_obj.stage1_results
+        ],
         "wall_clock_seconds": wall_clock,
         "brier_raw_pairs_path": str(raw_store_path),
     }
@@ -306,6 +403,9 @@ def cmd_run(args: argparse.Namespace) -> None:
                 "dev_score_prompt": round(c.dev_score_prompt, 4),
                 "dev_improvement": round(c.dev_improvement, 4),
                 "coherence_ok": c.coherence_ok,
+                "coherence_ratio": c.coherence_ratio,
+                "coherence_degeneracy_steer": c.coherence_degeneracy_steer,
+                "coherence_degeneracy_baseline": c.coherence_degeneracy_baseline,
                 "passes_cutoff": c.passes_cutoff,
             }
             for c in stage0.all_candidates
@@ -313,6 +413,35 @@ def cmd_run(args: argparse.Namespace) -> None:
         stage0_path = out_dir / "e0012_stage0_candidates.json"
         stage0_path.write_text(json.dumps(stage0_table, indent=2), encoding="utf-8")
         print(f"[e0012] Stage 0 candidate table written to {stage0_path}")
+
+    eval_by_id = {ev.candidate_id: ev for ev in ape_result.all_candidate_evals}
+    winner_id = ape_winner_candidate_id
+    ape_candidate_provenance = _list_attr(
+        ape_result, "candidate_provenance", candidate_provenance
+    )
+    ape_candidates_payload = {
+        "raw_model_output": _str_attr(ape_result, "raw_model_output", raw_model_output),
+        "n_model_parseable": _int_attr(ape_result, "n_model_parseable", n_model_parseable),
+        "n_padded": _int_attr(ape_result, "n_cand_padded", n_cand_padded),
+        "candidates": [
+            {
+                **prov,
+                "dev_score_k3": (
+                    eval_by_id[int(prov["candidate_id"])].dev_score
+                    if int(prov["candidate_id"]) in eval_by_id else None
+                ),
+                "dev_score_k5": (
+                    ape_result.auto_prompt_dev_score_k5
+                    if winner_id is not None and int(prov["candidate_id"]) == int(winner_id)
+                    else None
+                ),
+            }
+            for prov in ape_candidate_provenance
+        ],
+    }
+    ape_candidates_path = out_dir / "e0012_ape_candidates.json"
+    ape_candidates_path.write_text(json.dumps(ape_candidates_payload, indent=2), encoding="utf-8")
+    print(f"[e0012] APE candidate provenance written to {ape_candidates_path}")
 
 
 def main() -> None:

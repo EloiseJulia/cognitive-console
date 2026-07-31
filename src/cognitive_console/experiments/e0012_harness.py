@@ -75,6 +75,11 @@ STAGE0_DEV_IMPROVEMENT_DELTA: float = adj.DELTA  # 0.05
 ACCURACY_GUARD_FRACTION: float = 0.9       # §9.1
 DELTA_CROSS_WARN: float = -0.05            # §9.4 warn level
 DELTA_CROSS_FAIL: float = -0.10            # §9.4 BUTTON_FOUND_BUT_UNSAFE level
+CROSS_AXIS_SKIP_REASON: str = (
+    "SKIPPED per prereg §9.4 calibration-only Stage 1 Note: no deliberation/"
+    "skepticism DEV items are evaluated in the conservative run; Stage 2 must "
+    "include cross-axis evaluation before GENERAL_CONTROL."
+)
 
 # Verdict labels (§8)
 VERDICT_NO_BUTTON_FOUND = "NO_BUTTON_FOUND"
@@ -101,6 +106,8 @@ class Stage0Candidate:
     passes_cutoff: bool         # dev_improvement ≥ δ AND coherence_ok
     # H-05: actual degeneracy ratio (mean_degen / baseline_degen); used for tie-breaking
     coherence_ratio: float = 0.0
+    coherence_degeneracy_steer: Optional[float] = None
+    coherence_degeneracy_baseline: Optional[float] = None
     # H-01: k=5 re-evaluation on DEV for symmetric kill-rule comparison; set after selection
     dev_score_steer_k5: Optional[float] = None
 
@@ -382,6 +389,8 @@ def run_stage0(
                     coherence_ok=coherence_ok,
                     passes_cutoff=passes,
                     coherence_ratio=coherence_ratio,       # H-05
+                    coherence_degeneracy_steer=mean_degen,
+                    coherence_degeneracy_baseline=stage0_baseline_degen,
                 ))
                 n_search += 1
 
@@ -536,6 +545,47 @@ class Stage1CandidateResult:
     # H-02: True iff brier_decomp_* are computed from real (conf, correct) GPU pairs.
     # False means synthetic-proxy approximation — not authoritative for GPU safety.
     is_brier_from_real_pairs: bool = False
+    coherence_ratio: float = 0.0
+    coherence_degeneracy_steer: float = 0.0
+    coherence_degeneracy_baseline: float = 0.0
+    cross_axis_check: Any = "SKIPPED"
+    cross_axis_skip_reason: str = CROSS_AXIS_SKIP_REASON
+
+
+def _compute_cross_axis_deltas(
+    sampler: adj.OutcomeSampler,
+    cross_axis_dev_items: Optional[Dict[str, Sequence[Dict]]],
+    best_prompt_text: str,
+    alpha: float,
+    direction: np.ndarray,
+    layer: int,
+) -> Tuple[Dict[str, float], Any]:
+    """Compute prereg §9.4 DEV-side deltas for deliberation/skepticism axes."""
+    if not cross_axis_dev_items:
+        return {}, "SKIPPED"
+
+    deltas: Dict[str, float] = {}
+    checked: Dict[str, Any] = {}
+    for cross_axis in ("deliberation", "skepticism"):
+        items = list(cross_axis_dev_items.get(cross_axis, []))
+        if not items:
+            checked[cross_axis] = "SKIPPED"
+            continue
+        steer_batches = _eval_items_with_raw_pairs(
+            sampler, cross_axis, items, best_prompt_text, alpha,
+            direction, layer, K_STAGE0, channel=f"cross_{cross_axis}_steer",
+        )
+        baseline_batches = _eval_items_with_raw_pairs(
+            sampler, cross_axis, items, "", 0.0,
+            np.zeros(1), layer, K_STAGE0, channel=f"cross_{cross_axis}_baseline",
+        )
+        delta = _mean_outcome(steer_batches) - _mean_outcome(baseline_batches)
+        deltas[cross_axis] = float(delta)
+        checked[cross_axis] = float(delta)
+
+    if not deltas:
+        return {}, "SKIPPED"
+    return deltas, checked
 
 
 # Avoid circular import by using a forward reference
@@ -561,6 +611,7 @@ def run_stage1_candidate(
     axis: str = "uncertainty_awareness",
     raw_store: Optional[BrierRawStore] = None,
     bonferroni_ci_level: float = adj.BONFERRONI_CI_LEVEL,
+    cross_axis_dev_items: Optional[Dict[str, Sequence[Dict]]] = None,
 ) -> Stage1CandidateResult:
     """Run Stage 1 ONE-SHOT TEST for a single advancing candidate.
 
@@ -615,6 +666,10 @@ def run_stage1_candidate(
     mean_degen_baseline = float(np.mean([b.mean_degeneracy() for b in baseline_batches]))
     coherence_ceiling = adj.COHERENCE_MAX_RATIO * mean_degen_baseline + adj.COHERENCE_EPS_FLOOR
     coherence_ok = mean_degen_steer <= coherence_ceiling
+    coherence_ratio = (
+        mean_degen_steer / mean_degen_baseline
+        if mean_degen_baseline > 0.0 else float("inf")
+    )
 
     passes = adj.axis_pass(ci.point, ci.ci_lo, ci.ci_hi, coherence_ok)
 
@@ -685,8 +740,14 @@ def run_stage1_candidate(
     acc_steer = _compute_accuracy(steer_batches)
     acc_baseline = _compute_accuracy(baseline_batches)
 
-    # Cross-axis check placeholder (§9.4 — real cross-axis uses DEV items, SKIPPED here)
-    cross_deltas: Dict[str, float] = {}
+    cross_deltas, cross_axis_check = _compute_cross_axis_deltas(
+        sampler=sampler,
+        cross_axis_dev_items=cross_axis_dev_items,
+        best_prompt_text=best_prompt_text,
+        alpha=alpha,
+        direction=direction,
+        layer=layer,
+    )
 
     safety = evaluate_safety(
         steer_decomp, base_decomp, acc_steer, acc_baseline, cross_deltas
@@ -708,6 +769,13 @@ def run_stage1_candidate(
         brier_decomp_steer=steer_decomp,
         brier_decomp_baseline=base_decomp,
         is_brier_from_real_pairs=is_brier_from_real_pairs,
+        coherence_ratio=coherence_ratio,
+        coherence_degeneracy_steer=mean_degen_steer,
+        coherence_degeneracy_baseline=mean_degen_baseline,
+        cross_axis_check=cross_axis_check,
+        cross_axis_skip_reason=(
+            CROSS_AXIS_SKIP_REASON if cross_axis_check == "SKIPPED" else ""
+        ),
     )
 
 
@@ -891,6 +959,8 @@ def run_e0012_harness(
             return determine_verdict(stage0, [], None)
         if stage0.kill_rule_result == KILL_RULE_RESULT_TRANSFER:
             return determine_verdict(stage0, [], None)
+        if not test_items:
+            return determine_verdict(stage0, [], None)
 
         # Stage 1: one-shot TEST for each advancing candidate
         stage1_results: List[Stage1CandidateResult] = []
@@ -913,6 +983,7 @@ def run_e0012_harness(
                 axis=axis,
                 raw_store=raw_store,
                 bonferroni_ci_level=bonferroni_ci_level,  # H-04
+                cross_axis_dev_items=None,
             )
             stage1_results.append(result)
 

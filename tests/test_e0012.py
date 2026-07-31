@@ -1953,3 +1953,405 @@ class TestN02VerdictUnsafeLogic:
         assert r.safety.button_found_but_unsafe
         verdict = determine_verdict(stage0, [r], stage2_dimensions_passed=None)
         assert verdict.verdict == VERDICT_BUTTON_FOUND_BUT_UNSAFE
+
+
+# ═══════════════════════════════════════════════════════════════════════════ #
+# Runner wiring tests: F-01, F-02, F-03, F-04
+# ═══════════════════════════════════════════════════════════════════════════ #
+def _import_runner():
+    """Import run_e0012_verified_control, adding scripts/ to sys.path as needed."""
+    import importlib
+    import sys
+
+    repo = Path(__file__).resolve().parents[1]
+    scripts_dir = str(repo / "scripts")
+    if scripts_dir not in sys.path:
+        sys.path.insert(0, scripts_dir)
+    if "run_e0012_verified_control" not in sys.modules:
+        return importlib.import_module("run_e0012_verified_control")
+    return sys.modules["run_e0012_verified_control"]
+
+
+class TestRunnerWiring:
+    """Tests for F-01 (generate_candidates_real), F-02 (valid_for_paper=False),
+    F-03 (button_best_dev_k5 persisted), F-04 (ape_winner_prompt_text persisted)."""
+
+    # ─────────────────────────────────────────────────────────────────────── #
+    # F-01: hf path must call generate_candidates_real, not generate_candidates_synthetic
+    # ─────────────────────────────────────────────────────────────────────── #
+
+    def test_hf_path_calls_generate_candidates_real(self, tmp_path, monkeypatch):
+        """F-01: cmd_run with --backend hf must route to generate_candidates_real."""
+        import argparse
+        import sys
+        from unittest.mock import MagicMock, patch
+
+        runner = _import_runner()
+
+        real_calls: list = []
+        synth_calls: list = []
+
+        def _mock_gen_real(backend, n_cand, seed, authored_prompts=None):
+            real_calls.append((n_cand, seed))
+            return [f"r{i}" for i in range(n_cand)]
+
+        def _mock_gen_synth(n_cand, seed):
+            synth_calls.append((n_cand, seed))
+            return [f"s{i}" for i in range(n_cand)]
+
+        # Concrete TextCapableSampler stub satisfying the isinstance check in runner
+        class _StubSampler(TextCapableSampler):
+            def sample(self, axis, item, instruction, alpha, k, direction, layer):
+                return adj.SampleBatch(outcomes=[0.5] * k, degeneracies=[0.1] * k)
+
+            def sample_with_texts(self, axis, item, instruction, alpha, k, direction, layer):
+                return self.sample(axis, item, instruction, alpha, k, direction, layer), ["t"] * k
+
+        _stub_sampler = _StubSampler()
+
+        from cognitive_console.experiments.e0012_harness import Stage0Result, E0012Verdict
+        _mock_ape = MagicMock()
+        _mock_ape.auto_prompt_dev_score_k3 = 0.5
+        _mock_ape.auto_prompt_dev_score_k5 = 0.4
+        _mock_ape.auto_prompt_text = "Test prompt."
+        _mock_ape.all_candidate_evals = []
+        _mock_s0 = Stage0Result(
+            all_candidates=[], advancing=[], n_search=0, ape_result=_mock_ape,
+            best_prompt_text="", kill_rule_result="SKIPPED", kill_rule_reason="",
+            verdict_at_stage0=VERDICT_NO_BUTTON_FOUND,
+        )
+        _mock_verdict = E0012Verdict(
+            verdict=VERDICT_NO_BUTTON_FOUND, stage0=_mock_s0, stage1_results=[],
+            winner_candidate=None, notes="", transfer_detected=False,
+        )
+
+        torch_mock = MagicMock()
+        torch_mock.cuda.is_available.return_value = False
+
+        with patch.dict(sys.modules, {"torch": torch_mock}):
+            import cognitive_console.steering.generate as _gen_mod
+            import cognitive_console.experiments.e0012_steer_hf as _steer_mod
+            monkeypatch.setattr(_gen_mod, "SteeredHFBackend",
+                                MagicMock(return_value=MagicMock()))
+            monkeypatch.setattr(_steer_mod, "SteeredHFTextCapableSampler",
+                                MagicMock(return_value=_stub_sampler))
+
+            monkeypatch.setattr(runner, "generate_candidates_real", _mock_gen_real)
+            monkeypatch.setattr(runner, "generate_candidates_synthetic", _mock_gen_synth)
+            monkeypatch.setattr(runner, "load_e0012_pool",
+                                lambda use_fixture=True: _make_items(12))
+            monkeypatch.setattr(runner, "split_e0012_pool",
+                                lambda items, split_seed=42: (items[:4], items[4:]))
+            monkeypatch.setattr(runner, "load_authored_prompts",
+                                lambda data_root=None: [("P0", "Be calibrated.")])
+            monkeypatch.setattr(runner, "run_ape", lambda **kw: _mock_ape)
+            monkeypatch.setattr(runner, "run_e0012_harness", lambda **kw: _mock_verdict)
+
+            args = argparse.Namespace(
+                backend="hf", output_dir=str(tmp_path), seed=42,
+                model=None, n_items=None, stage0_only=False,
+            )
+            runner.cmd_run(args)
+
+        assert len(real_calls) == 1, (
+            f"F-01: generate_candidates_real must be called once in hf path, "
+            f"got {len(real_calls)} call(s)"
+        )
+        assert len(synth_calls) == 0, (
+            "F-01: generate_candidates_synthetic must NOT be called in hf path"
+        )
+
+    def test_synthetic_path_does_not_call_generate_candidates_real(self, tmp_path, monkeypatch):
+        """F-01 (sanity): synthetic path must NOT call generate_candidates_real."""
+        import argparse
+        from unittest.mock import MagicMock
+        from cognitive_console.experiments.e0012_harness import Stage0Result, E0012Verdict
+
+        runner = _import_runner()
+
+        real_calls: list = []
+        synth_calls: list = []
+
+        def _mock_gen_real(backend, n_cand, seed, authored_prompts=None):
+            real_calls.append((n_cand, seed))
+            return [f"r{i}" for i in range(n_cand)]
+
+        def _mock_gen_synth(n_cand, seed):
+            synth_calls.append((n_cand, seed))
+            return [f"s{i}" for i in range(n_cand)]
+
+        _mock_ape = MagicMock()
+        _mock_ape.auto_prompt_dev_score_k3 = 0.5
+        _mock_ape.auto_prompt_dev_score_k5 = 0.4
+        _mock_ape.auto_prompt_text = "Synthetic prompt."
+        _mock_ape.all_candidate_evals = []
+        _mock_s0 = Stage0Result(
+            all_candidates=[], advancing=[], n_search=0, ape_result=_mock_ape,
+            best_prompt_text="", kill_rule_result="SKIPPED", kill_rule_reason="",
+            verdict_at_stage0=VERDICT_NO_BUTTON_FOUND,
+        )
+        _mock_verdict = E0012Verdict(
+            verdict=VERDICT_NO_BUTTON_FOUND, stage0=_mock_s0, stage1_results=[],
+            winner_candidate=None, notes="", transfer_detected=False,
+        )
+
+        monkeypatch.setattr(runner, "generate_candidates_real", _mock_gen_real)
+        monkeypatch.setattr(runner, "generate_candidates_synthetic", _mock_gen_synth)
+        monkeypatch.setattr(runner, "run_ape", lambda **kw: _mock_ape)
+        monkeypatch.setattr(runner, "run_e0012_harness", lambda **kw: _mock_verdict)
+        monkeypatch.setattr(runner, "load_authored_prompts",
+                            lambda data_root=None: [("P0", "Be calibrated.")])
+
+        args = argparse.Namespace(
+            backend="synthetic", output_dir=str(tmp_path), seed=42,
+            model=None, n_items=8, stage0_only=False,
+        )
+        runner.cmd_run(args)
+
+        assert len(synth_calls) == 1, "synthetic path must call generate_candidates_synthetic once"
+        assert len(real_calls) == 0, "synthetic path must NOT call generate_candidates_real"
+
+    # ─────────────────────────────────────────────────────────────────────── #
+    # F-02: valid_for_paper is always False in results JSON
+    # ─────────────────────────────────────────────────────────────────────── #
+
+    def test_valid_for_paper_is_always_false_synthetic(self, tmp_path):
+        """F-02: valid_for_paper must be False in results JSON for synthetic run."""
+        import argparse
+        runner = _import_runner()
+
+        args = argparse.Namespace(
+            backend="synthetic", output_dir=str(tmp_path), seed=42,
+            model=None, n_items=8, stage0_only=False,
+        )
+        runner.cmd_run(args)
+
+        result = json.loads((tmp_path / "e0012_results.json").read_text())
+        assert result["valid_for_paper"] is False, (
+            f"F-02: valid_for_paper must always be False, got {result['valid_for_paper']!r}"
+        )
+
+    def test_valid_for_paper_false_for_hf_path(self, tmp_path, monkeypatch):
+        """F-02: even for hf backend, valid_for_paper stays False."""
+        import argparse
+        import sys
+        from unittest.mock import MagicMock, patch
+        from cognitive_console.experiments.e0012_harness import Stage0Result, E0012Verdict
+
+        runner = _import_runner()
+
+        _mock_ape = MagicMock()
+        _mock_ape.auto_prompt_dev_score_k3 = 0.5
+        _mock_ape.auto_prompt_dev_score_k5 = 0.4
+        _mock_ape.auto_prompt_text = "HF prompt."
+        _mock_ape.all_candidate_evals = []
+        _mock_s0 = Stage0Result(
+            all_candidates=[], advancing=[], n_search=0, ape_result=_mock_ape,
+            best_prompt_text="", kill_rule_result="SKIPPED", kill_rule_reason="",
+            verdict_at_stage0=VERDICT_NO_BUTTON_FOUND,
+        )
+        _mock_verdict = E0012Verdict(
+            verdict=VERDICT_NO_BUTTON_FOUND, stage0=_mock_s0, stage1_results=[],
+            winner_candidate=None, notes="", transfer_detected=False,
+        )
+
+        class _StubSampler(TextCapableSampler):
+            def sample(self, axis, item, instruction, alpha, k, direction, layer):
+                return adj.SampleBatch(outcomes=[0.5] * k, degeneracies=[0.1] * k)
+
+            def sample_with_texts(self, axis, item, instruction, alpha, k, direction, layer):
+                return self.sample(axis, item, instruction, alpha, k, direction, layer), ["t"] * k
+
+        torch_mock = MagicMock()
+        torch_mock.cuda.is_available.return_value = False
+
+        with patch.dict(sys.modules, {"torch": torch_mock}):
+            import cognitive_console.steering.generate as _gen_mod
+            import cognitive_console.experiments.e0012_steer_hf as _steer_mod
+            monkeypatch.setattr(_gen_mod, "SteeredHFBackend", MagicMock(return_value=MagicMock()))
+            monkeypatch.setattr(_steer_mod, "SteeredHFTextCapableSampler",
+                                MagicMock(return_value=_StubSampler()))
+            monkeypatch.setattr(runner, "generate_candidates_real",
+                                lambda *a, **kw: ["cand"] * 50)
+            monkeypatch.setattr(runner, "load_e0012_pool",
+                                lambda use_fixture=True: _make_items(12))
+            monkeypatch.setattr(runner, "split_e0012_pool",
+                                lambda items, split_seed=42: (items[:4], items[4:]))
+            monkeypatch.setattr(runner, "load_authored_prompts",
+                                lambda data_root=None: [("P0", "Be calibrated.")])
+            monkeypatch.setattr(runner, "run_ape", lambda **kw: _mock_ape)
+            monkeypatch.setattr(runner, "run_e0012_harness", lambda **kw: _mock_verdict)
+
+            args = argparse.Namespace(
+                backend="hf", output_dir=str(tmp_path), seed=42,
+                model=None, n_items=None, stage0_only=False,
+            )
+            runner.cmd_run(args)
+
+        result = json.loads((tmp_path / "e0012_results.json").read_text())
+        assert result["valid_for_paper"] is False, (
+            "F-02: valid_for_paper must be False even for hf backend run"
+        )
+
+    # ─────────────────────────────────────────────────────────────────────── #
+    # F-03: button_best_dev_k5 is persisted when available
+    # ─────────────────────────────────────────────────────────────────────── #
+
+    def test_button_best_dev_k5_field_exists_in_results_json(self, tmp_path):
+        """F-03: results JSON must always contain button_best_dev_k5 field."""
+        import argparse
+        runner = _import_runner()
+
+        args = argparse.Namespace(
+            backend="synthetic", output_dir=str(tmp_path), seed=42,
+            model=None, n_items=8, stage0_only=False,
+        )
+        runner.cmd_run(args)
+
+        result = json.loads((tmp_path / "e0012_results.json").read_text())
+        assert "button_best_dev_k5" in result, (
+            "F-03: button_best_dev_k5 must be present in results JSON"
+        )
+        assert "button_best_k5_family_layer_alpha" in result, (
+            "F-03: button_best_k5_family_layer_alpha must be present in results JSON"
+        )
+
+    def test_button_best_dev_k5_persisted_via_mock_harness(self, tmp_path, monkeypatch):
+        """F-03: when harness returns a candidate with dev_score_steer_k5, it's persisted."""
+        import argparse
+        from unittest.mock import MagicMock
+        from cognitive_console.experiments.e0012_harness import (
+            Stage0Result, E0012Verdict, VERDICT_TRANSFER,
+        )
+        from cognitive_console.experiments.e0012_ape import APERunResult, CandidateEval
+
+        runner = _import_runner()
+
+        cand_with_k5 = Stage0Candidate(
+            button_family=BTN_PROBE, layer=L_C1, alpha=4.0,
+            dev_score_steer=0.72, dev_score_prompt=0.55,
+            dev_improvement=0.17, coherence_ok=True, passes_cutoff=True,
+        )
+        cand_with_k5.dev_score_steer_k5 = 0.6912  # H-01 k=5 re-eval
+
+        winner_eval = CandidateEval(candidate_id=7, prompt_text="Winner.",
+                                    dev_score=0.83, k_used=3)
+        mock_ape = APERunResult(
+            auto_prompt_text="Winner.", auto_prompt_dev_score_k3=0.83,
+            auto_prompt_dev_score_k5=0.85,
+            all_candidate_evals=[winner_eval], n_cand_generated=50, n_cand_padded=0,
+        )
+
+        mock_s0 = Stage0Result(
+            all_candidates=[cand_with_k5], advancing=[], n_search=105,
+            ape_result=mock_ape, best_prompt_text="Be calibrated.",
+            kill_rule_result="TRANSFER", kill_rule_reason="ape >= button",
+            verdict_at_stage0=VERDICT_NO_BUTTON_FOUND,
+        )
+        mock_verdict = E0012Verdict(
+            verdict=VERDICT_TRANSFER, stage0=mock_s0, stage1_results=[],
+            winner_candidate=None, notes="", transfer_detected=True,
+        )
+
+        monkeypatch.setattr(runner, "run_ape", lambda **kw: mock_ape)
+        monkeypatch.setattr(runner, "run_e0012_harness", lambda **kw: mock_verdict)
+        monkeypatch.setattr(runner, "load_authored_prompts",
+                            lambda data_root=None: [("P0", "Be calibrated.")])
+
+        args = argparse.Namespace(
+            backend="synthetic", output_dir=str(tmp_path), seed=42,
+            model=None, n_items=8, stage0_only=False,
+        )
+        runner.cmd_run(args)
+
+        result = json.loads((tmp_path / "e0012_results.json").read_text())
+        assert result["button_best_dev_k5"] == round(0.6912, 4), (
+            f"F-03: expected {round(0.6912, 4)}, got {result['button_best_dev_k5']!r}"
+        )
+        assert result["button_best_k5_family_layer_alpha"] is not None
+        assert BTN_PROBE in result["button_best_k5_family_layer_alpha"]
+
+    # ─────────────────────────────────────────────────────────────────────── #
+    # F-04: ape_winner_prompt_text is persisted
+    # ─────────────────────────────────────────────────────────────────────── #
+
+    def test_ape_winner_prompt_text_present_in_results_json(self, tmp_path):
+        """F-04: results JSON must contain ape_winner_prompt_text (non-null)."""
+        import argparse
+        runner = _import_runner()
+
+        args = argparse.Namespace(
+            backend="synthetic", output_dir=str(tmp_path), seed=42,
+            model=None, n_items=8, stage0_only=False,
+        )
+        runner.cmd_run(args)
+
+        result = json.loads((tmp_path / "e0012_results.json").read_text())
+        assert "ape_winner_prompt_text" in result, (
+            "F-04: ape_winner_prompt_text must be present in results JSON"
+        )
+        assert result["ape_winner_prompt_text"] is not None, (
+            "F-04: ape_winner_prompt_text must not be null (APE always runs)"
+        )
+        assert isinstance(result["ape_winner_prompt_text"], str)
+        assert len(result["ape_winner_prompt_text"]) > 0
+
+    def test_ape_winner_candidate_id_present(self, tmp_path):
+        """F-04: ape_winner_candidate_id must be present and non-null."""
+        import argparse
+        runner = _import_runner()
+
+        args = argparse.Namespace(
+            backend="synthetic", output_dir=str(tmp_path), seed=42,
+            model=None, n_items=8, stage0_only=False,
+        )
+        runner.cmd_run(args)
+
+        result = json.loads((tmp_path / "e0012_results.json").read_text())
+        assert "ape_winner_candidate_id" in result
+        assert isinstance(result["ape_winner_candidate_id"], int)
+
+    def test_ape_winner_prompt_text_matches_known_candidate(self, tmp_path, monkeypatch):
+        """F-04: persisted text must match the actual APE winner (round-trip check)."""
+        import argparse
+        from cognitive_console.experiments.e0012_ape import APERunResult, CandidateEval
+        from cognitive_console.experiments.e0012_harness import Stage0Result, E0012Verdict
+
+        runner = _import_runner()
+
+        expected_text = "This is the winning prompt. It is uniquely recognizable."
+        winning_eval = CandidateEval(candidate_id=3, prompt_text=expected_text,
+                                     dev_score=0.91, k_used=3)
+        mock_ape = APERunResult(
+            auto_prompt_text=expected_text, auto_prompt_dev_score_k3=0.91,
+            auto_prompt_dev_score_k5=0.90,
+            all_candidate_evals=[winning_eval], n_cand_generated=50, n_cand_padded=0,
+        )
+        mock_s0 = Stage0Result(
+            all_candidates=[], advancing=[], n_search=0, ape_result=mock_ape,
+            best_prompt_text="", kill_rule_result="SKIPPED", kill_rule_reason="",
+            verdict_at_stage0=VERDICT_NO_BUTTON_FOUND,
+        )
+        mock_verdict = E0012Verdict(
+            verdict=VERDICT_NO_BUTTON_FOUND, stage0=mock_s0, stage1_results=[],
+            winner_candidate=None, notes="", transfer_detected=False,
+        )
+
+        monkeypatch.setattr(runner, "run_ape", lambda **kw: mock_ape)
+        monkeypatch.setattr(runner, "run_e0012_harness", lambda **kw: mock_verdict)
+        monkeypatch.setattr(runner, "load_authored_prompts",
+                            lambda data_root=None: [("P0", "Be calibrated.")])
+
+        args = argparse.Namespace(
+            backend="synthetic", output_dir=str(tmp_path), seed=42,
+            model=None, n_items=8, stage0_only=False,
+        )
+        runner.cmd_run(args)
+
+        result = json.loads((tmp_path / "e0012_results.json").read_text())
+        assert result["ape_winner_prompt_text"] == expected_text, (
+            f"F-04: expected {expected_text!r}, got {result['ape_winner_prompt_text']!r}"
+        )
+        assert result["ape_winner_candidate_id"] == 3, (
+            f"F-04: candidate_id should be 3, got {result['ape_winner_candidate_id']!r}"
+        )

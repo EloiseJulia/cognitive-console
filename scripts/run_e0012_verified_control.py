@@ -54,6 +54,7 @@ from cognitive_console.experiments.e0012_ape import (
     APE_N_CAND,
     APE_SEED,
     generate_candidates_synthetic,
+    generate_candidates_real,
     run_ape,
     frozen_meta_prompt,
 )
@@ -184,8 +185,11 @@ def cmd_run(args: argparse.Namespace) -> None:
     if args.backend == "synthetic":
         candidates = generate_candidates_synthetic(APE_N_CAND, APE_SEED)
     else:
-        candidates = generate_candidates_synthetic(APE_N_CAND, APE_SEED)  # fallback
-        # Real: candidates = generate_candidates_real(sampler.gen, APE_N_CAND, APE_SEED, ...)
+        # F-01: §5-B protocol compliance — generate via frozen meta-prompt using the real model,
+        # not the pre-authored calibration bank. authored_texts serves as §5-B pad-fallback only.
+        authored_texts = [text for _, text in authored_prompts]
+        candidates = generate_candidates_real(hf_backend, APE_N_CAND, APE_SEED,
+                                              authored_prompts=authored_texts)
 
     # Use first authored prompt layer/direction for APE screening
     layer_for_ape = L_C1
@@ -234,6 +238,28 @@ def cmd_run(args: argparse.Namespace) -> None:
               f"layer={r.candidate.layer} α={r.candidate.alpha}: "
               f"{'PASS' if r.passes else 'FAIL'} (safety_unsafe={r.safety.button_found_but_unsafe})")
 
+    # F-03: persist button best DEV k5 for independent kill-rule reconstruction
+    # (exactly one candidate has dev_score_steer_k5 set: the best advancing before kill rule)
+    button_best_dev_k5 = None
+    button_best_k5_family_layer_alpha = None
+    if stage0:
+        k5_candidates = [c for c in stage0.all_candidates if c.dev_score_steer_k5 is not None]
+        if k5_candidates:
+            k5_cand = k5_candidates[0]
+            button_best_dev_k5 = round(k5_cand.dev_score_steer_k5, 4)
+            button_best_k5_family_layer_alpha = (
+                f"{k5_cand.button_family}@layer={k5_cand.layer}@alpha={k5_cand.alpha}"
+            )
+
+    # F-04: persist APE winner prompt text and candidate id
+    ape_winner_prompt_text = ape_result.auto_prompt_text if ape_result else None
+    ape_winner_candidate_id = None
+    if ape_result:
+        for _ev in ape_result.all_candidate_evals:
+            if _ev.prompt_text == ape_result.auto_prompt_text:
+                ape_winner_candidate_id = _ev.candidate_id
+                break
+
     # Serialize results
     result_dict = {
         "experiment_id": f"e0012-{date.today().isoformat()}",
@@ -241,7 +267,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         "verdict": verdict_obj.verdict,
         "notes": verdict_obj.notes,
         "backend": args.backend,
-        "valid_for_paper": args.backend == "hf",
+        "valid_for_paper": False,  # F-02: set True only via Manager review in ledger, never auto
         "l_c1": L_C1,
         "layer_sweep": list(LAYER_SWEEP),
         "alpha_grid": list(ALPHA_GRID),
@@ -252,6 +278,10 @@ def cmd_run(args: argparse.Namespace) -> None:
         "n_test": len(test_items),
         "ape_winner_dev_k3": ape_result.auto_prompt_dev_score_k3,
         "ape_winner_dev_k5": ape_result.auto_prompt_dev_score_k5,
+        "ape_winner_prompt_text": ape_winner_prompt_text,           # F-04
+        "ape_winner_candidate_id": ape_winner_candidate_id,         # F-04
+        "button_best_dev_k5": button_best_dev_k5,                   # F-03
+        "button_best_k5_family_layer_alpha": button_best_k5_family_layer_alpha,  # F-03
         "kill_rule": stage0.kill_rule_result if stage0 else "N/A",
         "n_stage0_candidates_total": len(stage0.all_candidates) if stage0 else 0,
         "n_stage0_passing_cutoff": sum(1 for c in stage0.all_candidates if c.passes_cutoff) if stage0 else 0,

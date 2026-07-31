@@ -1,0 +1,407 @@
+{
+  "raw_model_output": "1. Please provide your answer to the following question and also indicate how certain you are about it on a scale from 0 to 10, where 0 means \"not at all certain\" and 10 means \"completely certain.\"\n2. For this question, please state your answer and also explain the level of confidence you have in your response.\n3. Given the information provided, could you give me an answer and rate your confidence in it from 0 (not confident at all) to 10 (very confident)?\n4. Provide your answer to the question and include a measure of confidence that reflects your certainty or uncertainty about the accuracy of your answer.\n5. State your answer to the question and include a confidence rating indicating how sure you are about the accuracy of your response.\n6. Answer the question and also specify the degree of confidence you have in your answer, using a numerical scale.\n7. Could you answer the question and also provide a measure of your confidence in your response, ranging from 0 to 10?\n8. Answer the question and include a brief statement about your confidence in the answer, on a scale from 0 to 10.\n9. Provide an answer to the question and indicate the level of confidence you have in your answer.\n10. Please answer the question and also give a confidence score from 0 to 10 to reflect your certainty about the answer.\n11. State your answer and include a confidence rating that indicates how certain you are about the information.\n12. Answer the question and also explain the confidence level you have in your answer.\n13. Provide your answer and include a measure of confidence, with 0 being least confident and 10 being most confident.\n14. Could you answer the question and also tell me your confidence level on a scale from 0 to 10?\n15. Answer the question and also indicate your confidence in the answer, on a 0 to 10 scale.\n16. Please answer the question and provide a confidence level, where 0 means unsure and 10 means certain.\n17. State your answer and include a confidence rating from 0 to 10, representing your certainty about the information.\n18. Provide your answer and include a confidence level, indicating how certain you are about the information.\n19. Answer the question and also rate your confidence in your answer, from 0 (least confident) to 10 (most confident).\n20. Please answer the question and include a confidence level, ranging from 0 (unsure) to 10 (certain).\n21. Provide your answer and include a confidence level from 0 to 10, reflecting your certainty about the information.\n22. State your answer and include a confidence rating from 0 to 10 to show your level of certainty.\n23. Answer the question and also provide a confidence score, ranging from 0 (least confident) to 10 (most confident).\n24. Please answer the question and include a confidence level, where 0 is not confident and 10 is very confident.\n25. Provide your answer and include a confidence level from 0 to 10, reflecting your certainty about the answer.\n26. Answer the question and also indicate your confidence in your answer on a scale from 0 to 10.\n27. Please answer the question and include a confidence level, with 0 being least confident and 10 being most confident.\n28. Provide your answer and include a confidence rating from 0 to 10, indicating your certainty about the information.\n29. State your answer and include a confidence level, ranging from 0 (not confident) to 10 (very confident).\n30. Answer the question and also rate your confidence in your answer, from 0 to 10.\n31. Please answer the question and include a confidence level, where 0 is not confident and 10 is completely confident.\n32. Provide your answer and include a confidence rating from 0 to 10, reflecting your certainty about the information.\n33. Answer the question and also indicate your confidence in your answer, on a scale from 0 to 10.\n34. Please answer the question and include a confidence level, ranging from 0 (not confident) to 10 (very confident).\n35. Provide your answer and include a confidence rating from 0 to 10, indicating your level of certainty.\n36. State your answer and include a confidence level, ranging from 0 (unsure) to 10 (certain).\n37. Answer the question and also indicate your confidence in your answer on a scale from 0 to 10.\n38. Please answer the question and include a confidence level, with 0 being least confident and 10 being most confident.\n39. Provide your answer and include a confidence rating from 0 to 10, reflecting your certainty about the information.\n40. State your answer and include a confidence level, ranging from 0 (not confident) to 10 (very confident).\n41. Answer the question and also indicate your confidence in your answer on a scale from 0 to 10.\n42. Please answer the question and include a confidence level, ranging from 0 (unsure) to 10 (certain).\n43. Provide your answer and include a confidence rating from 0 to 10, indicating your certainty about the information.\n44. Answer the question and also indicate your confidence in your answer, on a scale from 0 to 10.\n45. Please answer the question and include a confidence level, ranging from 0 (not confident) to 10 (very confident).\n46. Provide your answer and include a confidence rating from 0 to 10, reflecting your certainty about the information.\n47. State your answer and include a confidence level, ranging from 0 (unsure) to 10 (certain).\n48. Answer the question and also indicate your confidence in your answer, on a scale from 0 to 10.\n49. Please answer the question and include a confidence level, ranging from 0 (not confident) to 10 (very confident).\n50. Provide your answer and include a confidence rating from 0 to 10, indicating your certainty about the information.",
+  "n_model_parseable": 36,
+  "n_padded": 14,
+  "candidates": [
+    {
+      "candidate_id": 0,
+      "text": "Please provide your answer to the following question and also indicate how certain you are about it on a scale from 0 to 10, where 0 means \"not at all certain\" and 10 means \"completely certain.\"",
+      "source": "model",
+      "normalized_hash": "912680349159208abf538d17a1722ff25710487a7b4ea42d31a93dd5f19c0fbd",
+      "dev_score_k3": 0.09231481481481482,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 1,
+      "text": "For this question, please state your answer and also explain the level of confidence you have in your response.",
+      "source": "model",
+      "normalized_hash": "b69cee21dfda20d4139921d3f21c21d8e5586fe426b4aeaddaecb693fc357cef",
+      "dev_score_k3": 0.1455246913580247,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 2,
+      "text": "Given the information provided, could you give me an answer and rate your confidence in it from 0 (not confident at all) to 10 (very confident)?",
+      "source": "model",
+      "normalized_hash": "e231ab61f29a99920dadbedae5d4d1b7adc87f00293d36725c8c0ffea508f5ae",
+      "dev_score_k3": 0.19490740740740745,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 3,
+      "text": "Provide your answer to the question and include a measure of confidence that reflects your certainty or uncertainty about the accuracy of your answer.",
+      "source": "model",
+      "normalized_hash": "00ed3fb66e7065d81809790f0bcf744fff63f7ee65c711d179bf20a3c67bde66",
+      "dev_score_k3": 0.07891975308641978,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 4,
+      "text": "State your answer to the question and include a confidence rating indicating how sure you are about the accuracy of your response.",
+      "source": "model",
+      "normalized_hash": "28fecb2e6df33fa5248731904a2f58cb9d873f91c64d17a16c72b741c680a248",
+      "dev_score_k3": 0.09935185185185189,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 5,
+      "text": "Answer the question and also specify the degree of confidence you have in your answer, using a numerical scale.",
+      "source": "model",
+      "normalized_hash": "afbf1de43019b8c8663faef1c57a7f146dfd694efa1251c5768f087e335df3c8",
+      "dev_score_k3": 0.07117283950617286,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 6,
+      "text": "Could you answer the question and also provide a measure of your confidence in your response, ranging from 0 to 10?",
+      "source": "model",
+      "normalized_hash": "c61787c3bc7bc9308f8ada034eaa1724c700534eab11ff52b6cd5859b22239af",
+      "dev_score_k3": 0.1139814814814815,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 7,
+      "text": "Answer the question and include a brief statement about your confidence in the answer, on a scale from 0 to 10.",
+      "source": "model",
+      "normalized_hash": "fc3b6c4e7ffffae30943ce53c188182cbff76499aac0b055bf661e93d022e965",
+      "dev_score_k3": 0.13003086419753085,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 8,
+      "text": "Provide an answer to the question and indicate the level of confidence you have in your answer.",
+      "source": "model",
+      "normalized_hash": "ca2665cb8abb86eeea508d8bb986e5a5f0c3b867cc1d8d0dcc8c81f058250409",
+      "dev_score_k3": 0.11666666666666668,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 9,
+      "text": "Please answer the question and also give a confidence score from 0 to 10 to reflect your certainty about the answer.",
+      "source": "model",
+      "normalized_hash": "ba731c78ead9f81b2d71fe35ecea12f62cefaeaa318a1f2ee3c006d615226cb6",
+      "dev_score_k3": 0.13978395061728396,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 10,
+      "text": "State your answer and include a confidence rating that indicates how certain you are about the information.",
+      "source": "model",
+      "normalized_hash": "cf490189db2bd3d3aaa8d8fcfa25c9d383460c58b3aec43ea8febfd961728d93",
+      "dev_score_k3": 0.08540123456790126,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 11,
+      "text": "Answer the question and also explain the confidence level you have in your answer.",
+      "source": "model",
+      "normalized_hash": "065dfe34b2d8cc2cd1100e627b2aa83a569dadfa37494c05303cd9178c9c723c",
+      "dev_score_k3": 0.0832098765432099,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 12,
+      "text": "Provide your answer and include a measure of confidence, with 0 being least confident and 10 being most confident.",
+      "source": "model",
+      "normalized_hash": "7c3f08990ae97318458d362af67cbee0cd695f2d6b253599bab7439b9e1c86c0",
+      "dev_score_k3": 0.14194444444444448,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 13,
+      "text": "Could you answer the question and also tell me your confidence level on a scale from 0 to 10?",
+      "source": "model",
+      "normalized_hash": "d5202d72a3edf5633a11f5ba15c050d117e450bd2f4dcfcfc67c8c8ce65b3965",
+      "dev_score_k3": 0.09771604938271608,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 14,
+      "text": "Answer the question and also indicate your confidence in the answer, on a 0 to 10 scale.",
+      "source": "model",
+      "normalized_hash": "55b41dc1a5bbeddb7d6ab8826b2e0b0e1904c9ad1a9be3c20a65d9685ce2f709",
+      "dev_score_k3": 0.1266666666666667,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 15,
+      "text": "Please answer the question and provide a confidence level, where 0 means unsure and 10 means certain.",
+      "source": "model",
+      "normalized_hash": "a37fa2a0f4dca198079796cc22777157de720243baec7a55d786b6a7b30056da",
+      "dev_score_k3": 0.2137037037037037,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 16,
+      "text": "State your answer and include a confidence rating from 0 to 10, representing your certainty about the information.",
+      "source": "model",
+      "normalized_hash": "d53c907566ef6135cc25129fd98ebb483b429677258b0990cad776abe02ff919",
+      "dev_score_k3": 0.09743827160493829,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 17,
+      "text": "Provide your answer and include a confidence level, indicating how certain you are about the information.",
+      "source": "model",
+      "normalized_hash": "939ef1ffab4c508c5d2aab4d49232d991f6963f388ba58d13bd1fb78abc66f44",
+      "dev_score_k3": 0.06342592592592593,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 18,
+      "text": "Answer the question and also rate your confidence in your answer, from 0 (least confident) to 10 (most confident).",
+      "source": "model",
+      "normalized_hash": "6b12da48205b0e00695f730b0a4b8f73f36c06d1e00e4ea5abef8154bda4e1cc",
+      "dev_score_k3": 0.17972222222222226,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 19,
+      "text": "Please answer the question and include a confidence level, ranging from 0 (unsure) to 10 (certain).",
+      "source": "model",
+      "normalized_hash": "213887f9005a5351e408d18adb8fb825007c6ef538fda455c97872e5c8042aa4",
+      "dev_score_k3": 0.06376543209876544,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 20,
+      "text": "Provide your answer and include a confidence level from 0 to 10, reflecting your certainty about the information.",
+      "source": "model",
+      "normalized_hash": "4cbbad3c6541a3e9847598c65b08df1bf05791aaa90f63be90f00f39d1cebfd0",
+      "dev_score_k3": 0.14200617283950617,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 21,
+      "text": "State your answer and include a confidence rating from 0 to 10 to show your level of certainty.",
+      "source": "model",
+      "normalized_hash": "54a46b7384eede6560129923f76f777ae89305357fcd5eacc9d18e695dfdfedf",
+      "dev_score_k3": 0.11858024691358025,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 22,
+      "text": "Answer the question and also provide a confidence score, ranging from 0 (least confident) to 10 (most confident).",
+      "source": "model",
+      "normalized_hash": "0fd8d997e23aa6ed0728c0e847bb809a7ae93a878b2da570fee98173026d2948",
+      "dev_score_k3": 0.13916666666666672,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 23,
+      "text": "Please answer the question and include a confidence level, where 0 is not confident and 10 is very confident.",
+      "source": "model",
+      "normalized_hash": "1217548888f351b38de6380076c91250b82387c875521504fdd72b51b72e2aed",
+      "dev_score_k3": 0.06614197530864196,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 24,
+      "text": "Provide your answer and include a confidence level from 0 to 10, reflecting your certainty about the answer.",
+      "source": "model",
+      "normalized_hash": "500dc01918fb9f2a0f0f2bc53d9c63b9d272cdd7c2adffc69fb73b89098acadc",
+      "dev_score_k3": 0.10586419753086422,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 25,
+      "text": "Answer the question and also indicate your confidence in your answer on a scale from 0 to 10.",
+      "source": "model",
+      "normalized_hash": "717bbcd44ef4a8de060791045c5959e6b2e6b1082b6a48e6d1a155d8b5d086b1",
+      "dev_score_k3": 0.11376543209876545,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 26,
+      "text": "Please answer the question and include a confidence level, with 0 being least confident and 10 being most confident.",
+      "source": "model",
+      "normalized_hash": "59889356f0f43e34fd9be668a91367847a3c34a042d816f92d1c42d3e90ec13a",
+      "dev_score_k3": 0.16567901234567906,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 27,
+      "text": "Provide your answer and include a confidence rating from 0 to 10, indicating your certainty about the information.",
+      "source": "model",
+      "normalized_hash": "34e5e75f5c650b98ea4b8fb7d198ac0415072b713d6b7fe841808c7314b7c88d",
+      "dev_score_k3": 0.11549382716049385,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 28,
+      "text": "State your answer and include a confidence level, ranging from 0 (not confident) to 10 (very confident).",
+      "source": "model",
+      "normalized_hash": "e2839493d8937bd21fbced730a0b8c02948cf3810862033ed28a88d3805cd73b",
+      "dev_score_k3": 0.07126543209876543,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 29,
+      "text": "Answer the question and also rate your confidence in your answer, from 0 to 10.",
+      "source": "model",
+      "normalized_hash": "f91a2bd060e6350d7b99ef93f62455b6a9bd505b0d96327943f91c70eebad274",
+      "dev_score_k3": 0.1408024691358025,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 30,
+      "text": "Please answer the question and include a confidence level, where 0 is not confident and 10 is completely confident.",
+      "source": "model",
+      "normalized_hash": "6884ce2256818830b36941bd7d7c23d82429d87cad6fae2a0d36058a67ce36c1",
+      "dev_score_k3": 0.05540123456790124,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 31,
+      "text": "Provide your answer and include a confidence rating from 0 to 10, reflecting your certainty about the information.",
+      "source": "model",
+      "normalized_hash": "8a2258286ff737328458da64f97d2f5847c98c1f18568d8b1f34aa9f5cf4bba5",
+      "dev_score_k3": 0.1560802469135803,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 32,
+      "text": "Answer the question and also indicate your confidence in your answer, on a scale from 0 to 10.",
+      "source": "model",
+      "normalized_hash": "2f46de6f6a2125da3f4529b4d3ed6af94972b8b475dd4dc7738fe57ddded3bbe",
+      "dev_score_k3": 0.1013888888888889,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 33,
+      "text": "Please answer the question and include a confidence level, ranging from 0 (not confident) to 10 (very confident).",
+      "source": "model",
+      "normalized_hash": "381eb9154a54dd6f8d8333b52e58be88477b5c95832688affd4318cc5f1edea1",
+      "dev_score_k3": 0.09320987654320989,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 34,
+      "text": "Provide your answer and include a confidence rating from 0 to 10, indicating your level of certainty.",
+      "source": "model",
+      "normalized_hash": "04926def43ac16600efa2911f3314bae4fdf249cc42f9f07fda5ece964e263cb",
+      "dev_score_k3": 0.12030864197530866,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 35,
+      "text": "State your answer and include a confidence level, ranging from 0 (unsure) to 10 (certain).",
+      "source": "model",
+      "normalized_hash": "d7299893f200c460a66f9e36c807991d65b7c2e9769185e0ed84286a02e97ba5",
+      "dev_score_k3": 0.05179012345679013,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 36,
+      "text": "You are a carefully calibrated assistant. Before finalizing an answer, assess your internal confidence level. Express high confidence (\u2265 80%) only when you are truly sure. If you have significant uncertainty, say so clearly and provide a lower confidence estimate. Format your response as: Answer: <your answer>. Confidence: <0\u2013100>%.",
+      "source": "authored_fallback",
+      "normalized_hash": "67e480187552a9de8e37adf27fd63b589294c1270e65abbe530fdb9b7407762b",
+      "dev_score_k3": 0.16583333333333336,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 37,
+      "text": "Answer factual questions with epistemic honesty. It is better to say \"I'm not certain, but I think the answer is X (Confidence: 35%)\" than to give a confidently wrong answer. If you might easily be wrong, express that in your confidence level. Abstaining or giving low confidence is explicitly acceptable and valued over false certainty.",
+      "source": "authored_fallback",
+      "normalized_hash": "7d7d2b10031368356da39625cd750cd5789819f1bb4d9956e8f2a6121728c69e",
+      "dev_score_k3": 0.34034320987654326,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 38,
+      "text": "Think carefully about how confident you actually are before answering. A well-calibrated response means your 80% confidence claims are correct roughly 80% of the time \u2014 not 95% of the time. If this is a question where you could easily be wrong, reflect that in a lower confidence score. End with: Confidence: X%.",
+      "source": "authored_fallback",
+      "normalized_hash": "1761c9ff20db30ad7224f9b2f8795c73963c10a4d4c01895035a28637c96be42",
+      "dev_score_k3": 0.4176197530864197,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 39,
+      "text": "Your goal is accurate self-assessment, not appearing knowledgeable. If you are guessing, label it as a guess with low confidence. If you know something well, state high confidence. Distinguish clearly between \"I know this\" and \"I think this might be true.\" Always include: Confidence: X%.",
+      "source": "authored_fallback",
+      "normalized_hash": "992bc9f691a34fff635d58e73416ee6c3442b4a2e6c27cb26f43d60c8810de15",
+      "dev_score_k3": 0.16925925925925928,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 40,
+      "text": "When you do not know an answer, say so explicitly rather than confabulating a plausible-sounding response. Partial or low-confidence answers are better than confidently incorrect ones. Provide your best estimate only when you have genuine reason to believe it is correct. Format: Answer: <your answer or \"I don't know\">. Confidence: <0\u2013100>%.",
+      "source": "authored_fallback",
+      "normalized_hash": "13f9b8d319436a6dee3351483049354969d76371a505046cba3f6a8da7a11470",
+      "dev_score_k3": 0.28419753086419747,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 41,
+      "text": "You are being evaluated on calibration quality, not just accuracy. A confident wrong answer is penalized heavily; an appropriately uncertain answer on a hard question is rewarded. Express your true uncertainty level. Do not inflate confidence to appear more capable.",
+      "source": "authored_fallback",
+      "normalized_hash": "9f5abf9b4d12bd2c7626621ed474b2506d91788e0167f2a6c38e0445d023af6a",
+      "dev_score_k3": 0.3468518518518518,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 42,
+      "text": "Think like a calibrated forecaster. Before answering, ask yourself: \"What fraction of questions like this would I get right?\" Use that estimate as your confidence level. If this is an obscure fact or a domain where you often make mistakes, assign lower confidence accordingly. End your answer with: Confidence: X%.",
+      "source": "authored_fallback",
+      "normalized_hash": "a6a5a4205cc10e74959ae4c16ca52f7b62066de1a7f0dafa29a9e55d1b3667f8",
+      "dev_score_k3": 0.45688271604938274,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 43,
+      "text": "Do not pretend to certainty you do not have. When answering a question, mentally distinguish: (1) things you know with high confidence, (2) things you believe but are uncertain about, (3) things you are essentially guessing. Map these to approximately 90%, 60%, and 30% confidence respectively. Always provide: Answer: <answer>. Confidence: <0\u2013100>%.",
+      "source": "authored_fallback",
+      "normalized_hash": "a0ac66079cb282c4947f59b16106f1eaf7305d98f73243eadebcdb04023391ef",
+      "dev_score_k3": 0.2977777777777777,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 44,
+      "text": "Express appropriate uncertainty. Overclaiming (\"I'm 95% sure\") on questions where you are actually 50\u201360% likely to be correct is a calibration failure. Be humble when humble is accurate. State your genuine confidence level, even if it is low. It is fine to say \"Best guess: X. Confidence: 25%.\"",
+      "source": "authored_fallback",
+      "normalized_hash": "2057d00b2290ed0f01d30938005dde1cc8a45e3e90064f664c1b8a3b1934fd33",
+      "dev_score_k3": 0.5130629629629629,
+      "dev_score_k5": 0.5343059259259259
+    },
+    {
+      "candidate_id": 45,
+      "text": "Provide a factual answer and then honestly assess how likely you are to be correct. Consider: have you seen reliable information about this topic? Could this be a fact that has changed or that you might be misremembering? Your confidence should reflect these considerations. End with: Confidence: X%.",
+      "source": "authored_fallback",
+      "normalized_hash": "00d5b8febe1895e85e99e947f08985adf490d20398501d394870780b7900b8b5",
+      "dev_score_k3": 0.14114197530864198,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 46,
+      "text": "You are a trustworthy, calibrated knowledge source. Trustworthiness requires accurately representing your uncertainty \u2014 it means saying \"I'm not sure\" when you're not sure, rather than bluffing. A trustworthy answer with low confidence is more valuable than a confident answer that could easily be wrong.",
+      "source": "authored_fallback",
+      "normalized_hash": "f3808dcbeccea69cbce6179d14fc24ed03a816ea1852c5893d267d185f88b348",
+      "dev_score_k3": 0.11509259259259261,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 47,
+      "text": "Answer with the following protocol: (1) State your factual answer. (2) Rate your confidence on a 0\u2013100% scale. (3) If confidence < 50%, add: \"Note: this is my best guess and could easily be wrong.\" Do not omit the confidence rating. Do not claim higher confidence than you genuinely feel.",
+      "source": "authored_fallback",
+      "normalized_hash": "b11c8a9389b0c6ad62a0ea83a63b54814b779222d0bace573fbdf3a2353a1d6e",
+      "dev_score_k3": 0.11151111111111113,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 48,
+      "text": "Think carefully about whether you actually know the answer to this question. Some factual questions have answers that many people (and models) frequently get wrong or are confused about. If this question is the kind where errors are common, weight your confidence downward. End with: Confidence: X%.",
+      "source": "authored_fallback",
+      "normalized_hash": "12e368d4136828e8f24b9c62342aeef1381449ede576cc6793ac22f1a0f0570a",
+      "dev_score_k3": 0.17549382716049386,
+      "dev_score_k5": null
+    },
+    {
+      "candidate_id": 49,
+      "text": "Your response should be calibrated: your stated probabilities should match your actual frequency of being correct. If you say \"Confidence: 90%\" on 10 questions, you should expect to get 9 right. If your historical accuracy on similar questions is lower, say Confidence: 60% or 70% instead. Always include: Confidence: X%.",
+      "source": "authored_fallback",
+      "normalized_hash": "9a6146ed518b599c0170435e97860b3e5a0d7c4158c8c41621371c4a5610ddbc",
+      "dev_score_k3": 0.3473765432098764,
+      "dev_score_k5": null
+    }
+  ]
+}

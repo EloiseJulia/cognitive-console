@@ -7,6 +7,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0183,
     "coherence_ok": true,
+    "coherence_ratio": 0.0755834576125904,
+    "coherence_degeneracy_steer": 0.0015116691522518082,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -17,6 +20,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0088,
     "coherence_ok": true,
+    "coherence_ratio": 0.17391888399135186,
+    "coherence_degeneracy_steer": 0.0034783776798270375,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -27,6 +33,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0021,
     "coherence_ok": true,
+    "coherence_ratio": 0.09926402649924349,
+    "coherence_degeneracy_steer": 0.0019852805299848696,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -37,6 +46,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0325,
     "coherence_ok": true,
+    "coherence_ratio": 0.11440661759980876,
+    "coherence_degeneracy_steer": 0.0022881323519961753,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -47,6 +59,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0153,
     "coherence_ok": true,
+    "coherence_ratio": 0.11702196619709293,
+    "coherence_degeneracy_steer": 0.0023404393239418587,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -57,6 +72,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0542,
     "coherence_ok": true,
+    "coherence_ratio": 0.20648699981265142,
+    "coherence_degeneracy_steer": 0.004129739996253028,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -67,6 +85,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.1302,
     "coherence_ok": true,
+    "coherence_ratio": 0.326598143175835,
+    "coherence_degeneracy_steer": 0.0065319628635167005,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -77,6 +98,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.004,
     "coherence_ok": true,
+    "coherence_ratio": 0.015827793605571395,
+    "coherence_degeneracy_steer": 0.0003165558721114279,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -87,6 +111,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0041,
     "coherence_ok": true,
+    "coherence_ratio": 0.0,
+    "coherence_degeneracy_steer": 0.0,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -97,6 +124,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.01,
     "coherence_ok": true,
+    "coherence_ratio": 0.015432098765432112,
+    "coherence_degeneracy_steer": 0.00030864197530864224,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -107,6 +137,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.033,
     "coherence_ok": true,
+    "coherence_ratio": 0.0,
+    "coherence_degeneracy_steer": 0.0,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -117,6 +150,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0112,
     "coherence_ok": true,
+    "coherence_ratio": 0.0,
+    "coherence_degeneracy_steer": 0.0,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -127,6 +163,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.018,
     "coherence_ok": true,
+    "coherence_ratio": 0.0,
+    "coherence_degeneracy_steer": 0.0,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -137,6 +176,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0164,
     "coherence_ok": true,
+    "coherence_ratio": 0.0,
+    "coherence_degeneracy_steer": 0.0,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -147,6 +189,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0063,
     "coherence_ok": true,
+    "coherence_ratio": 0.06362857507871626,
+    "coherence_degeneracy_steer": 0.0012725715015743254,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -157,6 +202,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0002,
     "coherence_ok": true,
+    "coherence_ratio": 0.06047193440461952,
+    "coherence_degeneracy_steer": 0.0012094386880923905,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -167,6 +215,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0078,
     "coherence_ok": true,
+    "coherence_ratio": 0.24958765787355297,
+    "coherence_degeneracy_steer": 0.0049917531574710594,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -177,6 +228,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0114,
     "coherence_ok": true,
+    "coherence_ratio": 0.34481318862564325,
+    "coherence_degeneracy_steer": 0.006896263772512865,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -187,6 +241,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0827,
     "coherence_ok": true,
+    "coherence_ratio": 0.38171311685448844,
+    "coherence_degeneracy_steer": 0.0076342623370897695,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": true
   },
   {
@@ -197,6 +254,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.1045,
     "coherence_ok": true,
+    "coherence_ratio": 0.2815086400094826,
+    "coherence_degeneracy_steer": 0.0056301728001896525,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": true
   },
   {
@@ -207,6 +267,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0294,
     "coherence_ok": true,
+    "coherence_ratio": 0.21666824278334626,
+    "coherence_degeneracy_steer": 0.0043333648556669255,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -217,6 +280,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0158,
     "coherence_ok": true,
+    "coherence_ratio": 0.03165558721114279,
+    "coherence_degeneracy_steer": 0.0006331117442228558,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -227,6 +293,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0246,
     "coherence_ok": true,
+    "coherence_ratio": 0.04673624648039854,
+    "coherence_degeneracy_steer": 0.0009347249296079708,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -237,6 +306,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0466,
     "coherence_ok": true,
+    "coherence_ratio": 0.0,
+    "coherence_degeneracy_steer": 0.0,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -247,6 +319,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0671,
     "coherence_ok": true,
+    "coherence_ratio": 0.012597631645250707,
+    "coherence_degeneracy_steer": 0.00025195263290501415,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": true
   },
   {
@@ -257,6 +332,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.1164,
     "coherence_ok": true,
+    "coherence_ratio": 0.021415973796926162,
+    "coherence_degeneracy_steer": 0.0004283194759385232,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": true
   },
   {
@@ -267,6 +345,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.1394,
     "coherence_ok": true,
+    "coherence_ratio": 0.011223344556677893,
+    "coherence_degeneracy_steer": 0.00022446689113355786,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": true
   },
   {
@@ -277,6 +358,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.1909,
     "coherence_ok": true,
+    "coherence_ratio": 0.0,
+    "coherence_degeneracy_steer": 0.0,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": true
   },
   {
@@ -287,6 +371,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0003,
     "coherence_ok": true,
+    "coherence_ratio": 0.11641821149499562,
+    "coherence_degeneracy_steer": 0.0023283642298999123,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -297,6 +384,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.003,
     "coherence_ok": true,
+    "coherence_ratio": 0.05473799079130664,
+    "coherence_degeneracy_steer": 0.0010947598158261328,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -307,6 +397,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0127,
     "coherence_ok": true,
+    "coherence_ratio": 0.020876756987868124,
+    "coherence_degeneracy_steer": 0.0004175351397573625,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -317,6 +410,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0308,
     "coherence_ok": true,
+    "coherence_ratio": 0.06058984030017408,
+    "coherence_degeneracy_steer": 0.0012117968060034816,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -327,6 +423,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0347,
     "coherence_ok": true,
+    "coherence_ratio": 0.06206190736277342,
+    "coherence_degeneracy_steer": 0.0012412381472554684,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -337,6 +436,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0015,
     "coherence_ok": true,
+    "coherence_ratio": 0.038235703790023425,
+    "coherence_degeneracy_steer": 0.0007647140758004684,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -347,6 +449,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0434,
     "coherence_ok": true,
+    "coherence_ratio": 0.030017921146953376,
+    "coherence_degeneracy_steer": 0.0006003584229390675,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -357,6 +462,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0047,
     "coherence_ok": true,
+    "coherence_ratio": 0.09155709897812295,
+    "coherence_degeneracy_steer": 0.001831141979562459,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -367,6 +475,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0161,
     "coherence_ok": true,
+    "coherence_ratio": 0.031116150163769243,
+    "coherence_degeneracy_steer": 0.0006223230032753849,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -377,6 +488,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.035,
     "coherence_ok": true,
+    "coherence_ratio": 0.23429382764537598,
+    "coherence_degeneracy_steer": 0.0046858765529075195,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -387,6 +501,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0538,
     "coherence_ok": true,
+    "coherence_ratio": 0.03042155584528464,
+    "coherence_degeneracy_steer": 0.0006084311169056928,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": true
   },
   {
@@ -397,6 +514,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0536,
     "coherence_ok": true,
+    "coherence_ratio": 0.29593758407317733,
+    "coherence_degeneracy_steer": 0.005918751681463547,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": true
   },
   {
@@ -407,6 +527,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0676,
     "coherence_ok": true,
+    "coherence_ratio": 0.1229029904333436,
+    "coherence_degeneracy_steer": 0.002458059808666872,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": true
   },
   {
@@ -417,6 +540,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0565,
     "coherence_ok": true,
+    "coherence_ratio": 0.07082488748683806,
+    "coherence_degeneracy_steer": 0.0014164977497367612,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": true
   },
   {
@@ -427,6 +553,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0068,
     "coherence_ok": true,
+    "coherence_ratio": 0.046711293323759485,
+    "coherence_degeneracy_steer": 0.0009342258664751897,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -437,6 +566,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.004,
     "coherence_ok": true,
+    "coherence_ratio": 0.036235268475705684,
+    "coherence_degeneracy_steer": 0.0007247053695141137,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -447,6 +579,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0276,
     "coherence_ok": true,
+    "coherence_ratio": 0.014355440712029884,
+    "coherence_degeneracy_steer": 0.0002871088142405977,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -457,6 +592,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0385,
     "coherence_ok": true,
+    "coherence_ratio": 0.0,
+    "coherence_degeneracy_steer": 0.0,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -467,6 +605,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0393,
     "coherence_ok": true,
+    "coherence_ratio": 0.0,
+    "coherence_degeneracy_steer": 0.0,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -477,6 +618,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0383,
     "coherence_ok": true,
+    "coherence_ratio": 0.018705574261129797,
+    "coherence_degeneracy_steer": 0.000374111485222596,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -487,6 +631,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0863,
     "coherence_ok": true,
+    "coherence_ratio": 0.0,
+    "coherence_degeneracy_steer": 0.0,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": true
   },
   {
@@ -497,6 +644,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0028,
     "coherence_ok": true,
+    "coherence_ratio": 0.06308598223684046,
+    "coherence_degeneracy_steer": 0.0012617196447368094,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -507,6 +657,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0019,
     "coherence_ok": true,
+    "coherence_ratio": 0.0614904732838457,
+    "coherence_degeneracy_steer": 0.001229809465676914,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -517,6 +670,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0012,
     "coherence_ok": true,
+    "coherence_ratio": 0.04112549402404474,
+    "coherence_degeneracy_steer": 0.0008225098804808948,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -527,6 +683,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0043,
     "coherence_ok": true,
+    "coherence_ratio": 0.07390346115554104,
+    "coherence_degeneracy_steer": 0.0014780692231108209,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -537,6 +696,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0034,
     "coherence_ok": true,
+    "coherence_ratio": 0.03374624853498094,
+    "coherence_degeneracy_steer": 0.0006749249706996188,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -547,6 +709,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0046,
     "coherence_ok": true,
+    "coherence_ratio": 0.05638628188555321,
+    "coherence_degeneracy_steer": 0.0011277256377110643,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -557,6 +722,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0012,
     "coherence_ok": true,
+    "coherence_ratio": 0.043758265769650986,
+    "coherence_degeneracy_steer": 0.0008751653153930198,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -567,6 +735,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0001,
     "coherence_ok": true,
+    "coherence_ratio": 0.046711293323759485,
+    "coherence_degeneracy_steer": 0.0009342258664751897,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -577,6 +748,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0067,
     "coherence_ok": true,
+    "coherence_ratio": 0.027073857483214225,
+    "coherence_degeneracy_steer": 0.0005414771496642845,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -587,6 +761,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0169,
     "coherence_ok": true,
+    "coherence_ratio": 0.029394473838918314,
+    "coherence_degeneracy_steer": 0.0005878894767783663,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -597,6 +774,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0297,
     "coherence_ok": true,
+    "coherence_ratio": 0.0,
+    "coherence_degeneracy_steer": 0.0,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -607,6 +787,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0287,
     "coherence_ok": true,
+    "coherence_ratio": 0.018705574261129797,
+    "coherence_degeneracy_steer": 0.000374111485222596,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -617,6 +800,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0108,
     "coherence_ok": true,
+    "coherence_ratio": 0.0,
+    "coherence_degeneracy_steer": 0.0,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -627,6 +813,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0075,
     "coherence_ok": true,
+    "coherence_ratio": 0.0,
+    "coherence_degeneracy_steer": 0.0,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -637,6 +826,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0001,
     "coherence_ok": true,
+    "coherence_ratio": 0.09304303285784771,
+    "coherence_degeneracy_steer": 0.001860860657156954,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -647,6 +839,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0001,
     "coherence_ok": true,
+    "coherence_ratio": 0.05850263607058699,
+    "coherence_degeneracy_steer": 0.0011700527214117398,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -657,6 +852,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0066,
     "coherence_ok": true,
+    "coherence_ratio": 0.10936600501175908,
+    "coherence_degeneracy_steer": 0.0021873201002351817,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -667,6 +865,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.008,
     "coherence_ok": true,
+    "coherence_ratio": 0.05077616402031233,
+    "coherence_degeneracy_steer": 0.0010155232804062466,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -677,6 +878,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0224,
     "coherence_ok": true,
+    "coherence_ratio": 0.09792577062981661,
+    "coherence_degeneracy_steer": 0.001958515412596332,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -687,6 +891,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0235,
     "coherence_ok": true,
+    "coherence_ratio": 0.04246448797205126,
+    "coherence_degeneracy_steer": 0.0008492897594410252,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -697,6 +904,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0007,
     "coherence_ok": true,
+    "coherence_ratio": 0.18220625655195694,
+    "coherence_degeneracy_steer": 0.003644125131039139,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -707,6 +917,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0034,
     "coherence_ok": true,
+    "coherence_ratio": 0.07441757103003718,
+    "coherence_degeneracy_steer": 0.0014883514206007436,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -717,6 +930,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.004,
     "coherence_ok": true,
+    "coherence_ratio": 0.05093108263358373,
+    "coherence_degeneracy_steer": 0.0010186216526716747,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -727,6 +943,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.006,
     "coherence_ok": true,
+    "coherence_ratio": 0.21591754703604105,
+    "coherence_degeneracy_steer": 0.004318350940720821,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -737,6 +956,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.041,
     "coherence_ok": true,
+    "coherence_ratio": 0.055178836269848125,
+    "coherence_degeneracy_steer": 0.0011035767253969625,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -747,6 +969,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0259,
     "coherence_ok": true,
+    "coherence_ratio": 0.34425511863622715,
+    "coherence_degeneracy_steer": 0.006885102372724543,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -757,6 +982,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0062,
     "coherence_ok": true,
+    "coherence_ratio": 0.41098345077856524,
+    "coherence_degeneracy_steer": 0.008219669015571305,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -767,6 +995,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0168,
     "coherence_ok": true,
+    "coherence_ratio": 0.7297093663632619,
+    "coherence_degeneracy_steer": 0.014594187327265239,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -777,6 +1008,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0019,
     "coherence_ok": true,
+    "coherence_ratio": 0.0919726040171689,
+    "coherence_degeneracy_steer": 0.001839452080343378,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -787,6 +1021,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0009,
     "coherence_ok": true,
+    "coherence_ratio": 0.05886022737411673,
+    "coherence_degeneracy_steer": 0.0011772045474823347,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -797,6 +1034,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0046,
     "coherence_ok": true,
+    "coherence_ratio": 0.0674034388109553,
+    "coherence_degeneracy_steer": 0.0013480687762191061,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -807,6 +1047,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0278,
     "coherence_ok": true,
+    "coherence_ratio": 0.07208295792525084,
+    "coherence_degeneracy_steer": 0.0014416591585050167,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -817,6 +1060,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0294,
     "coherence_ok": true,
+    "coherence_ratio": 0.043479325886733346,
+    "coherence_degeneracy_steer": 0.000869586517734667,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -827,6 +1073,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0088,
     "coherence_ok": true,
+    "coherence_ratio": 0.043142240332162796,
+    "coherence_degeneracy_steer": 0.000862844806643256,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -837,6 +1086,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.03,
     "coherence_ok": true,
+    "coherence_ratio": 0.04272216431154075,
+    "coherence_degeneracy_steer": 0.0008544432862308151,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -847,6 +1099,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0011,
     "coherence_ok": true,
+    "coherence_ratio": 0.06128427085969996,
+    "coherence_degeneracy_steer": 0.0012256854171939992,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -857,6 +1112,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0031,
     "coherence_ok": true,
+    "coherence_ratio": 0.05174329835808013,
+    "coherence_degeneracy_steer": 0.0010348659671616026,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -867,6 +1125,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0213,
     "coherence_ok": true,
+    "coherence_ratio": 0.06334754278215628,
+    "coherence_degeneracy_steer": 0.0012669508556431256,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -877,6 +1138,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0299,
     "coherence_ok": true,
+    "coherence_ratio": 0.036943947803960334,
+    "coherence_degeneracy_steer": 0.0007388789560792067,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -887,6 +1151,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0218,
     "coherence_ok": true,
+    "coherence_ratio": 0.050895032807177526,
+    "coherence_degeneracy_steer": 0.0010179006561435505,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -897,6 +1164,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0087,
     "coherence_ok": true,
+    "coherence_ratio": 0.0644561025916958,
+    "coherence_degeneracy_steer": 0.0012891220518339162,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -907,6 +1177,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0172,
     "coherence_ok": true,
+    "coherence_ratio": 0.035344065254880215,
+    "coherence_degeneracy_steer": 0.0007068813050976043,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -917,6 +1190,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0068,
     "coherence_ok": true,
+    "coherence_ratio": 0.062519784742007,
+    "coherence_degeneracy_steer": 0.0012503956948401401,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -927,6 +1203,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.002,
     "coherence_ok": true,
+    "coherence_ratio": 0.10443878116936745,
+    "coherence_degeneracy_steer": 0.002088775623387349,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -937,6 +1216,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.026,
     "coherence_ok": true,
+    "coherence_ratio": 0.0819538012721445,
+    "coherence_degeneracy_steer": 0.00163907602544289,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -947,6 +1229,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0424,
     "coherence_ok": true,
+    "coherence_ratio": 0.0643004115226338,
+    "coherence_degeneracy_steer": 0.001286008230452676,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -957,6 +1242,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0551,
     "coherence_ok": true,
+    "coherence_ratio": 0.1486944769801119,
+    "coherence_degeneracy_steer": 0.002973889539602238,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": true
   },
   {
@@ -967,6 +1255,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0112,
     "coherence_ok": true,
+    "coherence_ratio": 0.3070613290739078,
+    "coherence_degeneracy_steer": 0.006141226581478156,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -977,6 +1268,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0928,
     "coherence_ok": true,
+    "coherence_ratio": 0.32592048190720024,
+    "coherence_degeneracy_steer": 0.006518409638144005,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": true
   },
   {
@@ -987,6 +1281,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0001,
     "coherence_ok": true,
+    "coherence_ratio": 0.07348754262334509,
+    "coherence_degeneracy_steer": 0.0014697508524669017,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -997,6 +1294,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0082,
     "coherence_ok": true,
+    "coherence_ratio": 0.05162082160132849,
+    "coherence_degeneracy_steer": 0.0010324164320265699,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -1007,6 +1307,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.0012,
     "coherence_ok": true,
+    "coherence_ratio": 0.08249655812238152,
+    "coherence_degeneracy_steer": 0.0016499311624476305,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -1017,6 +1320,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0189,
     "coherence_ok": true,
+    "coherence_ratio": 0.05015701702168042,
+    "coherence_degeneracy_steer": 0.0010031403404336084,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -1027,6 +1333,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0179,
     "coherence_ok": true,
+    "coherence_ratio": 0.06242296039570889,
+    "coherence_degeneracy_steer": 0.0012484592079141778,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -1037,6 +1346,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": -0.023,
     "coherence_ok": true,
+    "coherence_ratio": 0.02415821129271417,
+    "coherence_degeneracy_steer": 0.0004831642258542834,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   },
   {
@@ -1047,6 +1359,9 @@
     "dev_score_prompt": 0.5131,
     "dev_improvement": 0.0192,
     "coherence_ok": true,
+    "coherence_ratio": 0.04895288986569044,
+    "coherence_degeneracy_steer": 0.000979057797313809,
+    "coherence_degeneracy_baseline": 0.02,
     "passes_cutoff": false
   }
 ]

@@ -6,7 +6,7 @@
 **Date: 2026-07-29**
 
 > ✅ **FROZEN for the CONSERVATIVE track (Calibration button, Qwen2.5-7B).** Owner §5 GPU GO recorded (D-0058).
-> **Frozen pins:** code commit **4e7e088** (main, post-merge PR #45); **L_c1 = 20** (uncertainty_awareness
+> **Frozen pins:** protocol frozen at code commit **4e7e088** (main, post-merge PR #45); **execution run commit = 8bd29c4** (main, post-merge PR #46: adds ops-only device+dtype-fp16 fixes [D-0060] and the F-01 wiring fix that re-aligns the runner's hf path to call `generate_candidates_real` per frozen §5-B [D-0062] — infra/wiring only, the frozen APE/harness/adjudicator §4/§5-B/§7/§9 core is byte-unchanged vs 4e7e088, Manager-verified diff empty on e0012_ape.py/e0012_harness.py/adjudicate_c2b.py); **L_c1 = 20** (uncertainty_awareness
 > chosen non-degenerate layer, Qwen2.5-7B, from E-0003 `results/gpu_7b_2026-07-23/c1/`), Stage 0 layer sweep
 > {18,19,20,21,22}; **Stage 1 item pool = Option A** TriviaQA validation calibration subset, N=80, seed/offset
 > DISJOINT from E-0006 (owner-confirmed); **prompt comparator family = 18 authored prompts** in
@@ -437,8 +437,8 @@ where mean_outcome uses the same behavioral metric as C2b for each axis (deliber
 - [x] Button families and exclusion rule confirmed — 3 non-trained families; SAE conditional (excluded if no pre-trained SAE); Residual-PCA deferred
 - [x] Stage 0 scope (model × layer × family × α) confirmed — Qwen2.5-7B, layers {18–22} (L_c1=20), 3 families, α{2,4,6,8,12,16,24}, N_search cap 105
 - [x] New DEV/TEST split rule for Stage 1 pool confirmed — TriviaQA N=80, DEV/TEST per harness
-- [x] Analysis script committed to branch before Stage 1 runs — harness + runner committed (main 4e7e088)
-- [x] Commit hash recorded in freeze block — 4e7e088
+- [x] Analysis script committed to branch before Stage 1 runs — harness + runner committed (protocol 4e7e088; execution run commit 8bd29c4 after F-01 wiring fix)
+- [x] Commit hash recorded in freeze block — protocol 4e7e088 / execution 8bd29c4
 - [x] Independent audit of prereg completed — pre-run critic READY-TO-FREEZE + 2 harness audit rounds (H-01..H-06, N-01/N-02 fixed)
 - [x] Owner §5 GPU approval obtained — D-0058 (conservative track GO)
 - [x] Status changed from DRAFT to FROZEN — D-0059

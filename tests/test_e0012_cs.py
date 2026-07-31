@@ -94,8 +94,31 @@ def test_synthetic_smoke_persists_summary_fields(tmp_path):
     assert result["pool"]["n_test"] == 53
     assert result["pool"]["dev_test_overlap_n"] == 0
     assert result["k"] == 5
-    for field in ("max_condition", "best_synthetic_bank", "cal_09", "button", "baseline"):
+    for field in (
+        "max_condition",
+        "max_human_prompt",
+        "best_synthetic_bank",
+        "best_calibration_yaml",
+        "cal_09",
+        "button",
+        "baseline",
+    ):
         assert field in result
+    assert result["max_human_prompt"]["source"] in {"synthetic_bank", "calibration_yaml"}
+    human_scores = [
+        row["test_mean_1minus_brier_k5"]
+        for row in result["conditions"]
+        if row["source"] in {"synthetic_bank", "calibration_yaml"}
+    ]
+    yaml_scores = [
+        row["test_mean_1minus_brier_k5"]
+        for row in result["conditions"]
+        if row["source"] == "calibration_yaml"
+    ]
+    assert result["max_human_prompt"]["score"] == max(human_scores)
+    assert result["best_calibration_yaml"]["score"] == max(yaml_scores)
+    assert result["best_calibration_yaml"]["id"].startswith("CAL-")
+    assert result["best_calibration_yaml"]["text"]
     raw_path = Path(result["raw_pairs_path"])
     assert raw_path.exists()
     assert sum(1 for _ in raw_path.open(encoding="utf-8")) == 50 * 53 * 5

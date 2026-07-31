@@ -276,8 +276,16 @@ def run_comparator_strength(args: argparse.Namespace) -> Dict[str, Any]:
         raw_store.close()
 
     max_condition = max(condition_results, key=lambda r: (r["test_mean_1minus_brier_k5"], r["id"]))
+    max_human_prompt = max(
+        (r for r in condition_results if r["source"] in {"synthetic_bank", "calibration_yaml"}),
+        key=lambda r: (r["test_mean_1minus_brier_k5"], r["id"]),
+    )
     best_synthetic = max(
         (r for r in condition_results if r["source"] == "synthetic_bank"),
+        key=lambda r: (r["test_mean_1minus_brier_k5"], r["id"]),
+    )
+    best_calibration_yaml = max(
+        (r for r in condition_results if r["source"] == "calibration_yaml"),
         key=lambda r: (r["test_mean_1minus_brier_k5"], r["id"]),
     )
     by_id = {r["id"]: r for r in condition_results}
@@ -316,10 +324,21 @@ def run_comparator_strength(args: argparse.Namespace) -> Dict[str, Any]:
             "prompt_text": max_condition["prompt_text"],
             "button_spec": max_condition["button_spec"],
         },
+        "max_human_prompt": {
+            "id": max_human_prompt["id"],
+            "source": max_human_prompt["source"],
+            "score": max_human_prompt["test_mean_1minus_brier_k5"],
+            "prompt_text": max_human_prompt["prompt_text"],
+        },
         "best_synthetic_bank": {
             "id": best_synthetic["id"],
             "score": best_synthetic["test_mean_1minus_brier_k5"],
             "text": best_synthetic["prompt_text"],
+        },
+        "best_calibration_yaml": {
+            "id": best_calibration_yaml["id"],
+            "score": best_calibration_yaml["test_mean_1minus_brier_k5"],
+            "text": best_calibration_yaml["prompt_text"],
         },
         "cal_09": {
             "id": "CAL-09",
@@ -354,7 +373,9 @@ def print_summary_table(summary: Dict[str, Any]) -> None:
         print(f"{row['id']:<32} {row['source']:<18} {row['test_mean_1minus_brier_k5']:>20.6f}")
     print("-" * 74)
     print("MAX:", json.dumps(summary["max_condition"], ensure_ascii=False))
+    print("max_human_prompt:", json.dumps(summary["max_human_prompt"], ensure_ascii=False))
     print("best_synthetic_bank:", json.dumps(summary["best_synthetic_bank"], ensure_ascii=False))
+    print("best_calibration_yaml:", json.dumps(summary["best_calibration_yaml"], ensure_ascii=False))
     print("CAL-09:", json.dumps(summary["cal_09"], ensure_ascii=False))
     print("button:", json.dumps(summary["button"], ensure_ascii=False))
     print("baseline:", json.dumps(summary["baseline"], ensure_ascii=False))

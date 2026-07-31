@@ -1,8 +1,8 @@
 # E-0012-CS Comparator-Strength Check — DRAFT Mini-Prereg
 
-**Status:** DRAFT freeze candidate.  
-**Experiment ID:** E-0012-CS.  
-**Run commit:** `<MANAGER_TO_FILL_AT_FREEZE>`.  
+**Status:** DRAFT freeze candidate.
+**Experiment ID:** E-0012-CS.
+**Run commit:** `<MANAGER_TO_FILL_AT_FREEZE>`.
 **valid_for_paper:** `false` until independent audit plus Manager/owner sign-off.
 
 ## Purpose

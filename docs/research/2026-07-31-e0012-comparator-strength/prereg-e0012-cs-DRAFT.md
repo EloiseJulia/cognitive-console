@@ -1,8 +1,8 @@
 # E-0012-CS Comparator-Strength Check — DRAFT Mini-Prereg
 
-**Status:** DRAFT freeze candidate.
+**Status:** FROZEN (D-0066, 2026-07-31). Protocol committed before the single GPU run.
 **Experiment ID:** E-0012-CS.
-**Run commit:** `<MANAGER_TO_FILL_AT_FREEZE>`.
+**Run commit:** `264b475` (main, post-merge of feature/e0012-comparator-strength; code audited READY-TO-FREEZE-AND-RUN, zero drift to frozen src). The GPU run executes at this code state (the freeze-doc commit that pins this line adds only this prose; code is byte-identical).
 **valid_for_paper:** `false` until independent audit plus Manager/owner sign-off.
 
 ## Purpose

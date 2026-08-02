@@ -212,9 +212,26 @@ def _make_e0006_dev_items(n: int = 80) -> List[Dict[str, Any]]:
 
 def _write_fake_e0006_baseline_jsonl(path: Path, rows: List[Dict[str, Any]]) -> None:
     """Write a clearly test-only canonical JSONL+manifest fixture."""
+    jsonl_rows = []
+    for row in rows:
+        clean = {k: v for k, v in row.items() if k not in {"source_artifact_sha256"}}
+        if "raw_pairs" not in clean:
+            score = float(clean["baseline_score"])
+            clean["raw_pairs"] = [
+                {
+                    "sample_index": j,
+                    "confidence": score,
+                    "correctness": 1,
+                    "one_minus_brier": score,
+                    "text_sha256": f"test-{clean['id']}-{j}",
+                    "synthetic_proxy": False,
+                }
+                for j in range(5)
+            ]
+        jsonl_rows.append(clean)
     text = "".join(
-        json.dumps({k: v for k, v in row.items() if k not in {"source_artifact_sha256"}}, sort_keys=True) + "\n"
-        for row in rows
+        json.dumps(row, sort_keys=True) + "\n"
+        for row in jsonl_rows
     )
     path.write_text(text, encoding="utf-8")
     sha = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -230,10 +247,19 @@ def _write_fake_e0006_baseline_jsonl(path: Path, rows: List[Dict[str, Any]]) -> 
             "k": 5,
             "synthetic_proxy": False,
             "item_count": 80,
-            "model": "test-model",
+            "model": "Qwen/Qwen2.5-7B-Instruct",
             "dtype": "float32",
             "device": "cpu",
             "code_commit": "test",
+            "max_new_tokens": 64,
+            "temperature": 0.7,
+            "seed": 20260723,
+            "e0006_generation_identity": {
+                "model": "Qwen/Qwen2.5-7B-Instruct",
+                "max_new_tokens": 64,
+                "temperature": 0.7,
+                "seed": 20260723,
+            },
         },
         "item_ids": [str(row["id"]) for row in rows],
         "artifact_sha256": sha,
@@ -1235,6 +1261,56 @@ class TestE0012TriviaQALoader:
         )
         with pytest.raises(ValueError, match="frozen E-0006 uncertainty pool"):
             load_e0006_dev_baseline_scores(path, validate_item_source=True)
+
+    def test_canonical_e0006_baseline_loader_rejects_wrong_generation_identity(self, tmp_path):
+        path = tmp_path / "e0006_uncertainty_baseline.jsonl"
+        _write_fake_e0006_baseline_jsonl(path, _make_e0006_dev_items())
+        manifest_path = path.with_name(path.stem + ".manifest.json")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["lineage"]["e0006_generation_identity"]["seed"] = 42
+        manifest["lineage"]["seed"] = 42
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        with pytest.raises(ValueError, match="generation identity seed mismatch"):
+            load_e0006_dev_baseline_scores(path)
+
+    def test_canonical_e0006_baseline_loader_rejects_raw_pair_length(self, tmp_path):
+        path = tmp_path / "e0006_uncertainty_baseline.jsonl"
+        _write_fake_e0006_baseline_jsonl(path, _make_e0006_dev_items())
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+        rows[0]["raw_pairs"] = rows[0]["raw_pairs"][:4]
+        path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows), encoding="utf-8")
+        manifest_path = path.with_name(path.stem + ".manifest.json")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["artifact_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        with pytest.raises(ValueError, match="raw_pairs length"):
+            load_e0006_dev_baseline_scores(path)
+
+    def test_canonical_e0006_baseline_loader_rejects_synthetic_raw_pair(self, tmp_path):
+        path = tmp_path / "e0006_uncertainty_baseline.jsonl"
+        _write_fake_e0006_baseline_jsonl(path, _make_e0006_dev_items())
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+        rows[0]["raw_pairs"][0]["synthetic_proxy"] = True
+        path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows), encoding="utf-8")
+        manifest_path = path.with_name(path.stem + ".manifest.json")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["artifact_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        with pytest.raises(ValueError, match="synthetic_proxy=false"):
+            load_e0006_dev_baseline_scores(path)
+
+    def test_canonical_e0006_baseline_loader_rejects_baseline_raw_pair_mismatch(self, tmp_path):
+        path = tmp_path / "e0006_uncertainty_baseline.jsonl"
+        _write_fake_e0006_baseline_jsonl(path, _make_e0006_dev_items())
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+        rows[0]["baseline_score"] = 0.123
+        path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows), encoding="utf-8")
+        manifest_path = path.with_name(path.stem + ".manifest.json")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["artifact_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        with pytest.raises(ValueError, match="baseline_score does not match"):
+            load_e0006_dev_baseline_scores(path)
 
 
 # ═══════════════════════════════════════════════════════════════════════════ #

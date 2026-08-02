@@ -33,6 +33,16 @@ E0012_POOL_ID: str = "e0012-triviaqa-v1"
 E0006_BASELINE_ITEM_COUNT: int = 80
 E0006_BASELINE_SCHEMA_VERSION: str = "e0006-uncertainty-baseline-v1"
 E0006_BASELINE_CONDITION: str = "unsteered_empty_prompt"
+E0006_FROZEN_MODEL: str = "Qwen/Qwen2.5-7B-Instruct"
+E0006_FROZEN_MAX_NEW_TOKENS: int = 64
+E0006_FROZEN_TEMPERATURE: float = 0.7
+E0006_FROZEN_SEED: int = 20260723
+E0006_FROZEN_GENERATION_IDENTITY: Dict[str, Any] = {
+    "model": E0006_FROZEN_MODEL,
+    "max_new_tokens": E0006_FROZEN_MAX_NEW_TOKENS,
+    "temperature": E0006_FROZEN_TEMPERATURE,
+    "seed": E0006_FROZEN_SEED,
+}
 
 
 def default_data_root() -> Path:
@@ -320,6 +330,17 @@ def load_e0006_dev_baseline_scores(
         raise ValueError("E-0006 baseline must be real-model synthetic_proxy=false")
     if int(lineage["item_count"]) != E0006_BASELINE_ITEM_COUNT:
         raise ValueError("E-0006 baseline item_count must be 80")
+    generation_identity = lineage.get("e0006_generation_identity")
+    if not isinstance(generation_identity, dict):
+        raise ValueError("E-0006 baseline manifest missing e0006_generation_identity")
+    if generation_identity.get("model") != E0006_FROZEN_MODEL:
+        raise ValueError("E-0006 baseline generation identity model mismatch")
+    if int(generation_identity.get("max_new_tokens", -1)) != E0006_FROZEN_MAX_NEW_TOKENS:
+        raise ValueError("E-0006 baseline generation identity max_new_tokens mismatch")
+    if abs(float(generation_identity.get("temperature", -999.0)) - E0006_FROZEN_TEMPERATURE) > 1e-12:
+        raise ValueError("E-0006 baseline generation identity temperature mismatch")
+    if int(generation_identity.get("seed", -1)) != E0006_FROZEN_SEED:
+        raise ValueError("E-0006 baseline generation identity seed mismatch")
     if manifest.get("artifact_sha256") != file_sha:
         raise ValueError(
             f"E-0006 baseline artifact sha mismatch: manifest={manifest.get('artifact_sha256')!r} "
@@ -331,7 +352,7 @@ def load_e0006_dev_baseline_scores(
         if not line.strip():
             continue
         row = json.loads(line)
-        missing_item = {"item_index", "id", "prompt", "answer", "baseline_score"} - set(row)
+        missing_item = {"item_index", "id", "prompt", "answer", "baseline_score", "raw_pairs"} - set(row)
         if missing_item:
             raise ValueError(f"{path}:{lineno} missing item fields: {sorted(missing_item)}")
         item = dict(row)
@@ -344,6 +365,23 @@ def load_e0006_dev_baseline_scores(
         item["baseline_score"] = float(item["baseline_score"])
         if not (0.0 <= item["baseline_score"] <= 1.0):
             raise ValueError(f"{path}:{lineno} baseline_score out of range")
+        raw_pairs = item["raw_pairs"]
+        if not isinstance(raw_pairs, list) or len(raw_pairs) != int(lineage["k"]):
+            raise ValueError(f"{path}:{lineno} raw_pairs length must equal k={lineage['k']}")
+        raw_scores: List[float] = []
+        for pair_index, pair in enumerate(raw_pairs):
+            if not isinstance(pair, dict):
+                raise ValueError(f"{path}:{lineno} raw_pairs[{pair_index}] is not an object")
+            if bool(pair.get("synthetic_proxy", True)):
+                raise ValueError(f"{path}:{lineno} raw_pairs[{pair_index}] must have synthetic_proxy=false")
+            if "one_minus_brier" not in pair:
+                raise ValueError(f"{path}:{lineno} raw_pairs[{pair_index}] missing one_minus_brier")
+            raw_scores.append(float(pair["one_minus_brier"]))
+        raw_mean = sum(raw_scores) / len(raw_scores)
+        if abs(item["baseline_score"] - raw_mean) > 1e-9:
+            raise ValueError(
+                f"{path}:{lineno} baseline_score does not match mean(raw_pairs.one_minus_brier)"
+            )
         item.setdefault("aliases", [])
         item["source_artifact_sha256"] = file_sha
         item["source_experiment_id"] = lineage["source_experiment_id"]

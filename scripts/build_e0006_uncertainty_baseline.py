@@ -28,6 +28,11 @@ from cognitive_console.eval.e0012_triviaqa import (
     E0006_BASELINE_CONDITION,
     E0006_BASELINE_ITEM_COUNT,
     E0006_BASELINE_SCHEMA_VERSION,
+    E0006_FROZEN_GENERATION_IDENTITY,
+    E0006_FROZEN_MAX_NEW_TOKENS,
+    E0006_FROZEN_MODEL,
+    E0006_FROZEN_SEED,
+    E0006_FROZEN_TEMPERATURE,
 )
 from cognitive_console.experiments import adjudicate_c2b as adj
 from cognitive_console.experiments.e0012_steer_hf import SteeredHFTextCapableSampler
@@ -142,6 +147,12 @@ def build_baseline_rows(
         "max_new_tokens": int(max_new_tokens),
         "temperature": float(temperature),
         "seed": int(seed),
+        "e0006_generation_identity": {
+            "model": model_name,
+            "max_new_tokens": int(max_new_tokens),
+            "temperature": float(temperature),
+            "seed": int(seed),
+        },
     }
     return rows, lineage
 
@@ -165,18 +176,29 @@ def write_artifact(rows: List[Dict[str, Any]], lineage: Dict[str, Any], jsonl_pa
 
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument("--model", default="Qwen/Qwen2.5-7B-Instruct")
+    p.add_argument("--model", default=E0006_FROZEN_MODEL)
     p.add_argument("--dtype", default="bfloat16")
     p.add_argument("--device", default="cuda")
-    p.add_argument("--seed", type=int, default=42)
-    p.add_argument("--max-new-tokens", type=int, default=256)
-    p.add_argument("--temperature", type=float, default=0.7)
+    p.add_argument("--seed", type=int, default=E0006_FROZEN_SEED)
+    p.add_argument("--max-new-tokens", type=int, default=E0006_FROZEN_MAX_NEW_TOKENS)
+    p.add_argument("--temperature", type=float, default=E0006_FROZEN_TEMPERATURE)
     p.add_argument(
         "--output",
         type=Path,
         default=Path("data/e0006_uncertainty_baseline/e0006_uncertainty_baseline.jsonl"),
     )
     args = p.parse_args()
+    requested_identity = {
+        "model": args.model,
+        "max_new_tokens": int(args.max_new_tokens),
+        "temperature": float(args.temperature),
+        "seed": int(args.seed),
+    }
+    if requested_identity != E0006_FROZEN_GENERATION_IDENTITY:
+        raise SystemExit(
+            "E-0006 baseline builder is frozen to generation identity "
+            f"{E0006_FROZEN_GENERATION_IDENTITY}; got {requested_identity}"
+        )
     rows, lineage = build_baseline_rows(
         model_name=args.model,
         dtype=args.dtype,

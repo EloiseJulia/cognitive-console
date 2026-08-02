@@ -1,24 +1,0 @@
-Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
-[e0012] backend='hf' output=results/E-0012 seed=42
-[e0012] L_c1=20 layer_sweep=(18, 19, 20, 21, 22) alpha_grid=(2.0, 4.0, 6.0, 8.0, 12.0, 16.0, 24.0)
-[e0012] N_search_cap=105
-[e0012] Loaded E-0012 pool: 80 items
-[e0012] Split: 27 DEV / 53 TEST
-[e0012] Loaded 18 authored calibration prompts
-[e0012] device='cuda' (CUDA_VISIBLE_DEVICES='1')
-[e0012] Running APE (N_cand=50, seed=42)
-Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   1%|▏         | 5/339 [00:00<00:07, 45.65it/s]Loading weights:  19%|█▉        | 66/339 [00:00<00:00, 360.76it/s]Loading weights:  38%|███▊      | 130/339 [00:00<00:00, 483.87it/s]Loading weights:  53%|█████▎    | 180/339 [00:00<00:00, 468.42it/s]Loading weights:  67%|██████▋   | 228/339 [00:00<00:00, 450.75it/s]Loading weights:  81%|████████▏ | 276/339 [00:00<00:00, 452.72it/s]Loading weights:  96%|█████████▌| 326/339 [00:00<00:00, 460.42it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 448.44it/s]
-[e0012] APE winner DEV score (k=3): 0.5131
-[e0012] APE winner DEV score (k=5): 0.5343
-[e0012] Running Stage 0 + Stage 1...
-
-[e0012] ═══ VERDICT: LOCAL ═══
-[e0012] Notes: Stage 1 PASS; Stage 2 not run. Verdict defaulted to LOCAL (model-specific). Stage 2 required for GENERALIZING or GENERAL_CONTROL.
-[e0012] Stage 0: 105/105 combinations evaluated, 13 pass cutoff, 3 advancing to Stage 1
-[e0012] Kill rule: PASS
-[e0012] Stage 1 candidate BTN-CAL-PROBE@layer=19 α=24.0: PASS (safety_unsafe=False)
-[e0012] Stage 1 candidate BTN-CAL-CONTRA-REEXTRACT@layer=18 α=16.0: PASS (safety_unsafe=False)
-[e0012] Stage 1 candidate BTN-CAL-LOGIT-MARGIN@layer=22 α=24.0: PASS (safety_unsafe=False)
-[e0012] Results written to results/E-0012/e0012_results.json
-[e0012] Stage 0 candidate table written to results/E-0012/e0012_stage0_candidates.json
-[e0012] APE candidate provenance written to results/E-0012/e0012_ape_candidates.json

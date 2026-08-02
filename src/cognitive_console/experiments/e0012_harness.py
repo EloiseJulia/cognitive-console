@@ -2,8 +2,8 @@
 
 Implements the full three-stage funnel from prereg §7 + §8 + §9:
 
-  Stage 0 (EXPLORATORY):  DEV mining over N_search ≤ 105 (button, layer, α)
-                          combinations. Advances ≤ 3 candidates to Stage 1.
+  Stage 0 (EXPLORATORY):  DEV mining over N_search ≤ 70 (button, layer, α)
+                          combinations. Advances ≤ 2 candidates to Stage 1.
   Stage 1 (CONFIRMATORY): One-shot TEST adjudication using the frozen C2b
                           adjudicator (prereg §4 / adjudicate_c2b.py verbatim).
   Stage 2 (PLACEHOLDER):  Transfer stress test — interface/placeholder only.
@@ -22,10 +22,10 @@ Layer sweep: {L_c1−2 .. L_c1+2} where L_c1 = 20 (uncertainty_awareness,
 Qwen2.5-7B, E-0003 C1 facade result). Stage 0 sweep = {18, 19, 20, 21, 22}.
 
 Pre-registered constants (FROZEN at prereg freeze):
-  N_SEARCH_CAP = 105 = 3 families × 5 layers × 7 α values
+  N_SEARCH_CAP = 70 = 2 families × 5 layers × 7 α values
   ALPHA_GRID = (2, 4, 6, 8, 12, 16, 24)  [same as C2b]
   L_C1 = 20
-  MAX_STAGE1_CANDIDATES = 3
+  MAX_STAGE1_CANDIDATES = 2
 """
 
 from __future__ import annotations
@@ -40,10 +40,12 @@ import numpy as np
 
 from cognitive_console.experiments import adjudicate_c2b as adj
 from cognitive_console.experiments.e0012_buttons import (
-    ALL_BUTTON_FAMILIES,
+    CONSERVATIVE_BUTTON_FAMILIES,
     ButtonDirection,
+    all_real_directions_for_layer,
     all_directions_for_layer,
-    derive_direction_synthetic,
+    assert_real_direction_provenance,
+    direction_provenance_records,
 )
 from cognitive_console.experiments.e0012_brier import (
     BrierDecomposition,
@@ -65,10 +67,10 @@ from cognitive_console.eval.scorers import parse_confidence, item_is_correct
 L_C1: int = 20          # E-0003 C1 optimal layer for uncertainty_awareness on Qwen2.5-7B
 LAYER_SWEEP: Tuple[int, ...] = tuple(range(L_C1 - 2, L_C1 + 3))   # {18,19,20,21,22}
 ALPHA_GRID: Tuple[float, ...] = adj.ALPHA_GRID                      # {2,4,6,8,12,16,24}
-N_SEARCH_CAP: int = len(ALL_BUTTON_FAMILIES) * len(LAYER_SWEEP) * len(ALPHA_GRID)  # 105
+N_SEARCH_CAP: int = len(CONSERVATIVE_BUTTON_FAMILIES) * len(LAYER_SWEEP) * len(ALPHA_GRID)  # 70
 K_STAGE0: int = 3       # samples per item during DEV screening
 K_STAGE1: int = 5       # samples per item during TEST adjudication (=K_SAMPLES)
-MAX_STAGE1_CANDIDATES: int = 3
+MAX_STAGE1_CANDIDATES: int = 2
 STAGE0_DEV_IMPROVEMENT_DELTA: float = adj.DELTA  # 0.05
 
 # Safety guard thresholds (§9)
@@ -116,7 +118,7 @@ class Stage0Candidate:
 class Stage0Result:
     """Full Stage 0 run result."""
     all_candidates: List[Stage0Candidate]
-    advancing: List[Stage0Candidate]   # ≤ 3, sorted by dev_improvement desc
+    advancing: List[Stage0Candidate]   # ≤ 2, sorted by dev_improvement desc
     n_search: int
     ape_result: Optional[APERunResult]
     best_prompt_text: str           # DEV-frozen best authored prompt
@@ -303,10 +305,11 @@ def run_stage0(
     ape_result: Optional[APERunResult] = None,
     axis: str = "uncertainty_awareness",
     raw_store: Optional[BrierRawStore] = None,
+    families: Sequence[str] = CONSERVATIVE_BUTTON_FAMILIES,
 ) -> Stage0Result:
     """Run Stage 0 DEV mining (EXPLORATORY).
 
-    Evaluates up to N_SEARCH_CAP = 105 (family, layer, α) combinations.
+    Evaluates up to N_SEARCH_CAP = 70 (family, layer, α) combinations.
     All candidates are reported (anti-forking-paths discipline, §10).
     """
     dev_items = list(dev_items)
@@ -350,14 +353,14 @@ def run_stage0(
         layer_dirs = directions_by_layer.get(layer, [])
         dir_by_family = {bd.family: bd for bd in layer_dirs}
 
-        for family in ALL_BUTTON_FAMILIES:
+        for family in families:
             bd = dir_by_family.get(family)
             if bd is None:
                 continue
 
             for alpha in ALPHA_GRID:
                 if n_search >= N_SEARCH_CAP:
-                    break  # hard cap: never exceed 105
+                    break  # hard cap: never exceed 70
 
                 # Evaluate steered on DEV
                 steer_batches = _eval_items_with_raw_pairs(
@@ -926,6 +929,11 @@ def run_e0012_harness(
     axis: str = "uncertainty_awareness",
     raw_store_path: Optional[Path] = None,
     e0006_dev_items: Optional[Sequence[Dict]] = None,
+    activation_provider: Any = None,
+    triviaqa_train_items: Optional[Sequence[Dict]] = None,
+    direction_families: Sequence[str] = CONSERVATIVE_BUTTON_FAMILIES,
+    prederived_directions_by_layer: Optional[Dict[int, List[ButtonDirection]]] = None,
+    direction_provenance_path: Optional[Path] = None,
 ) -> E0012Verdict:
     """Run the full E-0012 harness end-to-end (Stage 0 → Stage 1 → verdict).
 
@@ -937,11 +945,48 @@ def run_e0012_harness(
         raw_store = BrierRawStore(raw_store_path)
 
     try:
-        # Derive directions for all families × all layers
+        # Derive directions for all approved families × all layers.
+        is_hf_backend = isinstance(sampler, TextCapableSampler)
         directions_by_layer: Dict[int, List[ButtonDirection]] = {}
-        for layer in LAYER_SWEEP:
-            directions_by_layer[layer] = all_directions_for_layer(
-                layer, hidden_dim, e0006_dev_items
+        if is_hf_backend and prederived_directions_by_layer is not None:
+            raise RuntimeError(
+                "REAL-NOT-SMOKE hard-fail: prederived_directions_by_layer is "
+                "forbidden on hf/TextCapable backends. HF runs must derive fresh "
+                "directions via all_real_directions_for_layer from validated source data."
+            )
+        if prederived_directions_by_layer is not None:
+            directions_by_layer = {
+                int(layer): list(dirs)
+                for layer, dirs in prederived_directions_by_layer.items()
+            }
+        elif is_hf_backend:
+            if activation_provider is None or triviaqa_train_items is None or e0006_dev_items is None:
+                raise RuntimeError(
+                    "REAL-NOT-SMOKE hard-fail: hf backend requires real direction "
+                    "inputs (activation_provider, TriviaQA-train items, and E-0006 "
+                    "all-80 baseline-scored items). Synthetic/random directions are forbidden."
+                )
+            for layer in LAYER_SWEEP:
+                directions_by_layer[layer] = all_real_directions_for_layer(
+                    layer=layer,
+                    activation_provider=activation_provider,
+                    triviaqa_train_items=triviaqa_train_items,
+                    e0006_items=e0006_dev_items,
+                    families=direction_families,
+                )
+        else:
+            for layer in LAYER_SWEEP:
+                directions_by_layer[layer] = all_directions_for_layer(
+                    layer, hidden_dim, e0006_dev_items, families=direction_families
+                )
+
+        if is_hf_backend:
+            assert_real_direction_provenance(directions_by_layer)
+        if direction_provenance_path is not None:
+            direction_provenance_path.parent.mkdir(parents=True, exist_ok=True)
+            direction_provenance_path.write_text(
+                json.dumps(direction_provenance_records(directions_by_layer), indent=2),
+                encoding="utf-8",
             )
 
         # Stage 0
@@ -953,6 +998,7 @@ def run_e0012_harness(
             ape_result=ape_result,
             axis=axis,
             raw_store=raw_store,
+            families=direction_families,
         )
 
         if stage0.verdict_at_stage0 == VERDICT_NO_BUTTON_FOUND:

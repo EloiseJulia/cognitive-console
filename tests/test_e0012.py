@@ -20,7 +20,7 @@ Coverage:
   - Verdict tier ladder: NO_BUTTON_FOUND / BUTTON_FOUND_BUT_UNSAFE / PASS → LOCAL
   - Accuracy guard (abstentions count as incorrect)
   - Cross-axis non-degradation (δ_cross_fail = −0.10)
-  - Stage 0 selection rule (≤3, family diversity, tie-breaking)
+  - Stage 0 selection rule (≤2, family diversity, tie-breaking)
   - TriviaQA E-0012 fixture loader
   - Synthetic smoke: full pipeline end-to-end, verdict assigned
 """
@@ -28,6 +28,7 @@ Coverage:
 from __future__ import annotations
 
 import json
+import hashlib
 import math
 import os
 import tempfile
@@ -43,15 +44,21 @@ from cognitive_console.experiments.e0012_buttons import (
     BTN_CONTRA,
     BTN_LOGIT_MARGIN,
     BTN_PROBE,
+    CONSERVATIVE_BUTTON_FAMILIES,
     ButtonDirection,
     CONTRA_N_NEGATIVE,
     CONTRA_N_POSITIVE,
+    all_real_directions_for_layer,
     all_directions_for_layer,
+    assert_real_direction_provenance,
     build_probe_synthetic_pairs,
+    derive_contra_direction_real,
     derive_contra_direction_synthetic,
     derive_direction_synthetic,
     derive_logit_margin_direction_synthetic,
+    derive_probe_direction_real,
     derive_probe_direction_synthetic,
+    direction_provenance_records,
     select_contra_pairs,
 )
 from cognitive_console.experiments.e0012_ape import (
@@ -117,8 +124,11 @@ from cognitive_console.eval.e0012_triviaqa import (
     E0012_POOL_SEED,
     E0012_SPLIT_SEED,
     load_e0012_triviaqa_fixture,
+    load_e0006_dev_baseline_scores,
+    make_e0006_baseline_artifact,
 )
 from cognitive_console.experiments import adjudicate_c2b as adj
+from cognitive_console.steering.extract import mean_difference_vector
 from cognitive_console.steering.generate import SyntheticC2bTaskBackend
 
 
@@ -150,12 +160,143 @@ def _make_authored(n: int = 4) -> List[Tuple[str, str]]:
     return [(f"P{i}", f"Be calibrated. Prompt {i}.") for i in range(n)]
 
 
+class _FakeActivationProvider:
+    model_name = "fake-model"
+    dtype = "float32"
+    device = "cpu"
+
+    def __init__(self, hidden_dim: int = 16):
+        self.hidden_dim = hidden_dim
+
+    def get_activations(self, texts, layer):
+        rows = []
+        for i, text in enumerate(texts):
+            digest = abs(hash((str(text), int(layer)))) % 10_000
+            base = np.linspace(0.0, 1.0, self.hidden_dim) + (digest / 10_000.0)
+            if "very confident" in str(text) or "confidence is 0.9" in str(text):
+                base[0] += 2.0
+            if "not very sure" in str(text) or "confidence is 0.1" in str(text):
+                base[0] -= 2.0
+            rows.append(base + i * 0.001)
+        return np.asarray(rows, dtype=np.float32)
+
+
+def _make_probe_train_items(n: int = 220) -> List[Dict[str, Any]]:
+    return [
+        {"id": f"train-{i:04d}", "prompt": f"Train question {i}?", "answer": f"A{i}"}
+        for i in range(n)
+    ]
+
+
+def _make_e0006_dev_items(n: int = 80) -> List[Dict[str, Any]]:
+    rows = [
+        {
+            "item_index": i,
+            "id": f"e0006-unc-{i:04d}",
+            "prompt": f"E0006 uncertainty question {i}?",
+            "answer": f"A{i}",
+            "baseline_score": float(i) / max(1, n - 1),
+        }
+        for i in range(n)
+    ]
+    if n == 80:
+        artifact = make_e0006_baseline_artifact(
+            source_experiment_id="e0006-test",
+            source_run_commit="abc123",
+            items=rows,
+        )
+        sha = artifact["artifact_sha256"]
+        rows = [{**row, "source_artifact_sha256": sha} for row in rows]
+    return rows
+
+
+def _write_fake_e0006_baseline_jsonl(path: Path, rows: List[Dict[str, Any]]) -> None:
+    """Write a clearly test-only canonical JSONL+manifest fixture."""
+    jsonl_rows = []
+    for row in rows:
+        clean = {k: v for k, v in row.items() if k not in {"source_artifact_sha256"}}
+        if "raw_pairs" not in clean:
+            score = float(clean["baseline_score"])
+            clean["raw_pairs"] = [
+                {
+                    "sample_index": j,
+                    "confidence": score,
+                    "correctness": 1,
+                    "one_minus_brier": score,
+                    "text_sha256": f"test-{clean['id']}-{j}",
+                    "synthetic_proxy": False,
+                }
+                for j in range(5)
+            ]
+        jsonl_rows.append(clean)
+    text = "".join(
+        json.dumps(row, sort_keys=True) + "\n"
+        for row in jsonl_rows
+    )
+    path.write_text(text, encoding="utf-8")
+    sha = hashlib.sha256(path.read_bytes()).hexdigest()
+    manifest = {
+        "schema_version": "e0006-uncertainty-baseline-v1",
+        "lineage": {
+            "source_experiment_id": "e0006-test-fixture",
+            "source_run_commit": "test-only",
+            "source_axis": "uncertainty_awareness",
+            "source_item_loader": "scripts.run_c2b_adjudication.load_axis_items(TEST_FIXTURE_NOT_HF_VALIDATED)",
+            "source_split": "full_frozen_80_calibration_items",
+            "condition": "unsteered_empty_prompt",
+            "k": 5,
+            "synthetic_proxy": False,
+            "item_count": 80,
+            "model": "Qwen/Qwen2.5-7B-Instruct",
+            "dtype": "float32",
+            "device": "cpu",
+            "code_commit": "test",
+            "max_new_tokens": 64,
+            "temperature": 0.7,
+            "seed": 20260723,
+            "e0006_generation_identity": {
+                "model": "Qwen/Qwen2.5-7B-Instruct",
+                "max_new_tokens": 64,
+                "temperature": 0.7,
+                "seed": 20260723,
+            },
+        },
+        "item_ids": [str(row["id"]) for row in rows],
+        "artifact_sha256": sha,
+    }
+    path.with_name(path.stem + ".manifest.json").write_text(
+        json.dumps(manifest, sort_keys=True), encoding="utf-8"
+    )
+
+
+def _fake_real_directions_by_layer(hidden_dim: int = 16):
+    provider = _FakeActivationProvider(hidden_dim)
+    return {
+        layer: all_real_directions_for_layer(
+            layer=layer,
+            activation_provider=provider,
+            triviaqa_train_items=_make_probe_train_items(),
+            e0006_items=_make_e0006_dev_items(),
+        )
+        for layer in LAYER_SWEEP
+    }
+
+
+def _real_direction_kwargs(hidden_dim: int = 16):
+    return {
+        "activation_provider": _FakeActivationProvider(hidden_dim),
+        "triviaqa_train_items": _make_probe_train_items(),
+        "e0006_dev_items": _make_e0006_dev_items(),
+    }
+
+
 # ═══════════════════════════════════════════════════════════════════════════ #
 # ButtonDirection tests
 # ═══════════════════════════════════════════════════════════════════════════ #
 class TestButtonDirections:
     def test_all_families_defined(self):
         assert len(ALL_BUTTON_FAMILIES) == 3
+        assert CONSERVATIVE_BUTTON_FAMILIES == (BTN_PROBE, BTN_CONTRA)
         assert BTN_PROBE in ALL_BUTTON_FAMILIES
         assert BTN_LOGIT_MARGIN in ALL_BUTTON_FAMILIES
         assert BTN_CONTRA in ALL_BUTTON_FAMILIES
@@ -198,6 +339,48 @@ class TestButtonDirections:
             ButtonDirection(family=BTN_PROBE, layer=20,
                             direction=np.zeros(16), derivation_hash="abc")
 
+    def test_real_probe_direction_uses_fake_activations(self):
+        bd = derive_probe_direction_real(20, _FakeActivationProvider(8), _make_probe_train_items())
+        assert bd.family == BTN_PROBE
+        assert bd.is_unit
+        assert bd.provenance["method"] == "real_probe"
+        assert bd.provenance["source_split"] == "TriviaQA-train"
+        assert len(bd.provenance["source_item_ids"]) == 200
+
+    def test_real_contra_direction_uses_caa_mean_difference(self):
+        bd = derive_contra_direction_real(20, _FakeActivationProvider(8), _make_e0006_dev_items())
+        assert bd.family == BTN_CONTRA
+        assert bd.is_unit
+        assert bd.provenance["method"] == "real_caa_mean_diff"
+        assert "all-80" in bd.provenance["source_split"]
+        assert bd.provenance["n_positive"] == 40
+        assert bd.provenance["n_negative"] == 40
+        assert bd.provenance["source_artifact_sha256"]
+
+    def test_real_contra_direction_matches_mean_difference_vector(self):
+        provider = _FakeActivationProvider(8)
+        items = _make_e0006_dev_items()
+        pos, neg = select_contra_pairs(items)
+        pos_acts = provider.get_activations([str(it["prompt"]) for it in pos], 20)
+        neg_acts = provider.get_activations([str(it["prompt"]) for it in neg], 20)
+        expected = mean_difference_vector(pos_acts, neg_acts)
+        expected = expected / np.linalg.norm(expected)
+        bd = derive_contra_direction_real(20, provider, items)
+        np.testing.assert_allclose(bd.direction, expected, rtol=1e-6, atol=1e-6)
+
+    def test_real_provenance_guard_rejects_synthetic_direction(self):
+        dirs = {20: [derive_probe_direction_synthetic(20, 16)]}
+        with pytest.raises(RuntimeError, match="REAL-NOT-SMOKE"):
+            assert_real_direction_provenance(dirs)
+
+    def test_real_provenance_guard_accepts_real_directions(self):
+        dirs = {20: all_real_directions_for_layer(
+            20, _FakeActivationProvider(8), _make_probe_train_items(), _make_e0006_dev_items()
+        )}
+        assert_real_direction_provenance(dirs)
+        records = direction_provenance_records(dirs)
+        assert {r["method"] for r in records} == {"real_probe", "real_caa_mean_diff"}
+
 
 class TestContraPairSelection:
     def _make_dev_items(self, n: int = 100) -> List[Dict]:
@@ -208,13 +391,13 @@ class TestContraPairSelection:
         ]
 
     def test_returns_correct_counts(self):
-        items = self._make_dev_items(100)
+        items = self._make_dev_items(80)
         pos, neg = select_contra_pairs(items, n_positive=40, n_negative=40)
         assert len(pos) == 40
         assert len(neg) == 40
 
     def test_positive_higher_than_negative(self):
-        items = self._make_dev_items(100)
+        items = self._make_dev_items(80)
         pos, neg = select_contra_pairs(items, n_positive=40, n_negative=40)
         min_pos = min(it["baseline_score"] for it in pos)
         max_neg = max(it["baseline_score"] for it in neg)
@@ -224,17 +407,16 @@ class TestContraPairSelection:
         med_neg = np.median([it["baseline_score"] for it in neg])
         assert med_pos > med_neg
 
-    def test_fallback_when_insufficient(self):
+    def test_raises_when_not_all_80(self):
         items = self._make_dev_items(50)
-        pos, neg = select_contra_pairs(items, n_positive=40, n_negative=40)
-        # With n=50 < 80, fallback: top-half + bottom-half
-        assert len(pos) + len(neg) == 50
+        with pytest.raises(ValueError, match="exactly 80"):
+            select_contra_pairs(items, n_positive=40, n_negative=40)
 
     def test_tie_breaking_by_item_index(self):
         # Items with identical scores — tie-break by index (ascending)
         items = [
             {"id": f"item-{i}", "prompt": f"Q{i}", "baseline_score": 0.5}
-            for i in range(20)
+            for i in range(10)
         ]
         pos, neg = select_contra_pairs(items, n_positive=5, n_negative=5)
         # With all equal scores, sort by index: positive = first 5 (indices 0-4)
@@ -831,12 +1013,12 @@ class TestStage0SelectionRule:
             coherence_ratio=coherence_ratio,
         )
 
-    def test_returns_at_most_3(self):
+    def test_returns_at_most_2_by_default(self):
         candidates = [
             self._make_cand(f"FAM-{i}", 20, 4.0, 0.10) for i in range(10)
         ]
-        selected = _select_stage1_candidates(candidates, max_n=3)
-        assert len(selected) <= 3
+        selected = _select_stage1_candidates(candidates)
+        assert len(selected) <= 2
 
     def test_filters_non_passing(self):
         candidates = [
@@ -981,15 +1163,15 @@ class TestFrozenHarnessParameters:
     def test_alpha_grid_matches_c2b(self):
         assert ALPHA_GRID == adj.ALPHA_GRID
 
-    def test_n_search_cap_is_105(self):
-        assert N_SEARCH_CAP == 105
-        assert N_SEARCH_CAP == len(ALL_BUTTON_FAMILIES) * len(LAYER_SWEEP) * len(ALPHA_GRID)
+    def test_n_search_cap_is_70(self):
+        assert N_SEARCH_CAP == 70
+        assert N_SEARCH_CAP == len(CONSERVATIVE_BUTTON_FAMILIES) * len(LAYER_SWEEP) * len(ALPHA_GRID)
 
     def test_k_stage0_is_3(self):
         assert K_STAGE0 == 3
 
-    def test_max_stage1_candidates_is_3(self):
-        assert MAX_STAGE1_CANDIDATES == 3
+    def test_max_stage1_candidates_is_2(self):
+        assert MAX_STAGE1_CANDIDATES == 2
 
 
 # ═══════════════════════════════════════════════════════════════════════════ #
@@ -1041,6 +1223,94 @@ class TestE0012TriviaQALoader:
         assert 24 <= len(dev) <= 30
         # TEST ≈ 2/3 (53–54 items)
         assert 50 <= len(test) <= 56
+
+    def test_canonical_e0006_baseline_loader_validates_lineage(self, tmp_path):
+        rows = _make_e0006_dev_items()
+        path = tmp_path / "e0006_uncertainty_baseline.jsonl"
+        _write_fake_e0006_baseline_jsonl(path, rows)
+        loaded = load_e0006_dev_baseline_scores(path)
+        assert len(loaded) == 80
+        assert all(it["source_artifact_sha256"] for it in loaded)
+        assert loaded[0]["source_experiment_id"] == "e0006-test-fixture"
+
+    def test_canonical_e0006_baseline_loader_rejects_missing_lineage(self, tmp_path):
+        path = tmp_path / "bad_e0006_baseline.jsonl"
+        path.write_text(json.dumps(_make_e0006_dev_items()[0]), encoding="utf-8")
+        with pytest.raises(FileNotFoundError, match="sidecar manifest"):
+            load_e0006_dev_baseline_scores(path)
+
+    def test_canonical_e0006_baseline_loader_rejects_bad_sha(self, tmp_path):
+        path = tmp_path / "e0006_uncertainty_baseline.jsonl"
+        _write_fake_e0006_baseline_jsonl(path, _make_e0006_dev_items())
+        manifest_path = path.with_name(path.stem + ".manifest.json")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["artifact_sha256"] = "0" * 64
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        with pytest.raises(ValueError, match="sha mismatch"):
+            load_e0006_dev_baseline_scores(path)
+
+    def test_canonical_e0006_baseline_loader_rejects_wrong_frozen_pool_ids(self, tmp_path, monkeypatch):
+        import cognitive_console.eval.e0012_triviaqa as e0012_triviaqa
+
+        path = tmp_path / "e0006_uncertainty_baseline.jsonl"
+        _write_fake_e0006_baseline_jsonl(path, _make_e0006_dev_items())
+        monkeypatch.setattr(
+            e0012_triviaqa,
+            "_expected_e0006_uncertainty_item_ids",
+            lambda: [f"other-{i:04d}" for i in range(80)],
+        )
+        with pytest.raises(ValueError, match="frozen E-0006 uncertainty pool"):
+            load_e0006_dev_baseline_scores(path, validate_item_source=True)
+
+    def test_canonical_e0006_baseline_loader_rejects_wrong_generation_identity(self, tmp_path):
+        path = tmp_path / "e0006_uncertainty_baseline.jsonl"
+        _write_fake_e0006_baseline_jsonl(path, _make_e0006_dev_items())
+        manifest_path = path.with_name(path.stem + ".manifest.json")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["lineage"]["e0006_generation_identity"]["seed"] = 42
+        manifest["lineage"]["seed"] = 42
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        with pytest.raises(ValueError, match="generation identity seed mismatch"):
+            load_e0006_dev_baseline_scores(path)
+
+    def test_canonical_e0006_baseline_loader_rejects_raw_pair_length(self, tmp_path):
+        path = tmp_path / "e0006_uncertainty_baseline.jsonl"
+        _write_fake_e0006_baseline_jsonl(path, _make_e0006_dev_items())
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+        rows[0]["raw_pairs"] = rows[0]["raw_pairs"][:4]
+        path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows), encoding="utf-8")
+        manifest_path = path.with_name(path.stem + ".manifest.json")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["artifact_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        with pytest.raises(ValueError, match="raw_pairs length"):
+            load_e0006_dev_baseline_scores(path)
+
+    def test_canonical_e0006_baseline_loader_rejects_synthetic_raw_pair(self, tmp_path):
+        path = tmp_path / "e0006_uncertainty_baseline.jsonl"
+        _write_fake_e0006_baseline_jsonl(path, _make_e0006_dev_items())
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+        rows[0]["raw_pairs"][0]["synthetic_proxy"] = True
+        path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows), encoding="utf-8")
+        manifest_path = path.with_name(path.stem + ".manifest.json")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["artifact_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        with pytest.raises(ValueError, match="synthetic_proxy=false"):
+            load_e0006_dev_baseline_scores(path)
+
+    def test_canonical_e0006_baseline_loader_rejects_baseline_raw_pair_mismatch(self, tmp_path):
+        path = tmp_path / "e0006_uncertainty_baseline.jsonl"
+        _write_fake_e0006_baseline_jsonl(path, _make_e0006_dev_items())
+        rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+        rows[0]["baseline_score"] = 0.123
+        path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows), encoding="utf-8")
+        manifest_path = path.with_name(path.stem + ".manifest.json")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["artifact_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        with pytest.raises(ValueError, match="baseline_score does not match"):
+            load_e0006_dev_baseline_scores(path)
 
 
 # ═══════════════════════════════════════════════════════════════════════════ #
@@ -1320,6 +1590,7 @@ class TestBrierRealPairsGPUPath:
             authored_prompts=authored,
             hidden_dim=16,
             raw_store_path=raw_path,
+            **_real_direction_kwargs(16),
         )
         assert raw_path.exists()
         store = BrierRawStore(raw_path)
@@ -1376,6 +1647,7 @@ class TestBrierRealPairsGPUPath:
             authored_prompts=authored,
             hidden_dim=16,
             raw_store_path=raw_path,
+            **_real_direction_kwargs(16),
         )
         # If any Stage 1 results exist, they should use real pairs
         for r in verdict_obj.stage1_results:
@@ -1808,6 +2080,7 @@ class TestN01SteeredHFTextCapableSampler:
             authored_prompts=authored,
             hidden_dim=16,
             raw_store_path=raw_path,
+            **_real_direction_kwargs(16),
         )
         assert raw_path.exists(), "N-01: raw_store_path should be written by HF run"
         store = BrierRawStore(raw_path)
@@ -1837,6 +2110,7 @@ class TestN01SteeredHFTextCapableSampler:
             authored_prompts=authored,
             hidden_dim=16,
             raw_store_path=raw_path,
+            **_real_direction_kwargs(16),
         )
         store = BrierRawStore(raw_path)
         all_pairs = store.load_all()
@@ -1863,11 +2137,42 @@ class TestN01SteeredHFTextCapableSampler:
             authored_prompts=authored,
             hidden_dim=16,
             raw_store_path=raw_path,
+            **_real_direction_kwargs(16),
         )
         for r in verdict_obj.stage1_results:
             assert r.is_brier_from_real_pairs, (
                 "N-01: Stage 1 with SteeredHFTextCapableSampler must use real pairs "
                 f"(is_brier_from_real_pairs=False for candidate {r.candidate.button_family})"
+            )
+
+    def test_hf_harness_forbids_prederived_direction_injection(self, tmp_path):
+        """REAL-NOT-SMOKE: hf/TextCapable path forbids prederived direction injection."""
+        from cognitive_console.experiments.e0012_steer_hf import SteeredHFTextCapableSampler
+        items = _make_items(8)
+        fake = _make_fake_hf_backend("Answer: Paris. Confidence: 80%.")
+        sampler = SteeredHFTextCapableSampler(fake)
+        dev_items, test_items = split_e0012_pool(items, split_seed=42)
+        authored = _make_authored(2)
+        forged = ButtonDirection(
+            family=BTN_PROBE,
+            layer=20,
+            direction=np.random.default_rng(0).standard_normal(16),
+            derivation_hash="forged",
+            provenance={
+                "method": "real_probe",
+                "source_artifact_sha256": "fake",
+                "hyperparameters": {"seed": 42},
+            },
+        )
+        with pytest.raises(RuntimeError, match="prederived_directions_by_layer is forbidden"):
+            run_e0012_harness(
+                sampler=sampler,
+                dev_items=dev_items,
+                test_items=test_items,
+                authored_prompts=authored,
+                hidden_dim=16,
+                raw_store_path=tmp_path / "raw.jsonl",
+                prederived_directions_by_layer={20: [forged]},
             )
 
     def test_sample_with_texts_returns_k_texts(self):
@@ -2205,12 +2510,17 @@ class TestRunnerWiring:
                                 lambda items, split_seed=42: (items[:4], items[4:]))
             monkeypatch.setattr(runner, "load_authored_prompts",
                                 lambda data_root=None: [("P0", "Be calibrated.")])
+            monkeypatch.setattr(runner, "load_triviaqa_train_for_probe",
+                                lambda n=200, seed=42: _make_probe_train_items(n))
+            monkeypatch.setattr(runner, "load_e0006_dev_baseline_scores",
+                                lambda path, **kwargs: _make_e0006_dev_items())
             monkeypatch.setattr(runner, "run_ape", lambda **kw: _mock_ape)
             monkeypatch.setattr(runner, "run_e0012_harness", lambda **kw: _mock_verdict)
 
             args = argparse.Namespace(
                 backend="hf", output_dir=str(tmp_path), seed=42,
                 model=None, n_items=None, stage0_only=False,
+                e0006_dev_baseline_jsonl=str(tmp_path / "e0006.jsonl"),
             )
             runner.cmd_run(args)
 
@@ -2340,12 +2650,17 @@ class TestRunnerWiring:
                                 lambda items, split_seed=42: (items[:4], items[4:]))
             monkeypatch.setattr(runner, "load_authored_prompts",
                                 lambda data_root=None: [("P0", "Be calibrated.")])
+            monkeypatch.setattr(runner, "load_triviaqa_train_for_probe",
+                                lambda n=200, seed=42: _make_probe_train_items(n))
+            monkeypatch.setattr(runner, "load_e0006_dev_baseline_scores",
+                                lambda path, **kwargs: _make_e0006_dev_items())
             monkeypatch.setattr(runner, "run_ape", lambda **kw: _mock_ape)
             monkeypatch.setattr(runner, "run_e0012_harness", lambda **kw: _mock_verdict)
 
             args = argparse.Namespace(
                 backend="hf", output_dir=str(tmp_path), seed=42,
                 model=None, n_items=None, stage0_only=False,
+                e0006_dev_baseline_jsonl=str(tmp_path / "e0006.jsonl"),
             )
             runner.cmd_run(args)
 
@@ -2404,7 +2719,7 @@ class TestRunnerWiring:
         )
 
         mock_s0 = Stage0Result(
-            all_candidates=[cand_with_k5], advancing=[], n_search=105,
+            all_candidates=[cand_with_k5], advancing=[], n_search=70,
             ape_result=mock_ape, best_prompt_text="Be calibrated.",
             kill_rule_result="TRANSFER", kill_rule_reason="ape >= button",
             verdict_at_stage0=VERDICT_NO_BUTTON_FOUND,

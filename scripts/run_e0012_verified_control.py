@@ -1,7 +1,7 @@
 """E-0012 Verified Control Button — main runner script.
 
 Usage (synthetic smoke, no GPU):
-  python scripts/run_e0012_verified_control.py --backend synthetic --output-dir /tmp/e0012_smoke
+  python scripts/run_e0012_verified_control.py --backend synthetic --output-dir results/e0012_smoke
 
 Usage (generate fixture, needs network):
   python scripts/run_e0012_verified_control.py --generate-fixture
@@ -69,6 +69,8 @@ from cognitive_console.eval.e0012_triviaqa import (
     load_e0012_pool,
     save_fixture,
     load_e0012_triviaqa_real,
+    load_triviaqa_train_for_probe,
+    load_e0006_dev_baseline_scores,
 )
 from cognitive_console.lineage import utcnow
 
@@ -161,11 +163,13 @@ def cmd_run(args: argparse.Namespace) -> None:
         import torch as _torch  # noqa
         from cognitive_console.steering.generate import SteeredHFBackend  # noqa
         from cognitive_console.experiments.e0012_steer_hf import SteeredHFTextCapableSampler  # noqa
+        from cognitive_console.activations.provider import HFActivationProvider  # noqa
         model_name = args.model or "Qwen/Qwen2.5-7B-Instruct"
         _hf_device = "cuda" if _torch.cuda.is_available() else "cpu"
+        _hf_dtype = "float16" if _hf_device == "cuda" else "float32"
         print(f"[e0012] device={_hf_device!r} (CUDA_VISIBLE_DEVICES={__import__('os').environ.get('CUDA_VISIBLE_DEVICES','unset')!r})")
         hf_backend = SteeredHFBackend(model_name=model_name, device=_hf_device,
-                                       dtype=("float16" if _hf_device == "cuda" else "float32"))
+                                       dtype=_hf_dtype)
         # N-01 fix: wrap in SteeredHFTextCapableSampler (not BackendOutcomeSampler)
         # so _eval_items_with_raw_pairs records real (confidence, correctness) pairs
         # (synthetic_proxy=False) for the §9.2 Brier safety guards.
@@ -180,6 +184,25 @@ def cmd_run(args: argparse.Namespace) -> None:
             "GPU run requires a TextCapableSampler; got " + type(sampler).__name__
         )
         hidden_dim = 3584  # Qwen2.5-7B hidden dim
+        activation_provider = HFActivationProvider(
+            model_name=model_name,
+            layers=LAYER_SWEEP,
+            device=_hf_device,
+            dtype=_hf_dtype,
+            cache_dir=str(out_dir / "activation_cache"),
+        )
+        triviaqa_train_items = load_triviaqa_train_for_probe(n=200, seed=42)
+        e0006_path_arg = getattr(args, "e0006_dev_baseline_jsonl", None)
+        if not e0006_path_arg:
+            raise FileNotFoundError(
+                "hf backend requires --e0006-dev-baseline-jsonl for "
+                "BTN-CAL-CONTRA-REEXTRACT real CAA derivation."
+            )
+        e0006_dev_items = load_e0006_dev_baseline_scores(Path(e0006_path_arg))
+    if args.backend == "synthetic":
+        activation_provider = None
+        triviaqa_train_items = None
+        e0006_dev_items = None
 
     # ── APE run ────────────────────────────────────────────────────────────── #
     print(f"[e0012] Running APE (N_cand={APE_N_CAND}, seed={APE_SEED})")
@@ -261,6 +284,10 @@ def cmd_run(args: argparse.Namespace) -> None:
         ape_result=ape_result,
         axis=axis,
         raw_store_path=raw_store_path,
+        e0006_dev_items=e0006_dev_items,
+        activation_provider=activation_provider,
+        triviaqa_train_items=triviaqa_train_items,
+        direction_provenance_path=out_dir / "direction_provenance.json",
     )
     wall_clock = time.time() - t0
 
@@ -386,6 +413,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         ],
         "wall_clock_seconds": wall_clock,
         "brier_raw_pairs_path": str(raw_store_path),
+        "direction_provenance_path": str(out_dir / "direction_provenance.json"),
     }
 
     out_json = out_dir / "e0012_results.json"
@@ -451,12 +479,14 @@ def main() -> None:
     parser.add_argument("--backend", default="synthetic", choices=["synthetic", "hf"])
     parser.add_argument("--generate-fixture", action="store_true",
                         help="Download and save TriviaQA fixture (requires network)")
-    parser.add_argument("--output-dir", default="/tmp/e0012_smoke")
+    parser.add_argument("--output-dir", default="results/e0012_smoke")
     parser.add_argument("--stage0-only", action="store_true")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--model", default=None, help="HF model id")
     parser.add_argument("--n-items", type=int, default=None,
                         help="Synthetic pool size (smoke only)")
+    parser.add_argument("--e0006-dev-baseline-jsonl", default=None,
+                        help="HF only: JSONL of E-0006 DEV items with baseline_score")
     args = parser.parse_args()
 
     if args.generate_fixture:

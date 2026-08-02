@@ -20,7 +20,7 @@ Coverage:
   - Verdict tier ladder: NO_BUTTON_FOUND / BUTTON_FOUND_BUT_UNSAFE / PASS → LOCAL
   - Accuracy guard (abstentions count as incorrect)
   - Cross-axis non-degradation (δ_cross_fail = −0.10)
-  - Stage 0 selection rule (≤3, family diversity, tie-breaking)
+  - Stage 0 selection rule (≤2, family diversity, tie-breaking)
   - TriviaQA E-0012 fixture loader
   - Synthetic smoke: full pipeline end-to-end, verdict assigned
 """
@@ -43,15 +43,21 @@ from cognitive_console.experiments.e0012_buttons import (
     BTN_CONTRA,
     BTN_LOGIT_MARGIN,
     BTN_PROBE,
+    CONSERVATIVE_BUTTON_FAMILIES,
     ButtonDirection,
     CONTRA_N_NEGATIVE,
     CONTRA_N_POSITIVE,
+    all_real_directions_for_layer,
     all_directions_for_layer,
+    assert_real_direction_provenance,
     build_probe_synthetic_pairs,
+    derive_contra_direction_real,
     derive_contra_direction_synthetic,
     derive_direction_synthetic,
     derive_logit_margin_direction_synthetic,
+    derive_probe_direction_real,
     derive_probe_direction_synthetic,
+    direction_provenance_records,
     select_contra_pairs,
 )
 from cognitive_console.experiments.e0012_ape import (
@@ -150,12 +156,66 @@ def _make_authored(n: int = 4) -> List[Tuple[str, str]]:
     return [(f"P{i}", f"Be calibrated. Prompt {i}.") for i in range(n)]
 
 
+class _FakeActivationProvider:
+    model_name = "fake-model"
+    dtype = "float32"
+    device = "cpu"
+
+    def __init__(self, hidden_dim: int = 16):
+        self.hidden_dim = hidden_dim
+
+    def get_activations(self, texts, layer):
+        rows = []
+        for i, text in enumerate(texts):
+            digest = abs(hash((str(text), int(layer)))) % 10_000
+            base = np.linspace(0.0, 1.0, self.hidden_dim) + (digest / 10_000.0)
+            if "very confident" in str(text) or "confidence is 0.9" in str(text):
+                base[0] += 2.0
+            if "not very sure" in str(text) or "confidence is 0.1" in str(text):
+                base[0] -= 2.0
+            rows.append(base + i * 0.001)
+        return np.asarray(rows, dtype=np.float32)
+
+
+def _make_probe_train_items(n: int = 220) -> List[Dict[str, Any]]:
+    return [
+        {"id": f"train-{i:04d}", "prompt": f"Train question {i}?", "answer": f"A{i}"}
+        for i in range(n)
+    ]
+
+
+def _make_e0006_dev_items(n: int = 27) -> List[Dict[str, Any]]:
+    return [
+        {
+            "id": f"e0006-dev-{i:04d}",
+            "prompt": f"E0006 dev question {i}?",
+            "answer": f"A{i}",
+            "baseline_score": float(i) / max(1, n - 1),
+        }
+        for i in range(n)
+    ]
+
+
+def _fake_real_directions_by_layer(hidden_dim: int = 16):
+    provider = _FakeActivationProvider(hidden_dim)
+    return {
+        layer: all_real_directions_for_layer(
+            layer=layer,
+            activation_provider=provider,
+            triviaqa_train_items=_make_probe_train_items(),
+            e0006_dev_items=_make_e0006_dev_items(),
+        )
+        for layer in LAYER_SWEEP
+    }
+
+
 # ═══════════════════════════════════════════════════════════════════════════ #
 # ButtonDirection tests
 # ═══════════════════════════════════════════════════════════════════════════ #
 class TestButtonDirections:
     def test_all_families_defined(self):
         assert len(ALL_BUTTON_FAMILIES) == 3
+        assert CONSERVATIVE_BUTTON_FAMILIES == (BTN_PROBE, BTN_CONTRA)
         assert BTN_PROBE in ALL_BUTTON_FAMILIES
         assert BTN_LOGIT_MARGIN in ALL_BUTTON_FAMILIES
         assert BTN_CONTRA in ALL_BUTTON_FAMILIES
@@ -197,6 +257,36 @@ class TestButtonDirections:
         with pytest.raises(ValueError, match="zero"):
             ButtonDirection(family=BTN_PROBE, layer=20,
                             direction=np.zeros(16), derivation_hash="abc")
+
+    def test_real_probe_direction_uses_fake_activations(self):
+        bd = derive_probe_direction_real(20, _FakeActivationProvider(8), _make_probe_train_items())
+        assert bd.family == BTN_PROBE
+        assert bd.is_unit
+        assert bd.provenance["method"] == "real_probe"
+        assert bd.provenance["source_split"] == "TriviaQA-train"
+        assert len(bd.provenance["source_item_ids"]) == 200
+
+    def test_real_contra_direction_uses_caa_mean_difference(self):
+        bd = derive_contra_direction_real(20, _FakeActivationProvider(8), _make_e0006_dev_items(27))
+        assert bd.family == BTN_CONTRA
+        assert bd.is_unit
+        assert bd.provenance["method"] == "real_caa_mean_diff"
+        assert bd.provenance["source_split"].startswith("E-0006 DEV")
+        assert bd.provenance["n_positive"] == 13
+        assert bd.provenance["n_negative"] == 14
+
+    def test_real_provenance_guard_rejects_synthetic_direction(self):
+        dirs = {20: [derive_probe_direction_synthetic(20, 16)]}
+        with pytest.raises(RuntimeError, match="REAL-NOT-SMOKE"):
+            assert_real_direction_provenance(dirs)
+
+    def test_real_provenance_guard_accepts_real_directions(self):
+        dirs = {20: all_real_directions_for_layer(
+            20, _FakeActivationProvider(8), _make_probe_train_items(), _make_e0006_dev_items()
+        )}
+        assert_real_direction_provenance(dirs)
+        records = direction_provenance_records(dirs)
+        assert {r["method"] for r in records} == {"real_probe", "real_caa_mean_diff"}
 
 
 class TestContraPairSelection:
@@ -981,15 +1071,15 @@ class TestFrozenHarnessParameters:
     def test_alpha_grid_matches_c2b(self):
         assert ALPHA_GRID == adj.ALPHA_GRID
 
-    def test_n_search_cap_is_105(self):
-        assert N_SEARCH_CAP == 105
-        assert N_SEARCH_CAP == len(ALL_BUTTON_FAMILIES) * len(LAYER_SWEEP) * len(ALPHA_GRID)
+    def test_n_search_cap_is_70(self):
+        assert N_SEARCH_CAP == 70
+        assert N_SEARCH_CAP == len(CONSERVATIVE_BUTTON_FAMILIES) * len(LAYER_SWEEP) * len(ALPHA_GRID)
 
     def test_k_stage0_is_3(self):
         assert K_STAGE0 == 3
 
-    def test_max_stage1_candidates_is_3(self):
-        assert MAX_STAGE1_CANDIDATES == 3
+    def test_max_stage1_candidates_is_2(self):
+        assert MAX_STAGE1_CANDIDATES == 2
 
 
 # ═══════════════════════════════════════════════════════════════════════════ #
@@ -1320,6 +1410,7 @@ class TestBrierRealPairsGPUPath:
             authored_prompts=authored,
             hidden_dim=16,
             raw_store_path=raw_path,
+            prederived_directions_by_layer=_fake_real_directions_by_layer(16),
         )
         assert raw_path.exists()
         store = BrierRawStore(raw_path)
@@ -1376,6 +1467,7 @@ class TestBrierRealPairsGPUPath:
             authored_prompts=authored,
             hidden_dim=16,
             raw_store_path=raw_path,
+            prederived_directions_by_layer=_fake_real_directions_by_layer(16),
         )
         # If any Stage 1 results exist, they should use real pairs
         for r in verdict_obj.stage1_results:
@@ -1808,6 +1900,7 @@ class TestN01SteeredHFTextCapableSampler:
             authored_prompts=authored,
             hidden_dim=16,
             raw_store_path=raw_path,
+            prederived_directions_by_layer=_fake_real_directions_by_layer(16),
         )
         assert raw_path.exists(), "N-01: raw_store_path should be written by HF run"
         store = BrierRawStore(raw_path)
@@ -1837,6 +1930,7 @@ class TestN01SteeredHFTextCapableSampler:
             authored_prompts=authored,
             hidden_dim=16,
             raw_store_path=raw_path,
+            prederived_directions_by_layer=_fake_real_directions_by_layer(16),
         )
         store = BrierRawStore(raw_path)
         all_pairs = store.load_all()
@@ -1863,11 +1957,35 @@ class TestN01SteeredHFTextCapableSampler:
             authored_prompts=authored,
             hidden_dim=16,
             raw_store_path=raw_path,
+            prederived_directions_by_layer=_fake_real_directions_by_layer(16),
         )
         for r in verdict_obj.stage1_results:
             assert r.is_brier_from_real_pairs, (
                 "N-01: Stage 1 with SteeredHFTextCapableSampler must use real pairs "
                 f"(is_brier_from_real_pairs=False for candidate {r.candidate.button_family})"
+            )
+
+    def test_hf_harness_rejects_synthetic_direction_provenance(self, tmp_path):
+        """REAL-NOT-SMOKE: hf/TextCapable path rejects synthetic/random directions."""
+        from cognitive_console.experiments.e0012_steer_hf import SteeredHFTextCapableSampler
+        items = _make_items(8)
+        fake = _make_fake_hf_backend("Answer: Paris. Confidence: 80%.")
+        sampler = SteeredHFTextCapableSampler(fake)
+        dev_items, test_items = split_e0012_pool(items, split_seed=42)
+        authored = _make_authored(2)
+        synthetic_dirs = {
+            layer: all_directions_for_layer(layer, 16, families=CONSERVATIVE_BUTTON_FAMILIES)
+            for layer in LAYER_SWEEP
+        }
+        with pytest.raises(RuntimeError, match="REAL-NOT-SMOKE"):
+            run_e0012_harness(
+                sampler=sampler,
+                dev_items=dev_items,
+                test_items=test_items,
+                authored_prompts=authored,
+                hidden_dim=16,
+                raw_store_path=tmp_path / "raw.jsonl",
+                prederived_directions_by_layer=synthetic_dirs,
             )
 
     def test_sample_with_texts_returns_k_texts(self):
@@ -2205,12 +2323,17 @@ class TestRunnerWiring:
                                 lambda items, split_seed=42: (items[:4], items[4:]))
             monkeypatch.setattr(runner, "load_authored_prompts",
                                 lambda data_root=None: [("P0", "Be calibrated.")])
+            monkeypatch.setattr(runner, "load_triviaqa_train_for_probe",
+                                lambda n=200, seed=42: _make_probe_train_items(n))
+            monkeypatch.setattr(runner, "load_e0006_dev_baseline_scores",
+                                lambda path: _make_e0006_dev_items())
             monkeypatch.setattr(runner, "run_ape", lambda **kw: _mock_ape)
             monkeypatch.setattr(runner, "run_e0012_harness", lambda **kw: _mock_verdict)
 
             args = argparse.Namespace(
                 backend="hf", output_dir=str(tmp_path), seed=42,
                 model=None, n_items=None, stage0_only=False,
+                e0006_dev_baseline_jsonl=str(tmp_path / "e0006.jsonl"),
             )
             runner.cmd_run(args)
 
@@ -2340,12 +2463,17 @@ class TestRunnerWiring:
                                 lambda items, split_seed=42: (items[:4], items[4:]))
             monkeypatch.setattr(runner, "load_authored_prompts",
                                 lambda data_root=None: [("P0", "Be calibrated.")])
+            monkeypatch.setattr(runner, "load_triviaqa_train_for_probe",
+                                lambda n=200, seed=42: _make_probe_train_items(n))
+            monkeypatch.setattr(runner, "load_e0006_dev_baseline_scores",
+                                lambda path: _make_e0006_dev_items())
             monkeypatch.setattr(runner, "run_ape", lambda **kw: _mock_ape)
             monkeypatch.setattr(runner, "run_e0012_harness", lambda **kw: _mock_verdict)
 
             args = argparse.Namespace(
                 backend="hf", output_dir=str(tmp_path), seed=42,
                 model=None, n_items=None, stage0_only=False,
+                e0006_dev_baseline_jsonl=str(tmp_path / "e0006.jsonl"),
             )
             runner.cmd_run(args)
 

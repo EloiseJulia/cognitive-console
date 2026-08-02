@@ -35,10 +35,15 @@ runs offline. The GPU path must call the real activation provider.
 from __future__ import annotations
 
 import hashlib
+import json
+import os
+import subprocess
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
+
+from cognitive_console.steering.extract import mean_difference_vector
 
 # --------------------------------------------------------------------------- #
 # Button family identifiers (frozen)
@@ -48,6 +53,7 @@ BTN_LOGIT_MARGIN = "BTN-CAL-LOGIT-MARGIN"
 BTN_CONTRA = "BTN-CAL-CONTRA-REEXTRACT"
 
 ALL_BUTTON_FAMILIES: Tuple[str, ...] = (BTN_PROBE, BTN_LOGIT_MARGIN, BTN_CONTRA)
+CONSERVATIVE_BUTTON_FAMILIES: Tuple[str, ...] = (BTN_PROBE, BTN_CONTRA)
 
 # Pre-registered constants for BTN-CAL-PROBE synthetic pair construction (§3-B-1)
 PROBE_SYNTHETIC_SEED: int = 42
@@ -69,12 +75,20 @@ class ButtonDirection:
     direction: np.ndarray  # unit-norm vector in hidden-state space
     derivation_hash: str  # SHA-256 hex of derivation parameters (reproducibility)
     notes: str = ""
+    provenance: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         norm = float(np.linalg.norm(self.direction))
         if norm < 1e-12:
             raise ValueError(f"ButtonDirection {self.family} has near-zero direction vector")
         self.direction = self.direction / norm  # ensure unit norm
+        self.provenance = dict(self.provenance or {})
+        self.provenance.setdefault("family", self.family)
+        self.provenance.setdefault("layer", int(self.layer))
+        self.provenance.setdefault("hidden_dim", int(self.direction.shape[0]))
+        self.provenance.setdefault("vector_norm", float(np.linalg.norm(self.direction)))
+        self.provenance.setdefault("derivation_hash", self.derivation_hash)
+        self.provenance.setdefault("notes", self.notes)
 
     @property
     def is_unit(self) -> bool:
@@ -83,8 +97,76 @@ class ButtonDirection:
 
 def _derivation_hash(*args) -> str:
     """Stable SHA-256 fingerprint of derivation parameters."""
-    key = "|".join(str(a) for a in args)
+    key = "|".join(
+        json.dumps(a, sort_keys=True, default=str) if isinstance(a, (dict, list, tuple))
+        else str(a)
+        for a in args
+    )
     return hashlib.sha256(key.encode("utf-8")).hexdigest()[:16]
+
+
+def _git_commit() -> str:
+    """Best-effort current git commit for provenance."""
+    env = os.environ.get("COGNITIVE_CONSOLE_CODE_COMMIT")
+    if env:
+        return env
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except Exception:
+        return "UNKNOWN"
+
+
+def _provider_provenance(activation_provider) -> Dict[str, Any]:
+    return {
+        "model": str(getattr(activation_provider, "model_name", "UNKNOWN")),
+        "dtype": str(getattr(activation_provider, "dtype", "UNKNOWN")),
+        "device": str(getattr(activation_provider, "device", "UNKNOWN")),
+        "activation_provider": type(activation_provider).__name__,
+    }
+
+
+def direction_provenance_records(
+    directions_by_layer: Dict[int, Sequence[ButtonDirection]],
+) -> List[Dict[str, Any]]:
+    """Flatten direction provenance records for artifact persistence."""
+    records: List[Dict[str, Any]] = []
+    for layer in sorted(directions_by_layer):
+        for bd in directions_by_layer[layer]:
+            rec = dict(bd.provenance or {})
+            rec.setdefault("family", bd.family)
+            rec.setdefault("layer", int(bd.layer))
+            rec.setdefault("method", "UNKNOWN")
+            rec.setdefault("derivation_hash", bd.derivation_hash)
+            rec.setdefault("hidden_dim", int(bd.direction.shape[0]))
+            rec.setdefault("vector_norm", float(np.linalg.norm(bd.direction)))
+            records.append(rec)
+    return records
+
+
+def assert_real_direction_provenance(
+    directions_by_layer: Dict[int, Sequence[ButtonDirection]],
+) -> None:
+    """Hard-fail if any HF-path direction is synthetic/random/non-real."""
+    bad: List[str] = []
+    for rec in direction_provenance_records(directions_by_layer):
+        haystack = " ".join(
+            str(rec.get(k, ""))
+            for k in ("method", "source", "source_split", "derivation_function")
+        )
+        low = haystack.lower()
+        if "synthetic" in low or "random" in low:
+            bad.append(f"{rec.get('family')}@L{rec.get('layer')} method={rec.get('method')}")
+        if str(rec.get("method", "")).lower() not in {"real_probe", "real_caa_mean_diff"}:
+            bad.append(f"{rec.get('family')}@L{rec.get('layer')} method={rec.get('method')}")
+    if bad:
+        raise RuntimeError(
+            "REAL-NOT-SMOKE hard-fail: hf backend received non-real button "
+            "directions: " + "; ".join(sorted(set(bad)))
+        )
 
 
 # --------------------------------------------------------------------------- #
@@ -142,6 +224,18 @@ def build_probe_synthetic_pairs(
     return texts, labels
 
 
+def _probe_selected_item_ids(
+    triviaqa_train_items: Sequence[Dict],
+    seed: int = PROBE_SYNTHETIC_SEED,
+    n_high: int = PROBE_N_HIGH,
+    n_low: int = PROBE_N_LOW,
+) -> List[str]:
+    items = list(triviaqa_train_items)
+    rng = np.random.default_rng(seed)
+    idx = rng.permutation(len(items))[: n_high + n_low].tolist()
+    return [str(items[i].get("id", "")) for i in idx]
+
+
 def derive_probe_direction_synthetic(
     layer: int,
     hidden_dim: int,
@@ -165,6 +259,12 @@ def derive_probe_direction_synthetic(
             "SYNTHETIC (offline): random unit vector used as stand-in for real "
             "probe direction. Real GPU path trains logistic probe on §3-B-1 pairs."
         ),
+        provenance={
+            "method": "synthetic_random_probe",
+            "source_split": "offline_synthetic",
+            "derivation_function": "derive_probe_direction_synthetic",
+            "code_commit": _git_commit(),
+        },
     )
 
 
@@ -181,31 +281,59 @@ def derive_probe_direction_real(
     Trains a logistic probe on synthetic pair activations at ``layer``.
     ``activation_provider`` must expose ``get_activations(texts, layer) -> np.ndarray``.
     """
-    try:
-        from sklearn.linear_model import LogisticRegression  # noqa: PLC0415
-    except ImportError as exc:
-        raise NotImplementedError(
-            "derive_probe_direction_real needs scikit-learn. "
-            "Install: pip install scikit-learn"
-        ) from exc
     texts, labels = build_probe_synthetic_pairs(
         triviaqa_train_items, seed=seed, n_high=n_high, n_low=n_low
     )
     acts = activation_provider.get_activations(texts, layer)  # [N, hidden_dim]
-    clf = LogisticRegression(max_iter=200, random_state=seed)
-    clf.fit(acts, labels)
-    direction = clf.coef_[0]
+    x = np.asarray(acts, dtype=np.float64)
+    y = np.asarray(labels, dtype=np.float64)
+    mu = x.mean(axis=0)
+    sigma = x.std(axis=0)
+    sigma[sigma < 1e-8] = 1.0
+    xs = (x - mu) / sigma
+    w = np.zeros(xs.shape[1], dtype=np.float64)
+    b = 0.0
+    lr = 0.2
+    l2 = 1e-4
+    for _ in range(800):
+        logits = np.clip(xs @ w + b, -40.0, 40.0)
+        p = 1.0 / (1.0 + np.exp(-logits))
+        err = p - y
+        w -= lr * ((xs.T @ err) / len(y) + l2 * w)
+        b -= lr * float(err.mean())
+    direction = w / sigma
+    source_ids = _probe_selected_item_ids(triviaqa_train_items, seed, n_high, n_low)
+    deriv_hash = _derivation_hash(
+        BTN_PROBE,
+        layer,
+        list(acts.shape),
+        seed,
+        n_high,
+        n_low,
+        source_ids,
+        _provider_provenance(activation_provider),
+    )
     return ButtonDirection(
         family=BTN_PROBE,
         layer=layer,
         direction=direction,
-        derivation_hash=_derivation_hash(
-            BTN_PROBE, layer, acts.shape, seed, n_high, n_low
-        ),
+        derivation_hash=deriv_hash,
         notes=(
             "Real GPU probe direction: logistic regression on "
             f"{n_high} high-conf + {n_low} low-conf synthetic pairs at layer={layer}."
         ),
+        provenance={
+            "method": "real_probe",
+            "source_split": "TriviaQA-train",
+            "source_item_ids": source_ids,
+            "n_high": int(n_high),
+            "n_low": int(n_low),
+            "seed": int(seed),
+            "label_semantics": "verbalized confidence 0.9 vs 0.1 only",
+            "derivation_function": "derive_probe_direction_real",
+            "code_commit": _git_commit(),
+            **_provider_provenance(activation_provider),
+        },
     )
 
 
@@ -234,6 +362,12 @@ def derive_logit_margin_direction_synthetic(
             "SYNTHETIC (offline): random unit vector. Real GPU path: PCA of "
             "Δlogit-margin activation matrix at the target layer."
         ),
+        provenance={
+            "method": "synthetic_random_logit_margin",
+            "source_split": "offline_synthetic",
+            "derivation_function": "derive_logit_margin_direction_synthetic",
+            "code_commit": _git_commit(),
+        },
     )
 
 
@@ -329,6 +463,12 @@ def derive_contra_direction_synthetic(
             "mean-diff of activations from pre-selected top-40/bottom-40 E-0006 "
             "DEV pairs at layer={layer}."
         ),
+        provenance={
+            "method": "synthetic_random_contra",
+            "source_split": "offline_synthetic",
+            "derivation_function": "derive_contra_direction_synthetic",
+            "code_commit": _git_commit(),
+        },
     )
 
 
@@ -350,19 +490,65 @@ def derive_contra_direction_real(
     neg_texts = [str(it.get("prompt", "")) for it in negatives]
     pos_acts = activation_provider.get_activations(pos_texts, layer)
     neg_acts = activation_provider.get_activations(neg_texts, layer)
-    direction = pos_acts.mean(axis=0) - neg_acts.mean(axis=0)
+    direction = mean_difference_vector(pos_acts, neg_acts)
+    pos_ids = [str(it.get("id", "")) for it in positives]
+    neg_ids = [str(it.get("id", "")) for it in negatives]
+    deriv_hash = _derivation_hash(
+        BTN_CONTRA,
+        layer,
+        pos_ids,
+        neg_ids,
+        [float(it.get("baseline_score", 0.0)) for it in positives + negatives],
+        _provider_provenance(activation_provider),
+    )
     return ButtonDirection(
         family=BTN_CONTRA,
         layer=layer,
         direction=direction,
-        derivation_hash=_derivation_hash(
-            BTN_CONTRA, layer, len(positives), len(negatives)
-        ),
+        derivation_hash=deriv_hash,
         notes=(
             f"Real GPU CAA mean-diff: {len(positives)} positive − {len(negatives)} "
             f"negative pairs from E-0006 DEV at layer={layer}."
         ),
+        provenance={
+            "method": "real_caa_mean_diff",
+            "source_split": "E-0006 DEV baseline-scored calibration items",
+            "positive_item_ids": pos_ids,
+            "negative_item_ids": neg_ids,
+            "n_positive": len(positives),
+            "n_negative": len(negatives),
+            "fallback_top_half_bottom_half": len(e0006_dev_items) < (n_positive + n_negative),
+            "baseline_score_field": "baseline_score = unsteered baseline mean(1-Brier), k=5",
+            "derivation_function": "derive_contra_direction_real",
+            "code_commit": _git_commit(),
+            **_provider_provenance(activation_provider),
+        },
     )
+
+
+def all_real_directions_for_layer(
+    layer: int,
+    activation_provider,
+    triviaqa_train_items: Sequence[Dict],
+    e0006_dev_items: Sequence[Dict],
+    families: Sequence[str] = CONSERVATIVE_BUTTON_FAMILIES,
+) -> List[ButtonDirection]:
+    """Derive the A-lite real E-0012 directions for one layer."""
+    directions: List[ButtonDirection] = []
+    for fam in families:
+        if fam == BTN_PROBE:
+            directions.append(
+                derive_probe_direction_real(layer, activation_provider, triviaqa_train_items)
+            )
+        elif fam == BTN_CONTRA:
+            directions.append(
+                derive_contra_direction_real(layer, activation_provider, e0006_dev_items)
+            )
+        else:
+            raise ValueError(
+                f"{fam!r} is not in the owner-approved A-lite real-direction family set"
+            )
+    return directions
 
 
 # --------------------------------------------------------------------------- #

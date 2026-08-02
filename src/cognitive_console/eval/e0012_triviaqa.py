@@ -112,6 +112,71 @@ def load_e0012_triviaqa_real(data_root: Optional[Path] = None) -> List[Dict[str,
     return items
 
 
+def load_triviaqa_train_for_probe(
+    n: int = 200,
+    seed: int = 42,
+) -> List[Dict[str, Any]]:
+    """Load deterministic TriviaQA-train items for BTN-CAL-PROBE derivation."""
+    try:
+        import datasets  # noqa: PLC0415
+    except ImportError as exc:
+        raise NotImplementedError(
+            "load_triviaqa_train_for_probe needs the 'datasets' package + network (A800)."
+        ) from exc
+    import numpy as np  # noqa: PLC0415
+
+    from cognitive_console.eval.c2b_tasks import parse_uncertainty_rows
+
+    ds = datasets.load_dataset("mandarjoshi/trivia_qa", "rc.nocontext", split="train")
+    items = parse_uncertainty_rows(ds)
+    items = [{**it, "id": f"triviaqa-train-{i:05d}"} for i, it in enumerate(items)]
+    if len(items) < n:
+        raise ValueError(f"TriviaQA-train has {len(items)} parsed items; need {n}")
+    rng = np.random.default_rng(seed)
+    idx = sorted(rng.permutation(len(items))[:n].tolist())
+    return [items[i] for i in idx]
+
+
+def load_e0006_dev_baseline_scores(path: Path) -> List[Dict[str, Any]]:
+    """Load E-0006 DEV calibration items with frozen unsteered baseline scores.
+
+    The required JSONL schema is one record per E-0006 DEV calibration item:
+    ``id``, ``prompt``, ``answer``, optional ``aliases``, and ``baseline_score``
+    where ``baseline_score`` is mean(1-Brier) over k=5 unsteered baseline
+    samples from the E-0006 DEV run.  Cardinality follows the prereg literally:
+    E-0006 DEV, not all 80 scored calibration items; if fewer than 80 are present,
+    BTN-CAL-CONTRA-REEXTRACT uses the frozen top-half/bottom-half fallback.
+    """
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(
+            f"E-0006 DEV baseline-score JSONL not found: {path}. "
+            "Provide --e0006-dev-baseline-jsonl with one DEV item per line and "
+            "baseline_score=unsteered mean(1-Brier), k=5."
+        )
+    items: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    with open(path, "r", encoding="utf-8") as fh:
+        for lineno, line in enumerate(fh, 1):
+            line = line.strip()
+            if not line:
+                continue
+            row = json.loads(line)
+            missing = {"id", "prompt", "answer", "baseline_score"} - set(row)
+            if missing:
+                raise ValueError(f"{path}:{lineno} missing required fields: {sorted(missing)}")
+            item_id = str(row["id"])
+            if item_id in seen:
+                raise ValueError(f"{path}:{lineno} duplicate id: {item_id!r}")
+            seen.add(item_id)
+            row["baseline_score"] = float(row["baseline_score"])
+            row.setdefault("aliases", [])
+            items.append(row)
+    if not items:
+        raise ValueError(f"{path} contains no E-0006 DEV baseline-scored items")
+    return items
+
+
 def save_fixture(items: List[Dict[str, Any]], data_root: Optional[Path] = None) -> Path:
     """Write items to the fixture file for offline reuse."""
     path = fixture_path(data_root)

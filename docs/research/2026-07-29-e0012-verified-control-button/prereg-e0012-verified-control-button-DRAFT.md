@@ -476,3 +476,21 @@ Revisions responding to pre-run critic review (`reviews/2026-07-29-e0012-prerun/
 ### F-06 (MAJOR) — Cross-axis non-degradation added to pass/fail ✓
 **Location:** §9.4 (rewritten) + §8 BUTTON_FOUND_BUT_UNSAFE condition.
 **Closure:** δ_cross_fail = −0.10 (2×δ_primary) triggers BUTTON_FOUND_BUT_UNSAFE on any tested non-calibration axis, overriding VERIFIED-CONTROL. δ_cross_warn = −0.05 reported but does not affect verdict. Cross-axis check uses DEV items from deliberation/skepticism axes at k=3 (side-effect measurement, does not consume Stage 1 TEST items). BUTTON_FOUND_BUT_UNSAFE is TERMINAL (no upgrade path within E-0012). Consistent with console-safety framing: a "verified control" that harms other axes cannot be deployed as a safe console control.
+
+---
+
+## 2026-08-01 Amendment (owner-approved, D-0068): A-lite real-direction scope reduction
+
+Status: **DRAFT addendum only**; Manager must fill `<MANAGER_TO_FILL_RUN_COMMIT>` and freeze if/when adopted.
+
+- **BTN-CAL-LOGIT-MARGIN dropped from the conservative E-0012 rerun** because its real derivation is underspecified relative to the current activation/logit APIs and carries the highest protocol-drift risk.
+- **Conservative family set is now exactly `{BTN-CAL-PROBE, BTN-CAL-CONTRA-REEXTRACT}`**.
+- **Stage 0 grid changes from 105 to 70 combinations**: 2 families × 5 layers `{18,19,20,21,22}` × 7 α values `{2,4,6,8,12,16,24}`.
+- **Stage 1 advances ≤2 candidates with family diversity**; Bonferroni uses dynamic `M = number advancing` as already specified for Stage 1.
+- **Real direction derivations are implemented per §3-B**:
+  - `BTN-CAL-PROBE`: logistic probe direction from 100 high-confidence + 100 low-confidence rule-generated TriviaQA-train verbal-confidence pairs, seed=42.
+  - `BTN-CAL-CONTRA-REEXTRACT`: CAA mean difference between top vs bottom E-0006 DEV baseline-scored calibration items, with the existing §3-B-2 top-half/bottom-half fallback when E-0006 DEV has fewer than 80 items.
+- **Real-not-smoke hard guard added**: HF/backend runs must carry real direction provenance and raise if any button direction is synthetic/random or lacks a real derivation label. A `direction_provenance.json` artifact is persisted.
+- **All other frozen parameters remain unchanged**, including TriviaQA Option A pool (`pool_seed=12`, `offset=500`, `split_seed=42`, 27 DEV/53 TEST), APE procedure, kill rule symmetry, §9.1/§9.2/§9.4 guards, coherence gate, §8 verdict mapping, and the adjudicator math.
+
+Run commit: `<MANAGER_TO_FILL_RUN_COMMIT>`.

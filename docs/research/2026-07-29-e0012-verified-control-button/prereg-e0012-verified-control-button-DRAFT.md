@@ -481,7 +481,7 @@ Revisions responding to pre-run critic review (`reviews/2026-07-29-e0012-prerun/
 
 ## 2026-08-01 Amendment (owner-approved, D-0068): A-lite real-direction scope reduction
 
-Status: **DRAFT addendum only**; Manager must fill `<MANAGER_TO_FILL_RUN_COMMIT>` and freeze if/when adopted.
+Status: **FROZEN (D-0069, 2026-08-01)** — Manager-adopted; run commit pinned below. Owner-approved scope reduction (D-0068).
 
 - **BTN-CAL-LOGIT-MARGIN dropped from the conservative E-0012 rerun** because its real derivation is underspecified relative to the current activation/logit APIs and carries the highest protocol-drift risk.
 - **Conservative family set is now exactly `{BTN-CAL-PROBE, BTN-CAL-CONTRA-REEXTRACT}`**.
@@ -494,4 +494,6 @@ Status: **DRAFT addendum only**; Manager must fill `<MANAGER_TO_FILL_RUN_COMMIT>
 - **Real-not-smoke hard guard added**: HF/backend runs must derive fresh directions (no prederived direction injection), carry real direction provenance, persist `vector_sha256`, `source_artifact_sha256`, and method hyperparameters, and raise if any button direction is synthetic/random or lacks real provenance. A `direction_provenance.json` artifact is persisted.
 - **All other frozen parameters remain unchanged**, including TriviaQA Option A pool (`pool_seed=12`, `offset=500`, `split_seed=42`, 27 DEV/53 TEST), APE procedure, kill rule symmetry, §9.1/§9.2/§9.4 guards, coherence gate, §8 verdict mapping, and the adjudicator math.
 
-Run commit: `<MANAGER_TO_FILL_RUN_COMMIT>`.
+- **E-0006 baseline generation identity FROZEN** to E-0006's own regime: model Qwen/Qwen2.5-7B-Instruct, `max_new_tokens=64`, `temperature=0.7`, `seed=20260723` (the builder enforces these as a frozen contract and the CONTRA loader RAISES if the manifest identity differs; loader also requires per-row `raw_pairs` length k=5, all `synthetic_proxy=false`, and `baseline_score==mean(raw_pairs.one_minus_brier)`).
+
+Run commit: `0abd4a7` (main, post-merge of feature/e0012-real-directions; gated by two converged hostile code-audit rounds + Manager verify; zero drift to adjudicator/kill-rule/split/APE/§9/verdict). The GPU run executes at this code state (the freeze-doc commit pinning this line adds only prose; code byte-identical).

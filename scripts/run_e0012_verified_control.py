@@ -192,13 +192,12 @@ def cmd_run(args: argparse.Namespace) -> None:
             cache_dir=str(out_dir / "activation_cache"),
         )
         triviaqa_train_items = load_triviaqa_train_for_probe(n=200, seed=42)
-        e0006_path_arg = getattr(args, "e0006_dev_baseline_jsonl", None)
-        if not e0006_path_arg:
-            raise FileNotFoundError(
-                "hf backend requires --e0006-dev-baseline-jsonl (canonical all-80 artifact) for "
-                "BTN-CAL-CONTRA-REEXTRACT real CAA derivation."
-            )
-        e0006_dev_items = load_e0006_dev_baseline_scores(Path(e0006_path_arg))
+        e0006_path_arg = getattr(args, "e0006_dev_baseline_jsonl", None) or (
+            "data/e0006_uncertainty_baseline/e0006_uncertainty_baseline.jsonl"
+        )
+        e0006_dev_items = load_e0006_dev_baseline_scores(
+            Path(e0006_path_arg), validate_item_source=True
+        )
     if args.backend == "synthetic":
         activation_provider = None
         triviaqa_train_items = None
@@ -486,7 +485,9 @@ def main() -> None:
     parser.add_argument("--n-items", type=int, default=None,
                         help="Synthetic pool size (smoke only)")
     parser.add_argument("--e0006-dev-baseline-jsonl", default=None,
-                        help="HF only: canonical JSON artifact for all 80 E-0006 baseline-scored items")
+                        help=("HF only: canonical E-0006 all-80 unsteered-empty-prompt "
+                              "JSONL artifact (with .manifest.json sidecar); defaults to "
+                              "data/e0006_uncertainty_baseline/e0006_uncertainty_baseline.jsonl"))
     args = parser.parse_args()
 
     if args.generate_fixture:

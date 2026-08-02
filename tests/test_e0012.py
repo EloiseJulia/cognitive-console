@@ -28,6 +28,7 @@ Coverage:
 from __future__ import annotations
 
 import json
+import hashlib
 import math
 import os
 import tempfile
@@ -207,6 +208,39 @@ def _make_e0006_dev_items(n: int = 80) -> List[Dict[str, Any]]:
         sha = artifact["artifact_sha256"]
         rows = [{**row, "source_artifact_sha256": sha} for row in rows]
     return rows
+
+
+def _write_fake_e0006_baseline_jsonl(path: Path, rows: List[Dict[str, Any]]) -> None:
+    """Write a clearly test-only canonical JSONL+manifest fixture."""
+    text = "".join(
+        json.dumps({k: v for k, v in row.items() if k not in {"source_artifact_sha256"}}, sort_keys=True) + "\n"
+        for row in rows
+    )
+    path.write_text(text, encoding="utf-8")
+    sha = hashlib.sha256(path.read_bytes()).hexdigest()
+    manifest = {
+        "schema_version": "e0006-uncertainty-baseline-v1",
+        "lineage": {
+            "source_experiment_id": "e0006-test-fixture",
+            "source_run_commit": "test-only",
+            "source_axis": "uncertainty_awareness",
+            "source_item_loader": "scripts.run_c2b_adjudication.load_axis_items(TEST_FIXTURE_NOT_HF_VALIDATED)",
+            "source_split": "full_frozen_80_calibration_items",
+            "condition": "unsteered_empty_prompt",
+            "k": 5,
+            "synthetic_proxy": False,
+            "item_count": 80,
+            "model": "test-model",
+            "dtype": "float32",
+            "device": "cpu",
+            "code_commit": "test",
+        },
+        "item_ids": [str(row["id"]) for row in rows],
+        "artifact_sha256": sha,
+    }
+    path.with_name(path.stem + ".manifest.json").write_text(
+        json.dumps(manifest, sort_keys=True), encoding="utf-8"
+    )
 
 
 def _fake_real_directions_by_layer(hidden_dim: int = 16):
@@ -1166,23 +1200,41 @@ class TestE0012TriviaQALoader:
 
     def test_canonical_e0006_baseline_loader_validates_lineage(self, tmp_path):
         rows = _make_e0006_dev_items()
-        artifact = make_e0006_baseline_artifact(
-            source_experiment_id="e0006-real",
-            source_run_commit="d20cced",
-            items=[{k: v for k, v in row.items() if k != "source_artifact_sha256"} for row in rows],
-        )
-        path = tmp_path / "e0006_baseline.json"
-        path.write_text(json.dumps(artifact), encoding="utf-8")
+        path = tmp_path / "e0006_uncertainty_baseline.jsonl"
+        _write_fake_e0006_baseline_jsonl(path, rows)
         loaded = load_e0006_dev_baseline_scores(path)
         assert len(loaded) == 80
-        assert all(it["canonical_artifact_sha256"] == artifact["artifact_sha256"] for it in loaded)
         assert all(it["source_artifact_sha256"] for it in loaded)
+        assert loaded[0]["source_experiment_id"] == "e0006-test-fixture"
 
     def test_canonical_e0006_baseline_loader_rejects_missing_lineage(self, tmp_path):
-        path = tmp_path / "bad_e0006_baseline.json"
-        path.write_text(json.dumps({"items": _make_e0006_dev_items()}), encoding="utf-8")
-        with pytest.raises(ValueError, match="schema_version"):
+        path = tmp_path / "bad_e0006_baseline.jsonl"
+        path.write_text(json.dumps(_make_e0006_dev_items()[0]), encoding="utf-8")
+        with pytest.raises(FileNotFoundError, match="sidecar manifest"):
             load_e0006_dev_baseline_scores(path)
+
+    def test_canonical_e0006_baseline_loader_rejects_bad_sha(self, tmp_path):
+        path = tmp_path / "e0006_uncertainty_baseline.jsonl"
+        _write_fake_e0006_baseline_jsonl(path, _make_e0006_dev_items())
+        manifest_path = path.with_name(path.stem + ".manifest.json")
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest["artifact_sha256"] = "0" * 64
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        with pytest.raises(ValueError, match="sha mismatch"):
+            load_e0006_dev_baseline_scores(path)
+
+    def test_canonical_e0006_baseline_loader_rejects_wrong_frozen_pool_ids(self, tmp_path, monkeypatch):
+        import cognitive_console.eval.e0012_triviaqa as e0012_triviaqa
+
+        path = tmp_path / "e0006_uncertainty_baseline.jsonl"
+        _write_fake_e0006_baseline_jsonl(path, _make_e0006_dev_items())
+        monkeypatch.setattr(
+            e0012_triviaqa,
+            "_expected_e0006_uncertainty_item_ids",
+            lambda: [f"other-{i:04d}" for i in range(80)],
+        )
+        with pytest.raises(ValueError, match="frozen E-0006 uncertainty pool"):
+            load_e0006_dev_baseline_scores(path, validate_item_source=True)
 
 
 # ═══════════════════════════════════════════════════════════════════════════ #
@@ -2385,7 +2437,7 @@ class TestRunnerWiring:
             monkeypatch.setattr(runner, "load_triviaqa_train_for_probe",
                                 lambda n=200, seed=42: _make_probe_train_items(n))
             monkeypatch.setattr(runner, "load_e0006_dev_baseline_scores",
-                                lambda path: _make_e0006_dev_items())
+                                lambda path, **kwargs: _make_e0006_dev_items())
             monkeypatch.setattr(runner, "run_ape", lambda **kw: _mock_ape)
             monkeypatch.setattr(runner, "run_e0012_harness", lambda **kw: _mock_verdict)
 
@@ -2525,7 +2577,7 @@ class TestRunnerWiring:
             monkeypatch.setattr(runner, "load_triviaqa_train_for_probe",
                                 lambda n=200, seed=42: _make_probe_train_items(n))
             monkeypatch.setattr(runner, "load_e0006_dev_baseline_scores",
-                                lambda path: _make_e0006_dev_items())
+                                lambda path, **kwargs: _make_e0006_dev_items())
             monkeypatch.setattr(runner, "run_ape", lambda **kw: _mock_ape)
             monkeypatch.setattr(runner, "run_e0012_harness", lambda **kw: _mock_verdict)
 

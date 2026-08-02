@@ -32,6 +32,7 @@ E0012_SPLIT_SEED: int = 42         # DEV/TEST split seed
 E0012_POOL_ID: str = "e0012-triviaqa-v1"
 E0006_BASELINE_ITEM_COUNT: int = 80
 E0006_BASELINE_SCHEMA_VERSION: str = "e0006-uncertainty-baseline-v1"
+E0006_BASELINE_CONDITION: str = "unsteered_empty_prompt"
 
 
 def default_data_root() -> Path:
@@ -159,7 +160,7 @@ def make_e0006_baseline_artifact(
     source_run_commit: str,
     items: List[Dict[str, Any]],
     source_split: str = "E-0006 uncertainty_awareness all-80",
-    condition: str = "unsteered",
+    condition: str = E0006_BASELINE_CONDITION,
     k: int = 5,
     synthetic_proxy: bool = False,
 ) -> Dict[str, Any]:
@@ -211,8 +212,8 @@ def validate_e0006_baseline_artifact(payload: Dict[str, Any]) -> str:
         raise ValueError(f"E-0006 baseline artifact lineage missing: {sorted(missing)}")
     if lineage["source_axis"] != "uncertainty_awareness":
         raise ValueError("E-0006 baseline artifact must be uncertainty_awareness")
-    if lineage["condition"] != "unsteered":
-        raise ValueError("E-0006 baseline artifact condition must be unsteered")
+    if lineage["condition"] != E0006_BASELINE_CONDITION:
+        raise ValueError(f"E-0006 baseline artifact condition must be {E0006_BASELINE_CONDITION}")
     if int(lineage["k"]) != 5:
         raise ValueError("E-0006 baseline artifact must have k=5")
     if bool(lineage["synthetic_proxy"]):
@@ -241,13 +242,31 @@ def validate_e0006_baseline_artifact(payload: Dict[str, Any]) -> str:
     return actual_hash
 
 
-def load_e0006_dev_baseline_scores(path: Path) -> List[Dict[str, Any]]:
-    """Load canonical all-80 E-0006 baseline-scored calibration artifact.
+def _expected_e0006_uncertainty_item_ids() -> List[str]:
+    """Return the frozen E-0006 uncertainty item ids via the audited C2b loader."""
+    import importlib
+
+    runner = importlib.import_module("scripts.run_c2b_adjudication")
+    items = runner.load_axis_items("uncertainty_awareness", use_fixture=False, n_items=None)
+    if len(items) != E0006_BASELINE_ITEM_COUNT:
+        raise ValueError(
+            "Frozen E-0006 uncertainty loader returned "
+            f"{len(items)} items; expected {E0006_BASELINE_ITEM_COUNT}"
+        )
+    return [str(item.get("id")) for item in items]
+
+
+def load_e0006_dev_baseline_scores(
+    path: Path,
+    *,
+    validate_item_source: bool = False,
+) -> List[Dict[str, Any]]:
+    """Load canonical all-80 E-0006 baseline-scored calibration JSONL artifact.
 
     Despite the historical function name, this now follows Manager D-0068:
     rank the FULL E-0006 uncertainty_awareness set (80 items), not the DEV split.
-    The artifact must carry lineage, condition=unsteered, k=5, synthetic_proxy=false,
-    exactly 80 item ids, and a valid canonical artifact hash.
+    The JSONL sidecar manifest must carry lineage, condition=unsteered_empty_prompt,
+    k=5, synthetic_proxy=false, exactly 80 item ids, and a matching file sha256.
     """
     path = Path(path)
     if not path.exists():
@@ -255,21 +274,98 @@ def load_e0006_dev_baseline_scores(path: Path) -> List[Dict[str, Any]]:
             f"E-0006 baseline-score artifact not found: {path}. "
             "Build/provide the canonical all-80 real E-0006 unsteered k=5 artifact."
         )
+    if path.suffix.lower() != ".jsonl":
+        if validate_item_source:
+            raise ValueError("HF E-0012 runs require canonical E-0006 JSONL + manifest artifact")
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        artifact_sha = validate_e0006_baseline_artifact(payload)
+        items = []
+        for row in payload["items"]:
+            item = dict(row)
+            item["baseline_score"] = float(item["baseline_score"])
+            item.setdefault("aliases", [])
+            item["source_artifact_sha256"] = artifact_sha
+            item["canonical_artifact_sha256"] = artifact_sha
+            item["source_experiment_id"] = payload["lineage"]["source_experiment_id"]
+            item["source_run_commit"] = payload["lineage"]["source_run_commit"]
+            items.append(item)
+        return items
+
+    manifest_path = path.with_name(path.stem + ".manifest.json")
+    if not manifest_path.exists():
+        raise FileNotFoundError(f"E-0006 baseline sidecar manifest not found: {manifest_path}")
     raw_bytes = path.read_bytes()
-    payload = json.loads(raw_bytes.decode("utf-8"))
-    artifact_sha = validate_e0006_baseline_artifact(payload)
     file_sha = hashlib.sha256(raw_bytes).hexdigest()
-    items = []
-    for row in payload["items"]:
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("schema_version") != E0006_BASELINE_SCHEMA_VERSION:
+        raise ValueError("E-0006 baseline manifest has wrong or missing schema_version")
+    lineage = manifest.get("lineage")
+    if not isinstance(lineage, dict):
+        raise ValueError("E-0006 baseline manifest missing lineage")
+    required = {
+        "source_experiment_id", "source_run_commit", "source_axis", "source_item_loader",
+        "source_split", "condition", "k", "synthetic_proxy", "item_count",
+        "model", "dtype", "device", "code_commit",
+    }
+    missing = required - set(lineage)
+    if missing:
+        raise ValueError(f"E-0006 baseline manifest lineage missing: {sorted(missing)}")
+    if lineage["source_axis"] != "uncertainty_awareness":
+        raise ValueError("E-0006 baseline source_axis must be uncertainty_awareness")
+    if lineage["condition"] != E0006_BASELINE_CONDITION:
+        raise ValueError(f"E-0006 baseline condition must be {E0006_BASELINE_CONDITION}")
+    if int(lineage["k"]) != 5:
+        raise ValueError("E-0006 baseline k must be 5")
+    if bool(lineage["synthetic_proxy"]):
+        raise ValueError("E-0006 baseline must be real-model synthetic_proxy=false")
+    if int(lineage["item_count"]) != E0006_BASELINE_ITEM_COUNT:
+        raise ValueError("E-0006 baseline item_count must be 80")
+    if manifest.get("artifact_sha256") != file_sha:
+        raise ValueError(
+            f"E-0006 baseline artifact sha mismatch: manifest={manifest.get('artifact_sha256')!r} "
+            f"computed={file_sha!r}"
+        )
+    rows: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for lineno, line in enumerate(raw_bytes.decode("utf-8").splitlines(), 1):
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        missing_item = {"item_index", "id", "prompt", "answer", "baseline_score"} - set(row)
+        if missing_item:
+            raise ValueError(f"{path}:{lineno} missing item fields: {sorted(missing_item)}")
         item = dict(row)
+        if int(item["item_index"]) != len(rows):
+            raise ValueError(f"{path}:{lineno} item_index must be contiguous from 0")
+        item_id = str(item["id"])
+        if item_id in seen:
+            raise ValueError(f"{path}:{lineno} duplicate item id {item_id!r}")
+        seen.add(item_id)
         item["baseline_score"] = float(item["baseline_score"])
+        if not (0.0 <= item["baseline_score"] <= 1.0):
+            raise ValueError(f"{path}:{lineno} baseline_score out of range")
         item.setdefault("aliases", [])
         item["source_artifact_sha256"] = file_sha
-        item["canonical_artifact_sha256"] = artifact_sha
-        item["source_experiment_id"] = payload["lineage"]["source_experiment_id"]
-        item["source_run_commit"] = payload["lineage"]["source_run_commit"]
-        items.append(item)
-    return items
+        item["source_experiment_id"] = lineage["source_experiment_id"]
+        item["source_run_commit"] = lineage["source_run_commit"]
+        rows.append(item)
+    if len(rows) != E0006_BASELINE_ITEM_COUNT:
+        raise ValueError(f"E-0006 baseline JSONL must contain exactly 80 items, got {len(rows)}")
+    manifest_ids = manifest.get("item_ids")
+    row_ids = [str(r["id"]) for r in rows]
+    if manifest_ids != row_ids:
+        raise ValueError("E-0006 baseline manifest item_ids do not match JSONL row ids")
+    expected_loader = "scripts.run_c2b_adjudication.load_axis_items"
+    if expected_loader not in str(lineage.get("source_item_loader", "")):
+        raise ValueError(
+            "E-0006 baseline source_item_loader must name the frozen C2b loader "
+            f"{expected_loader}"
+        )
+    if validate_item_source:
+        expected_ids = _expected_e0006_uncertainty_item_ids()
+        if row_ids != expected_ids:
+            raise ValueError("E-0006 baseline item ids do not match frozen E-0006 uncertainty pool")
+    return rows
 
 
 def save_fixture(items: List[Dict[str, Any]], data_root: Optional[Path] = None) -> Path:

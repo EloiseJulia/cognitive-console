@@ -123,8 +123,11 @@ from cognitive_console.eval.e0012_triviaqa import (
     E0012_POOL_SEED,
     E0012_SPLIT_SEED,
     load_e0012_triviaqa_fixture,
+    load_e0006_dev_baseline_scores,
+    make_e0006_baseline_artifact,
 )
 from cognitive_console.experiments import adjudicate_c2b as adj
+from cognitive_console.steering.extract import mean_difference_vector
 from cognitive_console.steering.generate import SyntheticC2bTaskBackend
 
 
@@ -184,16 +187,26 @@ def _make_probe_train_items(n: int = 220) -> List[Dict[str, Any]]:
     ]
 
 
-def _make_e0006_dev_items(n: int = 27) -> List[Dict[str, Any]]:
-    return [
+def _make_e0006_dev_items(n: int = 80) -> List[Dict[str, Any]]:
+    rows = [
         {
-            "id": f"e0006-dev-{i:04d}",
-            "prompt": f"E0006 dev question {i}?",
+            "item_index": i,
+            "id": f"e0006-unc-{i:04d}",
+            "prompt": f"E0006 uncertainty question {i}?",
             "answer": f"A{i}",
             "baseline_score": float(i) / max(1, n - 1),
         }
         for i in range(n)
     ]
+    if n == 80:
+        artifact = make_e0006_baseline_artifact(
+            source_experiment_id="e0006-test",
+            source_run_commit="abc123",
+            items=rows,
+        )
+        sha = artifact["artifact_sha256"]
+        rows = [{**row, "source_artifact_sha256": sha} for row in rows]
+    return rows
 
 
 def _fake_real_directions_by_layer(hidden_dim: int = 16):
@@ -203,9 +216,17 @@ def _fake_real_directions_by_layer(hidden_dim: int = 16):
             layer=layer,
             activation_provider=provider,
             triviaqa_train_items=_make_probe_train_items(),
-            e0006_dev_items=_make_e0006_dev_items(),
+            e0006_items=_make_e0006_dev_items(),
         )
         for layer in LAYER_SWEEP
+    }
+
+
+def _real_direction_kwargs(hidden_dim: int = 16):
+    return {
+        "activation_provider": _FakeActivationProvider(hidden_dim),
+        "triviaqa_train_items": _make_probe_train_items(),
+        "e0006_dev_items": _make_e0006_dev_items(),
     }
 
 
@@ -267,13 +288,25 @@ class TestButtonDirections:
         assert len(bd.provenance["source_item_ids"]) == 200
 
     def test_real_contra_direction_uses_caa_mean_difference(self):
-        bd = derive_contra_direction_real(20, _FakeActivationProvider(8), _make_e0006_dev_items(27))
+        bd = derive_contra_direction_real(20, _FakeActivationProvider(8), _make_e0006_dev_items())
         assert bd.family == BTN_CONTRA
         assert bd.is_unit
         assert bd.provenance["method"] == "real_caa_mean_diff"
-        assert bd.provenance["source_split"].startswith("E-0006 DEV")
-        assert bd.provenance["n_positive"] == 13
-        assert bd.provenance["n_negative"] == 14
+        assert "all-80" in bd.provenance["source_split"]
+        assert bd.provenance["n_positive"] == 40
+        assert bd.provenance["n_negative"] == 40
+        assert bd.provenance["source_artifact_sha256"]
+
+    def test_real_contra_direction_matches_mean_difference_vector(self):
+        provider = _FakeActivationProvider(8)
+        items = _make_e0006_dev_items()
+        pos, neg = select_contra_pairs(items)
+        pos_acts = provider.get_activations([str(it["prompt"]) for it in pos], 20)
+        neg_acts = provider.get_activations([str(it["prompt"]) for it in neg], 20)
+        expected = mean_difference_vector(pos_acts, neg_acts)
+        expected = expected / np.linalg.norm(expected)
+        bd = derive_contra_direction_real(20, provider, items)
+        np.testing.assert_allclose(bd.direction, expected, rtol=1e-6, atol=1e-6)
 
     def test_real_provenance_guard_rejects_synthetic_direction(self):
         dirs = {20: [derive_probe_direction_synthetic(20, 16)]}
@@ -298,13 +331,13 @@ class TestContraPairSelection:
         ]
 
     def test_returns_correct_counts(self):
-        items = self._make_dev_items(100)
+        items = self._make_dev_items(80)
         pos, neg = select_contra_pairs(items, n_positive=40, n_negative=40)
         assert len(pos) == 40
         assert len(neg) == 40
 
     def test_positive_higher_than_negative(self):
-        items = self._make_dev_items(100)
+        items = self._make_dev_items(80)
         pos, neg = select_contra_pairs(items, n_positive=40, n_negative=40)
         min_pos = min(it["baseline_score"] for it in pos)
         max_neg = max(it["baseline_score"] for it in neg)
@@ -314,17 +347,16 @@ class TestContraPairSelection:
         med_neg = np.median([it["baseline_score"] for it in neg])
         assert med_pos > med_neg
 
-    def test_fallback_when_insufficient(self):
+    def test_raises_when_not_all_80(self):
         items = self._make_dev_items(50)
-        pos, neg = select_contra_pairs(items, n_positive=40, n_negative=40)
-        # With n=50 < 80, fallback: top-half + bottom-half
-        assert len(pos) + len(neg) == 50
+        with pytest.raises(ValueError, match="exactly 80"):
+            select_contra_pairs(items, n_positive=40, n_negative=40)
 
     def test_tie_breaking_by_item_index(self):
         # Items with identical scores — tie-break by index (ascending)
         items = [
             {"id": f"item-{i}", "prompt": f"Q{i}", "baseline_score": 0.5}
-            for i in range(20)
+            for i in range(10)
         ]
         pos, neg = select_contra_pairs(items, n_positive=5, n_negative=5)
         # With all equal scores, sort by index: positive = first 5 (indices 0-4)
@@ -921,12 +953,12 @@ class TestStage0SelectionRule:
             coherence_ratio=coherence_ratio,
         )
 
-    def test_returns_at_most_3(self):
+    def test_returns_at_most_2_by_default(self):
         candidates = [
             self._make_cand(f"FAM-{i}", 20, 4.0, 0.10) for i in range(10)
         ]
-        selected = _select_stage1_candidates(candidates, max_n=3)
-        assert len(selected) <= 3
+        selected = _select_stage1_candidates(candidates)
+        assert len(selected) <= 2
 
     def test_filters_non_passing(self):
         candidates = [
@@ -1131,6 +1163,26 @@ class TestE0012TriviaQALoader:
         assert 24 <= len(dev) <= 30
         # TEST ≈ 2/3 (53–54 items)
         assert 50 <= len(test) <= 56
+
+    def test_canonical_e0006_baseline_loader_validates_lineage(self, tmp_path):
+        rows = _make_e0006_dev_items()
+        artifact = make_e0006_baseline_artifact(
+            source_experiment_id="e0006-real",
+            source_run_commit="d20cced",
+            items=[{k: v for k, v in row.items() if k != "source_artifact_sha256"} for row in rows],
+        )
+        path = tmp_path / "e0006_baseline.json"
+        path.write_text(json.dumps(artifact), encoding="utf-8")
+        loaded = load_e0006_dev_baseline_scores(path)
+        assert len(loaded) == 80
+        assert all(it["canonical_artifact_sha256"] == artifact["artifact_sha256"] for it in loaded)
+        assert all(it["source_artifact_sha256"] for it in loaded)
+
+    def test_canonical_e0006_baseline_loader_rejects_missing_lineage(self, tmp_path):
+        path = tmp_path / "bad_e0006_baseline.json"
+        path.write_text(json.dumps({"items": _make_e0006_dev_items()}), encoding="utf-8")
+        with pytest.raises(ValueError, match="schema_version"):
+            load_e0006_dev_baseline_scores(path)
 
 
 # ═══════════════════════════════════════════════════════════════════════════ #
@@ -1410,7 +1462,7 @@ class TestBrierRealPairsGPUPath:
             authored_prompts=authored,
             hidden_dim=16,
             raw_store_path=raw_path,
-            prederived_directions_by_layer=_fake_real_directions_by_layer(16),
+            **_real_direction_kwargs(16),
         )
         assert raw_path.exists()
         store = BrierRawStore(raw_path)
@@ -1467,7 +1519,7 @@ class TestBrierRealPairsGPUPath:
             authored_prompts=authored,
             hidden_dim=16,
             raw_store_path=raw_path,
-            prederived_directions_by_layer=_fake_real_directions_by_layer(16),
+            **_real_direction_kwargs(16),
         )
         # If any Stage 1 results exist, they should use real pairs
         for r in verdict_obj.stage1_results:
@@ -1900,7 +1952,7 @@ class TestN01SteeredHFTextCapableSampler:
             authored_prompts=authored,
             hidden_dim=16,
             raw_store_path=raw_path,
-            prederived_directions_by_layer=_fake_real_directions_by_layer(16),
+            **_real_direction_kwargs(16),
         )
         assert raw_path.exists(), "N-01: raw_store_path should be written by HF run"
         store = BrierRawStore(raw_path)
@@ -1930,7 +1982,7 @@ class TestN01SteeredHFTextCapableSampler:
             authored_prompts=authored,
             hidden_dim=16,
             raw_store_path=raw_path,
-            prederived_directions_by_layer=_fake_real_directions_by_layer(16),
+            **_real_direction_kwargs(16),
         )
         store = BrierRawStore(raw_path)
         all_pairs = store.load_all()
@@ -1957,7 +2009,7 @@ class TestN01SteeredHFTextCapableSampler:
             authored_prompts=authored,
             hidden_dim=16,
             raw_store_path=raw_path,
-            prederived_directions_by_layer=_fake_real_directions_by_layer(16),
+            **_real_direction_kwargs(16),
         )
         for r in verdict_obj.stage1_results:
             assert r.is_brier_from_real_pairs, (
@@ -1965,19 +2017,26 @@ class TestN01SteeredHFTextCapableSampler:
                 f"(is_brier_from_real_pairs=False for candidate {r.candidate.button_family})"
             )
 
-    def test_hf_harness_rejects_synthetic_direction_provenance(self, tmp_path):
-        """REAL-NOT-SMOKE: hf/TextCapable path rejects synthetic/random directions."""
+    def test_hf_harness_forbids_prederived_direction_injection(self, tmp_path):
+        """REAL-NOT-SMOKE: hf/TextCapable path forbids prederived direction injection."""
         from cognitive_console.experiments.e0012_steer_hf import SteeredHFTextCapableSampler
         items = _make_items(8)
         fake = _make_fake_hf_backend("Answer: Paris. Confidence: 80%.")
         sampler = SteeredHFTextCapableSampler(fake)
         dev_items, test_items = split_e0012_pool(items, split_seed=42)
         authored = _make_authored(2)
-        synthetic_dirs = {
-            layer: all_directions_for_layer(layer, 16, families=CONSERVATIVE_BUTTON_FAMILIES)
-            for layer in LAYER_SWEEP
-        }
-        with pytest.raises(RuntimeError, match="REAL-NOT-SMOKE"):
+        forged = ButtonDirection(
+            family=BTN_PROBE,
+            layer=20,
+            direction=np.random.default_rng(0).standard_normal(16),
+            derivation_hash="forged",
+            provenance={
+                "method": "real_probe",
+                "source_artifact_sha256": "fake",
+                "hyperparameters": {"seed": 42},
+            },
+        )
+        with pytest.raises(RuntimeError, match="prederived_directions_by_layer is forbidden"):
             run_e0012_harness(
                 sampler=sampler,
                 dev_items=dev_items,
@@ -1985,7 +2044,7 @@ class TestN01SteeredHFTextCapableSampler:
                 authored_prompts=authored,
                 hidden_dim=16,
                 raw_store_path=tmp_path / "raw.jsonl",
-                prederived_directions_by_layer=synthetic_dirs,
+                prederived_directions_by_layer={20: [forged]},
             )
 
     def test_sample_with_texts_returns_k_texts(self):
@@ -2532,7 +2591,7 @@ class TestRunnerWiring:
         )
 
         mock_s0 = Stage0Result(
-            all_candidates=[cand_with_k5], advancing=[], n_search=105,
+            all_candidates=[cand_with_k5], advancing=[], n_search=70,
             ape_result=mock_ape, best_prompt_text="Be calibrated.",
             kill_rule_result="TRANSFER", kill_rule_reason="ape >= button",
             verdict_at_stage0=VERDICT_NO_BUTTON_FOUND,

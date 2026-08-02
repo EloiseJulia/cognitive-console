@@ -195,7 +195,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         e0006_path_arg = getattr(args, "e0006_dev_baseline_jsonl", None)
         if not e0006_path_arg:
             raise FileNotFoundError(
-                "hf backend requires --e0006-dev-baseline-jsonl for "
+                "hf backend requires --e0006-dev-baseline-jsonl (canonical all-80 artifact) for "
                 "BTN-CAL-CONTRA-REEXTRACT real CAA derivation."
             )
         e0006_dev_items = load_e0006_dev_baseline_scores(Path(e0006_path_arg))
@@ -486,7 +486,7 @@ def main() -> None:
     parser.add_argument("--n-items", type=int, default=None,
                         help="Synthetic pool size (smoke only)")
     parser.add_argument("--e0006-dev-baseline-jsonl", default=None,
-                        help="HF only: JSONL of E-0006 DEV items with baseline_score")
+                        help="HF only: canonical JSON artifact for all 80 E-0006 baseline-scored items")
     args = parser.parse_args()
 
     if args.generate_fixture:

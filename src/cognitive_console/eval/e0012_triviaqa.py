@@ -19,6 +19,7 @@ the HuggingFace ``datasets`` API.
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -29,6 +30,8 @@ E0012_POOL_SEED: int = 12          # differs from E-0006 (seed=0)
 E0012_POOL_OFFSET: int = 500       # skip first 500 val items
 E0012_SPLIT_SEED: int = 42         # DEV/TEST split seed
 E0012_POOL_ID: str = "e0012-triviaqa-v1"
+E0006_BASELINE_ITEM_COUNT: int = 80
+E0006_BASELINE_SCHEMA_VERSION: str = "e0006-uncertainty-baseline-v1"
 
 
 def default_data_root() -> Path:
@@ -137,43 +140,135 @@ def load_triviaqa_train_for_probe(
     return [items[i] for i in idx]
 
 
-def load_e0006_dev_baseline_scores(path: Path) -> List[Dict[str, Any]]:
-    """Load E-0006 DEV calibration items with frozen unsteered baseline scores.
+def _canonical_json_bytes(payload: Any) -> bytes:
+    return json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode("utf-8")
 
-    The required JSONL schema is one record per E-0006 DEV calibration item:
-    ``id``, ``prompt``, ``answer``, optional ``aliases``, and ``baseline_score``
-    where ``baseline_score`` is mean(1-Brier) over k=5 unsteered baseline
-    samples from the E-0006 DEV run.  Cardinality follows the prereg literally:
-    E-0006 DEV, not all 80 scored calibration items; if fewer than 80 are present,
-    BTN-CAL-CONTRA-REEXTRACT uses the frozen top-half/bottom-half fallback.
+
+def canonical_e0006_baseline_hash(payload: Dict[str, Any]) -> str:
+    """Hash canonical E-0006 baseline artifact content, excluding self hash."""
+    copy = json.loads(json.dumps(payload))
+    copy.pop("artifact_sha256", None)
+    return hashlib.sha256(_canonical_json_bytes(copy)).hexdigest()
+
+
+def make_e0006_baseline_artifact(
+    *,
+    source_experiment_id: str,
+    source_run_commit: str,
+    items: List[Dict[str, Any]],
+    source_split: str = "E-0006 uncertainty_awareness all-80",
+    condition: str = "unsteered",
+    k: int = 5,
+    synthetic_proxy: bool = False,
+) -> Dict[str, Any]:
+    """Create the canonical all-80 E-0006 baseline-score artifact."""
+    artifact = {
+        "schema_version": E0006_BASELINE_SCHEMA_VERSION,
+        "lineage": {
+            "source_experiment_id": source_experiment_id,
+            "source_run_commit": source_run_commit,
+            "source_axis": "uncertainty_awareness",
+            "source_split": source_split,
+            "condition": condition,
+            "k": int(k),
+            "synthetic_proxy": bool(synthetic_proxy),
+            "item_count": len(items),
+        },
+        "items": items,
+    }
+    artifact["artifact_sha256"] = canonical_e0006_baseline_hash(artifact)
+    return artifact
+
+
+def validate_e0006_baseline_artifact(payload: Dict[str, Any]) -> str:
+    """Validate canonical E-0006 baseline artifact and return its sha256."""
+    if payload.get("schema_version") != E0006_BASELINE_SCHEMA_VERSION:
+        raise ValueError("E-0006 baseline artifact has wrong or missing schema_version")
+    expected_hash = payload.get("artifact_sha256")
+    actual_hash = canonical_e0006_baseline_hash(payload)
+    if expected_hash != actual_hash:
+        raise ValueError(
+            f"E-0006 baseline artifact hash mismatch: expected {expected_hash!r}, "
+            f"computed {actual_hash!r}"
+        )
+    lineage = payload.get("lineage")
+    if not isinstance(lineage, dict):
+        raise ValueError("E-0006 baseline artifact missing lineage object")
+    required_lineage = {
+        "source_experiment_id",
+        "source_run_commit",
+        "source_axis",
+        "source_split",
+        "condition",
+        "k",
+        "synthetic_proxy",
+        "item_count",
+    }
+    missing = required_lineage - set(lineage)
+    if missing:
+        raise ValueError(f"E-0006 baseline artifact lineage missing: {sorted(missing)}")
+    if lineage["source_axis"] != "uncertainty_awareness":
+        raise ValueError("E-0006 baseline artifact must be uncertainty_awareness")
+    if lineage["condition"] != "unsteered":
+        raise ValueError("E-0006 baseline artifact condition must be unsteered")
+    if int(lineage["k"]) != 5:
+        raise ValueError("E-0006 baseline artifact must have k=5")
+    if bool(lineage["synthetic_proxy"]):
+        raise ValueError("E-0006 baseline artifact must be real-model synthetic_proxy=false")
+    if int(lineage["item_count"]) != E0006_BASELINE_ITEM_COUNT:
+        raise ValueError("E-0006 baseline artifact lineage item_count must be 80")
+    items = payload.get("items")
+    if not isinstance(items, list) or len(items) != E0006_BASELINE_ITEM_COUNT:
+        raise ValueError("E-0006 baseline artifact must contain exactly 80 items")
+    seen: set[str] = set()
+    for i, row in enumerate(items):
+        if not isinstance(row, dict):
+            raise ValueError(f"E-0006 baseline item {i} is not an object")
+        missing_item = {"id", "prompt", "answer", "baseline_score", "item_index"} - set(row)
+        if missing_item:
+            raise ValueError(f"E-0006 baseline item {i} missing: {sorted(missing_item)}")
+        if int(row["item_index"]) != i:
+            raise ValueError(f"E-0006 baseline item_index mismatch at row {i}")
+        item_id = str(row["id"])
+        if item_id in seen:
+            raise ValueError(f"E-0006 baseline duplicate item id: {item_id!r}")
+        seen.add(item_id)
+        score = float(row["baseline_score"])
+        if not (0.0 <= score <= 1.0):
+            raise ValueError(f"E-0006 baseline_score out of range for {item_id!r}")
+    return actual_hash
+
+
+def load_e0006_dev_baseline_scores(path: Path) -> List[Dict[str, Any]]:
+    """Load canonical all-80 E-0006 baseline-scored calibration artifact.
+
+    Despite the historical function name, this now follows Manager D-0068:
+    rank the FULL E-0006 uncertainty_awareness set (80 items), not the DEV split.
+    The artifact must carry lineage, condition=unsteered, k=5, synthetic_proxy=false,
+    exactly 80 item ids, and a valid canonical artifact hash.
     """
     path = Path(path)
     if not path.exists():
         raise FileNotFoundError(
-            f"E-0006 DEV baseline-score JSONL not found: {path}. "
-            "Provide --e0006-dev-baseline-jsonl with one DEV item per line and "
-            "baseline_score=unsteered mean(1-Brier), k=5."
+            f"E-0006 baseline-score artifact not found: {path}. "
+            "Build/provide the canonical all-80 real E-0006 unsteered k=5 artifact."
         )
-    items: List[Dict[str, Any]] = []
-    seen: set[str] = set()
-    with open(path, "r", encoding="utf-8") as fh:
-        for lineno, line in enumerate(fh, 1):
-            line = line.strip()
-            if not line:
-                continue
-            row = json.loads(line)
-            missing = {"id", "prompt", "answer", "baseline_score"} - set(row)
-            if missing:
-                raise ValueError(f"{path}:{lineno} missing required fields: {sorted(missing)}")
-            item_id = str(row["id"])
-            if item_id in seen:
-                raise ValueError(f"{path}:{lineno} duplicate id: {item_id!r}")
-            seen.add(item_id)
-            row["baseline_score"] = float(row["baseline_score"])
-            row.setdefault("aliases", [])
-            items.append(row)
-    if not items:
-        raise ValueError(f"{path} contains no E-0006 DEV baseline-scored items")
+    raw_bytes = path.read_bytes()
+    payload = json.loads(raw_bytes.decode("utf-8"))
+    artifact_sha = validate_e0006_baseline_artifact(payload)
+    file_sha = hashlib.sha256(raw_bytes).hexdigest()
+    items = []
+    for row in payload["items"]:
+        item = dict(row)
+        item["baseline_score"] = float(item["baseline_score"])
+        item.setdefault("aliases", [])
+        item["source_artifact_sha256"] = file_sha
+        item["canonical_artifact_sha256"] = artifact_sha
+        item["source_experiment_id"] = payload["lineage"]["source_experiment_id"]
+        item["source_run_commit"] = payload["lineage"]["source_run_commit"]
+        items.append(item)
     return items
 
 

@@ -489,8 +489,9 @@ Status: **DRAFT addendum only**; Manager must fill `<MANAGER_TO_FILL_RUN_COMMIT>
 - **Stage 1 advances ≤2 candidates with family diversity**; Bonferroni uses dynamic `M = number advancing` as already specified for Stage 1.
 - **Real direction derivations are implemented per §3-B**:
   - `BTN-CAL-PROBE`: logistic probe direction from 100 high-confidence + 100 low-confidence rule-generated TriviaQA-train verbal-confidence pairs, seed=42.
-  - `BTN-CAL-CONTRA-REEXTRACT`: CAA mean difference between top vs bottom E-0006 DEV baseline-scored calibration items, with the existing §3-B-2 top-half/bottom-half fallback when E-0006 DEV has fewer than 80 items.
-- **Real-not-smoke hard guard added**: HF/backend runs must carry real direction provenance and raise if any button direction is synthetic/random or lacks a real derivation label. A `direction_provenance.json` artifact is persisted.
+  - `BTN-CAL-CONTRA-REEXTRACT`: Manager D-0068 resolves the §3-B-2 cardinality inconsistency as **rank the FULL E-0006 uncertainty_awareness calibration item set (all 80 adjudicated items)** by real unsteered baseline mean(1−Brier), take top-40 positive and bottom-40 negative, ties by item index. This honors the explicit frozen 40/40 counts and avoids tiny-N DEV-split instability; E-0006 source items remain disjoint from E-0012's TriviaQA Option A adjudication pool.
+- **Canonical E-0006 baseline artifact required**: CONTRA source data must be a lineage-validated all-80 artifact with source experiment id, source run commit, exact 80 item ids/source split, condition=unsteered, k=5, real-model `synthetic_proxy=false`, baseline scores, and artifact sha256.
+- **Real-not-smoke hard guard added**: HF/backend runs must derive fresh directions (no prederived direction injection), carry real direction provenance, persist `vector_sha256`, `source_artifact_sha256`, and method hyperparameters, and raise if any button direction is synthetic/random or lacks real provenance. A `direction_provenance.json` artifact is persisted.
 - **All other frozen parameters remain unchanged**, including TriviaQA Option A pool (`pool_seed=12`, `offset=500`, `split_seed=42`, 27 DEV/53 TEST), APE procedure, kill rule symmetry, §9.1/§9.2/§9.4 guards, coherence gate, §8 verdict mapping, and the adjudicator math.
 
 Run commit: `<MANAGER_TO_FILL_RUN_COMMIT>`.

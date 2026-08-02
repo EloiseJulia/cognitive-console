@@ -118,7 +118,7 @@ class Stage0Candidate:
 class Stage0Result:
     """Full Stage 0 run result."""
     all_candidates: List[Stage0Candidate]
-    advancing: List[Stage0Candidate]   # ≤ 3, sorted by dev_improvement desc
+    advancing: List[Stage0Candidate]   # ≤ 2, sorted by dev_improvement desc
     n_search: int
     ape_result: Optional[APERunResult]
     best_prompt_text: str           # DEV-frozen best authored prompt
@@ -360,7 +360,7 @@ def run_stage0(
 
             for alpha in ALPHA_GRID:
                 if n_search >= N_SEARCH_CAP:
-                    break  # hard cap: never exceed 105
+                    break  # hard cap: never exceed 70
 
                 # Evaluate steered on DEV
                 steer_batches = _eval_items_with_raw_pairs(
@@ -948,6 +948,12 @@ def run_e0012_harness(
         # Derive directions for all approved families × all layers.
         is_hf_backend = isinstance(sampler, TextCapableSampler)
         directions_by_layer: Dict[int, List[ButtonDirection]] = {}
+        if is_hf_backend and prederived_directions_by_layer is not None:
+            raise RuntimeError(
+                "REAL-NOT-SMOKE hard-fail: prederived_directions_by_layer is "
+                "forbidden on hf/TextCapable backends. HF runs must derive fresh "
+                "directions via all_real_directions_for_layer from validated source data."
+            )
         if prederived_directions_by_layer is not None:
             directions_by_layer = {
                 int(layer): list(dirs)
@@ -958,14 +964,14 @@ def run_e0012_harness(
                 raise RuntimeError(
                     "REAL-NOT-SMOKE hard-fail: hf backend requires real direction "
                     "inputs (activation_provider, TriviaQA-train items, and E-0006 "
-                    "DEV baseline-scored items). Synthetic/random directions are forbidden."
+                    "all-80 baseline-scored items). Synthetic/random directions are forbidden."
                 )
             for layer in LAYER_SWEEP:
                 directions_by_layer[layer] = all_real_directions_for_layer(
                     layer=layer,
                     activation_provider=activation_provider,
                     triviaqa_train_items=triviaqa_train_items,
-                    e0006_dev_items=e0006_dev_items,
+                    e0006_items=e0006_dev_items,
                     families=direction_families,
                 )
         else:

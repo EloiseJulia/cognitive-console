@@ -1,0 +1,65 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   1%|▏         | 5/339 [00:00<00:07, 42.25it/s]Loading weights:  24%|██▎       | 80/339 [00:00<00:00, 414.69it/s]Loading weights:  43%|████▎     | 147/339 [00:00<00:00, 514.75it/s]Loading weights:  65%|██████▌   | 222/339 [00:00<00:00, 603.18it/s]Loading weights:  89%|████████▉ | 302/339 [00:00<00:00, 669.96it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 594.97it/s]
+
+E-0012-CS comparator-strength summary
+backend=hf seed=42 k=5 split=27 DEV / 53 TEST
+id                               source               TEST mean(1-Brier)
+--------------------------------------------------------------------------
+SYNTH-BANK-26                    synthetic_bank                 0.794047
+SYNTH-BANK-28                    synthetic_bank                 0.665528
+SYNTH-BANK-14                    synthetic_bank                 0.637344
+SYNTH-BANK-21                    synthetic_bank                 0.594658
+SYNTH-BANK-07                    synthetic_bank                 0.573834
+SYNTH-BANK-19                    synthetic_bank                 0.571457
+CAL-09                           calibration_yaml               0.536575
+CAL-18                           calibration_yaml               0.492541
+CAL-16                           calibration_yaml               0.472474
+SYNTH-BANK-03                    synthetic_bank                 0.439738
+CAL-07                           calibration_yaml               0.390875
+CAL-03                           calibration_yaml               0.385524
+SYNTH-BANK-00                    synthetic_bank                 0.382065
+CAL-14                           calibration_yaml               0.374274
+CAL-02                           calibration_yaml               0.368899
+SYNTH-BANK-10                    synthetic_bank                 0.354735
+SYNTH-BANK-24                    synthetic_bank                 0.349615
+SYNTH-BANK-08                    synthetic_bank                 0.341597
+CAL-06                           calibration_yaml               0.335132
+CAL-05                           calibration_yaml               0.332330
+SYNTH-BANK-06                    synthetic_bank                 0.330170
+CAL-08                           calibration_yaml               0.284038
+CAL-15                           calibration_yaml               0.281702
+SYNTH-BANK-22                    synthetic_bank                 0.259396
+SYNTH-BANK-29                    synthetic_bank                 0.237425
+SYNTH-BANK-25                    synthetic_bank                 0.221474
+CAL-01                           calibration_yaml               0.205565
+SYNTH-BANK-23                    synthetic_bank                 0.192764
+SYNTH-BANK-18                    synthetic_bank                 0.192662
+CAL-04                           calibration_yaml               0.170887
+SYNTH-BANK-27                    synthetic_bank                 0.169500
+SYNTH-BANK-17                    synthetic_bank                 0.169377
+SYNTH-BANK-05                    synthetic_bank                 0.154594
+CAL-10                           calibration_yaml               0.151991
+SYNTH-BANK-09                    synthetic_bank                 0.149608
+SYNTH-BANK-12                    synthetic_bank                 0.148353
+SYNTH-BANK-16                    synthetic_bank                 0.144915
+BASELINE-UNSTEERED-NO-PROMPT     baseline                       0.144028
+BTN-CAL-PROBE-L19-A24            button                         0.140547
+CAL-17                           calibration_yaml               0.139914
+SYNTH-BANK-04                    synthetic_bank                 0.127830
+CAL-13                           calibration_yaml               0.113311
+CAL-11                           calibration_yaml               0.112792
+SYNTH-BANK-15                    synthetic_bank                 0.109283
+SYNTH-BANK-02                    synthetic_bank                 0.106019
+SYNTH-BANK-13                    synthetic_bank                 0.104819
+SYNTH-BANK-11                    synthetic_bank                 0.094991
+CAL-12                           calibration_yaml               0.088225
+SYNTH-BANK-01                    synthetic_bank                 0.061679
+SYNTH-BANK-20                    synthetic_bank                 0.060368
+--------------------------------------------------------------------------
+MAX: {"id": "SYNTH-BANK-26", "source": "synthetic_bank", "score": 0.7940471698113208, "prompt_text": "When answering factual questions: give your best answer, then state your confidence. If you're guessing, say 'Best guess: ...' and give low confidence.", "button_spec": null}
+max_human_prompt: {"id": "SYNTH-BANK-26", "source": "synthetic_bank", "score": 0.7940471698113208, "prompt_text": "When answering factual questions: give your best answer, then state your confidence. If you're guessing, say 'Best guess: ...' and give low confidence."}
+best_synthetic_bank: {"id": "SYNTH-BANK-26", "score": 0.7940471698113208, "text": "When answering factual questions: give your best answer, then state your confidence. If you're guessing, say 'Best guess: ...' and give low confidence."}
+best_calibration_yaml: {"id": "CAL-09", "score": 0.536574716981132, "text": "Express appropriate uncertainty. Overclaiming (\"I'm 95% sure\") on questions where you are actually 50–60% likely to be correct is a calibration failure. Be humble when humble is accurate. State your genuine confidence level, even if it is low. It is fine to say \"Best guess: X. Confidence: 25%.\""}
+CAL-09: {"id": "CAL-09", "score": 0.536574716981132, "text": "Express appropriate uncertainty. Overclaiming (\"I'm 95% sure\") on questions where you are actually 50–60% likely to be correct is a calibration failure. Be humble when humble is accurate. State your genuine confidence level, even if it is low. It is fine to say \"Best guess: X. Confidence: 25%.\""}
+button: {"id": "BTN-CAL-PROBE-L19-A24", "score": 0.14054716981132076, "spec": {"family": "BTN-CAL-PROBE", "layer": 19, "alpha": 24.0, "system_prompt": "", "direction_derivation": "all_directions_for_layer(layer, hidden_dim) as used by e0012_harness.run_e0012_harness", "derivation_hash": "2ce428b423aaa900", "direction_notes": "SYNTHETIC (offline): random unit vector used as stand-in for real probe direction. Real GPU path trains logistic probe on §3-B-1 pairs."}}
+baseline: {"id": "BASELINE-UNSTEERED-NO-PROMPT", "score": 0.1440283018867925}

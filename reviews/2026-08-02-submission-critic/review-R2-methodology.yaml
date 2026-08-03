@@ -1,0 +1,184 @@
+reviewer: R2
+role: independent_methodology_skeptic
+venue_lens: "top-tier HCI/AI methodology, statistical validity, threats, claim-evidence fit, reproducibility"
+review_date: "2026-08-03"
+frozen_bundle_reviewed:
+  - docs/paper/main.tex
+  - docs/paper/claim-map.yaml
+  - docs/paper/tables/*.tex
+  - docs/paper/table-manifests/*.yaml
+  - docs/paper/figure-manifests/*.yaml
+  - docs/ledgers/evidence-ledger.md rows E-0003..E-0011
+excluded_content_policy: "E-0012 / verified-control / settling-grid / comparator-strength content treated as invalid and outside paper evidence."
+
+summary_assessment: >-
+  The core C2 negative is unusually well disciplined for a negative result: DEV-only selection for both prompt and steering strength, disjoint TEST evaluation, paired item-level deltas, Bonferroni correction, a meaningful-margin pass rule, coherence gating, generated tables, hostile audits, and explicit underpowered-null caveats. I would not block the paper on methodology. The strongest defensible empirical claim is calibration harm on uncertainty, not equivalence/no-effect on deliberation or skepticism. The paper mostly says this, but the abstract/conclusion still use language ("replicates across five seeds", "no added behavioral control") that could be misread as stronger than failed-superiority evidence from repeated splits on a shared item pool.
+
+overall_methodology_verdict: "MAJOR revisions before submission; no fatal blocker if wording and reproducibility gaps are closed."
+
+core_c2_negative_design:
+  fairness_of_test:
+    assessment: >-
+      Fair within the declared scope. main.tex Methods states that each axis/model selects the best of 16 authored prompts on DEV, selects steering alpha on DEV from {2,4,6,8,12,16,24}, fixes layer before TEST, then evaluates disjoint TEST once (main.tex:121-130). This is a defensible interface-relevant comparator: bounded prompt channel versus naive CAA/ITI latent intervention. It is not a test against unconstrained prompt engineering, APE, trained steering, multi-layer schedules, or product-specific prompt workflows; main.tex and claim-map correctly scope this (main.tex:48, 130-136, 256-263; claim-map C2 scope/gate_notes).
+    criticism: >-
+      "Best-prompt baseline" is rhetorically strong. The actual comparator is "best of 16 authored bounded prompts selected on DEV." The current text often includes "bounded," but reviewers may still ask whether 16 prompts are enough to represent realistic console prompting.
+    suggested_fix: "In Abstract/Results, say 'bounded 16-candidate best-prompt baseline' at first mention or add a one-sentence rationale for why 16 is a fair HCI budget."
+  dev_test_bonferroni_coherence:
+    assessment: >-
+      Sound and conservative for superiority. The pre-specified pass rule requires CI excluding zero, mean >= delta=0.05, and coherence_ratio <=1.5, with Bonferroni 98.33% CIs across three axes (main.tex:139-154; c2-delta-4cell.tex caption/notes). This reduces HARKing and prevents degenerate-output wins.
+    criticism: >-
+      Bonferroni is conservative and contributes to underpowered deliberation/skepticism nulls, but the paper explicitly admits this.
+    suggested_fix: "No design change required; retain the underpowered-null language wherever 'no added control' appears."
+  paired_bootstrap_ci:
+    assessment: >-
+      Appropriate in principle because outcomes are paired on the same TEST items and item-cluster bootstrap resamples items carrying k samples (main.tex:137-145). This is preferable to unpaired CI comparisons.
+    criticism: >-
+      The paper should specify whether bootstrap units preserve both prompt and steered samples per item and whether seed/sampling variation inside each item is treated as fixed conditional on item. The current description is close but could be more explicit for replication.
+    suggested_fix: "Add one sentence: bootstrap resamples TEST items; each resampled item includes all prompt/steer generations and the precomputed paired difference."
+  five_seed_robustness:
+    assessment: >-
+      The shared-pool caveat is honestly disclosed in Results and Limitations: all five seeds use the same first-N deterministic item pool and only DEV/TEST membership varies (main.tex:199-201, 263; claim-map C2 gate_notes; evidence-ledger E-0011). This supports split-robustness of the verdict and calibration harm, not independent item-draw replication.
+    criticism: >-
+      Abstract and Conclusion say the negative "replicates across five seeds" / "pre-registered multi-seed check confirms" (main.tex:37, 282). Although not false, this wording can be overread as independent item replication.
+    suggested_fix: "Change first occurrence to 'replicates across five DEV/TEST split seeds over the same item pool' or 'split-seed robustness check'."
+
+negative_result_validity:
+  power_and_equivalence:
+    assessment: >-
+      The paper handles the negative-result power problem better than most submissions. It explicitly says deliberation/skepticism are underpowered non-detections, not proof of zero effect (main.tex:37, 194-198, 282). The post-hoc TOST table is clearly labeled exploratory/not preregistered, uses SESOI ±0.05, and marks skepticism underpowered in all four cells (equivalence-tost.tex caption and rows).
+    criticism: >-
+      The phrase "no added behavioral control" is acceptable only as "no demonstrated superiority under the pre-registered pass rule." It should not imply equivalence for deliberation/skepticism.
+    robust_claim_boundary: >-
+      Yes: uncertainty calibration harm is the only robust axis-level behavioral effect. All four uncertainty rows have negative Bonferroni CIs excluding zero (c2-delta-4cell.tex; evidence-ledger E-0006), and the text names it as the one robust signal (main.tex:37, 190-193, 216-221, 267).
+  tost_status:
+    assessment: >-
+      Adequate if kept post-hoc. TOST is useful characterization, not confirmatory evidence. The table's MDE column makes underpower visible (equivalence-tost.tex). Do not move these equivalence labels into claims.
+
+threats_to_validity:
+  - category: construct_validity
+    severity: MAJOR
+    criticism: >-
+      Deliberation=accuracy, skepticism=false-premise rejection, and uncertainty=1-Brier are clean operationalizations but narrow proxies for metacognitive constructs (axis-outcome-definitions.tex; main.tex:131-133). 1-Brier is proper but conflates reliability/resolution/base-rate behavior; the paper admits Murphy decomposition is missing because raw confidence/correctness pairs are not committed (main.tex:267).
+    suggested_fix: "Add a construct-validity paragraph stating that C2 measures task outcomes for these axes, not the full psychological construct; either commit raw confidence/correctness pairs or clearly defer decomposition."
+  - category: internal_validity
+    severity: MAJOR
+    criticism: >-
+      Steering comparison is internally disciplined, but residual confounds remain: CAA/ITI layer choice comes from C1 extraction diagnostics, method implementations may differ in effective intervention strength, and coherence/format disruption may itself drive calibration harm. The paper notes mechanism is open after OOD-null (main.tex:216-221, 265, 275), but calibration harm could reflect output-format fragility rather than a deep control gap.
+    suggested_fix: "Frame calibration harm as behaviorally real under this implementation, not mechanism-diagnostic; add a format-compliance/parser-sensitivity check summary if available."
+  - category: external_validity
+    severity: MAJOR
+    criticism: >-
+      The core covers two 7-8B instruction model families, two naive steering families, three metacognitive axes, and specific GSM8K/TruthfulQA-style item pools (main.tex:130-136, 256-263; evidence-ledger E-0006/E-0011). This is strong for a scoped claim but weak for generalized claims about latent control.
+    suggested_fix: "Keep 'naive/off-the-shelf CAA/ITI' and 'tested grid' in every headline; avoid 'latent steering' without qualifier."
+  - category: ecological_validity
+    severity: MAJOR
+    criticism: >-
+      A bounded 16-prompt DEV-selected comparator and offline steering grid are plausible for an interface evaluation contract, but real cognitive-console use may involve iterative prompting, user feedback, prompt libraries, model-specific system prompts, or trained control affordances. The paper acknowledges no human-study evidence (main.tex:74-79, 269), but the console implications may still read as design evidence rather than model-evidence-derived discipline.
+    suggested_fix: "State that the protocol evaluates deployability prerequisites for a console affordance, not actual end-user behavior or adoption."
+
+claim_evidence_fit:
+  C1:
+    verdict: "adequate if exploratory label retained"
+    evidence: "claim-map C1; evidence-ledger E-0003/E-0008; main.tex:117-120, 170-179, 260-261, 282; c1-twomodel.tex"
+    criticism: >-
+      Main text consistently calls C1 exploratory and axis-heterogeneous. Good.
+  C2:
+    verdict: "adequate for failed-superiority plus robust uncertainty harm; not adequate for equivalence except exploratory TOST"
+    evidence: "claim-map C2; evidence-ledger E-0005/E-0006/E-0011; main.tex:121-154, 184-201, 216-221"
+    criticism: >-
+      Claim-map correctly notes E-0011 same item pool and E-0009 exploratory support. The paper discloses this in Results/Limitations, but Abstract should use split-seed language.
+  C3:
+    verdict: "acceptable as design implication only"
+    evidence: "claim-map C3 has no evidence row; main.tex:70-79, 224-240, 269, 282"
+    criticism: >-
+      The paper explicitly says no user-study claim. However, contribution #4 plus console figure language could still be read as an empirical HCI contribution. Keep the bold disclaimer and consider renaming it 'interface-evaluation implication' rather than 'design contribution'.
+  C4:
+    verdict: "adequately caveated as exploratory/discussion-only"
+    evidence: "claim-map C4; evidence-ledger E-0010; main.tex:244-251"
+    criticism: >-
+      Social-axis null is honestly reported: single model/seed, LLM-judge-only, M2/M3 not implemented, latent-steering held out. It should remain outside Abstract/contributions.
+  stray_invalid_references:
+    assessment: >-
+      I found no E-0012 / verified-control / settling-grid / comparator-strength references in main.tex, claim-map.yaml, or paper manifests. The unfiltered evidence-ledger file does contain E-0012 rows after E-0011, which are outside the requested bundle slice and could confuse an external reviewer if shipped wholesale.
+    suggested_fix: "Ship a filtered evidence ledger or mark E-0012 rows excluded/invalid in supplementary materials."
+
+reproducibility:
+  strengths:
+    - "C2 table and calibration-harm figure are generated from frozen JSON artifacts via scripts (make_c2_delta_table.py; plot_c2_calibration_harm.py)."
+    - "Manifests specify source artifacts and no-hand-edit rules for C1/C2 tables/figures."
+    - "Evidence ledger ties C2 to experiment IDs and hostile audits (E-0005/E-0006/E-0011)."
+  gaps:
+    - severity: MAJOR
+      issue: >-
+        main.tex and c2-delta-4cell.tex say full DEV-selected prompt text is in c2-delta-4cell.yaml, but the manifest only lists best_prompt_id as a column and source artifacts; it does not include prompt text (table-manifests/c2-delta-4cell.yaml lines 27-38; main.tex:165-167; generated table note). This blocks independent reconstruction of the bounded prompt comparator from the paper supplement alone.
+      cheapest_action: "Add prompt IDs plus full text for the selected prompts, or point to a committed artifact that contains them."
+      closure_condition: "A reviewer can recover every selected prompt without running GPU code or accessing private artifact stores."
+    - severity: MINOR
+      issue: >-
+        E-0011 item identity is described as high-confidence/index-based in the ledger rather than directly item_id-auditable in pulled artifacts (evidence-ledger E-0011). This is acceptable for split robustness but limits independent verification of same-pool claims.
+      cheapest_action: "Commit a small seed-by-axis manifest listing TEST/DEV item identifiers or hashes."
+      closure_condition: "Reviewer can verify pool overlap/split disjointness from committed files."
+    - severity: MINOR
+      issue: >-
+        Raw confidence/correctness pairs for Brier decomposition are not committed (main.tex:267). This does not block reproducing reported 1-Brier deltas if JSON diffs are present, but blocks deeper calibration diagnostics.
+      cheapest_action: "Commit redacted raw pairs or explicitly declare them non-required for main-result reproduction."
+      closure_condition: "Supplement states exactly which calibration analyses are reproducible from committed artifacts."
+  hand_copied_number_risk: >-
+    Low for the main C1/C2 tables because sources are auto-generated and manifests/scripts exist. Moderate for prose summaries and social-axis discussion numbers unless the console/flagship artifacts are shipped with the supplement.
+
+ranked_findings:
+  - id: R2-MAJOR-1
+    severity: MAJOR
+    title: "Five-seed language can overstate independence"
+    evidence: "main.tex:37,199-201,263,282; claim-map C2 gate_notes; evidence-ledger E-0011"
+    criticism: "The five seeds share the same item pool and vary only DEV/TEST split, so this is split-seed robustness, not independent item-draw replication."
+    cheapest_discriminating_action: "Revise Abstract/Conclusion to say 'five DEV/TEST split seeds over the same item pool'."
+    closure_condition: "No headline use of 'replicates across five seeds' without same-pool/split-seed qualifier."
+  - id: R2-MAJOR-2
+    severity: MAJOR
+    title: "Bounded best-prompt comparator needs visible prompt reconstruction"
+    evidence: "main.tex:121-127,165-167; c2-delta-4cell.tex notes; table-manifests/c2-delta-4cell.yaml"
+    criticism: "The paper relies on a strong bounded-prompt comparator, but the supplement manifest reviewed here does not actually expose full selected prompt text despite claiming it does."
+    cheapest_discriminating_action: "Add selected prompt text or artifact paths/hashes to c2-delta-4cell.yaml."
+    closure_condition: "Reviewer can reconstruct all prompt baselines from committed supplement."
+  - id: R2-MAJOR-3
+    severity: MAJOR
+    title: "Negative-result wording must remain failed-superiority, not equivalence"
+    evidence: "main.tex:37,184-198,282; equivalence-tost.tex"
+    criticism: "Deliberation and skepticism are explicitly underpowered. 'No added control' is valid only as no demonstrated superiority under the pass rule."
+    cheapest_discriminating_action: "Add parenthetical 'failed-superiority, not equivalence' to first Results headline or table note."
+    closure_condition: "No reader can infer proven absence of effect on deliberation/skepticism."
+  - id: R2-MAJOR-4
+    severity: MAJOR
+    title: "Construct validity of metacognitive axes is narrow"
+    evidence: "axis-outcome-definitions.tex; main.tex:131-133,267"
+    criticism: "Accuracy, false-premise rejection, and 1-Brier are defensible but incomplete proxies for deliberation/skepticism/uncertainty. Calibration harm is robust for 1-Brier but not decomposed into reliability/resolution."
+    cheapest_discriminating_action: "Add explicit construct-validity limitations near Methods/Limitations."
+    closure_condition: "Claims consistently say 'axis outcome' rather than broad psychological construct when reporting C2."
+  - id: R2-MINOR-1
+    severity: MINOR
+    title: "Unfiltered evidence ledger contains excluded E-0012 rows"
+    evidence: "docs/ledgers/evidence-ledger.md rows after E-0011"
+    criticism: "Paper files do not cite E-0012, but a shipped ledger with invalid rows could confuse provenance review."
+    cheapest_discriminating_action: "Provide a submission-specific filtered ledger or prominent exclusion note."
+    closure_condition: "Submission bundle contains only E-0003..E-0011 or clearly marks later rows excluded."
+  - id: R2-QUESTION-1
+    severity: QUESTION
+    title: "Is coherence gate sufficient to distinguish harm from format disruption?"
+    evidence: "main.tex:148-154,216-221; evidence-ledger E-0006"
+    criticism: "Uncertainty harm may be caused by confidence-format disruption; that is still behaviorally important, but reviewers will ask whether it is a parser/format artifact."
+    cheapest_discriminating_action: "Add a one-sentence audit result on truncation/empty/format rates for uncertainty cells."
+    closure_condition: "Methods/Results state why calibration harm is not parser-only degeneration."
+
+scores:
+  rigor: 4
+  technical_quality: 4
+  clarity: 4
+  reproducibility: 3
+  overall: 3
+  confidence: 4
+
+methodology_rejection_risks_top3:
+  - "Reviewers may treat five-seed robustness as overstated because it is repeated split robustness over a shared item pool, not independent item replication."
+  - "The bounded best-prompt comparator may be attacked as too weak or insufficiently reconstructable unless selected prompt text and budget rationale are explicit."
+  - "The strongest statistical result is uncertainty calibration harm; deliberation/skepticism are underpowered failed-superiority tests, so any broad 'no control' language risks overclaiming."

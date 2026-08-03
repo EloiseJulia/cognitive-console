@@ -13,6 +13,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import sys
 import time
 from dataclasses import dataclass
@@ -483,6 +484,19 @@ def _write_json(path: Path, payload: Dict) -> None:
     path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
+def _model_identity_key(model_ref: str) -> str:
+    parts = [p for p in str(model_ref).strip().replace(os.sep, "/").replace("\\", "/").split("/") if p]
+    return (parts[-1] if parts else str(model_ref)).strip().lower()
+
+
+def _looks_like_local_path(model_ref: str) -> bool:
+    ref = str(model_ref).strip()
+    return (
+        ref.startswith(("/", "\\", "./", ".\\", "../", "..\\"))
+        or (len(ref) >= 3 and ref[1] == ":" and ref[2] in {"/", "\\"})
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description="E-0013 uncertainty format-compliance recheck")
     ap.add_argument("--backend", choices=["synthetic", "hf"], default="synthetic")
@@ -514,13 +528,34 @@ def _validate_generation_identity(
         "--temperature": (args.temperature, DEFAULT_TEMPERATURE),
         "--seed": (args.seed, DEFAULT_SEED),
     }
-    if frozen_cell is not None:
-        expected["--model"] = (requested_model or frozen_cell.model_id, frozen_cell.model_id)
+    effective_model = requested_model or (frozen_cell.model_id if frozen_cell is not None else None)
     mismatches = [f"{k}={got!r} (expected {want!r})" for k, (got, want) in expected.items() if got != want]
+    if frozen_cell is not None and effective_model is not None:
+        effective_key = _model_identity_key(effective_model)
+        frozen_key = _model_identity_key(frozen_cell.model_id)
+        if effective_key != frozen_key:
+            mismatches.append(
+                f"--model identity={effective_key!r} from {effective_model!r} "
+                f"(expected {frozen_key!r} from frozen {frozen_cell.model_id!r})"
+            )
     if mismatches:
         raise SystemExit(
             "E-0013 must use the E-0006 generation identity; mismatches: "
             + ", ".join(mismatches)
+        )
+    if (
+        frozen_cell is not None
+        and requested_model is None
+        and args.backend == "hf"
+        and _looks_like_local_path(frozen_cell.model_id)
+        and not Path(frozen_cell.model_id).exists()
+    ):
+        flag = "--qwen-model" if frozen_cell.model_label == "qwen2.5-7b" else "--llama-model"
+        raise SystemExit(
+            f"{frozen_cell.cell_key}: frozen E-0006 model_id {frozen_cell.model_id!r} "
+            "is a local path that does not exist on this machine. "
+            f"Pass {flag} with this machine's reference to the same model "
+            f"(identity key {_model_identity_key(frozen_cell.model_id)!r})."
         )
     if args.bootstrap_b < adj.BOOTSTRAP_B and not args.allow_underpowered:
         raise SystemExit(
@@ -529,7 +564,7 @@ def _validate_generation_identity(
         )
     if args.backend == "hf" and args.n_items is not None:
         raise SystemExit("--n-items is forbidden for hf E-0013; use the frozen full uncertainty N")
-    return frozen_cell.model_id if frozen_cell is not None else None
+    return effective_model if frozen_cell is not None else None
 
 
 def _parse_cell(cell_key: str) -> Tuple[str, str]:
@@ -566,7 +601,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     t0 = time.time()
     for cell_key in args.cells:
         cfg = frozen_configs[cell_key]
-        model_id = model_ids[cell_key]
+        effective_model_ref = model_ids[cell_key]
+        model_id = effective_model_ref
         if args.backend == "synthetic":
             model_id = "synthetic-offline"
         print(
@@ -591,6 +627,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         cell_records.extend(recs)
         cell_meta[cell_key] = {
             "frozen_config": cfg.__dict__,
+            "frozen_model_id": cfg.model_id,
+            "effective_model_ref": effective_model_ref,
+            "model_identity_key": _model_identity_key(effective_model_ref),
             "run_model_id": model_id,
             **meta,
         }
@@ -612,6 +651,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         "code_commit": git_commit(str(_REPO)),
         "generation_identity": {
             "model_by_cell": {k: v.model_id for k, v in frozen_configs.items()},
+            "frozen_model_by_cell": {k: v.model_id for k, v in frozen_configs.items()},
+            "effective_model_by_cell": model_ids,
+            "model_identity_key_by_cell": {k: _model_identity_key(v) for k, v in model_ids.items()},
             "max_new_tokens": args.max_new_tokens,
             "temperature": args.temperature,
             "seed": args.seed,

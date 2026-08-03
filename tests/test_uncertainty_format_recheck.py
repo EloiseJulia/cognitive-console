@@ -61,6 +61,91 @@ def test_synthetic_smoke_writes_compliance_and_delta_fields(tmp_path):
     manifest = json.loads((out_dir / "run_manifest.json").read_text(encoding="utf-8"))
     assert manifest["synthetic_proxy"] is True
     assert manifest["generation_identity"]["model_by_cell"]["caa__qwen2.5-7b"] == "frozen-qwen"
+    assert manifest["generation_identity"]["effective_model_by_cell"]["caa__qwen2.5-7b"] == "frozen-qwen"
+    assert manifest["generation_identity"]["model_identity_key_by_cell"]["caa__qwen2.5-7b"] == "frozen-qwen"
+
+
+def test_model_identity_key_normalizes_paths_and_hf_ids():
+    qwen_autodl = "/root/autodl-tmp/models/Qwen2.5-7B-Instruct"
+    qwen_hf = "Qwen/Qwen2.5-7B-Instruct"
+    llama_autodl = "/root/autodl-tmp/models/Meta-Llama-3-8B-Instruct"
+    llama_hf = "meta-llama/Meta-Llama-3-8B-Instruct"
+
+    assert R._model_identity_key(qwen_autodl) == R._model_identity_key(qwen_hf)
+    assert R._model_identity_key(llama_autodl) == R._model_identity_key(llama_hf)
+    assert R._model_identity_key(qwen_hf) != R._model_identity_key(llama_hf)
+
+
+def test_validate_generation_identity_allows_same_model_different_reference():
+    cfg = _frozen_cell(
+        model_id="/root/autodl-tmp/models/Qwen2.5-7B-Instruct",
+        model_label="qwen2.5-7b",
+    )
+    args = R.build_parser().parse_args(["--backend", "synthetic"])
+
+    effective = R._validate_generation_identity(
+        args,
+        frozen_cell=cfg,
+        requested_model="Qwen/Qwen2.5-7B-Instruct",
+    )
+
+    assert effective == "Qwen/Qwen2.5-7B-Instruct"
+
+
+def test_validate_generation_identity_rejects_different_model_family():
+    cfg = _frozen_cell(
+        model_id="/root/autodl-tmp/models/Qwen2.5-7B-Instruct",
+        model_label="qwen2.5-7b",
+    )
+    args = R.build_parser().parse_args(["--backend", "synthetic"])
+
+    with pytest.raises(SystemExit, match="--model identity"):
+        R._validate_generation_identity(
+            args,
+            frozen_cell=cfg,
+            requested_model="meta-llama/Meta-Llama-3-8B-Instruct",
+        )
+
+
+def test_hf_missing_frozen_local_path_without_override_has_actionable_error():
+    cfg = _frozen_cell(
+        model_id="/root/autodl-tmp/models/Qwen2.5-7B-Instruct",
+        model_label="qwen2.5-7b",
+    )
+    args = R.build_parser().parse_args(["--backend", "hf"])
+
+    with pytest.raises(SystemExit, match="Pass --qwen-model"):
+        R._validate_generation_identity(args, frozen_cell=cfg)
+
+
+def test_manifest_records_frozen_effective_and_identity_key_for_override(tmp_path):
+    frozen_model = "/root/autodl-tmp/models/Qwen2.5-7B-Instruct"
+    effective_model = "Qwen/Qwen2.5-7B-Instruct"
+    frozen_root = _write_minimal_frozen_root(tmp_path / "frozen", model=frozen_model)
+    out_dir = tmp_path / "e0013"
+
+    rc = R.main([
+        "--backend", "synthetic",
+        "--frozen-root", str(frozen_root),
+        "--out-dir", str(out_dir),
+        "--cells", "caa__qwen2.5-7b",
+        "--qwen-model", effective_model,
+        "--splits", "test",
+        "--n-items", "4",
+        "--bootstrap-b", "200",
+        "--allow-underpowered",
+    ])
+
+    assert rc == 0
+    manifest = json.loads((out_dir / "run_manifest.json").read_text(encoding="utf-8"))
+    identity = manifest["generation_identity"]
+    assert identity["frozen_model_by_cell"]["caa__qwen2.5-7b"] == frozen_model
+    assert identity["effective_model_by_cell"]["caa__qwen2.5-7b"] == effective_model
+    assert identity["model_identity_key_by_cell"]["caa__qwen2.5-7b"] == "qwen2.5-7b-instruct"
+    cell = manifest["cells"]["caa__qwen2.5-7b"]
+    assert cell["frozen_model_id"] == frozen_model
+    assert cell["effective_model_ref"] == effective_model
+    assert cell["model_identity_key"] == "qwen2.5-7b-instruct"
 
 
 def test_model_identity_mismatch_raises_before_generation(tmp_path):
@@ -92,13 +177,31 @@ def _row(item_id, sample_index, condition, compliant, score):
     }
 
 
-def _write_minimal_frozen_root(root):
+def _frozen_cell(model_id, model_label):
+    return R.FrozenCellConfig(
+        cell_key=f"caa__{model_label}",
+        method="caa",
+        model_label=model_label,
+        model_id=model_id,
+        layer=3,
+        frozen_alpha=8.0,
+        best_prompt_id="unc-test",
+        best_prompt_text="Answer and state confidence.",
+        neutral_prompt="Neutral.",
+        sigma=1.0,
+        source_result_file="synthetic",
+        source_config_fingerprint="abc123",
+        source_mean_diff=-0.1,
+    )
+
+
+def _write_minimal_frozen_root(root, model="frozen-qwen"):
     path = root / "cell_caa__qwen2.5-7b"
     path.mkdir(parents=True)
     payload = {
         "backend": "hf",
         "steering_method": "caa",
-        "model": "frozen-qwen",
+        "model": model,
         "config_fingerprint": "abc123",
         "frozen_params": {"k_samples": 5},
         "c1_layer_info": {"uncertainty_awareness": {"sigma": 1.0}},

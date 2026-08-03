@@ -3,6 +3,13 @@
 > 论文：**Legible Need Not Be Controllable: No Demonstrated Superiority over Bounded Prompts under Naive CAA/ITI Steering**（标题已按 critic gap 修订收窄，D-0074；目标 venue = **IUI**，D-0074）。  
 > 本文档是 owner 内部理解稿，不是送审稿；数字以 `docs/ledgers/evidence-ledger.md`、生成表、冻结结果 artifact 与 `docs/paper/main.tex` 为准。  
 > **内部备注（不入论文）：** 曾尝试 E-0012「verified control button」搜索以升级为正例/关闭"只试了弱 steering"攻击，但历经 4 个占位符-vs-真实 bug（假比较器/贪心采样/随机方向/假 world-capital fixture 数据），全部证据判 INVALID，已于 D-0073 **终止**并不入论文；"弱 steering"攻击改由 E-0009（PSR arm）在论文里 pre-empt。论文 headline 未受影响。
+>
+> **最新进展（2026-08-03，本文档正文尚未逐节同步，以 `main.tex` + decision-log D-0074..D-0078 为准）：**
+> 1. **全文已按 HCI best-paper 风格重构**（design-driven 叙事：可调界面→"可读即可控"推断→校准依赖→冻结裁决证否→console 仪器化边界→evidence-tier 评估合同；Related Work 改 HCI-first；C3 由证据*导出*而非断言；破折号=0；诊断+策略见 `docs/paper/hci-rewrite-plan.md`），已敌对审计通过并合并。
+> 2. **三段式敌对 chained review**（Opus5→GPT-5.6-Sol→Opus5）判 **Reject（有一轮返修路径）**，三大致命点：F1 calibration-harm 可能是"置信度格式丢失+parser 补 0.5"假象；F2 无 positive control/manipulation check（裁决器从未在任何臂返回 pass），且 READ(C1) 与 TRANSFER(C2) 未在同一 intervention 上验证（尤其 ITI）；F3 C3 无证据。
+> 3. **F1 已解决（最大 cell）**：E-0013 格式合规复查（D-0078，审计 HARM-SURVIVES-BUT-CAVEATED）——CAA×Qwen 上 **steering 比 prompt 更少丢格式**（合规率 0.83 vs 0.45），仅取双臂都给出可解析置信度的配对样本，harm=**−0.34 CI[−0.51,−0.17]**（比 as-run imputed −0.21 更大）⇒ 补 0.5 的 imputation 让 as-run 偏保守，harm 非格式假象。已按**单 cell scope + 其余 3 cell（ITI fp 复现门槛 / Llama gated）诚实披露为 limitation** 写入论文。
+> 4. **F3 已处理**：C3 降级为 interface-evaluation implication（明确无 user-benefit 声明）。
+> 5. **仍开放 = F2**（positive control + READ↔TRANSFER 同方向）：待定走 Limitations 诚实 reframe 还是补一个 positive-control run（GPU，§5）。正在重跑一轮 reviewer-critic 复评，据此定 F2 路线。
 
 ## 1. 一页速览（TL;DR）
 

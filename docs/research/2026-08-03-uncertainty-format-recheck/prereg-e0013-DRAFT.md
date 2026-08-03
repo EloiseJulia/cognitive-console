@@ -1,7 +1,7 @@
 # E-0013 UNCERTAINTY FORMAT-COMPLIANCE RECHECK — DRAFT
 
-**Status:** draft mini-prereg; `valid_for_paper=false` until independent audit and Manager sign-off.  
-**Run commit:** `<MANAGER_TO_FILL_RUN_COMMIT>`  
+**Status:** FROZEN (D-0077, 2026-08-03); code-audited (real dirs/data confirmed, model-identity BLOCKER fixed); `valid_for_paper=false` until independent results audit and Manager/owner sign-off.
+**Run commit:** `1d4ad54` (main, post-merge feature/uncertainty-format-recheck; GPU run executes at this code state).
 **Scope:** exploratory robustness check only. E-0013 does **not** overwrite, refreeze, or re-judge the frozen E-0005/E-0006 C2b protocol/verdict.
 
 ## Purpose

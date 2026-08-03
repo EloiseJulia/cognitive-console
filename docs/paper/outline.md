@@ -8,7 +8,7 @@ Legible Need Not Be Controllable: A Frozen Reality Check for Prompt-vs-Latent Be
 ## Novelty unit
 A frozen, fairness-controlled, independently-audited behavioral adjudication showing that representational legibility does **not** transfer to control, generalized across 2 steering methods × 2 model families, with a replicated calibration-harm sub-finding.
 
-## Abstract (claims carried: C1 scoped; C2 headline; C3 design implication only)
+## Abstract (claims carried: C1 scoped; C2 headline; C3 interface-evaluation implication only)
 - Problem: HCI tools increasingly promise readable controls over LLM behavior, but a readable cognitive axis may not be a usable control primitive.
 - Background: Mishra et al.'s non-surjectivity result motivates a prompt/latent gap at the internal-state level; we do **not** claim that result as our own behavioral finding.
 - Evidence: C1 shows an exploratory representational facade on 3/4 axes in Qwen2.5-7B: deliberation, skepticism, and uncertainty; focus overshoots and is not a facade.
@@ -55,7 +55,7 @@ Citation hygiene rule for this table: use only works verified in `docs/research/
 | Heyman & Vandeputte, *Steer Like the LLM* (2026; `heyman2026steer`) | Trained steering that mimics prompting | Naive/bounded off-the-shelf CAA/ITI failure; PSR is a threat and planned response, not covered by C2 |
 | Rimsky et al. CAA + Li et al. ITI (2024/2023; `rimsky2024caa`, `li2023iti`) | Activation steering methods | Whether those legible directions beat the best prompt on task outcomes, with fairness controls and hostile audits |
 | Fan et al. ASTEER + Korznikov et al. Rogue Scalpel (2026; `fan2026asteer`, `korznikov2025rogue`) | Steerability limits and safety-domain steering failures | Metacognitive-axis prompt-vs-latent adjudication, not a broad benchmark or safety attack |
-| Huang & Lim (2025; `huang2025steering`) | Layperson GUI for SAE feature steering/persona building | Prompt-vs-latent behavioral non-transfer and design implications; no human-study claim in this route |
+| Huang & Lim (2025; `huang2025steering`) | Layperson GUI for SAE feature steering/persona building | Prompt-vs-latent behavioral non-transfer and interface-evaluation implications; no human-study claim in this route |
 | Riche et al., Labarta et al., Raval et al. (2025/2026; `riche2025aiinstr`, `labarta2026attribution`, `raval2026latman`) | Prompt instruments, expert vision/CLIP steering, and embedding-visualization manipulation | LLM behavioral control and calibration harm; Labarta is vision/CLIP and Latent Manipulator steers visualizations, not LLM generations |
 ## 3. Methods (claims carried: C1 measurement; C2 adjudication)
 
@@ -99,7 +99,7 @@ Citation hygiene rule for this table: use only works verified in `docs/research/
 - E-0007 tested off-manifold distance as an explanation and returned VALID_NULL: 0/4 cells pass.
 - This appears only as limitation/future-work context, not as a mechanism contribution.
 
-## 5. Design implications (claims carried: C3 design implication only)
+## 5. Interface-evaluation contract (claims carried: C3 interface-evaluation implication only)
 - Replace "latent control slider" framing with a limits instrument: show when legible directions fail, when calibration is harmed, and when prompt-only is safer.
 - Console outputs should be framed as adjudication and trust-calibration aids, not proof of hidden user control.
 - No empirical HCI/user-study credit is claimed on the pure-model route.
@@ -118,7 +118,7 @@ Citation hygiene rule for this table: use only works verified in `docs/research/
 - Investigate calibration-harm mechanisms in a new preregistered package; do not re-mine E-0007 data.
 
 ## 8. Conclusion (claims carried: C1 scoped; C2 headline; C3 implication)
-- Repeat only evidence-backed claims: exploratory legibility facade, generalized C2 non-transfer across tested cells, robust calibration harm, and design implication.
+- Repeat only evidence-backed claims: exploratory legibility facade, generalized C2 non-transfer across tested cells, robust calibration harm, and interface-evaluation implication.
 - Do not conclude that all steering fails, that prompts are behaviorally non-surjective in general, or that users empirically benefit from the console.
 
 

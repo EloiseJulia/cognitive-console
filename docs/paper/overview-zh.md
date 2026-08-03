@@ -11,7 +11,7 @@
 |---|---|---:|---|
 | C1 facade / Qwen | prompt 只到达 axis pole 的一部分 | 聚合 3/4 轴 hold；focus 轴为 overshoot/no facade | exploratory，valid_for_paper=false（E-0003） |
 | C1 facade / Llama | 聚合 3/4 两模型测量结果一致，但轴组成不同 | 聚合 3/4；uncertainty 不 hold，focus hold | exploratory，轴异质性 caveat（E-0008） |
-| C2 2×2 冻结裁决 + 5-seed 鲁棒性 | latent 未显示任何超过 bounded best-prompt baseline 的额外控制（no demonstrated added control）；5/5 seed 均 NON_TRANSFER。只有 uncertainty 轴是稳健结果（CI 排除 0），deliberation 为混合（ITI 等价、CAA 欠功效），skepticism 为全欠功效（不能区分无效应与小于 SESOI 的效应） | 4 cells 全 0/3；uncertainty Δ：-0.228, -0.072, -0.103, -0.084，CI 全排除 0；post-hoc TOST（D-0056，exploratory）：uncertainty 4/4 CALIBRATION_HARM；deliberation ITI 2 cells EQUIVALENT；skepticism 4/4 UNDERPOWERED | core scoped negative（E-0005/E-0006）；multi-seed robustness（E-0011，item pool 与 E-0006 共享，仅 DEV/TEST split 随 seed 变）；post-hoc TOST（results/posthoc_equivalence/） |
+| C2 2×2 冻结裁决 + split-seed 鲁棒性 | latent 未显示任何超过 bounded best-prompt baseline 的额外控制（no demonstrated superiority under the pass rule）；5/5 seed 均 NON_TRANSFER。只有 uncertainty 轴是稳健结果（CI 排除 0），deliberation 为混合（ITI 等价、CAA 欠功效），skepticism 为全欠功效（不能区分无效应与小于 SESOI 的效应） | 4 cells 全 0/3；uncertainty Δ：-0.228, -0.072, -0.103, -0.084，CI 全排除 0；post-hoc TOST（D-0056，exploratory）：uncertainty 4/4 CALIBRATION_HARM；deliberation ITI 2 cells EQUIVALENT；skepticism 4/4 UNDERPOWERED | core scoped negative（E-0005/E-0006）；split-seed robustness（E-0011，item pool 与 E-0006 共享，仅 DEV/TEST split 随 seed 变）；post-hoc TOST（results/posthoc_equivalence/） |
 | 方法强度与社会轴 | PSR 仍 KILL；社会轴 READ 但行为 null | PSR uncertainty -0.160 [-0.292,-0.039]；social B−A M1=+0.00148, p_bonf=1.0；READ AUC=0.954 | exploratory / valid_for_paper=false（E-0009/E-0010） |
 
 **Novelty 一句话（锐化后）：** 不是提出又一个 steering 方法，而是把"prompt 通道"和"latent 通道"放进同一个冻结、审计过的行为裁决器里竞争，再把失败边界翻译成 cognitive console 的 UI/evaluation contract。与 Sprejer et al. 的区别：他们是并行工作（非前作），用 SAE features + MMLU，无预注册，用于外部佐证而非 scoop；与 Heyman 的区别：他们展示 trained steering 可以 mimic prompting，本文声明范围刻意限于 naive/off-the-shelf + bounded prompt，并用 PSR arm pre-empt "方法太弱"攻击；与 Mishra 的区别：他们证明内部非满射性（背景），本文测试行为层面的 transfer。
@@ -37,7 +37,7 @@ Mishra et al. 的 non-surjectivity 只作为背景动机：activation steering �
 1. 不押“可读 prompt ≈ steering 向量对齐”。C1 只测 representational facade，不等于控制。
 2. 不押“所有 activation steering 都失败”。C2 明确限定为 bounded prompt vs naive/off-the-shelf CAA/ITI；PSR 只是单模型探索性支持。
 3. 不押机制。E-0007 已经把 off-manifold distance 机制测试为 NOT_SUPPORTED。
-4. 不押用户研究。Console 是 model-evidence-derived design implication；未证明真人理解或受益。
+4. 不押用户研究。Console 是 model-evidence-derived interface-evaluation implication；未证明真人理解或受益。
 
 ## 4. 相关工作与定位
 
@@ -99,7 +99,7 @@ Breadth 轴来自 `results/breadth_confirm2/` 与 D-0047：facade ratio 0.271 �
 
 `docs/specs/console-v1.md` 把 console 定位为 reality-check / boundary instrument，不是 latent control slider。v2 UI-contract 每个 affordance card 显示 5 个 artifact-derived signals：READ status、TRANSFER verdict、BOUNDED BEST-PROMPT BASELINE（原"PROMPT-CEILING"，已重命名为中性术语）、CALIBRATION-HARM、EVIDENCE-TIER。`results/console_v1_demo/console_v1_demo_report.md` 与 `docs/paper/figure-manifests/console-ui-contract.yaml` 说明静态图和 demo 从冻结 artifacts 读取，不手填数字。
 
-**Console 标签更新（D-0056）：** `src/cognitive_console/console/data_loader.py._card_verdict` 已将分类式 `"LEGIBLE but NOT CONTROLLABLE"` 改为诚实的 `"LEGIBLE: no added control demonstrated"`（经生成器改，不手改 PDF 产物；幂等校验通过）。
+**Console 标签更新（D-0056）：** `src/cognitive_console/console/data_loader.py._card_verdict` 已将分类式 `"LEGIBLE but NOT CONTROLLABLE"` 改为诚实的 `"LEGIBLE: no superiority demonstrated under pass rule"`（经生成器改，不手改 PDF 产物；幂等校验通过）。
 
 ## 7. 实验结果
 
@@ -127,7 +127,7 @@ Breadth 轴来自 `results/breadth_confirm2/` 与 D-0047：facade ratio 0.271 �
 | ITI×Qwen | +0.020 [+0.000,+0.055] | -0.100 [-0.270,+0.060] | **-0.103 [-0.136,-0.069]** | 0/3 fail |
 | ITI×Llama | +0.015 [-0.040,+0.060] | +0.000 [-0.195,+0.205] | **-0.084 [-0.115,-0.049]** | 0/3 fail |
 
-Interpretation：在 tested scope 内，latent steering **未显示任何超过 bounded best-prompt baseline 的额外控制（no demonstrated added control）**。只有 uncertainty/calibration 轴是稳健负结果：不只是无增益，而是显著更差（CI 排除 0）。deliberation 和 skepticism 的 non-transfer 是**欠功效非检出**，不是"证明无效应"。Post-hoc TOST equivalence（D-0056，exploratory，见生成表 `docs/paper/tables/equivalence-tost.tex`）：uncertainty 4/4 CALIBRATION_HARM（稳健）；deliberation ITI 2 cells EQUIVALENT（实际等价）、CAA 2 cells UNDERPOWERED；skepticism 4/4 UNDERPOWERED（方差过宽）。任何轴在任何 cell 均无 superiority。尤其 CAA×Qwen uncertainty Δ=-0.228，是 console v1/v2 反复高亮的红色告警。该结论来自 C2 冻结行为裁决本身，不依赖 C1 uncertainty facade 是否复现。
+Interpretation：在 tested scope 内，latent steering **未显示任何超过 bounded best-prompt baseline 的额外控制（no demonstrated superiority under the pass rule）**。只有 uncertainty/calibration 轴是稳健负结果：不只是无增益，而是显著更差（CI 排除 0）。deliberation 和 skepticism 的 non-transfer 是**欠功效非检出**，不是"证明无效应"。Post-hoc TOST equivalence（D-0056，exploratory，见生成表 `docs/paper/tables/equivalence-tost.tex`）：uncertainty 4/4 CALIBRATION_HARM（稳健）；deliberation ITI 2 cells EQUIVALENT（实际等价）、CAA 2 cells UNDERPOWERED；skepticism 4/4 UNDERPOWERED（方差过宽）。任何轴在任何 cell 均无 superiority。尤其 CAA×Qwen uncertainty Δ=-0.228，是 console v1/v2 反复高亮的红色告警。该结论来自 C2 冻结行为裁决本身，不依赖 C1 uncertainty facade 是否复现。
 
 ### 7.3 PSR：KILL，支持“不是只因为 naive 方法太弱”
 
@@ -157,7 +157,7 @@ Console 的目标不是“把 latent 方向包装成 slider”，而是显示**�
 4. **CALIBRATION-HARM**：uncertainty 轴若 steering 伤害校准，必须显式红色告警。
 5. **EVIDENCE-TIER**：confirmatory / exploratory / untested，显示单模型、单 seed、human-α pending 等 caveat。
 
-失败分类（`failure-taxonomy.tex`）：F1 legible-but-non-transfer；F2 calibration backfire；F3 coherence-fragility corridor；F4 layer-sensitive instability；F5 axis extraction degeneration。当前是从 model evidence 推导出的 design implication，**不是用户研究结果**。
+失败分类（`failure-taxonomy.tex`）：F1 legible-but-non-transfer；F2 calibration backfire；F3 coherence-fragility corridor；F4 layer-sensitive instability；F5 axis extraction degeneration。当前是从 model evidence 推导出的 interface-evaluation implication，**不是用户研究结果**。
 
 ## 9. 局限与诚实边界
 
@@ -196,7 +196,7 @@ Console 的目标不是“把 latent 方向包装成 slider”，而是显示**�
 - **CHI experience track / CHI full paper：** 风险是无真人研究、console 只是 model-evidence-derived implication。若走 CHI，需要更强人机落点或明确定位为 methodology/reality-check。
 - **FAccT / AIES：** 社会轴/操纵语境更契合，但 E-0010 目前 human-α pending 且是 honest-null/exploratory；不能把它包装成 manipulation finding。
 - **拒稿风险：** “ML negative + HCI愿景”而非完成的交互贡献；“方法太弱”攻击（PSR 已初步 pre-empt 但未全解决）；界面可见度不足；缺少真人验证。
-- **已加固：** 2×2 CAA/ITI×Qwen/Llama；PSR Qwen exploratory arm；console v2 artifact-derived card；claim-map 明确 C3 只是 design implication。
+- **已加固：** 2×2 CAA/ITI×Qwen/Llama；PSR Qwen exploratory arm；console v2 artifact-derived card；claim-map 明确 C3 只是 interface-evaluation implication。
 - **录取率注记：** owner brief 中要求写 IUI 约 24–25%；我在仓库内未找到官方可核验来源，故此处不把该百分比作为强事实，投稿策略文档需后续用官方 CFP/proceedings 核验。
 
 ## 13. 附：证据台账速查表（E-0003..E-0010）

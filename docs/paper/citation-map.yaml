@@ -83,7 +83,7 @@ references:
     venue_or_source: "CHI 2024"
     how_we_use_it: "HCI theory base for metacognitive monitoring/control and why legibility matters."
     claim_links: ["C3"]
-    paper_sections: ["Introduction", "Design Implications"]
+    paper_sections: ["Introduction", "Interface-Evaluation Contract"]
 
   ai_instruments:
     status: VERIFIED
@@ -133,7 +133,7 @@ references:
     venue_or_source: "CHI 2026"
     how_we_use_it: "C3/trust background: user perspectives on prompt-layer control; our console extends the control/legibility problem to latent channels."
     claim_links: ["C3"]
-    paper_sections: ["Related Work", "Design Implications"]
+    paper_sections: ["Related Work", "Interface-Evaluation Contract"]
 
   transparency_roadmap:
     status: VERIFIED
@@ -144,7 +144,7 @@ references:
     venue_or_source: "Harvard Data Science Review"
     how_we_use_it: "C3/trust background: human-centered transparency and legibility roadmap for non-experts."
     claim_links: ["C3"]
-    paper_sections: ["Introduction", "Design Implications"]
+    paper_sections: ["Introduction", "Interface-Evaluation Contract"]
 
   latent_control_trust:
     status: VERIFIED
@@ -154,7 +154,7 @@ references:
     venue_or_source: "ACL 2026 BigPicture Workshop"
     how_we_use_it: "C3/trust background and crowded phrase context for steering/control/trust; not a scoop because no interface or user study."
     claim_links: ["C3"]
-    paper_sections: ["Related Work", "Design Implications"]
+    paper_sections: ["Related Work", "Interface-Evaluation Contract"]
 
   coninstruct:
     status: VERIFIED
@@ -174,7 +174,7 @@ references:
     venue_or_source: "arXiv preprint"
     how_we_use_it: "C3/trust background and possible human-study measure/model if the human-study fork reopens."
     claim_links: ["C3"]
-    paper_sections: ["Related Work", "Design Implications", "Future Work"]
+    paper_sections: ["Related Work", "Interface-Evaluation Contract", "Future Work"]
 
   mind_the_performance_gap:
     status: VERIFIED

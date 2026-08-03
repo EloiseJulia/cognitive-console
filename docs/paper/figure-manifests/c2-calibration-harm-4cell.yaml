@@ -1,5 +1,5 @@
 artifact_id: "fig-calibration-harm-4cell"
-artifact_type: "main or companion figure stub"
+artifact_type: "main companion figure"
 title: "Uncertainty calibration harm across steering methods and model families"
 supports_claims: ["C2"]
 source_artifacts:
@@ -28,5 +28,9 @@ axes:
 encodings:
   color: "steering method"
   shape: "model family"
-status: "stub: plotting script/table source not yet created"
+generation_script: "docs/paper/scripts/plot_c2_calibration_harm.py"
+output_file: "docs/paper/figures/c2-calibration-harm.pdf"
+rebuild_command: "python docs\\paper\\scripts\\plot_c2_calibration_harm.py"
+manual_edits_allowed: false
+status: "active: generated from frozen robustness-arm JSON artifacts by docs/paper/scripts/plot_c2_calibration_harm.py"
 required_message: "All four cells are negative with CI excluding 0 per E-0006; mechanism remains open after E-0007."

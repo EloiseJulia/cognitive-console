@@ -1,0 +1,6 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[E-0013] cell=caa__qwen2.5-7b backend=hf model=Qwen/Qwen2.5-7B-Instruct layer=20 alpha=8.0 prompt=unc-strong-01
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:  12%|█▏        | 40/339 [00:00<00:00, 377.74it/s]Loading weights:  36%|███▌      | 121/339 [00:00<00:00, 617.71it/s]Loading weights:  60%|██████    | 204/339 [00:00<00:00, 705.35it/s]Loading weights:  84%|████████▍ | 286/339 [00:00<00:00, 749.32it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 716.08it/s]
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   1%|          | 2/339 [00:00<00:24, 14.00it/s]Loading weights:  29%|██▉       | 100/339 [00:00<00:00, 494.29it/s]Loading weights:  54%|█████▍    | 183/339 [00:00<00:00, 618.00it/s]Loading weights:  81%|████████▏ | 276/339 [00:00<00:00, 725.51it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 641.10it/s]
+[E-0013] wrote results/E-0013-uncertainty-recheck/samples.jsonl
+[E-0013] wrote results/E-0013-uncertainty-recheck/reanalysis.json

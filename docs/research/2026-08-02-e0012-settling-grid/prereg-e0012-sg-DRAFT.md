@@ -1,6 +1,6 @@
 # E-0012-SG settling grid mini-prereg (DRAFT)
 
-Run commit: `<MANAGER_TO_FILL_RUN_COMMIT>`
+Run commit: `345b27c` (main, post-merge of feature/e0012-settling-grid; FROZEN D-0071; code-audited READY-TO-FREEZE-AND-RUN; zero drift). The GPU run executes at this code state.
 
 ## Purpose
 

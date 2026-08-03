@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-08-02 · D-0071 · E-0012-SG settling grid frozen (run commit 345b27c); cleared for ~30-45min GPU run
+- Owner chose (post D-0070) to run the settling grid to close the A-lite results-audit UNVERIFIED-1 (pure real-probe steering unmeasured) before writing E-0012 into the paper.
+- **Design:** 6 conditions on frozen E-0012 TEST (53 items, k=5, same fp16 sampler as A-lite): {empty, CAL-09, SYNTH-BANK-26} × {no-steer, real BTN-CAL-PROBE@L18 α24}. Reuses the EXACT A-lite real probe direction (hf re-derives + ASSERTS vector_sha256 == A-lite provenance da5723...e60e, aborts on mismatch). Persists per-condition TEST mean(1-Brier) + paired-bootstrap-CI deltas: pure-steering (empty+probe−empty), CAL09+probe−CAL09, SYNTH26+probe−SYNTH26, best-steered−best-prompt-only. Descriptive, no selection/tuning.
+- **Gates:** independent hostile code audit (`reviews/2026-08-02-e0012-sg-code-audit`) = READY-TO-FREEZE-AND-RUN (same-direction guarantee hard-fails; steering/scoring reuse harness path; TEST-only; deltas use shared cluster bootstrap; zero src drift; 1 low-impact MINOR test-coverage note). Additive-only. Merged main 345b27c.
+- Not §5-new (within owner-approved settling-grid). Next: run once on A800 GPU1 fp16 (~30-45min), PUSH run commit before cleanup, results audit, then write E-0012 into paper. valid_for_paper=false until run + results audit.
+
 ## 2026-08-02 · D-0070 · E-0012 A-lite REAL-direction run audited SOUND-BUT-OVERCLAIMS → honest headline: a real effective calibration direction still does NOT beat strong prompting (defensible negative, closes "weak-steering" attack)
 - A-lite real-direction run (execution 9f7a42a, run branch run/e0012-alite-20260802 @ 846e9fd; E-0006 baseline artifact 1c07a03). Independent hostile results audit (`reviews/2026-08-02-e0012-alite-results-audit/audit-report.md`) verdict = **SOUND-BUT-OVERCLAIMS-IF-CALLED-VERIFIED-CONTROL**.
 - **Directions genuinely REAL (bug fixed):** 10 provenance records (5 real_probe from TriviaQA-train + 5 real_caa_mean_diff whose source_artifact_sha256=9c1e12ccef16 matches the E-0006 unsteered baseline manifest). Real-not-smoke guard did not fire (real inputs present). E-0006↔E-0012 item overlap=0 (re-verified) → no CONTRA leakage. All standard gates pass: split 27/53 0-overlap; 7,923 raw pairs all synthetic_proxy=false; N-01 active; kill rule symmetric (APE k5=0.5343 < button DEV k5=0.8242 → PASS); Stage0 70/70, 8 pass cutoff, 1 advancing (BTN-CAL-PROBE@L18 α24); Bonferroni M=1; §9.4 SKIPPED correct; VERDICT=LOCAL correct per §8.

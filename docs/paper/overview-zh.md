@@ -1,7 +1,8 @@
 # 论文总览（中文内部理解版）
 
-> 论文：**Legible Need Not Be Controllable: A Frozen Reality Check for Prompt-vs-Latent Behavioral Control in LLMs**。  
-> 本文档是 owner 内部理解稿，不是送审稿；数字以 `docs/ledgers/evidence-ledger.md`、生成表、冻结结果 artifact 与 `docs/paper/main.tex` 为准。
+> 论文：**Legible Need Not Be Controllable: No Demonstrated Superiority over Bounded Prompts under Naive CAA/ITI Steering**（标题已按 critic gap 修订收窄，D-0074；目标 venue = **IUI**，D-0074）。  
+> 本文档是 owner 内部理解稿，不是送审稿；数字以 `docs/ledgers/evidence-ledger.md`、生成表、冻结结果 artifact 与 `docs/paper/main.tex` 为准。  
+> **内部备注（不入论文）：** 曾尝试 E-0012「verified control button」搜索以升级为正例/关闭"只试了弱 steering"攻击，但历经 4 个占位符-vs-真实 bug（假比较器/贪心采样/随机方向/假 world-capital fixture 数据），全部证据判 INVALID，已于 D-0073 **终止**并不入论文；"弱 steering"攻击改由 E-0009（PSR arm）在论文里 pre-empt。论文 headline 未受影响。
 
 ## 1. 一页速览（TL;DR）
 

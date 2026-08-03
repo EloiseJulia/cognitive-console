@@ -57,7 +57,7 @@ internal legibility does **not** cash out into a behavioral advantage over the b
   where* legible latent control fails or degrades behavior, and (b) helps non-experts *recalibrate trust* and
   attribute prompt↔latent conflict — i.e., a legibility/limits console, not a superpower panel.
 - **Evidence:** formative + controlled user study — **NOT yet run; IRB/human-subjects = §5, human-gated.**
-- **Status:** **proposed (design contribution).**
+- **Status:** **proposed (interface-evaluation implication).**
 
 ---
 

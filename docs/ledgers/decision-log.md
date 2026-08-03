@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-08-03 · D-0075 · Paper SUBMISSION-READY for IUI (final polish merged); E-0012 chapter fully closed
+- Final acceptance critic (`reviews/2026-08-03-final-acceptance-critic/review-final-IUI.yaml`): all 10 prior-critic gaps CLOSED, zero residual over-claims (equivalence/universal/user-benefit all clean), zero E-0012 leakage; scores up (overall 3.4→3.8; rigor 4.3, clarity 4.2, reprod 4.2); IUI accept est. 25-40% → **35-50%**; verdict MINOR-POLISH-THEN-SUBMIT.
+- Final prose-only polish merged (main 34ace23, revision b12fa29 → polish e5cf264): positioning sentence (interface-evaluation-method contribution, not user-benefit study); scoped `\shorttitle` "under Naive CAA/ITI"; 16-prompt bounded-interface-budget phrase; exploratory social-inference (C4) relocated to appendix (Context Only) with all caveats preserved. Zero numeric/table/figure edits; LaTeX compiles; Manager-verified full diff.
+- **Paper state:** revised, audited (READY-TO-MERGE), re-reviewed (MINOR-POLISH-THEN-SUBMIT), venue=IUI, overview-zh synced. Headline = C1 (exploratory setup facade) + **C2 frozen negative (no demonstrated superiority under naive CAA/ITI; robust uncertainty calibration harm; split-seed robust)** + C3 (interface-evaluation contract, model-evidence-derived, no user study) + C4 (appendix exploratory). E-0009 pre-empts "weak steering" attack. Actual IUI submission is owner §5 (external release) — NOT performed by Manager.
+- **E-0012 fully closed** (D-0072/D-0073 terminated after 4 placeholder bugs; all evidence INVALID; not in paper; lessons in failure-log). Manager E-0012 thread ended.
+
 ## 2026-08-03 · D-0074 · Venue = IUI (owner §5 decision); authorized full submission-revision pass per reviewer-critic gap list
 - Reviewer-critic gap pass (`reviews/2026-08-02-submission-critic/` R1-novelty-venue + R2-methodology) on the frozen post-E-0012-termination paper (main 7e6bd0c): both critics = sound paper, MAJOR revisions (wording/framing/reproducibility) but NO fatal blocker and NO new experiments; zero E-0012 leakage confirmed. R1 overall 3.4, R2 3.0.
 - **Owner ruled venue = IUI** (primary; R1: IUI 25-40% if tightened, best fit for intelligent-UI + model-evidence artifact without a user study; FAccT/AIES = alt after trust reframing; CHI-full fatal without user study). Venue no longer deferred.

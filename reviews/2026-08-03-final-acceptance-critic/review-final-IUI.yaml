@@ -1,0 +1,180 @@
+review_id: final-IUI-acceptance-critic
+reviewer_role: "Independent final IUI reviewer of frozen revised paper bundle"
+review_date: "2026-08-03"
+venue: "ACM IUI"
+scope:
+  frozen_bundle:
+    - "docs/paper/main.tex"
+    - "docs/paper/claim-map.yaml"
+    - "docs/paper/submission-evidence-ledger.md"
+    - "docs/paper/tables/*.tex"
+    - "docs/paper/table-manifests/*.yaml"
+    - "docs/paper/figure-manifests/*"
+  excluded: "Any E-0012/verified-control/settling-grid/comparator-strength content; no substantive E-0012 content found in the paper bundle, only the filtered-ledger exclusion notice."
+
+prior_gap_closure_check:
+  - gap: "Scope wording: no demonstrated superiority, not equivalence, under naive CAA/ITI."
+    status: CLOSED
+    evidence:
+      - "main.tex:24 title scopes to 'No Demonstrated Superiority ... under Naive CAA/ITI Steering'."
+      - "main.tex:37 abstract says underpowered non-detection, not proof of zero or equivalence."
+      - "main.tex:68 contribution says superiority test, not equivalence or universal non-controllability."
+      - "main.tex:209 and main.tex:211 state failed-superiority within tested scope and distinguish uncertainty harm from underpowered deliberation/skepticism."
+      - "claim-map.yaml:12 explicitly says failed-superiority, not equivalence."
+  - gap: "Split-seed language must say DEV/TEST split seeds over the same item pool."
+    status: CLOSED
+    evidence:
+      - "main.tex:37 abstract says five DEV/TEST split seeds over the same item pool."
+      - "main.tex:274 limitations says seeds vary split membership, not independent item draws."
+      - "main.tex:293 conclusion repeats five DEV/TEST split seeds over the same item pool."
+      - "submission-evidence-ledger.md:15 records same-pool and NOT independent item draws."
+  - gap: "C3 reframed as interface-evaluation contract plus UI vignette, with no user-benefit claim."
+    status: CLOSED
+    evidence:
+      - "main.tex:70 defines C3 as an interface-evaluation implication from model evidence, not a user-study claim."
+      - "main.tex:238 says the contract is not a user study and does not claim users understand, rely on, or benefit from the console."
+      - "main.tex:242 adds a UI-decision vignette and states it is not evidence of measured user benefit."
+      - "main.tex:248 figure caption says the console rendering is not a user study."
+      - "claim-map.yaml:41-48 flags C3 as an implication with no standalone evidence row."
+  - gap: "Calibration harm foregrounded and mechanism left open."
+    status: CLOSED
+    evidence:
+      - "main.tex:37 abstract identifies uncertainty calibration harm as the sharper, narrower headline empirical result."
+      - "main.tex:69 contribution foregrounds robust calibration harm."
+      - "main.tex:211 results separate robust uncertainty harm from underpowered non-detections."
+      - "main.tex:228 explicitly reports the OOD mechanism null and leaves reliability/resolution/base-rate/confidence-format mechanisms open."
+      - "figure-manifests/c2-calibration-harm-4cell.yaml:32 requires the message that mechanism remains open after E-0007."
+  - gap: "Bounded-prompt IDs/text/hashes exposed and 16-prompt rationale added."
+    status: CLOSED
+    evidence:
+      - "main.tex:145 explains 16 authored candidate prompts as a bounded non-expert interface-effort baseline, not exhaustive prompt optimization."
+      - "main.tex:188 says prompt text, selected IDs, artifact paths, and hashes are in c2-delta-4cell.yaml."
+      - "table-manifests/c2-delta-4cell.yaml:30 includes best_prompt_text as a column."
+      - "table-manifests/c2-delta-4cell.yaml:37-123 lists selected prompt text and source_artifact_sha256 entries."
+  - gap: "Novelty one-liner."
+    status: CLOSED
+    evidence:
+      - "main.tex:101 opens the Nearest-Neighbor Novelty Contrast section."
+      - "main.tex:107 table caption gives the distinct unit: frozen, pre-registered prompt-vs-naive-latent adjudication tied to an HCI console discipline."
+      - "main.tex:102-121 culminates in the explicit unlike-neighbors sentence contrasting Mishra, Heyman, Sprejer, and Huang/Lim."
+  - gap: "Construct-validity paragraph."
+    status: CLOSED
+    evidence:
+      - "main.tex:145 explains comparator construct/budget."
+      - "main.tex:133 and main.tex:274 bound C1/C2 scope."
+      - "main.tex:151 states the axis outcomes are task measurements, not complete psychological measurements, and details Brier-score limitations."
+  - gap: "Format-disruption caveat."
+    status: CLOSED
+    evidence:
+      - "main.tex:151 notes 1-Brier conflates confidence-format effects."
+      - "main.tex:228 says uncertainty outputs often dropped the required confidence format; not parser-only degeneration, but format fragility remains plausible."
+  - gap: "Submission-filtered ledger."
+    status: CLOSED
+    evidence:
+      - "submission-evidence-ledger.md:1 is titled 'Submission Evidence Ledger (Filtered)'."
+      - "submission-evidence-ledger.md:3 states the bundle contains only E-0003..E-0011 and excludes E-0012 as invalid/out of scope."
+      - "E-0012 scan result: no substantive E-0012 references in main.tex, claim-map.yaml, tables, table manifests, or figure manifests; only the exclusion notice in submission-evidence-ledger.md:3."
+  - gap: "C4 trimmed and C1 treated as setup rather than a core control contribution."
+    status: CLOSED
+    evidence:
+      - "main.tex:62-66 labels C1 as setup/diagnostic measurement and not a control claim."
+      - "main.tex:133 says C1 is not a behavioral user study and not confirmatory evidence."
+      - "main.tex:254-261 confines the social-inference material to an exploratory context-only subsection, not a fifth contribution."
+      - "main.tex:248 figure caption preserves social-axis caveats and human-rater pending status."
+      - "claim-map.yaml:49-62 marks C4 discussion-only, exploratory, valid_for_paper=false."
+
+fresh_iui_review:
+  one_sentence_summary: >-
+    This paper presents a scoped negative-result evaluation showing that readable metacognitive latent directions in two 7--8B instruction-model families do not demonstrate added behavioral control over a bounded prompt baseline under naive CAA/ITI steering, with robust calibration harm, and converts that result into an IUI-oriented console evaluation contract.
+  actual_contributions:
+    - "A frozen, auditable prompt-vs-latent behavioral adjudicator for testing whether latent controls beat a bounded prompt channel."
+    - "A 2 methods x 2 models failed-superiority result for naive/off-the-shelf CAA/ITI, with robust uncertainty calibration harm and careful failed-superiority rather than equivalence wording."
+    - "A concrete interface-evaluation contract and static console instantiation that separates READ status, TRANSFER verdict, baseline comparison, calibration warning, and evidence tier."
+    - "Exploratory setup evidence on representational facades and limited exploratory method-strength/social-axis extensions, properly demoted."
+  strengths:
+    - "The revised scope language is unusually disciplined for a negative result."
+    - "The IUI fit is now clearer: the contribution is an evaluation contract for intelligent UI affordances, not a latent-steering benchmark alone."
+    - "Reproducibility improved materially: generated tables, manifests, prompt text/IDs/hashes, and a submission-filtered ledger are present."
+    - "Calibration harm is practically relevant to trust and reliance interfaces and is not hidden behind the broader null."
+  remaining_weaknesses:
+    - "No human study remains a venue risk; the paper handles this honestly, but some IUI reviewers may still want evidence that the contract changes user behavior."
+    - "The title prefix 'Legible Need Not Be Controllable' is memorable but still broad if quoted without the subtitle."
+    - "The PSR-style arm is helpful but single-model/single-seed exploratory support; strong/trained steering remains a natural reviewer objection."
+    - "C4/social-axis material is now caveated, but it still slightly competes for attention in the console figure caption."
+  ranked_findings:
+    - id: FINAL-MAJOR-1
+      severity: MAJOR
+      finding: "IUI contribution still depends on reviewers accepting an evaluation-contract paper without user evidence."
+      evidence:
+        - "main.tex:70 and main.tex:238 correctly disclaim user-study/user-benefit claims."
+        - "main.tex:73 says a human-subjects study is registered but owner-gated."
+      cheapest_fix: "In the cover letter or final introduction polish, explicitly position the paper as an interface-evaluation-method contribution and preempt 'where is the user study?' in one sentence."
+      closure_condition: "A reviewer can state the IUI contribution without expecting empirical user-benefit evidence."
+    - id: FINAL-MINOR-1
+      severity: MINOR
+      finding: "The title prefix can be quoted more broadly than the paper permits, although the subtitle repairs it."
+      evidence:
+        - "main.tex:24 has a broad slogan followed by a scoped subtitle."
+        - "main.tex:48, main.tex:68, main.tex:209, and main.tex:274 all correctly bound the claim."
+      cheapest_fix: "If page/title constraints allow, keep the subtitle in all metadata and talks; optionally change the short running title to include 'Naive CAA/ITI'."
+      closure_condition: "No standalone title/metadata occurrence omits the scoped subtitle."
+    - id: FINAL-MINOR-2
+      severity: MINOR
+      finding: "The social-inference/contextual axis remains visible in the console figure and may distract from the metacognitive C2 headline."
+      evidence:
+        - "main.tex:248 explains that the social-axis NULL is not latent-transfer evidence and remains exploratory."
+        - "main.tex:254-261 says the subsection is context only, not a fifth contribution."
+      cheapest_fix: "If space is tight, move the social card to appendix/supplement or label it visually as exploratory/context-only."
+      closure_condition: "No reader treats C4 as a confirmatory contribution or as part of the C2 headline."
+    - id: FINAL-QUESTION-1
+      severity: QUESTION
+      finding: "How far should the 16-prompt baseline be interpreted as a realistic user-channel comparator?"
+      evidence:
+        - "main.tex:145 defines it as bounded non-expert prompt effort, not exhaustive optimization."
+        - "table-manifests/c2-delta-4cell.yaml:37-123 makes selected prompts reconstructable."
+      cheapest_fix: "Add, if space permits, one phrase tying 16 prompts to a realistic interface evaluation budget."
+      closure_condition: "The comparator is read as bounded interface effort, not best-possible prompting."
+
+residual_overclaim_scan:
+  equivalence_or_proven_null_on_deliberation_skepticism:
+    verdict: "No actionable offender found."
+    evidence:
+      - "main.tex:37: 'underpowered non-detection, not a proof of zero effect or equivalence'."
+      - "main.tex:68: tests superiority, not equivalence."
+      - "main.tex:211: cannot distinguish no effect from smaller-than-bound; all skepticism cells underpowered."
+      - "tables/equivalence-tost.tex:2,7,44 label TOST post-hoc/exploratory; lines 23-37 show mixed deliberation and underpowered skepticism."
+  universal_latent_control_failure_beyond_naive_caa_iti:
+    verdict: "No actionable offender found; only a minor title-slogan risk if quoted without subtitle."
+    nearest_risk_quote: "main.tex:24: 'Legible Need Not Be Controllable' — repaired on the same line by 'No Demonstrated Superiority over Bounded Prompts under Naive CAA/ITI Steering'."
+    evidence:
+      - "main.tex:48: claim deliberately narrow and not an impossibility theorem."
+      - "main.tex:209: not a universal statement about steering."
+      - "main.tex:274: should not be cited as an impossibility theorem for activation steering, latent control, or prompt/latent equivalence."
+      - "main.tex:293: explicitly says no universal limit on steering."
+  user_study_or_user_benefit_claim_for_console:
+    verdict: "No offender found."
+    evidence:
+      - "main.tex:37: model-evidence-derived contract, not a user-study claim."
+      - "main.tex:70 and main.tex:238: interface-evaluation implication only; no claim users understand, rely on, or benefit from the console."
+      - "main.tex:242: vignette is not measured user benefit."
+      - "main.tex:287: human evaluation is future work."
+  e0012_content:
+    verdict: "Clean, except for the explicit exclusion note."
+    evidence:
+      - "submission-evidence-ledger.md:3 excludes E-0012 as invalid/out of scope."
+
+updated_scores_1_to_5:
+  originality: 3.8
+  significance: 3.6
+  rigor: 4.3
+  clarity: 4.2
+  reproducibility: 4.2
+  overall: 3.8
+confidence: 0.82
+accept_probability:
+  pre_revision_r1_estimate: "25-40% if tightened"
+  current_realistic_iui_range: "35-50%"
+  rationale: "The main prior blockers are closed; residual risk is primarily venue taste around no user study and the bounded scope of latent methods, not fixable correctness problems."
+highest_leverage_remaining_improvement: >-
+  Add a short final-IUI positioning sentence in the abstract/introduction or cover letter: this is an interface-evaluation-method paper that supplies deployability prerequisites for latent-control affordances, not a study of end-user benefit.
+submission_readiness_verdict: "MINOR-POLISH-THEN-SUBMIT"

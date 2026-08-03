@@ -1,0 +1,147 @@
+review_id: R1-novelty-venue
+reviewer_role: "Independent senior reviewer simulating top-tier HCI/AI venue review"
+review_date: "2026-08-03"
+review_scope: "Frozen paper bundle only: docs/paper/main.tex, claim-map.yaml, outline.md, tables, table/figure manifests, and evidence-ledger support rows."
+overall_stance: "Borderline-to-positive for an IUI-style intelligent-interface paper if framed as an evaluation discipline around latent-control affordances; weak fit for CHI full paper without human evidence."
+
+summary:
+  one_sentence: "The paper argues, using a frozen prompt-vs-latent behavioral adjudication, that readable metacognitive latent directions in two 7--8B instruction models do not become better user-facing controls than bounded prompts under naive CAA/ITI steering, and that uncertainty steering robustly harms calibration."
+  claimed_contributions_from_paper:
+    - "C1: exploratory two-model representational-facade measurement with cross-model support on deliberation and skepticism but heterogeneous uncertainty/focus."
+    - "C2: pre-registered, fairness-controlled, independently audited prompt-vs-latent behavioral adjudication comparing bounded best prompts with naive CAA/ITI across Qwen2.5-7B and Llama-3-8B."
+    - "C2 headline: scoped negative result showing no added behavioral control in every tested cell, with robust uncertainty calibration harm."
+    - "C3: interface-evaluation implications for cognitive consoles: expose transfer limits, bounded-prompt baselines, calibration risks, and evidence tier rather than presenting legible latent directions as control sliders."
+  actual_contributions_assessment:
+    - "The strongest actual contribution is methodological: a clean, frozen, comparator-aware adjudication protocol for deciding whether a latent-control affordance beats a bounded prompt baseline."
+    - "The strongest empirical contribution is narrower than the prose sometimes sounds: uncertainty calibration harm is robust across the 2x2 grid; deliberation and skepticism are mainly non-superiority/underpowered non-detections rather than evidence of equivalence."
+    - "The HCI contribution is currently a design/evaluation contract, not validated interaction knowledge. It is useful but should be sold as interface evaluation infrastructure, not as a demonstrated user benefit."
+    - "The representational facade result is supportive framing but not a top-line contribution because it is exploratory, single-run per model, and axis-heterogeneous."
+
+novelty:
+  rating: "moderately novel"
+  assessment: "The core framing 'readable need not be controllable' is not wholly new after non-surjectivity, activation-steering brittleness, and prompt-steering recovery work, but the paper's combination of bounded-prompt comparator, frozen DEV/TEST adjudication, 2 methods x 2 models grid, calibration harm, and HCI console-evaluation contract is a moderately novel synthesis."
+  genuine_new_parts:
+    - "Making the prompt channel and latent channel compete under a frozen, item-paired, multiplicity-controlled behavioral test is a real methodological contribution for intelligent interfaces."
+    - "Treating latent UI affordances as objects that require READ, TRANSFER, prompt-baseline, calibration-harm, and evidence-tier labels is a clear HCI translation of model evidence."
+    - "The calibration-harm finding is practically interesting because it attacks a trust-relevant axis rather than only demonstrating generic capability degradation."
+  vulnerable_prior_work:
+    - "mishra2026nonsurj already motivates an internal prompt/latent gap; the paper must keep saying it tests behavioral transfer rather than claiming the non-surjectivity idea."
+    - "heyman2026steer is the strongest threat because trained steering can mimic prompting; this confines the contribution to naive/off-the-shelf CAA/ITI and makes the PSR-style arm important but still exploratory."
+    - "sprejer2026mindgap makes the degradation/trade-off story less surprising; the paper's defense is preregistration, comparator discipline, metacognitive axes, and HCI framing, not the mere existence of steering harm."
+    - "rimsky2024caa and li2023iti supply tested method lineages; reviewers may see the experiment as a bounded benchmark of known methods rather than a conceptual HCI advance."
+    - "huang2025steering, riche2025aiinstr, and related interface work mean the console angle needs more than a schematic; without users, the novelty lives in evaluation discipline, not interaction findings."
+  readable_not_controllable_contribution: "Real but incremental-to-moderate: the conceptual slogan is anticipated by adjacent work, but the frozen behavioral reality check against bounded prompts makes it more actionable for interface design."
+
+contribution_strength:
+  negative_result_strength: "Moderate. Negative results can be valuable here because the comparator is fair, the protocol is frozen, and the uncertainty harm is directional and replicated across method/model cells. However, the scope is only two 7--8B models, two naive steering families, three behavioral axes, and bounded prompt effort."
+  too_narrow_concerns:
+    - "Only uncertainty delivers strong harm; deliberation and skepticism mostly support 'no demonstrated superiority' rather than equivalence or failure."
+    - "The best-prompt baseline is bounded to 16 authored prompts; reviewers may argue that both channels are under-optimized in different ways."
+    - "The multi-seed check varies DEV/TEST split membership over the same item pool, so it reduces split luck but not item-sampling generalization risk."
+    - "PSR/trained steering is a known threat and remains exploratory/single-model, so the paper cannot claim broad latent-control failure."
+  calibration_harm_and_design_implication: "The calibration-harm result carries the paper because it is trust-relevant, robust in all four cells, and directly motivates UI warnings. The console contract is a plausible design implication, but it should be framed as an evaluation discipline derived from model evidence, not an HCI outcome."
+  lack_of_user_study: "Not fatal for IUI or possibly FAccT/AIES if the paper is positioned as an artifact/evaluation-method paper about intelligent UI affordances and trust calibration. It is likely fatal for CHI full paper unless reframed for a methods/theory contribution or paired with a human study. For CHI LBW/experience-style tracks, it is acceptable but the contribution bar and archival expectations differ."
+
+venue_fit:
+  IUI:
+    fit: "strongest fit as-is"
+    rationale: "IUI values intelligent interfaces, AI control affordances, and evaluation of model-driven UI capabilities. The console contract plus frozen latent-control adjudicator is squarely an intelligent-UI contribution even without a user study, provided the paper avoids overclaiming user effects."
+    risks: "IUI reviewers may still ask for an interactive system evaluation or at least a more concrete artifact walk-through; add a compact use-case vignette and sharpen why the adjudicator changes interface design."
+    estimated_acceptance_probability: "25-40% if tightened; 18-30% as currently written."
+  CHI_full:
+    fit: "weak-to-borderline"
+    rationale: "CHI full papers usually expect human evidence, deployed systems, or a very strong theory/design-method contribution. This paper has model evidence and a design implication, but no user study and a static console rendering."
+    risks: "Reviewers may view it as an ML steering benchmark with HCI implications appended. The paper itself admits no evidence that users understand warnings or calibrate reliance."
+    estimated_acceptance_probability: "8-18% as a full paper; higher only after a human-subjects study or a stronger design-method validation."
+  CHI_late_breaking_or_experience:
+    fit: "moderate"
+    rationale: "The negative result and console framing could work as an LBW/experience or alt-format contribution, especially if positioned as a timely cautionary artifact rather than a complete empirical HCI paper."
+    risks: "Less archival weight; may not satisfy the authors' apparent full-paper ambition."
+    estimated_acceptance_probability: "18-30% depending on track constraints and page format."
+  FAccT_AIES:
+    fit: "moderate but reframing required"
+    rationale: "Calibration harm, transparency, and trust-calibration warnings are relevant to responsible AI, but the current paper is not centrally about fairness, accountability, governance, social impact, or human/organizational harms. It would need a stronger risk and accountability frame."
+    risks: "FAccT/AIES reviewers may ask why the axes/tasks instantiate consequential fairness or safety failures, and may see the HCI console as under-evaluated."
+    estimated_acceptance_probability: "15-28% after reframing toward trust/calibration; 10-20% as currently written."
+  ranked_recommendation:
+    - venue: "IUI full paper"
+      reason: "Best match to intelligent UI plus model-evidence artifact; no human study is a weakness but not necessarily disqualifying if sold as interface-evaluation methodology."
+    - venue: "FAccT/AIES only after trust-calibration/accountability reframing"
+      reason: "Calibration harm can support responsible-AI relevance, but fairness/accountability contribution is currently secondary."
+    - venue: "CHI LBW/experience-style route"
+      reason: "Better fit than CHI full for a scoped, timely caution without user evidence, but lower prestige/archival contribution."
+    - venue: "CHI full paper"
+      reason: "Highest risk as-is because C3 is not empirically validated with users."
+  venue_maximizing_acceptance_as_is: "IUI"
+
+rejection_risks:
+  - rank: 1
+    risk: "This is an ML steering negative result with HCI language added; no user study validates the console or user benefit."
+    likely_reviewer_form: "Where is the HCI contribution beyond implications?"
+    cheapest_author_action: "Move the console evaluation contract earlier and make it an explicit method artifact: add a one-page scenario walking through how READ/TRANSFER/baseline/calibration/evidence-tier labels would change an interface decision, while explicitly stating no user-benefit claim."
+  - rank: 2
+    risk: "The negative result is too narrow and partly underpowered; deliberation/skepticism are not proven nulls."
+    likely_reviewer_form: "The title and contribution overgeneralize from non-superiority to non-controllability."
+    cheapest_author_action: "Retitle/subtitle and revise contribution C3/C2 wording to foreground 'no demonstrated added control under frozen bounded CAA/ITI' and state in the abstract that only uncertainty is robust harm while other axes are underpowered non-detections."
+  - rank: 3
+    risk: "Novelty is vulnerable to Mishra, Heyman, Sprejer, and steering-failure papers."
+    likely_reviewer_form: "Known: steering can be non-surjective, brittle, or harmful; what is new?"
+    cheapest_author_action: "Add a short 'What is new relative to nearest neighbors' paragraph at the end of Related Work that states the irreducible novelty unit in one sentence: frozen prompt-vs-naive-latent behavioral adjudication plus UI evidence-tier contract."
+
+ranked_findings:
+  - id: R1-F1
+    severity: MAJOR
+    finding: "Venue fit and claimed HCI contribution are fragile because C3 is only a design implication from model evidence, not a user-study result."
+    evidence: "Introduction contribution 4 and Design Implications explicitly disclaim user-study evidence; Limitations says human evaluation is deferred."
+    cheapest_discriminating_fix: "Reframe C3 throughout as an interface-evaluation artifact/contract, not a design contribution with user effects; include a concrete UI decision vignette."
+    closure_condition: "Abstract, Introduction, Design Implications, and Conclusion consistently avoid user-benefit claims and explain how the contract changes interface evaluation without needing a user study."
+  - id: R1-F2
+    severity: MAJOR
+    finding: "The title and headline risk over-reading underpowered non-detections as behavioral non-controllability."
+    evidence: "Abstract and Results correctly note uncertainty is robust but deliberation/skepticism are underpowered; however the title 'Need Not Be Controllable' and contribution language can be read more broadly."
+    cheapest_discriminating_fix: "Insert 'under naive CAA/ITI' or 'under bounded off-the-shelf steering' into the subtitle/abstract headline and keep the underpowered-axis caveat in every contribution summary."
+    closure_condition: "A skeptical reader cannot quote any top-level sentence as claiming universal or equivalence-style failure across all steering or all axes."
+  - id: R1-F3
+    severity: MAJOR
+    finding: "The paper's strongest empirical result is calibration harm, but mechanism remains open and Brier decomposition is unavailable."
+    evidence: "Results state the OOD mechanism test returned a valid null; Limitations says Murphy decomposition inputs were not committed."
+    cheapest_discriminating_fix: "Make calibration harm the explicit empirical contribution and demote mechanism speculation; add one sentence saying the harm may reflect reliability, resolution, or confidence-format effects not distinguished here."
+    closure_condition: "No mechanism language appears in Abstract/Contributions/Conclusion beyond 'open'; future-work mechanism hypotheses are clearly separated from the result."
+  - id: R1-F4
+    severity: MAJOR
+    finding: "Novelty defense depends on precise positioning against Sprejer, Mishra, Heyman, Huang/Lim, and AI-Instruments."
+    evidence: "Related Work includes a nearest-neighbor table, but the core novelty unit should be stated more sharply for reviewers who skim."
+    cheapest_discriminating_fix: "Add a boxed or final related-work sentence: 'Unlike prior X/Y/Z, we adjudicate whether naive latent controls beat bounded prompts on the same frozen behavioral items and convert the verdict into an interface evidence-tier contract.'"
+    closure_condition: "The novelty claim is understandable without reading the whole table."
+  - id: R1-F5
+    severity: MINOR
+    finding: "The exploratory social-inference extension risks distracting from the already narrow metacognitive headline."
+    evidence: "Discussion includes a lengthy social-inference extension with LLM-judge-only, human-alpha-pending results and no latent-steering transfer claim."
+    cheapest_discriminating_fix: "Shorten or move social-inference material to appendix/supplement unless needed for the console figure."
+    closure_condition: "Main text does not create a perceived fifth contribution or confuse C2's metacognitive scope."
+  - id: R1-F6
+    severity: MINOR
+    finding: "C1's exploratory and axis-heterogeneous status is handled honestly but may weaken the rhetorical setup."
+    evidence: "C1 table shows uncertainty/focus swap across models; claim-map marks C1 valid only as exploratory/scoped."
+    cheapest_discriminating_fix: "Call C1 a 'setup measurement' or 'diagnostic precondition' rather than a contribution of equal weight to C2."
+    closure_condition: "Contribution list visually separates exploratory setup from confirmatory behavioral adjudication."
+  - id: R1-Q1
+    severity: QUESTION
+    finding: "How bounded is 'bounded best prompt' relative to realistic prompt engineering?"
+    evidence: "Methods use 16 authored candidate prompts and DEV selection; this is fair but may be viewed as too small or author-dependent."
+    cheapest_discriminating_fix: "Add a short rationale for 16 prompts and characterize it as non-expert bounded effort rather than best possible prompting."
+    closure_condition: "Readers understand the comparator as an intentionally bounded user-channel baseline, not an exhaustive prompt optimization."
+
+scores_1_to_5:
+  originality: 3.5
+  significance: 3.3
+  rigor: 4.1
+  clarity: 3.7
+  reproducibility: 4.0
+  overall: 3.4
+confidence: 0.76
+recommended_venue_accept_probability_range: "IUI: 25-40% if tightened around interface-evaluation contribution; 18-30% without revision."
+final_recommendation: "Submit first to IUI after tightening the HCI artifact framing and scope language. Do not target CHI full as-is unless a human study or stronger design-method validation is added."
+stray_invalid_work_check:
+  checked_terms: ["E-0012", "verified-control", "settling-grid", "comparator-strength"]
+  result: "No matches found in the frozen paper bundle paths searched."

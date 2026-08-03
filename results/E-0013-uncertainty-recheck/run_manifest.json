@@ -1,0 +1,66 @@
+{
+  "experiment_id": "E-0013",
+  "valid_for_paper": false,
+  "purpose": "uncertainty format-compliance robustness recheck; does not modify frozen E-0006",
+  "backend": "hf",
+  "started_at": "2026-08-03T11:35:03.754104+00:00",
+  "ended_at": "2026-08-03T11:37:49.809429+00:00",
+  "wall_clock_seconds": 166.05531644821167,
+  "code_commit": "72aa8eba64656640b5092b83ea8ce8c8b8d74ce4",
+  "generation_identity": {
+    "model_by_cell": {
+      "caa__qwen2.5-7b": "/root/autodl-tmp/models/Qwen2.5-7B-Instruct"
+    },
+    "frozen_model_by_cell": {
+      "caa__qwen2.5-7b": "/root/autodl-tmp/models/Qwen2.5-7B-Instruct"
+    },
+    "effective_model_by_cell": {
+      "caa__qwen2.5-7b": "Qwen/Qwen2.5-7B-Instruct"
+    },
+    "model_identity_key_by_cell": {
+      "caa__qwen2.5-7b": "qwen2.5-7b-instruct"
+    },
+    "max_new_tokens": 64,
+    "temperature": 0.7,
+    "seed": 20260723,
+    "k_samples": 5
+  },
+  "frozen_root": "results/arm_full",
+  "cells": {
+    "caa__qwen2.5-7b": {
+      "frozen_config": {
+        "cell_key": "caa__qwen2.5-7b",
+        "method": "caa",
+        "model_label": "qwen2.5-7b",
+        "model_id": "/root/autodl-tmp/models/Qwen2.5-7B-Instruct",
+        "layer": 20,
+        "frozen_alpha": 8.0,
+        "best_prompt_id": "unc-strong-01",
+        "best_prompt_text": "Be honest about what you do not know. Flag every uncertainty and tell me how confident you really are.",
+        "neutral_prompt": "Please answer the following question.",
+        "sigma": 1.0,
+        "source_result_file": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+        "source_config_fingerprint": "433c5772c8ede7f8",
+        "source_mean_diff": -0.22767283018867926
+      },
+      "frozen_model_id": "/root/autodl-tmp/models/Qwen2.5-7B-Instruct",
+      "effective_model_ref": "Qwen/Qwen2.5-7B-Instruct",
+      "model_identity_key": "qwen2.5-7b-instruct",
+      "run_model_id": "Qwen/Qwen2.5-7B-Instruct",
+      "direction": {
+        "direction_source": "caa_mean_difference_at_frozen_layer"
+      },
+      "n_records": 1200,
+      "splits": [
+        "dev",
+        "test"
+      ]
+    }
+  },
+  "artifacts": {
+    "samples_jsonl": "results/E-0013-uncertainty-recheck/samples.jsonl",
+    "reanalysis_json": "results/E-0013-uncertainty-recheck/reanalysis.json",
+    "run_manifest_json": "results/E-0013-uncertainty-recheck/run_manifest.json"
+  },
+  "synthetic_proxy": false
+}

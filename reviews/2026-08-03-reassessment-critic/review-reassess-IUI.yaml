@@ -1,0 +1,338 @@
+review:
+  id: "reassess-IUI-2026-08-03"
+  reviewer_role: "Independent senior reviewer, ACM IUI (judged also against CHI/CSCW norms); acceptance <25%"
+  mode: "RE-ASSESSMENT of frozen bundle at main b0fecf0 after the 2026-08-03 chained review (REJECT, one-cycle path back)"
+  read_only: true
+  bundle_reviewed:
+    - "docs/paper/main.tex (305 lines, incl. appendix)"
+    - "docs/paper/claim-map.yaml"
+    - "docs/paper/tables/{c1-twomodel,c2-delta-4cell,equivalence-tost}.tex"
+    - "docs/paper/table-manifests/*.yaml, docs/paper/figure-manifests/*"
+    - "docs/ledgers/evidence-ledger.md (E-0003..E-0011), docs/ledgers/decision-log.md (D-0076..D-0078)"
+    - "results/E-0013-uncertainty-recheck/{reanalysis.json,run_manifest.json,run_e0013_caaqwen.log}"
+  explicitly_ignored: "E-0012 / verified-control lineage (terminated, not in paper)"
+
+summary_one_sentence: >
+  A frozen, pre-registered, comparator-controlled adjudication across CAA/ITI x Qwen2.5-7B/Llama-3-8B finds that
+  naive off-the-shelf latent steering never demonstrates superiority over a bounded 16-candidate best-prompt
+  baseline on three metacognitive axes, and consistently harms uncertainty calibration, from which the authors
+  derive (but do not user-test) a five-signal interface-evaluation contract for cognitive consoles.
+
+actual_contributions:
+  - id: "K1"
+    what: "Method contribution: a reusable prompt-vs-latent adjudication protocol (symmetric DEV-only selection of both the 16-prompt comparator and the steering alpha, paired item-cluster bootstrap, Bonferroni across axes, pre-registered delta=0.05 margin, coherence gate). main.tex:129-160"
+    strength: "Strongest and most transferable piece. This is the part IUI reviewers can reuse."
+  - id: "K2"
+    what: "Empirical negative: 12/12 method-model-axis cells fail the pre-registered pass rule; robust negative uncertainty effect in all four cells (tables/c2-delta-4cell.tex). main.tex:205-215"
+    strength: "Credible but narrow; the axis-level nulls are largely power-limited (see B-2)."
+  - id: "K3"
+    what: "Calibration-harm sub-finding plus its one-cell format-compliance robustness recheck. main.tex:224-231"
+    strength: "The paper's sharpest claim and simultaneously its most fragile one (see B-1)."
+  - id: "K4"
+    what: "Design/HCI output: failure taxonomy (F1-F5) and the READ/TRANSFER/comparator/calibration-warning/evidence-tier affordance card, instantiated as a console figure. main.tex:232-244"
+    strength: "Reasonable, honestly labeled as an implication; contributes framing, not evidence."
+  - not_a_contribution:
+      - "C1 facade measurement: correctly demoted to exploratory setup (main.tex:59, 200-204)."
+      - "C2a non-surjectivity: correctly background only (main.tex:93)."
+      - "Appendix social-inference probes: context only (main.tex:299-302)."
+
+above_or_below_line: >
+  Materially improved and no longer an obvious reject, but not yet clearly above the IUI line. The rewrite fixed
+  the framing, the disclosure, and the C3 over-claim; it did not fix the two things that decide the paper's fate:
+  (i) the uncertainty harm is still not identified independently of differential confidence-format missingness,
+  and the authors' own artifact contains an adverse sensitivity analysis they do not report; (ii) the assay's
+  sensitivity is still unestablished (no positive control; for skepticism the detectable effect is 4-6x the
+  pre-registered margin, so those cells could not have passed under any outcome). Current position: BORDERLINE,
+  leaning accept-with-major-revision at a venue that rewards protocol rigor, reject at a reviewer who takes the
+  missingness bound seriously.
+
+prior_fatal_issues:
+  F1_calibration_harm_may_be_format_parser_imputation_artifact:
+    status: "PARTIALLY-ADDRESSED"
+    what_improved:
+      - "The parser and the impute-to-0.5 rule are now fully disclosed in Methods, including the consequence that a no-confidence item scores 1-Brier = 0.75 regardless of correctness (main.tex:143)."
+      - "A real recheck exists and is in the paper: on CAA x Qwen, steering was MORE format-compliant than the prompt baseline (0.83 vs 0.45), and on paired format-compliant generations the harm persisted and grew to -0.34 CI[-0.51,-0.17] (main.tex:230; results/E-0013-uncertainty-recheck/reanalysis.json)."
+      - "The one-cell scope and the conditioning/collider caveat are stated in Results and Limitations (main.tex:231, 274)."
+    what_still_fails:
+      - id: "F1-a (decisive)"
+        detail: >
+          The same artifact the paper cites contains a worst-case (Manski-style) imputation bound the paper never
+          reports: sensitivity.worst_case_imputation_bounds = [least_favorable_to_steer -0.478,
+          most_favorable_to_steer +0.250] (reanalysis.json). Those bounds straddle zero. Under differential
+          missingness of 55% (prompt) vs 17% (steer), the harm on ALL generations is therefore not point-identified;
+          only the complete-case estimate is negative, and complete-case conditions on a post-treatment variable.
+          The paper's sentence "the confidence-format imputation therefore made the reported harm conservative
+          rather than inflating it" (main.tex:230) is true only for the complete-case comparison and is not
+          licensed as a general statement. Reporting the favorable comparison while omitting the unfavorable
+          bound that sits in the same JSON is selective reporting by the paper's own evidence-discipline standard.
+      - id: "F1-b"
+        detail: >
+          The prompt baseline's high imputed score is mechanically driven by non-compliance: prompt
+          mean_frozen_imputed_1minus_brier = 0.831 with 55% imputed at 0.75, vs steer 0.621 with 17% imputed.
+          The frozen headline effect is thus substantially an artifact of how often each condition emitted the
+          requested format, which is exactly the confound F1 named. The complete-case rerun mitigates it for one
+          cell; it does not remove it from the frozen Table 3 numbers that the Abstract and Conclusion quote.
+      - id: "F1-c"
+        detail: >
+          Scope: only CAA x Qwen (the largest effect, -0.228) was rechecked. The three smaller cells (-0.072,
+          -0.103, -0.084) are of the magnitude that differential imputation alone could plausibly produce, and
+          they remain unchecked (main.tex:231). The Abstract and Conclusion nevertheless assert harm "in all four
+          method/model cells" with no format caveat attached (main.tex:38, 291).
+      - id: "F1-d"
+        detail: >
+          E-0013 is a NEW generation run, not a reanalysis of the frozen E-0006 transcripts (run_manifest.json:
+          n_records=1200, backend hf, own model load). It reproduces -0.209 against the frozen -0.2277
+          (source_mean_diff), an 8% discrepancy that is never mentioned; the paper says "larger than the imputed
+          -0.21" (main.tex:230) while Table 3 says -0.228. A reviewer will ask which number is the result, and
+          whether TEST was touched a second time.
+  F2_no_positive_control_no_manipulation_check:
+    status: "STILL-FATAL (downgradeable to MAJOR if reframed honestly)"
+    what_improved:
+      - "The E-0013 compliance result is an incidental manipulation check for the uncertainty cell: steering demonstrably changes output behavior (compliance 0.45 -> 0.83), so the intervention is not inert there."
+      - "The exploratory PSR-style DEV-optimized arm is offered as an answer to 'your directions were too weak' (main.tex:96, 250)."
+    what_still_fails:
+      - id: "F2-a"
+        detail: >
+          There is still no positive control anywhere in the paper. grep of main.tex for 'positive control',
+          'manipulation check', 'power analysis', 'MDE' returns nothing in the body text. The paper therefore
+          cannot show that its adjudicator would have detected a true +0.05 improvement had one existed - which
+          is the entire epistemic content of a negative result.
+      - id: "F2-b (quantitative, decisive)"
+        detail: >
+          The authors' own MDE column refutes the pre-registered design for one axis: MDE_sup for skepticism is
+          0.188, 0.268, 0.225, 0.279 across the four cells (tables/equivalence-tost.tex), i.e. 4-6x the
+          pre-registered margin delta=0.05. Those four cells could not have produced a pass under any true effect
+          smaller than ~0.2. Deliberation MDE is 0.039-0.075, i.e. only ITI x Qwen (0.039) was adequately powered
+          for delta. So of 8 non-uncertainty cells, at most 1-2 are informative. The body text calls this
+          "underpowered non-detection" (main.tex:209) but never states that the design was, for skepticism,
+          incapable of registering the outcome it pre-registered. That is a stronger and more damaging fact than
+          the paper admits, and burying MDE in a table caption reads as under-disclosure.
+      - id: "F2-c (READ/TRANSFER cross-method gap, unaddressed)"
+        detail: >
+          C1 measures facade ratios for contrastive (CAA-style) directions only (main.tex:117-124). ITI directions
+          are probe-derived (main.tex:156) and were never READ-validated. Yet the contract card and the vignette
+          pair a READ status from the C1 facade measurement with a TRANSFER verdict aggregated over CAA and ITI
+          (main.tex:238). For ITI cells the paper reports a TRANSFER failure for a direction whose READ status is
+          unknown, so 'legible but not controllable' is not established for half the grid. The layer choice for
+          ITI is also inherited from C1 CAA extraction diagnostics (main.tex:137) without justification. Nothing
+          in the current draft acknowledges this.
+  F3_console_contract_had_no_evidence:
+    status: "RESOLVED (as a scoping fix)"
+    evidence:
+      - "C3 is demoted to 'an interface-evaluation implication from model evidence, not a user-study claim' in the Abstract (main.tex:38), contribution list (main.tex:63), contract section (main.tex:236), and Conclusion ('no demonstrated user benefit', main.tex:293)."
+      - "The vignette is explicitly labelled 'not evidence of measured user benefit' (main.tex:238)."
+      - "The adverse prior is cited rather than assumed away: bansal2019beyond / bucinca2021trust are used to argue the benefit is an open question (main.tex:236, 285)."
+      - "claim-map.yaml C3 gate_notes match the paper's usage (no standalone empirical HCI contribution)."
+    residual: >
+      Non-fatal but real: with C3 demoted to an implication, the paper's HCI contribution is a framing device, and
+      an IUI reviewer will ask whether a model-only negative with a design vignette is an IUI paper or an
+      interpretability-workshop paper wearing an IUI jacket. The Related Work and the contract section carry that
+      burden well; the vignette (one paragraph, one hypothetical designer) is thin for the venue.
+
+new_weaknesses_introduced_by_rewrite_or_recheck:
+  - id: "N-1"
+    severity: "MAJOR"
+    what: >
+      Selective sensitivity reporting (see F1-a). Reporting the complete-case number as proof that imputation was
+      'conservative' while an adverse bound sits unreported in the cited JSON is the single most damaging thing a
+      hostile reviewer can find in this bundle, precisely because the paper's rhetorical asset is its
+      evidence discipline.
+    location: "main.tex:230 vs results/E-0013-uncertainty-recheck/reanalysis.json sensitivity.worst_case_imputation_bounds"
+  - id: "N-2"
+    severity: "MAJOR"
+    what: >
+      Artifact-lineage inconsistency for the one number added since the last review. results/E-0013-uncertainty-recheck/run_manifest.json
+      still carries valid_for_paper=false, there is NO E-0013 row in docs/ledgers/evidence-ledger.md (rows stop at
+      E-0012c), and claim-map.yaml C2 lists supporting_evidence_ids E-0005/E-0006/E-0009/E-0011 with no E-0013.
+      Only decision-log D-0078 asserts 'valid_for_paper for E-0013 = true for the narrow CAA x Qwen robustness
+      claim only'. Meanwhile Methods states the prose values 'trace to results/E-0013-uncertainty-recheck/reanalysis.json'
+      (main.tex:168). By the project's own bidirectional claim-evidence gate, the paper currently cites an artifact
+      marked invalid and unregistered.
+  - id: "N-3"
+    severity: "MINOR"
+    what: >
+      Numeric inconsistency between the frozen -0.228 (Table 3, figure) and the recheck's regenerated imputed
+      -0.209 (main.tex:230). The paper compares -0.34 against '-0.21' while its own headline table reports -0.228.
+      Neither the regeneration nor the discrepancy is explained.
+  - id: "N-4"
+    severity: "MINOR"
+    what: >
+      Narrative over-reach in the rewritten voice. 'the data actively show steering making calibration worse'
+      (main.tex:209) is stronger than an identification-limited, format-entangled paired difference supports; and
+      'the highest-risk failure mode in the paper' (main.tex:224) is rhetorical escalation on top of the same
+      contested quantity.
+  - id: "N-5"
+    severity: "MINOR"
+    what: >
+      Citation load in the design section is now doing argumentative work that is only loosely coupled to the
+      evidence. lee2004trust / bansal2019beyond / bucinca2021trust are used correctly and non-abusively
+      (main.tex:236) - no misattribution found - but the inference chain 'calibration harm in a 53-item TEST
+      => trust-relevant design risk for users' rests entirely on citation, not on data in this paper. The paper
+      hedges this, but the Abstract's 'design risk rather than a neutral null' (main.tex:44) is one step further
+      than the hedge.
+  - id: "N-6"
+    severity: "QUESTION"
+    what: >
+      The equivalence table's two ITI deliberation 'Equiv' verdicts (delta = +0.020 and +0.015, TOST CI inside
+      +/-0.05) are post-hoc and, for ITI x Qwen, the pre-reg CI is [+0.000,+0.055] - i.e. a boundary case where
+      rounding decides the verdict, acknowledged in the c2 table notes but not in the equivalence discussion
+      (main.tex:209).
+
+residual_overclaim_scan:
+  method: "Read every top-level (Abstract / contribution list / section-opening / Conclusion) sentence for the four failure readings requested."
+  equivalence_reading:
+    verdict: "CLEAN"
+    evidence: "Abstract explicitly says non-detections 'are underpowered rather than proofs of zero effect or equivalence' (main.tex:38); Conclusion repeats 'underpowered non-detection rather than proven equivalence' (main.tex:291); the TOST table is labelled post-hoc/exploratory in caption and notes."
+  universal_latent_control_failure_reading:
+    verdict: "MOSTLY CLEAN, one soft offender"
+    offenders:
+      - quote: "\"Legible Need Not Be Controllable: No Demonstrated Superiority over Bounded Prompts under Naive CAA/ITI Steering\" (title, main.tex:24)"
+        reading: "The subtitle scopes it correctly; the main clause is a general slogan that will be quoted without the subtitle. Acceptable but note it."
+      - quote: "\"legibility and control are different properties, and an interface that offers the second on the strength of the first owes its users evidence\" (main.tex:293)"
+        reading: "General normative statement generalized from 2 methods x 2 models x 3 axes. Defensible as a design stance; flag only."
+    counter_evidence: "Introduction (main.tex:47), Results (main.tex:207), Discussion (main.tex:252) and Limitations (main.tex:266) each explicitly deny an impossibility theorem. Well done."
+  user_benefit_reading:
+    verdict: "CLEAN"
+    evidence: "main.tex:38, 63, 236, 238, 279, 293 all disclaim user evidence explicitly, including 'It supplies no behavioral evidence about users' (main.tex:285)."
+  format_confound_resolved_gridwide_reading:
+    verdict: "OFFENDING (this is the live over-claim)"
+    offenders:
+      - quote: "\"Uncertainty calibration is consistently harmed in all four method/model cells, with every effect negative and every interval excluding zero.\" (Abstract, main.tex:38)"
+        problem: "Stated with no format/imputation caveat anywhere in the Abstract, although the effect is computed under an imputation rule that is only validated in one of the four cells and is non-identified under differential missingness."
+      - quote: "\"the uncertainty axis shows robust calibration harm in every cell, with all intervals excluding zero\" (Conclusion, main.tex:291)"
+        problem: "Same. 'Robust' is doing confound-resolution work the evidence supports for one cell only."
+      - quote: "\"the confidence-format imputation therefore made the reported harm conservative rather than inflating it\" (main.tex:230)"
+        problem: "Reads as a general resolution of the confound; it is a complete-case statement for one cell, and the unreported worst-case bound reaches +0.250."
+      - quote: "\"the data actively show steering making calibration worse than the bounded best-prompt baseline\" (main.tex:209)"
+        problem: "'Actively show' asserts identification the missingness structure does not grant."
+    non_offenders_noted: "main.tex:231 and 274 do state the one-cell scope and the conditioning caveat correctly. The problem is that the scoped statement lives only in Results/Limitations while the unscoped one leads the paper."
+
+ranked_findings:
+  - id: "B-1"
+    severity: "BLOCKER"
+    title: "Unreported adverse missing-data sensitivity contradicts the 'imputation was conservative' claim"
+    where: "main.tex:230 (claim); results/E-0013-uncertainty-recheck/reanalysis.json (sensitivity.worst_case_imputation_bounds = -0.478 / +0.250)"
+    why: "The paper's central quantitative rebuttal to prior fatal issue F1 is stated as a general conclusion while the same artifact contains bounds that straddle zero. This is both an identification problem and a reporting-integrity problem."
+    cheapest_discriminating_fix: "WRITING-ONLY. Report the worst-case bounds in Results next to the complete-case number; restate the claim as 'under complete-case analysis the harm persists and strengthens; under worst-case imputation the effect is not point-identified (bounds [-0.48, +0.25])'; move the format caveat into the Abstract and Conclusion. Optionally add a cheap MAR-plausible middle analysis (e.g. inverse-probability weighting by compliance, computable from the committed samples.jsonl, no GPU)."
+    closure_condition: "Abstract, Results and Conclusion all state the harm with its identification caveat; the bounds appear in the paper; no sentence claims the confound is resolved."
+  - id: "B-2"
+    severity: "BLOCKER"
+    title: "No positive control / assay-sensitivity evidence; skepticism cells were un-passable by construction (MDE 0.19-0.28 vs delta=0.05)"
+    where: "main.tex:209 (characterization); tables/equivalence-tost.tex (MDE_sup column); no 'positive control' or 'MDE' anywhere in body text"
+    why: "A negative result whose assay sensitivity is unestablished, and 4 of 12 cells whose minimum detectable effect exceeds the pre-registered pass margin by 4-6x, cannot support the sentence 'no demonstrated superiority on any adjudicated axis' as an informative finding for those cells."
+    cheapest_discriminating_fix: >
+      Two options. (a) WRITING-ONLY, cheap: promote MDE_sup into the body text, state per-cell which cells were
+      adequately powered for delta=0.05 (only ITI x Qwen deliberation, MDE 0.039; arguably CAA x Llama uncertainty
+      0.047), and restrict the headline to those cells plus the uncertainty axis, explicitly labelling the
+      skepticism cells as uninformative rather than as negative evidence. (b) NEEDS-A-RUN, still cheap: one
+      positive-control cell - a known-effective intervention (e.g. the DEV-selected strong prompt vs the neutral
+      prompt, already generated) run through the identical adjudicator - to show the pipeline returns a PASS when
+      a real effect exists. Option (b) is ~1 GPU-hour and converts the negative from 'we saw nothing' to 'our
+      instrument sees things, and saw nothing here'.
+    closure_condition: "Body text reports MDE per cell; either a positive control passes the adjudicator, or the paper explicitly restricts its negative claim to adequately-powered cells."
+  - id: "M-1"
+    severity: "MAJOR"
+    title: "Format confound closed for 1 of 4 cells while Abstract/Conclusion assert grid-wide robust harm"
+    where: "main.tex:38, 291 vs main.tex:231"
+    why: "The three unchecked cells (-0.072, -0.103, -0.084) are exactly the magnitude differential imputation could manufacture."
+    cheapest_discriminating_fix: "NEEDS-A-RUN but tiny: the CAA x Qwen recheck cost 166 s wall-clock (run_e0013_caaqwen.log). Relax the exact-match sigma guard to a tolerance (the ITI block was 4.5455 vs 4.5465, ~2e-4 fp noise, D-0077) to unblock ITI x Qwen, and use the same NousResearch identical-weights mirror already used for the frozen Llama runs (Methods, main.tex:162) to unblock both Llama cells. That is ~10 minutes of A800 time for full grid closure. Fallback if truly blocked: add the format caveat to the Abstract."
+    closure_condition: "All four cells have compliance rates and complete-case + bounds estimates, or the Abstract carries the one-cell scope."
+  - id: "M-2"
+    severity: "MAJOR"
+    title: "ITI directions are never READ-validated; READ and TRANSFER are established on different interventions"
+    where: "main.tex:117-124 (C1 = contrastive directions), 156 (ITI probe-derived), 137 (ITI layer inherited from C1 CAA diagnostics), 238 (card pairs READ from C1 with TRANSFER over CAA+ITI)"
+    why: "The paper's thesis is 'legible but not controllable'. For the ITI half of the grid, legibility was not measured, so those cells show only 'not controllable'."
+    cheapest_discriminating_fix: "WRITING-ONLY: state that C1 facade ratios characterize contrastive directions, that ITI directions inherit the layer but not the READ verdict, and restrict the legible-but-not-controllable framing to the CAA cells (ITI cells then read as an additional non-superiority family). A one-paragraph Limitations addition. A cheap run alternative: compute the facade ratio for the ITI directions from already-committed C1 activations."
+    closure_condition: "Every READ/TRANSFER pairing in the paper and in the console figure names the direction family it applies to."
+  - id: "M-3"
+    severity: "MAJOR"
+    title: "E-0013 lineage is unregistered and flagged invalid while cited in the paper"
+    where: "results/E-0013-uncertainty-recheck/run_manifest.json (valid_for_paper=false); docs/ledgers/evidence-ledger.md (no E-0013 row); docs/paper/claim-map.yaml C2.supporting_evidence_ids (no E-0013); main.tex:168, 230"
+    why: "The paper's credibility argument is its artifact lineage (main.tex:166-172). A reviewer who checks the supplement finds the newest number outside the ledger and marked not-valid-for-paper."
+    cheapest_discriminating_fix: "WRITING/BOOKKEEPING-ONLY: add an E-0013 evidence-ledger row scoped to the CAA x Qwen robustness claim, set the manifest flag to the D-0078 scoped value, add E-0013 to claim-map C2 as scoped supporting evidence, and add a c2-format-recheck manifest so the prose numbers have the same manifest discipline as tables."
+    closure_condition: "E-0013 appears in evidence-ledger, claim-map, and a manifest, with consistent valid_for_paper scoping."
+  - id: "M-4"
+    severity: "MAJOR"
+    title: "E-0013 is a regeneration, not a reanalysis of the frozen transcripts; -0.209 vs frozen -0.228 unexplained"
+    where: "run_manifest.json (n_records=1200, own model load, seed 20260723) vs frozen source_mean_diff -0.2277; main.tex:230 says '-0.21' while Table 3 says -0.228"
+    why: "Raises two questions a reviewer will ask: was TEST re-touched, and are the frozen generations reproducible?"
+    cheapest_discriminating_fix: "WRITING-ONLY: one sentence in Methods stating that the recheck regenerated the cell under the frozen config (same model/alpha/layer/prompt/seed/k/temp/max_new_tokens), reproduced the imputed effect to within 0.02 of the frozen value, and does not modify the frozen adjudication."
+    closure_condition: "Regeneration status and the numeric discrepancy are disclosed in the paper."
+  - id: "m-1"
+    severity: "MINOR"
+    title: "Rhetorical escalation around the contested quantity"
+    where: "main.tex:209 ('the data actively show'), 224 ('highest-risk failure mode'), 44 ('a design risk rather than a neutral null')"
+    fix: "WRITING-ONLY: downgrade to 'the estimated effect is negative in all four cells under the frozen scorer'."
+    closure_condition: "No top-level sentence asserts more identification than B-1's resolution supports."
+  - id: "m-2"
+    severity: "MINOR"
+    title: "Equivalence verdicts on rounding boundaries"
+    where: "tables/equivalence-tost.tex ITI x Qwen deliberation, pre-reg CI [+0.000,+0.055]; main.tex:209"
+    fix: "WRITING-ONLY: note that the two 'Equiv' verdicts are boundary cases decided within rounding, consistent with the c2 table note."
+    closure_condition: "Discussion of the two Equiv cells carries the boundary caveat."
+  - id: "m-3"
+    severity: "MINOR"
+    title: "64-token cap vs the deliberation axis"
+    where: "main.tex:143"
+    fix: "Already disclosed honestly; consider stating what fraction of GSM8K generations hit the cap (computable from committed transcripts) so reviewers can size the concern."
+    closure_condition: "Truncation rate reported."
+  - id: "q-1"
+    severity: "QUESTION"
+    title: "Comparator asymmetry in the steer condition"
+    where: "main.tex:143: steer uses the neutral instruction plus alpha; prompt uses the DEV-selected strong prompt with alpha=0"
+    ask: "Why is there no prompt+steer arm? A user of a console would keep their prompt and add the slider. The tested contrast answers 'steering instead of prompting', while the interface question the paper poses is arguably 'steering in addition to prompting'. This is a framing gap a reviewer may treat as a construct-validity objection to the whole adjudication."
+    fix: "WRITING-ONLY minimum: justify the substitution design explicitly and flag the additive arm as future work. A combined arm would be a new run."
+  - id: "q-2"
+    severity: "QUESTION"
+    title: "Is this an IUI paper?"
+    ask: "The evidence is model-side; the interface contribution is a taxonomy, a card schema, and a vignette. Reviewers split on whether that clears IUI's bar without any user data. Strengthening K4 (e.g. a walkthrough of the console applied to a second, external steering result) is the cheapest way to raise the HCI weight without a study."
+
+scores:
+  scale: "1-5, 5 best"
+  originality: 3
+  significance: 3
+  rigor: 3
+  clarity: 4
+  reproducibility: 4
+  overall: 3
+  confidence: 4
+  notes:
+    originality: "Protocol design is genuinely novel; the phenomenon is now partly co-claimed by concurrent work (sprejer2026mindgap), handled honestly (main.tex:107 table)."
+    significance: "Real for console designers; blunted by the small grid, small N, and the fact that the strongest sub-finding is the least identified."
+    rigor: "Pre-registration, freezing, hostile audits and paired bootstrap are above the IUI median; the missingness identification gap and the absent positive control keep this from a 4."
+    clarity: "The rewrite is a large improvement - the design-driven voice works and the exploratory/confirmatory boundary is legible throughout. Docked one point because the decisive caveats live in Results/Limitations while the unscoped claims lead."
+    reproducibility: "Manifests, generated tables, committed JSON, no hand-transcription; docked for the E-0013 lineage gaps (M-3, M-4)."
+
+accept_probability:
+  pre_fix_chained_review_estimate: "~15-22% (raw)"
+  pre_fix_nonchained_critic_estimate: "~35-50% (after gap-list revision)"
+  current_estimate: "28-40%"
+  reasoning: >
+    The rewrite plus the recheck removed the two clearest desk-reject triggers (an unfalsified format-artifact
+    explanation for the headline sub-finding, and an evidence-free HCI contract). What replaces them is a paper
+    whose remaining problems are legible to any careful reviewer who opens the cited JSON: an unreported adverse
+    bound and an unestablished assay sensitivity. I do not believe the higher 35-50% estimate survives contact
+    with a reviewer who checks results/E-0013-uncertainty-recheck/reanalysis.json. If B-1 and B-2 are closed
+    writing-only (bounds reported, MDE promoted, claims restricted to powered cells), I would move this to 45-55%.
+    If M-1 is also closed with the ~10-minute grid-wide rerun, 55-65%.
+
+verdict: "BORDERLINE"
+verdict_detail: >
+  Not below the line any more, and clearly not yet above it. The paper is now honest about almost everything
+  except the one thing it most needs to be honest about: that its sharpest finding is not identified under the
+  missingness structure its own recheck revealed.
+
+highest_leverage_remaining_action:
+  primary:
+    action: "Report the worst-case imputation bounds (-0.478 / +0.250) from the already-committed reanalysis.json, restate the harm claim with its identification caveat in Abstract and Conclusion, and promote MDE_sup into the body text so the skepticism cells are labelled uninformative rather than negative."
+    type: "WRITING-ONLY"
+    cost: "Half a day of editing; no compute."
+    why_highest_leverage: >
+      It simultaneously closes the reporting-integrity exposure (B-1), converts B-2 from a hidden weakness into a
+      disclosed scope statement, and costs nothing. Every remaining finding is cheaper to fix after this one,
+      because it fixes the paper's rhetorical posture rather than its numbers.
+  secondary_if_compute_available:
+    action: "Unblock and run the format-compliance recheck on the remaining three cells (relax the ITI sigma exact-match guard to a tolerance; use the NousResearch mirror already used for the frozen Llama runs), and add one positive-control cell through the identical adjudicator."
+    type: "NEEDS-A-RUN"
+    cost: "~10 minutes of A800 for the three cells (CAA x Qwen took 166 s); ~1 GPU-hour for the positive control."
+    why: "Closes M-1 grid-wide and converts B-2 from a disclosure into an actual demonstration of assay sensitivity, which is what would move this paper decisively above the IUI line."

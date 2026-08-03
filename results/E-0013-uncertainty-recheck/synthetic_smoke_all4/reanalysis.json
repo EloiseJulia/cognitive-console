@@ -1,6 +1,6 @@
 {
   "experiment_id": "E-0013",
-  "generated_at": "2026-08-03T10:44:54.097592+00:00",
+  "generated_at": "2026-08-03T11:02:53.325258+00:00",
   "headline_questions": {
     "does_harm_survive_format_compliant_only": "inspect each cell's format_compliant_only_delta_steer_minus_prompt CI",
     "is_format_compliance_materially_different": "compare condition format_compliance_rate for steer vs prompt/baseline"

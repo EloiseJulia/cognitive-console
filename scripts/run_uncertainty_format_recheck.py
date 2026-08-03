@@ -162,7 +162,6 @@ def score_uncertainty_record(text: str, item: Dict) -> Dict[str, object]:
         "item_is_correct": correct,
         "imputed_confidence": imputed_conf,
         "per_item_1minus_brier": scorers.per_item_brier(correct, imputed_conf),
-        "synthetic_proxy": False,
     }
 
 
@@ -325,6 +324,7 @@ def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id:
                         "raw_text": raw_payload,
                         "raw_text_sha256": _sha256_text(str(raw)),
                         "raw_text_truncated": bool(raw_truncated),
+                        "synthetic_proxy": bool(backend_name == "synthetic"),
                         **diag,
                     })
     meta = {
@@ -506,12 +506,16 @@ def build_parser() -> argparse.ArgumentParser:
     return ap
 
 
-def _validate_generation_identity(args) -> None:
+def _validate_generation_identity(
+    args, frozen_cell: Optional[FrozenCellConfig] = None, requested_model: Optional[str] = None
+) -> Optional[str]:
     expected = {
         "--max-new-tokens": (args.max_new_tokens, DEFAULT_MAX_NEW_TOKENS),
         "--temperature": (args.temperature, DEFAULT_TEMPERATURE),
         "--seed": (args.seed, DEFAULT_SEED),
     }
+    if frozen_cell is not None:
+        expected["--model"] = (requested_model or frozen_cell.model_id, frozen_cell.model_id)
     mismatches = [f"{k}={got!r} (expected {want!r})" for k, (got, want) in expected.items() if got != want]
     if mismatches:
         raise SystemExit(
@@ -525,6 +529,7 @@ def _validate_generation_identity(args) -> None:
         )
     if args.backend == "hf" and args.n_items is not None:
         raise SystemExit("--n-items is forbidden for hf E-0013; use the frozen full uncertainty N")
+    return frozen_cell.model_id if frozen_cell is not None else None
 
 
 def _parse_cell(cell_key: str) -> Tuple[str, str]:
@@ -541,6 +546,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     _validate_generation_identity(args)
     out_dir = Path(args.out_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
+    frozen_configs: Dict[str, FrozenCellConfig] = {}
+    model_ids: Dict[str, str] = {}
+    for cell_key in args.cells:
+        method, model_label = _parse_cell(cell_key)
+        cfg = load_frozen_cell_config(Path(args.frozen_root), method, model_label)
+        override_model = args.qwen_model if model_label == "qwen2.5-7b" else args.llama_model
+        model_ids[cell_key] = _validate_generation_identity(
+            args, frozen_cell=cfg, requested_model=override_model
+        )
+        frozen_configs[cell_key] = cfg
     use_fixture = args.backend == "synthetic"
     items = load_uncertainty_items(use_fixture=use_fixture, n_items=args.n_items)
     items_by_split = split_items(items, args.seed)
@@ -550,10 +565,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     started = utcnow()
     t0 = time.time()
     for cell_key in args.cells:
-        method, model_label = _parse_cell(cell_key)
-        cfg = load_frozen_cell_config(Path(args.frozen_root), method, model_label)
-        override_model = args.qwen_model if model_label == "qwen2.5-7b" else args.llama_model
-        model_id = override_model or cfg.model_id
+        cfg = frozen_configs[cell_key]
+        model_id = model_ids[cell_key]
         if args.backend == "synthetic":
             model_id = "synthetic-offline"
         print(
@@ -598,6 +611,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         "wall_clock_seconds": time.time() - t0,
         "code_commit": git_commit(str(_REPO)),
         "generation_identity": {
+            "model_by_cell": {k: v.model_id for k, v in frozen_configs.items()},
             "max_new_tokens": args.max_new_tokens,
             "temperature": args.temperature,
             "seed": args.seed,
@@ -610,7 +624,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             "reanalysis_json": _rel(reanalysis_path),
             "run_manifest_json": _rel(manifest_path),
         },
-        "synthetic_proxy": False,
+        "synthetic_proxy": bool(args.backend == "synthetic"),
     }
     _write_json(manifest_path, manifest)
     print(f"[E-0013] wrote {_rel(samples_path)}")

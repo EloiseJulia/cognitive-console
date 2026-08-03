@@ -13,7 +13,6 @@ def test_confidence_parse_none_sets_noncompliant_and_frozen_imputation():
     assert rec["item_is_correct"] == 1
     assert rec["imputed_confidence"] == 0.5
     assert rec["per_item_1minus_brier"] == pytest.approx(0.75)
-    assert rec["synthetic_proxy"] is False
 
 
 def test_compliant_only_reanalysis_uses_only_paired_compliant_samples():
@@ -56,9 +55,29 @@ def test_synthetic_smoke_writes_compliance_and_delta_fields(tmp_path):
     assert "frozen_uncertainty_delta_steer_minus_prompt_as_run_imputed" in cell
     assert "format_compliant_only_delta_steer_minus_prompt" in cell
     sample = json.loads((out_dir / "samples.jsonl").read_text(encoding="utf-8").splitlines()[0])
-    assert sample["synthetic_proxy"] is False
+    assert sample["synthetic_proxy"] is True
     assert sample["format_compliant"] is True
     assert sample["parse_confidence"] is not None
+    manifest = json.loads((out_dir / "run_manifest.json").read_text(encoding="utf-8"))
+    assert manifest["synthetic_proxy"] is True
+    assert manifest["generation_identity"]["model_by_cell"]["caa__qwen2.5-7b"] == "frozen-qwen"
+
+
+def test_model_identity_mismatch_raises_before_generation(tmp_path):
+    frozen_root = _write_minimal_frozen_root(tmp_path / "frozen")
+    out_dir = tmp_path / "e0013"
+    with pytest.raises(SystemExit, match="--model"):
+        R.main([
+            "--backend", "synthetic",
+            "--frozen-root", str(frozen_root),
+            "--out-dir", str(out_dir),
+            "--cells", "caa__qwen2.5-7b",
+            "--qwen-model", "wrong-qwen",
+            "--n-items", "4",
+            "--bootstrap-b", "200",
+            "--allow-underpowered",
+        ])
+    assert not (out_dir / "samples.jsonl").exists()
 
 
 def _row(item_id, sample_index, condition, compliant, score):

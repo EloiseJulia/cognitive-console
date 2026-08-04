@@ -4,12 +4,13 @@
 > 本文档是 owner 内部理解稿，不是送审稿；数字以 `docs/ledgers/evidence-ledger.md`、生成表、冻结结果 artifact 与 `docs/paper/main.tex` 为准。  
 > **内部备注（不入论文）：** 曾尝试 E-0012「verified control button」搜索以升级为正例/关闭"只试了弱 steering"攻击，但历经 4 个占位符-vs-真实 bug（假比较器/贪心采样/随机方向/假 world-capital fixture 数据），全部证据判 INVALID，已于 D-0073 **终止**并不入论文。E-0009（PSR arm）只能作为单模型探索性 method-strength 补充；D-0082/E-0014 显示相同 `α·û, α≤24` 约定下 latent arm 可能整体 under-scaled，因此 headline 必须收窄为 bounded/naive CAA/ITI at α≤24。
 >
-> **最新进展（2026-08-04，本文档正文尚未逐节同步，以 `main.tex` + decision-log D-0074..D-0085 为准）：**
-> 0. **D-0085 最新进展：** E-0015 scale-corrected 正控（Qwen2.5-7B，raw-magnitude CAA，`h→h+βv`，β∈{0.125..2}，refusal + 3 个 metacognitive axes）经审计后仍是 **全 cell NO-PASS**：refusal 在所有 coherent β 仍 0%，metacog PC-2a 近零且 CI 包 0。该 null 不是 hook/管线死掉：prompt refusal=95%，random direction 在 uncertainty 上 coherent 地移动 −0.24 CI[−0.36,−0.12]，refusal β=2 超出 coherent ceiling 后 degeneracy 0.003→0.318。诚实结论：在 coherent ceiling（约 0.5–0.66×‖h‖，不是 ~1×；唯一 ~1.05× 点已 degenerate）内，scale correction 没救回 naive single-layer CAA；under-scaling 在 coherent range 内基本排除，instrument sensitivity 已建立，但仍无 latent intervention pass，不能说 latent control 一般不可能；null 需带 MDE≈0.19，且 E-0015 未保存 transcripts，不能完全排除 coherent range 内的 specific-logit attenuation。
+> **最新进展（2026-08-04，本文档正文尚未逐节同步，以 `main.tex` + decision-log D-0074..D-0086 为准）：**
+> 0. **D-0086 最新进展：** reviewer-critic 复评为 BORDERLINE（IUI 约 30–35%）：必须更早说明 F2 未完全关闭（无 latent behavioral manipulation check pass），并把最强贡献前置为 READ/TRANSFER/bounded-prompt-comparator/calibration-warning/evidence-tier 的 evaluation contract，而不是 console benefit。E-0015 logit-delta 诊断已补足 transcript/logit 证据：refusal 方向在 coherent β=1 强烈推高 refusal-leading first-token mass（均值 Δlogsumexp≈+13.9 nats），但 0/5 probes 命中 preregistered refusal markers，且 β=2 只产生重复退化；因此它支持“representational push ≠ behavioral control”，不是“handle works”。
+> 0. **D-0085 最新进展：** E-0015 scale-corrected 正控（Qwen2.5-7B，raw-magnitude CAA，`h→h+βv`，β∈{0.125..2}，refusal + 3 个 metacognitive axes）经审计后仍是 **全 cell NO-PASS**：refusal 在所有 coherent β 仍 0%，metacog PC-2a 近零且 CI 包 0。该 null 不是 hook/管线死掉：prompt refusal=95%，random direction 在 uncertainty 上 coherent 地移动 −0.24 CI[−0.36,−0.12]，refusal β=2 超出 coherent ceiling 后 degeneracy 0.003→0.318。诚实结论：在 coherent ceiling（约 0.5–0.66×‖h‖，不是 ~1×；唯一 ~1.05× 点已 degenerate）内，scale correction 没救回 naive single-layer CAA；under-scaling 在 coherent range 内基本排除，instrument sensitivity 已建立，但仍无 latent intervention pass，不能说 latent control 一般不可能；null 需带 MDE≈0.19。
 > 0. **D-0082 诚实收窄：** E-0014 正控（真实 Qwen2.5-7B refusal CAA，经独立审计）显示端点/统计管线是活的：prompt 指令达到 95% refusal，random direction 不 pass；但在与 C2 相同的冻结 `α·û`、`α≤24` 单位方向注入约定下，latent CAA refusal arm 在所有 α 都是 0% refusal（自然 class-difference norm ≈216，注入 norm ≤24）。因此 F2 latent-arm assay sensitivity 未关闭，论文 steering claim 必须严格改写为 **bounded/naive CAA/ITI at α≤24** 的 negative result；calibration “harm” 是 steer-vs-bounded-prompt contrast，直接 steer-vs-baseline 近零（compliance +0.011，1−Brier +0.0008），不得写成 latent steering 直接伤害 calibration 或 latent control 一般不可能。
 > 1. **全文已按 HCI best-paper 风格重构**（design-driven 叙事：可调界面→"可读即可控"推断→校准依赖→冻结裁决证否→console 仪器化边界→evidence-tier 评估合同；Related Work 改 HCI-first；C3 由证据*导出*而非断言；破折号=0；诊断+策略见 `docs/paper/hci-rewrite-plan.md`），已敌对审计通过并合并。
 > 2. **三段式敌对 chained review**（Opus5→GPT-5.6-Sol→Opus5）判 **Reject（有一轮返修路径）**，三大致命点：F1 calibration-harm 可能是"置信度格式丢失+parser 补 0.5"假象；F2 无 positive control/manipulation check（裁决器从未在任何臂返回 pass），且 READ(C1) 与 TRANSFER(C2) 未在同一 intervention 上验证（尤其 ITI）；F3 C3 无证据。
-> 3. **F1 已解决（最大 cell）**：E-0013 格式合规复查（D-0078，审计 HARM-SURVIVES-BUT-CAVEATED）——CAA×Qwen 上 **steering 比 prompt 更少丢格式**（合规率 0.83 vs 0.45），仅取双臂都给出可解析置信度的配对样本，harm=**−0.34 CI[−0.51,−0.17]**（比 as-run imputed −0.21 更大）⇒ 补 0.5 的 imputation 让 as-run 偏保守，harm 非格式假象。已按**单 cell scope + 其余 3 cell（ITI fp 复现门槛 / Llama gated）诚实披露为 limitation** 写入论文。
+> 3. **F1 已解决（最大 cell）**：E-0013 格式合规复查（D-0078，审计 HARM-SURVIVES-BUT-CAVEATED）：CAA×Qwen 上 **steering 比 prompt 更少丢格式**（合规率 0.83 vs 0.45），仅取双臂都给出可解析置信度的配对样本，harm=**−0.34 CI[−0.51,−0.17]**（比 as-run imputed −0.21 更大）⇒ 补 0.5 的 imputation 让 as-run 偏保守，harm 非格式假象。已按**单 cell scope + 其余 3 cell（ITI fp 复现门槛 / Llama gated）诚实披露为 limitation** 写入论文。
 > 4. **F3 已处理**：C3 降级为 interface-evaluation implication（明确无 user-benefit 声明）。
 > 5. **F2 更新：** E-0015 后，instrument sensitivity 已建立、under-scaling 在 coherent range 内基本排除；但没有任何 latent intervention pass，因此 F2 不能写成“cleared”，只能写成 strengthened scoped negative + no passing latent positive control。READ↔TRANSFER 同方向和更强/多层/训练 steering 仍是未来工作。
 
@@ -173,7 +174,7 @@ Console 的目标不是“把 latent 方向包装成 slider”，而是显示**�
 
 - C1：两模型单 run，聚合 3/4 但轴组成异质；跨模型不变只到 deliberation + skepticism，不能写成普遍定律。
 - C2：强于单模型单方法，但仍限于 7–8B open instruct models、bounded/naive CAA/ITI at α≤24、三条 metacognitive axes、单 seed/冻结预算；不是 activation steering 不可能性定理。**重要区分：** uncertainty 轴是稳健 steer-vs-prompt contrast（CI 排除 0），不是 direct steer-vs-baseline 伤害；deliberation/skepticism 是欠功效非检出，不是"证明等价/无效应"（见 post-hoc TOST 表，exploratory）。
-- Calibration harm 机制：off-manifold distance 已被 valid null；Brier 分解（reliability/resolution）**未做**——per-item confidence 在 A800 未提交 transcripts 中，可 re-run 恢复，不能从已提交 artifacts 推算；不得在 prose 里夸大校准机制或把 steer-vs-prompt 写成 steer-vs-baseline。
+- Calibration harm 机制：off-manifold distance 已被 valid null；Brier 分解（reliability/resolution）**未做**：per-item confidence 在 A800 未提交 transcripts 中，可 re-run 恢复，不能从已提交 artifacts 推算；E-0015 refusal 的 transcript/logit 诊断已完成，但它是 qualitative/supporting、valid_for_paper=false，只能说明 target-specific logit push 未转成 scored refusal，不得在 prose 里夸大校准机制、把 steer-vs-prompt 写成 steer-vs-baseline，或把 +13.9 脱离 0/5 behavioral refusal 写成“handle works”。
 - PSR：只在 Qwen 单模型探索；不能覆盖所有 trained steering。
 - 机制：OOD distance hypothesis 已被 valid null；机制未知。
 - 社会轴：LLM-judge-only、human-α pending、M2/M3 not implemented、steer arm held；不能作为 confirmatory manipulation claim。
@@ -184,7 +185,7 @@ Console 的目标不是“把 latent 方向包装成 slider”，而是显示**�
 1. **Llama PSR 确认。** 若要把 PSR robustness 从 exploratory 推高，需要新 prereg + Llama 或更大预算。
 2. **更强 steering / trained methods。** 任何 scale-corrected/raw-magnitude/norm-matched direction、multi-layer schedule、RepE、trained prompt-mimicking steering 都应新冻结，不得改写 E-0005/E-0006。
 3. **机制新包。** Calibration harm 可探索 confidence-format disruption、answer-style distribution shift、sampling×calibration scoring，但必须新预注册。
-4. **Brier 分解（未决）。** Uncertainty calibration harm 的 Brier 分解（reliability/resolution/base-rate）尚未完成——per-item (confidence, correctness) pairs 在 A800 未提交 transcripts 中，可 re-run 恢复。不能从已提交 artifacts 推算，不得在论文 prose 夸大校准机制。
+4. **Brier 分解（未决）。** Uncertainty calibration harm 的 Brier 分解（reliability/resolution/base-rate）尚未完成：per-item (confidence, correctness) pairs 在 A800 未提交 transcripts 中，可 re-run 恢复。E-0015 refusal transcript/logit 诊断已完成，但只是 supporting qualitative diagnostic：+13.9 nats 必须始终绑定 0/5 behavioral refusal，不得写成 latent handle works。
 5. **C1 结构。** 解释为什么 deliberation/skepticism 稳定，而 uncertainty/focus 翻转。
 6. **真人走查。** Owner-gated；需要伦理/招募/venue 决策，测试 boundary instrumentation 是否改善 calibrated reliance。
 

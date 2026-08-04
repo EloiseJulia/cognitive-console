@@ -1,10 +1,10 @@
 {
-  "backend": "synthetic",
-  "model_id": "synthetic-offline",
+  "backend": "hf",
+  "model_id": "Qwen/Qwen2.5-7B-Instruct",
   "axis": "refusal_positive_control",
   "method": "caa_mean_difference",
-  "derivation_function": "synthetic_offline.extract_caa_with_planted_contrast",
-  "layer": 3,
+  "derivation_function": "cognitive_console.steering.extract.extract_caa",
+  "layer": 27,
   "n_extraction_pairs": 40,
   "extraction_pair_ids": [
     "refusal-pair-001",
@@ -48,59 +48,564 @@
     "refusal-pair-039",
     "refusal-pair-040"
   ],
-  "contrast_pairs_file_sha256": "sha256:53e256c8f83eb4460f2c50f214b4a84092103ce8d37932e124909555d371aa28",
-  "direction_sha256": "445d2088f3a1f08b6c7b06e72f964fb473be6cfcb276a023832e54c5c9d97244",
-  "vector_norm": 4.5021970116896615,
-  "direction_norm": 0.9999999999999999,
-  "hidden_dim": 64,
+  "contrast_pairs_file_sha256": "sha256:d943386d93c86a438256dc92f239f99afbddef3196e6c9de757dc13056af882e",
+  "direction_sha256": "b86be808c9e5605831031d9356b421edb4b0d04d3d617e58eacce1780b46c46e",
+  "vector_norm": 216.51313704902114,
+  "direction_norm": 1.0,
+  "hidden_dim": 3584,
   "selection": "separation",
-  "selected_layer_separation": 95.39054826848685,
+  "selected_layer_separation": 55.596893445879026,
   "per_layer": {
     "1": {
       "layer": 1,
-      "separation": 20.938396240916077,
-      "vector_norm": 1.1844752727139887,
-      "mean_pos_proj": 0.5882192945080222,
-      "mean_neg_proj": -0.5962559782059664,
-      "pooled_std": 0.056569531834505325,
+      "separation": 3.1961730475662784,
+      "vector_norm": 0.4630226355608863,
+      "mean_pos_proj": -0.7465426226516613,
+      "mean_neg_proj": -1.2095652582125476,
+      "pooled_std": 0.14486782432304604,
       "n_pos": 40,
       "n_neg": 40
     },
     "2": {
       "layer": 2,
-      "separation": 50.691991093373,
-      "vector_norm": 2.4084347035338105,
-      "mean_pos_proj": 1.210386954525434,
-      "mean_neg_proj": -1.1980477490083765,
-      "pooled_std": 0.04751114824228451,
+      "separation": 4.1275460645963165,
+      "vector_norm": 0.902893696291744,
+      "mean_pos_proj": 3.5020238551479976,
+      "mean_neg_proj": 2.5991301588562528,
+      "pooled_std": 0.21874830278364196,
       "n_pos": 40,
       "n_neg": 40
     },
     "3": {
       "layer": 3,
-      "separation": 95.39054826848685,
-      "vector_norm": 4.5021970116896615,
-      "mean_pos_proj": 2.242628581353858,
-      "mean_neg_proj": -2.2595684303358032,
-      "pooled_std": 0.04719751687575743,
+      "separation": 6.187017731607381,
+      "vector_norm": 1.266919077970591,
+      "mean_pos_proj": 2.6135340851633613,
+      "mean_neg_proj": 1.3466150071927692,
+      "pooled_std": 0.2047705587618298,
       "n_pos": 40,
       "n_neg": 40
     },
     "4": {
       "layer": 4,
-      "separation": 58.230228507043684,
-      "vector_norm": 3.0073853765785103,
-      "mean_pos_proj": 1.5063176651893824,
-      "mean_neg_proj": -1.5010677113891284,
-      "pooled_std": 0.05164646359261203,
+      "separation": 5.55824344681391,
+      "vector_norm": 1.5728718770331414,
+      "mean_pos_proj": -0.3547642020286125,
+      "mean_neg_proj": -1.9276360790617542,
+      "pooled_std": 0.28298002634892533,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "5": {
+      "layer": 5,
+      "separation": 9.38260792083615,
+      "vector_norm": 2.233443575534678,
+      "mean_pos_proj": 2.1435024654062373,
+      "mean_neg_proj": -0.08994111012844076,
+      "pooled_std": 0.23804080852348353,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "6": {
+      "layer": 6,
+      "separation": 14.629796288798607,
+      "vector_norm": 3.136159390663109,
+      "mean_pos_proj": 0.4427840808108979,
+      "mean_neg_proj": -2.693375309852212,
+      "pooled_std": 0.21436794667225337,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "7": {
+      "layer": 7,
+      "separation": 13.13242997672701,
+      "vector_norm": 3.3891664166124085,
+      "mean_pos_proj": 2.02681469227435,
+      "mean_neg_proj": -1.3623517243380587,
+      "pooled_std": 0.2580761079722954,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "8": {
+      "layer": 8,
+      "separation": 10.23846961712251,
+      "vector_norm": 3.74069228634595,
+      "mean_pos_proj": 2.3295883303695235,
+      "mean_neg_proj": -1.411103955976426,
+      "pooled_std": 0.36535658416079375,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "9": {
+      "layer": 9,
+      "separation": 10.188801744225088,
+      "vector_norm": 5.72838807026323,
+      "mean_pos_proj": 1.6319197385132953,
+      "mean_neg_proj": -4.096468331749935,
+      "pooled_std": 0.5622239213271594,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "10": {
+      "layer": 10,
+      "separation": 7.82959896166707,
+      "vector_norm": 6.1541522279693375,
+      "mean_pos_proj": 3.327804752184199,
+      "mean_neg_proj": -2.826347475785139,
+      "pooled_std": 0.7860111684007633,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "11": {
+      "layer": 11,
+      "separation": 6.516796993635901,
+      "vector_norm": 6.559171147288852,
+      "mean_pos_proj": 0.6971629846100111,
+      "mean_neg_proj": -5.862008162678841,
+      "pooled_std": 1.006502297630927,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "12": {
+      "layer": 12,
+      "separation": 22.60622945721151,
+      "vector_norm": 8.36534850116558,
+      "mean_pos_proj": 9.71773656549974,
+      "mean_neg_proj": 1.352388064334161,
+      "pooled_std": 0.3700461643547986,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "13": {
+      "layer": 13,
+      "separation": 41.50758281375013,
+      "vector_norm": 8.45488772949998,
+      "mean_pos_proj": 6.291105653282419,
+      "mean_neg_proj": -2.163782076217564,
+      "pooled_std": 0.20369501561770417,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "14": {
+      "layer": 14,
+      "separation": 23.97316525461344,
+      "vector_norm": 10.903007812321423,
+      "mean_pos_proj": 11.730812992010726,
+      "mean_neg_proj": 0.827805179689304,
+      "pooled_std": 0.45480051117668857,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "15": {
+      "layer": 15,
+      "separation": 18.924325138776094,
+      "vector_norm": 13.638882653744671,
+      "mean_pos_proj": 4.890928942735215,
+      "mean_neg_proj": -8.747953711009455,
+      "pooled_std": 0.7207064216941871,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "16": {
+      "layer": 16,
+      "separation": 18.102662244988963,
+      "vector_norm": 14.415944168580284,
+      "mean_pos_proj": 4.813438263157795,
+      "mean_neg_proj": -9.602505905422491,
+      "pooled_std": 0.7963438732648727,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "17": {
+      "layer": 17,
+      "separation": 15.27927061790272,
+      "vector_norm": 16.636732726103553,
+      "mean_pos_proj": 9.488948104752442,
+      "mean_neg_proj": -7.147784621351109,
+      "pooled_std": 1.0888433840951999,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "18": {
+      "layer": 18,
+      "separation": 25.275365821488354,
+      "vector_norm": 17.98085930372548,
+      "mean_pos_proj": 7.981225368055712,
+      "mean_neg_proj": -9.999633935669767,
+      "pooled_std": 0.711398577995603,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "19": {
+      "layer": 19,
+      "separation": 22.465070325435974,
+      "vector_norm": 27.834063945563067,
+      "mean_pos_proj": 4.982685040458621,
+      "mean_neg_proj": -22.851378905104443,
+      "pooled_std": 1.2389929585062582,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "20": {
+      "layer": 20,
+      "separation": 16.52529866244649,
+      "vector_norm": 42.1066409288685,
+      "mean_pos_proj": 12.199049996481554,
+      "mean_neg_proj": -29.90759093238695,
+      "pooled_std": 2.548010888575058,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "21": {
+      "layer": 21,
+      "separation": 16.704510555398066,
+      "vector_norm": 61.576071797471236,
+      "mean_pos_proj": 11.488714444102932,
+      "mean_neg_proj": -50.08735735336829,
+      "pooled_std": 3.6861943122046696,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "22": {
+      "layer": 22,
+      "separation": 17.64953407723454,
+      "vector_norm": 78.36133045728636,
+      "mean_pos_proj": 23.936354621607983,
+      "mean_neg_proj": -54.42497583567839,
+      "pooled_std": 4.439852639416791,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "23": {
+      "layer": 23,
+      "separation": 42.644056065228035,
+      "vector_norm": 111.49834713309558,
+      "mean_pos_proj": 45.54133165018943,
+      "mean_neg_proj": -65.95701548290616,
+      "pooled_std": 2.6146280964115736,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "24": {
+      "layer": 24,
+      "separation": 19.703420479737527,
+      "vector_norm": 134.89419758283472,
+      "mean_pos_proj": 53.989317038433434,
+      "mean_neg_proj": -80.90488054440125,
+      "pooled_std": 6.846232496614296,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "25": {
+      "layer": 25,
+      "separation": 24.780033135853643,
+      "vector_norm": 160.43025586777975,
+      "mean_pos_proj": 46.22750535410631,
+      "mean_neg_proj": -114.20275051367344,
+      "pooled_std": 6.474174388235866,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "26": {
+      "layer": 26,
+      "separation": 37.014620895227935,
+      "vector_norm": 190.08231917800362,
+      "mean_pos_proj": 77.93317874405518,
+      "mean_neg_proj": -112.14914043394845,
+      "pooled_std": 5.1353307039410945,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "27": {
+      "layer": 27,
+      "separation": 55.596893445879026,
+      "vector_norm": 216.51313704902114,
+      "mean_pos_proj": 96.18285348275738,
+      "mean_neg_proj": -120.33028356626377,
+      "pooled_std": 3.894338759409041,
+      "n_pos": 40,
+      "n_neg": 40
+    },
+    "28": {
+      "layer": 28,
+      "separation": 33.50513550962297,
+      "vector_norm": 155.2917962681069,
+      "mean_pos_proj": 61.10023036163899,
+      "mean_neg_proj": -94.19156590646796,
+      "pooled_std": 4.634865488710106,
       "n_pos": 40,
       "n_neg": 40
     }
   },
   "hook_bites_check": {
-    "applicable": false,
-    "passed": null,
-    "reason": "synthetic backend no-op"
-  },
-  "hook_bites_checks": []
+    "applicable": true,
+    "mode": "pre_generation_full_alpha_grid",
+    "passed": true,
+    "alpha_grid": [
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      12.0,
+      16.0,
+      24.0
+    ],
+    "min_cosine_threshold": 0.99,
+    "max_relative_norm_error_threshold": 0.05,
+    "rationale": "fp16 recalibration: working Qwen2.5-7B steering measured cosine\u22480.998 and relative_norm_error\u22480.002 at alpha=2, while a dead/mis-wired/random hook has cosine\u22480 and relative_norm_error\u22481. The 0.05 relative-norm ceiling is the tight quantitative guard; cosine>=0.99 rejects gross direction errors.",
+    "by_alpha": {
+      "2": {
+        "applicable": true,
+        "alpha": 2.0,
+        "probe_count": 4,
+        "criterion": "cosine(delta, unit_direction) >= 0.99 and abs(norm(delta)-abs(alpha))/abs(alpha) <= 0.05 for every probe",
+        "min_cosine_threshold": 0.99,
+        "max_relative_norm_error_threshold": 0.05,
+        "rationale": "fp16 recalibration: working Qwen2.5-7B steering measured cosine\u22480.998 and relative_norm_error\u22480.002 at alpha=2, while a dead/mis-wired/random hook has cosine\u22480 and relative_norm_error\u22481. The 0.05 relative-norm ceiling is the tight quantitative guard; cosine>=0.99 rejects gross direction errors.",
+        "min_cosine": 0.9979707836771571,
+        "max_relative_norm_error": 0.0015790750148642063,
+        "per_probe_cosine": [
+          0.9982053112675666,
+          0.9979707836771571,
+          0.9983058897597846,
+          0.9983753902323409
+        ],
+        "per_probe_delta_norm": [
+          1.9975174255479085,
+          1.9989549647272626,
+          1.9979643866012289,
+          1.9968418499702716
+        ],
+        "per_probe_relative_norm_error": [
+          0.001241287226045773,
+          0.0005225176363686801,
+          0.0010178066993855595,
+          0.0015790750148642063
+        ],
+        "per_probe_passed": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "passed": true
+      },
+      "4": {
+        "applicable": true,
+        "alpha": 4.0,
+        "probe_count": 4,
+        "criterion": "cosine(delta, unit_direction) >= 0.99 and abs(norm(delta)-abs(alpha))/abs(alpha) <= 0.05 for every probe",
+        "min_cosine_threshold": 0.99,
+        "max_relative_norm_error_threshold": 0.05,
+        "rationale": "fp16 recalibration: working Qwen2.5-7B steering measured cosine\u22480.998 and relative_norm_error\u22480.002 at alpha=2, while a dead/mis-wired/random hook has cosine\u22480 and relative_norm_error\u22481. The 0.05 relative-norm ceiling is the tight quantitative guard; cosine>=0.99 rejects gross direction errors.",
+        "min_cosine": 0.9997492262261279,
+        "max_relative_norm_error": 0.0007433802067391415,
+        "per_probe_cosine": [
+          0.9998091497522659,
+          0.9997492262261279,
+          0.9998242742544288,
+          0.9998365239959405
+        ],
+        "per_probe_delta_norm": [
+          4.002301893851939,
+          4.001661651861563,
+          4.001543466851732,
+          4.002973520826957
+        ],
+        "per_probe_relative_norm_error": [
+          0.0005754734629848102,
+          0.00041541296539082673,
+          0.0003858667129330584,
+          0.0007433802067391415
+        ],
+        "per_probe_passed": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "passed": true
+      },
+      "6": {
+        "applicable": true,
+        "alpha": 6.0,
+        "probe_count": 4,
+        "criterion": "cosine(delta, unit_direction) >= 0.99 and abs(norm(delta)-abs(alpha))/abs(alpha) <= 0.05 for every probe",
+        "min_cosine_threshold": 0.99,
+        "max_relative_norm_error_threshold": 0.05,
+        "rationale": "fp16 recalibration: working Qwen2.5-7B steering measured cosine\u22480.998 and relative_norm_error\u22480.002 at alpha=2, while a dead/mis-wired/random hook has cosine\u22480 and relative_norm_error\u22481. The 0.05 relative-norm ceiling is the tight quantitative guard; cosine>=0.99 rejects gross direction errors.",
+        "min_cosine": 0.999890266113018,
+        "max_relative_norm_error": 0.0004976403360038203,
+        "per_probe_cosine": [
+          0.9999135850678951,
+          0.999890266113018,
+          0.9999217443351516,
+          0.999923786577976
+        ],
+        "per_probe_delta_norm": [
+          5.997386501869644,
+          5.998671924154025,
+          5.997334094984002,
+          5.997014157983977
+        ],
+        "per_probe_relative_norm_error": [
+          0.0004355830217259715,
+          0.0002213459743291383,
+          0.00044431750266626935,
+          0.0004976403360038203
+        ],
+        "per_probe_passed": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "passed": true
+      },
+      "8": {
+        "applicable": true,
+        "alpha": 8.0,
+        "probe_count": 4,
+        "criterion": "cosine(delta, unit_direction) >= 0.99 and abs(norm(delta)-abs(alpha))/abs(alpha) <= 0.05 for every probe",
+        "min_cosine_threshold": 0.99,
+        "max_relative_norm_error_threshold": 0.05,
+        "rationale": "fp16 recalibration: working Qwen2.5-7B steering measured cosine\u22480.998 and relative_norm_error\u22480.002 at alpha=2, while a dead/mis-wired/random hook has cosine\u22480 and relative_norm_error\u22481. The 0.05 relative-norm ceiling is the tight quantitative guard; cosine>=0.99 rejects gross direction errors.",
+        "min_cosine": 0.9998751060552543,
+        "max_relative_norm_error": 0.0010473127569030627,
+        "per_probe_cosine": [
+          0.9998895821904561,
+          0.9998751060552543,
+          0.9998945936552048,
+          0.9999054133055206
+        ],
+        "per_probe_delta_norm": [
+          8.007334877782759,
+          8.005685218094513,
+          8.008378502055225,
+          8.007311893144035
+        ],
+        "per_probe_relative_norm_error": [
+          0.0009168597228448316,
+          0.0007106522618141042,
+          0.0010473127569030627,
+          0.0009139866430043497
+        ],
+        "per_probe_passed": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "passed": true
+      },
+      "12": {
+        "applicable": true,
+        "alpha": 12.0,
+        "probe_count": 4,
+        "criterion": "cosine(delta, unit_direction) >= 0.99 and abs(norm(delta)-abs(alpha))/abs(alpha) <= 0.05 for every probe",
+        "min_cosine_threshold": 0.99,
+        "max_relative_norm_error_threshold": 0.05,
+        "rationale": "fp16 recalibration: working Qwen2.5-7B steering measured cosine\u22480.998 and relative_norm_error\u22480.002 at alpha=2, while a dead/mis-wired/random hook has cosine\u22480 and relative_norm_error\u22481. The 0.05 relative-norm ceiling is the tight quantitative guard; cosine>=0.99 rejects gross direction errors.",
+        "min_cosine": 0.9999430539279757,
+        "max_relative_norm_error": 0.00032764788861235533,
+        "per_probe_cosine": [
+          0.9999493842889456,
+          0.9999430539279757,
+          0.9999511993059921,
+          0.9999513199077861
+        ],
+        "per_probe_delta_norm": [
+          11.996068225336652,
+          11.997720320491435,
+          11.996385208691269,
+          11.99708535438374
+        ],
+        "per_probe_relative_norm_error": [
+          0.00032764788861235533,
+          0.0001899732923803891,
+          0.00030123260906093446,
+          0.000242887134688304
+        ],
+        "per_probe_passed": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "passed": true
+      },
+      "16": {
+        "applicable": true,
+        "alpha": 16.0,
+        "probe_count": 4,
+        "criterion": "cosine(delta, unit_direction) >= 0.99 and abs(norm(delta)-abs(alpha))/abs(alpha) <= 0.05 for every probe",
+        "min_cosine_threshold": 0.99,
+        "max_relative_norm_error_threshold": 0.05,
+        "rationale": "fp16 recalibration: working Qwen2.5-7B steering measured cosine\u22480.998 and relative_norm_error\u22480.002 at alpha=2, while a dead/mis-wired/random hook has cosine\u22480 and relative_norm_error\u22481. The 0.05 relative-norm ceiling is the tight quantitative guard; cosine>=0.99 rejects gross direction errors.",
+        "min_cosine": 0.9999830303522641,
+        "max_relative_norm_error": 0.00022371375015806105,
+        "per_probe_cosine": [
+          0.9999866861714367,
+          0.9999830303522641,
+          0.9999880967269046,
+          0.999988387117315
+        ],
+        "per_probe_delta_norm": [
+          15.996420579997471,
+          15.999414241984365,
+          15.997541146731615,
+          15.996474032792731
+        ],
+        "per_probe_relative_norm_error": [
+          0.00022371375015806105,
+          3.6609875977200446e-05,
+          0.0001536783292740429,
+          0.00022037295045429506
+        ],
+        "per_probe_passed": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "passed": true
+      },
+      "24": {
+        "applicable": true,
+        "alpha": 24.0,
+        "probe_count": 4,
+        "criterion": "cosine(delta, unit_direction) >= 0.99 and abs(norm(delta)-abs(alpha))/abs(alpha) <= 0.05 for every probe",
+        "min_cosine_threshold": 0.99,
+        "max_relative_norm_error_threshold": 0.05,
+        "rationale": "fp16 recalibration: working Qwen2.5-7B steering measured cosine\u22480.998 and relative_norm_error\u22480.002 at alpha=2, while a dead/mis-wired/random hook has cosine\u22480 and relative_norm_error\u22481. The 0.05 relative-norm ceiling is the tight quantitative guard; cosine>=0.99 rejects gross direction errors.",
+        "min_cosine": 0.9999924547942847,
+        "max_relative_norm_error": 0.0001466295419504012,
+        "per_probe_cosine": [
+          0.9999940882462316,
+          0.9999924547942847,
+          0.9999947814862756,
+          0.9999958121567807
+        ],
+        "per_probe_delta_norm": [
+          24.00351910900681,
+          24.000987956459785,
+          24.00330741692996,
+          24.002684372434
+        ],
+        "per_probe_relative_norm_error": [
+          0.0001466295419504012,
+          4.116485249102316e-05,
+          0.00013780903874834513,
+          0.00011184885141668488
+        ],
+        "per_probe_passed": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "passed": true
+      }
+    }
+  }
 }

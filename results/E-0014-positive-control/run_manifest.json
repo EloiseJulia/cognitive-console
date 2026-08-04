@@ -1,18 +1,18 @@
 {
   "experiment_id": "E-0014",
   "valid_for_paper": false,
-  "backend": "synthetic",
-  "model": "synthetic-offline",
-  "generated_at": "2026-08-04T03:28:56.289880+00:00",
+  "backend": "hf",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "generated_at": "2026-08-04T04:22:28.072716+00:00",
   "scope_guard_sentence": "This positive control tests the sensitivity of the measuring instrument on a non-metacognitive target chosen because activation steering is already known to move it; it is not evidence that deliberation, skepticism, or calibration are latently controllable, and a pass here does not weaken, qualify, or extend the scoped negative reported for naive CAA/ITI steering on the three metacognitive axes.",
   "item_pool_integrity": {
     "item_pool_disjoint_from_frozen80": true,
     "all_ids_triviaqa": true,
-    "min_triviaqa_index": 80,
+    "min_triviaqa_index": 399,
     "item_count": 60
   },
   "artifacts": {
-    "positive_control_results_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\poscontrol\\results\\E-0014-positive-control\\positive_control_results.json",
-    "direction_provenance_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\poscontrol\\results\\E-0014-positive-control\\direction_provenance.json"
+    "positive_control_results_json": "/home/elzhang/cc_l0/repo/results/E-0014-positive-control/positive_control_results.json",
+    "direction_provenance_json": "/home/elzhang/cc_l0/repo/results/E-0014-positive-control/direction_provenance.json"
   }
 }

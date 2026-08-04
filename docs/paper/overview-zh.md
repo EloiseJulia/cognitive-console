@@ -1,11 +1,11 @@
 # 论文总览（中文内部理解版）
 
-> 论文：**Legible Need Not Be Controllable: No Demonstrated Superiority over Bounded Prompts under Naive CAA/ITI Steering**（标题已按 critic gap 修订收窄，D-0074；目标 venue = **IUI**，D-0074）。  
+> 论文：**Legible Need Not Be Controllable: No Demonstrated Superiority over Bounded Prompts under Bounded Naive CAA/ITI Steering**（标题已按 D-0082 reframe 再次收窄；目标 venue = **IUI**，D-0074）。
 > 本文档是 owner 内部理解稿，不是送审稿；数字以 `docs/ledgers/evidence-ledger.md`、生成表、冻结结果 artifact 与 `docs/paper/main.tex` 为准。  
 > **内部备注（不入论文）：** 曾尝试 E-0012「verified control button」搜索以升级为正例/关闭"只试了弱 steering"攻击，但历经 4 个占位符-vs-真实 bug（假比较器/贪心采样/随机方向/假 world-capital fixture 数据），全部证据判 INVALID，已于 D-0073 **终止**并不入论文。E-0009（PSR arm）只能作为单模型探索性 method-strength 补充；D-0082/E-0014 显示相同 `α·û, α≤24` 约定下 latent arm 可能整体 under-scaled，因此 headline 必须收窄为 bounded/naive CAA/ITI at α≤24。
 >
 > **最新进展（2026-08-04，本文档正文尚未逐节同步，以 `main.tex` + decision-log D-0074..D-0082 为准）：**
-> 0. **D-0082 诚实收窄：** E-0014 正控（真实 Qwen2.5-7B refusal CAA，经独立审计）显示端点/统计管线是活的：prompt 指令达到 95% refusal，random direction 不 pass；但在与 C2 相同的冻结 `α·û`、`α≤24` 单位方向注入约定下，latent CAA refusal arm 在所有 α 都是 0% refusal（自然 class-difference norm ≈216，注入 norm ≤24）。因此 F2 latent-arm assay sensitivity 未关闭，论文 steering claim 必须严格改写为 **bounded/naive CAA/ITI at α≤24** 的 negative result；calibration “harm” 是 steer-vs-bounded-prompt contrast，直接 steer-vs-baseline 近零（compliance +0.011，1−Brier +0.001），不得写成 latent steering 直接伤害 calibration 或 latent control 一般不可能。
+> 0. **D-0082 诚实收窄：** E-0014 正控（真实 Qwen2.5-7B refusal CAA，经独立审计）显示端点/统计管线是活的：prompt 指令达到 95% refusal，random direction 不 pass；但在与 C2 相同的冻结 `α·û`、`α≤24` 单位方向注入约定下，latent CAA refusal arm 在所有 α 都是 0% refusal（自然 class-difference norm ≈216，注入 norm ≤24）。因此 F2 latent-arm assay sensitivity 未关闭，论文 steering claim 必须严格改写为 **bounded/naive CAA/ITI at α≤24** 的 negative result；calibration “harm” 是 steer-vs-bounded-prompt contrast，直接 steer-vs-baseline 近零（compliance +0.011，1−Brier +0.0008），不得写成 latent steering 直接伤害 calibration 或 latent control 一般不可能。
 > 1. **全文已按 HCI best-paper 风格重构**（design-driven 叙事：可调界面→"可读即可控"推断→校准依赖→冻结裁决证否→console 仪器化边界→evidence-tier 评估合同；Related Work 改 HCI-first；C3 由证据*导出*而非断言；破折号=0；诊断+策略见 `docs/paper/hci-rewrite-plan.md`），已敌对审计通过并合并。
 > 2. **三段式敌对 chained review**（Opus5→GPT-5.6-Sol→Opus5）判 **Reject（有一轮返修路径）**，三大致命点：F1 calibration-harm 可能是"置信度格式丢失+parser 补 0.5"假象；F2 无 positive control/manipulation check（裁决器从未在任何臂返回 pass），且 READ(C1) 与 TRANSFER(C2) 未在同一 intervention 上验证（尤其 ITI）；F3 C3 无证据。
 > 3. **F1 已解决（最大 cell）**：E-0013 格式合规复查（D-0078，审计 HARM-SURVIVES-BUT-CAVEATED）——CAA×Qwen 上 **steering 比 prompt 更少丢格式**（合规率 0.83 vs 0.45），仅取双臂都给出可解析置信度的配对样本，harm=**−0.34 CI[−0.51,−0.17]**（比 as-run imputed −0.21 更大）⇒ 补 0.5 的 imputation 让 as-run 偏保守，harm 非格式假象。已按**单 cell scope + 其余 3 cell（ITI fp 复现门槛 / Llama gated）诚实披露为 limitation** 写入论文。
@@ -14,7 +14,7 @@
 
 ## 1. 一页速览（TL;DR）
 
-**头条 Claim：** 对 cognitive console 来说，“一个 latent 轴可读/可命名”不能自动当成“用户可用的行为控制滑块”。在冻结的 prompt-vs-latent 行为裁决中，**bounded/naive CAA/ITI steering（`α·û`, α≤24）** 在 `{Qwen2.5-7B, Llama-3-8B} × {CAA, ITI}` 四格里 **全部 0/3 轴通过**。uncertainty/calibration 的稳健信号必须写成 steer-vs-bounded-prompt contrast（四格 CI 排除 0），不是 latent steer-vs-baseline 直接伤害；Qwen/CAA 复查中 direct steer≈baseline（compliance +0.011，1−Brier +0.001）。该 contrast 由 C2 行为证据独立成立，不由 C1 facade 推导。
+**头条 Claim：** 对 cognitive console 来说，“一个 latent 轴可读/可命名”不能自动当成“用户可用的行为控制滑块”。在冻结的 prompt-vs-latent 行为裁决中，**bounded/naive CAA/ITI steering（`α·û`, α≤24）** 在 `{Qwen2.5-7B, Llama-3-8B} × {CAA, ITI}` 四格里 **全部 0/3 轴通过**。uncertainty/calibration 的稳健信号必须写成 steer-vs-bounded-prompt contrast（四格 CI 排除 0），不是 latent steer-vs-baseline 直接伤害；Qwen/CAA 复查中 direct steer≈baseline（compliance +0.011，1−Brier +0.0008）。该 contrast 由 C2 行为证据独立成立，不由 C1 facade 推导。
 
 | 证据块 | 结论 | 关键数字 | 状态 |
 |---|---|---:|---|

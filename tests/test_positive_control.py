@@ -44,6 +44,15 @@ def test_hook_bites_metric_fails_no_perturbation_and_passes_expected_delta():
     assert no_perturb["min_cosine"] is None
     assert no_perturb["max_relative_norm_error"] == pytest.approx(1.0)
 
+    fp16_small_alpha = np.array(
+        [[2.0 * 0.998, 2.0 * np.sqrt(1.0 - 0.998**2), 0.0]],
+        dtype=np.float64,
+    )
+    recalibrated = R._hook_bite_metrics(fp16_small_alpha, direction, 2.0)
+    assert recalibrated["passed"] is True
+    assert recalibrated["min_cosine"] == pytest.approx(0.998)
+    assert recalibrated["max_relative_norm_error"] == pytest.approx(0.0)
+
 
 def test_random_direction_negative_control_is_wired(tmp_path):
     out_dir = tmp_path / "e0014"

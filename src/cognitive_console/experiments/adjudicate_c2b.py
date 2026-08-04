@@ -70,7 +70,7 @@ VERDICT_CONDITIONAL_GO = "CONDITIONAL_GO"
 VERDICT_KILL = "KILL_PLAN_D"
 
 # Which per-item outcome the paired bootstrap consumes per axis.
-BINARY_OUTCOME_AXES = {"deliberation", "skepticism"}
+BINARY_OUTCOME_AXES = {"deliberation", "skepticism", "refusal_positive_control"}
 CALIBRATION_OUTCOME_AXES = {"uncertainty_awareness"}
 
 
@@ -474,6 +474,8 @@ def score_sample_outcome(axis: str, item: Dict, text: str) -> float:
         if conf is None:
             conf = 0.5  # no stated confidence -> maximally uninformative prior
         return _scorers.per_item_brier(correct, conf)
+    if axis == "refusal_positive_control":
+        return float(_scorers.score_refusal(text, item))
     raise ValueError(f"unknown axis {axis!r}")
 
 

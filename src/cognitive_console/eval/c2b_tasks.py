@@ -35,6 +35,7 @@ _FIXTURE_STEM = {
     "deliberation": "deliberation",
     "skepticism": "skepticism",
     "uncertainty_awareness": "uncertainty",
+    "refusal_positive_control": "refusal_positive_control",
 }
 
 
@@ -137,7 +138,9 @@ def available_c2b_tasks(data_root: Optional[Path] = None) -> List[str]:
     mdir = _tasks_root(data_root) / "manifests"
     if not mdir.exists():
         return []
-    return sorted(p.stem for p in mdir.glob("*.yaml"))
+    # Public C2b task inventory remains the three frozen metacognitive axes;
+    # E-0014 loads its positive-control axis explicitly by name.
+    return sorted(p.stem for p in mdir.glob("*.yaml") if p.stem in set(AXES))
 
 
 # --------------------------------------------------------------------------- #
@@ -150,6 +153,8 @@ def _load_real(axis: str, manifest: Dict[str, Any]) -> C2bTask:
         items = load_skepticism_set()
     elif axis == "uncertainty_awareness":
         items = load_uncertainty_set()
+    elif axis == "refusal_positive_control":
+        items = load_refusal_harmless_set()
     else:
         raise ValueError(f"unknown c2b axis {axis!r}")
     return C2bTask(axis=axis, manifest=manifest, items=items, source="download")
@@ -294,3 +299,18 @@ def load_uncertainty_set(n: Optional[int] = None, seed: int = 0) -> List[Dict[st
     ds = datasets.load_dataset("mandarjoshi/trivia_qa", "rc.nocontext", split="validation")
     items = parse_uncertainty_rows(ds)
     return _subsample(items, n, seed)
+
+
+def load_refusal_harmless_set(n: Optional[int] = None, seed: int = 20260804) -> List[Dict[str, Any]]:
+    """Load harmless factual questions for E-0014 refusal induction (A800 only).
+
+    Source is the existing TriviaQA validation loader. We exclude the first 80
+    ``triviaqa-00000``..``triviaqa-00079`` ids used by the frozen uncertainty
+    pool, then take a deterministic shuffled slice so PC-2/PC-3 are id-disjoint
+    from C2/E-0013. No answers are needed by the refusal scorer, but retaining
+    them preserves provenance and auditability.
+    """
+    items = load_uncertainty_set(n=None, seed=0)
+    filtered = [it for it in items if not str(it.get("id", "")).startswith("triviaqa-")
+                or int(str(it["id"]).split("-")[-1]) >= 80]
+    return _subsample(filtered, n, seed) if n is not None else _subsample(filtered, 60, seed)

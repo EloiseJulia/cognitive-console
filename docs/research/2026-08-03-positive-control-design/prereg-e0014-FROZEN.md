@@ -1,6 +1,6 @@
 # E-0014 Positive Control Preregistration (DRAFT)
 
-**Status:** DRAFT; `valid_for_paper=false` until independent audit and Manager sign-off. **Run commit:** `<MANAGER_TO_FILL_RUN_COMMIT>`.
+**Status:** FROZEN 2026-08-04 by Manager after independent hostile code audit (SOUND; all three MAJORs closed; BLOCKER-1 fp16 tolerance fixed). `valid_for_paper=false` until a sound hf run + independent results audit. **Harness frozen at run commit:** `a7c4f25` (merge of `feature/positive-control`; the exact executing commit is captured live by `git_commit()` into `run_manifest.json`/`positive_control_results.json`). No parameter below may change after this line without a new prereg and a §5 escalation.
 
 ## Purpose
 E-0014 is an assay-sensitivity positive control for the frozen C2b adjudicator. It is not a metacognitive-control experiment and does not modify any C1/C2 verdict.

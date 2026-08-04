@@ -1099,8 +1099,8 @@ experiments:
   hypothesis_id: H-E0014-POSITIVE-CONTROL
   claim_ids: []
   type: positive_control
-  status: pre_gpu_guards_ready
-  code_commit: dd165d65121c0a4811009f77241be8c120a07077
+  status: prereg_frozen_ready_for_gpu
+  code_commit: a7c4f25
   dirty_tree: false
   data_hash:
     item_pool_fixture_sha256: sha256:533dd1231deed98b078e870f6f9a5530ace3d1f3dab7eac1360a991552d6df51

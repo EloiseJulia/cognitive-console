@@ -1,0 +1,12 @@
+{
+  "experiment_id": "E-0015",
+  "valid_for_paper": false,
+  "backend": "hf",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "generated_at": "2026-08-04T08:31:16.645888+00:00",
+  "scope_guard_sentence": "E-0015 is a scale-corrected positive-control and headline-risk harness: the refusal target is non-metacognitive and tests instrument sensitivity, while the three metacognitive axes are a preregistered risk co-test; all artifacts remain valid_for_paper=false until a frozen GPU run and hostile results audit, and refusal success alone is not evidence of metacognitive controllability.",
+  "artifacts": {
+    "results_json": "/home/elzhang/cc_l0/repo/results/E-0015-scale-corrected-positive-control/positive_control_scale_corrected_results.json",
+    "direction_provenance_json": "/home/elzhang/cc_l0/repo/results/E-0015-scale-corrected-positive-control/direction_provenance.json"
+  }
+}

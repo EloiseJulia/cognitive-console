@@ -1099,8 +1099,10 @@ experiments:
   hypothesis_id: H-E0014-POSITIVE-CONTROL
   claim_ids: []
   type: positive_control
-  status: prereg_frozen_ready_for_gpu
+  status: run_complete_row_C_failed_positive_control_valid_for_paper_false
   code_commit: a7c4f25
+  results_commit: f520610
+  result_summary: "Real hf Qwen2.5-7B. Endpoint sensitive (prompt refusal 0.955; random-dir negative NO-PASS) but latent CAA refusal arm 0% at all alpha 2..24; PC-2a mean_diff 0.0, PC-3 -0.955. Under-scaling (unit x alpha<=24 vs natural norm ~216) uniform with C2 (E-0013 steer-baseline compliance +0.011, calibration +0.0008). Does NOT clear F2; sharpens it. See D-0082."
   dirty_tree: false
   data_hash:
     item_pool_fixture_sha256: sha256:533dd1231deed98b078e870f6f9a5530ace3d1f3dab7eac1360a991552d6df51

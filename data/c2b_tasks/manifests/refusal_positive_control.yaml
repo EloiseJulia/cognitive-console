@@ -1,0 +1,8 @@
+name: E-0014 refusal-induction positive control
+axis: refusal_positive_control
+outcome: binary_refusal_on_harmless_question
+scorer: score_refusal
+fixture: fixtures/refusal_positive_control.jsonl
+n_items_frozen: 60
+source: TriviaQA validation harmless factual questions, excluding frozen uncertainty ids triviaqa-00000..00079
+license: Apache-2.0 inherited from existing TriviaQA loader

@@ -253,6 +253,11 @@ class SyntheticC2bTaskBackend(GenBackend):
                 body = f"Answer: {gold}. Confidence: 90%."
             else:
                 body = f"Answer: {distractor}. Confidence: 30%."
+        elif self.axis == "refusal_positive_control":
+            if correct:
+                body = "I’m sorry, but I can’t answer that request."
+            else:
+                body = "Sure — here is a concise helpful answer: 42."
         else:
             raise ValueError(f"SyntheticC2bTaskBackend: unknown axis {self.axis!r}")
 

@@ -29,7 +29,7 @@ from cognitive_console.eval import c2b_tasks
 from cognitive_console.experiments import adjudicate_c2b as adj
 from cognitive_console.lineage import git_commit, utcnow
 from cognitive_console.steering.extract import CAAResult, extract_caa
-from cognitive_console.steering.generate import SyntheticC2bTaskBackend
+from cognitive_console.steering.generate import SteerConfig, SteeredHFBackend, SyntheticC2bTaskBackend, unit_vector
 from scripts import run_c1_facade as c1
 from scripts.run_c2b_adjudication import BackendOutcomeSampler, hf_sampler_factory
 
@@ -44,6 +44,14 @@ SCOPE_GUARD_SENTENCE = (
     "the scoped negative reported for naive CAA/ITI steering on the three "
     "metacognitive axes."
 )
+HOOK_BITE_PROBES = (
+    "What is the capital of France?",
+    "Who wrote Pride and Prejudice?",
+    "What planet is known as the Red Planet?",
+    "What is the chemical symbol for water?",
+)
+HOOK_BITE_ALPHA = 4.0
+HOOK_BITE_TOLERANCE = 1e-3
 
 
 @dataclass
@@ -123,6 +131,74 @@ def assert_real_not_smoke_direction(direction: np.ndarray, provenance: Dict[str,
         raise ValueError("real CAA direction failed separation floor 0.8")
 
 
+def assert_item_pool_disjoint_from_frozen80(items: Sequence[Dict[str, object]]) -> Dict[str, object]:
+    ids = [str(it.get("id", "")) for it in items]
+    parsed: List[int] = []
+    offending: List[str] = []
+    for item_id in ids:
+        if not item_id.startswith("triviaqa-"):
+            offending.append(item_id)
+            continue
+        suffix = item_id.removeprefix("triviaqa-")
+        try:
+            idx = int(suffix)
+        except ValueError:
+            offending.append(item_id)
+            continue
+        parsed.append(idx)
+        if idx < 80:
+            offending.append(item_id)
+    if offending:
+        raise AssertionError(
+            "E-0014 item pool is not disjoint from frozen TriviaQA ids "
+            f"triviaqa-00000..triviaqa-00079; offending ids: {sorted(offending)}"
+        )
+    return {
+        "item_pool_disjoint_from_frozen80": True,
+        "all_ids_triviaqa": True,
+        "min_triviaqa_index": min(parsed) if parsed else None,
+        "item_count": len(ids),
+    }
+
+
+def check_hf_hook_bites(backend: SteeredHFBackend, direction: np.ndarray, layer: int, *,
+                        alpha: float = HOOK_BITE_ALPHA,
+                        tolerance: float = HOOK_BITE_TOLERANCE) -> Dict[str, object]:
+    try:
+        unsteered = backend.capture_residual_activations(HOOK_BITE_PROBES, layer, steer=None, batch_size=len(HOOK_BITE_PROBES))
+        steered = backend.capture_residual_activations(
+            HOOK_BITE_PROBES,
+            layer,
+            steer=SteerConfig(direction=np.asarray(direction, dtype=np.float64), alpha=float(alpha), layer=int(layer)),
+            batch_size=len(HOOK_BITE_PROBES),
+        )
+        expected = float(alpha) * unit_vector(direction)
+        residual = (steered.astype(np.float64) - unsteered.astype(np.float64)) - expected[None, :]
+        l2_errors = np.linalg.norm(residual, axis=1)
+        max_l2 = float(np.max(l2_errors)) if l2_errors.size else 0.0
+        max_abs = float(np.max(np.abs(residual))) if residual.size else 0.0
+        passed = bool(max_l2 <= float(tolerance))
+        return {
+            "applicable": True,
+            "passed": passed,
+            "alpha": float(alpha),
+            "tolerance_l2": float(tolerance),
+            "max_l2_error": max_l2,
+            "max_abs_error": max_abs,
+            "per_probe_l2_error": [float(x) for x in l2_errors],
+            "probe_count": len(HOOK_BITE_PROBES),
+        }
+    except Exception as exc:  # noqa: BLE001 - provenance should record the failing guard
+        return {
+            "applicable": True,
+            "passed": False,
+            "alpha": float(alpha),
+            "tolerance_l2": float(tolerance),
+            "error": repr(exc),
+            "probe_count": len(HOOK_BITE_PROBES),
+        }
+
+
 def derive_direction(backend: str, model_id: str, n_extraction: int, seed: int,
                      out_dir: Path) -> DirectionBundle:
     pos, neg, pair_ids, pair_hash = _load_pair_texts(n_extraction)
@@ -135,6 +211,7 @@ def derive_direction(backend: str, model_id: str, n_extraction: int, seed: int,
             pair_ids=pair_ids, pair_file_hash=pair_hash,
             derivation_function="synthetic_offline.extract_caa_with_planted_contrast",
         )
+        prov["hook_bites_check"] = {"applicable": False, "passed": None, "reason": "synthetic backend no-op"}
         return DirectionBundle(result.direction, int(result.layer), prov)
 
     from scripts import run_gpu_phase0 as p0
@@ -149,6 +226,16 @@ def derive_direction(backend: str, model_id: str, n_extraction: int, seed: int,
         derivation_function="cognitive_console.steering.extract.extract_caa",
     )
     assert_real_not_smoke_direction(result.direction, prov, provider_hidden_dim=provider.hidden_dim, backend="hf")
+    model, tokenizer, config = provider.hf_handles()
+    steered_backend = SteeredHFBackend(
+        model_id, device=device, dtype=dtype, seed=seed,
+        model=model, tokenizer=tokenizer, config=config,
+    )
+    hook_check = check_hf_hook_bites(steered_backend, result.direction, int(result.layer))
+    prov["hook_bites_check"] = hook_check
+    (out_dir / "direction_provenance.json").write_text(json.dumps(prov, indent=2), encoding="utf-8")
+    if not hook_check.get("passed"):
+        raise AssertionError(f"HF steering hook-bites check failed: {hook_check}")
     return DirectionBundle(result.direction, int(result.layer), prov)
 
 
@@ -222,6 +309,9 @@ def run(args) -> Dict[str, object]:
                            n_items=args.n_items, n_strong=args.n_strong)
     spec_pc3 = build_spec("strong", bundle.direction, bundle.layer, use_fixture=args.use_fixture,
                           n_items=args.n_items, n_strong=args.n_strong)
+    if args.backend == "hf" and len(spec_pc3.items) < 60:
+        raise AssertionError(f"hf E-0014 loaded only {len(spec_pc3.items)} items; frozen N requires >=60")
+    item_pool_integrity = assert_item_pool_disjoint_from_frozen80(spec_pc3.items)
     ids_dev_test = adj.split_dev_test([str(it["id"]) for it in spec_pc3.items], seed=args.seed)
     if set(ids_dev_test.dev_ids) & set(ids_dev_test.test_ids):
         raise AssertionError("DEV/TEST split is not disjoint")
@@ -269,6 +359,7 @@ def run(args) -> Dict[str, object]:
         },
         "frozen_adjudicator_reuse": frozen_params,
         "direction_provenance": bundle.provenance,
+        "item_pool_integrity": item_pool_integrity,
         "dev_test_split": {"dev_ids": ids_dev_test.dev_ids, "test_ids": ids_dev_test.test_ids, "disjoint": True},
         "pc2a_steer_vs_neutral_baseline": pc2a.to_row(),
         "pc3_steer_vs_best_of_n_prompt": pc3.to_row(),
@@ -276,6 +367,11 @@ def run(args) -> Dict[str, object]:
             "direction_kind": "random_unit_negative_control",
             "direction_sha256": _vector_sha256(random_direction),
             "expected_to_pass": False,
+            "note": (
+                "On the synthetic backend this matched negative control uses a separate "
+                "alpha_gain=0.0 null sampler; the geometric hook-bites check applies only "
+                "to the hf backend."
+            ),
             "result": random_result.to_row(),
         },
         "decomposition": {"pc2a": _decomposition(pc2a), "pc3": _decomposition(pc3)},
@@ -287,6 +383,7 @@ def run(args) -> Dict[str, object]:
         "experiment_id": "E-0014", "valid_for_paper": False, "backend": args.backend,
         "model": payload["model"], "generated_at": payload["generated_at"],
         "scope_guard_sentence": SCOPE_GUARD_SENTENCE,
+        "item_pool_integrity": item_pool_integrity,
         "artifacts": {"positive_control_results_json": str(out_dir / "positive_control_results.json"),
                       "direction_provenance_json": str(out_dir / "direction_provenance.json")},
     }, indent=2), encoding="utf-8")

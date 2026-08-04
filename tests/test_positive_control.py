@@ -69,12 +69,46 @@ def test_adjudicator_reuse_records_frozen_delta_bootstrap_bonferroni_coherence(t
     assert payload["pc3_steer_vs_best_of_n_prompt"]["delta"] == adj.DELTA
 
 
-def test_dev_test_disjoint_and_real_loader_excludes_frozen_uncertainty_prefix():
-    task = c2b_tasks.load_c2b_task(R.AXIS, use_fixture=True)
-    assert len(task.items) >= 6
-    spec = R.build_spec("strong", np.ones(64), 3, use_fixture=True, n_items=6, n_strong=4)
+def test_dev_test_disjoint_and_real_loader_excludes_frozen_uncertainty_prefix(monkeypatch):
+    standin = [
+        {"id": f"triviaqa-{i:05d}", "prompt": f"Question {i}?", "answer": f"Answer {i}"}
+        for i in range(200)
+    ]
+
+    def fake_uncertainty_set(n=None, seed=0):
+        return list(standin) if n is None else list(standin)[: int(n)]
+
+    monkeypatch.setattr(c2b_tasks, "load_uncertainty_set", fake_uncertainty_set)
+    items = c2b_tasks.load_refusal_harmless_set()
+    ids = [str(it["id"]) for it in items]
+    numeric = [int(item_id.split("-")[-1]) for item_id in ids]
+    frozen = {f"triviaqa-{i:05d}" for i in range(80)}
+    assert len(items) == 60
+    assert min(numeric) == 80
+    assert set(ids).isdisjoint(frozen)
+
+    spec = R.build_spec("strong", np.ones(64), 3, use_fixture=True, n_items=60, n_strong=4)
     split = adj.split_dev_test([str(it["id"]) for it in spec.items], seed=20260723)
     assert set(split.dev_ids).isdisjoint(set(split.test_ids))
+
+
+def test_runtime_item_pool_disjointness_assertion_fires(tmp_path, monkeypatch):
+    bad_items = [
+        {"id": "triviaqa-00079", "prompt": "Bad frozen-prefix item?", "answer": "bad"},
+        *[
+            {"id": f"triviaqa-{80 + i:05d}", "prompt": f"Question {i}?", "answer": f"Answer {i}"}
+            for i in range(59)
+        ],
+    ]
+    monkeypatch.setattr(R, "_items", lambda use_fixture, n_items: list(bad_items))
+    with pytest.raises(AssertionError, match="triviaqa-00079"):
+        R.main([
+            "--backend", "synthetic",
+            "--out-dir", str(tmp_path / "bad-pool"),
+            "--n-extraction", "4",
+            "--bootstrap-b", "200",
+            "--allow-underpowered",
+        ])
 
 
 def test_hf_forbids_fixture_and_item_cap(tmp_path):

@@ -167,6 +167,17 @@ def strongest_texts():
     return out
 
 
+def _texts_by_axis(root):
+    out = {}
+    for f in sorted(root.glob("*.jsonl")):
+        rows = _jsonl(f)
+        if root == PAIRS_DIR:
+            out[f.stem] = [row["text"] for row in rows]
+        else:
+            out[f.stem] = [row["text"] for row in rows]
+    return out
+
+
 def test_strongest_prompt_files_exist_for_every_axis():
     axes = strongest_axes()
     pair_axes = sorted(f.stem for f in PAIRS_DIR.glob("*.jsonl"))
@@ -218,4 +229,35 @@ def test_no_content_overlap_between_strongest_prompts_and_pairs():
     assert not shared, (
         f"leakage: shared {NGRAM_N}-gram(s) between strongest prompts and contrast pairs: "
         f"{sorted(shared)[:5]}"
+    )
+
+
+def test_refusal_axis_does_not_leak_into_metacognitive_axes():
+    pair_by_axis = _texts_by_axis(PAIRS_DIR)
+    strong_by_axis = _texts_by_axis(STRONGEST_DIR)
+    metacognitive_axes = {"deliberation", "skepticism", "uncertainty_awareness"}
+    assert "refusal_positive_control" in pair_by_axis
+    assert "refusal_positive_control" in strong_by_axis
+    assert metacognitive_axes <= set(pair_by_axis)
+    assert metacognitive_axes <= set(strong_by_axis)
+
+    refusal_texts = pair_by_axis["refusal_positive_control"] + strong_by_axis["refusal_positive_control"]
+    meta_texts = []
+    for axis in sorted(metacognitive_axes):
+        meta_texts.extend(pair_by_axis[axis])
+        meta_texts.extend(strong_by_axis[axis])
+
+    refusal_norm = {_normalize(t) for t in refusal_texts}
+    meta_norm = {_normalize(t) for t in meta_texts}
+    exact = refusal_norm & meta_norm
+    assert not exact, f"refusal/metacognitive leakage: identical normalized text: {sorted(exact)}"
+
+    meta_ngrams = set()
+    for t in meta_norm:
+        meta_ngrams |= _ngrams(t)
+    shared = set()
+    for t in refusal_norm:
+        shared |= _ngrams(t) & meta_ngrams
+    assert not shared, (
+        f"refusal/metacognitive leakage: shared {NGRAM_N}-gram(s): {sorted(shared)[:5]}"
     )

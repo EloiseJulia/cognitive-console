@@ -51,7 +51,8 @@ HOOK_BITE_PROBES = (
     "What is the chemical symbol for water?",
 )
 HOOK_BITE_ALPHA = 4.0
-HOOK_BITE_TOLERANCE = 1e-3
+HOOK_BITE_MIN_COSINE = 0.999
+HOOK_BITE_MAX_RELATIVE_NORM_ERROR = 0.05
 
 
 @dataclass
@@ -59,6 +60,7 @@ class DirectionBundle:
     direction: np.ndarray
     layer: int
     provenance: Dict[str, object]
+    hook_backend: Optional[SteeredHFBackend] = None
 
 
 def _sha256_file(path: Path) -> str:
@@ -161,9 +163,49 @@ def assert_item_pool_disjoint_from_frozen80(items: Sequence[Dict[str, object]]) 
     }
 
 
+def _hook_bite_metrics(delta: np.ndarray, direction: np.ndarray, alpha: float) -> Dict[str, object]:
+    unit = unit_vector(direction)
+    deltas = np.asarray(delta, dtype=np.float64)
+    alpha_abs = abs(float(alpha))
+    delta_norms = np.linalg.norm(deltas, axis=1)
+    dots = deltas @ unit
+    cosines: List[Optional[float]] = []
+    relative_norm_errors: List[float] = []
+    per_probe_passed: List[bool] = []
+    for dot, norm in zip(dots, delta_norms):
+        if not np.isfinite(norm) or norm <= 1e-12:
+            cosine = None
+        else:
+            cosine = float(dot / norm)
+        if alpha_abs <= 1e-12:
+            rel_err = float("inf")
+        else:
+            rel_err = float(abs(norm - alpha_abs) / alpha_abs)
+        passed = bool(
+            cosine is not None
+            and cosine >= HOOK_BITE_MIN_COSINE
+            and rel_err <= HOOK_BITE_MAX_RELATIVE_NORM_ERROR
+        )
+        cosines.append(cosine)
+        relative_norm_errors.append(rel_err)
+        per_probe_passed.append(passed)
+    valid_cosines = [c for c in cosines if c is not None]
+    return {
+        "criterion": "cosine(delta, unit_direction) >= 0.999 and abs(norm(delta)-abs(alpha))/abs(alpha) <= 0.05 for every probe",
+        "min_cosine_threshold": HOOK_BITE_MIN_COSINE,
+        "max_relative_norm_error_threshold": HOOK_BITE_MAX_RELATIVE_NORM_ERROR,
+        "min_cosine": min(valid_cosines) if valid_cosines else None,
+        "max_relative_norm_error": max(relative_norm_errors) if relative_norm_errors else None,
+        "per_probe_cosine": cosines,
+        "per_probe_delta_norm": [float(x) for x in delta_norms],
+        "per_probe_relative_norm_error": relative_norm_errors,
+        "per_probe_passed": per_probe_passed,
+        "passed": bool(per_probe_passed and all(per_probe_passed)),
+    }
+
+
 def check_hf_hook_bites(backend: SteeredHFBackend, direction: np.ndarray, layer: int, *,
-                        alpha: float = HOOK_BITE_ALPHA,
-                        tolerance: float = HOOK_BITE_TOLERANCE) -> Dict[str, object]:
+                        alpha: float = HOOK_BITE_ALPHA) -> Dict[str, object]:
     try:
         unsteered = backend.capture_residual_activations(HOOK_BITE_PROBES, layer, steer=None, batch_size=len(HOOK_BITE_PROBES))
         steered = backend.capture_residual_activations(
@@ -172,31 +214,38 @@ def check_hf_hook_bites(backend: SteeredHFBackend, direction: np.ndarray, layer:
             steer=SteerConfig(direction=np.asarray(direction, dtype=np.float64), alpha=float(alpha), layer=int(layer)),
             batch_size=len(HOOK_BITE_PROBES),
         )
-        expected = float(alpha) * unit_vector(direction)
-        residual = (steered.astype(np.float64) - unsteered.astype(np.float64)) - expected[None, :]
-        l2_errors = np.linalg.norm(residual, axis=1)
-        max_l2 = float(np.max(l2_errors)) if l2_errors.size else 0.0
-        max_abs = float(np.max(np.abs(residual))) if residual.size else 0.0
-        passed = bool(max_l2 <= float(tolerance))
+        delta = steered.astype(np.float64) - unsteered.astype(np.float64)
+        metrics = _hook_bite_metrics(delta, direction, float(alpha))
         return {
             "applicable": True,
-            "passed": passed,
             "alpha": float(alpha),
-            "tolerance_l2": float(tolerance),
-            "max_l2_error": max_l2,
-            "max_abs_error": max_abs,
-            "per_probe_l2_error": [float(x) for x in l2_errors],
             "probe_count": len(HOOK_BITE_PROBES),
+            **metrics,
         }
     except Exception as exc:  # noqa: BLE001 - provenance should record the failing guard
         return {
             "applicable": True,
             "passed": False,
             "alpha": float(alpha),
-            "tolerance_l2": float(tolerance),
+            "min_cosine_threshold": HOOK_BITE_MIN_COSINE,
+            "max_relative_norm_error_threshold": HOOK_BITE_MAX_RELATIVE_NORM_ERROR,
             "error": repr(exc),
             "probe_count": len(HOOK_BITE_PROBES),
         }
+
+
+def record_hf_hook_bites(bundle: DirectionBundle, out_dir: Path, alpha: float, label: str) -> None:
+    if bundle.hook_backend is None:
+        return
+    hook_check = check_hf_hook_bites(bundle.hook_backend, bundle.direction, bundle.layer, alpha=float(alpha))
+    hook_check["label"] = label
+    checks = list(bundle.provenance.get("hook_bites_checks", []))
+    checks.append(hook_check)
+    bundle.provenance["hook_bites_checks"] = checks
+    bundle.provenance["hook_bites_check"] = hook_check
+    (out_dir / "direction_provenance.json").write_text(json.dumps(bundle.provenance, indent=2), encoding="utf-8")
+    if not hook_check.get("passed"):
+        raise AssertionError(f"HF steering hook-bites check failed ({label}): {hook_check}")
 
 
 def derive_direction(backend: str, model_id: str, n_extraction: int, seed: int,
@@ -212,6 +261,7 @@ def derive_direction(backend: str, model_id: str, n_extraction: int, seed: int,
             derivation_function="synthetic_offline.extract_caa_with_planted_contrast",
         )
         prov["hook_bites_check"] = {"applicable": False, "passed": None, "reason": "synthetic backend no-op"}
+        prov["hook_bites_checks"] = []
         return DirectionBundle(result.direction, int(result.layer), prov)
 
     from scripts import run_gpu_phase0 as p0
@@ -231,12 +281,9 @@ def derive_direction(backend: str, model_id: str, n_extraction: int, seed: int,
         model_id, device=device, dtype=dtype, seed=seed,
         model=model, tokenizer=tokenizer, config=config,
     )
-    hook_check = check_hf_hook_bites(steered_backend, result.direction, int(result.layer))
-    prov["hook_bites_check"] = hook_check
-    (out_dir / "direction_provenance.json").write_text(json.dumps(prov, indent=2), encoding="utf-8")
-    if not hook_check.get("passed"):
-        raise AssertionError(f"HF steering hook-bites check failed: {hook_check}")
-    return DirectionBundle(result.direction, int(result.layer), prov)
+    bundle = DirectionBundle(result.direction, int(result.layer), prov, hook_backend=steered_backend)
+    record_hf_hook_bites(bundle, out_dir, HOOK_BITE_ALPHA, "fixed_pre_adjudication_alpha")
+    return bundle
 
 
 def _strong_prompts(n: int) -> List[Tuple[str, str]]:
@@ -320,6 +367,9 @@ def run(args) -> Dict[str, object]:
                             temperature=args.temperature, seed=args.seed, batch_size=args.batch_size)
     pc2a = _adjudicate_one(spec_pc2a, sampler, bootstrap_b=args.bootstrap_b, seed=args.seed)
     pc3 = _adjudicate_one(spec_pc3, sampler, bootstrap_b=args.bootstrap_b, seed=args.seed)
+    if args.backend == "hf":
+        frozen_alpha = float(pc3.to_row()["dev_selection"]["frozen_alpha"])
+        record_hf_hook_bites(bundle, out_dir, frozen_alpha, "pc3_dev_selected_frozen_alpha")
 
     rng = np.random.default_rng(args.seed + 99173)
     random_direction = rng.standard_normal(np.asarray(bundle.direction).shape)

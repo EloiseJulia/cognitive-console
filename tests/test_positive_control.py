@@ -31,6 +31,20 @@ def test_real_not_smoke_guard_raises_on_synthetic_random_direction_hf():
         R.assert_real_not_smoke_direction(direction, provenance, provider_hidden_dim=4096, backend="hf")
 
 
+def test_hook_bites_metric_fails_no_perturbation_and_passes_expected_delta():
+    direction = np.array([1.0, 0.0, 0.0], dtype=np.float64)
+    expected = np.tile(4.0 * direction, (2, 1))
+    good = R._hook_bite_metrics(expected, direction, 4.0)
+    assert good["passed"] is True
+    assert good["min_cosine"] == pytest.approx(1.0)
+    assert good["max_relative_norm_error"] == pytest.approx(0.0)
+
+    no_perturb = R._hook_bite_metrics(np.zeros((2, 3), dtype=np.float64), direction, 4.0)
+    assert no_perturb["passed"] is False
+    assert no_perturb["min_cosine"] is None
+    assert no_perturb["max_relative_norm_error"] == pytest.approx(1.0)
+
+
 def test_random_direction_negative_control_is_wired(tmp_path):
     out_dir = tmp_path / "e0014"
     rc = R.main([

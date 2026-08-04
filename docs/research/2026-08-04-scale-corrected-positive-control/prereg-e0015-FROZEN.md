@@ -1,7 +1,8 @@
 # E-0015 Scale-Corrected Positive Control Preregistration (DRAFT)
 
 **Experiment id:** E-0015  
-**Status:** DRAFT, not frozen. No GPU run is authorized by this file alone.  
+**Status:** FROZEN 2026-08-04 by Manager after two independent hostile code-audit passes (SOUND; BLOCKER OOM + 2 MAJOR + MINOR closed; shared-handle refactor verified behaviorally identical; single-variable isolation code-locked). No parameter below may change without a new prereg + §5 escalation. `valid_for_paper=false` until a sound hf run + independent results audit. **A GPU run additionally requires explicit owner sign-off on scope (minimal vs full) — this file alone does not authorize GPU.**  
+**Harness frozen at run commit:** `c2e82b2` (merge of `feature/e0015-scale-corrected`; live executing commit captured by `git_commit()` into the manifest).
 **Created:** 2026-08-04  
 **Validity:** `valid_for_paper=false` until a sound run and independent hostile results audit.  
 **No-goal:** this preregistration does not change `main.tex`, does not modify any frozen C2/E-0014 verdict, and does not support any metacognitive controllability claim before results exist.

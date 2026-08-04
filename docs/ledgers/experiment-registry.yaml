@@ -1157,3 +1157,30 @@ experiments:
     not perturb residuals in the unit direction with cosine>=0.999 and relative norm error<=0.05 at both the fixed guard alpha and PC-3 DEV-selected alpha. The synthetic random-direction negative control
     uses alpha_gain=0.0 by design; the geometric hook-bites assertion is hf-only. This entry does not add
     support to any metacognitive-axis claim and does not modify the frozen C2 verdict.
+- experiment_id: E-0015
+  parent: E-0014
+  hypothesis_id: H-D
+  claim_ids:
+  - C2b
+  type: confirmatory
+  status: pre_gpu
+  code_commit: null
+  dirty_tree: null
+  data_hash: null
+  env_hash: null
+  config_hash: null
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: data/c2b_tasks/* real loaders + data/contrast_pairs/* + data/strongest_prompts/*; refusal TriviaQA ids >=80
+  seed: 20260723
+  hardware: owner-gated GPU; synthetic smoke only before freeze
+  started_at: null
+  ended_at: null
+  exit_code: null
+  raw_metrics: null
+  summary_metrics: null
+  artifacts:
+  - scripts/run_positive_control_scale_corrected.py
+  - docs/research/2026-08-04-scale-corrected-positive-control/prereg-e0015-DRAFT.md
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: Scale-corrected positive-control harness registered pre-GPU. Uses frozen beta grid {0.125,0.25,0.5,1.0,2.0}; valid_for_paper remains false until frozen GPU run and hostile results audit.

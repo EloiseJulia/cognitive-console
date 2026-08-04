@@ -5,6 +5,7 @@
 **Created:** 2026-08-04  
 **Validity:** `valid_for_paper=false` until a sound run and independent hostile results audit.  
 **No-goal:** this preregistration does not change `main.tex`, does not modify any frozen C2/E-0014 verdict, and does not support any metacognitive controllability claim before results exist.
+**Scope guard sentence:** E-0015 is a scale-corrected positive-control and headline-risk harness: the refusal target is non-metacognitive and tests instrument sensitivity, while the three metacognitive axes are a preregistered risk co-test; all artifacts remain `valid_for_paper=false` until a frozen GPU run and hostile results audit, and refusal success alone is not evidence of metacognitive controllability.
 
 ## 1. Purpose
 

@@ -75,6 +75,37 @@ class SteerConfig:
         return unit_vector(self.direction)
 
 
+
+
+@dataclass
+class AblationConfig:
+    """All-layer projection-ablation configuration for refusal-direction removal.
+
+    Unlike ``SteerConfig`` this is NOT additive and has no selected injection
+    layer: the unit direction is projected out at every decoder block output and
+    every token position.
+    """
+
+    direction: np.ndarray
+
+    def unit(self) -> np.ndarray:
+        return unit_vector(self.direction)
+
+
+def project_out_direction_array(hidden, direction):
+    """Return ``hidden - (hidden·r_hat) r_hat`` over the last dimension.
+
+    Pure numpy helper used by tests and synthetic hook-bites; the HF hook below
+    implements the same operation in torch without touching the additive hook.
+    """
+    arr = np.asarray(hidden, dtype=np.float64)
+    r = unit_vector(direction)
+    if arr.shape[-1] != r.size:
+        raise ValueError(f"hidden last dim {arr.shape[-1]} != direction dim {r.size}")
+    comp = np.tensordot(arr, r, axes=([-1], [0]))
+    return arr - comp[..., None] * r
+
+
 class GenBackend(abc.ABC):
     """Abstract steered-generation backend (the deferred model seam)."""
 
@@ -578,6 +609,156 @@ class SteeredHFBackend(GenBackend):
                 )
             out_rows.append(last.to(torch.float32).cpu().numpy())
         return np.concatenate(out_rows, axis=0)
+
+    # -- all-layer projection ablation (E-0016; distinct from additive hook) -
+    def _make_ablation_hook(self, ablation: AblationConfig, *, stats: Optional[dict] = None, layer: Optional[int] = None):
+        import torch
+
+        u = ablation.unit()
+
+        def hook(module, inputs, output):
+            hidden = output[0] if isinstance(output, tuple) else output
+            vec = torch.as_tensor(u, dtype=hidden.dtype, device=hidden.device)
+            comp = torch.sum(hidden * vec, dim=-1, keepdim=True)
+            new_hidden = hidden - comp * vec
+            if stats is not None and layer is not None:
+                with torch.no_grad():
+                    before = torch.sum(hidden.to(torch.float32) * vec.to(torch.float32), dim=-1).detach().abs()
+                    after = torch.sum(new_hidden.to(torch.float32) * vec.to(torch.float32), dim=-1).detach().abs()
+                    rec = stats.setdefault(int(layer), {"max_abs_before": 0.0, "max_abs_after": 0.0, "mean_abs_before": 0.0, "mean_abs_after": 0.0, "n_values": 0})
+                    n_old = int(rec["n_values"])
+                    n_new = int(before.numel())
+                    rec["max_abs_before"] = max(float(rec["max_abs_before"]), float(before.max().item()))
+                    rec["max_abs_after"] = max(float(rec["max_abs_after"]), float(after.max().item()))
+                    rec["mean_abs_before"] = (float(rec["mean_abs_before"]) * n_old + float(before.mean().item()) * n_new) / max(1, n_old + n_new)
+                    rec["mean_abs_after"] = (float(rec["mean_abs_after"]) * n_old + float(after.mean().item()) * n_new) / max(1, n_old + n_new)
+                    rec["n_values"] = n_old + n_new
+            if isinstance(output, tuple):
+                return (new_hidden,) + tuple(output[1:])
+            return new_hidden
+
+        return hook
+
+    def _register_all_layer_ablation_hooks(self, ablation: AblationConfig, *, stats: Optional[dict] = None):
+        """Register projection-ablation hooks on every decoder block."""
+        self._ensure_loaded()
+        if np.asarray(ablation.unit()).size != self.hidden_dim:
+            raise ValueError("ablation direction dim does not match model hidden_dim")
+        handles = []
+        for idx, block in enumerate(self._layers, start=1):
+            handles.append(block.register_forward_hook(self._make_ablation_hook(ablation, stats=stats, layer=idx)))
+        return handles
+
+    def capture_ablation_hook_bites(
+        self,
+        prompts: Sequence[str],
+        ablation: AblationConfig,
+        *,
+        batch_size: Optional[int] = 2,
+    ) -> Dict[int, Dict[str, float]]:
+        """Forward-pass-only guard proving all-layer ablation removes r_hat.
+
+        Returns per decoder layer maxima/means of ``|h_old·r_hat|`` and
+        ``|h_new·r_hat|`` over every batch/token position seen by the hook. This
+        does not generate text and must run before expensive generation.
+        """
+        import torch
+
+        self._ensure_loaded()
+        prompts = list(prompts)
+        if not prompts:
+            raise ValueError("hook-bites need at least one probe prompt")
+        if batch_size is None:
+            batch_size = len(prompts)
+        stats: Dict[int, Dict[str, float]] = {}
+        base_model = getattr(self._model, "model", self._model)
+        for start in range(0, len(prompts), int(batch_size)):
+            texts = [self._render_user_chat_prompt(self._tokenizer, p, self.model_name) for p in prompts[start:start + int(batch_size)]]
+            self._tokenizer.padding_side = "left"
+            enc = self._tokenizer(texts, return_tensors="pt", padding=True, truncation=True, max_length=self.max_length)
+            enc = {k: v.to(self.device) for k, v in enc.items()}
+            handles = self._register_all_layer_ablation_hooks(ablation, stats=stats)
+            try:
+                with torch.no_grad():
+                    base_model(**enc, use_cache=False)
+            finally:
+                for handle in reversed(handles):
+                    handle.remove()
+        return stats
+
+    def generate_with_ablation(
+        self,
+        prompt: str,
+        ablation: Optional[AblationConfig] = None,
+        max_new_tokens: int = 128,
+        do_sample: bool = False,
+        temperature: float = 1.0,
+        top_p: Optional[float] = None,
+        seed: Optional[int] = None,
+    ) -> str:
+        """Generate with all-layer projection ablation; additive hook untouched."""
+        import torch
+
+        self._ensure_loaded()
+        self._seed_torch(seed if seed is not None else self.seed)
+        text = self._render_user_chat_prompt(self._tokenizer, prompt, self.model_name)
+        enc = self._tokenizer(text, return_tensors="pt", truncation=True, max_length=self.max_length)
+        enc = {k: v.to(self.device) for k, v in enc.items()}
+        input_len = enc["input_ids"].shape[1]
+        handles = self._register_all_layer_ablation_hooks(ablation) if ablation is not None else []
+        try:
+            gen_kwargs = dict(max_new_tokens=int(max_new_tokens), do_sample=bool(do_sample), pad_token_id=self._tokenizer.pad_token_id)
+            if do_sample:
+                gen_kwargs["temperature"] = float(temperature)
+                if top_p is not None:
+                    gen_kwargs["top_p"] = float(top_p)
+            with torch.no_grad():
+                out = self._model.generate(**enc, **gen_kwargs)
+        finally:
+            for handle in reversed(handles):
+                handle.remove()
+        return self._tokenizer.decode(out[0][input_len:], skip_special_tokens=True)
+
+    def generate_batch_with_ablation(
+        self,
+        prompts: Sequence[str],
+        ablation: Optional[AblationConfig] = None,
+        max_new_tokens: int = 128,
+        seeds: Optional[Sequence[int]] = None,
+        do_sample: bool = False,
+        temperature: float = 1.0,
+        top_p: Optional[float] = None,
+    ) -> List[str]:
+        """Batched generation under the same all-layer projection-ablation hook."""
+        import torch
+
+        self._ensure_loaded()
+        prompts = list(prompts)
+        if not prompts:
+            return []
+        if do_sample:
+            key = "|".join(str(int(s)) for s in seeds) if seeds else str(self.seed)
+            batch_seed = int(hashlib.sha256(key.encode("utf-8")).hexdigest(), 16) % (2 ** 31)
+            self._seed_torch(batch_seed)
+        texts = [self._render_user_chat_prompt(self._tokenizer, p, self.model_name) for p in prompts]
+        self._tokenizer.padding_side = "left"
+        enc = self._tokenizer(texts, return_tensors="pt", padding=True, truncation=True, max_length=self.max_length)
+        enc = {k: v.to(self.device) for k, v in enc.items()}
+        input_len = enc["input_ids"].shape[1]
+        handles = self._register_all_layer_ablation_hooks(ablation) if ablation is not None else []
+        try:
+            gen_kwargs = dict(max_new_tokens=int(max_new_tokens), do_sample=bool(do_sample), pad_token_id=self._tokenizer.pad_token_id)
+            if do_sample:
+                gen_kwargs["temperature"] = float(temperature)
+                if top_p is not None:
+                    gen_kwargs["top_p"] = float(top_p)
+            with torch.no_grad():
+                out = self._model.generate(**enc, **gen_kwargs)
+        finally:
+            for handle in reversed(handles):
+                handle.remove()
+        new = out[:, input_len:]
+        return [self._tokenizer.decode(row, skip_special_tokens=True) for row in new]
 
     # -- generation -------------------------------------------------------
     def generate(

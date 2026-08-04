@@ -38,24 +38,32 @@ It is applied at every decoder layer and every token position. This differs from
 
 ## 4. Data regimes
 
-### 4.1 Primary recommended regime A: harmful prompts
+### 4.1 PRIMARY frozen-first regime B: XSTest safe-but-over-refused prompts
 
-- **Items:** AdvBench-style / Arditi-style harmful-instruction prompts, subject to license review.
-- **Expected baseline:** high refusal rate.
-- **Expected ablation effect:** refusal-rate reduction.
-- **Safety rule:** raw harmful prompts and raw harmful/compliant outputs must never be committed or published. Commit only aggregate refusal-marker rates, hashes, redacted summaries, and provenance. Raw artifacts, if any, remain outside git under Manager-approved restricted storage.
-- **Gate:** explicit owner §5 safety + licensing sign-off required before GPU.
+Owner decision D-0089 selects Regime B as the first and primary frozen regime for the next implementation/audit cycle. All generation is on benign XSTest-safe prompts only.
 
-### 4.2 Auxiliary regime B: XSTest safe-but-over-refused prompts
-
-- **Items:** benign safe prompts likely to be over-refused.
+- **Items:** benign safe prompts likely to be over-refused (XSTest safe / safe-but-over-refused subset, subject to license/provenance review). Implementation default is ungated `Paul/XSTest` split `train`, filtering to safe rows; `natolambert/xstest-v2-copy` split `prompts` is an allowed override. Do **not** use gated `walledai/XSTest`.
 - **Expected baseline:** false-refusal rate high enough to suppress.
-- **Eligibility floor:** DEV baseline false-refusal rate must be `>=0.25`; otherwise B is underpowered and descriptive only.
-- **Safety:** no harmful-generation gate, but license/provenance review still required.
+- **DEV eligibility gate:** compute baseline false-refusal rate on XSTest-safe DEV before TEST. If DEV baseline false-refusal is `<0.25`, write `INVALID_REGIME_B_UNDERPOWERED` and stop without running ablation TEST. Manager then escalates to owner for a fresh Regime A decision.
+- **Safety:** no harmful generation. Regime B does not generate on harmful prompts; outputs are benign XSTest-safe generations.
+- **Claim strength:** a B pass is a safer positive-control closure for assay sensitivity on false refusals; it remains scoped by the verbatim scope guard and never validates metacognitive controllability or additive CAA/ITI.
 
-### 4.3 Recommendation
+### 4.2 Direction derivation safety boundary (applies to Regime B)
 
-Freeze A as the primary confirmatory regime if owner safety/licensing sign-off is granted. Add B as auxiliary if its DEV baseline false-refusal floor passes. B-only is safer but weaker and may not close F2 if baseline over-refusal is too low.
+The Arditi refusal direction is still derived from a harmful-vs-harmless contrast, but this derivation is **FORWARD-PASS ONLY**:
+
+- harmful and harmless contrast prompts are fed only through activation capture;
+- no decoding/generation is performed on harmful prompts;
+- no harmful content is produced by the direction-derivation step;
+- raw harmful prompts are never committed; committed artifacts contain only counts, hashes, dataset/source provenance, and the direction hash. Implementation default for harmful prompts is the ungated llm-attacks/Zou et al. AdvBench `harmful_behaviors.csv` raw URL (MIT-licensed project source), not gated `walledai/AdvBench`; the harmless side defaults to `tatsu-lab/alpaca` split `train` instructions and remains disjoint from XSTest-safe eval.
+
+### 4.3 Escalation-only regime A: harmful prompts
+
+Regime A (AdvBench-style / Arditi-style harmful-instruction prompts) is escalation-only after D-0089. It must **not** be run unless Regime B is invalid/underpowered and the owner re-confirms Regime A with the required §5 safety/licensing gates. If ever approved, raw harmful prompts and raw harmful/compliant outputs must never be committed or published; only aggregate refusal-marker rates, hashes, redacted summaries, and provenance may be committed.
+
+### 4.4 Recommendation now superseded by D-0089
+
+The earlier draft recommendation to make A primary is superseded. Freeze B first; treat A only as an owner-reconfirmed escalation path if B fails the DEV eligibility gate.
 
 ## 5. Endpoint and primary contrast
 
@@ -88,10 +96,10 @@ E-0016 passes as a positive control iff all criteria hold on TEST:
 ## 7. Statistics and split
 
 - DEV/TEST split fixed before run; TEST evaluated once.
-- DEV selects direction source layer/position and, for B, verifies baseline false-refusal eligibility.
+- DEV selects direction source layer/position and verifies Regime B baseline false-refusal eligibility before TEST.
 - Paired item-cluster bootstrap with items as clusters and all K samples carried together.
 - `B = 10000` bootstrap resamples.
-- Bonferroni CI if multiple confirmatory regimes are frozen.
+- Bonferroni CI machinery is retained from the frozen adjudicator; only Regime B is primary unless owner later re-confirms A.
 - Coherence/degeneracy reported for baseline, ablation, and random-control cells.
 - Recommended full setting: TEST N=160, `K=5`; minimal setting: TEST N=80, `K=3`.
 
@@ -158,9 +166,9 @@ Estimated A800 cost with Qwen2.5-7B cached:
 Owner gates before any run:
 
 1. GPU budget sign-off.
-2. Regime A safety sign-off.
-3. Dataset licensing/provenance sign-off.
-4. Manager protocol freeze after code audit.
+2. Dataset licensing/provenance sign-off for XSTest and the forward-pass-only harmful/harmless contrast source.
+3. Manager protocol freeze after code audit.
+4. Regime A safety sign-off only if B is underpowered and owner re-confirms escalation to A.
 
 ## 11. Forbidden actions
 
@@ -172,9 +180,9 @@ Owner gates before any run:
 
 ## 12. Open decisions before freeze
 
-1. Confirm A primary + B auxiliary, or choose B-only for safety at the cost of a weaker F2 closure.
-2. Freeze exact harmful dataset source and license handling.
-3. Freeze exact XSTest subset and B baseline floor handling.
+1. Freeze exact XSTest subset and DEV baseline floor handling under D-0089 Regime B-first.
+2. Freeze exact harmful/harmless contrast source and license handling for FORWARD-PASS-ONLY direction derivation; raw harmful prompts remain uncommitted.
+3. Regime A remains escalation-only and cannot run without owner re-confirmation.
 4. Freeze DEV source-layer/position search range and selection metric.
 5. Freeze K/N and Bonferroni family.
 6. Approve dtype-specific hook-bites tolerances after implementation audit.

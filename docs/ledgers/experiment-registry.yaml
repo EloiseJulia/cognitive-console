@@ -1163,7 +1163,7 @@ experiments:
   claim_ids:
   - C2b
   type: confirmatory
-  status: prereg_frozen_ready_for_gpu_pending_owner_scope_signoff
+  status: run_complete_audited_universal_null_valid_for_paper_true (D-0085; results audit passed; integrated 6231855)
   code_commit: null
   dirty_tree: null
   data_hash: null

@@ -51,6 +51,82 @@ def _fake_bundle(dead=False):
     )
 
 
+def _guard_bundle(axis="deliberation", *, dim=16, selection="frozen_c2_direction_layer_reuse_no_reselection",
+                  provenance_extra=None, direction=None, separation=1.2):
+    if direction is None:
+        raw = np.arange(1, dim + 1, dtype=np.float64)
+        direction = raw / np.linalg.norm(raw)
+    else:
+        direction = np.asarray(direction, dtype=np.float64)
+        raw = direction.copy()
+    prov = {
+        "backend": "hf",
+        "model_id": R.DEFAULT_MODEL,
+        "axis": axis,
+        "method": "caa_mean_difference_raw_magnitude_scale_corrected",
+        "derivation_function": (
+            "cognitive_console.steering.extract.extract_caa"
+            if axis == R.REFUSAL_AXIS
+            else "cognitive_console.steering.extract.extract_caa_at_single_frozen_c2_layer"
+        ),
+        "selection": selection,
+        "selected_layer_separation": separation,
+        "vector_sha256": R._vector_sha256(raw),
+        "direction_sha256": R._vector_sha256(direction),
+        "contrast_pairs_file_sha256": "sha256:" + "a" * 64,
+        "layer": 20,
+        "model_id": R.DEFAULT_MODEL,
+        "extraction_pair_ids": ["pair-001"],
+        "vector_norm": float(np.linalg.norm(raw)),
+    }
+    prov.update(provenance_extra or {})
+    return R.ScaleDirectionBundle(axis, raw, direction, 20, prov)
+
+
+def test_real_not_smoke_scale_guard_hf_valid_bundle_passes():
+    bundle = _guard_bundle()
+    R.assert_real_not_smoke_scale_direction(bundle, provider_hidden_dim=16, backend="hf")
+
+
+@pytest.mark.parametrize(
+    "bundle, hidden_dim, pattern",
+    [
+        (_guard_bundle(selection="reselected_layer"), 16, "frozen C2 layer"),
+        (_guard_bundle(direction=np.ones(16, dtype=np.float64) / 4.0), 16, "constant"),
+        (_guard_bundle(dim=16), 32, "dim"),
+        (_guard_bundle(provenance_extra={"notes": "random placeholder direction"}), 16, "banned smoke token"),
+        (_guard_bundle(axis=R.REFUSAL_AXIS, separation=0.2), 16, "separation floor"),
+    ],
+)
+def test_real_not_smoke_scale_guard_hf_rejects_bad_bundles(bundle, hidden_dim, pattern):
+    with pytest.raises(ValueError, match=pattern):
+        R.assert_real_not_smoke_scale_direction(bundle, provider_hidden_dim=hidden_dim, backend="hf")
+
+
+def test_hf_isolation_runtime_lock_fails_before_model_load(tmp_path):
+    with pytest.raises(SystemExit, match="seed=20260723"):
+        R.main(["--backend", "hf", "--seed", "123", "--out-dir", str(tmp_path / "bad-seed")])
+    with pytest.raises(SystemExit, match="n_metacog_extraction=28"):
+        R.main(["--backend", "hf", "--n-metacog-extraction", "4", "--out-dir", str(tmp_path / "bad-n")])
+
+
+def test_hf_sampler_uses_shared_backend_instance_not_string_reload():
+    items = [{"id": "x", "prompt": "What is 2+2?", "answer": "4"}]
+    shared = R.SyntheticC2bTaskBackend("deliberation", items)
+    sampler = R._make_sampler(
+        "deliberation", "hf", R.DEFAULT_MODEL, items,
+        max_new_tokens=8, temperature=0.7, seed=1, batch_size=1,
+        shared_hf_backend=shared,
+    )
+    assert sampler.gen is shared
+    with pytest.raises(ValueError, match="single shared"):
+        R._make_sampler(
+            "deliberation", "hf", R.DEFAULT_MODEL, items,
+            max_new_tokens=8, temperature=0.7, seed=1, batch_size=1,
+            shared_hf_backend=None,
+        )
+
+
 def test_upfront_full_beta_grid_hook_bites_passes_and_records_all_betas(tmp_path):
     bundle = _fake_bundle(dead=False)
     R.record_upfront_hook_bites_all_axes({"deliberation": bundle}, tmp_path)
@@ -77,6 +153,15 @@ def test_runtime_item_pool_disjointness_assertion_fires():
     ]
     with pytest.raises(AssertionError, match="triviaqa-00079"):
         R.assert_item_pool_for_axis(R.REFUSAL_AXIS, bad_items, backend="synthetic")
+
+
+def test_metacognitive_hf_item_pool_minimum_assertion_fires():
+    short = [{"id": f"gsm8k-test-{i:05d}", "prompt": "q", "answer": "1"} for i in range(59)]
+    with pytest.raises(AssertionError, match="frozen N requires >=60"):
+        R.assert_item_pool_for_axis("deliberation", short, backend="hf")
+    short_unc = [{"id": f"triviaqa-{i:05d}", "prompt": "q", "answer": "a"} for i in range(79)]
+    with pytest.raises(AssertionError, match="frozen N requires >=80"):
+        R.assert_item_pool_for_axis("uncertainty_awareness", short_unc, backend="hf")
 
 
 def test_mde_computation_has_underpowered_binary_floor():

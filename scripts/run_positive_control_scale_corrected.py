@@ -33,7 +33,7 @@ from cognitive_console.lineage import git_commit, utcnow
 from cognitive_console.steering.extract import CAAResult, extract_caa
 from cognitive_console.steering.generate import SteerConfig, SteeredHFBackend, SyntheticC2bTaskBackend, unit_vector
 from scripts import run_c1_facade as c1
-from scripts.run_c2b_adjudication import BackendOutcomeSampler, hf_sampler_factory, load_axis_items
+from scripts.run_c2b_adjudication import BackendOutcomeSampler, load_axis_items
 from scripts import run_positive_control as e0014
 
 EXPERIMENT_ID = "E-0015"
@@ -81,8 +81,37 @@ class ScaleDirectionBundle:
         return float(np.linalg.norm(np.asarray(self.vector, dtype=np.float64).ravel()))
 
 
+@dataclass
+class SharedHFHandles:
+    """Single loaded HF model shared across extraction, hook-bites, and generation."""
+
+    provider: HFActivationProvider
+    hook_backend: SteeredHFBackend
+    device: str
+    dtype: str
+
+
 def _vector_sha256(vec: np.ndarray) -> str:
     return hashlib.sha256(np.asarray(vec, dtype=np.float64).ravel().tobytes()).hexdigest()
+
+
+def build_shared_hf_handles(model_id: str, seed: int, out_dir: Path) -> SharedHFHandles:
+    """Load Qwen once and share its handles with every E-0015 HF component."""
+    from scripts import run_gpu_phase0 as p0
+
+    device, dtype = p0._pick_device(), p0._pick_dtype()
+    provider = HFActivationProvider(model_id, device=device, dtype=dtype, cache_dir=str(out_dir / "activations" / "cache"))
+    model, tokenizer, config = provider.hf_handles()
+    hook_backend = SteeredHFBackend(
+        model_id,
+        device=device,
+        dtype=dtype,
+        seed=seed,
+        model=model,
+        tokenizer=tokenizer,
+        config=config,
+    )
+    return SharedHFHandles(provider=provider, hook_backend=hook_backend, device=device, dtype=dtype)
 
 
 def _axis_pair_texts(axis: str, n_extraction: int, seed: int, *, frozen_c2_split: bool) -> Tuple[List[str], List[str], List[str], str]:
@@ -207,6 +236,9 @@ def assert_item_pool_for_axis(axis: str, items: Sequence[Dict[str, object]], *, 
     ids = [str(it.get("id", "")) for it in items]
     if len(set(ids)) != len(ids):
         raise AssertionError(f"{axis}: duplicate item ids")
+    required_n = int(adj.N_ITEMS_BY_AXIS.get(axis, 60))
+    if backend == "hf" and len(items) < required_n:
+        raise AssertionError(f"hf {EXPERIMENT_ID} {axis} loaded only {len(items)} items; frozen N requires >={required_n}")
     return {"axis": axis, "item_count": len(ids), "unique_ids": True, "source": "frozen_c2b_loader"}
 
 
@@ -251,7 +283,8 @@ def record_upfront_hook_bites_all_axes(bundles: Dict[str, ScaleDirectionBundle],
         raise AssertionError(f"HF steering hook-bites full beta grid failed before generation: {failures}")
 
 
-def derive_refusal_direction(backend: str, model_id: str, n_extraction: int, seed: int, out_dir: Path) -> ScaleDirectionBundle:
+def derive_refusal_direction(backend: str, model_id: str, n_extraction: int, seed: int, out_dir: Path,
+                             shared_hf: Optional[SharedHFHandles] = None) -> ScaleDirectionBundle:
     pos, neg, pair_ids, pair_hash = _axis_pair_texts(REFUSAL_AXIS, n_extraction, seed, frozen_c2_split=False)
     if backend == "synthetic":
         provider = SyntheticActivationProvider(dim=64, layers=(1, 2, 3, 4), seed=seed, noise_scale=0.05)
@@ -267,12 +300,11 @@ def derive_refusal_direction(backend: str, model_id: str, n_extraction: int, see
         prov["hook_bites_check"] = {"applicable": False, "passed": None, "reason": "synthetic backend no-op"}
         return ScaleDirectionBundle(REFUSAL_AXIS, result.vector, result.direction, int(result.layer), prov)
 
-    from scripts import run_gpu_phase0 as p0
-    device, dtype = p0._pick_device(), p0._pick_dtype()
-    provider = HFActivationProvider(model_id, device=device, dtype=dtype, cache_dir=str(out_dir / "activations" / "cache"))
+    if shared_hf is None:
+        raise ValueError("hf E-0015 refusal derivation requires shared_hf handles")
+    provider = shared_hf.provider
     result: CAAResult = extract_caa(provider, REFUSAL_AXIS, pos, neg, layers=[ell for ell in provider.available_layers() if ell >= 1])
-    model, tokenizer, config = provider.hf_handles()
-    steered_backend = SteeredHFBackend(model_id, device=device, dtype=dtype, seed=seed, model=model, tokenizer=tokenizer, config=config)
+    steered_backend = shared_hf.hook_backend
     residual_mean = _residual_norm_mean(steered_backend, int(result.layer))
     prov = _direction_provenance(
         REFUSAL_AXIS, result.vector, result.direction, backend="hf", model_id=model_id, layer=int(result.layer),
@@ -286,7 +318,8 @@ def derive_refusal_direction(backend: str, model_id: str, n_extraction: int, see
     return bundle
 
 
-def derive_metacog_direction(axis: str, backend: str, model_id: str, n_extraction: int, seed: int, out_dir: Path) -> ScaleDirectionBundle:
+def derive_metacog_direction(axis: str, backend: str, model_id: str, n_extraction: int, seed: int, out_dir: Path,
+                             shared_hf: Optional[SharedHFHandles] = None) -> ScaleDirectionBundle:
     layer = FROZEN_C2_LAYER_BY_AXIS[axis]
     pos, neg, pair_ids, pair_hash = _axis_pair_texts(axis, n_extraction, seed, frozen_c2_split=True)
     if backend == "synthetic":
@@ -304,14 +337,13 @@ def derive_metacog_direction(axis: str, backend: str, model_id: str, n_extractio
         prov["hook_bites_check"] = {"applicable": False, "passed": None, "reason": "synthetic backend no-op"}
         return ScaleDirectionBundle(axis, vector, direction, layer, prov)
 
-    from scripts import run_gpu_phase0 as p0
-    device, dtype = p0._pick_device(), p0._pick_dtype()
-    provider = HFActivationProvider(model_id, device=device, dtype=dtype, cache_dir=str(out_dir / "activations" / "cache"))
+    if shared_hf is None:
+        raise ValueError("hf E-0015 metacognitive derivation requires shared_hf handles")
+    provider = shared_hf.provider
     result = extract_caa(provider, axis, pos, neg, layers=[layer])
     vector = np.asarray(result.vector, dtype=np.float64)
     direction = np.asarray(result.direction, dtype=np.float64)
-    model, tokenizer, config = provider.hf_handles()
-    steered_backend = SteeredHFBackend(model_id, device=device, dtype=dtype, seed=seed, model=model, tokenizer=tokenizer, config=config)
+    steered_backend = shared_hf.hook_backend
     residual_mean = _residual_norm_mean(steered_backend, layer)
     prov = _direction_provenance(
         axis, vector, direction, backend="hf", model_id=model_id, layer=layer, n_extraction=n_extraction,
@@ -350,7 +382,9 @@ def build_spec(axis: str, prompt_set: str, bundle: ScaleDirectionBundle, *, use_
     )
 
 
-def _make_sampler(axis: str, backend: str, model: str, items: Sequence[Dict[str, object]], *, max_new_tokens: int, temperature: float, seed: int, batch_size: int, random_null: bool = False):
+def _make_sampler(axis: str, backend: str, model: str, items: Sequence[Dict[str, object]], *, max_new_tokens: int,
+                  temperature: float, seed: int, batch_size: int, random_null: bool = False,
+                  shared_hf_backend: Optional[SteeredHFBackend] = None):
     if backend == "synthetic":
         if axis == REFUSAL_AXIS:
             markers = ["refuse", "decline", "answer nothing", "do not answer"]
@@ -360,7 +394,16 @@ def _make_sampler(axis: str, backend: str, model: str, items: Sequence[Dict[str,
             gain = 0.0 if random_null else 0.08
             gen = SyntheticC2bTaskBackend(axis, items, prompt_gain=0.40, alpha_gain=gain, threshold=0.50)
         return BackendOutcomeSampler(gen, max_new_tokens=max_new_tokens, do_sample=False, seed=seed)
-    return hf_sampler_factory(model, max_new_tokens, temperature, seed, batch_size)(axis)
+    if shared_hf_backend is None:
+        raise ValueError("hf E-0015 sampler requires the single shared SteeredHFBackend")
+    return BackendOutcomeSampler(
+        shared_hf_backend,
+        max_new_tokens=max_new_tokens,
+        do_sample=True,
+        temperature=temperature,
+        seed=seed,
+        batch_size=batch_size,
+    )
 
 
 def _adjudicate_one(spec: adj.AxisAdjSpec, sampler, *, alpha_grid: Sequence[float], bootstrap_b: int, seed: int) -> adj.AxisAdjResult:
@@ -437,10 +480,18 @@ def run(args) -> Dict[str, object]:
         raise SystemExit("hf E-0015 must use real data and frozen N; --use-fixture/--n-items forbidden")
     if args.backend == "hf" and args.bootstrap_b < adj.BOOTSTRAP_B:
         raise SystemExit("hf E-0015 requires frozen bootstrap B=10000")
+    if args.backend == "hf" and (int(args.seed) != 20260723 or int(args.n_metacog_extraction) != 28):
+        raise SystemExit(
+            "hf E-0015 metacognitive isolation requires seed=20260723 and "
+            "n_metacog_extraction=28 to reproduce the frozen C2 split/direction"
+        )
 
-    bundles: Dict[str, ScaleDirectionBundle] = {REFUSAL_AXIS: derive_refusal_direction(args.backend, args.model, args.n_refusal_extraction, args.seed, out_dir)}
+    shared_hf = build_shared_hf_handles(args.model, args.seed, out_dir) if args.backend == "hf" else None
+    bundles: Dict[str, ScaleDirectionBundle] = {
+        REFUSAL_AXIS: derive_refusal_direction(args.backend, args.model, args.n_refusal_extraction, args.seed, out_dir, shared_hf=shared_hf)
+    }
     for axis in METACOG_AXES:
-        bundles[axis] = derive_metacog_direction(axis, args.backend, args.model, args.n_metacog_extraction, args.seed, out_dir)
+        bundles[axis] = derive_metacog_direction(axis, args.backend, args.model, args.n_metacog_extraction, args.seed, out_dir, shared_hf=shared_hf)
 
     item_pool_integrity: Dict[str, object] = {}
     split_integrity: Dict[str, object] = {}
@@ -458,11 +509,20 @@ def run(args) -> Dict[str, object]:
     rng = np.random.default_rng(args.seed + 99173)
     for axis, bundle in bundles.items():
         items = load_items_for_axis(axis, args.use_fixture, args.n_items)
-        sampler = _make_sampler(axis, args.backend, args.model, items, max_new_tokens=args.max_new_tokens, temperature=args.temperature, seed=args.seed, batch_size=args.batch_size)
+        sampler = _make_sampler(
+            axis, args.backend, args.model, items, max_new_tokens=args.max_new_tokens,
+            temperature=args.temperature, seed=args.seed, batch_size=args.batch_size,
+            shared_hf_backend=shared_hf.hook_backend if shared_hf is not None else None,
+        )
         pc2a = _condition(axis, "PC-2a", bundle, sampler, use_fixture=args.use_fixture, n_items=args.n_items, n_strong=args.n_strong, bootstrap_b=args.bootstrap_b, seed=args.seed)
         pc3 = _condition(axis, "PC-3", bundle, sampler, use_fixture=args.use_fixture, n_items=args.n_items, n_strong=args.n_strong, bootstrap_b=args.bootstrap_b, seed=args.seed)
         random_direction = unit_vector(rng.standard_normal(np.asarray(bundle.direction).shape))
-        random_sampler = _make_sampler(axis, args.backend, args.model, items, max_new_tokens=args.max_new_tokens, temperature=args.temperature, seed=args.seed, batch_size=args.batch_size, random_null=args.backend == "synthetic")
+        random_sampler = _make_sampler(
+            axis, args.backend, args.model, items, max_new_tokens=args.max_new_tokens,
+            temperature=args.temperature, seed=args.seed, batch_size=args.batch_size,
+            random_null=args.backend == "synthetic",
+            shared_hf_backend=shared_hf.hook_backend if shared_hf is not None else None,
+        )
         rand = _condition(axis, "RAND", bundle, random_sampler, use_fixture=args.use_fixture, n_items=args.n_items, n_strong=args.n_strong, bootstrap_b=args.bootstrap_b, seed=args.seed, random_direction=random_direction)
         axes_payload[axis] = {
             "axis": axis,
@@ -499,6 +559,13 @@ def run(args) -> Dict[str, object]:
             "frozen_c2_layer_by_axis": FROZEN_C2_LAYER_BY_AXIS,
             "frozen_c2_layer_source": FROZEN_C2_LAYER_SOURCE,
             "only_beta_varies_for_metacognitive_axes": True,
+            "hf_runtime_lock": {"seed": 20260723, "n_metacog_extraction": 28},
+            "hash_compare_status": "not_available_in_committed_frozen_c2_artifact; runtime seed/n lock plus provenance records direction_sha256",
+        },
+        "hf_model_handle_sharing": {
+            "enabled": bool(args.backend == "hf"),
+            "from_pretrained_model_loads_by_design": 1 if args.backend == "hf" else 0,
+            "shared_across": ["all_axis_extraction", "upfront_hook_bites", "pc2a_generation", "pc3_generation", "random_negative_control"],
         },
         "generation_identity": {
             "max_new_tokens": int(args.max_new_tokens), "temperature": float(args.temperature),

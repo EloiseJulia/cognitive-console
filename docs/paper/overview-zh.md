@@ -1,10 +1,11 @@
 # 论文总览（中文内部理解版）
 
-> 论文：**Legible Need Not Be Controllable: No Demonstrated Superiority over Bounded Prompts under Naive CAA/ITI Steering**（标题已按 critic gap 修订收窄，D-0074；目标 venue = **IUI**，D-0074）。  
+> 论文：**Legible Need Not Be Controllable: No Demonstrated Superiority over Bounded Prompts under Bounded Naive CAA/ITI Steering**（标题已按 D-0082 reframe 再次收窄；目标 venue = **IUI**，D-0074）。
 > 本文档是 owner 内部理解稿，不是送审稿；数字以 `docs/ledgers/evidence-ledger.md`、生成表、冻结结果 artifact 与 `docs/paper/main.tex` 为准。  
-> **内部备注（不入论文）：** 曾尝试 E-0012「verified control button」搜索以升级为正例/关闭"只试了弱 steering"攻击，但历经 4 个占位符-vs-真实 bug（假比较器/贪心采样/随机方向/假 world-capital fixture 数据），全部证据判 INVALID，已于 D-0073 **终止**并不入论文；"弱 steering"攻击改由 E-0009（PSR arm）在论文里 pre-empt。论文 headline 未受影响。
+> **内部备注（不入论文）：** 曾尝试 E-0012「verified control button」搜索以升级为正例/关闭"只试了弱 steering"攻击，但历经 4 个占位符-vs-真实 bug（假比较器/贪心采样/随机方向/假 world-capital fixture 数据），全部证据判 INVALID，已于 D-0073 **终止**并不入论文。E-0009（PSR arm）只能作为单模型探索性 method-strength 补充；D-0082/E-0014 显示相同 `α·û, α≤24` 约定下 latent arm 可能整体 under-scaled，因此 headline 必须收窄为 bounded/naive CAA/ITI at α≤24。
 >
-> **最新进展（2026-08-03，本文档正文尚未逐节同步，以 `main.tex` + decision-log D-0074..D-0078 为准）：**
+> **最新进展（2026-08-04，本文档正文尚未逐节同步，以 `main.tex` + decision-log D-0074..D-0082 为准）：**
+> 0. **D-0082 诚实收窄：** E-0014 正控（真实 Qwen2.5-7B refusal CAA，经独立审计）显示端点/统计管线是活的：prompt 指令达到 95% refusal，random direction 不 pass；但在与 C2 相同的冻结 `α·û`、`α≤24` 单位方向注入约定下，latent CAA refusal arm 在所有 α 都是 0% refusal（自然 class-difference norm ≈216，注入 norm ≤24）。因此 F2 latent-arm assay sensitivity 未关闭，论文 steering claim 必须严格改写为 **bounded/naive CAA/ITI at α≤24** 的 negative result；calibration “harm” 是 steer-vs-bounded-prompt contrast，直接 steer-vs-baseline 近零（compliance +0.011，1−Brier +0.0008），不得写成 latent steering 直接伤害 calibration 或 latent control 一般不可能。
 > 1. **全文已按 HCI best-paper 风格重构**（design-driven 叙事：可调界面→"可读即可控"推断→校准依赖→冻结裁决证否→console 仪器化边界→evidence-tier 评估合同；Related Work 改 HCI-first；C3 由证据*导出*而非断言；破折号=0；诊断+策略见 `docs/paper/hci-rewrite-plan.md`），已敌对审计通过并合并。
 > 2. **三段式敌对 chained review**（Opus5→GPT-5.6-Sol→Opus5）判 **Reject（有一轮返修路径）**，三大致命点：F1 calibration-harm 可能是"置信度格式丢失+parser 补 0.5"假象；F2 无 positive control/manipulation check（裁决器从未在任何臂返回 pass），且 READ(C1) 与 TRANSFER(C2) 未在同一 intervention 上验证（尤其 ITI）；F3 C3 无证据。
 > 3. **F1 已解决（最大 cell）**：E-0013 格式合规复查（D-0078，审计 HARM-SURVIVES-BUT-CAVEATED）——CAA×Qwen 上 **steering 比 prompt 更少丢格式**（合规率 0.83 vs 0.45），仅取双臂都给出可解析置信度的配对样本，harm=**−0.34 CI[−0.51,−0.17]**（比 as-run imputed −0.21 更大）⇒ 补 0.5 的 imputation 让 as-run 偏保守，harm 非格式假象。已按**单 cell scope + 其余 3 cell（ITI fp 复现门槛 / Llama gated）诚实披露为 limitation** 写入论文。
@@ -13,16 +14,16 @@
 
 ## 1. 一页速览（TL;DR）
 
-**头条 Claim：** 对 cognitive console 来说，“一个 latent 轴可读/可命名”不能自动当成“用户可用的行为控制滑块”。在冻结的 prompt-vs-latent 行为裁决中，naive/off-the-shelf CAA/ITI steering 在 `{Qwen2.5-7B, Llama-3-8B} × {CAA, ITI}` 四格里 **全部 0/3 轴通过**，且 uncertainty/calibration 轴四格均显著变差（E-0006）。该 uncertainty 伤害结论由 C2 行为证据独立成立，不由 C1 facade 推导。
+**头条 Claim：** 对 cognitive console 来说，“一个 latent 轴可读/可命名”不能自动当成“用户可用的行为控制滑块”。在冻结的 prompt-vs-latent 行为裁决中，**bounded/naive CAA/ITI steering（`α·û`, α≤24）** 在 `{Qwen2.5-7B, Llama-3-8B} × {CAA, ITI}` 四格里 **全部 0/3 轴通过**。uncertainty/calibration 的稳健信号必须写成 steer-vs-bounded-prompt contrast（四格 CI 排除 0），不是 latent steer-vs-baseline 直接伤害；Qwen/CAA 复查中 direct steer≈baseline（compliance +0.011，1−Brier +0.0008）。该 contrast 由 C2 行为证据独立成立，不由 C1 facade 推导。
 
 | 证据块 | 结论 | 关键数字 | 状态 |
 |---|---|---:|---|
 | C1 facade / Qwen | prompt 只到达 axis pole 的一部分 | 聚合 3/4 轴 hold；focus 轴为 overshoot/no facade | exploratory，valid_for_paper=false（E-0003） |
 | C1 facade / Llama | 聚合 3/4 两模型测量结果一致，但轴组成不同 | 聚合 3/4；uncertainty 不 hold，focus hold | exploratory，轴异质性 caveat（E-0008） |
-| C2 2×2 冻结裁决 + split-seed 鲁棒性 | latent 未显示任何超过 bounded best-prompt baseline 的额外控制（no demonstrated superiority under the pass rule）；5/5 seed 均 NON_TRANSFER。只有 uncertainty 轴是稳健结果（CI 排除 0），deliberation 为混合（ITI 等价、CAA 欠功效），skepticism 为全欠功效（不能区分无效应与小于 SESOI 的效应） | 4 cells 全 0/3；uncertainty Δ：-0.228, -0.072, -0.103, -0.084，CI 全排除 0；post-hoc TOST（D-0056，exploratory）：uncertainty 4/4 CALIBRATION_HARM；deliberation ITI 2 cells EQUIVALENT；skepticism 4/4 UNDERPOWERED | core scoped negative（E-0005/E-0006）；split-seed robustness（E-0011，item pool 与 E-0006 共享，仅 DEV/TEST split 随 seed 变）；post-hoc TOST（results/posthoc_equivalence/） |
+| C2 2×2 冻结裁决 + split-seed 鲁棒性 | bounded/naive latent 未显示任何超过 bounded best-prompt baseline 的额外控制（no demonstrated superiority under the pass rule）；5/5 seed 均 NON_TRANSFER。只有 uncertainty 轴的 steer-vs-prompt contrast 是稳健结果（CI 排除 0），deliberation 为混合（ITI 等价、CAA 欠功效），skepticism 为全欠功效（不能区分无效应与小于 SESOI 的效应） | 4 cells 全 0/3；uncertainty steer-vs-prompt Δ：-0.228, -0.072, -0.103, -0.084，CI 全排除 0；direct steer-vs-baseline 在 Qwen/CAA 近零；post-hoc TOST（D-0056，exploratory）：uncertainty 4/4 CALIBRATION_HARM；deliberation ITI 2 cells EQUIVALENT；skepticism 4/4 UNDERPOWERED | core scoped negative（E-0005/E-0006；D-0082 后限定 α≤24 bounded naive）；split-seed robustness（E-0011，item pool 与 E-0006 共享，仅 DEV/TEST split 随 seed 变）；post-hoc TOST（results/posthoc_equivalence/） |
 | 方法强度与社会轴 | PSR 仍 KILL；社会轴 READ 但行为 null | PSR uncertainty -0.160 [-0.292,-0.039]；social B−A M1=+0.00148, p_bonf=1.0；READ AUC=0.954 | exploratory / valid_for_paper=false（E-0009/E-0010） |
 
-**Novelty 一句话（锐化后）：** 不是提出又一个 steering 方法，而是把"prompt 通道"和"latent 通道"放进同一个冻结、审计过的行为裁决器里竞争，再把失败边界翻译成 cognitive console 的 UI/evaluation contract。与 Sprejer et al. 的区别：他们是并行工作（非前作），用 SAE features + MMLU，无预注册，用于外部佐证而非 scoop；与 Heyman 的区别：他们展示 trained steering 可以 mimic prompting，本文声明范围刻意限于 naive/off-the-shelf + bounded prompt，并用 PSR arm pre-empt "方法太弱"攻击；与 Mishra 的区别：他们证明内部非满射性（背景），本文测试行为层面的 transfer。
+**Novelty 一句话（锐化后）：** 不是提出又一个 steering 方法，而是把"prompt 通道"和"bounded naive latent 通道"放进同一个冻结、审计过的行为裁决器里竞争，再把失败边界翻译成 cognitive console 的 UI/evaluation contract。与 Sprejer et al. 的区别：他们是并行工作（非前作），用 SAE features + MMLU，无预注册，用于外部佐证而非 scoop；与 Heyman 的区别：他们展示 trained steering 可以 mimic prompting，本文声明范围刻意限于 naive/off-the-shelf `α·û, α≤24` + bounded prompt，PSR arm 只能回应一部分 method-strength 风险，不能关闭 E-0014 的 scale caveat；与 Mishra 的区别：他们证明内部非满射性（背景），本文测试行为层面的 transfer。
 
 **当前状态：** C2 的 2×2 negative + calibration harm 是最硬的 paper core；C2 的 single-seed caveat 已正式退役（D-0055）：预注册多 seed 检验（E-0011，5/5 seeds NON_TRANSFER_GENERALIZED，uncertainty CI_hi<0 全 4 cells × 全 5 seeds，any_true_pass=false）在相同冻结裁决器下复现，DROP_SINGLE_SEED_CAVEAT 已生效。**披露：** E-0011 与 E-0006 共享 item pool（同一 first-N 确定性切片），仅 DEV/TEST split 随 seed 变，非独立 item 抽样。C1 是探索性两模型测量；PSR 和社会推断轴用于 pre-empt / discussion，不升级为 confirmatory；OOD 机制臂为 valid null，机制降级为 Future Work。
 
@@ -37,13 +38,13 @@ Mishra et al. 的 non-surjectivity 只作为背景动机：activation steering �
 ## 3. 研究问题（RQ）与不押什么
 
 - **RQ1 / C1：facade 可读性。** 对选定 cognitive axes，最强可读 prompt 在中层 activation 上能否只到达 extracted axis pole 的一部分？指标是 `prompt_reach / pole_reach` ratio 及 CI。
-- **RQ2 / C2：prompt vs latent 行为控制。** 在同一冻结行为裁决器里，naive latent steering（CAA/ITI）是否能超过 DEV 选择的 bounded best prompt？
+- **RQ2 / C2：prompt vs latent 行为控制。** 在同一冻结行为裁决器里，bounded/naive latent steering（CAA/ITI，`α·û`, α≤24）是否能超过 DEV 选择的 bounded best prompt？
 - **RQ3 / C3：console 设计含义。** 如果 transfer 失败，console 应如何显示 READ、TRANSFER、bounded best-prompt baseline、calibration harm 和 evidence tier？
 - **探索扩展 / C4：社会推断轴。** novice self-disclosure 这种 user-model/social axis 是否呈现“latent 可读但行为操纵 null”的同构模式？
 
 本文**不押**：
 1. 不押“可读 prompt ≈ steering 向量对齐”。C1 只测 representational facade，不等于控制。
-2. 不押“所有 activation steering 都失败”。C2 明确限定为 bounded prompt vs naive/off-the-shelf CAA/ITI；PSR 只是单模型探索性支持。
+2. 不押“所有 activation steering 都失败”。C2 明确限定为 bounded prompt vs bounded/naive `α·û`, α≤24 CAA/ITI；PSR 只是单模型探索性支持，E-0014 说明 latent-arm assay sensitivity 未关闭。
 3. 不押机制。E-0007 已经把 off-manifold distance 机制测试为 NOT_SUPPORTED。
 4. 不押用户研究。Console 是 model-evidence-derived interface-evaluation implication；未证明真人理解或受益。
 
@@ -52,18 +53,18 @@ Mishra et al. 的 non-surjectivity 只作为背景动机：activation steering �
 | 邻近工作/脉络 | 它解决什么 | 本文如何定位 |
 |---|---|---|
 | Mishra et al. non-surjectivity | internal residual state 的 prompt-unreachable 理论背景 | 只作 motivation / C2a background；不是本文经验 claim（`citation-map.yaml`） |
-| PSR / “Steer Like the LLM” | 强反例：trained steering 可 mimic prompting | 本文 C2 scoped 到 naive CAA/ITI；E-0009 用 DEV-optimized PSR-style arm 回应“方法太弱”，但仍 exploratory |
+| PSR / “Steer Like the LLM” | 强反例：trained steering 可 mimic prompting | 本文 C2 scoped 到 bounded/naive CAA/ITI at α≤24；E-0009 用 DEV-optimized PSR-style arm 回应一部分“方法太弱”风险，但仍 exploratory，且不关闭 E-0014 的 under-scaling caveat |
 | CAA / ITI / ActAdd / RepE | activation steering 方法家族 | CAA、ITI 是实测 baseline；ActAdd/RepE 作为 lineage，未进入当前 2×2 grid |
 | HCI transparency / trust | 关注可解释、行动性、校准依赖 | 本文把“可读但不转移”的边界做成 UI contract，而非单纯可视化内部状态 |
 | feature-steering / latent UI 邻居 | SAE/feature slider、persona-building 或 expert debugging | 本文没有用户研究；独占单元是 frozen prompt-vs-latent behavioral adjudication + console evaluation discipline |
 | sycophancy / manipulation / dark patterns | 社会推断轴的风险语境 | 只作 exploratory discussion context；E-0010 不证明 manipulation，只报告 READ_HOLDS + implemented M1/M4 honest-null |
 
-最接近的 reviewer attack 是 PSR：如果 trained steering 能模仿 prompt，那么“latent 不可控”说法必须收窄。因此论文应始终写成：**在冻结裁决器、bounded prompt comparator、naive/off-the-shelf CAA/ITI（加一个单模型 PSR 探索臂）范围内，legibility does not transfer to behavioral controllability。**
+最接近的 reviewer attack 已从单纯 PSR 扩展为 F2/scale：E-0014 显示相同 bounded unit-direction 约定下 refusal 正控 latent arm 也不动。因此论文应始终写成：**在冻结裁决器、bounded prompt comparator、bounded/naive CAA/ITI at α≤24（加一个单模型 PSR 探索臂）范围内，legibility does not show demonstrated superiority over prompt behavioral control。**
 
 ## 5. 核心贡献
 
 1. **C1：facade 测量。** 给出一个可复建的 representational measurement：prompt_reach / pole_reach。跨模型不变只保留 deliberation + skepticism；uncertainty 与 focus 为 model-dependent（uncertainty 在 Qwen 成立、Llama 不成立；focus 在 Llama 成立、Qwen 过冲且无 facade）；只能作为 exploratory measurement。
-2. **C2：冻结行为裁决的 scoped negative。** DEV/TEST、bounded best-prompt baseline、steering alpha、paired item-cluster bootstrap、Bonferroni、coherence gate 和 δ 判据全部冻结；2×2 全失败，uncertainty calibration harm 四格复现。
+2. **C2：冻结行为裁决的 scoped negative。** DEV/TEST、bounded best-prompt baseline、steering alpha（`α·û`, α≤24）、paired item-cluster bootstrap、Bonferroni、coherence gate 和 δ 判据全部冻结；2×2 全失败，uncertainty steer-vs-prompt calibration contrast 四格复现，但 direct steer-vs-baseline 近零。
 3. **方法学纪律本身。** 负结果没有被改写为正结果；OOD 机制臂失败后降级到 Future Work；PSR 只作为探索性 robustness；每个重要结果有 hostile audit。
 4. **Console 设计立场。** Console 不应承诺“latent 超能力滑块”，而应显示 READ/TRANSFER/bounded best-prompt baseline/calibration harm/evidence tier，帮助信任再校准。
 
@@ -83,7 +84,7 @@ C2 的问题不是“latent 能不能改变输出”，而是“在公平 compar
 
 - **DEV/TEST split：** best prompt 和 alpha 都只在 DEV 选；TEST 用于一次性 paired adjudication。
 - **轴与 outcome：** deliberation=task accuracy；skepticism=false-premise rejection；uncertainty=`1-Brier`；focus 因 C1 诊断不合格排除。
-- **搜索空间：** CAA/ITI；Qwen2.5-7B 与 Llama-3-8B；alpha grid `{2,4,6,8,12,16,24}`。
+- **搜索空间：** CAA/ITI；Qwen2.5-7B 与 Llama-3-8B；unit-direction alpha grid `{2,4,6,8,12,16,24}`，即 `α·û` 且 α≤24。
 - **统计：** paired item-cluster bootstrap，B=10000；三轴 Bonferroni two-sided CI level 0.98333。
 - **pass 判据：** CI 排除 0、mean(d) ≥ δ=0.05、coherence ratio ≤1.5；0 轴 pass 即 KILL。
 
@@ -126,7 +127,7 @@ Breadth 轴来自 `results/breadth_confirm2/` 与 D-0047：facade ratio 0.271 �
 
 结论：C1 支持“若干 metacognitive axes 有 representational facade”，但跨模型不变只到 deliberation + skepticism；uncertainty 与 focus 明确是 model-dependent，不支持 axis-invariant general law。Deliberation layer-16 sensitivity 也需保留 caveat（E-0003）。
 
-### 7.2 C2：2×2 全 0/3，uncertainty 四格校准伤害
+### 7.2 C2：2×2 全 0/3，uncertainty 四格 steer-vs-prompt 校准差
 
 | Cell | deliberation Δ [CI] | skepticism Δ [CI] | uncertainty Δ [CI] | cell verdict |
 |---|---:|---:|---:|---|
@@ -135,9 +136,9 @@ Breadth 轴来自 `results/breadth_confirm2/` 与 D-0047：facade ratio 0.271 �
 | ITI×Qwen | +0.020 [+0.000,+0.055] | -0.100 [-0.270,+0.060] | **-0.103 [-0.136,-0.069]** | 0/3 fail |
 | ITI×Llama | +0.015 [-0.040,+0.060] | +0.000 [-0.195,+0.205] | **-0.084 [-0.115,-0.049]** | 0/3 fail |
 
-Interpretation：在 tested scope 内，latent steering **未显示任何超过 bounded best-prompt baseline 的额外控制（no demonstrated superiority under the pass rule）**。只有 uncertainty/calibration 轴是稳健负结果：不只是无增益，而是显著更差（CI 排除 0）。deliberation 和 skepticism 的 non-transfer 是**欠功效非检出**，不是"证明无效应"。Post-hoc TOST equivalence（D-0056，exploratory，见生成表 `docs/paper/tables/equivalence-tost.tex`）：uncertainty 4/4 CALIBRATION_HARM（稳健）；deliberation ITI 2 cells EQUIVALENT（实际等价）、CAA 2 cells UNDERPOWERED；skepticism 4/4 UNDERPOWERED（方差过宽）。任何轴在任何 cell 均无 superiority。尤其 CAA×Qwen uncertainty Δ=-0.228，是 console v1/v2 反复高亮的红色告警。该结论来自 C2 冻结行为裁决本身，不依赖 C1 uncertainty facade 是否复现。
+Interpretation：在 tested scope 内，bounded/naive latent steering **未显示任何超过 bounded best-prompt baseline 的额外控制（no demonstrated superiority under the pass rule）**。只有 uncertainty/calibration 的 steer-vs-prompt contrast 是稳健负结果（CI 排除 0）；它不是 direct latent steer-vs-baseline 伤害，Qwen/CAA direct effect 近零。deliberation 和 skepticism 的 non-transfer 是**欠功效非检出**，不是"证明无效应"。Post-hoc TOST equivalence（D-0056，exploratory，见生成表 `docs/paper/tables/equivalence-tost.tex`）：uncertainty 4/4 CALIBRATION_HARM（按 frozen steer-vs-prompt scorer）；deliberation ITI 2 cells EQUIVALENT（实际等价）、CAA 2 cells UNDERPOWERED；skepticism 4/4 UNDERPOWERED（方差过宽）。任何轴在任何 cell 均无 superiority。尤其 CAA×Qwen uncertainty Δ=-0.228，是 console v1/v2 反复高亮的红色告警，但必须附带 steer≈baseline caveat。该结论来自 C2 冻结行为裁决本身，不依赖 C1 uncertainty facade 是否复现。
 
-### 7.3 PSR：KILL，支持“不是只因为 naive 方法太弱”
+### 7.3 PSR：KILL，但不能关闭 bounded-scale caveat
 
 PSR Qwen primary（E-0009）结果：deliberation +0.025 [-0.030,+0.100] fail；skepticism -0.060 [-0.210,+0.070] fail；uncertainty -0.160 [-0.292,-0.039]，CI 排除 0 且为负。Audit 判定 VALID_NEGATIVE，确认 optimizer 做了真实 DEV 搜索、TEST steering 生效、无 leakage/degeneracy。Scope：single model / single seed / exploratory / valid_for_paper=false。
 
@@ -162,7 +163,7 @@ Console 的目标不是“把 latent 方向包装成 slider”，而是显示**�
 1. **READ status**：轴是否 latent-readable（C1 ratio/CI 或 social READ AUC）。
 2. **TRANSFER verdict**：是否通过 prompt-vs-latent 行为裁决；social card 的 NULL 是 prompt condition B−A，不是 steering transfer。
 3. **BOUNDED BEST-PROMPT BASELINE**（原"PROMPT-CEILING"）：bounded best prompt 已经达到什么水平；renamed 为中性术语，避免"ceiling"的倾向性含义。
-4. **CALIBRATION-HARM**：uncertainty 轴若 steering 伤害校准，必须显式红色告警。
+4. **CALIBRATION-HARM**：uncertainty 轴若 frozen steer-vs-prompt contrast 显示校准风险，必须显式红色告警，并标出 direct steer-vs-baseline 是否近零。
 5. **EVIDENCE-TIER**：confirmatory / exploratory / untested，显示单模型、单 seed、human-α pending 等 caveat。
 
 失败分类（`failure-taxonomy.tex`）：F1 legible-but-non-transfer；F2 calibration backfire；F3 coherence-fragility corridor；F4 layer-sensitive instability；F5 axis extraction degeneration。当前是从 model evidence 推导出的 interface-evaluation implication，**不是用户研究结果**。
@@ -170,8 +171,8 @@ Console 的目标不是“把 latent 方向包装成 slider”，而是显示**�
 ## 9. 局限与诚实边界
 
 - C1：两模型单 run，聚合 3/4 但轴组成异质；跨模型不变只到 deliberation + skepticism，不能写成普遍定律。
-- C2：强于单模型单方法，但仍限于 7–8B open instruct models、CAA/ITI、三条 metacognitive axes、单 seed/冻结预算；不是 activation steering 不可能性定理。**重要区分：** uncertainty 轴是稳健负结果（CI 排除 0）；deliberation/skepticism 是欠功效非检出，不是"证明等价/无效应"（见 post-hoc TOST 表，exploratory）。
-- Calibration harm 机制：off-manifold distance 已被 valid null；Brier 分解（reliability/resolution）**未做**——per-item confidence 在 A800 未提交 transcripts 中，可 re-run 恢复，不能从已提交 artifacts 推算；不得在 prose 里夸大校准机制。
+- C2：强于单模型单方法，但仍限于 7–8B open instruct models、bounded/naive CAA/ITI at α≤24、三条 metacognitive axes、单 seed/冻结预算；不是 activation steering 不可能性定理。**重要区分：** uncertainty 轴是稳健 steer-vs-prompt contrast（CI 排除 0），不是 direct steer-vs-baseline 伤害；deliberation/skepticism 是欠功效非检出，不是"证明等价/无效应"（见 post-hoc TOST 表，exploratory）。
+- Calibration harm 机制：off-manifold distance 已被 valid null；Brier 分解（reliability/resolution）**未做**——per-item confidence 在 A800 未提交 transcripts 中，可 re-run 恢复，不能从已提交 artifacts 推算；不得在 prose 里夸大校准机制或把 steer-vs-prompt 写成 steer-vs-baseline。
 - PSR：只在 Qwen 单模型探索；不能覆盖所有 trained steering。
 - 机制：OOD distance hypothesis 已被 valid null；机制未知。
 - 社会轴：LLM-judge-only、human-α pending、M2/M3 not implemented、steer arm held；不能作为 confirmatory manipulation claim。
@@ -180,7 +181,7 @@ Console 的目标不是“把 latent 方向包装成 slider”，而是显示**�
 ## 10. 未来工作
 
 1. **Llama PSR 确认。** 若要把 PSR robustness 从 exploratory 推高，需要新 prereg + Llama 或更大预算。
-2. **更强 steering / trained methods。** 任何 multi-layer schedule、RepE、trained prompt-mimicking steering 都应新冻结，不得改写 E-0005/E-0006。
+2. **更强 steering / trained methods。** 任何 scale-corrected/raw-magnitude/norm-matched direction、multi-layer schedule、RepE、trained prompt-mimicking steering 都应新冻结，不得改写 E-0005/E-0006。
 3. **机制新包。** Calibration harm 可探索 confidence-format disruption、answer-style distribution shift、sampling×calibration scoring，但必须新预注册。
 4. **Brier 分解（未决）。** Uncertainty calibration harm 的 Brier 分解（reliability/resolution/base-rate）尚未完成——per-item (confidence, correctness) pairs 在 A800 未提交 transcripts 中，可 re-run 恢复。不能从已提交 artifacts 推算，不得在论文 prose 夸大校准机制。
 5. **C1 结构。** 解释为什么 deliberation/skepticism 稳定，而 uncertainty/focus 翻转。

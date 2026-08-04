@@ -4,13 +4,14 @@
 > 本文档是 owner 内部理解稿，不是送审稿；数字以 `docs/ledgers/evidence-ledger.md`、生成表、冻结结果 artifact 与 `docs/paper/main.tex` 为准。  
 > **内部备注（不入论文）：** 曾尝试 E-0012「verified control button」搜索以升级为正例/关闭"只试了弱 steering"攻击，但历经 4 个占位符-vs-真实 bug（假比较器/贪心采样/随机方向/假 world-capital fixture 数据），全部证据判 INVALID，已于 D-0073 **终止**并不入论文。E-0009（PSR arm）只能作为单模型探索性 method-strength 补充；D-0082/E-0014 显示相同 `α·û, α≤24` 约定下 latent arm 可能整体 under-scaled，因此 headline 必须收窄为 bounded/naive CAA/ITI at α≤24。
 >
-> **最新进展（2026-08-04，本文档正文尚未逐节同步，以 `main.tex` + decision-log D-0074..D-0082 为准）：**
+> **最新进展（2026-08-04，本文档正文尚未逐节同步，以 `main.tex` + decision-log D-0074..D-0085 为准）：**
+> 0. **D-0085 最新进展：** E-0015 scale-corrected 正控（Qwen2.5-7B，raw-magnitude CAA，`h→h+βv`，β∈{0.125..2}，refusal + 3 个 metacognitive axes）经审计后仍是 **全 cell NO-PASS**：refusal 在所有 coherent β 仍 0%，metacog PC-2a 近零且 CI 包 0。该 null 不是 hook/管线死掉：prompt refusal=95%，random direction 在 uncertainty 上 coherent 地移动 −0.24 CI[−0.36,−0.12]，refusal β=2 超出 coherent ceiling 后 degeneracy 0.003→0.318。诚实结论：在 coherent ceiling（约 0.5–0.66×‖h‖，不是 ~1×；唯一 ~1.05× 点已 degenerate）内，scale correction 没救回 naive single-layer CAA；under-scaling 在 coherent range 内基本排除，instrument sensitivity 已建立，但仍无 latent intervention pass，不能说 latent control 一般不可能；null 需带 MDE≈0.19，且 E-0015 未保存 transcripts，不能完全排除 coherent range 内的 specific-logit attenuation。
 > 0. **D-0082 诚实收窄：** E-0014 正控（真实 Qwen2.5-7B refusal CAA，经独立审计）显示端点/统计管线是活的：prompt 指令达到 95% refusal，random direction 不 pass；但在与 C2 相同的冻结 `α·û`、`α≤24` 单位方向注入约定下，latent CAA refusal arm 在所有 α 都是 0% refusal（自然 class-difference norm ≈216，注入 norm ≤24）。因此 F2 latent-arm assay sensitivity 未关闭，论文 steering claim 必须严格改写为 **bounded/naive CAA/ITI at α≤24** 的 negative result；calibration “harm” 是 steer-vs-bounded-prompt contrast，直接 steer-vs-baseline 近零（compliance +0.011，1−Brier +0.0008），不得写成 latent steering 直接伤害 calibration 或 latent control 一般不可能。
 > 1. **全文已按 HCI best-paper 风格重构**（design-driven 叙事：可调界面→"可读即可控"推断→校准依赖→冻结裁决证否→console 仪器化边界→evidence-tier 评估合同；Related Work 改 HCI-first；C3 由证据*导出*而非断言；破折号=0；诊断+策略见 `docs/paper/hci-rewrite-plan.md`），已敌对审计通过并合并。
 > 2. **三段式敌对 chained review**（Opus5→GPT-5.6-Sol→Opus5）判 **Reject（有一轮返修路径）**，三大致命点：F1 calibration-harm 可能是"置信度格式丢失+parser 补 0.5"假象；F2 无 positive control/manipulation check（裁决器从未在任何臂返回 pass），且 READ(C1) 与 TRANSFER(C2) 未在同一 intervention 上验证（尤其 ITI）；F3 C3 无证据。
 > 3. **F1 已解决（最大 cell）**：E-0013 格式合规复查（D-0078，审计 HARM-SURVIVES-BUT-CAVEATED）——CAA×Qwen 上 **steering 比 prompt 更少丢格式**（合规率 0.83 vs 0.45），仅取双臂都给出可解析置信度的配对样本，harm=**−0.34 CI[−0.51,−0.17]**（比 as-run imputed −0.21 更大）⇒ 补 0.5 的 imputation 让 as-run 偏保守，harm 非格式假象。已按**单 cell scope + 其余 3 cell（ITI fp 复现门槛 / Llama gated）诚实披露为 limitation** 写入论文。
 > 4. **F3 已处理**：C3 降级为 interface-evaluation implication（明确无 user-benefit 声明）。
-> 5. **仍开放 = F2**（positive control + READ↔TRANSFER 同方向）：待定走 Limitations 诚实 reframe 还是补一个 positive-control run（GPU，§5）。正在重跑一轮 reviewer-critic 复评，据此定 F2 路线。
+> 5. **F2 更新：** E-0015 后，instrument sensitivity 已建立、under-scaling 在 coherent range 内基本排除；但没有任何 latent intervention pass，因此 F2 不能写成“cleared”，只能写成 strengthened scoped negative + no passing latent positive control。READ↔TRANSFER 同方向和更强/多层/训练 steering 仍是未来工作。
 
 ## 1. 一页速览（TL;DR）
 

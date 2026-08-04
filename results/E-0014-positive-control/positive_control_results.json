@@ -1,8 +1,8 @@
 {
   "experiment_id": "E-0014",
   "valid_for_paper": false,
-  "generated_at": "2026-08-04T03:11:09.276217+00:00",
-  "code_commit": "152e9deb2f5c28e2b2665d4f37589af20cf42f8d",
+  "generated_at": "2026-08-04T03:28:56.289880+00:00",
+  "code_commit": "dd165d65121c0a4811009f77241be8c120a07077",
   "backend": "synthetic",
   "model": "synthetic-offline",
   "axis": "refusal_positive_control",
@@ -148,7 +148,8 @@
       "applicable": false,
       "passed": null,
       "reason": "synthetic backend no-op"
-    }
+    },
+    "hook_bites_checks": []
   },
   "item_pool_integrity": {
     "item_pool_disjoint_from_frozen80": true,

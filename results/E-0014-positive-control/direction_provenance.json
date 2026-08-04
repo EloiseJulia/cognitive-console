@@ -101,5 +101,6 @@
     "applicable": false,
     "passed": null,
     "reason": "synthetic backend no-op"
-  }
+  },
+  "hook_bites_checks": []
 }

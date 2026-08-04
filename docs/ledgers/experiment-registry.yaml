@@ -1100,7 +1100,7 @@ experiments:
   claim_ids: []
   type: positive_control
   status: pre_gpu_guards_ready
-  code_commit: 152e9deb2f5c28e2b2665d4f37589af20cf42f8d
+  code_commit: dd165d65121c0a4811009f77241be8c120a07077
   dirty_tree: false
   data_hash:
     item_pool_fixture_sha256: sha256:533dd1231deed98b078e870f6f9a5530ace3d1f3dab7eac1360a991552d6df51
@@ -1138,7 +1138,7 @@ experiments:
     item_pool_disjoint_from_frozen80: true
     min_triviaqa_index: 80
     item_count: 60
-    hook_bites_check: synthetic_no_op; required on hf before frozen adjudication
+    hook_bites_check: synthetic_no_op; hf requires cosine>=0.999 and relative norm error<=0.05 at fixed alpha and PC-3 DEV-selected alpha
   summary_metrics:
     pre_gpu_checklist_status: PC-0/1/2/3 registration plus runtime guards implemented; hf GPU not run
     modifies_frozen_verdict: false
@@ -1152,6 +1152,6 @@ experiments:
   validation_notes: >-
     E-0014 is registered as an assay-sensitivity positive control only. Runtime guards now fail closed on
     non-TriviaQA or frozen-prefix item ids, hf N<60, non-real direction provenance, and an hf hook that does
-    not perturb residuals by alpha times the unit direction. The synthetic random-direction negative control
+    not perturb residuals in the unit direction with cosine>=0.999 and relative norm error<=0.05 at both the fixed guard alpha and PC-3 DEV-selected alpha. The synthetic random-direction negative control
     uses alpha_gain=0.0 by design; the geometric hook-bites assertion is hf-only. This entry does not add
     support to any metacognitive-axis claim and does not modify the frozen C2 verdict.

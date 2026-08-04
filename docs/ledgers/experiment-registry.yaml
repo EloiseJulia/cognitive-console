@@ -1093,3 +1093,65 @@ experiments:
     tracks and Stage2 remain §5-gated. Does NOT modify C1/C2 frozen headline or E-0005/E-0006 records.
     TRANSFER is an honest pre-accepted outcome per prereg §8; legibility != controllability boundary confirmed.
     valid_for_paper=PENDING independent hostile audit of results.
+
+- experiment_id: E-0014
+  parent: null
+  hypothesis_id: H-E0014-POSITIVE-CONTROL
+  claim_ids: []
+  type: positive_control
+  status: pre_gpu_guards_ready
+  code_commit: 152e9deb2f5c28e2b2665d4f37589af20cf42f8d
+  dirty_tree: false
+  data_hash:
+    item_pool_fixture_sha256: sha256:533dd1231deed98b078e870f6f9a5530ace3d1f3dab7eac1360a991552d6df51
+    contrast_pairs_sha256: sha256:53e256c8f83eb4460f2c50f214b4a84092103ce8d37932e124909555d371aa28
+    strongest_prompts_sha256: sha256:1bdd4f58d3b61c6ca42650ed61e2737f92031a7d7e8f32f9bc5edbb1089a7bba
+  env_hash: null
+  config_hash: null
+  model: synthetic-offline smoke; planned hf Qwen/Qwen2.5-7B-Instruct for GPU PC-2/PC-3
+  dataset: >-
+    Refusal positive-control harmless TriviaQA validation slice via load_refusal_harmless_set,
+    excluding frozen uncertainty/C2/E-0013 ids triviaqa-00000..triviaqa-00079; offline fixture mirrors
+    triviaqa-00080..triviaqa-00139 for synthetic smoke only.
+  seed: 20260723
+  axis: refusal_positive_control
+  hardware: local Windows synthetic smoke; hf GPU not run in this registration commit
+  ladder:
+    PC-0: committed transcript reanalysis endpoint sanity check
+    PC-1: committed transcript sensitivity detection check
+    PC-2: hf steering versus neutral baseline on fresh disjoint harmless TriviaQA items
+    PC-3: hf steering versus best-of-16 strong refusal prompt comparator
+  scope_guard: >-
+    This positive control tests the sensitivity of the measuring instrument on a non-metacognitive target chosen
+    because activation steering is already known to move it; it is not evidence that deliberation, skepticism,
+    or calibration are latently controllable, and a pass here does not weaken, qualify, or extend the scoped
+    negative reported for naive CAA/ITI steering on the three metacognitive axes.
+  started_at: null
+  ended_at: null
+  exit_code: 0
+  raw_metrics:
+    backend: synthetic
+    bootstrap_b: 200
+    pc2a_passed: true
+    pc3_passed: true
+    random_direction_negative_control_passed: false
+    item_pool_disjoint_from_frozen80: true
+    min_triviaqa_index: 80
+    item_count: 60
+    hook_bites_check: synthetic_no_op; required on hf before frozen adjudication
+  summary_metrics:
+    pre_gpu_checklist_status: PC-0/1/2/3 registration plus runtime guards implemented; hf GPU not run
+    modifies_frozen_verdict: false
+    valid_for_paper: false
+  artifacts:
+  - results/E-0014-positive-control/positive_control_results.json
+  - results/E-0014-positive-control/direction_provenance.json
+  - results/E-0014-positive-control/run_manifest.json
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    E-0014 is registered as an assay-sensitivity positive control only. Runtime guards now fail closed on
+    non-TriviaQA or frozen-prefix item ids, hf N<60, non-real direction provenance, and an hf hook that does
+    not perturb residuals by alpha times the unit direction. The synthetic random-direction negative control
+    uses alpha_gain=0.0 by design; the geometric hook-bites assertion is hf-only. This entry does not add
+    support to any metacognitive-axis claim and does not modify the frozen C2 verdict.

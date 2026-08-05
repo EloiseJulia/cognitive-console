@@ -116,6 +116,94 @@ def test_pass_rule_logic_and_random_veto():
     assert vetoed["status"] == "INVALID_RANDOM"
 
 
+@pytest.mark.parametrize(
+    ("point", "ci_lo", "coherent", "expected"),
+    [
+        (0.20, 0.01, True, "PARTIAL"),
+        (0.00, 0.00, True, "FAIL"),
+        (0.10, -0.01, True, "FAIL"),
+        (-0.10, -0.20, True, "FAIL"),
+        (0.30, 0.01, False, "INVALID_COHERENCE"),
+        (0.25, 0.01, True, "PASS"),
+    ],
+)
+def test_preregistered_runtime_status_boundaries(
+    monkeypatch, point, ci_lo, coherent, expected
+):
+    base = e0016.EvalResult(
+        "baseline", np.ones((4, 1)), np.zeros((4, 1)), ["h"] * 4
+    )
+    ablated = e0016.EvalResult(
+        "ablation",
+        np.zeros((4, 1)),
+        np.zeros((4, 1)) if coherent else np.ones((4, 1)),
+        ["h"] * 4,
+    )
+    random_null = e0016.EvalResult(
+        "random", np.ones((4, 1)), np.zeros((4, 1)), ["h"] * 4
+    )
+    cis = iter(
+        [
+            SimpleNamespace(
+                point=point,
+                ci_lo=ci_lo,
+                ci_hi=max(point, ci_lo) + 0.1,
+                ci_level=0.95,
+                b=10000,
+            ),
+            SimpleNamespace(
+                point=0.0,
+                ci_lo=-0.1,
+                ci_hi=0.1,
+                ci_level=0.95,
+                b=10000,
+            ),
+        ]
+    )
+    monkeypatch.setattr(e0016.adj, "cluster_bootstrap_ci", lambda *a, **k: next(cis))
+    result = e0016.pass_rule(base, ablated, random_null)
+    assert result["status"] == expected
+
+
+def test_random_pass_is_invalid_even_when_ablation_passes(monkeypatch):
+    result = _pass_rule_with_fixed_cis(
+        monkeypatch,
+        ablation=(0.30, 0.01),
+        random=(0.30, 0.01),
+    )
+    assert result["status"] == "INVALID_RANDOM"
+    assert result["pass"] is False
+
+
+def _pass_rule_with_fixed_cis(monkeypatch, *, ablation, random):
+    base = e0016.EvalResult(
+        "baseline", np.ones((4, 1)), np.zeros((4, 1)), ["h"] * 4
+    )
+    changed = e0016.EvalResult(
+        "changed", np.zeros((4, 1)), np.zeros((4, 1)), ["h"] * 4
+    )
+    cis = iter(
+        [
+            SimpleNamespace(
+                point=ablation[0],
+                ci_lo=ablation[1],
+                ci_hi=ablation[0] + 0.1,
+                ci_level=0.95,
+                b=10000,
+            ),
+            SimpleNamespace(
+                point=random[0],
+                ci_lo=random[1],
+                ci_hi=random[0] + 0.1,
+                ci_level=0.95,
+                b=10000,
+            ),
+        ]
+    )
+    monkeypatch.setattr(e0016.adj, "cluster_bootstrap_ci", lambda *a, **k: next(cis))
+    return e0016.pass_rule(base, changed, changed)
+
+
 
 def test_hf_rejects_renamed_arbitrary_xstest_csv(tmp_path):
     path = tmp_path / "xstest.csv"
@@ -522,6 +610,95 @@ def test_truncated_decoder_module_list_fails_at_production_backend_init():
         )
 
 
+@pytest.mark.parametrize(
+    "depth",
+    [
+        None,
+        0,
+        -1,
+        3.5,
+        "3",
+        True,
+        float("nan"),
+        np.int64(3),
+        np.float64(3.0),
+    ],
+)
+def test_production_backend_rejects_non_strict_decoder_depth(depth):
+    torch = pytest.importorskip("torch")
+
+    class Block(torch.nn.Module):
+        def forward(self, hidden):
+            return hidden
+
+    blocks = torch.nn.ModuleList([Block(), Block(), Block()])
+
+    class Base(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.layers = blocks
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.model = Base()
+
+    config = SimpleNamespace(hidden_size=4)
+    if depth is not None:
+        config.num_hidden_layers = depth
+    with pytest.raises(ValueError, match="decoder depth|must be"):
+        e0016.SteeredHFBackend(
+            "fake",
+            model=Model(),
+            tokenizer=_FakeTokenizer(),
+            config=config,
+        )
+
+
+def test_production_backend_rejects_extra_decoder_module():
+    torch = pytest.importorskip("torch")
+
+    class Block(torch.nn.Module):
+        def forward(self, hidden):
+            return hidden
+
+    blocks = torch.nn.ModuleList([Block(), Block(), Block(), Block()])
+
+    class Base(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.layers = blocks
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.model = Base()
+
+    with pytest.raises(ValueError, match="config declares 3.*has 4"):
+        e0016.SteeredHFBackend(
+            "fake",
+            model=Model(),
+            tokenizer=_FakeTokenizer(),
+            config=SimpleNamespace(hidden_size=4, num_hidden_layers=3),
+        )
+
+
+def test_all_layer_hook_registration_rolls_back_on_second_layer_failure(
+    monkeypatch,
+):
+    backend, blocks = _hook_backend()
+
+    def fail_registration(*args, **kwargs):
+        raise RuntimeError("second layer registration failed")
+
+    monkeypatch.setattr(blocks[1], "register_forward_hook", fail_registration)
+    with pytest.raises(RuntimeError, match="second layer"):
+        backend._register_all_layer_ablation_hooks(
+            e0016.AblationConfig(np.array([1.0, 0.0, 0.0, 0.0]))
+        )
+    assert all(not block._forward_hooks for block in blocks)
+
+
 def test_supported_alternate_config_depth_field_is_accepted():
     torch = pytest.importorskip("torch")
 
@@ -635,3 +812,102 @@ def test_resolved_frozen_config_hash_covers_identity_categories(
         cursor = cursor[key]
     cursor[path[-1]] = replacement
     assert e0016.config_hash(mutated) != baseline_hash
+
+
+@pytest.mark.parametrize(
+    ("path", "replacement"),
+    [
+        (("selected_intervention", "source_layer"), 12),
+        (("selected_intervention", "position"), "first_token"),
+        (("selected_intervention", "direction_sha256"), "other-direction"),
+    ],
+)
+def test_finalized_identity_hash_is_stable_and_selected_intervention_sensitive(
+    tmp_path, path, replacement
+):
+    resolved = _resolved_config_fixture(tmp_path)
+    selected = e0016.DirectionBundle(
+        direction=np.ones(4),
+        source_layer=8,
+        position="last_token",
+        provenance={"direction_sha256": "selected-direction"},
+    )
+    dev_payload = {
+        "status": "ELIGIBLE",
+        "baseline_false_refusal_rate": 0.5,
+        "selected": {
+            "source_layer": 8,
+            "position": "last_token",
+            "direction_sha256": "selected-direction",
+            "mean_reduction": 0.3,
+            "coherence_ok": True,
+            "random_mean_reduction": 0.0,
+        },
+        "selection_rows": [{"source_layer": 8, "mean_reduction": 0.3}],
+    }
+    identity = e0016.finalized_run_identity(resolved, selected, dev_payload)
+    baseline_hash = e0016.config_hash(identity)
+    assert baseline_hash == e0016.config_hash(deepcopy(identity))
+    mutated = deepcopy(identity)
+    cursor = mutated
+    for key in path[:-1]:
+        cursor = cursor[key]
+    cursor[path[-1]] = replacement
+    assert e0016.config_hash(mutated) != baseline_hash
+
+
+def test_finalized_identity_is_persisted_before_test_and_used_by_artifact(
+    tmp_path, monkeypatch
+):
+    calls = []
+    dev_ids = None
+    original = e0016.eval_synthetic
+
+    def recording_eval(items, backend, condition, *, k):
+        nonlocal dev_ids
+        calls.append(condition)
+        item_ids = tuple(item.id for item in items)
+        if dev_ids is None:
+            dev_ids = item_ids
+        if item_ids != dev_ids:
+            identity_path = tmp_path / "e0016_finalized_run_identity.json"
+            manifest_path = tmp_path / "e0016_ablation_positive_control_results.json"
+            selection_path = tmp_path / "e0016_dev_selection_manifest.json"
+            assert identity_path.exists()
+            assert manifest_path.exists()
+            assert selection_path.exists()
+            identity = json.loads(identity_path.read_text(encoding="utf-8"))
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            selection = json.loads(selection_path.read_text(encoding="utf-8"))
+            final_hash = identity["finalized_run_identity_hash"]
+            assert identity["test_generation_started"] is False
+            assert identity["valid_for_paper"] is False
+            assert manifest["finalized_run_identity_hash"] == final_hash
+            assert selection["finalized_run_identity_hash"] == final_hash
+            assert manifest["artifact_identity"] == {
+                "experiment_id": e0016.EXPERIMENT_ID,
+                "finalized_run_identity_hash": final_hash,
+            }
+        return original(items, backend, condition, k=k)
+
+    monkeypatch.setattr(e0016, "eval_synthetic", recording_eval)
+    payload = e0016.run(
+        e0016.parse_args(
+            [
+                "--backend",
+                "synthetic",
+                "--out-dir",
+                str(tmp_path),
+                "--dev-n",
+                "4",
+                "--test-n",
+                "8",
+                "--k",
+                "2",
+            ]
+        )
+    )
+    assert payload["finalized_run_identity_hash"] == payload["artifact_identity"][
+        "finalized_run_identity_hash"
+    ]
+    assert payload["valid_for_paper"] is False

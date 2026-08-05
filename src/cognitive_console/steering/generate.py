@@ -435,7 +435,12 @@ class SteeredHFBackend(GenBackend):
             ):
                 value = getattr(candidate, field, None)
                 if value is not None:
-                    count = int(value)
+                    if type(value) is not int:
+                        raise ValueError(
+                            f"model config field {field} must be a Python int, "
+                            f"got {type(value).__name__}: {value!r}"
+                        )
+                    count = value
                     if count <= 0:
                         raise ValueError(
                             f"model config field {field} must be positive, got {count}"
@@ -728,19 +733,24 @@ class SteeredHFBackend(GenBackend):
         if np.asarray(ablation.unit()).size != self.hidden_dim:
             raise ValueError("ablation direction dim does not match model hidden_dim")
         handles = []
-        for idx in range(1, declared_layers + 1):
-            block = self._layers[idx - 1]
-            handles.append(
-                block.register_forward_hook(
-                    self._make_ablation_hook(
-                        ablation,
-                        stats=stats,
-                        layer=idx,
-                        abs_tol=abs_tol,
-                        rel_tol=rel_tol,
+        try:
+            for idx in range(1, declared_layers + 1):
+                block = self._layers[idx - 1]
+                handles.append(
+                    block.register_forward_hook(
+                        self._make_ablation_hook(
+                            ablation,
+                            stats=stats,
+                            layer=idx,
+                            abs_tol=abs_tol,
+                            rel_tol=rel_tol,
+                        )
                     )
                 )
-            )
+        except Exception:
+            for handle in reversed(handles):
+                handle.remove()
+            raise
         return handles
 
     @property

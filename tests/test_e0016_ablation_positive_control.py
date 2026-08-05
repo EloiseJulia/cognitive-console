@@ -1,5 +1,7 @@
 
 import json
+import os
+import shutil
 from copy import deepcopy
 from types import SimpleNamespace
 from pathlib import Path
@@ -898,10 +900,9 @@ def test_finalized_identity_is_persisted_before_test_and_used_by_artifact(
             assert identity["valid_for_paper"] is False
             assert manifest["finalized_run_identity_hash"] == final_hash
             assert selection["finalized_run_identity_hash"] == final_hash
-            assert manifest["artifact_identity"] == {
-                "experiment_id": e0016.EXPERIMENT_ID,
-                "finalized_run_identity_hash": final_hash,
-            }
+            assert manifest["artifact_identity"]["experiment_id"] == e0016.EXPERIMENT_ID
+            assert manifest["artifact_identity"]["finalized_run_identity_hash"] == final_hash
+            assert manifest["artifact_identity"]["artifact_identity_sha256"]
         return original(items, backend, condition, k=k, **kwargs)
 
     monkeypatch.setattr(e0016, "eval_synthetic", recording_eval)
@@ -989,7 +990,7 @@ def test_checkpoint_resume_converges_and_repeated_resume_is_idempotent(tmp_path)
     checkpoint = tmp_path / "resume.json"
     identity = {
         "config_hash": "cfg",
-        "finalized_run_identity_hash": "final",
+        "finalized_run_identity_hash": e0016.config_hash({"final": 1}),
         "condition": "baseline",
     }
     interrupted = _DeterministicBatchBackend(fail_on_call=2)
@@ -1029,6 +1030,7 @@ def test_checkpoint_resume_converges_and_repeated_resume_is_idempotent(tmp_path)
         max_new_tokens=8,
         seed=19,
         generation_batch_size=2,
+        checkpoint_identity=identity,
     )
     assert resumed.records == uninterrupted.records
     repeated = e0016.eval_hf(
@@ -1050,7 +1052,7 @@ def test_checkpoint_rejects_config_or_finalized_identity_mismatch(tmp_path):
     checkpoint = tmp_path / "mismatch.json"
     identity = {
         "config_hash": "cfg-a",
-        "finalized_run_identity_hash": "final-a",
+        "finalized_run_identity_hash": e0016.config_hash({"final": "a"}),
         "condition": "baseline",
     }
     e0016.eval_hf(
@@ -1064,7 +1066,9 @@ def test_checkpoint_rejects_config_or_finalized_identity_mismatch(tmp_path):
         checkpoint_path=checkpoint,
         checkpoint_identity=identity,
     )
-    mutated = dict(identity, finalized_run_identity_hash="final-b")
+    mutated = dict(
+        identity, finalized_run_identity_hash=e0016.config_hash({"final": "b"})
+    )
     with pytest.raises(ValueError, match="identity mismatch"):
         e0016.eval_hf(
             _items(2),
@@ -1129,7 +1133,9 @@ def test_synthetic_artifact_reconstructs_all_statistics_and_has_no_raw_text(
     )
     artifact = json.loads(records_path.read_text(encoding="utf-8"))
     rebuilt = e0016.reconstruct_test_from_generation_artifact(
-        artifact, seed=args.seed
+        artifact,
+        seed=args.seed,
+        expected_artifact_identity=payload["artifact_identity"],
     )
     assert rebuilt["test"] == payload["test"]
     assert rebuilt["test_baseline"]["mean_refusal"] == payload["test_baseline"][
@@ -1225,3 +1231,229 @@ def test_verified_parquet_bytes_are_the_only_rows_loaded(tmp_path, monkeypatch):
     assert provenance["loaded_rows_sha256"] == e0016._canonical_rows_sha256(
         parsed, spec.schema
     )
+
+
+def _completed_artifact(tmp_path):
+    args = e0016.parse_args(
+        ["--backend", "synthetic", "--out-dir", str(tmp_path)]
+    )
+    manifest = e0016.run(args)
+    artifact = json.loads(
+        (tmp_path / "e0016_generation_records.json").read_text(encoding="utf-8")
+    )
+    return args, manifest, artifact
+
+
+def test_output_directory_rejects_traversal_and_source_hiding():
+    with pytest.raises(ValueError, match="traversal"):
+        e0016.resolve_output_directory(Path("results") / ".." / "src")
+    with pytest.raises(ValueError, match="exact results"):
+        e0016.resolve_output_directory(e0016._REPO / "src" / "hidden-output")
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("degeneracy_score", -0.1),
+        ("degeneracy_score", float("nan")),
+        ("degeneracy_score", float("inf")),
+        ("output_sha256", "not-a-hash"),
+        ("refusal_score", 1),
+        ("item_id", "forged-item"),
+        ("condition", "extra-condition"),
+        ("sample_index", 99),
+        ("seed", 99),
+        ("item_prompt_sha256", "0" * 64),
+        ("direction_sha256_actual_used", "1" * 64),
+    ],
+)
+def test_strict_record_validator_rejects_scientific_mutations(
+    tmp_path, field, value
+):
+    _, manifest, artifact = _completed_artifact(tmp_path)
+    mutated = deepcopy(artifact)
+    row = next(
+        record
+        for record in mutated["records"]
+        if field != "direction_sha256_actual_used"
+        or record["condition"] == "ablation"
+    )
+    row[field] = value
+    with pytest.raises(ValueError):
+        e0016.reconstruct_test_from_generation_artifact(
+            mutated,
+            seed=e0016.HF_FROZEN_SEED,
+            expected_artifact_identity=manifest["artifact_identity"],
+        )
+
+
+def test_strict_record_validator_rejects_flipped_refusal(tmp_path):
+    _, manifest, artifact = _completed_artifact(tmp_path)
+    mutated = deepcopy(artifact)
+    mutated["records"][0]["refusal_score"] = not mutated["records"][0][
+        "refusal_score"
+    ]
+    mutated["records_sha256"] = e0016.config_hash(mutated["records"])
+    with pytest.raises(ValueError, match="record identity"):
+        e0016.reconstruct_test_from_generation_artifact(
+            mutated,
+            seed=e0016.HF_FROZEN_SEED,
+            expected_artifact_identity=manifest["artifact_identity"],
+        )
+
+
+def test_strict_record_validator_rejects_unknown_duplicate_extra_and_missing(
+    tmp_path,
+):
+    _, manifest, artifact = _completed_artifact(tmp_path)
+    identity = manifest["artifact_identity"]
+
+    unknown = deepcopy(artifact)
+    unknown["records"][0]["unknown"] = True
+    unknown["records_sha256"] = e0016.config_hash(unknown["records"])
+    with pytest.raises(ValueError, match="field set"):
+        e0016.reconstruct_test_from_generation_artifact(
+            unknown, seed=e0016.HF_FROZEN_SEED, expected_artifact_identity=identity
+        )
+
+    duplicate = deepcopy(artifact)
+    duplicate["records"].append(deepcopy(duplicate["records"][0]))
+    duplicate["records_sha256"] = e0016.config_hash(duplicate["records"])
+    with pytest.raises(ValueError, match="duplicate"):
+        e0016.reconstruct_test_from_generation_artifact(
+            duplicate,
+            seed=e0016.HF_FROZEN_SEED,
+            expected_artifact_identity=identity,
+        )
+
+    extra = deepcopy(artifact)
+    forged = deepcopy(extra["records"][0])
+    forged["sample_identity_sha256"] = e0016.config_hash({"extra": True})
+    forged["record_identity_sha256"] = e0016._record_identity(forged)
+    extra["records"].append(forged)
+    extra["records_sha256"] = e0016.config_hash(extra["records"])
+    with pytest.raises(ValueError, match="not an expected"):
+        e0016.reconstruct_test_from_generation_artifact(
+            extra, seed=e0016.HF_FROZEN_SEED, expected_artifact_identity=identity
+        )
+
+    missing = deepcopy(artifact)
+    missing["records"].pop()
+    missing["records_sha256"] = e0016.config_hash(missing["records"])
+    with pytest.raises(ValueError, match="exactly match"):
+        e0016.reconstruct_test_from_generation_artifact(
+            missing,
+            seed=e0016.HF_FROZEN_SEED,
+            expected_artifact_identity=identity,
+        )
+
+
+def test_checkpoint_validator_accepts_only_valid_strict_subset(tmp_path):
+    _, _, artifact = _completed_artifact(tmp_path)
+    subset = artifact["records"][:3]
+    assert e0016.validate_generation_records(
+        subset, artifact["expected_jobs"], allow_subset=True
+    ) == subset
+    with pytest.raises(ValueError, match="exactly match"):
+        e0016.validate_generation_records(
+            subset, artifact["expected_jobs"], allow_subset=False
+        )
+
+
+def test_artifact_identity_and_manifest_hash_chain_reject_forgery(tmp_path):
+    args, manifest, artifact = _completed_artifact(tmp_path)
+    forged = deepcopy(artifact)
+    forged["artifact_identity"]["artifact_identity_sha256"] = e0016.config_hash(
+        {"forged": True}
+    )
+    with pytest.raises(ValueError, match="identity"):
+        e0016.reconstruct_test_from_generation_artifact(
+            forged,
+            seed=args.seed,
+            expected_artifact_identity=manifest["artifact_identity"],
+        )
+    records_path = tmp_path / "e0016_generation_records.json"
+    records_path.write_text(json.dumps(forged), encoding="utf-8")
+    with pytest.raises(ValueError, match="file hash"):
+        e0016.load_and_reconstruct_generation_artifact(
+            records_path,
+            manifest,
+            seed=args.seed,
+            expected_jobs=artifact["expected_jobs"],
+            expected_artifact_identity=manifest["artifact_identity"],
+        )
+
+
+def test_complete_valid_artifact_reconstruction_is_unchanged(tmp_path):
+    args, manifest, artifact = _completed_artifact(tmp_path)
+    rebuilt = e0016.reconstruct_test_from_generation_artifact(
+        deepcopy(artifact),
+        seed=args.seed,
+        expected_artifact_identity=manifest["artifact_identity"],
+    )
+    assert rebuilt["test"] == manifest["test"]
+
+
+def test_production_entry_interruption_resume_and_source_mutation_rejection(
+    tmp_path, monkeypatch
+):
+    token = f"pytest-{os.getpid()}-{tmp_path.name}"
+    resume_dir = e0016._REPO / "results" / f"E-0016-{token}-resume"
+    clean_dir = tmp_path / "clean"
+    shutil.rmtree(resume_dir, ignore_errors=True)
+    shutil.rmtree(clean_dir, ignore_errors=True)
+    original_generate = e0016.SyntheticRegimeBBackend.generate
+    calls = {"count": 0}
+
+    def interrupt_once(self, item, condition, sample):
+        calls["count"] += 1
+        if calls["count"] == 3:
+            raise RuntimeError("production-entry interruption")
+        return original_generate(self, item, condition, sample)
+
+    mutation = e0016._REPO / f"e0016_source_mutation_{os.getpid()}.py"
+    try:
+        clean = e0016.run(
+            e0016.parse_args(
+                ["--backend", "synthetic", "--out-dir", str(clean_dir)]
+            )
+        )
+        monkeypatch.setattr(
+            e0016.SyntheticRegimeBBackend, "generate", interrupt_once
+        )
+        args = e0016.parse_args(
+            ["--backend", "synthetic", "--out-dir", str(resume_dir)]
+        )
+        with pytest.raises(RuntimeError, match="production-entry interruption"):
+            e0016.run(args)
+        checkpoints = list((resume_dir / "checkpoints").rglob("*.json"))
+        assert checkpoints
+        assert any(
+            0 < len(json.loads(path.read_text(encoding="utf-8"))["records"])
+            for path in checkpoints
+        )
+
+        monkeypatch.setattr(
+            e0016.SyntheticRegimeBBackend, "generate", original_generate
+        )
+        resumed = e0016.run(args)
+        resumed_artifact = json.loads(
+            (resume_dir / "e0016_generation_records.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        clean_artifact = json.loads(
+            (clean_dir / "e0016_generation_records.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        assert resumed_artifact == clean_artifact
+        assert resumed["test"] == clean["test"]
+
+        mutation.write_text("SOURCE_MUTATION = True\n", encoding="utf-8")
+        with pytest.raises(ValueError, match="source state changed"):
+            e0016.run(args)
+    finally:
+        mutation.unlink(missing_ok=True)
+        shutil.rmtree(resume_dir, ignore_errors=True)
+        shutil.rmtree(clean_dir, ignore_errors=True)

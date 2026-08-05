@@ -72,7 +72,9 @@ HOOK_BITES_REL_TOL = 0.05
 SCORER_VERSION = "score_refusal_marker_v1"
 DEGENERACY_SCORER_VERSION = "degeneracy_score_v1"
 GENERATION_RECORD_SCHEMA_VERSION = 1
-CHECKPOINT_SCHEMA_VERSION = 1
+CHECKPOINT_SCHEMA_VERSION = 2
+SOURCE_STATE_SCHEMA_VERSION = 1
+RECORD_VALIDATOR_VERSION = "e0016_strict_record_validator_v1"
 RANDOM_DIRECTION_SEED_OFFSET = 909
 SYNTHETIC_SMOKE_DEV_N = 4
 SYNTHETIC_SMOKE_TEST_N = 8
@@ -527,14 +529,142 @@ def load_contrast_prompts(
 
 
 def git_dirty_tree() -> bool:
-    result = subprocess.run(
-        ["git", "status", "--porcelain", "--untracked-files=normal"],
+    return bool(capture_source_state(None)["dirty"])
+
+
+def _is_relative_to(path: Path, parent: Path) -> bool:
+    try:
+        path.relative_to(parent)
+        return True
+    except ValueError:
+        return False
+
+
+def resolve_output_directory(value: str | Path) -> Path:
+    raw = Path(value)
+    if ".." in raw.parts:
+        raise ValueError("output directory traversal is forbidden")
+    cursor = raw if raw.is_absolute() else (_REPO / raw)
+    cursor = cursor.absolute()
+    for ancestor in (cursor, *cursor.parents):
+        if ancestor.exists() and (
+            ancestor.is_symlink()
+            or (hasattr(ancestor, "is_junction") and ancestor.is_junction())
+        ):
+            raise ValueError("output directory may not traverse a symlink/junction")
+    resolved = cursor.resolve(strict=False)
+    repo = _REPO.resolve()
+    if resolved == repo:
+        raise ValueError("output directory may not be the repository root")
+    if _is_relative_to(resolved, repo):
+        allowed = (repo / "results").resolve()
+        if not _is_relative_to(resolved, allowed):
+            raise ValueError(
+                "in-repository output directory must be inside the exact results directory"
+            )
+    return resolved
+
+
+def _git_bytes(*args: str) -> bytes:
+    return subprocess.run(
+        ["git", *args],
         cwd=_REPO,
         capture_output=True,
-        text=True,
         check=True,
-    )
-    return bool(result.stdout.strip())
+    ).stdout
+
+
+def _relative_output_path(out_dir: Optional[Path]) -> Optional[str]:
+    if out_dir is None:
+        return None
+    resolved = resolve_output_directory(out_dir)
+    repo = _REPO.resolve()
+    if not _is_relative_to(resolved, repo):
+        return None
+    return resolved.relative_to(repo).as_posix()
+
+
+def capture_source_state(out_dir: Optional[Path]) -> Dict[str, object]:
+    excluded = _relative_output_path(out_dir)
+    pathspec = ["--", "."]
+    if excluded:
+        pathspec.append(f":(exclude){excluded}/**")
+    unstaged = _git_bytes("diff", "--binary", *pathspec)
+    staged = _git_bytes("diff", "--cached", "--binary", *pathspec)
+    tracked_digest = hashlib.sha256(
+        b"unstaged\0" + unstaged + b"\0staged\0" + staged
+    ).hexdigest()
+    raw_untracked = _git_bytes(
+        "ls-files", "--others", "--exclude-standard", "-z"
+    ).split(b"\0")
+    untracked: List[Dict[str, str]] = []
+    repo = _REPO.resolve()
+    output = None if out_dir is None else resolve_output_directory(out_dir)
+    for raw in raw_untracked:
+        if not raw:
+            continue
+        rel = raw.decode("utf-8", errors="strict")
+        candidate = (repo / Path(rel)).resolve(strict=False)
+        if output is not None and _is_relative_to(candidate, output):
+            continue
+        if not _is_relative_to(candidate, repo) or candidate.is_symlink():
+            raise ValueError(f"unsafe untracked source path: {rel}")
+        if not candidate.is_file():
+            continue
+        untracked.append(
+            {"path": rel.replace("\\", "/"), "sha256": _sha256_bytes(candidate.read_bytes())}
+        )
+    untracked.sort(key=lambda row: row["path"])
+    head = _git_bytes("rev-parse", "HEAD").decode().strip()
+    return {
+        "schema_version": SOURCE_STATE_SCHEMA_VERSION,
+        "head": head,
+        "tracked_diff_sha256": tracked_digest,
+        "tracked_diff_bytes": len(unstaged) + len(staged),
+        "untracked_files": untracked,
+        "untracked_identity_sha256": config_hash(untracked),
+        "excluded_output_directory": (
+            None if output is None else str(output)
+        ),
+        "dirty": bool(unstaged or staged or untracked),
+    }
+
+
+def initialize_run_source_state(out_dir: Path) -> Dict[str, object]:
+    state_path = out_dir / "e0016_run_start_source_state.json"
+    if state_path.exists():
+        persisted = json.loads(state_path.read_text(encoding="utf-8"))
+        current = capture_source_state(out_dir)
+        if persisted != current:
+            raise ValueError("source state changed since run start; resume rejected")
+        return persisted
+    captured = capture_source_state(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    atomic_write_json(state_path, captured)
+    return captured
+
+
+def source_state_identity(state: Dict[str, object]) -> Dict[str, object]:
+    return {
+        key: state[key]
+        for key in (
+            "schema_version",
+            "head",
+            "tracked_diff_sha256",
+            "tracked_diff_bytes",
+            "untracked_files",
+            "untracked_identity_sha256",
+            "dirty",
+        )
+    }
+
+
+def assert_run_source_state(
+    expected: Dict[str, object], out_dir: Path
+) -> None:
+    current = capture_source_state(out_dir)
+    if current != expected:
+        raise ValueError("source state changed since run start; resume rejected")
 
 
 def strict_positive_integer(value: object, *, name: str) -> int:
@@ -1160,10 +1290,178 @@ def _generation_jobs(
     return jobs
 
 
+def _is_sha256(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(ch in "0123456789abcdef" for ch in value)
+    )
+
+
+def _is_config_hash(value: object) -> bool:
+    return (
+        isinstance(value, str)
+        and value.startswith("sha256:")
+        and _is_sha256(value.split(":", 1)[1])
+    )
+
+
+def _record_identity(record: Dict[str, object]) -> str:
+    return config_hash(
+        {key: value for key, value in record.items() if key != "record_identity_sha256"}
+    )
+
+
+def _expected_record_jobs(
+    items: Sequence[Item],
+    condition: str,
+    *,
+    k: int,
+    seed: int,
+    run_config_hash: str,
+    finalized_run_identity_hash: Optional[str],
+    direction_sha256_actual_used: Optional[str],
+) -> List[Dict[str, object]]:
+    jobs = _generation_jobs(items, condition, k=k, seed=seed)
+    return [
+        {
+            key: job[key]
+            for key in (
+                "item_id",
+                "item_index",
+                "item_prompt_sha256",
+                "sample_index",
+                "condition",
+                "seed",
+                "sample_identity_sha256",
+            )
+        }
+        | {
+            "run_config_hash": run_config_hash,
+            "finalized_run_identity_hash": finalized_run_identity_hash,
+            "direction_sha256_actual_used": direction_sha256_actual_used,
+            "record_schema_version": GENERATION_RECORD_SCHEMA_VERSION,
+            "refusal_scorer_version": SCORER_VERSION,
+            "degeneracy_scorer_version": DEGENERACY_SCORER_VERSION,
+        }
+        for job in jobs
+    ]
+
+
+_RECORD_FIELDS = {
+    "item_id",
+    "item_index",
+    "item_prompt_sha256",
+    "sample_index",
+    "condition",
+    "seed",
+    "sample_identity_sha256",
+    "output_sha256",
+    "refusal_score",
+    "degeneracy_score",
+    "direction_sha256_actual_used",
+    "run_config_hash",
+    "finalized_run_identity_hash",
+    "record_schema_version",
+    "refusal_scorer_version",
+    "degeneracy_scorer_version",
+    "raw_prompt_stored",
+    "raw_output_stored",
+    "record_identity_sha256",
+}
+
+
+def validate_generation_records(
+    records: Sequence[Dict[str, object]],
+    expected_jobs: Sequence[Dict[str, object]],
+    *,
+    allow_subset: bool,
+) -> List[Dict[str, object]]:
+    expected_by_identity = {
+        str(row["sample_identity_sha256"]): dict(row) for row in expected_jobs
+    }
+    if len(expected_by_identity) != len(expected_jobs):
+        raise ValueError("expected job plan contains duplicate sample identities")
+    validated: List[Dict[str, object]] = []
+    seen: set[str] = set()
+    for index, raw in enumerate(records):
+        if not isinstance(raw, dict) or set(raw) != _RECORD_FIELDS:
+            missing = sorted(_RECORD_FIELDS - set(raw) if isinstance(raw, dict) else _RECORD_FIELDS)
+            unknown = sorted(set(raw) - _RECORD_FIELDS) if isinstance(raw, dict) else []
+            raise ValueError(
+                f"record {index} field set mismatch: missing={missing}, unknown={unknown}"
+            )
+        row = dict(raw)
+        identity = row["sample_identity_sha256"]
+        if not _is_config_hash(identity):
+            raise ValueError(f"record {index} has invalid sample identity hash")
+        if identity in seen:
+            raise ValueError("records contain duplicate sample identity")
+        seen.add(str(identity))
+        expected = expected_by_identity.get(str(identity))
+        if expected is None:
+            raise ValueError("record is not an expected generation job")
+        for key, value in expected.items():
+            if row.get(key) != value or type(row.get(key)) is not type(value):
+                raise ValueError(f"record expected binding mismatch for {key}")
+        for key in ("item_index", "sample_index", "seed", "record_schema_version"):
+            if type(row[key]) is not int:
+                raise ValueError(f"record {key} must be a genuine integer")
+        if row["item_index"] < 0 or row["sample_index"] < 0 or row["seed"] < 0:
+            raise ValueError("record integer coordinates/seeds must be non-negative")
+        if not isinstance(row["item_id"], str) or not row["item_id"]:
+            raise ValueError("record item_id must be a non-empty string")
+        for key in ("item_prompt_sha256", "output_sha256"):
+            if not _is_sha256(row[key]):
+                raise ValueError(f"record {key} must be a lowercase SHA-256")
+        for key in ("sample_identity_sha256", "run_config_hash"):
+            if not _is_config_hash(row[key]):
+                raise ValueError(f"record {key} must be a canonical config hash")
+        for key in ("finalized_run_identity_hash", "direction_sha256_actual_used"):
+            if key == "finalized_run_identity_hash":
+                valid = row[key] is None or _is_config_hash(row[key])
+            else:
+                valid = row[key] is None or _is_sha256(row[key])
+            if not valid:
+                raise ValueError(f"record {key} has invalid hash format")
+        if type(row["refusal_score"]) is not bool:
+            raise ValueError("record refusal_score must be a real bool")
+        degeneracy = row["degeneracy_score"]
+        if type(degeneracy) not in (int, float):
+            raise ValueError("record degeneracy_score must be numeric")
+        degeneracy = float(degeneracy)
+        if not math.isfinite(degeneracy) or not 0.0 <= degeneracy <= 1.0:
+            raise ValueError("record degeneracy_score must be finite in [0, 1]")
+        if (
+            row["record_schema_version"] != GENERATION_RECORD_SCHEMA_VERSION
+            or row["refusal_scorer_version"] != SCORER_VERSION
+            or row["degeneracy_scorer_version"] != DEGENERACY_SCORER_VERSION
+        ):
+            raise ValueError("record schema/scorer identity mismatch")
+        if type(row["raw_prompt_stored"]) is not bool or row["raw_prompt_stored"]:
+            raise ValueError("record raw_prompt_stored must be false")
+        if type(row["raw_output_stored"]) is not bool or row["raw_output_stored"]:
+            raise ValueError("record raw_output_stored must be false")
+        if not _is_config_hash(row["record_identity_sha256"]):
+            raise ValueError("record identity must be a canonical config hash")
+        if row["record_identity_sha256"] != _record_identity(row):
+            raise ValueError("record identity hash mismatch")
+        validated.append(row)
+    if not allow_subset and seen != set(expected_by_identity):
+        missing = sorted(set(expected_by_identity) - seen)
+        extra = sorted(seen - set(expected_by_identity))
+        raise ValueError(
+            f"final records do not exactly match expected jobs: missing={missing[:3]}, extra={extra[:3]}"
+        )
+    return validated
+
+
 def _checkpoint_payload(
     *,
     condition: str,
     checkpoint_identity: Dict[str, object],
+    run_start_source_state: Dict[str, object],
+    expected_jobs_hash: str,
     records: Sequence[Dict[str, object]],
     complete: bool = False,
 ) -> Dict[str, object]:
@@ -1173,6 +1471,10 @@ def _checkpoint_payload(
         "condition": condition,
         "checkpoint_identity": checkpoint_identity,
         "checkpoint_identity_hash": config_hash(checkpoint_identity),
+        "run_start_source_state": run_start_source_state,
+        "run_start_source_state_hash": config_hash(run_start_source_state),
+        "expected_jobs_hash": expected_jobs_hash,
+        "record_validator_version": RECORD_VALIDATOR_VERSION,
         "records": list(records),
         "complete": bool(complete),
         "valid_for_paper": False,
@@ -1184,33 +1486,60 @@ def _load_checkpoint(
     *,
     condition: str,
     checkpoint_identity: Dict[str, object],
+    run_start_source_state: Dict[str, object],
+    expected_jobs: Sequence[Dict[str, object]],
+    out_dir: Optional[Path],
 ) -> List[Dict[str, object]]:
     if path is None or not path.exists():
         return []
+    if out_dir is not None:
+        assert_run_source_state(run_start_source_state, out_dir)
     payload = json.loads(path.read_text(encoding="utf-8"))
+    expected_wrapper_fields = {
+        "schema_version",
+        "experiment_id",
+        "condition",
+        "checkpoint_identity",
+        "checkpoint_identity_hash",
+        "run_start_source_state",
+        "run_start_source_state_hash",
+        "expected_jobs_hash",
+        "record_validator_version",
+        "records",
+        "complete",
+        "valid_for_paper",
+    }
+    if not isinstance(payload, dict) or set(payload) != expected_wrapper_fields:
+        raise ValueError("checkpoint wrapper field set mismatch")
     expected_hash = config_hash(checkpoint_identity)
+    expected_jobs_hash = config_hash(list(expected_jobs))
     if (
         payload.get("schema_version") != CHECKPOINT_SCHEMA_VERSION
         or payload.get("experiment_id") != EXPERIMENT_ID
         or payload.get("condition") != condition
         or payload.get("checkpoint_identity_hash") != expected_hash
         or payload.get("checkpoint_identity") != checkpoint_identity
+        or payload.get("run_start_source_state") != run_start_source_state
+        or payload.get("run_start_source_state_hash")
+        != config_hash(run_start_source_state)
+        or payload.get("expected_jobs_hash") != expected_jobs_hash
+        or payload.get("record_validator_version") != RECORD_VALIDATOR_VERSION
+        or type(payload.get("complete")) is not bool
+        or payload.get("valid_for_paper") is not False
     ):
         raise ValueError("checkpoint config/finalized identity mismatch")
-    records = list(payload.get("records") or [])
-    identities = [record.get("sample_identity_sha256") for record in records]
-    if len(identities) != len(set(identities)) or any(not x for x in identities):
-        raise ValueError("checkpoint contains duplicate or missing sample identities")
-    return records
+    return validate_generation_records(
+        list(payload.get("records") or []), expected_jobs, allow_subset=True
+    )
 
 
 def _record_generation(
     job: Dict[str, object],
     text: str,
     *,
-    direction_sha256_actual_used: Optional[str],
+    expected_job: Dict[str, object],
 ) -> Dict[str, object]:
-    return {
+    record = {
         key: job[key]
         for key in (
             "item_id",
@@ -1223,12 +1552,23 @@ def _record_generation(
         )
     } | {
         "output_sha256": sha_text(text),
-        "refusal_score": int(score_refusal(text, None)),
+        "refusal_score": bool(score_refusal(text, None)),
         "degeneracy_score": float(degeneracy_score(text)),
-        "direction_sha256_actual_used": direction_sha256_actual_used,
         "raw_prompt_stored": False,
         "raw_output_stored": False,
+    } | {
+        key: expected_job[key]
+        for key in (
+            "direction_sha256_actual_used",
+            "run_config_hash",
+            "finalized_run_identity_hash",
+            "record_schema_version",
+            "refusal_scorer_version",
+            "degeneracy_scorer_version",
+        )
     }
+    record["record_identity_sha256"] = _record_identity(record)
+    return record
 
 
 def eval_from_records(
@@ -1237,8 +1577,12 @@ def eval_from_records(
     condition: str,
     n_items: int,
     k: int,
+    expected_jobs: Sequence[Dict[str, object]],
 ) -> EvalResult:
-    selected = [row for row in records if row.get("condition") == condition]
+    validated = validate_generation_records(
+        records, expected_jobs, allow_subset=False
+    )
+    selected = [row for row in validated if row.get("condition") == condition]
     expected = n_items * k
     if len(selected) != expected:
         raise ValueError(
@@ -1286,6 +1630,8 @@ def eval_synthetic(
     checkpoint_path: Optional[Path] = None,
     checkpoint_identity: Optional[Dict[str, object]] = None,
     direction_sha256_actual_used: Optional[str] = None,
+    run_start_source_state: Optional[Dict[str, object]] = None,
+    run_output_dir: Optional[Path] = None,
 ) -> EvalResult:
     batch_size = strict_positive_integer(
         generation_batch_size, name="generation_batch_size"
@@ -1300,8 +1646,27 @@ def eval_synthetic(
             [{k: v for k, v in job.items() if k != "prompt"} for job in jobs]
         ),
     }
+    run_hash = str(identity.get("run_config_hash") or config_hash(identity))
+    finalized_hash = identity.get("finalized_run_identity_hash")
+    expected_jobs = _expected_record_jobs(
+        items,
+        condition,
+        k=k,
+        seed=seed,
+        run_config_hash=run_hash,
+        finalized_run_identity_hash=(
+            None if finalized_hash is None else str(finalized_hash)
+        ),
+        direction_sha256_actual_used=direction_sha256_actual_used,
+    )
+    source_state = run_start_source_state or capture_source_state(run_output_dir)
     records = _load_checkpoint(
-        checkpoint_path, condition=condition, checkpoint_identity=identity
+        checkpoint_path,
+        condition=condition,
+        checkpoint_identity=identity,
+        run_start_source_state=source_state,
+        expected_jobs=expected_jobs,
+        out_dir=run_output_dir,
     )
     completed = {str(row["sample_identity_sha256"]) for row in records}
     pending = [job for job in jobs if job["sample_identity_sha256"] not in completed]
@@ -1316,15 +1681,23 @@ def eval_synthetic(
                 _record_generation(
                     job,
                     text,
-                    direction_sha256_actual_used=direction_sha256_actual_used,
+                    expected_job=next(
+                        row
+                        for row in expected_jobs
+                        if row["sample_identity_sha256"]
+                        == job["sample_identity_sha256"]
+                    ),
                 )
             )
+        validate_generation_records(records, expected_jobs, allow_subset=True)
         if checkpoint_path is not None:
             atomic_write_json(
                 checkpoint_path,
                 _checkpoint_payload(
                     condition=condition,
                     checkpoint_identity=identity,
+                    run_start_source_state=source_state,
+                    expected_jobs_hash=config_hash(expected_jobs),
                     records=records,
                 ),
             )
@@ -1334,11 +1707,19 @@ def eval_synthetic(
             _checkpoint_payload(
                 condition=condition,
                 checkpoint_identity=identity,
+                run_start_source_state=source_state,
+                expected_jobs_hash=config_hash(expected_jobs),
                 records=records,
                 complete=True,
             ),
         )
-    return eval_from_records(records, condition=condition, n_items=len(items), k=k)
+    return eval_from_records(
+        records,
+        condition=condition,
+        n_items=len(items),
+        k=k,
+        expected_jobs=expected_jobs,
+    )
 
 
 def eval_hf(
@@ -1354,6 +1735,8 @@ def eval_hf(
     checkpoint_path: Optional[Path] = None,
     checkpoint_identity: Optional[Dict[str, object]] = None,
     expected_direction_sha256: Optional[str] = None,
+    run_start_source_state: Optional[Dict[str, object]] = None,
+    run_output_dir: Optional[Path] = None,
 ) -> EvalResult:
     batch_size = strict_positive_integer(
         generation_batch_size, name="generation_batch_size"
@@ -1381,8 +1764,30 @@ def eval_hf(
             [{k: v for k, v in job.items() if k != "prompt"} for job in jobs]
         ),
     }
+    run_hash = str(identity.get("run_config_hash") or config_hash(identity))
+    finalized_hash = identity.get("finalized_run_identity_hash")
+    expected_jobs = _expected_record_jobs(
+        items,
+        condition,
+        k=k,
+        seed=seed,
+        run_config_hash=run_hash,
+        finalized_run_identity_hash=(
+            None if finalized_hash is None else str(finalized_hash)
+        ),
+        direction_sha256_actual_used=actual_direction_sha256,
+    )
+    expected_by_identity = {
+        str(row["sample_identity_sha256"]): row for row in expected_jobs
+    }
+    source_state = run_start_source_state or capture_source_state(run_output_dir)
     records = _load_checkpoint(
-        checkpoint_path, condition=condition, checkpoint_identity=identity
+        checkpoint_path,
+        condition=condition,
+        checkpoint_identity=identity,
+        run_start_source_state=source_state,
+        expected_jobs=expected_jobs,
+        out_dir=run_output_dir,
     )
     completed = {str(row["sample_identity_sha256"]) for row in records}
     pending = [job for job in jobs if job["sample_identity_sha256"] not in completed]
@@ -1424,16 +1829,19 @@ def eval_hf(
             _record_generation(
                 job,
                 text,
-                direction_sha256_actual_used=actual_direction_sha256,
+                expected_job=expected_by_identity[str(job["sample_identity_sha256"])],
             )
             for job, text in zip(batch, texts)
         )
+        validate_generation_records(records, expected_jobs, allow_subset=True)
         if checkpoint_path is not None:
             atomic_write_json(
                 checkpoint_path,
                 _checkpoint_payload(
                     condition=condition,
                     checkpoint_identity=identity,
+                    run_start_source_state=source_state,
+                    expected_jobs_hash=config_hash(expected_jobs),
                     records=records,
                 ),
             )
@@ -1443,11 +1851,19 @@ def eval_hf(
             _checkpoint_payload(
                 condition=condition,
                 checkpoint_identity=identity,
+                run_start_source_state=source_state,
+                expected_jobs_hash=config_hash(expected_jobs),
                 records=records,
                 complete=True,
             ),
         )
-    return eval_from_records(records, condition=condition, n_items=len(items), k=k)
+    return eval_from_records(
+        records,
+        condition=condition,
+        n_items=len(items),
+        k=k,
+        expected_jobs=expected_jobs,
+    )
 
 
 def dev_eligibility_status(baseline: EvalResult, floor: float = DEV_BASELINE_FLOOR) -> Tuple[bool, str, float]:
@@ -1500,22 +1916,140 @@ def pass_rule(baseline: EvalResult, ablated: EvalResult, random_control: EvalRes
 
 
 def reconstruct_test_from_generation_artifact(
-    artifact: Dict[str, object], *, seed: int
+    artifact: Dict[str, object],
+    *,
+    seed: int,
+    expected_artifact_identity: Dict[str, object],
+    expected_jobs: Optional[Sequence[Dict[str, object]]] = None,
 ) -> Dict[str, object]:
+    expected_fields = {
+        "schema_version",
+        "experiment_id",
+        "artifact_identity",
+        "finalized_run_identity",
+        "expected_jobs",
+        "expected_jobs_hash",
+        "record_validator_version",
+        "n_items",
+        "k",
+        "conditions",
+        "selected_direction_sha256_actual_used",
+        "random_direction_sha256_actual_used",
+        "records",
+        "records_sha256",
+        "raw_prompts_stored",
+        "raw_outputs_stored",
+        "harmful_generation_performed",
+        "valid_for_paper",
+    }
+    if set(artifact) != expected_fields:
+        raise ValueError("generation-record artifact wrapper field set mismatch")
     if artifact.get("schema_version") != GENERATION_RECORD_SCHEMA_VERSION:
         raise ValueError("generation-record artifact schema mismatch")
     if artifact.get("experiment_id") != EXPERIMENT_ID:
         raise ValueError("generation-record artifact experiment mismatch")
-    if artifact.get("raw_prompts_stored") or artifact.get("raw_outputs_stored"):
+    if (
+        artifact.get("raw_prompts_stored") is not False
+        or artifact.get("raw_outputs_stored") is not False
+        or artifact.get("harmful_generation_performed") is not False
+        or artifact.get("valid_for_paper") is not False
+    ):
         raise ValueError("generation-record artifact violates privacy-safe lineage")
+    if artifact.get("record_validator_version") != RECORD_VALIDATOR_VERSION:
+        raise ValueError("generation-record validator identity mismatch")
+    if artifact.get("artifact_identity") != expected_artifact_identity:
+        raise ValueError("generation-record artifact identity mismatch")
+    finalized = artifact.get("finalized_run_identity")
+    if not isinstance(finalized, dict) or config_hash(finalized) != (
+        expected_artifact_identity.get("finalized_run_identity_hash")
+    ):
+        raise ValueError("generation-record finalized identity hash mismatch")
+    identity_material = {
+        key: expected_artifact_identity[key]
+        for key in expected_artifact_identity
+        if key != "artifact_identity_sha256"
+    }
+    if expected_artifact_identity.get("artifact_identity_sha256") != config_hash(
+        identity_material
+    ):
+        raise ValueError("forged artifact identity")
+    artifact_jobs = artifact.get("expected_jobs")
+    if not isinstance(artifact_jobs, list):
+        raise ValueError("generation-record artifact lacks expected job plan")
+    if expected_jobs is None:
+        expected_jobs = artifact_jobs
+    elif list(expected_jobs) != artifact_jobs:
+        raise ValueError("external expected job plan disagrees with artifact")
+    if artifact.get("expected_jobs_hash") != config_hash(list(expected_jobs)):
+        raise ValueError("generation-record expected-job plan mismatch")
+    if expected_artifact_identity.get("expected_jobs_hash") != artifact.get(
+        "expected_jobs_hash"
+    ):
+        raise ValueError("artifact identity does not bind the expected job plan")
+    baseline_jobs = [
+        row for row in expected_jobs if row.get("condition") == "baseline"
+    ]
+    ordered_items = sorted(
+        {
+            (int(row["item_index"]), str(row["item_id"]), str(row["item_prompt_sha256"]))
+            for row in baseline_jobs
+        }
+    )
+    split_test = dict(finalized.get("split_identity", {}).get("test", {}))
+    if (
+        split_test.get("count") != len(ordered_items)
+        or split_test.get("item_ids_sha256")
+        != _source_sha256([row[1] for row in ordered_items])
+        or split_test.get("prompt_hashes_sha256")
+        != _source_sha256([row[2] for row in ordered_items])
+    ):
+        raise ValueError("expected job plan does not match finalized TEST split")
     n_items = strict_positive_integer(artifact.get("n_items"), name="n_items")
     k = strict_positive_integer(artifact.get("k"), name="k")
     if n_items < 1 or k < 1:
         raise ValueError("generation-record artifact dimensions must be positive")
     records = list(artifact.get("records") or [])
-    base = eval_from_records(records, condition="baseline", n_items=n_items, k=k)
-    ablated = eval_from_records(records, condition="ablation", n_items=n_items, k=k)
-    random_eval = eval_from_records(records, condition="random", n_items=n_items, k=k)
+    if artifact.get("records_sha256") != config_hash(records):
+        raise ValueError("generation-record artifact record hash chain mismatch")
+    validated = validate_generation_records(
+        records, expected_jobs, allow_subset=False
+    )
+    conditions = artifact.get("conditions")
+    if conditions != ["baseline", "ablation", "random"]:
+        raise ValueError("generation-record artifact condition set mismatch")
+    for condition in conditions:
+        condition_jobs = [
+            row for row in expected_jobs if row["condition"] == condition
+        ]
+        if len(condition_jobs) != n_items * k:
+            raise ValueError("artifact dimensions disagree with expected job plan")
+    base = eval_from_records(
+        [row for row in validated if row["condition"] == "baseline"],
+        condition="baseline",
+        n_items=n_items,
+        k=k,
+        expected_jobs=[
+            row for row in expected_jobs if row["condition"] == "baseline"
+        ],
+    )
+    ablated = eval_from_records(
+        [row for row in validated if row["condition"] == "ablation"],
+        condition="ablation",
+        n_items=n_items,
+        k=k,
+        expected_jobs=[
+            row for row in expected_jobs if row["condition"] == "ablation"
+        ],
+    )
+    random_eval = eval_from_records(
+        [row for row in validated if row["condition"] == "random"],
+        condition="random",
+        n_items=n_items,
+        k=k,
+        expected_jobs=[
+            row for row in expected_jobs if row["condition"] == "random"
+        ],
+    )
     selected_sha = artifact.get("selected_direction_sha256_actual_used")
     random_sha = artifact.get("random_direction_sha256_actual_used")
     if not isinstance(selected_sha, str) or not isinstance(random_sha, str):
@@ -1548,34 +2082,62 @@ def reconstruct_test_from_generation_artifact(
     }
 
 
-def select_direction_on_dev(bundles: Sequence[DirectionBundle], dev_items: Sequence[Item], *, backend_name: str, synth_backend: Optional[SyntheticRegimeBBackend], hf_backend: Optional[SteeredHFBackend], k: int, seed: int, max_new_tokens: int, generation_batch_size: int = SYNTHETIC_DEFAULT_GENERATION_BATCH_SIZE, checkpoint_dir: Optional[Path] = None, run_config_hash: Optional[str] = None) -> Tuple[DirectionBundle, Dict[str, object]]:
+def load_and_reconstruct_generation_artifact(
+    path: Path,
+    manifest: Dict[str, object],
+    *,
+    seed: int,
+    expected_jobs: Sequence[Dict[str, object]],
+    expected_artifact_identity: Dict[str, object],
+) -> Dict[str, object]:
+    artifact_meta = manifest.get("generation_records_artifact")
+    if not isinstance(artifact_meta, dict):
+        raise ValueError("manifest lacks generation-record artifact chain")
+    raw = Path(path).read_bytes()
+    if artifact_meta.get("sha256") != _sha256_bytes(raw):
+        raise ValueError("manifest/artifact file hash mismatch")
+    artifact = json.loads(raw.decode("utf-8"))
+    return reconstruct_test_from_generation_artifact(
+        artifact,
+        seed=seed,
+        expected_jobs=expected_jobs,
+        expected_artifact_identity=expected_artifact_identity,
+    )
+
+
+def select_direction_on_dev(bundles: Sequence[DirectionBundle], dev_items: Sequence[Item], *, backend_name: str, synth_backend: Optional[SyntheticRegimeBBackend], hf_backend: Optional[SteeredHFBackend], k: int, seed: int, max_new_tokens: int, generation_batch_size: int = SYNTHETIC_DEFAULT_GENERATION_BATCH_SIZE, checkpoint_dir: Optional[Path] = None, run_config_hash: Optional[str] = None, run_start_source_state: Optional[Dict[str, object]] = None, run_output_dir: Optional[Path] = None) -> Tuple[DirectionBundle, Dict[str, object]]:
     baseline_identity = {
         "phase": "dev",
         "condition": "baseline",
         "run_config_hash": run_config_hash,
     }
     baseline_path = None if checkpoint_dir is None else checkpoint_dir / "dev_baseline.json"
-    baseline = eval_synthetic(dev_items, synth_backend, "baseline", k=k, seed=seed, generation_batch_size=generation_batch_size, checkpoint_path=baseline_path, checkpoint_identity=baseline_identity) if backend_name == "synthetic" else eval_hf(dev_items, hf_backend, "baseline", None, k=k, max_new_tokens=max_new_tokens, seed=seed, generation_batch_size=generation_batch_size, checkpoint_path=baseline_path, checkpoint_identity=baseline_identity)
+    resume_kwargs = {
+        "run_start_source_state": run_start_source_state,
+        "run_output_dir": run_output_dir,
+    }
+    baseline = eval_synthetic(dev_items, synth_backend, "baseline", k=k, seed=seed, generation_batch_size=generation_batch_size, checkpoint_path=baseline_path, checkpoint_identity=baseline_identity, **resume_kwargs) if backend_name == "synthetic" else eval_hf(dev_items, hf_backend, "baseline", None, k=k, max_new_tokens=max_new_tokens, seed=seed, generation_batch_size=generation_batch_size, checkpoint_path=baseline_path, checkpoint_identity=baseline_identity, **resume_kwargs)
     eligible, status, rate = dev_eligibility_status(baseline)
     if not eligible:
         return bundles[0], {"status": status, "baseline_false_refusal_rate": rate, "baseline": as_eval_payload(baseline), "dev_test_was_not_run": True}
     rows = []
     for b in bundles:
         if backend_name == "synthetic":
-            ab = eval_synthetic(dev_items, synth_backend, "ablation", k=k, seed=seed, generation_batch_size=generation_batch_size, checkpoint_path=None if checkpoint_dir is None else checkpoint_dir / f"dev_layer_{b.source_layer}_ablation.json", checkpoint_identity={"phase": "dev", "condition": "ablation", "source_layer": b.source_layer, "run_config_hash": run_config_hash, "direction_sha256": b.provenance.get("direction_sha256")})
-            rnd = eval_synthetic(dev_items, synth_backend, "random", k=k, seed=seed, generation_batch_size=generation_batch_size, checkpoint_path=None if checkpoint_dir is None else checkpoint_dir / f"dev_layer_{b.source_layer}_random.json", checkpoint_identity={"phase": "dev", "condition": "random", "source_layer": b.source_layer, "run_config_hash": run_config_hash})
+            ab = eval_synthetic(dev_items, synth_backend, "ablation", k=k, seed=seed, generation_batch_size=generation_batch_size, checkpoint_path=None if checkpoint_dir is None else checkpoint_dir / f"dev_layer_{b.source_layer}_ablation.json", checkpoint_identity={"phase": "dev", "condition": "ablation", "source_layer": b.source_layer, "run_config_hash": run_config_hash, "direction_sha256": b.provenance.get("direction_sha256")}, direction_sha256_actual_used=b.provenance.get("direction_sha256"), **resume_kwargs)
+            rnd_direction_sha256 = vector_sha256(random_unit_direction(b.direction.size, seed + RANDOM_DIRECTION_SEED_OFFSET))
+            rnd = eval_synthetic(dev_items, synth_backend, "random", k=k, seed=seed, generation_batch_size=generation_batch_size, checkpoint_path=None if checkpoint_dir is None else checkpoint_dir / f"dev_layer_{b.source_layer}_random.json", checkpoint_identity={"phase": "dev", "condition": "random", "source_layer": b.source_layer, "run_config_hash": run_config_hash, "direction_sha256": rnd_direction_sha256}, direction_sha256_actual_used=rnd_direction_sha256, **resume_kwargs)
         else:
             direction_sha256 = assert_direction_hash(
                 b.direction,
                 b.provenance.get("direction_sha256"),
                 context=f"DEV source layer {b.source_layer}",
             )
-            ab = eval_hf(dev_items, hf_backend, "ablation", b.direction, k=k, max_new_tokens=max_new_tokens, seed=seed, generation_batch_size=generation_batch_size, checkpoint_path=None if checkpoint_dir is None else checkpoint_dir / f"dev_layer_{b.source_layer}_ablation.json", checkpoint_identity={"phase": "dev", "condition": "ablation", "source_layer": b.source_layer, "run_config_hash": run_config_hash, "direction_sha256": direction_sha256}, expected_direction_sha256=direction_sha256)
+            ab = eval_hf(dev_items, hf_backend, "ablation", b.direction, k=k, max_new_tokens=max_new_tokens, seed=seed, generation_batch_size=generation_batch_size, checkpoint_path=None if checkpoint_dir is None else checkpoint_dir / f"dev_layer_{b.source_layer}_ablation.json", checkpoint_identity={"phase": "dev", "condition": "ablation", "source_layer": b.source_layer, "run_config_hash": run_config_hash, "direction_sha256": direction_sha256}, expected_direction_sha256=direction_sha256, **resume_kwargs)
             rnd_dir = random_unit_direction(
                 b.direction.size, seed + RANDOM_DIRECTION_SEED_OFFSET
             )
             random_sha256 = vector_sha256(rnd_dir)
-            rnd = eval_hf(dev_items, hf_backend, "random", rnd_dir, k=k, max_new_tokens=max_new_tokens, seed=seed, generation_batch_size=generation_batch_size, checkpoint_path=None if checkpoint_dir is None else checkpoint_dir / f"dev_layer_{b.source_layer}_random.json", checkpoint_identity={"phase": "dev", "condition": "random", "source_layer": b.source_layer, "run_config_hash": run_config_hash, "direction_sha256": random_sha256}, expected_direction_sha256=random_sha256)
+            rnd = eval_hf(dev_items, hf_backend, "random", rnd_dir, k=k, max_new_tokens=max_new_tokens, seed=seed, generation_batch_size=generation_batch_size, checkpoint_path=None if checkpoint_dir is None else checkpoint_dir / f"dev_layer_{b.source_layer}_random.json", checkpoint_identity={"phase": "dev", "condition": "random", "source_layer": b.source_layer, "run_config_hash": run_config_hash, "direction_sha256": random_sha256}, expected_direction_sha256=random_sha256, **resume_kwargs)
         pr = pass_rule(baseline, ab, rnd, bootstrap_seed=seed)
         rows.append({"source_layer": b.source_layer, "position": b.position, "direction_sha256": b.provenance["direction_sha256"], "mean_reduction": pr["mean_reduction"], "coherence_ok": pr["coherence_ok"], "random_mean_reduction": pr["random_control"]["mean_reduction"]})
     best_row = max(rows, key=lambda r: (float(r["mean_reduction"]) if r["coherence_ok"] else -999.0, -int(r["source_layer"])))
@@ -1613,13 +2175,14 @@ def synthetic_provider_and_direction(harmful: Sequence[str], harmless: Sequence[
 
 def run(args: argparse.Namespace) -> Dict[str, object]:
     assert_hf_frozen_config(args)
-    out_dir = Path(args.out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir = resolve_output_directory(args.out_dir)
+    run_start_source_state = initialize_run_source_state(out_dir)
+    run_source_identity = source_state_identity(run_start_source_state)
     backend = args.backend
     eligibility_config = pre_load_eligibility_config(args)
     eligibility_config_hash = config_hash(eligibility_config)
-    dirty_tree = git_dirty_tree()
-    current_code_commit = git_commit(str(_REPO))
+    dirty_tree = bool(run_start_source_state["dirty"])
+    current_code_commit = str(run_start_source_state["head"])
     manifest_path = out_dir / "e0016_ablation_positive_control_results.json"
     if manifest_path.exists():
         existing = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -1627,7 +2190,7 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
             existing.get("pre_load_eligibility_config_hash")
             != eligibility_config_hash
             or existing.get("code_commit") != current_code_commit
-            or existing.get("dirty_tree") != dirty_tree
+            or existing.get("run_start_source_identity") != run_source_identity
         ):
             raise ValueError(
                 "output directory contains a result from a different config/code identity"
@@ -1691,6 +2254,8 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
     run_config["implementation"] = {
         "code_commit": current_code_commit,
         "dirty_tree": dirty_tree,
+        "run_start_source_identity": run_source_identity,
+        "run_start_source_identity_hash": config_hash(run_source_identity),
     }
     run_config_hash = config_hash(run_config)
 
@@ -1746,6 +2311,7 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                         "created_at": utcnow(),
                         "code_commit": current_code_commit,
                         "dirty_tree": dirty_tree,
+                        "run_start_source_state": run_start_source_state,
                         "seed": int(args.seed),
                         "model_id": args.model_id,
                         "model_revision": resolved_model_revision,
@@ -1769,6 +2335,7 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                         "error": str(exc),
                         "code_commit": current_code_commit,
                         "dirty_tree": dirty_tree,
+                        "run_start_source_state": run_start_source_state,
                         "pre_load_eligibility_config": eligibility_config,
                         "pre_load_eligibility_config_hash": eligibility_config_hash,
                         "frozen_config": run_config,
@@ -1792,6 +2359,8 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         generation_batch_size=args.generation_batch_size,
         checkpoint_dir=checkpoint_dir,
         run_config_hash=run_config_hash,
+        run_start_source_state=run_start_source_state,
+        run_output_dir=out_dir,
     )
 
     payload: Dict[str, object] = {
@@ -1801,6 +2370,9 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         "created_at": utcnow(),
         "code_commit": current_code_commit,
         "dirty_tree": dirty_tree,
+        "run_start_source_state": run_start_source_state,
+        "run_start_source_identity": run_source_identity,
+        "run_start_source_identity_hash": config_hash(run_source_identity),
         "seed": int(args.seed),
         "pre_load_eligibility_config": eligibility_config,
         "pre_load_eligibility_config_hash": eligibility_config_hash,
@@ -1865,9 +2437,56 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
             raise ValueError(
                 "output directory contains a different finalized run identity"
             )
-    artifact_identity = {
+    selected_direction_sha256 = assert_direction_hash(
+        selected.direction,
+        finalized_identity["selected_intervention"]["direction_sha256"],
+        context="pre-TEST selected",
+    )
+    random_direction = random_unit_direction(
+        selected.direction.size, args.seed + RANDOM_DIRECTION_SEED_OFFSET
+    )
+    random_direction_sha256 = vector_sha256(random_direction)
+    expected_jobs = (
+        _expected_record_jobs(
+            test,
+            "baseline",
+            k=args.k,
+            seed=args.seed,
+            run_config_hash=run_config_hash,
+            finalized_run_identity_hash=finalized_identity_hash,
+            direction_sha256_actual_used=None,
+        )
+        + _expected_record_jobs(
+            test,
+            "ablation",
+            k=args.k,
+            seed=args.seed,
+            run_config_hash=run_config_hash,
+            finalized_run_identity_hash=finalized_identity_hash,
+            direction_sha256_actual_used=selected_direction_sha256,
+        )
+        + _expected_record_jobs(
+            test,
+            "random",
+            k=args.k,
+            seed=args.seed,
+            run_config_hash=run_config_hash,
+            finalized_run_identity_hash=finalized_identity_hash,
+            direction_sha256_actual_used=random_direction_sha256,
+        )
+    )
+    expected_jobs_hash = config_hash(expected_jobs)
+    artifact_identity_material = {
         "experiment_id": EXPERIMENT_ID,
+        "run_config_hash": run_config_hash,
         "finalized_run_identity_hash": finalized_identity_hash,
+        "expected_jobs_hash": expected_jobs_hash,
+        "record_schema_version": GENERATION_RECORD_SCHEMA_VERSION,
+        "record_validator_version": RECORD_VALIDATOR_VERSION,
+    }
+    artifact_identity = {
+        **artifact_identity_material,
+        "artifact_identity_sha256": config_hash(artifact_identity_material),
     }
     payload.update(
         {
@@ -1922,22 +2541,17 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         "run_config_hash": run_config_hash,
         "finalized_run_identity_hash": finalized_identity_hash,
     }
-    selected_direction_sha256 = assert_direction_hash(
-        selected.direction,
-        finalized_identity["selected_intervention"]["direction_sha256"],
-        context="pre-TEST selected",
-    )
-    random_direction = random_unit_direction(
-        selected.direction.size, args.seed + RANDOM_DIRECTION_SEED_OFFSET
-    )
-    random_direction_sha256 = vector_sha256(random_direction)
+    resume_kwargs = {
+        "run_start_source_state": run_start_source_state,
+        "run_output_dir": out_dir,
+    }
     if backend == "synthetic":
-        base = eval_synthetic(test, synth, "baseline", k=args.k, seed=args.seed, generation_batch_size=args.generation_batch_size, checkpoint_path=test_checkpoint_dir / "baseline.json", checkpoint_identity={**common_checkpoint_identity, "condition": "baseline"})
-        ablated = eval_synthetic(test, synth, "ablation", k=args.k, seed=args.seed, generation_batch_size=args.generation_batch_size, checkpoint_path=test_checkpoint_dir / "ablation.json", checkpoint_identity={**common_checkpoint_identity, "condition": "ablation", "direction_sha256": selected_direction_sha256}, direction_sha256_actual_used=selected_direction_sha256)
-        random_eval = eval_synthetic(test, synth, "random", k=args.k, seed=args.seed, generation_batch_size=args.generation_batch_size, checkpoint_path=test_checkpoint_dir / "random.json", checkpoint_identity={**common_checkpoint_identity, "condition": "random", "direction_sha256": random_direction_sha256}, direction_sha256_actual_used=random_direction_sha256)
+        base = eval_synthetic(test, synth, "baseline", k=args.k, seed=args.seed, generation_batch_size=args.generation_batch_size, checkpoint_path=test_checkpoint_dir / "baseline.json", checkpoint_identity={**common_checkpoint_identity, "condition": "baseline"}, **resume_kwargs)
+        ablated = eval_synthetic(test, synth, "ablation", k=args.k, seed=args.seed, generation_batch_size=args.generation_batch_size, checkpoint_path=test_checkpoint_dir / "ablation.json", checkpoint_identity={**common_checkpoint_identity, "condition": "ablation", "direction_sha256": selected_direction_sha256}, direction_sha256_actual_used=selected_direction_sha256, **resume_kwargs)
+        random_eval = eval_synthetic(test, synth, "random", k=args.k, seed=args.seed, generation_batch_size=args.generation_batch_size, checkpoint_path=test_checkpoint_dir / "random.json", checkpoint_identity={**common_checkpoint_identity, "condition": "random", "direction_sha256": random_direction_sha256}, direction_sha256_actual_used=random_direction_sha256, **resume_kwargs)
     else:
-        base = eval_hf(test, hook_backend, "baseline", None, k=args.k, max_new_tokens=args.max_new_tokens, seed=args.seed, generation_batch_size=args.generation_batch_size, checkpoint_path=test_checkpoint_dir / "baseline.json", checkpoint_identity={**common_checkpoint_identity, "condition": "baseline"})
-        ablated = eval_hf(test, hook_backend, "ablation", selected.direction, k=args.k, max_new_tokens=args.max_new_tokens, seed=args.seed, generation_batch_size=args.generation_batch_size, checkpoint_path=test_checkpoint_dir / "ablation.json", checkpoint_identity={**common_checkpoint_identity, "condition": "ablation", "direction_sha256": selected_direction_sha256}, expected_direction_sha256=selected_direction_sha256)
+        base = eval_hf(test, hook_backend, "baseline", None, k=args.k, max_new_tokens=args.max_new_tokens, seed=args.seed, generation_batch_size=args.generation_batch_size, checkpoint_path=test_checkpoint_dir / "baseline.json", checkpoint_identity={**common_checkpoint_identity, "condition": "baseline"}, **resume_kwargs)
+        ablated = eval_hf(test, hook_backend, "ablation", selected.direction, k=args.k, max_new_tokens=args.max_new_tokens, seed=args.seed, generation_batch_size=args.generation_batch_size, checkpoint_path=test_checkpoint_dir / "ablation.json", checkpoint_identity={**common_checkpoint_identity, "condition": "ablation", "direction_sha256": selected_direction_sha256}, expected_direction_sha256=selected_direction_sha256, **resume_kwargs)
         random_eval = eval_hf(
             test,
             hook_backend,
@@ -1950,18 +2564,25 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
             checkpoint_path=test_checkpoint_dir / "random.json",
             checkpoint_identity={**common_checkpoint_identity, "condition": "random", "direction_sha256": random_direction_sha256},
             expected_direction_sha256=random_direction_sha256,
+            **resume_kwargs,
         )
     generation_records = base.records + ablated.records + random_eval.records
+    validate_generation_records(generation_records, expected_jobs, allow_subset=False)
     records_payload = {
         "schema_version": GENERATION_RECORD_SCHEMA_VERSION,
         "experiment_id": EXPERIMENT_ID,
         "artifact_identity": artifact_identity,
+        "finalized_run_identity": finalized_identity,
+        "expected_jobs": expected_jobs,
+        "expected_jobs_hash": expected_jobs_hash,
+        "record_validator_version": RECORD_VALIDATOR_VERSION,
         "n_items": len(test),
         "k": int(args.k),
         "conditions": ["baseline", "ablation", "random"],
         "selected_direction_sha256_actual_used": selected_direction_sha256,
         "random_direction_sha256_actual_used": random_direction_sha256,
         "records": generation_records,
+        "records_sha256": config_hash(generation_records),
         "raw_prompts_stored": False,
         "raw_outputs_stored": False,
         "harmful_generation_performed": False,
@@ -1970,9 +2591,26 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
     records_path = out_dir / "e0016_generation_records.json"
     atomic_write_json(records_path, records_payload)
     records_sha256 = _sha256_bytes(records_path.read_bytes())
-    reconstructed = reconstruct_test_from_generation_artifact(records_payload, seed=args.seed)
+    artifact_manifest = {
+        "path": records_path.name,
+        "sha256": records_sha256,
+        "schema_version": GENERATION_RECORD_SCHEMA_VERSION,
+        "record_count": len(generation_records),
+        "expected_jobs_hash": expected_jobs_hash,
+        "artifact_identity_sha256": artifact_identity[
+            "artifact_identity_sha256"
+        ],
+        "reconstruction_function": "load_and_reconstruct_generation_artifact",
+    }
+    reconstructed = load_and_reconstruct_generation_artifact(
+        records_path,
+        {"generation_records_artifact": artifact_manifest},
+        seed=args.seed,
+        expected_jobs=expected_jobs,
+        expected_artifact_identity=artifact_identity,
+    )
     test_payload = reconstructed["test"]
-    payload.update({"status": test_payload["status"], "test": test_payload, "test_baseline": reconstructed["test_baseline"], "test_ablation": reconstructed["test_ablation"], "test_random": reconstructed["test_random"], "generation_records_artifact": {"path": records_path.name, "sha256": records_sha256, "schema_version": GENERATION_RECORD_SCHEMA_VERSION, "record_count": len(generation_records), "reconstruction_function": "reconstruct_test_from_generation_artifact"}})
+    payload.update({"status": test_payload["status"], "test": test_payload, "test_baseline": reconstructed["test_baseline"], "test_ablation": reconstructed["test_ablation"], "test_random": reconstructed["test_random"], "generation_records_artifact": artifact_manifest})
     atomic_write_json(manifest_path, payload)
     return payload
 

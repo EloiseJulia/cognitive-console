@@ -225,7 +225,7 @@ The item-cluster bootstrap resamples TEST items, not individual generations, wit
 \begin{equation}
   \begin{aligned}
     \operatorname{pass}(a)\iff{}&
-      \ell_a>0
+      0\notin I_a
       \;\land\;
       \bar d_a\ge\delta\\
       &{}\land\;
@@ -234,7 +234,7 @@ The item-cluster bootstrap resamples TEST items, not individual generations, wit
   \end{aligned}
   \label{eq:axis-pass}
 \end{equation}
-Equation~\ref{eq:axis-pass} requires a positive interval, the meaningful margin, and bounded coherence. The additive floor prevents a near-zero baseline from collapsing the gate into an exact-zero requirement; the implementation adds \(10^{-12}\) only as a floating-point comparison tolerance. The margin prevents negligible differences from licensing a control, and the coherence gate rejects gains due to degradation or repetition. The cell verdict is positive for at least two passing axes, conditional for one, and negative for none. This is a superiority test, not an equivalence test.
+Equation~\ref{eq:axis-pass} uses the frozen implementation's two-sided CI exclusion rule; the mean margin separately fixes the desired superiority direction. The additive floor prevents a near-zero baseline from collapsing the gate into an exact-zero requirement; the implementation adds \(10^{-12}\) only as a floating-point comparison tolerance. The margin prevents negligible differences from licensing a control, and the coherence gate rejects gains due to degradation or repetition. The cell verdict is positive for at least two passing axes, conditional for one, and negative for none. This is a superiority test, not an equivalence test.
 
 Bonferroni correction applies within a cell across three axes. It does not provide familywise control over the full descriptive 12-cell grid. A separate preregistered robustness analysis varies five DEV/TEST split seeds over the same item pool. It measures split sensitivity, not independent item-sampling generalization.
 

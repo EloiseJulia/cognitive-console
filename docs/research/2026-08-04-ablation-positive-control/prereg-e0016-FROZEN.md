@@ -2,7 +2,7 @@
 
 **Experiment id:** E-0016
 
-**Status:** **FROZEN — Regime B only; owner GPU-budget authorization pending**
+**Status:** **FROZEN — Regime B only; retry authorized under D-0095**
 
 **Freeze candidate prepared:** 2026-08-05
 
@@ -11,13 +11,25 @@
 **Protocol freeze candidate commit:** `c36a438977ae51be5172587e900811508fe77468`
 — this is the commit containing the first frozen-document candidate.
 
-**Required run commit:** `4def9ba59a00909d4cf2aae7dbdb1665877d6204`.
-This is the audited merge commit containing the frozen protocol and harness. The
+**Required run commit:** `c094f07fa3592c2210f46caba9e69c49a5a92fad`.
+This is the audited merge commit containing the frozen protocol, harness, and
+pre-DEV infrastructure-only serialization repair. The
 experiment may check out and execute only this commit from a clean source tree.
 
 **Validity:** `valid_for_paper=false` until a real eligible Regime-B run completes and an independent hostile results audit validates it.
 
-**Authorization boundary:** freezing this protocol does **not** authorize GPU use.
+**Authorization boundary:** D-0095 authorizes at most 3 A800 GPU-hours. Attempt 1
+consumed an upper bound of 0.00722222 GPU-hours, leaving a retry hard cap of
+2.99277778 GPU-hours.
+
+**Pre-DEV infrastructure-only amendment (2026-08-05):** Attempt 1 at
+`4def9ba59a00909d4cf2aae7dbdb1665877d6204` failed before direction extraction,
+hook-bites, DEV, eligibility, or TEST because tokenizer configuration contained a
+non-JSON-serializable `AddedToken`. The audited repair introduces canonical
+`AddedToken` and typed configuration-key serialization under environment identity
+schema v3. It changes no dataset, split, seed, model, generation setting,
+intervention, endpoint, statistic, threshold, or stopping rule. Attempt 1 produced
+no DEV/TEST result and remains `valid_for_paper=false`.
 
 ## 1. Frozen purpose and scope
 
@@ -49,8 +61,8 @@ Only **Regime B: benign XSTest-safe generation** is frozen.
 - Regime A harmful generation is excluded. It has no command, configuration, or
   fallback in this protocol. Future consideration requires a new owner decision
   and a new protocol.
-- Regime-B GPU budget remains unapproved. Do not run the HF command until the owner
-  approves budget and the Manager records authorization.
+- Regime-B GPU retry is authorized only within D-0095's remaining 2.99277778
+  A800 GPU-hour hard cap and from the required clean run commit.
 
 ## 3. Frozen model and runtime resolution
 
@@ -257,10 +269,10 @@ python scripts\run_e0016_ablation_positive_control.py `
 This may produce a synthetic PASS. It is explicitly non-evidence and must not be
 registered as a real run/result.
 
-### 9.2 Future owner-approved HF Regime-B run
+### 9.2 Authorized HF Regime-B retry
 
 Prerequisites: owner GPU-budget approval recorded; independent protocol audit
-SOUND; run commit `4def9ba59a00909d4cf2aae7dbdb1665877d6204` checked out in a clean
+SOUND; run commit `c094f07fa3592c2210f46caba9e69c49a5a92fad` checked out in a clean
 source tree; a free GPU selected according
 to host etiquette without interfering with another user. GPU visibility/index is
 an execution-environment choice made after approval and is intentionally absent
@@ -324,8 +336,8 @@ directory. If DEV is underpowered, the command returns
 - No raw harmful text in git or run artifacts.
 - No TEST-informed rerun or parameter change.
 - No paper integration before a real run and independent results audit.
-- No GPU use until owner budget approval.
+- No GPU use beyond D-0095's remaining 2.99277778 A800 GPU-hour hard cap.
 
-**Remaining non-scientific execution gate:** owner GPU-budget authorization and
-Manager recording of the final audited run commit/authorization. No scientific
-parameter is BLOCKED or left open in this Regime-B protocol.
+**Remaining non-scientific execution gates:** real Regime-B retry and independent
+hostile results audit. No scientific parameter is BLOCKED or left open in this
+Regime-B protocol.

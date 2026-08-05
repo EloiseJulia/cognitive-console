@@ -1,0 +1,94 @@
+{
+  "artifact_type": "E-0016 execution failure lineage",
+  "audit_status": "PENDING_INDEPENDENT_HOSTILE_RESULTS_AUDIT",
+  "authorization": "D-0095",
+  "branch": "run/e0016-regime-b-20260805",
+  "code_commit": "4def9ba59a00909d4cf2aae7dbdb1665877d6204",
+  "data_preflight": {
+    "advbench": {
+      "content_sha256": "6cd1a5c63c07610d7eb67307772ee5606017ee950b5770ab288a2c487489d3e1",
+      "forward_pass_only": true,
+      "loaded_rows": 520,
+      "loaded_rows_sha256": "223d1363cb43a5140370e58f1aa6a3d5dec5dc6a4f7f7e2bc775c0519da6306b",
+      "revision": "098262edf85f807224e70ecd87b9d83716bf6b73",
+      "used_prompt_hashes_sha256": "66d85dcc8cb618494c652230de24ec579f3b05dca9a27210e8a693c5fd22c925",
+      "used_rows": 64
+    },
+    "alpaca": {
+      "content_sha256": "06391b656a06fd3fb9d213160ef2398796c3b7f3dc75ef1e3ced30d461517073",
+      "loaded_rows": 52002,
+      "loaded_rows_sha256": "9792db24de17f155996194c64859ba20ba10e571b32eec69accf2e769a81b54a",
+      "revision": "dce01c9b08f87459cf36a430d809084718273017",
+      "used_prompt_hashes_sha256": "32b25402230591d1ae52cc682b158a89e4d782ad4b9fc7e0d71aec299de89e62",
+      "used_rows": 64
+    },
+    "verdict": "PASS",
+    "xstest": {
+      "content_sha256": "11783fb294ed017473ee53c207d71f2161c7672c8d0b037501e78387f801cb5a",
+      "loaded_rows": 450,
+      "loaded_rows_sha256": "abeeb9bf48f48aae36dd6c4c1dbd4eb096262fc4363b0d5eedfda3c357960811",
+      "revision": "f600c994b256f12867dfa5b3eb3d545a3e62f8b5",
+      "safe_prompt_hashes_sha256": "b6f9b51bdde09891456af5b064bb547a608fe4a67db51ffd43a0331f6b5ffaf1",
+      "safe_rows": 250
+    }
+  },
+  "dev": {
+    "baseline_false_refusal": null,
+    "eligibility_verdict": "UNVERIFIED_NOT_REACHED"
+  },
+  "dirty_at_run_start": false,
+  "ended_at": "2026-08-05T07:43:04Z",
+  "environment": {
+    "preflight_environment_hash": "sha256:c5aec6639a12c206f21e7743afc895460c855b4cc99a76eeba809381dc69ad3e",
+    "versions": {
+      "datasets": "5.0.1",
+      "numpy": "2.5.1",
+      "pandas": "3.0.5",
+      "pyarrow": "25.0.0",
+      "python": "3.12.3",
+      "torch": "2.11.0+cu128",
+      "transformers": "5.14.1"
+    }
+  },
+  "execution_status": "FAILED_PRE_DEV_ENVIRONMENT_SERIALIZATION",
+  "exit_code": 1,
+  "experiment_id": "E-0016",
+  "failure": {
+    "exception_type": "TypeError",
+    "frozen_code_or_parameters_changed": false,
+    "message": "Object of type AddedToken is not JSON serializable",
+    "retry_performed": false,
+    "stage": "capture_environment_identity/tokenizer_config serialization"
+  },
+  "gpu_hours_upper_bound": 0.00722222,
+  "gpu_model": "NVIDIA A800 80GB PCIe",
+  "lineage": {
+    "external_log": "~/cc_l0/e0016-logs/e0016-regime-b-20260805.log",
+    "external_log_sha256": "sha256:0d7748bb9b91e0576a47a4a7f1b648cb2cd6fac2849df6df0f1f6db6b016937c",
+    "run_start_source_state": "e0016_run_start_source_state.json",
+    "run_start_source_state_sha256": "sha256:98058e3fd105e45774942f2ed7989cd6e189307181d6ac1faf91b35d7dae9e9d"
+  },
+  "major_aggregate_numbers": null,
+  "model": {
+    "id": "Qwen/Qwen2.5-7B-Instruct",
+    "preflight_resolved_revision": "a09a35458c702b33eeacc393d103063234e8bc28",
+    "requested_revision": "a09a35458c702b33eeacc393d103063234e8bc28",
+    "shared_handle_loaded_once": true
+  },
+  "physical_gpu_index": 3,
+  "protocol_authority": "docs/research/2026-08-04-ablation-positive-control/prereg-e0016-FROZEN.md \u00a79.2",
+  "regime": "B_XSTest_safe_overrefusal",
+  "runner_final_verdict": null,
+  "safety": {
+    "harmful_generation_performed": false,
+    "raw_harmful_text_committed": false,
+    "regime_a_reached": false
+  },
+  "started_at": "2026-08-05T07:42:38Z",
+  "test": {
+    "ran": false,
+    "reason": "runner failed before DEV"
+  },
+  "valid_for_paper": false,
+  "wall_clock_seconds": 26
+}

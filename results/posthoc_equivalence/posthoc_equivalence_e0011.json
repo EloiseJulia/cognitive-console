@@ -1,8 +1,7 @@
 {
   "posthoc_label": "POST-HOC / exploratory / NOT pre-registered (D-0056)",
-  "generated_at": "2026-07-29T03:53:37.928354+00:00",
   "source": "scripts/posthoc_equivalence.py",
-  "e0011_dir": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011",
+  "e0011_dir": "results/E-0011",
   "sesoi": 0.05,
   "tost_ci_level": 0.9,
   "bootstrap_b": 10000,
@@ -11,7 +10,7 @@
       "seed": "seed_20260724",
       "cells": [
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260724\\cell_caa__qwen2.5-7b\\c2b_adjudication_results.json",
+          "cell_json": "results/E-0011/seed_20260724/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
           "method": "caa",
           "model": "qwen2.5-7b",
           "axes": [
@@ -71,7 +70,7 @@
               "tost_ci_hi": -0.135551,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 53,
                 "se_estimate": 0.061715,
@@ -84,7 +83,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260724\\cell_caa__llama3-8b\\c2b_adjudication_results.json",
+          "cell_json": "results/E-0011/seed_20260724/cell_caa__llama3-8b/c2b_adjudication_results.json",
           "method": "caa",
           "model": "meta-llama-3-8b",
           "axes": [
@@ -144,7 +143,7 @@
               "tost_ci_hi": -0.030339,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 53,
                 "se_estimate": 0.008293,
@@ -157,7 +156,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260724\\cell_iti__qwen2.5-7b\\c2b_adjudication_results.json",
+          "cell_json": "results/E-0011/seed_20260724/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
           "method": "iti",
           "model": "qwen2.5-7b",
           "axes": [
@@ -217,7 +216,7 @@
               "tost_ci_hi": -0.17711,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 53,
                 "se_estimate": 0.054045,
@@ -230,7 +229,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260724\\cell_iti__llama3-8b\\c2b_adjudication_results.json",
+          "cell_json": "results/E-0011/seed_20260724/cell_iti__llama3-8b/c2b_adjudication_results.json",
           "method": "iti",
           "model": "meta-llama-3-8b",
           "axes": [
@@ -290,7 +289,7 @@
               "tost_ci_hi": -0.036942,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 53,
                 "se_estimate": 0.015362,
@@ -308,7 +307,7 @@
       "seed": "seed_20260725",
       "cells": [
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260725\\cell_caa__qwen2.5-7b\\c2b_adjudication_results.json",
+          "cell_json": "results/E-0011/seed_20260725/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
           "method": "caa",
           "model": "qwen2.5-7b",
           "axes": [
@@ -368,7 +367,7 @@
               "tost_ci_hi": -0.119781,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 53,
                 "se_estimate": 0.05812,
@@ -381,7 +380,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260725\\cell_caa__llama3-8b\\c2b_adjudication_results.json",
+          "cell_json": "results/E-0011/seed_20260725/cell_caa__llama3-8b/c2b_adjudication_results.json",
           "method": "caa",
           "model": "meta-llama-3-8b",
           "axes": [
@@ -441,7 +440,7 @@
               "tost_ci_hi": -0.126598,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 53,
                 "se_estimate": 0.042768,
@@ -454,7 +453,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260725\\cell_iti__qwen2.5-7b\\c2b_adjudication_results.json",
+          "cell_json": "results/E-0011/seed_20260725/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
           "method": "iti",
           "model": "qwen2.5-7b",
           "axes": [
@@ -470,7 +469,7 @@
               "tost_ci_hi": -0.005,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 40,
                 "se_estimate": 0.018328,
@@ -514,7 +513,7 @@
               "tost_ci_hi": -0.104505,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 53,
                 "se_estimate": 0.046965,
@@ -527,7 +526,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260725\\cell_iti__llama3-8b\\c2b_adjudication_results.json",
+          "cell_json": "results/E-0011/seed_20260725/cell_iti__llama3-8b/c2b_adjudication_results.json",
           "method": "iti",
           "model": "meta-llama-3-8b",
           "axes": [
@@ -543,7 +542,7 @@
               "tost_ci_hi": -0.005,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 40,
                 "se_estimate": 0.014654,
@@ -587,7 +586,7 @@
               "tost_ci_hi": -0.036603,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 53,
                 "se_estimate": 0.008727,
@@ -605,7 +604,7 @@
       "seed": "seed_20260726",
       "cells": [
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260726\\cell_caa__qwen2.5-7b\\c2b_adjudication_results.json",
+          "cell_json": "results/E-0011/seed_20260726/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
           "method": "caa",
           "model": "qwen2.5-7b",
           "axes": [
@@ -665,7 +664,7 @@
               "tost_ci_hi": -0.099405,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 53,
                 "se_estimate": 0.050889,
@@ -678,7 +677,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260726\\cell_caa__llama3-8b\\c2b_adjudication_results.json",
+          "cell_json": "results/E-0011/seed_20260726/cell_caa__llama3-8b/c2b_adjudication_results.json",
           "method": "caa",
           "model": "meta-llama-3-8b",
           "axes": [
@@ -738,7 +737,7 @@
               "tost_ci_hi": -0.061094,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 53,
                 "se_estimate": 0.011942,
@@ -751,7 +750,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260726\\cell_iti__qwen2.5-7b\\c2b_adjudication_results.json",
+          "cell_json": "results/E-0011/seed_20260726/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
           "method": "iti",
           "model": "qwen2.5-7b",
           "axes": [
@@ -811,7 +810,7 @@
               "tost_ci_hi": -0.079469,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 53,
                 "se_estimate": 0.050843,
@@ -824,7 +823,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260726\\cell_iti__llama3-8b\\c2b_adjudication_results.json",
+          "cell_json": "results/E-0011/seed_20260726/cell_iti__llama3-8b/c2b_adjudication_results.json",
           "method": "iti",
           "model": "meta-llama-3-8b",
           "axes": [
@@ -884,7 +883,7 @@
               "tost_ci_hi": -0.080245,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 53,
                 "se_estimate": 0.035844,
@@ -902,7 +901,7 @@
       "seed": "seed_20260727",
       "cells": [
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260727\\cell_caa__qwen2.5-7b\\c2b_adjudication_results.json",
+          "cell_json": "results/E-0011/seed_20260727/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
           "method": "caa",
           "model": "qwen2.5-7b",
           "axes": [
@@ -940,7 +939,7 @@
               "tost_ci_hi": -0.005,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 40,
                 "se_estimate": 0.037348,
@@ -962,7 +961,7 @@
               "tost_ci_hi": -0.169981,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 53,
                 "se_estimate": 0.060894,
@@ -975,7 +974,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260727\\cell_caa__llama3-8b\\c2b_adjudication_results.json",
+          "cell_json": "results/E-0011/seed_20260727/cell_caa__llama3-8b/c2b_adjudication_results.json",
           "method": "caa",
           "model": "meta-llama-3-8b",
           "axes": [
@@ -1035,7 +1034,7 @@
               "tost_ci_hi": -0.038744,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 53,
                 "se_estimate": 0.020728,
@@ -1048,7 +1047,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260727\\cell_iti__qwen2.5-7b\\c2b_adjudication_results.json",
+          "cell_json": "results/E-0011/seed_20260727/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
           "method": "iti",
           "model": "qwen2.5-7b",
           "axes": [
@@ -1086,7 +1085,7 @@
               "tost_ci_hi": -0.02,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 40,
                 "se_estimate": 0.035581,
@@ -1108,7 +1107,7 @@
               "tost_ci_hi": -0.165977,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 53,
                 "se_estimate": 0.056983,
@@ -1121,7 +1120,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260727\\cell_iti__llama3-8b\\c2b_adjudication_results.json",
+          "cell_json": "results/E-0011/seed_20260727/cell_iti__llama3-8b/c2b_adjudication_results.json",
           "method": "iti",
           "model": "meta-llama-3-8b",
           "axes": [
@@ -1181,7 +1180,7 @@
               "tost_ci_hi": -0.052084,
               "tost_ci_level": 0.9,
               "tost_sesoi": 0.05,
-              "tost_verdict": "CALIBRATION_HARM",
+              "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
               "mde": {
                 "n": 53,
                 "se_estimate": 0.009917,

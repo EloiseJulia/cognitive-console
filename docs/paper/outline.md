@@ -6,7 +6,7 @@ Status: writing scaffold, not paper freeze. Route follows D-0035/D-0036/D-0041: 
 Legible Need Not Be Controllable: A Frozen Reality Check for Prompt-vs-Latent Behavioral Control in LLMs
 
 ## Novelty unit
-A frozen, fairness-controlled, independently-audited behavioral adjudication showing that representational legibility does **not** transfer to control, generalized across 2 steering methods × 2 model families, with a replicated calibration-harm sub-finding.
+A frozen, fairness-controlled, independently-audited behavioral adjudication showing that representational legibility does **not** transfer to control, generalized across 2 steering methods × 2 model families, with a replicated negative steer-vs-bounded-prompt uncertainty contrast.
 
 ## Abstract (claims carried: C1 scoped; C2 headline; C3 interface-evaluation implication only)
 - Problem: HCI tools increasingly promise readable controls over LLM behavior, but a readable cognitive axis may not be a usable control primitive.
@@ -25,7 +25,7 @@ A frozen, fairness-controlled, independently-audited behavioral adjudication sho
    - **Headline empirical contribution (C2):** a generalized negative result: across {CAA, ITI} × {Qwen2.5-7B, Llama-3-8B}, latent steering does not beat the bounded best-prompt ceiling on any tested axis, and calibration is harmed in all four cells.
    - **Methodology contribution (C2 support):** a reusable frozen adjudication protocol for fair prompt-vs-latent behavioral comparison.
    - **Design implication (C3):** console designs should surface boundary conditions and trust-calibration warnings; no user-study credit is claimed yet.
-5. **Non-claims.** We do not claim universal impossibility of latent steering, mechanism proof for calibration harm, empirical user-study results, or that Mishra is our empirical result.
+5. **Non-claims.** We do not claim universal impossibility of latent steering, a mechanism proof for the comparator-bound calibration contrast, empirical user-study results, or that Mishra is our empirical result.
 
 ## 2. Related Work (claims carried: C2a background; novelty contrast; no empirical claims)
 
@@ -50,13 +50,13 @@ Citation hygiene rule for this table: use only works verified in `docs/research/
 
 | prior work (year; cite key) | what THEY test | what WE uniquely adjudicate |
 |---|---|---|
-| Sprejer et al., *Mind the Performance Gap* (2026; `sprejer2026mindgap`) | Closest empirical neighbor: feature steering can induce capability--behavior trade-offs and degradation relative to prompting | External corroboration for C2/calibration-harm, not a scoop: Goodfire SAE features, MMLU, no pre-registration, no CAA/ITI 2×2 model grid, no HCI legibility-console framing |
+| Sprejer et al., *Mind the Performance Gap* (2026; `sprejer2026mindgap`) | Closest empirical neighbor: feature steering can induce capability--behavior trade-offs and degradation relative to prompting | External context for the C2 comparator-bound contrast, not a scoop: Goodfire SAE features, MMLU, no pre-registration, no CAA/ITI 2×2 model grid, no HCI legibility-console framing |
 | Mishra et al., *Steered LLM Activations are Non-Surjective* (2026 workshop; `mishra2026nonsurj`) | Internal residual-state non-surjectivity under activation steering | A behavioral prompt-vs-latent transfer test under frozen DEV/TEST adjudication; Mishra is background, not our result |
 | Heyman & Vandeputte, *Steer Like the LLM* (2026; `heyman2026steer`) | Trained steering that mimics prompting | Naive/bounded off-the-shelf CAA/ITI failure; PSR is a threat and planned response, not covered by C2 |
 | Rimsky et al. CAA + Li et al. ITI (2024/2023; `rimsky2024caa`, `li2023iti`) | Activation steering methods | Whether those legible directions beat the best prompt on task outcomes, with fairness controls and hostile audits |
 | Fan et al. ASTEER + Korznikov et al. Rogue Scalpel (2026; `fan2026asteer`, `korznikov2025rogue`) | Steerability limits and safety-domain steering failures | Metacognitive-axis prompt-vs-latent adjudication, not a broad benchmark or safety attack |
 | Huang & Lim (2025; `huang2025steering`) | Layperson GUI for SAE feature steering/persona building | Prompt-vs-latent behavioral non-transfer and interface-evaluation implications; no human-study claim in this route |
-| Riche et al., Labarta et al., Raval et al. (2025/2026; `riche2025aiinstr`, `labarta2026attribution`, `raval2026latman`) | Prompt instruments, expert vision/CLIP steering, and embedding-visualization manipulation | LLM behavioral control and calibration harm; Labarta is vision/CLIP and Latent Manipulator steers visualizations, not LLM generations |
+| Riche et al., Labarta et al., Raval et al. (2025/2026; `riche2025aiinstr`, `labarta2026attribution`, `raval2026latman`) | Prompt instruments, expert vision/CLIP steering, and embedding-visualization manipulation | LLM behavioral control and a comparator-bound negative calibration contrast; Labarta is vision/CLIP and Latent Manipulator steers visualizations, not LLM generations |
 ## 3. Methods (claims carried: C1 measurement; C2 adjudication)
 
 ### 3.1 C1 facade measurement
@@ -91,7 +91,7 @@ Citation hygiene rule for this table: use only works verified in `docs/research/
 - Report each cell as 0/3 axes pass: CAA×Qwen, CAA×Llama, ITI×Qwen, ITI×Llama all `KILL_PLAN_D`; arm verdict `NON_TRANSFER_GENERALIZED`.
 - Include per-axis Δ columns with Bonferroni CI and pass/fail; do not hand-enter final camera-ready values outside the artifact pipeline.
 
-### 4.3 Calibration harm replicated in all four cells
+### 4.3 Steer-vs-bounded-prompt negative calibration contrast in all four cells
 - Main/stub figure: calibration-harm-across-4-cells.
 - Required values from E-0006: CAA×Qwen −0.228, CAA×Llama −0.072, ITI×Qwen −0.103, ITI×Llama −0.084; all CIs exclude 0 negatively.
 - Interpretation: naive CAA/ITI steering is not just null for uncertainty; it worsens calibration in all tested method×model cells.
@@ -116,9 +116,8 @@ Citation hygiene rule for this table: use only works verified in `docs/research/
 - Run the frozen latent-recovery arm (`prereg-latent-recovery-arm.md`) to test faithful PSR-style DEV-optimized steering.
 - Run Llama C1 facade replication (Workstream A) before promoting C1 beyond exploratory.
 - Design and preregister a human study only if owner approves the venue fork.
-- Investigate calibration-harm mechanisms in a new preregistered package; do not re-mine E-0007 data.
+- Investigate mechanisms behind the negative steer-vs-bounded-prompt contrast in a new preregistered package; do not re-mine E-0007 data.
 
 ## 8. Conclusion (claims carried: C1 scoped; C2 headline; C3 implication)
-- Repeat only evidence-backed claims: exploratory legibility facade, generalized C2 non-transfer across tested cells, robust calibration harm, and interface-evaluation implication.
+- Repeat only evidence-backed claims: exploratory legibility facade, generalized C2 non-transfer across tested cells, the four-cell steer-vs-bounded-prompt negative calibration contrast under the frozen scorer, and the interface-evaluation implication. Keep direct Qwen/CAA steer-vs-baseline near zero (+0.011 compliance, +0.0008 1-Brier).
 - Do not conclude that all steering fails, that prompts are behaviorally non-surjective in general, or that users empirically benefit from the console.
-

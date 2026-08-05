@@ -1,8 +1,7 @@
 {
   "posthoc_label": "POST-HOC / exploratory / NOT pre-registered (D-0056)",
-  "generated_at": "2026-07-29T03:53:37.926352+00:00",
   "source": "scripts/posthoc_equivalence.py",
-  "arm_dir": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\arm_full",
+  "arm_dir": "results/arm_full",
   "sesoi": 0.05,
   "tost_ci_level": 0.9,
   "bootstrap_b": 10000,
@@ -13,7 +12,7 @@
   },
   "cells": [
     {
-      "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\arm_full\\cell_caa__qwen2.5-7b\\c2b_adjudication_results.json",
+      "cell_json": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
       "method": "caa",
       "model": "qwen2.5-7b",
       "axes": [
@@ -73,7 +72,7 @@
           "tost_ci_hi": -0.131397,
           "tost_ci_level": 0.9,
           "tost_sesoi": 0.05,
-          "tost_verdict": "CALIBRATION_HARM",
+          "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
           "mde": {
             "n": 53,
             "se_estimate": 0.060493,
@@ -86,7 +85,7 @@
       ]
     },
     {
-      "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\arm_full\\cell_caa__llama3-8b\\c2b_adjudication_results.json",
+      "cell_json": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
       "method": "caa",
       "model": "meta-llama-3-8b",
       "axes": [
@@ -146,7 +145,7 @@
           "tost_ci_hi": -0.046753,
           "tost_ci_level": 0.9,
           "tost_sesoi": 0.05,
-          "tost_verdict": "CALIBRATION_HARM",
+          "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
           "mde": {
             "n": 53,
             "se_estimate": 0.014663,
@@ -159,7 +158,7 @@
       ]
     },
     {
-      "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\arm_full\\cell_iti__qwen2.5-7b\\c2b_adjudication_results.json",
+      "cell_json": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
       "method": "iti",
       "model": "qwen2.5-7b",
       "axes": [
@@ -219,7 +218,7 @@
           "tost_ci_hi": -0.079445,
           "tost_ci_level": 0.9,
           "tost_sesoi": 0.05,
-          "tost_verdict": "CALIBRATION_HARM",
+          "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
           "mde": {
             "n": 53,
             "se_estimate": 0.014236,
@@ -232,7 +231,7 @@
       ]
     },
     {
-      "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\arm_full\\cell_iti__llama3-8b\\c2b_adjudication_results.json",
+      "cell_json": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
       "method": "iti",
       "model": "meta-llama-3-8b",
       "axes": [
@@ -292,7 +291,7 @@
           "tost_ci_hi": -0.060273,
           "tost_ci_level": 0.9,
           "tost_sesoi": 0.05,
-          "tost_verdict": "CALIBRATION_HARM",
+          "tost_verdict": "NEGATIVE_STEER_VS_PROMPT_CONTRAST",
           "mde": {
             "n": 53,
             "se_estimate": 0.014227,

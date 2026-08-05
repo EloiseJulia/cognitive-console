@@ -1,6 +1,6 @@
 artifact_id: "fig-calibration-harm-4cell"
 artifact_type: "main companion figure"
-title: "Uncertainty calibration harm across steering methods and model families"
+title: "Steer-vs-bounded-prompt uncertainty calibration contrast across steering methods and model families"
 supports_claims: ["C2"]
 source_artifacts:
   - path: "results/arm_full/arm_matrix_summary.json"
@@ -33,4 +33,23 @@ output_file: "docs/paper/figures/c2-calibration-harm.pdf"
 rebuild_command: "python docs\\paper\\scripts\\plot_c2_calibration_harm.py"
 manual_edits_allowed: false
 status: "active: generated from frozen robustness-arm JSON artifacts by docs/paper/scripts/plot_c2_calibration_harm.py"
-required_message: "All four cells are negative with CI excluding 0 per E-0006; mechanism remains open after E-0007."
+required_message: "All four steer-vs-bounded-prompt cells are negative with CI excluding 0 under the frozen scorer per E-0006; direct Qwen/CAA steer-vs-baseline is near zero (+0.011 compliance, +0.0008 1-Brier), and the mechanism remains open after E-0007."
+paper_location: "Results / Calibration Warning: Keep the Comparator Attached (Figure fig:c2-calibration-harm)"
+source_experiments: ["E-0005", "E-0006 arm_full 2x2"]
+aggregation_script: "docs/paper/scripts/plot_c2_calibration_harm.py"
+generator_commit: "2110a706bace5b3911043b354deca3103712c636"
+source_artifact_commits:
+  "results/arm_full/arm_matrix_summary.json": "76482794d6eedec14ee215ab5cf73b9bbd509361"
+  "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json": "76482794d6eedec14ee215ab5cf73b9bbd509361"
+  "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json": "76482794d6eedec14ee215ab5cf73b9bbd509361"
+  "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json": "76482794d6eedec14ee215ab5cf73b9bbd509361"
+  "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json": "76482794d6eedec14ee215ab5cf73b9bbd509361"
+source_artifact_hashes:
+  "results/arm_full/arm_matrix_summary.json": "fd9140e8764da8b46e531644b9f885d363f718107c2e86d592ea4593eb75338e"
+  "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json": "33f242faf921f4a5de49b9620b6a5507415a157d21f9688dce6616d32cda1800"
+  "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json": "d301bacf70744406356fd2e1a597c01b8738c10d392a9901feae461bebfa0f42"
+  "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json": "e168392f4c44d29467791883da122d27b470ce0770bc81c8b5d705119bc6647e"
+  "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json": "ac9d18aa67a5e2afe9b37441fa08c008cfad139a557f323fa5052d8c38f85282"
+output_sha256: "7b9f38fef8e1daba8d4669c75d1c6c4c3b43f4dd482357ac6a0857108863f8e0"
+last_verified: "2026-08-06"
+verdict: "verified main companion figure; comparator-bound C2 contrast only, not direct steer-vs-baseline harm"

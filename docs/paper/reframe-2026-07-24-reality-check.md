@@ -35,11 +35,11 @@ internal legibility does **not** cash out into a behavioral advantage over the b
 - **Statement:** Steering along the *legible* CAA/ITI mean-difference-style direction does **not** push task
   behavior beyond the best-prompt ceiling on any tested axis under frozen, pre-registered adjudication,
   across **2 steering method families × 2 model families**: CAA/ITI × Qwen2.5-7B/Llama-3-8B. All four cells
-  are **0/3 pass**; on calibration, steering is **actively harmful in all four cells** (uncertainty-axis CI
+  are **0/3 pass**; calibration shows a **steer-vs-bounded-prompt negative contrast under the frozen scorer in all four cells** (uncertainty-axis CI
   excludes 0 negatively in every method×model cell).
 - **Evidence:** **E-0005** (Qwen×CAA, audited **VALID_NEGATIVE**) + **E-0006** (audited
   **VALID_ARM_EVIDENCE**, arm_verdict=**NON_TRANSFER_GENERALIZED**; cell1 reproduces E-0005 byte-for-byte;
-  uncertainty harms: CAA×Qwen −0.228, CAA×Llama −0.072, ITI×Qwen −0.103, ITI×Llama −0.084, all CIs < 0).
+  uncertainty contrasts: CAA×Qwen −0.228, CAA×Llama −0.072, ITI×Qwen −0.103, ITI×Llama −0.084, all CIs < 0). Direct Qwen/CAA steer-vs-baseline is near zero (+0.011 compliance, +0.0008 1-Brier).
 - **Status:** **SUPPORTED as a pre-registered negative / generalized reality-check claim across the tested
   2×2 grid.**
 - **Framing rule (owner):** reported as an honest scoped negative; the judgment is frozen and will not be
@@ -96,11 +96,11 @@ study figures (future) → C3. No mechanism figure enters the main contribution 
 ## 5. Future Work / mechanism status (NOT a contribution)
 
 - **C2-mech / off-manifold distance account:** The targeted, pre-registered off-manifold test returned a
-  **VALID NULL** (**E-0007**, audited VALID_NULL): whitened Mahalanobis distance vs per-item calibration harm
+  **VALID NULL** (**E-0007**, audited VALID_NULL): whitened Mahalanobis distance vs the per-item comparator-bound calibration contrast
   had per-cell Spearman ρ ≈ {0.033, 0.039, -0.060, -0.223}, **0/4 pass**.
 - **Consequence:** the distance-based off-manifold mechanism is **not evidenced** and must not appear as a
-  contribution, core insight, or hypothesis in the contribution list. The calibration harm remains a robust
-  empirical phenomenon (E-0006), but **the mechanism of the calibration harm is open**. Per D-0040, do not
+  contribution, core insight, or hypothesis in the contribution list. The comparator-bound calibration contrast remains a robust
+  empirical phenomenon (E-0006), but **the mechanism of the contrast is open**. Per D-0040, do not
   re-mine an alternative mechanism on the same data.
 - **Permitted wording:** Limitations/Future Work may say that stronger, trained, optimized, or
   manifold-constrained steering could behave differently and would require a new independent preregistered

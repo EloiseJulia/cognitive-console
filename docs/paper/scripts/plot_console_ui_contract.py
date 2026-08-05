@@ -59,6 +59,8 @@ def _reader_text(text: object) -> str:
         "not_implemented": "not implemented in this run",
         "not_run_required_before_confirmatory_claim": "human-rater calibration pending",
         "human-alpha PENDING -> not-yet-confirmatory": "not yet confirmatory",
+        "calibration harm": "steer-vs-prompt calibration contrast",
+        "uncertainty harm": "uncertainty steer-vs-prompt contrast",
     }
     out = str(text)
     for old, new in replacements.items():
@@ -94,7 +96,7 @@ def _card_lines(card: dict) -> list[str]:
         _signal_line("READ", f"{read.get('status')} {read.get('summary', '')}"),
         _signal_line("TRANSFER", f"{transfer.get('verdict')} {transfer.get('summary', '')}"),
         _signal_line("PROMPT-CEILING", ceiling.get("summary", "n/a")),
-        _signal_line("CALIBRATION-HARM", f"{harm.get('status')} {harm.get('summary', '')}"),
+        _signal_line("CALIBRATION-CONTRAST", f"{harm.get('status')} {harm.get('summary', '')}"),
         _signal_line("EVIDENCE-TIER", f"{tier.get('tier')} ({'; '.join(tier.get('notes', []))})"),
     ]
     return lines

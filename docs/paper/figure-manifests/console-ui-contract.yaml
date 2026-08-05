@@ -1,6 +1,5 @@
 figure_id: console-ui-contract
 output: docs/paper/figures/console-ui-contract.pdf
-output_sha256: ed52591f883b2973ba6ac20a271aaeebb4cc1ae0eba1e18dcf1d9a3622c4493c
 generator: docs/paper/scripts/plot_console_ui_contract.py
 purpose: Static paper figure for the console v2 five-signal UI contract.
 evidence_ids:
@@ -23,3 +22,35 @@ claim_scope: Two-axis UI artifact illustrating the proposed evidence-accounting 
 rebuild_command: python docs\paper\scripts\plot_console_ui_contract.py
 rendering_notes:
   - Every PDF text segment explicitly sets black non-stroking and stroking color for high contrast on card fills and grayscale printing.
+artifact_id: fig-console-ui-contract
+artifact_type: main figure
+paper_location: "Interface-Evaluation Contract in Use / Illustrative Design Scenario (Figure fig:console)"
+supports_claims: ["C2", "C3"]
+source_experiments: ["E-0003", "E-0005", "E-0006", "E-0008", "E-0009"]
+aggregation_script: docs/paper/scripts/plot_console_ui_contract.py
+generator_commit: 2110a706bace5b3911043b354deca3103712c636
+source_artifact_commits:
+  "results/gpu_7b_2026-07-23/c1/c1_facade_results.json": 05b33ede9c4d9677d4a32c4d74766933d96d563d
+  "results/llama_c1_facade_2026-07-24/c1_facade_results.json": 31678173e83f01c2de2b8775b2f87f068fbc190e
+  "results/c2b_adjudication_hf_2026-07-24/c2b_adjudication_results.json": 047e6db4c5d2e5cf8cd34c86f80943647c2aba1e
+  "results/arm_full/arm_matrix_summary.json": 76482794d6eedec14ee215ab5cf73b9bbd509361
+  "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json": 76482794d6eedec14ee215ab5cf73b9bbd509361
+  "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json": 76482794d6eedec14ee215ab5cf73b9bbd509361
+  "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json": 76482794d6eedec14ee215ab5cf73b9bbd509361
+  "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json": 76482794d6eedec14ee215ab5cf73b9bbd509361
+  "results/psr_qwen_primary/psr_c2b_adjudication_results.json": ea7a520fe7703c23bfab3d8753ea6dbe0329cc44
+source_artifact_hashes:
+  "results/gpu_7b_2026-07-23/c1/c1_facade_results.json": c48dab0bc2debc369678d4e397d74c4157a98763c1feef3044cca2b6fdffd455
+  "results/llama_c1_facade_2026-07-24/c1_facade_results.json": 10fd45ba439695aec0c3ed62d4d274eff2a5e15f8765ca9f0a51a7102d155aa9
+  "results/c2b_adjudication_hf_2026-07-24/c2b_adjudication_results.json": cf6ccc104cd30ab09755a4d58dc021a8af969fbadb163c24e5ed45eceefb351a
+  "results/arm_full/arm_matrix_summary.json": fd9140e8764da8b46e531644b9f885d363f718107c2e86d592ea4593eb75338e
+  "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json": 33f242faf921f4a5de49b9620b6a5507415a157d21f9688dce6616d32cda1800
+  "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json": d301bacf70744406356fd2e1a597c01b8738c10d392a9901feae461bebfa0f42
+  "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json": e168392f4c44d29467791883da122d27b470ce0770bc81c8b5d705119bc6647e
+  "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json": ac9d18aa67a5e2afe9b37441fa08c008cfad139a557f323fa5052d8c38f85282
+  "results/psr_qwen_primary/psr_c2b_adjudication_results.json": 6604a65d1cb0bb27be69cc44701c684ced6812e39f43903cb79e7a1a2a044aee
+output_file: docs/paper/figures/console-ui-contract.pdf
+output_sha256: 1b2dded6abd92797976e897ad55c4420195832cc200c88a86ef428d5f9c6bf40
+manual_edits_allowed: false
+last_verified: "2026-08-06"
+verdict: "verified static model-evidence artifact; illustrates C2/C3 contract states and supports no HCI outcome claim"

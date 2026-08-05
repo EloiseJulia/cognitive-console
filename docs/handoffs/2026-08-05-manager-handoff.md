@@ -29,7 +29,7 @@ The paper has moved from a chained hostile-review **REJECT** to an independently
 - **C1:** exploratory representational facade measurement. Readability is a precondition/diagnostic, not proof of control.
 - **C2:** under the frozen prompt-vs-latent adjudicator, bounded/naive additive CAA/ITI (`h + alpha*u`, `alpha<=24`) shows no demonstrated superiority over bounded best prompts on the tested axes/models.
 - **Required scope guard:** this is about tested bounded/naive, single-layer additive CAA/ITI on the tested 7–8B models and tasks. It is **not** a theorem that latent control is impossible, and it does not cover trained, multi-layer, projection/ablation, or other intervention families.
-- **Calibration wording is delicate:** the robust negative is a **steer-vs-bounded-prompt contrast**. Direct steer-vs-baseline is near zero in the rechecked Qwen/CAA lineage (compliance +0.011; `1-Brier` +0.0008). Never say steering directly harms calibration without this qualifier.
+- **Calibration wording is delicate:** the robust negative is a **steer-vs-bounded-prompt contrast**. Direct steer-vs-baseline is near zero in the rechecked Qwen/CAA lineage (compliance +0.011; `1-Brier` +0.0008). Always keep the comparator attached and avoid a direct-degradation claim.
 
 ## 2. Evidence arc since the prior handoff
 
@@ -181,7 +181,7 @@ results/E-0015-logit-delta/
 The incoming Manager must answer these before executing:
 
 1. What exactly is the current C2 claim and its mandatory scope guard? Why is “latent control is impossible” forbidden?
-2. Why is the calibration result a steer-vs-prompt contrast rather than direct steering harm? Give the direct Qwen/CAA numbers.
+2. Why is the calibration result a steer-vs-prompt contrast rather than direct degradation from baseline? Give the direct Qwen/CAA numbers.
 3. What did E-0015 establish, and what did it fail to establish? State the coherent perturbation ceiling and MDE caveats.
 4. Why does the logit diagnostic strengthen `READ != CONTROL` without proving a working behavioral handle?
 5. What is F2’s current status after E-0015, and why can E-0016 close it without threatening the headline?

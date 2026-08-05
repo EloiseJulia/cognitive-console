@@ -19,7 +19,7 @@
 - **H-R (Robustness / non-transfer generality):** The behavioral non-transfer (steer along a *legible*
   direction does NOT beat the best prompt) holds across steering-method families and model families, not
   just CAA@Qwen2.5-7B.
-- **H-M (Off-manifold):** The calibration harm (and, more generally, failure to help) is *monotonically
+- **H-M (Off-manifold):** The negative steer-vs-prompt contrast (and, more generally, failure to help) is *monotonically
   associated with how far the steered activation is pushed off the natural data manifold*: cells/items with
   larger off-manifold displacement show worse Δoutcome. A linearly-legible direction is not a
   manifold-respecting control coordinate.

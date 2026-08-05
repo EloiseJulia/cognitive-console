@@ -20,3 +20,16 @@ required_caveats:
   - "C1 has two-model support at the aggregate 3/4 level, but per-axis composition differs."
   - "Model-invariant axes in this pair are deliberation and skepticism; uncertainty and focus are heterogeneous."
   - "Uncertainty is model-dependent (Qwen 0.713 hold vs Llama 1.000 no-facade); focus is model-dependent (Llama 0.471 hold vs Qwen 2.844 overshoot/no-facade)."
+paper_location: "Results / READ Establishes a Diagnostic Precondition (Table tab:c1-twomodel)"
+source_experiments: ["c1-facade-d710b4b4-0001 (E-0003)", "c1-facade-1dcc4fa7-0001 (E-0008)"]
+aggregation_script: "docs/paper/scripts/make_c1_twomodel_table.py"
+generator_commit: "841965f641a10bf68659bfda04cd6f65f2c4643f"
+source_artifact_commits:
+  "results/gpu_7b_2026-07-23/c1/c1_facade_results.json": "05b33ede9c4d9677d4a32c4d74766933d96d563d"
+  "results/llama_c1_facade_2026-07-24/c1_facade_results.json": "31678173e83f01c2de2b8775b2f87f068fbc190e"
+source_artifact_hashes:
+  "results/gpu_7b_2026-07-23/c1/c1_facade_results.json": "c48dab0bc2debc369678d4e397d74c4157a98763c1feef3044cca2b6fdffd455"
+  "results/llama_c1_facade_2026-07-24/c1_facade_results.json": "10fd45ba439695aec0c3ed62d4d274eff2a5e15f8765ca9f0a51a7102d155aa9"
+output_sha256: "32f3797b78ea50f964f41bff428fc16f4de9b3e7df2b5a4ec965cb894f446262"
+last_verified: "2026-08-06"
+verdict: "verified exploratory main table; supports C1 only with two-model aggregate and axis-heterogeneity caveats"

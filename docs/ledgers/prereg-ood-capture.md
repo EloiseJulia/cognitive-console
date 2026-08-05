@@ -7,7 +7,7 @@
 > 2×2 H-R result (arm_full, E-0006).
 
 ## 0. Goal
-Test H-M: is the calibration harm (uncertainty axis, negative in all 4 cells) explained by steering pushing
+Test H-M: is the negative steer-vs-prompt contrast (uncertainty axis, negative in all 4 cells) explained by steering pushing
 activations OFF the natural data manifold? Upgrade C2-mech from hypothesis to evidence, OR — if unsupported —
 **honestly demote C2-mech to an explicit hypothesis / Future Work; do NOT concoct a different mechanism story
 on the same data.**
@@ -29,7 +29,7 @@ on the same data.**
 - **Per-item outcome delta (FROZEN):** the per-item calibration Δoutcome = (steered − baseline) 1−Brier on the
   uncertainty axis, taken from the banked transcripts/results (the harm signal). "Calibration harm" = negative
   Δoutcome.
-- **Association test (FROZEN):** per cell, Spearman ρ between **OOD distance** and **calibration harm** (i.e.
+- **Association test (FROZEN):** per cell, Spearman ρ between **OOD distance** and the **negative steer-vs-prompt contrast** (i.e.
   ρ(distance, −Δoutcome) so that positive ρ = "more off-manifold ⇒ more harm"), with item-cluster bootstrap CI
   (B≥10000), reusing ood.py's frozen machinery.
 
@@ -64,4 +64,3 @@ on the same data.**
 ## 6. Untouchable
 E-0003, E-0005, prereg-c2b-adjudication.md, the frozen adjudicate_c2b §4 logic, and the banked arm_full H-R
 result (E-0006) are FROZEN. This capture ADDS a diagnostic; it never edits them.
-

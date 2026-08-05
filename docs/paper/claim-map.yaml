@@ -9,7 +9,7 @@ claims:
     valid_for_paper: "false for confirmatory/core claim per evidence ledger; usable only if explicitly labeled exploratory/scoped"
     gate_notes: "E-0003 and E-0008 both have valid_for_paper=false for confirmatory use. Mark exploratory everywhere; say aggregate support replicates but axis composition does not."
   C2:
-    statement: "Legibility does not transfer to behavioral controllability for naive/bounded CAA/ITI steering: across CAA/ITI x Qwen2.5-7B/Llama-3-8B, steering shows no demonstrated superiority over the bounded best-prompt baseline on any tested axis under the pre-registered pass rule (failed-superiority, not equivalence) and harms uncertainty calibration in all four cells; a post-hoc TOST equivalence analysis shows the uncertainty harm is robust while deliberation/skepticism non-detections are partly underpowered rather than proven equivalence."
+    statement: "Legibility does not transfer to behavioral controllability for naive/bounded CAA/ITI steering: across CAA/ITI x Qwen2.5-7B/Llama-3-8B, steering shows no demonstrated superiority over the bounded best-prompt baseline on any tested axis under the pre-registered pass rule (failed-superiority, not equivalence). The uncertainty result is a steer-vs-bounded-prompt negative calibration contrast under the frozen scorer in all four cells; direct Qwen/CAA steer-vs-baseline is near zero (+0.011 compliance, +0.0008 1-Brier). Post-hoc TOST characterizes the uncertainty contrast while deliberation/skepticism non-detections are partly underpowered rather than proven equivalence."
     status: "supported as a pre-registered negative generalized across tested methods and models; single-seed caveat RETIRED (D-0055): pre-registered negative is robust across five DEV/TEST split seeds over the same item pool (E-0011)"
     supporting_evidence_ids: ["E-0005", "E-0006", "E-0009", "E-0011", "E-0013", "E-0014", "E-0015"]
     scope: "Frozen C2b adjudicator; core headline is {CAA, ITI} x {Qwen2.5-7B, Llama-3-8B}; axes deliberation, skepticism, uncertainty_awareness; bounded prompt effort; naive/off-the-shelf steering under the frozen method-specific single-layer additive convention h'=h+alpha*s_m*u_m, with s_CAA=1, s_ITI=sigma_L, and coefficient alpha<=24 (not a common injected-norm bound). E-0009 is exploratory method-strength context. E-0011 varies five DEV/TEST split seeds over the same item pool. E-0013 is valid only for the CAA×Qwen format-robustness/limitation claim; three cells remain unverified. E-0014 and E-0015 are valid only as positive-control and assay-sensitivity limitations, not as positive latent-control evidence or universal negatives."
@@ -22,10 +22,10 @@ claims:
     excluded_diagnostic_ids: ["E-0015-logit-diagnostic"]
     gate_notes: "Passes Abstract/Contributions/Conclusion evidence gate via E-0005/E-0006 and the E-0011 split-seed robustness companion. E-0013 supports only D-0078's CAA×Qwen format-robustness statement, including post-generation conditioning and missingness caveats; ITI×Qwen and both Llama cells were not rechecked. E-0014 supports endpoint-live plus bounded unit-direction CAA null limitation wording and is not a passing latent positive control. E-0015 supports a scale-corrected CAA coherent-null/assay-sensitivity limitation with ceiling and MDE caveats, not a universal/core latent negative. E-0015-logit-diagnostic is valid_for_paper=false, appendix-only, and supports no claim. Scope guard: bounded prompt vs naive/off-the-shelf CAA/ITI under method-specific scaling; 2 models × 2 methods; not an impossibility theorem."
   C2-mech:
-    statement: "Calibration harm might be explained by off-manifold steering distance."
+    statement: "The steer-vs-bounded-prompt negative calibration contrast under the frozen scorer might be explained by off-manifold steering distance; direct Qwen/CAA steer-vs-baseline is near zero (+0.011 compliance, +0.0008 1-Brier)."
     status: "hypothesis/future work only; directly tested and not supported"
     supporting_evidence_ids: ["E-0007"]
-    scope: "Whitened Mahalanobis OOD distance vs per-item calibration harm, uncertainty axis, four CAA/ITI x Qwen/Llama cells"
+    scope: "Whitened Mahalanobis OOD distance vs the per-item steer-vs-bounded-prompt calibration contrast, uncertainty axis, four CAA/ITI x Qwen/Llama cells"
     paper_sections: ["Results", "Limitations", "Future Work"]
     main_artifacts: []
     valid_for_paper: "future-work/null-result context only; not a contribution"
@@ -40,8 +40,8 @@ claims:
     valid_for_paper: "background citation only; not our empirical claim"
     gate_notes: "No project evidence row because it is not our claim. Must not enter Abstract/Contributions/Conclusion as an empirical contribution."
   C3:
-    statement: "We propose and artifact-instantiate an evidence-accounting and evaluation framework for latent-control affordances: READ status, TRANSFER verdict, bounded best-prompt comparison, calibration warning, and evidence tier."
-    status: "primary methodological contribution derived from model evidence; proposed HCI framework with unvalidated comprehensibility, usability, reliance effects, and benefit"
+    statement: "Proposed, artifact-instantiated evidence-accounting and evaluation framework for latent-control affordances: READ status, TRANSFER verdict, bounded best-prompt comparison, calibration warning, and evidence tier."
+    status: "proposed, artifact-instantiated methodological contribution derived from model evidence; no validated comprehensibility, usability, reliance effect, effectiveness, or benefit"
     supporting_evidence_ids: []
     scope: "Pure-model route; no formative or controlled user study; human study deferred/owner-gated"
     paper_sections: ["Abstract", "Introduction", "Interface-evaluation contract", "Limitations", "Conclusion"]

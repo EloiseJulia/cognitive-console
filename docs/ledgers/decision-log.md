@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-08-05 · D-0095 · Owner authorizes E-0016 full benign Regime-B run, maximum 3 A800 GPU-hours
+- Owner selected: "批准完整 Regime-B，预算上限 3 GPU 小时（推荐）".
+- Authorization covers only the frozen Regime-B protocol at run commit `4def9ba59a00909d4cf2aae7dbdb1665877d6204`: DEV=60, TEST=160, K=5, benign XSTest generation only.
+- Execution must run DEV eligibility first. If baseline false-refusal is `<0.25`, it must emit `INVALID_REGIME_B_UNDERPOWERED`, stop before TEST, and report to the owner. If eligible, TEST may run once under the frozen protocol.
+- Harmful prompts remain forward-pass-only direction inputs. Harmful generation and Regime A remain unauthorized. The 3 GPU-hour cap is hard; exceeding it requires a new owner decision.
+
 ## 2026-08-05 · D-0094 · E-0016 Regime-B protocol audit passed; exact run commit frozen, GPU budget pending
 - Targeted independent protocol re-audit closed both D-0093 documentation findings. The Regime-B-only protocol is frozen and merged at `4def9ba59a00909d4cf2aae7dbdb1665877d6204`; this is the exact clean commit authorized for any future E-0016 execution.
 - Owner decisions remain binding: benign XSTest generation only; DEV baseline false-refusal must be `>=0.25`; otherwise emit `INVALID_REGIME_B_UNDERPOWERED` and stop before TEST. Harmful prompts remain forward-pass-only direction inputs; Regime A generation is excluded.

@@ -1191,7 +1191,7 @@ experiments:
   claim_ids:
   - C2b
   type: confirmatory_positive_control
-  status: protocol_frozen_ready_for_gpu_pending_owner_budget
+  status: gpu_authorized_ready_for_regime_b_run
   code_commit: 4def9ba59a00909d4cf2aae7dbdb1665877d6204
   harness_commit: 4513820a679408b071984b8500cc9c5636255a49
   protocol_file: docs/research/2026-08-04-ablation-positive-control/prereg-e0016-FROZEN.md
@@ -1205,8 +1205,8 @@ experiments:
   model: Qwen/Qwen2.5-7B-Instruct
   dataset: Regime B default Paul/XSTest train safe-filtered prompts for generation; harmful direction side default ungated llm-attacks AdvBench harmful_behaviors.csv raw URL; harmless side default tatsu-lab/alpaca train instructions; harmful-vs-harmless contrast used forward-pass-only, raw harmful prompts uncommitted
   seed: 20260804
-  hardware: owner-gated GPU run pending; local synthetic-only smoke allowed
-  gpu_owner_budget_authorization: pending
+  hardware: A800, any free GPU without interfering with other users; hard cap 3 GPU-hours
+  gpu_owner_budget_authorization: approved_2026-08-05_max_3_gpu_hours
   started_at: null
   ended_at: null
   exit_code: null
@@ -1224,14 +1224,16 @@ experiments:
   - test_informed_protocol_changes
   - gpu_execution_without_owner_budget_approval
   pending_gates:
-  - owner_gpu_budget_authorization
+  - real_regime_b_run
+  - independent_hostile_results_audit
   validation_notes: >-
     D-0089 Regime-B-only protocol. D-0091 harness findings were closed by the
     limited independent audit reflected in merge 4513820; that merge explicitly
     did not freeze the protocol or authorize GPU. Commit c36a438 contains the first
     freeze-document candidate. Targeted protocol re-audit closed both documentation
     findings, and merge 4def9ba is the exact frozen run commit. Only owner GPU-budget
-    authorization remains pending. DEV baseline
+    authorization was granted by the owner on 2026-08-05 with a hard cap of 3
+    A800 GPU-hours. DEV baseline
     false-refusal must be >=0.25 or the runner emits
     INVALID_REGIME_B_UNDERPOWERED and stops before TEST. Harmful prompts are
     forward-pass-only direction inputs. Regime A is excluded and requires a new

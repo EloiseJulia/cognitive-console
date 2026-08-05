@@ -3,7 +3,11 @@
 > Records dead ends, attributions, unexplained anomalies, non-reproducible routes, and randomness risks.
 > Prevents repeat trial-and-error after Manager rotation and guards against survivor bias.
 
-(none yet)
+
+## 2026-08-05 · E-0016 frozen Regime-B run failed before DEV: tokenizer AddedToken was not JSON serializable
+- Exact clean run commit `4def9ba59a00909d4cf2aae7dbdb1665877d6204`, exact prereg §9.2 command, physical A800 GPU 3. The single authorized attempt ran 26 seconds (upper bound 0.00722222 GPU-h) and exited 1 while `capture_environment_identity` serialized tokenizer configuration. With transformers 5.14.1, the object contained an `AddedToken`, which the frozen canonical JSON path could not serialize.
+- The runner failed before direction extraction, hook-bites, DEV generation, eligibility, and TEST. Therefore DEV baseline false-refusal and runner verdict are UNVERIFIED; TEST did not run. No retry, dependency change, code modification, parameter change, or Regime A fallback was attempted.
+- Frozen data preflight passed all revision/content/schema/row/canonical hashes for Paul/XSTest, AdvBench, and Alpaca; cached model revision resolved exactly. Only source-state and execution-failure lineage artifacts were produced, both `valid_for_paper=false`; no raw harmful text or harmful generation occurred. A fresh run requires Manager/owner disposition plus any code/environment repair to pass the required freeze/audit gates.
 
 ## 2026-08-04 · E-0014 positive control: fp16-miscalibrated hook-bites integrity guard aborted a completed GPU run, wasting ~1.5 GPU-h (no results written)
 - The E-0014 hook-bites guard (proves the steering hook actually perturbs activations) was fixed once already (absolute-L2 1e-3 → dtype-robust cosine≥0.999 + rel-norm≤0.05, per the code audit's BLOCKER-1). But `0.999` cosine is STILL too strict for fp16 at the DEV-selected small alpha (α=2): measured per-probe cosine ≈0.998, rel-norm-error ≈0.0016. fp16 quantization noise is ~constant in absolute terms, so cosine of (steered−unsteered) vs û degrades as alpha shrinks; the fixed α=4 check passed but the post-hoc frozen-α=2 check failed all 4 probes on cosine alone despite near-perfect magnitude.

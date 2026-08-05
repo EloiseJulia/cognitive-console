@@ -1191,50 +1191,58 @@ experiments:
   claim_ids:
   - C2b
   type: confirmatory_positive_control
-  status: protocol_freeze_candidate_pending_audit_and_run_commit
-  code_commit: null
+  status: failed_pre_dev_environment_serialization
+  code_commit: 4def9ba59a00909d4cf2aae7dbdb1665877d6204
   harness_commit: 4513820a679408b071984b8500cc9c5636255a49
   protocol_file: docs/research/2026-08-04-ablation-positive-control/prereg-e0016-FROZEN.md
   protocol_candidate_commit: c36a438977ae51be5172587e900811508fe77468
-  protocol_audit: pending
-  run_commit: pending_manager_record_after_repair_audit_and_merge
-  dirty_tree: null
-  data_hash: null
-  env_hash: null
+  protocol_audit: sound_D-0094
+  run_commit: 4def9ba59a00909d4cf2aae7dbdb1665877d6204
+  dirty_tree: false
+  data_hash:
+    xstest_content_sha256: 11783fb294ed017473ee53c207d71f2161c7672c8d0b037501e78387f801cb5a
+    advbench_content_sha256: 6cd1a5c63c07610d7eb67307772ee5606017ee950b5770ab288a2c487489d3e1
+    alpaca_content_sha256: 06391b656a06fd3fb9d213160ef2398796c3b7f3dc75ef1e3ced30d461517073
+  env_hash: sha256:c5aec6639a12c206f21e7743afc895460c855b4cc99a76eeba809381dc69ad3e
   config_hash: null
-  model: Qwen/Qwen2.5-7B-Instruct
-  dataset: Regime B default Paul/XSTest train safe-filtered prompts for generation; harmful direction side default ungated llm-attacks AdvBench harmful_behaviors.csv raw URL; harmless side default tatsu-lab/alpaca train instructions; harmful-vs-harmless contrast used forward-pass-only, raw harmful prompts uncommitted
+  model: Qwen/Qwen2.5-7B-Instruct@a09a35458c702b33eeacc393d103063234e8bc28
+  dataset: Regime B Paul/XSTest safe generation; AdvBench forward-pass-only harmful direction side; Alpaca harmless direction side; all immutable hashes preflight-verified
   seed: 20260804
-  hardware: owner-gated GPU run pending; local synthetic-only smoke allowed
-  gpu_owner_budget_authorization: pending
-  started_at: null
-  ended_at: null
-  exit_code: null
-  raw_metrics: null
+  hardware: NVIDIA A800 80GB PCIe, physical GPU 3; D-0095 hard cap 3 GPU-hours
+  gpu_owner_budget_authorization: D-0095_approved_max_3_A800_GPU_hours
+  started_at: '2026-08-05T07:42:38Z'
+  ended_at: '2026-08-05T07:43:04Z'
+  exit_code: 1
+  raw_metrics:
+    wall_clock_seconds: 26
+    gpu_hours_upper_bound: 0.00722222
+    dev_reached: false
+    dev_baseline_false_refusal: null
+    eligibility_verdict: UNVERIFIED_NOT_REACHED
+    test_ran: false
+    harmful_generation_performed: false
   summary_metrics: null
   artifacts:
-  - scripts/run_e0016_ablation_positive_control.py
-  - docs/research/2026-08-04-ablation-positive-control/prereg-e0016-FROZEN.md
-  failure_reason: null
+  - results/E-0016-regime-b-confirmatory/e0016_run_start_source_state.json
+  - results/E-0016-regime-b-confirmatory/execution_failure_manifest.json
+  failure_reason: >-
+    Frozen one-shot command exited 1 before DEV while capture_environment_identity
+    serialized tokenizer_config: transformers 5.14.1 exposed an AddedToken object that
+    json.dumps could not serialize. No retry, dependency change, parameter change, or
+    code fix was attempted.
   valid_for_paper: false
   forbidden:
   - harmful_generation
   - regime_a
   - raw_harmful_text_in_git_or_artifacts
   - test_informed_protocol_changes
-  - gpu_execution_without_owner_budget_approval
   pending_gates:
-  - independent_protocol_audit_sound
-  - owner_gpu_budget_authorization
-  - manager_records_final_clean_audited_run_commit
+  - Manager/owner disposition after failed authorized attempt
+  - any repair must pass code/protocol freeze and independent audit before a new run
+  - independent_hostile_results_audit
   validation_notes: >-
-    D-0089 Regime-B-only protocol. D-0091 harness findings were closed by the
-    limited independent audit reflected in merge 4513820; that merge explicitly
-    did not freeze the protocol or authorize GPU. Commit c36a438 contains the first
-    freeze-document candidate, not the final run commit. The candidate remains
-    pending independent protocol audit, repair merge, Manager recording of the
-    final merged run commit, and owner GPU-budget authorization. DEV baseline
-    false-refusal must be >=0.25 or the runner emits
-    INVALID_REGIME_B_UNDERPOWERED and stops before TEST. Harmful prompts are
-    forward-pass-only direction inputs. Regime A is excluded and requires a new
-    owner decision and new protocol. No run or result is registered.
+    D-0094 froze exact run commit 4def9ba; D-0095 authorized one complete benign
+    Regime-B attempt with a hard 3 A800 GPU-hour cap. Preflight passed frozen data,
+    schema, row-count, canonical hash, provenance, and cached model-revision checks.
+    The runner failed before direction extraction, hook-bites, DEV, eligibility, or
+    TEST. Only failure-lineage artifacts exist; they remain valid_for_paper=false.

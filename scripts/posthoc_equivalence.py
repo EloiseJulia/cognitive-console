@@ -657,8 +657,11 @@ def main(args: Optional[argparse.Namespace] = None) -> None:
         '  - "MDE_superiority uses normal approx with z_bonf=2.394 and z_80=0.842."',
         '  - "Brier decomposition: DEFERRED (raw conf+correct pairs not in committed artifacts)."',
     ]
-    manifest_path.write_text("\n".join(manifest_lines) + "\n", encoding="utf-8")
-    print(f"[posthoc_equivalence] Written manifest: {manifest_path}")
+    if manifest_path.exists():
+        print(f"[posthoc_equivalence] Preserved curated manifest: {manifest_path}")
+    else:
+        manifest_path.write_text("\n".join(manifest_lines) + "\n", encoding="utf-8")
+        print(f"[posthoc_equivalence] Written bootstrap manifest: {manifest_path}")
 
     # ------- Print summary to stdout -------
     print("\n=== TOST Summary (arm_full E-0005/E-0006) ===")

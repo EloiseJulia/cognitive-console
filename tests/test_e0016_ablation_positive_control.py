@@ -1,5 +1,6 @@
 
 import json
+from copy import deepcopy
 from types import SimpleNamespace
 from pathlib import Path
 
@@ -197,6 +198,22 @@ def test_hf_frozen_config_accepts_only_exact_identity(tmp_path):
         e0016.assert_hf_frozen_config(args)
 
 
+def test_hf_rejects_arbitrary_seed_before_model_or_data_load(tmp_path, monkeypatch):
+    args = _frozen_hf_args(tmp_path, "--seed", "999")
+    monkeypatch.setattr(
+        e0016,
+        "load_xstest_items",
+        lambda *a, **k: pytest.fail("data load must not occur"),
+    )
+    monkeypatch.setattr(
+        e0016,
+        "build_shared_hf_handles",
+        lambda *a, **k: pytest.fail("model load must not occur"),
+    )
+    with pytest.raises(ValueError, match="complete frozen"):
+        e0016.run(args)
+
+
 def test_hf_hook_bites_are_persisted_before_first_dev_generation(
     tmp_path, monkeypatch
 ):
@@ -230,10 +247,13 @@ def test_hf_hook_bites_are_persisted_before_first_dev_generation(
 
     class Provider:
         hidden_dim = 16
+        max_length = e0016.HF_PROVIDER_MAX_LENGTH
         _config = SimpleNamespace(_commit_hash=e0016.FROZEN_MODEL_REVISION)
 
     class HookBackend:
         decoder_layer_indices = [1, 2]
+        max_length = e0016.HF_BACKEND_MAX_LENGTH
+        num_hidden_layers = 2
 
         def capture_ablation_hook_bites(self, *a, **k):
             events.append("hook")
@@ -287,6 +307,13 @@ def test_hf_hook_bites_are_persisted_before_first_dev_generation(
         assert json.loads(guard.read_text(encoding="utf-8"))[
             "generation_started"
         ] is False
+        guard_payload = json.loads(guard.read_text(encoding="utf-8"))
+        assert guard_payload["frozen_config"]["identity_stage"] == (
+            "post_resolution_full_run"
+        )
+        assert guard_payload["frozen_config_hash"] == e0016.config_hash(
+            guard_payload["frozen_config"]
+        )
         events.append("generation")
         return e0016.EvalResult(
             "baseline",
@@ -382,7 +409,7 @@ def _hook_backend(*, skip_last=False):
         "fake",
         model=Model(),
         tokenizer=_FakeTokenizer(),
-        config=SimpleNamespace(hidden_size=4),
+        config=SimpleNamespace(hidden_size=4, num_hidden_layers=3),
         layers=blocks,
     )
     return backend, blocks
@@ -465,3 +492,146 @@ def test_missing_decoder_layer_is_rejected_and_hooks_are_cleaned():
             abs_tol=1e-5,
         )
     assert all(not block._forward_hooks for block in blocks)
+
+
+def test_truncated_decoder_module_list_fails_at_production_backend_init():
+    torch = pytest.importorskip("torch")
+
+    class Block(torch.nn.Module):
+        def forward(self, hidden):
+            return hidden
+
+    blocks = torch.nn.ModuleList([Block(), Block(), Block()])
+
+    class Base(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.layers = blocks
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.model = Base()
+
+    with pytest.raises(ValueError, match="config declares 4.*has 3"):
+        e0016.SteeredHFBackend(
+            "fake",
+            model=Model(),
+            tokenizer=_FakeTokenizer(),
+            config=SimpleNamespace(hidden_size=4, num_hidden_layers=4),
+        )
+
+
+def test_supported_alternate_config_depth_field_is_accepted():
+    torch = pytest.importorskip("torch")
+
+    class Block(torch.nn.Module):
+        def forward(self, hidden):
+            return hidden
+
+    blocks = torch.nn.ModuleList([Block(), Block()])
+
+    class Base(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.layers = blocks
+
+    class Model(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.model = Base()
+
+    backend = e0016.SteeredHFBackend(
+        "fake",
+        model=Model(),
+        tokenizer=_FakeTokenizer(),
+        config=SimpleNamespace(hidden_size=4, n_layer=2),
+    )
+    assert backend.decoder_layer_indices == [1, 2]
+
+
+def _resolved_config_fixture(tmp_path):
+    args = _frozen_hf_args(tmp_path)
+    dev = _items(e0016.HF_FROZEN_DEV_N, "dev")
+    test = _items(e0016.HF_FROZEN_TEST_N, "test")
+    xprov = {
+        "dataset_id": e0016.XSTEST_SPEC.dataset_id,
+        "revision": e0016.XSTEST_SPEC.revision,
+        "split": e0016.XSTEST_SPEC.split,
+        "content_path": e0016.XSTEST_SPEC.content_path,
+        "content_sha256": e0016.XSTEST_SPEC.content_sha256,
+        "schema": list(e0016.XSTEST_SPEC.schema),
+        "safe_filter": "type/label/annotation/focus safe and not unsafe/harm",
+        "safe_prompt_hashes_sha256": "safe-pool-hash",
+    }
+    cprov = {
+        "harmful_source": {
+            "dataset_id": e0016.HARMFUL_SPEC.dataset_id,
+            "revision": e0016.HARMFUL_SPEC.revision,
+            "split": e0016.HARMFUL_SPEC.split,
+            "content_path": e0016.HARMFUL_SPEC.content_path,
+            "content_sha256": e0016.HARMFUL_SPEC.content_sha256,
+            "schema": list(e0016.HARMFUL_SPEC.schema),
+        },
+        "harmless_source": {
+            "dataset_id": e0016.HARMLESS_SPEC.dataset_id,
+            "revision": e0016.HARMLESS_SPEC.revision,
+            "split": e0016.HARMLESS_SPEC.split,
+            "content_path": e0016.HARMLESS_SPEC.content_path,
+            "content_sha256": e0016.HARMLESS_SPEC.content_sha256,
+            "schema": list(e0016.HARMLESS_SPEC.schema),
+        },
+        "harmful_hashes_sha256": "harm-used",
+        "harmless_hashes_sha256": "safe-used",
+        "count_harmful_used": e0016.HF_FROZEN_DIRECTION_N,
+        "count_harmless_used": e0016.HF_FROZEN_DIRECTION_N,
+    }
+    kwargs = {
+        "xstest_prov": xprov,
+        "contrast_prov": cprov,
+        "dev": dev,
+        "test": test,
+        "model_revision_resolved": e0016.FROZEN_MODEL_REVISION,
+        "device": "cuda:1",
+        "dtype": "float16",
+        "provider_max_length": e0016.HF_PROVIDER_MAX_LENGTH,
+        "backend_max_length": e0016.HF_BACKEND_MAX_LENGTH,
+        "hidden_dim": 3584,
+        "declared_decoder_layers": 28,
+    }
+    return e0016.resolved_frozen_run_config(args, **kwargs)
+
+
+@pytest.mark.parametrize(
+    ("path", "replacement"),
+    [
+        (("seed",), 999),
+        (("data", "xstest", "content_sha256"), "other-data"),
+        (("model", "revision_resolved"), "other-model"),
+        (("runtime", "device"), "cpu"),
+        (("runtime", "dtype"), "bfloat16"),
+        (("runtime", "generation_backend_max_length"), 1024),
+        (("generation", "temperature"), 0.9),
+        (("generation", "batch_scheme"), "per-item"),
+        (("dev_n",), 61),
+        (("candidate_layers",), [4, 8]),
+        (("statistics", "bootstrap_b"), 999),
+        (("statistics", "pass_delta"), 0.2),
+        (("random_control", "seed"), 999),
+        (("hook_all_layer_recipe", "abs_tol"), 1e-5),
+        (("scorers", "refusal_version"), "v2"),
+        (("split_identity", "test", "item_ids_sha256"), "other-split"),
+    ],
+)
+def test_resolved_frozen_config_hash_covers_identity_categories(
+    tmp_path, path, replacement
+):
+    config = _resolved_config_fixture(tmp_path)
+    baseline_hash = e0016.config_hash(config)
+    assert baseline_hash == e0016.config_hash(deepcopy(config))
+    mutated = deepcopy(config)
+    cursor = mutated
+    for key in path[:-1]:
+        cursor = cursor[key]
+    cursor[path[-1]] = replacement
+    assert e0016.config_hash(mutated) != baseline_hash

@@ -347,6 +347,7 @@ class SteeredHFBackend(GenBackend):
             self._tokenizer.padding_side = "left"
             if self._layers is None:
                 self._layers = self._locate_decoder_layers(self._model)
+            self._validate_decoder_layer_count()
             self._seed_torch(self.seed)
 
     def _seed_torch(self, seed: Optional[int]) -> None:
@@ -396,6 +397,7 @@ class SteeredHFBackend(GenBackend):
         model.eval()
         self._model = model
         self._layers = self._locate_decoder_layers(model)
+        self._validate_decoder_layer_count()
         # Seed torch once at load so even an unseeded per-call path is reproducible.
         self._seed_torch(self.seed)
 
@@ -418,6 +420,43 @@ class SteeredHFBackend(GenBackend):
         )
 
     @staticmethod
+    def _declared_decoder_layer_count(config) -> int:
+        """Resolve the architecture's declared decoder depth fail-closed."""
+        candidates = [config]
+        text_config = getattr(config, "text_config", None)
+        if text_config is not None and text_config is not config:
+            candidates.append(text_config)
+        for candidate in candidates:
+            for field in (
+                "num_hidden_layers",
+                "n_layer",
+                "num_layers",
+                "decoder_layers",
+            ):
+                value = getattr(candidate, field, None)
+                if value is not None:
+                    count = int(value)
+                    if count <= 0:
+                        raise ValueError(
+                            f"model config field {field} must be positive, got {count}"
+                        )
+                    return count
+        raise ValueError(
+            "model config does not declare decoder depth via a supported field "
+            "(num_hidden_layers/n_layer/num_layers/decoder_layers)"
+        )
+
+    def _validate_decoder_layer_count(self) -> int:
+        declared = self._declared_decoder_layer_count(self._config)
+        actual = len(self._layers)
+        if actual != declared:
+            raise ValueError(
+                "decoder layer count mismatch: "
+                f"config declares {declared}, located ModuleList has {actual}"
+            )
+        return declared
+
+    @staticmethod
     def _render_user_chat_prompt(tokenizer, text: str, model_name: str = "unknown") -> str:
         """Render one user turn through model chat template when available."""
         if hasattr(tokenizer, "apply_chat_template"):
@@ -438,7 +477,7 @@ class SteeredHFBackend(GenBackend):
     @property
     def num_hidden_layers(self) -> int:
         self._ensure_loaded()
-        return int(self._config.num_hidden_layers)
+        return self._validate_decoder_layer_count()
 
     @property
     def hidden_dim(self) -> int:
@@ -447,7 +486,7 @@ class SteeredHFBackend(GenBackend):
 
     def available_layers(self) -> List[int]:
         self._ensure_loaded()
-        return list(range(int(self._config.num_hidden_layers) + 1))
+        return list(range(self._validate_decoder_layer_count() + 1))
 
     # -- hook -------------------------------------------------------------
     def _make_hook(self, steer: SteerConfig):
@@ -521,7 +560,7 @@ class SteeredHFBackend(GenBackend):
 
         self._ensure_loaded()
         layer = int(layer)
-        n_layers = int(self._config.num_hidden_layers)
+        n_layers = self.num_hidden_layers
         if not (0 <= layer <= n_layers):
             raise ValueError(f"layer {layer} out of range 0..{n_layers}")
 
@@ -685,10 +724,12 @@ class SteeredHFBackend(GenBackend):
     ):
         """Register projection-ablation hooks on every decoder block."""
         self._ensure_loaded()
+        declared_layers = self._validate_decoder_layer_count()
         if np.asarray(ablation.unit()).size != self.hidden_dim:
             raise ValueError("ablation direction dim does not match model hidden_dim")
         handles = []
-        for idx, block in enumerate(self._layers, start=1):
+        for idx in range(1, declared_layers + 1):
+            block = self._layers[idx - 1]
             handles.append(
                 block.register_forward_hook(
                     self._make_ablation_hook(
@@ -705,7 +746,7 @@ class SteeredHFBackend(GenBackend):
     @property
     def decoder_layer_indices(self) -> List[int]:
         self._ensure_loaded()
-        return list(range(1, len(self._layers) + 1))
+        return list(range(1, self._validate_decoder_layer_count() + 1))
 
     def capture_ablation_hook_bites(
         self,
@@ -853,7 +894,7 @@ class SteeredHFBackend(GenBackend):
         handle = None
         # alpha==0 => no hook needed (bit-identical to plain generation).
         if steer is not None and abs(float(steer.alpha)) > _EPS:
-            n = int(self._config.num_hidden_layers)
+            n = self.num_hidden_layers
             if not (1 <= steer.layer <= n):
                 raise ValueError(
                     f"steer.layer {steer.layer} out of range 1..{n} "
@@ -935,7 +976,7 @@ class SteeredHFBackend(GenBackend):
 
         handle = None
         if steer is not None and abs(float(steer.alpha)) > _EPS:
-            n = int(self._config.num_hidden_layers)
+            n = self.num_hidden_layers
             if not (1 <= steer.layer <= n):
                 raise ValueError(
                     f"steer.layer {steer.layer} out of range 1..{n} "

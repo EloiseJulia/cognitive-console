@@ -32,7 +32,7 @@ if str(_REPO) not in sys.path:
 
 from cognitive_console.activations.provider import HFActivationProvider, SyntheticActivationProvider
 from cognitive_console.config import config_hash
-from cognitive_console.eval.scorers import degeneracy_score, score_refusal
+from cognitive_console.eval.scorers import REFUSAL_MARKERS, degeneracy_score, score_refusal
 from cognitive_console.experiments import adjudicate_c2b as adj
 from cognitive_console.lineage import git_commit, utcnow
 from cognitive_console.steering.extract import layer_diagnostics, mean_difference_vector
@@ -57,6 +57,18 @@ HF_FROZEN_K = 5
 HF_FROZEN_DIRECTION_N = 64
 HF_FROZEN_CANDIDATE_LAYERS = (8, 12, 16, 20)
 HF_FROZEN_MAX_NEW_TOKENS = 96
+HF_FROZEN_SEED = 20260804
+HF_PROVIDER_MAX_LENGTH = 256
+HF_BACKEND_MAX_LENGTH = 512
+GENERATION_DO_SAMPLE = True
+GENERATION_TEMPERATURE = 0.7
+GENERATION_TOP_P = None
+GENERATION_BATCH_SCHEME = "one_fixed_full-condition_batch_in_item-sample_order"
+HOOK_BITES_BATCH_SIZE = 2
+HOOK_BITES_REL_TOL = 0.05
+SCORER_VERSION = "score_refusal_marker_v1"
+DEGENERACY_SCORER_VERSION = "degeneracy_score_v1"
+RANDOM_DIRECTION_SEED_OFFSET = 909
 SYNTHETIC_SMOKE_DEV_N = 4
 SYNTHETIC_SMOKE_TEST_N = 8
 SYNTHETIC_SMOKE_K = 2
@@ -454,7 +466,7 @@ def git_dirty_tree() -> bool:
     return bool(result.stdout.strip())
 
 
-def frozen_run_config(args: argparse.Namespace) -> Dict[str, Any]:
+def pre_load_eligibility_config(args: argparse.Namespace) -> Dict[str, Any]:
     return {
         "experiment_id": EXPERIMENT_ID,
         "primary_regime": PRIMARY_REGIME,
@@ -493,8 +505,12 @@ def frozen_run_config(args: argparse.Namespace) -> Dict[str, Any]:
             "content_sha256": HARMLESS_SPEC.content_sha256,
             "schema": list(HARMLESS_SPEC.schema),
         },
-        "sampling": {"do_sample": True, "temperature": 0.7},
-        "scorer": "score_refusal",
+        "sampling": {
+            "do_sample": GENERATION_DO_SAMPLE,
+            "temperature": GENERATION_TEMPERATURE,
+            "top_p": GENERATION_TOP_P,
+        },
+        "scorer": SCORER_VERSION,
         "split": {
             "algorithm": "numpy.default_rng(seed).permutation",
             "safe_filter": "type/label/annotation/focus safe and not unsafe/harm",
@@ -506,14 +522,162 @@ def frozen_run_config(args: argparse.Namespace) -> Dict[str, Any]:
         },
         "hook_bites": {
             "probe_hashes": [sha_text(x) for x in HOOK_BITE_PROBES],
-            "rel_tol": 0.05,
+            "rel_tol": HOOK_BITES_REL_TOL,
             "formula": "per_element_abs_after<=max(abs_tol,rel_tol*abs_before)",
             "required_layer_coverage": "all_decoder_layers_exact",
         },
-        "random_control": {"direction_seed_offset": 909},
+        "random_control": {"direction_seed_offset": RANDOM_DIRECTION_SEED_OFFSET},
         "coherence": {
             "max_ratio": float(adj.COHERENCE_MAX_RATIO),
             "eps_floor": float(adj.COHERENCE_EPS_FLOOR),
+        },
+    }
+
+
+def frozen_run_config(args: argparse.Namespace) -> Dict[str, Any]:
+    """Backward-compatible name for the pre-load eligibility identity."""
+    return pre_load_eligibility_config(args)
+
+
+def _item_identity(items: Sequence[Item]) -> Dict[str, object]:
+    return {
+        "count": len(items),
+        "item_ids_sha256": _source_sha256([item.id for item in items]),
+        "prompt_hashes_sha256": _source_sha256(
+            [sha_text(item.prompt) for item in items]
+        ),
+    }
+
+
+def _dataset_identity(provenance: Dict[str, object]) -> Dict[str, object]:
+    schema = list(provenance.get("schema") or [])
+    return {
+        key: provenance.get(key)
+        for key in (
+            "dataset_id",
+            "revision",
+            "split",
+            "content_path",
+            "content_sha256",
+        )
+    } | {
+        "schema": schema,
+        "schema_sha256": sha_text(
+            json.dumps(schema, ensure_ascii=False, separators=(",", ":"))
+        ),
+    }
+
+
+def resolved_frozen_run_config(
+    args: argparse.Namespace,
+    *,
+    xstest_prov: Dict[str, object],
+    contrast_prov: Dict[str, object],
+    dev: Sequence[Item],
+    test: Sequence[Item],
+    model_revision_resolved: Optional[str],
+    device: str,
+    dtype: str,
+    provider_max_length: int,
+    backend_max_length: int,
+    hidden_dim: int,
+    declared_decoder_layers: int,
+) -> Dict[str, Any]:
+    """Canonical post-resolution protocol identity; excludes outcome values."""
+    abs_tol = dtype_abs_tol(dtype, hidden_dim)
+    return {
+        **pre_load_eligibility_config(args),
+        "identity_stage": "post_resolution_full_run",
+        "identity_schema_version": 1,
+        "model": {
+            "model_id": args.model_id,
+            "revision_requested": args.model_revision,
+            "revision_resolved": model_revision_resolved,
+            "hidden_dim": int(hidden_dim),
+            "declared_decoder_layers": int(declared_decoder_layers),
+        },
+        "runtime": {
+            "device": str(device),
+            "dtype": str(dtype),
+            "provider_max_length": int(provider_max_length),
+            "generation_backend_max_length": int(backend_max_length),
+        },
+        "generation": {
+            "do_sample": GENERATION_DO_SAMPLE,
+            "temperature": GENERATION_TEMPERATURE,
+            "top_p": GENERATION_TOP_P,
+            "max_new_tokens": int(args.max_new_tokens),
+            "batch_scheme": GENERATION_BATCH_SCHEME,
+            "batch_sizes": {
+                "dev_condition": int(args.dev_n * args.k),
+                "test_condition": int(args.test_n * args.k),
+            },
+            "sample_seed_recipe": (
+                "sha256(run_seed|item_id|condition|sample_index) mod 2**31; "
+                "batch torch seed=sha256(ordered per-sample seeds) mod 2**31"
+            ),
+        },
+        "data": {
+            "xstest": {
+                **_dataset_identity(xstest_prov),
+                "safe_filter": xstest_prov.get("safe_filter"),
+                "safe_prompt_hashes_sha256": xstest_prov.get(
+                    "safe_prompt_hashes_sha256"
+                ),
+            },
+            "harmful_forward_only": _dataset_identity(
+                dict(contrast_prov.get("harmful_source", {}))
+            ),
+            "harmless": _dataset_identity(
+                dict(contrast_prov.get("harmless_source", {}))
+            ),
+            "contrast_used_hashes": {
+                "harmful_hashes_sha256": contrast_prov.get(
+                    "harmful_hashes_sha256"
+                ),
+                "harmless_hashes_sha256": contrast_prov.get(
+                    "harmless_hashes_sha256"
+                ),
+                "count_harmful_used": contrast_prov.get("count_harmful_used"),
+                "count_harmless_used": contrast_prov.get("count_harmless_used"),
+            },
+        },
+        "split_identity": {
+            "seed": int(args.seed),
+            "algorithm": "numpy.default_rng(seed).permutation",
+            "dev": _item_identity(dev),
+            "test": _item_identity(test),
+        },
+        "statistics": {
+            "bootstrap_b": int(adj.BOOTSTRAP_B),
+            "ci_level": float(adj.BONFERRONI_CI_LEVEL),
+            "cluster_unit": "item_with_all_k_samples",
+            "dev_baseline_floor": DEV_BASELINE_FLOOR,
+            "pass_delta": PASS_DELTA,
+            "separation_floor": SEPARATION_FLOOR,
+            "coherence_max_ratio": float(adj.COHERENCE_MAX_RATIO),
+            "coherence_eps_floor": float(adj.COHERENCE_EPS_FLOOR),
+        },
+        "random_control": {
+            "seed": int(args.seed),
+            "direction_seed_offset": RANDOM_DIRECTION_SEED_OFFSET,
+            "recipe": "numpy.default_rng(seed+offset).standard_normal(hidden_dim), unit-normalized",
+        },
+        "hook_all_layer_recipe": {
+            "formula": "h_new=h_old-(h_old dot r_hat)r_hat",
+            "layer_set": list(range(1, int(declared_decoder_layers) + 1)),
+            "required_layer_coverage": "all_declared_decoder_layers_exact",
+            "probe_hashes": [sha_text(x) for x in HOOK_BITE_PROBES],
+            "batch_size": HOOK_BITES_BATCH_SIZE,
+            "abs_tol": abs_tol,
+            "rel_tol": HOOK_BITES_REL_TOL,
+            "non_vacuity_floor": max(abs_tol * 10.0, 1e-6),
+            "non_vacuity_rule": "every layer max_abs_before > non_vacuity_floor",
+        },
+        "scorers": {
+            "refusal_version": SCORER_VERSION,
+            "refusal_markers_sha256": _source_sha256(list(REFUSAL_MARKERS)),
+            "degeneracy_version": DEGENERACY_SCORER_VERSION,
         },
     }
 
@@ -524,6 +688,7 @@ def assert_hf_frozen_config(args: argparse.Namespace) -> None:
     actual = {
         "model_id": args.model_id,
         "model_revision": args.model_revision,
+        "seed": int(args.seed),
         "dev_n": int(args.dev_n),
         "test_n": int(args.test_n),
         "k": int(args.k),
@@ -538,6 +703,7 @@ def assert_hf_frozen_config(args: argparse.Namespace) -> None:
     expected = {
         "model_id": DEFAULT_MODEL,
         "model_revision": FROZEN_MODEL_REVISION,
+        "seed": HF_FROZEN_SEED,
         "dev_n": HF_FROZEN_DEV_N,
         "test_n": HF_FROZEN_TEST_N,
         "k": HF_FROZEN_K,
@@ -588,10 +754,20 @@ def build_shared_hf_handles(
         device=device,
         dtype=dtype,
         cache_dir=str(out_dir / "activations" / "cache"),
+        max_length=HF_PROVIDER_MAX_LENGTH,
         model_revision=model_revision,
     )
     model, tokenizer, config = provider.hf_handles()
-    hook_backend = SteeredHFBackend(model_id, device=device, dtype=dtype, seed=seed, model=model, tokenizer=tokenizer, config=config)
+    hook_backend = SteeredHFBackend(
+        model_id,
+        device=device,
+        dtype=dtype,
+        max_length=HF_BACKEND_MAX_LENGTH,
+        seed=seed,
+        model=model,
+        tokenizer=tokenizer,
+        config=config,
+    )
     return SharedHFHandles(provider=provider, hook_backend=hook_backend, device=device, dtype=dtype)
 
 
@@ -816,10 +992,25 @@ def eval_hf(items: Sequence[Item], backend: SteeredHFBackend, condition: str, di
             item_hashes.append(sha_text(it.prompt))
             seeds.append(int(hashlib.sha256(f"{seed}|{it.id}|{condition}|{sample}".encode()).hexdigest(), 16) % (2**31))
     if condition == "baseline":
-        texts = backend.generate_batch(prompts, steer=None, max_new_tokens=max_new_tokens, seeds=seeds, do_sample=True, temperature=0.7)
+        texts = backend.generate_batch(
+            prompts,
+            steer=None,
+            max_new_tokens=max_new_tokens,
+            seeds=seeds,
+            do_sample=GENERATION_DO_SAMPLE,
+            temperature=GENERATION_TEMPERATURE,
+        )
     else:
         assert direction is not None
-        texts = backend.generate_batch_with_ablation(prompts, AblationConfig(direction), max_new_tokens=max_new_tokens, seeds=seeds, do_sample=True, temperature=0.7)
+        texts = backend.generate_batch_with_ablation(
+            prompts,
+            AblationConfig(direction),
+            max_new_tokens=max_new_tokens,
+            seeds=seeds,
+            do_sample=GENERATION_DO_SAMPLE,
+            temperature=GENERATION_TEMPERATURE,
+            top_p=GENERATION_TOP_P,
+        )
     scores = np.asarray([score_refusal(t, None) for t in texts], dtype=np.float64).reshape(len(items), k)
     degs = np.asarray([degeneracy_score(t) for t in texts], dtype=np.float64).reshape(len(items), k)
     return EvalResult(condition, scores, degs, [sha_text(x.prompt) for x in items])
@@ -876,7 +1067,9 @@ def select_direction_on_dev(bundles: Sequence[DirectionBundle], dev_items: Seque
             rnd = eval_synthetic(dev_items, synth_backend, "random", k=k)
         else:
             ab = eval_hf(dev_items, hf_backend, "ablation", b.direction, k=k, max_new_tokens=max_new_tokens, seed=seed)
-            rnd_dir = random_unit_direction(b.direction.size, seed + 909)
+            rnd_dir = random_unit_direction(
+                b.direction.size, seed + RANDOM_DIRECTION_SEED_OFFSET
+            )
             rnd = eval_hf(dev_items, hf_backend, "random", rnd_dir, k=k, max_new_tokens=max_new_tokens, seed=seed)
         pr = pass_rule(baseline, ab, rnd, bootstrap_seed=seed)
         rows.append({"source_layer": b.source_layer, "position": b.position, "direction_sha256": b.provenance["direction_sha256"], "mean_reduction": pr["mean_reduction"], "coherence_ok": pr["coherence_ok"], "random_mean_reduction": pr["random_control"]["mean_reduction"]})
@@ -906,8 +1099,8 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     backend = args.backend
-    run_config = frozen_run_config(args)
-    run_config_hash = config_hash(run_config)
+    eligibility_config = pre_load_eligibility_config(args)
+    eligibility_config_hash = config_hash(eligibility_config)
     dirty_tree = git_dirty_tree()
     use_fixture_xstest = backend == "synthetic" and not args.xstest_jsonl and args.xstest_source == DEFAULT_XSTEST_SOURCE
     xstest_source = str(XSTEST_FIXTURE) if use_fixture_xstest else (args.xstest_jsonl or args.xstest_source)
@@ -924,6 +1117,9 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         device = "synthetic"
         dtype = "float64"
         resolved_model_revision = None
+        provider_max_length = 0
+        backend_max_length = 0
+        declared_decoder_layers = len(layers)
     else:
         hf_handles = build_shared_hf_handles(
             args.model_id,
@@ -944,6 +1140,25 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                 "resolved model revision mismatch: "
                 f"expected {args.model_revision}, got {resolved_model_revision}"
             )
+        provider_max_length = int(provider.max_length)
+        backend_max_length = int(hook_backend.max_length)
+        declared_decoder_layers = int(hook_backend.num_hidden_layers)
+
+    run_config = resolved_frozen_run_config(
+        args,
+        xstest_prov=xstest_prov,
+        contrast_prov=contrast_prov,
+        dev=dev,
+        test=test,
+        model_revision_resolved=resolved_model_revision,
+        device=device,
+        dtype=dtype,
+        provider_max_length=provider_max_length,
+        backend_max_length=backend_max_length,
+        hidden_dim=provider.hidden_dim,
+        declared_decoder_layers=declared_decoder_layers,
+    )
+    run_config_hash = config_hash(run_config)
 
     bundles = derive_refusal_direction(provider, harmful, harmless, layers, backend=backend, model_id=args.model_id, contrast_prov=contrast_prov)
     observed_source_layers = [int(bundle.source_layer) for bundle in bundles]
@@ -971,16 +1186,16 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                 stats = hook_backend.capture_ablation_hook_bites(
                     HOOK_BITE_PROBES,
                     AblationConfig(bundle.direction),
-                    batch_size=2,
+                    batch_size=HOOK_BITES_BATCH_SIZE,
                     abs_tol=abs_tol,
-                    rel_tol=0.05,
+                    rel_tol=HOOK_BITES_REL_TOL,
                 )
                 candidate_hook_bites[str(bundle.source_layer)] = (
                     assert_ablation_hook_bites(
                         stats,
                         expected_layers=hook_backend.decoder_layer_indices,
                         abs_tol=abs_tol,
-                        rel_tol=0.05,
+                        rel_tol=HOOK_BITES_REL_TOL,
                     )
                 )
             hook_bites_payload = {
@@ -1000,6 +1215,8 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                         "seed": int(args.seed),
                         "model_id": args.model_id,
                         "model_revision": resolved_model_revision,
+                        "pre_load_eligibility_config": eligibility_config,
+                        "pre_load_eligibility_config_hash": eligibility_config_hash,
                         "frozen_config": run_config,
                         "frozen_config_hash": run_config_hash,
                         "xstest_provenance": xstest_prov,
@@ -1020,6 +1237,12 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                         "experiment_id": EXPERIMENT_ID,
                         "status": "PRE_GENERATION_GUARD_FAILED",
                         "error": str(exc),
+                        "code_commit": git_commit(str(_REPO)),
+                        "dirty_tree": dirty_tree,
+                        "pre_load_eligibility_config": eligibility_config,
+                        "pre_load_eligibility_config_hash": eligibility_config_hash,
+                        "frozen_config": run_config,
+                        "frozen_config_hash": run_config_hash,
                         "generation_started": False,
                         "valid_for_paper": False,
                     },
@@ -1049,6 +1272,8 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         "code_commit": git_commit(str(_REPO)),
         "dirty_tree": dirty_tree,
         "seed": int(args.seed),
+        "pre_load_eligibility_config": eligibility_config,
+        "pre_load_eligibility_config_hash": eligibility_config_hash,
         "frozen_config": run_config,
         "frozen_config_hash": run_config_hash,
         "valid_for_paper": False,
@@ -1110,7 +1335,17 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
     else:
         base = eval_hf(test, hook_backend, "baseline", None, k=args.k, max_new_tokens=args.max_new_tokens, seed=args.seed)
         ablated = eval_hf(test, hook_backend, "ablation", selected.direction, k=args.k, max_new_tokens=args.max_new_tokens, seed=args.seed)
-        random_eval = eval_hf(test, hook_backend, "random", random_unit_direction(selected.direction.size, args.seed + 909), k=args.k, max_new_tokens=args.max_new_tokens, seed=args.seed)
+        random_eval = eval_hf(
+            test,
+            hook_backend,
+            "random",
+            random_unit_direction(
+                selected.direction.size, args.seed + RANDOM_DIRECTION_SEED_OFFSET
+            ),
+            k=args.k,
+            max_new_tokens=args.max_new_tokens,
+            seed=args.seed,
+        )
     test_payload = pass_rule(base, ablated, random_eval, bootstrap_seed=args.seed)
     payload.update({"status": test_payload["status"], "test": test_payload, "test_baseline": as_eval_payload(base), "test_ablation": as_eval_payload(ablated), "test_random": as_eval_payload(random_eval)})
     manifest_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
@@ -1123,7 +1358,7 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     p.add_argument("--model-id", default=DEFAULT_MODEL)
     p.add_argument("--model-revision", default=FROZEN_MODEL_REVISION)
     p.add_argument("--out-dir", default=str(DEFAULT_OUT_DIR))
-    p.add_argument("--seed", type=int, default=20260804)
+    p.add_argument("--seed", type=int, default=HF_FROZEN_SEED)
     p.add_argument(
         "--dev-n",
         type=int,

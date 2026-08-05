@@ -75,6 +75,37 @@ class SteerConfig:
         return unit_vector(self.direction)
 
 
+
+
+@dataclass
+class AblationConfig:
+    """All-layer projection-ablation configuration for refusal-direction removal.
+
+    Unlike ``SteerConfig`` this is NOT additive and has no selected injection
+    layer: the unit direction is projected out at every decoder block output and
+    every token position.
+    """
+
+    direction: np.ndarray
+
+    def unit(self) -> np.ndarray:
+        return unit_vector(self.direction)
+
+
+def project_out_direction_array(hidden, direction):
+    """Return ``hidden - (hidden·r_hat) r_hat`` over the last dimension.
+
+    Pure numpy helper used by tests and synthetic hook-bites; the HF hook below
+    implements the same operation in torch without touching the additive hook.
+    """
+    arr = np.asarray(hidden, dtype=np.float64)
+    r = unit_vector(direction)
+    if arr.shape[-1] != r.size:
+        raise ValueError(f"hidden last dim {arr.shape[-1]} != direction dim {r.size}")
+    comp = np.tensordot(arr, r, axes=([-1], [0]))
+    return arr - comp[..., None] * r
+
+
 class GenBackend(abc.ABC):
     """Abstract steered-generation backend (the deferred model seam)."""
 
@@ -316,6 +347,7 @@ class SteeredHFBackend(GenBackend):
             self._tokenizer.padding_side = "left"
             if self._layers is None:
                 self._layers = self._locate_decoder_layers(self._model)
+            self._validate_decoder_layer_count()
             self._seed_torch(self.seed)
 
     def _seed_torch(self, seed: Optional[int]) -> None:
@@ -365,6 +397,7 @@ class SteeredHFBackend(GenBackend):
         model.eval()
         self._model = model
         self._layers = self._locate_decoder_layers(model)
+        self._validate_decoder_layer_count()
         # Seed torch once at load so even an unseeded per-call path is reproducible.
         self._seed_torch(self.seed)
 
@@ -387,6 +420,48 @@ class SteeredHFBackend(GenBackend):
         )
 
     @staticmethod
+    def _declared_decoder_layer_count(config) -> int:
+        """Resolve the architecture's declared decoder depth fail-closed."""
+        candidates = [config]
+        text_config = getattr(config, "text_config", None)
+        if text_config is not None and text_config is not config:
+            candidates.append(text_config)
+        for candidate in candidates:
+            for field in (
+                "num_hidden_layers",
+                "n_layer",
+                "num_layers",
+                "decoder_layers",
+            ):
+                value = getattr(candidate, field, None)
+                if value is not None:
+                    if type(value) is not int:
+                        raise ValueError(
+                            f"model config field {field} must be a Python int, "
+                            f"got {type(value).__name__}: {value!r}"
+                        )
+                    count = value
+                    if count <= 0:
+                        raise ValueError(
+                            f"model config field {field} must be positive, got {count}"
+                        )
+                    return count
+        raise ValueError(
+            "model config does not declare decoder depth via a supported field "
+            "(num_hidden_layers/n_layer/num_layers/decoder_layers)"
+        )
+
+    def _validate_decoder_layer_count(self) -> int:
+        declared = self._declared_decoder_layer_count(self._config)
+        actual = len(self._layers)
+        if actual != declared:
+            raise ValueError(
+                "decoder layer count mismatch: "
+                f"config declares {declared}, located ModuleList has {actual}"
+            )
+        return declared
+
+    @staticmethod
     def _render_user_chat_prompt(tokenizer, text: str, model_name: str = "unknown") -> str:
         """Render one user turn through model chat template when available."""
         if hasattr(tokenizer, "apply_chat_template"):
@@ -407,7 +482,7 @@ class SteeredHFBackend(GenBackend):
     @property
     def num_hidden_layers(self) -> int:
         self._ensure_loaded()
-        return int(self._config.num_hidden_layers)
+        return self._validate_decoder_layer_count()
 
     @property
     def hidden_dim(self) -> int:
@@ -416,7 +491,7 @@ class SteeredHFBackend(GenBackend):
 
     def available_layers(self) -> List[int]:
         self._ensure_loaded()
-        return list(range(int(self._config.num_hidden_layers) + 1))
+        return list(range(self._validate_decoder_layer_count() + 1))
 
     # -- hook -------------------------------------------------------------
     def _make_hook(self, steer: SteerConfig):
@@ -490,7 +565,7 @@ class SteeredHFBackend(GenBackend):
 
         self._ensure_loaded()
         layer = int(layer)
-        n_layers = int(self._config.num_hidden_layers)
+        n_layers = self.num_hidden_layers
         if not (0 <= layer <= n_layers):
             raise ValueError(f"layer {layer} out of range 0..{n_layers}")
 
@@ -579,6 +654,228 @@ class SteeredHFBackend(GenBackend):
             out_rows.append(last.to(torch.float32).cpu().numpy())
         return np.concatenate(out_rows, axis=0)
 
+    # -- all-layer projection ablation (E-0016; distinct from additive hook) -
+    @staticmethod
+    def _apply_ablation(hidden, vec):
+        import torch
+
+        comp = torch.sum(hidden * vec, dim=-1, keepdim=True)
+        return hidden - comp * vec
+
+    def _make_ablation_hook(
+        self,
+        ablation: AblationConfig,
+        *,
+        stats: Optional[dict] = None,
+        layer: Optional[int] = None,
+        abs_tol: Optional[float] = None,
+        rel_tol: Optional[float] = None,
+    ):
+        import torch
+
+        u = ablation.unit()
+
+        def hook(module, inputs, output):
+            hidden = output[0] if isinstance(output, tuple) else output
+            vec = torch.as_tensor(u, dtype=hidden.dtype, device=hidden.device)
+            new_hidden = self._apply_ablation(hidden, vec)
+            if stats is not None and layer is not None:
+                with torch.no_grad():
+                    before = torch.sum(hidden.to(torch.float32) * vec.to(torch.float32), dim=-1).detach().abs()
+                    after = torch.sum(new_hidden.to(torch.float32) * vec.to(torch.float32), dim=-1).detach().abs()
+                    allowed = torch.maximum(
+                        torch.full_like(before, float(abs_tol)),
+                        before * float(rel_tol),
+                    )
+                    excess = after - allowed
+                    violations = excess > 0
+                    rec = stats.setdefault(
+                        int(layer),
+                        {
+                            "max_abs_before": 0.0,
+                            "max_abs_after": 0.0,
+                            "mean_abs_before": 0.0,
+                            "mean_abs_after": 0.0,
+                            "n_values": 0,
+                            "violation_count": 0,
+                            "max_violation": 0.0,
+                        },
+                    )
+                    n_old = int(rec["n_values"])
+                    n_new = int(before.numel())
+                    rec["max_abs_before"] = max(float(rec["max_abs_before"]), float(before.max().item()))
+                    rec["max_abs_after"] = max(float(rec["max_abs_after"]), float(after.max().item()))
+                    rec["mean_abs_before"] = (float(rec["mean_abs_before"]) * n_old + float(before.mean().item()) * n_new) / max(1, n_old + n_new)
+                    rec["mean_abs_after"] = (float(rec["mean_abs_after"]) * n_old + float(after.mean().item()) * n_new) / max(1, n_old + n_new)
+                    rec["n_values"] = n_old + n_new
+                    rec["violation_count"] = int(rec["violation_count"]) + int(violations.sum().item())
+                    rec["max_violation"] = max(
+                        float(rec["max_violation"]),
+                        float(torch.clamp(excess, min=0).max().item()),
+                    )
+            if isinstance(output, tuple):
+                return (new_hidden,) + tuple(output[1:])
+            return new_hidden
+
+        return hook
+
+    def _register_all_layer_ablation_hooks(
+        self,
+        ablation: AblationConfig,
+        *,
+        stats: Optional[dict] = None,
+        abs_tol: Optional[float] = None,
+        rel_tol: Optional[float] = None,
+    ):
+        """Register projection-ablation hooks on every decoder block."""
+        self._ensure_loaded()
+        declared_layers = self._validate_decoder_layer_count()
+        if np.asarray(ablation.unit()).size != self.hidden_dim:
+            raise ValueError("ablation direction dim does not match model hidden_dim")
+        handles = []
+        try:
+            for idx in range(1, declared_layers + 1):
+                block = self._layers[idx - 1]
+                handles.append(
+                    block.register_forward_hook(
+                        self._make_ablation_hook(
+                            ablation,
+                            stats=stats,
+                            layer=idx,
+                            abs_tol=abs_tol,
+                            rel_tol=rel_tol,
+                        )
+                    )
+                )
+        except Exception:
+            for handle in reversed(handles):
+                handle.remove()
+            raise
+        return handles
+
+    @property
+    def decoder_layer_indices(self) -> List[int]:
+        self._ensure_loaded()
+        return list(range(1, self._validate_decoder_layer_count() + 1))
+
+    def capture_ablation_hook_bites(
+        self,
+        prompts: Sequence[str],
+        ablation: AblationConfig,
+        *,
+        batch_size: Optional[int] = 2,
+        abs_tol: float = 1e-5,
+        rel_tol: float = 0.05,
+    ) -> Dict[int, Dict[str, float]]:
+        """Forward-pass-only guard proving all-layer ablation removes r_hat.
+
+        Returns per decoder layer maxima/means of ``|h_old·r_hat|`` and
+        ``|h_new·r_hat|`` over every batch/token position seen by the hook. This
+        does not generate text and must run before expensive generation.
+        """
+        import torch
+
+        self._ensure_loaded()
+        prompts = list(prompts)
+        if not prompts:
+            raise ValueError("hook-bites need at least one probe prompt")
+        if batch_size is None:
+            batch_size = len(prompts)
+        stats: Dict[int, Dict[str, float]] = {}
+        base_model = getattr(self._model, "model", self._model)
+        for start in range(0, len(prompts), int(batch_size)):
+            texts = [self._render_user_chat_prompt(self._tokenizer, p, self.model_name) for p in prompts[start:start + int(batch_size)]]
+            self._tokenizer.padding_side = "left"
+            enc = self._tokenizer(texts, return_tensors="pt", padding=True, truncation=True, max_length=self.max_length)
+            enc = {k: v.to(self.device) for k, v in enc.items()}
+            handles = self._register_all_layer_ablation_hooks(
+                ablation,
+                stats=stats,
+                abs_tol=abs_tol,
+                rel_tol=rel_tol,
+            )
+            try:
+                with torch.no_grad():
+                    base_model(**enc, use_cache=False)
+            finally:
+                for handle in reversed(handles):
+                    handle.remove()
+        return stats
+
+    def generate_with_ablation(
+        self,
+        prompt: str,
+        ablation: Optional[AblationConfig] = None,
+        max_new_tokens: int = 128,
+        do_sample: bool = False,
+        temperature: float = 1.0,
+        top_p: Optional[float] = None,
+        seed: Optional[int] = None,
+    ) -> str:
+        """Generate with all-layer projection ablation; additive hook untouched."""
+        import torch
+
+        self._ensure_loaded()
+        self._seed_torch(seed if seed is not None else self.seed)
+        text = self._render_user_chat_prompt(self._tokenizer, prompt, self.model_name)
+        enc = self._tokenizer(text, return_tensors="pt", truncation=True, max_length=self.max_length)
+        enc = {k: v.to(self.device) for k, v in enc.items()}
+        input_len = enc["input_ids"].shape[1]
+        handles = self._register_all_layer_ablation_hooks(ablation) if ablation is not None else []
+        try:
+            gen_kwargs = dict(max_new_tokens=int(max_new_tokens), do_sample=bool(do_sample), pad_token_id=self._tokenizer.pad_token_id)
+            if do_sample:
+                gen_kwargs["temperature"] = float(temperature)
+                if top_p is not None:
+                    gen_kwargs["top_p"] = float(top_p)
+            with torch.no_grad():
+                out = self._model.generate(**enc, **gen_kwargs)
+        finally:
+            for handle in reversed(handles):
+                handle.remove()
+        return self._tokenizer.decode(out[0][input_len:], skip_special_tokens=True)
+
+    def generate_batch_with_ablation(
+        self,
+        prompts: Sequence[str],
+        ablation: Optional[AblationConfig] = None,
+        max_new_tokens: int = 128,
+        seeds: Optional[Sequence[int]] = None,
+        do_sample: bool = False,
+        temperature: float = 1.0,
+        top_p: Optional[float] = None,
+    ) -> List[str]:
+        """Batched generation under the same all-layer projection-ablation hook."""
+        import torch
+
+        self._ensure_loaded()
+        prompts = list(prompts)
+        if not prompts:
+            return []
+        if do_sample:
+            key = "|".join(str(int(s)) for s in seeds) if seeds else str(self.seed)
+            batch_seed = int(hashlib.sha256(key.encode("utf-8")).hexdigest(), 16) % (2 ** 31)
+            self._seed_torch(batch_seed)
+        texts = [self._render_user_chat_prompt(self._tokenizer, p, self.model_name) for p in prompts]
+        self._tokenizer.padding_side = "left"
+        enc = self._tokenizer(texts, return_tensors="pt", padding=True, truncation=True, max_length=self.max_length)
+        enc = {k: v.to(self.device) for k, v in enc.items()}
+        input_len = enc["input_ids"].shape[1]
+        handles = self._register_all_layer_ablation_hooks(ablation) if ablation is not None else []
+        try:
+            gen_kwargs = dict(max_new_tokens=int(max_new_tokens), do_sample=bool(do_sample), pad_token_id=self._tokenizer.pad_token_id)
+            if do_sample:
+                gen_kwargs["temperature"] = float(temperature)
+                if top_p is not None:
+                    gen_kwargs["top_p"] = float(top_p)
+            with torch.no_grad():
+                out = self._model.generate(**enc, **gen_kwargs)
+        finally:
+            for handle in reversed(handles):
+                handle.remove()
+        new = out[:, input_len:]
+        return [self._tokenizer.decode(row, skip_special_tokens=True) for row in new]
+
     # -- generation -------------------------------------------------------
     def generate(
         self,
@@ -607,7 +904,7 @@ class SteeredHFBackend(GenBackend):
         handle = None
         # alpha==0 => no hook needed (bit-identical to plain generation).
         if steer is not None and abs(float(steer.alpha)) > _EPS:
-            n = int(self._config.num_hidden_layers)
+            n = self.num_hidden_layers
             if not (1 <= steer.layer <= n):
                 raise ValueError(
                     f"steer.layer {steer.layer} out of range 1..{n} "
@@ -689,7 +986,7 @@ class SteeredHFBackend(GenBackend):
 
         handle = None
         if steer is not None and abs(float(steer.alpha)) > _EPS:
-            n = int(self._config.num_hidden_layers)
+            n = self.num_hidden_layers
             if not (1 <= steer.layer <= n):
                 raise ValueError(
                     f"steer.layer {steer.layer} out of range 1..{n} "

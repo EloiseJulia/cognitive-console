@@ -1184,3 +1184,31 @@ experiments:
   failure_reason: null
   valid_for_paper: false
   validation_notes: Scale-corrected positive-control harness registered pre-GPU. Uses frozen beta grid {0.125,0.25,0.5,1.0,2.0}; valid_for_paper remains false until frozen GPU run and hostile results audit.
+
+- experiment_id: e0016-ablation-positive-control-regime-b
+  parent: null
+  hypothesis_id: H-F2
+  claim_ids:
+  - C2b
+  type: confirmatory_positive_control
+  status: pre_gpu_regimeB
+  code_commit: null
+  dirty_tree: null
+  data_hash: null
+  env_hash: null
+  config_hash: null
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: Regime B default Paul/XSTest train safe-filtered prompts for generation; harmful direction side default ungated llm-attacks AdvBench harmful_behaviors.csv raw URL; harmless side default tatsu-lab/alpaca train instructions; harmful-vs-harmless contrast used forward-pass-only, raw harmful prompts uncommitted
+  seed: 20260804
+  hardware: owner-gated GPU run pending; local synthetic-only smoke allowed
+  started_at: null
+  ended_at: null
+  exit_code: null
+  raw_metrics: null
+  summary_metrics: null
+  artifacts:
+  - scripts/run_e0016_ablation_positive_control.py
+  - docs/research/2026-08-04-ablation-positive-control/prereg-e0016-DRAFT.md
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: D-0089 Regime B-first harness registration. DEV baseline false-refusal gate must pass before TEST; Regime A is escalation-only with owner re-confirmation.

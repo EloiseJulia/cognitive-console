@@ -77,7 +77,7 @@ DEGENERACY_SCORER_VERSION = "degeneracy_score_v1"
 GENERATION_RECORD_SCHEMA_VERSION = 2
 CHECKPOINT_SCHEMA_VERSION = 3
 SOURCE_STATE_SCHEMA_VERSION = 2
-ENVIRONMENT_SCHEMA_VERSION = 1
+ENVIRONMENT_SCHEMA_VERSION = 3
 ARTIFACT_MANIFEST_SCHEMA_VERSION = 1
 TEST_PLAN_SCHEMA_VERSION = 1
 RECORD_VALIDATOR_VERSION = "e0016_strict_record_validator_v2_rescore"
@@ -731,23 +731,102 @@ def _package_version(name: str) -> Optional[str]:
         return None
 
 
+def _canonical_identity_value(value: object) -> object:
+    if value is None or isinstance(value, (str, int, bool)):
+        return value
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise TypeError("environment identity floats must be finite")
+        return value
+
+    try:
+        from tokenizers import AddedToken
+    except ImportError:
+        AddedToken = None
+    if AddedToken is not None and isinstance(value, AddedToken):
+        return {
+            "__type__": "tokenizers.AddedToken",
+            "content": value.content,
+            "single_word": value.single_word,
+            "lstrip": value.lstrip,
+            "rstrip": value.rstrip,
+            "normalized": value.normalized,
+            "special": value.special,
+        }
+    if isinstance(value, dict):
+        items = [
+            {
+                "key": _canonical_identity_dict_key(key),
+                "value": _canonical_identity_value(item),
+            }
+            for key, item in value.items()
+        ]
+        items.sort(
+            key=lambda entry: json.dumps(
+                entry["key"],
+                sort_keys=True,
+                ensure_ascii=False,
+                separators=(",", ":"),
+                allow_nan=False,
+            )
+        )
+        return {
+            "__type__": "builtins.dict",
+            "items": items,
+        }
+    if isinstance(value, list):
+        return [_canonical_identity_value(item) for item in value]
+    if isinstance(value, tuple):
+        return {
+            "__type__": "builtins.tuple",
+            "items": [_canonical_identity_value(item) for item in value],
+        }
+    raise TypeError(
+        "unsupported non-JSON object in environment identity: "
+        f"{type(value).__module__}.{type(value).__qualname__}"
+    )
+
+
+def _canonical_identity_dict_key(key: object) -> Dict[str, object]:
+    key_type = type(key)
+    if key_type is str:
+        return {"__type__": "builtins.str", "value": key}
+    if key_type is bool:
+        return {"__type__": "builtins.bool", "value": key}
+    if key_type is int:
+        return {"__type__": "builtins.int", "value": str(key)}
+    if key_type is float:
+        if not math.isfinite(key):
+            raise TypeError("environment identity dictionary float keys must be finite")
+        return {"__type__": "builtins.float", "value": key.hex()}
+    if key is None:
+        return {"__type__": "builtins.NoneType"}
+    raise TypeError(
+        "unsupported dictionary key in environment identity: "
+        f"{key_type.__module__}.{key_type.__qualname__}"
+    )
+
+
 def _canonical_object_bytes(value: object) -> bytes:
     return json.dumps(
-        value, sort_keys=True, ensure_ascii=False, separators=(",", ":")
+        _canonical_identity_value(value),
+        sort_keys=True,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        allow_nan=False,
     ).encode("utf-8")
 
 
 def _object_config_identity(obj: object) -> Dict[str, object]:
     if obj is None:
-        raw = b"null"
-    elif isinstance(obj, (dict, list, tuple, str, int, float, bool)):
-        raw = _canonical_object_bytes(obj)
-    elif hasattr(obj, "to_json_string"):
-        raw = str(obj.to_json_string(use_diff=False)).encode("utf-8")
+        material = None
     elif hasattr(obj, "to_dict"):
-        raw = _canonical_object_bytes(obj.to_dict())
+        material = obj.to_dict()
+    elif hasattr(obj, "to_json_string"):
+        material = json.loads(str(obj.to_json_string(use_diff=False)))
     else:
-        raw = repr(obj).encode("utf-8")
+        material = obj
+    raw = _canonical_object_bytes(material)
     return {"bytes": len(raw), "sha256": _sha256_bytes(raw)}
 
 

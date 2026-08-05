@@ -25,6 +25,13 @@ DISCLAIMER = re.compile(
     r"does not establish|not a (?:result|deployment)",
     re.I,
 )
+ACTIVE_SUBJECT = re.compile(
+    r"\b(?:We|The console|A designer|A user|Alex|Maya)\s+"
+    r"(?:[A-Za-z]+|\\[A-Za-z]+)",
+)
+NON_PROSE_ENVIRONMENTS = re.compile(
+    r"\\begin\{(?:equation|align|figure|figure\*|table|table\*|tabular|enumerate|quote)\}"
+)
 
 
 def strip_comments(text: str) -> str:
@@ -61,6 +68,46 @@ def numeric_values(text: str) -> set[str]:
     return {m.group(0) for m in NUMERIC.finditer(clean)}
 
 
+def prose_paragraphs(text: str) -> list[tuple[int, str]]:
+    """Return ordinary prose blocks with their starting source lines."""
+    paragraphs: list[tuple[int, str]] = []
+    for match in re.finditer(r"(?ms)(?:\A|\n\s*\n)(.*?)(?=\n\s*\n|\Z)", text):
+        block = strip_comments(match.group(1)).strip()
+        if not block or NON_PROSE_ENVIRONMENTS.search(block):
+            continue
+        if block.startswith(
+            (
+                r"\documentclass",
+                r"\usepackage",
+                r"\usetikzlibrary",
+                r"\Declare",
+                r"\newcolumntype",
+                r"\AtBeginDocument",
+                r"\setcopyright",
+                r"\settopmatter",
+                r"\renewcommand",
+                r"\ccsdesc",
+                r"\keywords",
+                r"\title",
+                r"\author",
+                r"\affiliation",
+                r"\email",
+                r"\input",
+                r"\bibliographystyle",
+                r"\bibliography",
+            )
+        ):
+            continue
+        clean = re.sub(
+            r"\\(?:section|subsection|paragraph|label)\{[^}]*\}", "", block
+        ).strip()
+        clean = prose(clean)
+        if len(re.findall(r"\b[A-Za-z]{3,}\b", clean)) < 5:
+            continue
+        paragraphs.append((line_number(text, match.start(1)), clean))
+    return paragraphs
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base", help="Git revision used for numeric-value comparison")
@@ -84,10 +131,16 @@ def main() -> int:
     caption_disclaimers = [caption for caption in captions if DISCLAIMER.search(caption)]
 
     scope_sentence = re.findall(
-        r"no user study[^.]*comprehensibility[^.]*usability[^.]*reliance[^.]*untested",
+        r"no user study[^.]*comprehensibility[^.]*usability[^.]*"
+        r"calibrated reliance[^.]*untested",
         prose(text),
         re.I,
     )
+    active_paragraph_failures = [
+        (line, paragraph)
+        for line, paragraph in prose_paragraphs(text)
+        if not ACTIVE_SUBJECT.search(paragraph)
+    ]
     red_lines = {
         "missingness_bounds_cross_zero": "adversarial missingness bounds span zero" in prose(text),
         "other_three_not_rechecked": "other three cells were not format-rechecked" in prose(text),
@@ -108,6 +161,12 @@ def main() -> int:
         print(f"  line {line_number(body, match.start())}: {match.group(0)}")
     print(f"Caption disclaimers: {len(caption_disclaimers)}")
     print(f"Scope red lines: {red_lines}")
+    print(
+        "Prose paragraphs without an approved active subject: "
+        f"{len(active_paragraph_failures)}"
+    )
+    for line, paragraph in active_paragraph_failures:
+        print(f"  line {line}: {paragraph[:180]}")
 
     failures = []
     if first_result is None or first_result < 8:
@@ -122,6 +181,8 @@ def main() -> int:
         failures.append("caption contains scope/disclaimer language")
     if not all(red_lines.values()):
         failures.append("scope red-line statement missing")
+    if active_paragraph_failures:
+        failures.append("prose paragraph lacks approved active subject")
 
     if args.base:
         base = subprocess.run(

@@ -10,8 +10,9 @@ hardening). All numbers read from frozen JSON artifacts; none hand-coded.
 PURPOSE
 -------
 Distinguish two qualitatively different outcomes within the C2 negative:
-  1. CALIBRATION_HARM (robust): uncertainty_awareness axis CI excludes zero from
-     below in all 4 cells. The steering DEFINITIVELY HARMS calibration.
+  1. CALIBRATION_HARM (comparator-bound): uncertainty_awareness axis CI excludes
+     zero from below for steer minus bounded prompt in all 4 cells under the
+     frozen scorer. Direct Qwen/CAA steer-vs-baseline is near zero.
   2. UNDERPOWERED: deliberation/skepticism CI includes zero AND extends into
      the range of potentially meaningful effects (|bound| > SESOI). We cannot
      rule out a meaningful positive (or harmful) effect — this is a power issue,
@@ -51,7 +52,6 @@ from __future__ import annotations
 import argparse
 import json
 import math
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -476,10 +476,7 @@ def build_latex_table(arm_results: List[Dict[str, Any]], sesoi: float = SESOI) -
         r"% DO NOT HAND-EDIT. Regenerate with: python scripts/posthoc_equivalence.py",
         r"\begin{table*}[t]",
         r"  \centering",
-        r"  \caption{%",
-        r"    Post-hoc TOST intervals and minimum detectable superiority effects for the method-model grid, with SESOI $\pm\delta = "
-        + f"{sesoi:.2f}"
-        + r"$ and item-cluster bootstrap intervals.}",
+        r"  \caption{TOST equivalence and minimum detectable superiority effects by method, model, and axis.}",
         r"  \label{tab:equivalence-tost}",
         r"  \scriptsize",
         r"  \begin{tabular}{llllrrll}",
@@ -571,7 +568,6 @@ def main(args: Optional[argparse.Namespace] = None) -> None:
     # ------- Write main JSON -------
     main_payload: Dict[str, Any] = {
         "posthoc_label": POSTHOC_LABEL,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
         "source": "scripts/posthoc_equivalence.py",
         "arm_dir": str(args.arm_dir),
         "sesoi": SESOI,
@@ -592,7 +588,6 @@ def main(args: Optional[argparse.Namespace] = None) -> None:
     if e0011_results:
         e0011_payload: Dict[str, Any] = {
             "posthoc_label": POSTHOC_LABEL,
-            "generated_at": datetime.now(timezone.utc).isoformat(),
             "source": "scripts/posthoc_equivalence.py",
             "e0011_dir": str(args.e0011_dir),
             "sesoi": SESOI,

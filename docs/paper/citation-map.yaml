@@ -182,7 +182,7 @@ references:
     title: "Mind the Performance Gap: Capability-Behavior Trade-offs in Feature Steering"
     year: 2026
     venue_or_source: "arXiv preprint"
-    how_we_use_it: "Closest empirical neighbor and external corroboration for C2/calibration harm; distinguish because it uses Goodfire SAE features, MMLU, no preregistration, no 2x2 CAA/ITI x model adjudication, and no HCI legibility-console framing."
+    how_we_use_it: "Closest empirical neighbor and external corroboration for C2's comparator-bound negative calibration contrast; distinguish because it uses Goodfire SAE features, MMLU, no preregistration, no 2x2 CAA/ITI x model adjudication, and no HCI legibility-console framing."
     claim_links: ["C2"]
     paper_sections: ["Related Work", "Results", "Limitations"]
 
@@ -252,4 +252,3 @@ do_not_cite:
   actadd_appendix_b_subclaim: "UNVERIFIABLE in citation-verification pass; do not cite App-B exclusion experiment content until PDF is read directly."
   cot_unfaithfulness: "Do-not-cite per citation-verification §6."
   beyond_anthropomorphism: "Do-not-cite per citation-verification §6."
-

@@ -48,7 +48,11 @@ def main() -> None:
             ha="right", va="top", fontsize=7)
     fig.tight_layout()
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(OUT, bbox_inches="tight")
+    fig.savefig(
+        OUT,
+        bbox_inches="tight",
+        metadata={"CreationDate": None, "ModDate": None},
+    )
 
 
 if __name__ == "__main__":

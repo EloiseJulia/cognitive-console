@@ -1,4 +1,4 @@
-"""Generate the C2 uncertainty calibration-harm figure from frozen 2x2 arm JSON artifacts."""
+"""Generate the C2 comparator-bound calibration figure from frozen 2x2 arm JSON artifacts."""
 from __future__ import annotations
 
 import json
@@ -56,13 +56,17 @@ def main() -> None:
             ax.text(i, r["hi"] + 0.015, "CI excludes 0", ha="center", va="bottom", fontsize=7, rotation=0)
     ax.set_xticks(x, labels)
     ax.set_ylabel("TEST paired Δ in uncertainty (steer − prompt; 1 − Brier)")
-    ax.set_title("C2 calibration harm across CAA/ITI × Qwen/Llama")
+    ax.set_title("Steer − bounded prompt uncertainty contrast")
     ax.grid(axis="y", alpha=0.25)
     ax.text(0.99, 0.03, "Numbers derived from frozen robustness-arm artifacts", transform=ax.transAxes,
             ha="right", va="bottom", fontsize=7)
     fig.tight_layout()
     OUT.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(OUT, bbox_inches="tight")
+    fig.savefig(
+        OUT,
+        bbox_inches="tight",
+        metadata={"CreationDate": None, "ModDate": None},
+    )
 
 
 if __name__ == "__main__":

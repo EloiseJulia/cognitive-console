@@ -30,8 +30,10 @@ Status values: proposed | partially-supported | supported | contradicted | withd
 ## C2 — Legibility ≠ Behavioral Controllability (RQ2, CORE reality-check; reframed from C2b)
 - **Statement:** Steering along the *legible* CAA/ITI direction does NOT push task behavior beyond the
   best-prompt ceiling on any tested axis under a frozen, pre-registered adjudication, across TWO steering
-  method families (CAA, ITI) and TWO model families (Qwen2.5-7B, Llama-3-8B); on calibration it is
-  consistently HARMFUL (uncertainty axis negative, CI excludes 0, in all 4 method×model cells).
+  method families (CAA, ITI) and TWO model families (Qwen2.5-7B, Llama-3-8B). The uncertainty result is a
+  **steer-vs-bounded-prompt negative calibration contrast under the frozen scorer** (CI excludes 0 in all
+  4 method×model cells); **direct Qwen/CAA steer-vs-baseline is near zero (+0.011 compliance,
+  +0.0008 1-Brier)**.
 - **Scope:** {CAA,ITI}×{Qwen2.5-7B, Llama-3-8B}; frozen instrument (prereg-c2b-adjudication.md +
   prereg-robustness-mechanism-arm.md). Single-family caveat REMOVED (now 2 methods × 2 models).
   **Not an impossibility theorem for activation steering in general; scoped to bounded prompt effort vs
@@ -52,24 +54,27 @@ Status values: proposed | partially-supported | supported | contradicted | withd
 - **Robustness update (EXPLORATORY, does NOT change the frozen headline):** the SEPARATE pre-registered PSR
   latent-recovery arm (E-0009, prereg-latent-recovery-arm Option 1) ran on Qwen2.5-7B: a faithful DEV-optimized
   PSR-style steering method (the direct answer to PSR / open-risk #9) ALSO returned KILL_PLAN_D (all 3 axes fail;
-  uncertainty significantly HURTS). Audited VALID_NEGATIVE. This suggests the negative is robust to METHOD
+  uncertainty has a significant steer-vs-bounded-prompt negative calibration contrast under the frozen
+  scorer). Audited VALID_NEGATIVE. This suggests the negative is robust to METHOD
   STRENGTH, not merely to naive CAA/ITI — but it is EXPLORATORY (single model, single seed, valid_for_paper=false)
   and pre-empts the "method too weak" attack; it does NOT overwrite or upgrade the frozen E-0005/E-0006 headline.
 - **Paper location:** Contribution 2 (headline); Δ-table (4 cells) + per-cell verdicts.
 
-## C2-mech — Off-manifold degradation (calibration harm) — **HYPOTHESIS / FUTURE WORK (NOT supported by direct test)** · RQ2
-- **Statement (hypothesis):** the calibration worsening under steering (uncertainty axis, negative in all 4
-  cells) *might* be explained by steering pushing activations off the natural data manifold.
+## C2-mech — Off-manifold account of the calibration contrast — **HYPOTHESIS / FUTURE WORK (NOT supported by direct test)** · RQ2
+- **Statement (hypothesis):** the steer-vs-bounded-prompt negative calibration contrast under the frozen
+  scorer (uncertainty axis, CI excludes 0 in all 4 cells) *might* be explained by steering pushing
+  activations off the natural data manifold. Direct Qwen/CAA steer-vs-baseline is near zero
+  (+0.011 compliance, +0.0008 1-Brier).
 - **Type:** interpretive hypothesis — **DIRECTLY TESTED and NOT SUPPORTED.**
 - **Status:** **DEMOTED to explicit hypothesis / Future Work (E-0007, D-0040).** The pre-registered off-manifold
-  test (whitened Mahalanobis distance vs per-item calibration harm, frozen prereg-ood-capture) returned a
+  test (whitened Mahalanobis distance vs the per-item calibration contrast, frozen prereg-ood-capture) returned a
   VALID NULL: per-cell Spearman ρ ≈ {0.033, 0.039, -0.060, -0.223}, 0/4 pass. Audited VALID_NULL. Per owner's
   honest-fail rule, we do NOT re-mine an alternative mechanism on the same data. The *distance-based*
-  off-manifold account is not evidenced; the calibration harm is reported as a robust empirical phenomenon
+  off-manifold account is not evidenced; the comparator-bound calibration contrast is reported as a robust empirical phenomenon
   (E-0006) whose mechanism is open.
 - **Evidence:** E-0007 (valid null). Does NOT enter Contributions as a mechanism claim; appears in
   Limitations/Future Work only.
-- **Paper location:** Future Work (mechanism of the calibration harm is an open question).
+- **Paper location:** Discussion (the contract treats the contrast's mechanism as unresolved).
 
 ## C2a — Internal-State Non-Surjectivity (RQ2, theory backdrop) — BACKGROUND
 - **Statement:** Latent steering reaches internal residual states that no prompt in a bounded search

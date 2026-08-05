@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-08-05 · D-0099 · Comparator-bound calibration framing repaired without changing claims
+- This repair changes framing only. It changes no frozen protocol, result, number, confidence interval, formula, evidence validity, or Claim verdict.
+- C2 now states the uncertainty result as a **steer-vs-bounded-prompt negative calibration contrast under the frozen scorer**, with confidence intervals excluding zero in all four CAA/ITI-by-Qwen/Llama cells. It also carries the audited direct Qwen/CAA steer-vs-baseline result: near zero (`+0.011` compliance, `+0.0008` 1-Brier).
+- Claim, evidence, and paper maps retain the E-0013 narrow caveat: only CAA×Qwen has the complete-case format recheck; adversarial missingness bounds span zero, and the other three cells remain unverified for that recheck.
+- The off-manifold result remains a valid null and supports no mechanism claim. This is not a Claim change or validity upgrade.
+
 ## 2026-08-05 · D-0098 · Paper scope corrected to implemented method-specific scaling and exact coherence gate
 - This is a paper-fact correction only. It changes no frozen protocol, result artifact, numerical result, evidence verdict, or scientific conclusion.
 - C2's additive intervention is now stated as `h'_L = h_L + alpha*s_m*u_m`, with `s_CAA=1` and `s_ITI=sigma_L`. The shared grid bounds the coefficient at `alpha<=24`; it is not a common injected-norm bound. The frozen ITI `sigma_L` is the sample standard deviation of combined extraction positive/negative activations projected onto the unit probe direction, matching `src/cognitive_console/steering/iti.py` and `scripts/run_c2b_adjudication.py`.

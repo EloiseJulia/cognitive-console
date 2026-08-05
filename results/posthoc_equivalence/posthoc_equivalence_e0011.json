@@ -1,8 +1,7 @@
 {
   "posthoc_label": "POST-HOC / exploratory / NOT pre-registered (D-0056)",
-  "generated_at": "2026-07-29T03:53:37.928354+00:00",
   "source": "scripts/posthoc_equivalence.py",
-  "e0011_dir": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011",
+  "e0011_dir": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\paper-method-artifact-reframe\\results\\E-0011",
   "sesoi": 0.05,
   "tost_ci_level": 0.9,
   "bootstrap_b": 10000,
@@ -11,7 +10,7 @@
       "seed": "seed_20260724",
       "cells": [
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260724\\cell_caa__qwen2.5-7b\\c2b_adjudication_results.json",
+          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\paper-method-artifact-reframe\\results\\E-0011\\seed_20260724\\cell_caa__qwen2.5-7b\\c2b_adjudication_results.json",
           "method": "caa",
           "model": "qwen2.5-7b",
           "axes": [
@@ -84,7 +83,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260724\\cell_caa__llama3-8b\\c2b_adjudication_results.json",
+          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\paper-method-artifact-reframe\\results\\E-0011\\seed_20260724\\cell_caa__llama3-8b\\c2b_adjudication_results.json",
           "method": "caa",
           "model": "meta-llama-3-8b",
           "axes": [
@@ -157,7 +156,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260724\\cell_iti__qwen2.5-7b\\c2b_adjudication_results.json",
+          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\paper-method-artifact-reframe\\results\\E-0011\\seed_20260724\\cell_iti__qwen2.5-7b\\c2b_adjudication_results.json",
           "method": "iti",
           "model": "qwen2.5-7b",
           "axes": [
@@ -230,7 +229,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260724\\cell_iti__llama3-8b\\c2b_adjudication_results.json",
+          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\paper-method-artifact-reframe\\results\\E-0011\\seed_20260724\\cell_iti__llama3-8b\\c2b_adjudication_results.json",
           "method": "iti",
           "model": "meta-llama-3-8b",
           "axes": [
@@ -308,7 +307,7 @@
       "seed": "seed_20260725",
       "cells": [
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260725\\cell_caa__qwen2.5-7b\\c2b_adjudication_results.json",
+          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\paper-method-artifact-reframe\\results\\E-0011\\seed_20260725\\cell_caa__qwen2.5-7b\\c2b_adjudication_results.json",
           "method": "caa",
           "model": "qwen2.5-7b",
           "axes": [
@@ -381,7 +380,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260725\\cell_caa__llama3-8b\\c2b_adjudication_results.json",
+          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\paper-method-artifact-reframe\\results\\E-0011\\seed_20260725\\cell_caa__llama3-8b\\c2b_adjudication_results.json",
           "method": "caa",
           "model": "meta-llama-3-8b",
           "axes": [
@@ -454,7 +453,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260725\\cell_iti__qwen2.5-7b\\c2b_adjudication_results.json",
+          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\paper-method-artifact-reframe\\results\\E-0011\\seed_20260725\\cell_iti__qwen2.5-7b\\c2b_adjudication_results.json",
           "method": "iti",
           "model": "qwen2.5-7b",
           "axes": [
@@ -527,7 +526,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260725\\cell_iti__llama3-8b\\c2b_adjudication_results.json",
+          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\paper-method-artifact-reframe\\results\\E-0011\\seed_20260725\\cell_iti__llama3-8b\\c2b_adjudication_results.json",
           "method": "iti",
           "model": "meta-llama-3-8b",
           "axes": [
@@ -605,7 +604,7 @@
       "seed": "seed_20260726",
       "cells": [
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260726\\cell_caa__qwen2.5-7b\\c2b_adjudication_results.json",
+          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\paper-method-artifact-reframe\\results\\E-0011\\seed_20260726\\cell_caa__qwen2.5-7b\\c2b_adjudication_results.json",
           "method": "caa",
           "model": "qwen2.5-7b",
           "axes": [
@@ -678,7 +677,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260726\\cell_caa__llama3-8b\\c2b_adjudication_results.json",
+          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\paper-method-artifact-reframe\\results\\E-0011\\seed_20260726\\cell_caa__llama3-8b\\c2b_adjudication_results.json",
           "method": "caa",
           "model": "meta-llama-3-8b",
           "axes": [
@@ -751,7 +750,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260726\\cell_iti__qwen2.5-7b\\c2b_adjudication_results.json",
+          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\paper-method-artifact-reframe\\results\\E-0011\\seed_20260726\\cell_iti__qwen2.5-7b\\c2b_adjudication_results.json",
           "method": "iti",
           "model": "qwen2.5-7b",
           "axes": [
@@ -824,7 +823,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260726\\cell_iti__llama3-8b\\c2b_adjudication_results.json",
+          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\paper-method-artifact-reframe\\results\\E-0011\\seed_20260726\\cell_iti__llama3-8b\\c2b_adjudication_results.json",
           "method": "iti",
           "model": "meta-llama-3-8b",
           "axes": [
@@ -902,7 +901,7 @@
       "seed": "seed_20260727",
       "cells": [
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260727\\cell_caa__qwen2.5-7b\\c2b_adjudication_results.json",
+          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\paper-method-artifact-reframe\\results\\E-0011\\seed_20260727\\cell_caa__qwen2.5-7b\\c2b_adjudication_results.json",
           "method": "caa",
           "model": "qwen2.5-7b",
           "axes": [
@@ -975,7 +974,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260727\\cell_caa__llama3-8b\\c2b_adjudication_results.json",
+          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\paper-method-artifact-reframe\\results\\E-0011\\seed_20260727\\cell_caa__llama3-8b\\c2b_adjudication_results.json",
           "method": "caa",
           "model": "meta-llama-3-8b",
           "axes": [
@@ -1048,7 +1047,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260727\\cell_iti__qwen2.5-7b\\c2b_adjudication_results.json",
+          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\paper-method-artifact-reframe\\results\\E-0011\\seed_20260727\\cell_iti__qwen2.5-7b\\c2b_adjudication_results.json",
           "method": "iti",
           "model": "qwen2.5-7b",
           "axes": [
@@ -1121,7 +1120,7 @@
           ]
         },
         {
-          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\review-response\\results\\E-0011\\seed_20260727\\cell_iti__llama3-8b\\c2b_adjudication_results.json",
+          "cell_json": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\paper-method-artifact-reframe\\results\\E-0011\\seed_20260727\\cell_iti__llama3-8b\\c2b_adjudication_results.json",
           "method": "iti",
           "model": "meta-llama-3-8b",
           "axes": [

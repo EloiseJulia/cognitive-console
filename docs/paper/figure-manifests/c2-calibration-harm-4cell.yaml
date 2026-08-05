@@ -1,6 +1,6 @@
 artifact_id: "fig-calibration-harm-4cell"
 artifact_type: "main companion figure"
-title: "Uncertainty calibration harm across steering methods and model families"
+title: "Steer-vs-bounded-prompt uncertainty calibration contrast across steering methods and model families"
 supports_claims: ["C2"]
 source_artifacts:
   - path: "results/arm_full/arm_matrix_summary.json"
@@ -33,4 +33,4 @@ output_file: "docs/paper/figures/c2-calibration-harm.pdf"
 rebuild_command: "python docs\\paper\\scripts\\plot_c2_calibration_harm.py"
 manual_edits_allowed: false
 status: "active: generated from frozen robustness-arm JSON artifacts by docs/paper/scripts/plot_c2_calibration_harm.py"
-required_message: "All four cells are negative with CI excluding 0 per E-0006; mechanism remains open after E-0007."
+required_message: "All four steer-vs-bounded-prompt cells are negative with CI excluding 0 under the frozen scorer per E-0006; direct Qwen/CAA steer-vs-baseline is near zero (+0.011 compliance, +0.0008 1-Brier), and the mechanism remains open after E-0007."

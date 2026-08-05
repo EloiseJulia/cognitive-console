@@ -22,7 +22,8 @@ INTERNAL = re.compile(
 )
 DISCLAIMER = re.compile(
     r"user (?:study|comprehension)|usability|reliance|disclaimer|"
-    r"does not establish|not a (?:result|deployment)",
+    r"does not establish|not a (?:result|deployment)|post-hoc|exploratory|"
+    r"not pre-registered|valid_for_paper|claim status",
     re.I,
 )
 ACTIVE_SUBJECT = re.compile(

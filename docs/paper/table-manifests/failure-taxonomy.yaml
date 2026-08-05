@@ -1,0 +1,12 @@
+table_id: failure-taxonomy
+output: docs/paper/tables/failure-taxonomy.tex
+generator: docs/paper/scripts/make_failure_taxonomy.py
+purpose: Evidence-scoped definitions mapping tested model results to conditional interface states.
+evidence_ids:
+  - E-0003
+  - E-0005
+  - E-0006
+  - E-0007
+  - E-0008
+claim_scope: Proposed evidence-accounting framework derived from model evidence; no deployment or HCI-effectiveness claim.
+rebuild_command: python docs\paper\scripts\make_failure_taxonomy.py

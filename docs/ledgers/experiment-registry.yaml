@@ -1094,30 +1094,85 @@ experiments:
     TRANSFER is an honest pre-accepted outcome per prereg §8; legibility != controllability boundary confirmed.
     valid_for_paper=PENDING independent hostile audit of results.
 
+- experiment_id: E-0013
+  parent: E-0006
+  hypothesis_id: H-FORMAT-CONFOUND
+  claim_ids:
+  - C2
+  type: robustness_recheck
+  status: audited_valid_for_narrow_caa_qwen_paper_use
+  code_commit: 72aa8eba64656640b5092b83ea8ce8c8b8d74ce4
+  run_commit: 70af3996ddea4f881efbb4c0bff9241aad3849ce
+  merge_commit: a56db4f5622487a89a310496ea79b408b057f6af
+  dirty_tree: false
+  data_hash:
+    samples_jsonl_sha256: sha256:5c6c8f4c0f9b4bc6268d5674ad5d0cb0d663ed78ef5ab97ba31c54987f879ff2
+  env_hash: null
+  config_hash:
+    run_manifest_sha256: sha256:821d7f435216fc6a132b0178937dbe91d55a3062de17b322780840ea414c07d8
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: Frozen E-0006 uncertainty CAA×Qwen cell; same DEV/TEST pool and selected configuration
+  seed: 20260723
+  hardware: GPU run recorded in committed manifest; specific hardware identity not claim-bearing here
+  started_at: '2026-08-03T11:35:03.754104+00:00'
+  ended_at: '2026-08-03T11:37:49.809429+00:00'
+  exit_code: 0
+  summary_metrics:
+    tested_cells:
+    - caa__qwen2.5-7b
+    prompt_format_compliance: 0.44528301886792454
+    steer_format_compliance: 0.8264150943396227
+    baseline_format_compliance: 0.8150943396226416
+    compliant_only_delta_steer_minus_prompt: -0.3366781481481482
+    compliant_only_ci_95:
+    - -0.5075485879629629
+    - -0.16516796759259258
+    adversarial_missingness_bounds:
+    - -0.4783562264150944
+    - 0.2499456603773585
+    unverified_cells:
+    - iti__qwen2.5-7b
+    - caa__llama3-8b
+    - iti__llama3-8b
+  artifacts:
+  - path: results/E-0013-uncertainty-recheck/reanalysis.json
+    sha256: ea91f10cce1de06f9c38c4777064e85b7fcf44f295f7ef983092ca0843edfd01
+  - path: results/E-0013-uncertainty-recheck/run_manifest.json
+    sha256: 821d7f435216fc6a132b0178937dbe91d55a3062de17b322780840ea414c07d8
+  - path: results/E-0013-uncertainty-recheck/samples.jsonl
+    sha256: 5c6c8f4c0f9b4bc6268d5674ad5d0cb0d663ed78ef5ab97ba31c54987f879ff2
+  audit:
+    path: reviews/2026-08-03-e0013-result-audit/audit-report.md
+    verdict: HARM-SURVIVES-BUT-CAVEATED
+  failure_reason: Three planned cells blocked and never verified
+  valid_for_paper: true
+  validation_notes: >-
+    D-0078 authorizes only the narrow CAA×Qwen format-robustness claim.
+    The compliant-only analysis conditions on a post-generation variable and is not an unbiased
+    all-generation estimand. Adversarial missingness bounds span zero. The other three cells support no claim.
+
 - experiment_id: E-0014
   parent: null
   hypothesis_id: H-E0014-POSITIVE-CONTROL
   claim_ids: []
   type: positive_control
-  status: run_complete_row_C_failed_positive_control_valid_for_paper_false
-  code_commit: a7c4f25
-  results_commit: f520610
+  status: run_complete_audited_scoped_limitation_valid_for_paper
+  code_commit: 720c6c880f0df1e4841c66d99c007e73fcfc5392
+  results_commit: f520610a596da4df2f2cca44125352a24557c0d4
   result_summary: "Real hf Qwen2.5-7B. Endpoint sensitive (prompt refusal 0.955; random-dir negative NO-PASS) but latent CAA refusal arm 0% at all alpha 2..24; PC-2a mean_diff 0.0, PC-3 -0.955. Under-scaling (unit x alpha<=24 vs natural norm ~216) uniform with C2 (E-0013 steer-baseline compliance +0.011, calibration +0.0008). Does NOT clear F2; sharpens it. See D-0082."
   dirty_tree: false
-  data_hash:
-    item_pool_fixture_sha256: sha256:533dd1231deed98b078e870f6f9a5530ace3d1f3dab7eac1360a991552d6df51
-    contrast_pairs_sha256: sha256:53e256c8f83eb4460f2c50f214b4a84092103ce8d37932e124909555d371aa28
-    strongest_prompts_sha256: sha256:1bdd4f58d3b61c6ca42650ed61e2737f92031a7d7e8f32f9bc5edbb1089a7bba
+  data_hash: null
   env_hash: null
-  config_hash: null
-  model: synthetic-offline smoke; planned hf Qwen/Qwen2.5-7B-Instruct for GPU PC-2/PC-3
+  config_hash:
+    run_manifest_sha256: sha256:920703c9eba83d171c190d80b5054bc39013a22a592dd1cad4dc001ffa32c4bc
+  model: Qwen/Qwen2.5-7B-Instruct
   dataset: >-
     Refusal positive-control harmless TriviaQA validation slice via load_refusal_harmless_set,
     excluding frozen uncertainty/C2/E-0013 ids triviaqa-00000..triviaqa-00079; offline fixture mirrors
     triviaqa-00080..triviaqa-00139 for synthetic smoke only.
   seed: 20260723
   axis: refusal_positive_control
-  hardware: local Windows synthetic smoke; hf GPU not run in this registration commit
+  hardware: real hf GPU run; exact host identity is not present in the committed run manifest
   ladder:
     PC-0: committed transcript reanalysis endpoint sanity check
     PC-1: committed transcript sensitivity detection check
@@ -1129,61 +1184,115 @@ experiments:
     or calibration are latently controllable, and a pass here does not weaken, qualify, or extend the scoped
     negative reported for naive CAA/ITI steering on the three metacognitive axes.
   started_at: null
-  ended_at: null
+  ended_at: '2026-08-04T04:22:28.072716+00:00'
   exit_code: 0
   raw_metrics:
-    backend: synthetic
-    bootstrap_b: 200
-    pc2a_passed: true
-    pc3_passed: true
-    random_direction_negative_control_passed: false
+    backend: hf
+    prompt_refusal_rate: 0.9550000000000001
+    pc2a_mean_diff: 0.0
+    pc3_mean_diff: -0.9550000000000001
+    pc2a_passed: false
+    pc3_passed: false
+    random_direction_negative_control_passed: true
     item_pool_disjoint_from_frozen80: true
     min_triviaqa_index: 80
     item_count: 60
     hook_bites_check: synthetic_no_op; hf requires cosine>=0.999 and relative norm error<=0.05 at fixed alpha and PC-3 DEV-selected alpha
   summary_metrics:
-    pre_gpu_checklist_status: PC-0/1/2/3 registration plus runtime guards implemented; hf GPU not run
+    result_status: endpoint_live_latent_arm_null
     modifies_frozen_verdict: false
-    valid_for_paper: false
+    valid_for_paper: scoped_limitation_only
   artifacts:
-  - results/E-0014-positive-control/positive_control_results.json
-  - results/E-0014-positive-control/direction_provenance.json
-  - results/E-0014-positive-control/run_manifest.json
+  - path: results/E-0014-positive-control/positive_control_results.json
+    sha256: d3275016bd04ed3b9f1e06b7aceb4c7230d2f32b089d7a1f4949a8f902b1790c
+  - path: results/E-0014-positive-control/direction_provenance.json
+    sha256: bc777605e7c3c8777f674d1f3932bcbed67a3587111ec30646d3b5b45ec9afc7
+  - path: results/E-0014-positive-control/run_manifest.json
+    sha256: 920703c9eba83d171c190d80b5054bc39013a22a592dd1cad4dc001ffa32c4bc
   failure_reason: null
-  valid_for_paper: false
+  valid_for_paper: true
   validation_notes: >-
-    E-0014 is registered as an assay-sensitivity positive control only. Runtime guards now fail closed on
-    non-TriviaQA or frozen-prefix item ids, hf N<60, non-real direction provenance, and an hf hook that does
-    not perturb residuals in the unit direction with cosine>=0.999 and relative norm error<=0.05 at both the fixed guard alpha and PC-3 DEV-selected alpha. The synthetic random-direction negative control
-    uses alpha_gain=0.0 by design; the geometric hook-bites assertion is hf-only. This entry does not add
-    support to any metacognitive-axis claim and does not modify the frozen C2 verdict.
+    D-0082 authorizes E-0014 for the scoped endpoint-live and latent-arm-null limitation only.
+    It is not a passing latent positive control, does not establish latent assay sensitivity,
+    and adds no support to any metacognitive-axis claim.
 - experiment_id: E-0015
   parent: E-0014
   hypothesis_id: H-D
   claim_ids:
   - C2b
   type: confirmatory
-  status: run_complete_audited_universal_null_valid_for_paper_true (D-0085; results audit passed; integrated 6231855)
-  code_commit: null
-  dirty_tree: null
+  status: run_complete_audited_scoped_scale_corrected_null_valid_for_paper
+  code_commit: d75395e5097cc2f2320327b5581446ce27a8dd72
+  results_commit: 4d900a94ff01c056c93f4fa87e3074037a349adb
+  integration_commit: 6231855
+  dirty_tree: false
   data_hash: null
   env_hash: null
-  config_hash: null
+  config_hash:
+    run_manifest_sha256: sha256:c165b6c257482e5a18a3308a2f27a2889c17f6f66e9a74de33159f570b4a7700
   model: Qwen/Qwen2.5-7B-Instruct
   dataset: data/c2b_tasks/* real loaders + data/contrast_pairs/* + data/strongest_prompts/*; refusal TriviaQA ids >=80
   seed: 20260723
-  hardware: owner-gated GPU; synthetic smoke only before freeze
+  hardware: real hf GPU run; exact host identity is not present in the committed run manifest
+  started_at: null
+  ended_at: '2026-08-04T08:31:16.645888+00:00'
+  exit_code: 0
+  raw_metrics:
+    beta_grid: [0.125, 0.25, 0.5, 1.0, 2.0]
+    refusal_residual_norm_mean: 411.91598275121726
+    metacognitive_residual_norm_mean: 96.2220297853252
+    null_mde_approx: 0.1892607209965111
+  summary_metrics:
+    all_four_axes_passed: false
+    coherent_perturbation_ceiling_relative_to_residual: 0.5_to_0.66
+    near_1.05x_refusal_point: degenerate
+    interpretation: scoped_scale_corrected_null_and_assay_sensitivity_limitation
+  artifacts:
+  - path: results/E-0015-scale-corrected-positive-control/positive_control_scale_corrected_results.json
+    sha256: 205bce38d85d8976c2b361632561d8fe3aea5fe5f1a0711aaf88cf373e40a2f7
+  - path: results/E-0015-scale-corrected-positive-control/direction_provenance.json
+    sha256: e5182552321835fff906ee0879f6f0dbb0e832e7da198b8e37570079577c61d3
+  - path: results/E-0015-scale-corrected-positive-control/run_manifest.json
+    sha256: c165b6c257482e5a18a3308a2f27a2889c17f6f66e9a74de33159f570b4a7700
+  failure_reason: null
+  valid_for_paper: true
+  validation_notes: >-
+    D-0085 authorizes only a scoped scale-corrected null/assay-sensitivity limitation.
+    Coherent scaling did not produce a passing latent arm, but the MDE and coherent ceiling
+    prohibit a universal or core latent-negative interpretation.
+
+- experiment_id: E-0015-logit-delta
+  parent: E-0015
+  hypothesis_id: H-D-DIAGNOSTIC
+  claim_ids: []
+  type: qualitative_diagnostic
+  status: audited_nonconfirmatory_valid_for_paper_false
+  code_commit: 05de543bc004b732285ab42cb067692f1d68a1b0
+  integration_commit: 394b98f238cf3868a40b5cc0ea500fadb77117e6
+  dirty_tree: false
+  data_hash:
+    transcripts_sha256: sha256:caf0343e2fa1b4a8dbc882387d333168c1bc29be81e792fa4d8c07bfacdefe82
+  env_hash: null
+  config_hash:
+    diagnostic_sha256: sha256:1167fcdf7704f6ce76e0ab892b5d823d580a06339fb1aa46d5ef070b52a70209
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: Five diagnostic probes per axis from the E-0015 follow-up
+  seed: 20260723
+  hardware: GPU diagnostic; exact host identity not claim-bearing
   started_at: null
   ended_at: null
-  exit_code: null
-  raw_metrics: null
-  summary_metrics: null
+  exit_code: 0
   artifacts:
-  - scripts/run_positive_control_scale_corrected.py
-  - docs/research/2026-08-04-scale-corrected-positive-control/prereg-e0015-DRAFT.md
+  - path: results/E-0015-logit-delta/diagnostic.json
+    sha256: 1167fcdf7704f6ce76e0ab892b5d823d580a06339fb1aa46d5ef070b52a70209
+  - path: results/E-0015-logit-delta/transcripts.jsonl
+    sha256: caf0343e2fa1b4a8dbc882387d333168c1bc29be81e792fa4d8c07bfacdefe82
   failure_reason: null
   valid_for_paper: false
-  validation_notes: Scale-corrected positive-control harness registered pre-GPU. Uses frozen beta grid {0.125,0.25,0.5,1.0,2.0}; valid_for_paper remains false until frozen GPU run and hostile results audit.
+  validation_notes: >-
+    D-0087 permits appendix context only. The first-token proxy overlaps ordinary or hedged
+    answer starts. This diagnostic is non-confirmatory, excluded from submission evidence,
+    and supports no claim.
 
 - experiment_id: e0016-ablation-positive-control-regime-b
   parent: null

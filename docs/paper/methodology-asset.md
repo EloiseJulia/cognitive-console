@@ -72,27 +72,27 @@ This is the intended reusable "negative-result instrument" contribution, directl
 
 ---
 
-## 2) Latent control failure taxonomy (evidence-marked)
+## 2) Latent control failure taxonomy (evidence-marked conditional interface decisions)
 
-| Failure class | Observable symptom | Evidence status | Plausible mechanism | Diagnostic signal | Deployment meaning |
+| Failure class | Observable symptom | Evidence status | Plausible mechanism | Diagnostic signal | Conditional interface decision |
 |---|---|---|---|---|---|
-| **F1. Legible-but-non-transfer facade** | Axis is representationally legible, but steering does not beat best prompt behavior | **Supported in tested scope:** `E-0003` (legibility on 3/4 Qwen axes) + `E-0005`/`E-0006` (all 4 method×model cells 0/3 behavioral pass) | Behavioral policy may not be parameterized by that single linear control coordinate | Positive C1-style legibility plus null/negative paired `d_i` on adjudication | Treat latent direction as a diagnostic probe, not production control |
-| **F2. Calibration backfire under steering** | Uncertainty/calibration axis worsens under steering | **Supported/generalized in tested 2×2:** `E-0005` (Qwen×CAA uncertainty mean(d) = -0.228, CI excludes 0) + `E-0006` (all 4 cells negative, CI excludes 0) | **Mechanism open:** distance-based off-manifold account was directly tested and not supported (`E-0007`) | Negative paired effect concentrated on calibration metrics across method×model cells | For calibration-facing products, do not deploy naive CAA/ITI steering as a trust-control primitive |
+| **F1. Legible-but-non-transfer facade** | Axis is representationally legible, but steering does not beat best prompt behavior | **Supported in tested scope:** `E-0003` (legibility on 3/4 Qwen axes) + `E-0005`/`E-0006` (all 4 method×model cells 0/3 behavioral pass) | Behavioral policy may not be parameterized by that single linear control coordinate | Positive C1-style legibility plus null/negative paired `d_i` on adjudication | For the tested model/method/axis, show diagnostic status but withhold a validated-control state |
+| **F2. Calibration backfire in the steer-vs-prompt contrast** | Uncertainty/calibration axis is worse for steer than for the bounded prompt | **Supported/generalized in tested 2×2:** `E-0005` + `E-0006`; direct steer-vs-baseline is near zero where rechecked | **Mechanism open:** distance-based off-manifold account was directly tested and not supported (`E-0007`) | Negative comparator-bound effect across method×model cells | For the tested cells, present a comparator-bound warning instead of a validated calibration control |
 | **F3. Coherence-fragility corridor** | Higher steering strength risks coherence collapse or forces conservative usable alpha | **Instrumented but not triggered in tested cells:** coherence gate exists by design (`prereg-c2b`, robustness prereg); E-0005/E-0006 report coherence ok, so this is a guardrail rather than observed failure here | Steering may enter unusable output regimes, but this run's calibration harm was not explained by the tested off-manifold distance metric (`E-0007`) | Coherence diagnostics worsen faster than target metric improves | If coherence deteriorates before meaningful gain, stop latent route and keep prompt-only |
-| **F4. Layer-sensitive instability** | Axis effect depends strongly on layer choice | **Supported in-scope:** `E-0003` notes layer sensitivity (e.g., deliberation layer-16 CI crossing); `E-0006` independently re-derived per-model layers/α | Axis is distributed/nonlinear; single-layer extraction under-specifies control geometry | Large variance or sign/strength shifts across nearby layers | Any deployment must include layer sensitivity sweeps and stability checks; otherwise high fragility |
-| **F5. Axis extraction degeneration** | Extracted direction overshoots or fails to encode intended construct | **Supported in-scope:** focus axis overshoot/no facade in `E-0003`; focus dropped in prereg; robustness conclusions are limited to the three adjudicated axes | Target construct not linearly captured by current extraction objective/data | Ratio/pathology diagnostics show no valid facade regime | Exclude axis from control claims; redesign axis definition before any deployment |
+| **F4. Layer-sensitive instability** | Axis effect depends strongly on layer choice | **Supported in-scope:** `E-0003` notes layer sensitivity (e.g., deliberation layer-16 CI crossing); `E-0006` independently re-derived per-model layers/α | Axis is distributed/nonlinear; single-layer extraction under-specifies control geometry | Large variance or sign/strength shifts across nearby layers | Keep evidence layer-specific until stability is demonstrated in the intended setting |
+| **F5. Axis extraction degeneration** | Extracted direction overshoots or fails to encode intended construct | **Supported in-scope:** focus axis overshoot/no facade in `E-0003`; focus dropped in prereg; robustness conclusions are limited to the three adjudicated axes | Target construct not linearly captured by current extraction objective/data | Ratio/pathology diagnostics show no valid facade regime | Exclude the tested axis from validated-control claims until extraction is redesigned and re-evaluated |
 
 Interpretation boundary: F1-F5 are currently a **method-scoped operational taxonomy**, not universal laws of latent control.
 
 ---
 
-## 3) When-NOT-to-deploy latent control: operational decision checklist
+## 3) Conditional interface-state checklist
 
-This checklist turns the taxonomy into product/engineering decisions.
+This checklist maps model evidence to proposed interface states. It is not deployment-effectiveness evidence.
 
-### 3.1 Hard no-go triggers (for naive CAA/ITI-like steering in this tested scope)
+### 3.1 Withhold a validated-control state in the tested scope
 
-Do **not** deploy latent control as a user-facing control feature if any of the following holds:
+Withhold presentation as a validated user-facing control for the tested model/method/axis if any of the following holds:
 
 1. Target is calibration/uncertainty expression and adjudication shows negative paired effect (as in `E-0005` and generalized in `E-0006`).
 2. Increasing intervention strength improves target metric only while failing coherence gate or causing degeneration.
@@ -102,13 +102,12 @@ Do **not** deploy latent control as a user-facing control feature if any of the 
 ### 3.2 Prompt-vs-latent decision flow
 
 1. Run frozen adjudication on the intended axis and product objective.
-2. If axis fails pass criteria, default to prompt/channel-only control for deployment.
-3. If axis passes but is layer/coherence fragile, keep latent control as internal analyst tooling, not end-user control.
-4. Treat `E-0006` as a scoped 2×2 warning, not deployment clearance: promote to user-facing latent control only after product-specific adjudication passes under the intended model/method and any stronger/trained/optimized steering is tested in a new preregistered package.
+2. If the axis fails pass criteria, mark the latent control evidence as failed or unresolved and retain the comparator.
+3. If the axis passes but is layer/coherence fragile, expose that limitation in the evidence tier.
+4. Treat `E-0006` as a scoped 2×2 warning. A different model, method, axis, or task requires a new preregistered package.
 
 ### 3.3 What this contributes beyond one negative run
 
 The contribution is a **decision discipline**: teams can avoid shipping brittle latent controls by using a frozen adjudication and explicit no-go criteria, while still reporting honest scoped negatives as cumulative knowledge. The executed robustness arm shows the negative is not a single CAA×Qwen accident, but the scope remains exactly the tested 2 model families × 2 naive steering families.
 This directly answers the "method not tuned / so what" challenge by turning failures into reusable evaluation infrastructure rather than narrative-only conclusions, without claiming a universal limit on latent control.
 **Critic alignment:** especially `R3-M2`, plus `R2-B1` scope control and `R1-F1` robustness framing.
-

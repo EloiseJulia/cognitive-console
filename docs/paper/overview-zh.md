@@ -5,7 +5,7 @@
 
 ## 1. 一句话叙事
 
-Latent-control 界面把“可读的内部方向”翻译成“可操作的控制承诺”。本文提出一份界面评估合同，要求设计者在显示 slider 前分别回答 READ、TRANSFER、bounded prompt comparator、calibration warning 和 evidence tier。模型实验是唯一实证来源；console 只是基于冻结证据的界面实例，不是用户研究。
+Latent-control 界面把“可读的内部方向”翻译成“可操作的控制承诺”。本文提出并以 artifact 实例化一套基于模型证据的 evidence-accounting/evaluation framework，要求设计者在显示 slider 前分别回答 READ、TRANSFER、bounded prompt comparator、calibration warning 和 evidence tier。模型实验是唯一实证来源；framework 的可理解性、可用性和对 reliance 的影响尚未验证。
 
 ## 2. HCI 问题
 
@@ -136,14 +136,14 @@ E-0015 使用 raw-magnitude CAA：
 
 ### 5.5 Logit Diagnostic
 
-E-0015 appendix diagnostic：
+E-0015 appendix diagnostic 标记为 `valid_for_paper=false`，不进入 submission evidence，也不支持任何 claim：
 
 - coherent `beta=1` 时 refusal-leading first-token mass 平均约 `+13.9 nats`；
 - 同时 `0/5` scored refusals；
 - 一个 `+16.9` item 的 greedy completion byte-identical；
 - proxy 包含普通或 hedged answer 也可能以其开头的 token，如 `I`。
 
-只允许解释为 target-specific representational/logit push 没有转化为 scored behavioral control。不得写 “handle works”。
+它只提供 non-confirmatory context。不得写 “handle works”，也不得用于支持 READ、TRANSFER 或核心 negative claim。
 
 ## 6. Console 如何改变设计决策
 
@@ -168,9 +168,9 @@ Console 不是展示更多模型内部信息，而是决定一个 affordance 的
 4. **Calibration contrast must name the baseline.** steer-vs-prompt 与 steer-vs-baseline 回答不同问题。
 5. **Evidence tiers prevent substitution.** model、method、axis 任一变化都产生新的评估义务。
 
-## 8. 社会价值边界
+## 8. 规范性目标与待验证假设
 
-本文的规范性意义是减少 misleading affordance 和由其可能诱发的 over-trust。本文没有证明：
+本文的规范性目标是避免仅凭 legibility 呈现 actionability。“减少 misleading affordance 或 over-trust”是待验证的 HCI hypothesis，不是本文结果。本文没有证明：
 
 - warning card 改善 calibrated reliance；
 - 用户能正确理解 TRANSFER 或 evidence tier；

@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-08-05 · D-0097 · Paper lineage synchronized to D-0078 and D-0081..D-0087 without changing scientific conclusions
+- This repair closes a bookkeeping gap in the IUI rewrite. It does not authorize a new experiment, citation, number, claim, protocol change, or validity upgrade beyond Manager-approved paper uses already recorded in D-0078 and D-0081..D-0087.
+- E-0013 is registered as `valid_for_paper=true` only for the audited CAA×Qwen format-robustness/limitation claim. ITI×Qwen and both Llama cells remain unverified and support no E-0013 claim. The post-generation complete-case restriction and adversarial missingness bounds remain mandatory.
+- E-0014 is paper-valid only as endpoint-live plus bounded-latent-arm-null limitation evidence. It is not a passing latent positive control and supports no metacognitive-control claim. E-0015 is paper-valid only as a scoped scale-corrected null/assay-sensitivity limitation with coherent-ceiling and MDE caveats; it is not a universal or core latent negative.
+- The E-0015 first-token logit diagnostic remains `valid_for_paper=false`, non-confirmatory, appendix-only context and is excluded from claim support and the submission evidence ledger. The social E-0010 card is removed from the central console figure; E-0010 remains appendix-context-only under its existing caveats.
+- The contract is consistently described as an artifact-instantiated proposed evidence-accounting/evaluation framework derived from model evidence. Its comprehensibility, usability, reliance effects, and benefit remain unvalidated future-work questions.
+
 ## 2026-08-05 · D-0096 · E-0016 pre-DEV infrastructure failure validated; audited serialization repair authorizes retry within D-0095
 - Independent audit validated attempt 1 as a **VALID PRE-DEV INFRA FAILURE**, not a scientific result. Result branch/commit: `run/e0016-regime-b-20260805` / `c461c3c295ba96243d746f8fbfc60389a2635d1b`. The exact old run commit was `4def9ba59a00909d4cf2aae7dbdb1665877d6204`; DEV and TEST did not run, `valid_for_paper=false`, and no harmful generation or raw-harmful-text leakage occurred.
 - Root cause: transformers 5.14.1 exposed a tokenizer `AddedToken` during environment-identity capture, and the old canonical JSON path could not serialize it. Repair commits `75834b1f5913933ac412f93d5d41a44a58868060` and `fa58dcf5c739e7d89b36e6af7694e9ea0df84d27` add canonical `AddedToken` and typed configuration-key serialization (environment identity schema v3). The repair was independently audited **SOUND** and merged as the new exact run/code commit `c094f07fa3592c2210f46caba9e69c49a5a92fad`.

@@ -5,7 +5,7 @@
 
 ## 1. 一句话叙事
 
-Latent-control 界面把“可读的内部方向”翻译成“可操作的控制承诺”。本文提出并以 artifact 实例化一套基于模型证据的 evidence-accounting/evaluation framework，要求设计者在显示 slider 前分别回答 READ、TRANSFER、bounded prompt comparator、calibration warning 和 evidence tier。模型实验是唯一实证来源；framework 的可理解性、可用性和对 reliance 的影响尚未验证。
+给模型属性命名并放置 slider，会形成“移动 slider 就能控制对应行为”的承诺。本文的主贡献是五字段 evidence contract；console 是 model-evidence artifact instantiation，完整实证 grid 是该 contract 的首个 worked application。“No cell passes”是 contract 对这一案例给出的状态，不是论文对 latent control 的最终结论。
 
 ## 2. HCI 问题
 
@@ -27,9 +27,13 @@ Latent-control 界面把“可读的内部方向”翻译成“可操作的控�
 4. 是否引入 calibration 或 coherence 风险；
 5. 证据是否只适用于当前 model/method/axis。
 
-## 4. 主要贡献
+## 4. 主要贡献（严格顺序）
 
-### 4.1 Interface-Evaluation Contract
+### 4.1 Conceptual distinction
+
+READ 表示某个内部方向在指定测量下可读；CONTROL 表示该干预在指定比较器、结果、margin 与 coherence 条件下通过行为检查。可读性先支持 diagnostic，不自动支持 slider。
+
+### 4.2 Five-field evidence contract（主贡献）
 
 合同有五个字段：
 
@@ -48,9 +52,9 @@ Latent-control 界面把“可读的内部方向”翻译成“可操作的控�
 
 当前论文没有观察到最后一种状态，因为没有 latent behavioral positive control pass。
 
-### 4.2 Frozen Comparative Adjudicator
+### 4.3 Fully worked artifact instantiation
 
-在 Qwen2.5-7B 和 Llama-3-8B 上，对 CAA/ITI 使用同一冻结框架：
+论文首次完整应用五字段 contract，在 Qwen2.5-7B 和 Llama-3-8B 上对 CAA/ITI 使用同一冻结 evaluation procedure：
 
 - prompt channel：16 个预先编写候选，只在 DEV 选；
 - latent channel：method-specific 单层加法 `h'_L = h_L + alpha*s_m*u_m`，其中 `s_CAA=1`，`s_ITI=sigma_L`；两者都只在 DEV 从 `alpha in {2,4,6,8,12,16,24}` 选择系数，但 effective injected norm 不同；
@@ -61,7 +65,7 @@ Latent-control 界面把“可读的内部方向”翻译成“可操作的控�
 
 该实验比较的是“steering 替代 bounded prompt”，不是 prompt+steer 组合。
 
-### 4.3 Scoped Failed-Superiority Result
+该 application 的输出是 scoped failed-superiority：
 
 `{CAA, ITI} x {Qwen2.5-7B, Llama-3-8B}` 四格中，没有任何轴通过预注册 superiority rule。五个 DEV/TEST split seeds 在同一 item pool 上保持相同 no-pass verdict。
 
@@ -151,6 +155,8 @@ E-0015 appendix diagnostic 标记为 `valid_for_paper=false`，不进入 submiss
 
 Console 不是展示更多模型内部信息，而是决定一个 affordance 的状态。
 
+论文用明确标注为 illustrative 的设计师场景说明这一点：Maya 为 policy-analysis writing assistant 设计 uncertainty slider。她依次读取 five fields 后，将 slider 改为 diagnostic trace + bounded-prompt/latent comparator view。该场景不是观察、participant 数据或 user-benefit 证据。
+
 以 Qwen uncertainty axis 为例：
 
 1. exploratory READ 可以支持 diagnostic label；
@@ -181,9 +187,9 @@ Console 不是展示更多模型内部信息，而是决定一个 affordance 的
 
 真人研究必须另外验证这些问题，且不能预设更多 warning 一定有益。
 
-## 9. Limitations
+## 9. Scope and Conditions of the Contract
 
-- 无 user study、访谈、形成性需求或迭代反馈；
+- 第一段集中声明：无 user study，因此 comprehensibility、usability、reliance effects 未测试；正文其它位置不重复这一完整免责声明；
 - 无 passing latent behavioral positive control；
 - C1 exploratory，单模型单 run，轴组成异质；
 - ITI 没有对应 READ validation；
@@ -197,9 +203,11 @@ Console 不是展示更多模型内部信息，而是决定一个 affordance 的
 - 未测试 prompt+steer composition；
 - off-manifold mechanism prereg 返回 valid null，机制未知。
 
+后续各条统一采用正面 scope 写法：“contract applies to Y; beyond Y needs new evidence/re-evaluation”。四条不可删除事实是：adversarial missingness bounds 跨 0；其它三格未 format-recheck；skepticism 欠功效；无 user study（仅第一段完整陈述）。
+
 ## 10. Conclusion 边界
 
-结论不是 latent control 失败，而是界面证据规则：
+结论首要主张是方法：五字段 contract 决定界面可以诚实支持什么状态。tested grid 的 no-pass 是 worked instantiation 的输出：
 
 - READ-positive 可以显示为 diagnostic；
 - 没有 comparative TRANSFER evidence 时，不应把轴包装为 slider；

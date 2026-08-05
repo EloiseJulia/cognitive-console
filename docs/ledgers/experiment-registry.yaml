@@ -1220,9 +1220,9 @@ experiments:
     failure_stage: capture_environment_identity/tokenizer_config_serialization
     failure_artifacts:
     - path: results/E-0016-regime-b-confirmatory/e0016_run_start_source_state.json
-      sha256: 58d935ec7037c1488af56f078d980af78f3d485a5a030c19245b471fe8832299
+      sha256: 98058e3fd105e45774942f2ed7989cd6e189307181d6ac1faf91b35d7dae9e9d
     - path: results/E-0016-regime-b-confirmatory/execution_failure_manifest.json
-      sha256: e89d4f8b6fcf716b2d935d4e9f0c601d9e17e533d78d47c14341ea7f07b6a85d
+      sha256: 70393b38b07c81f9ac7b87b7ec49f76da8e8fe247390c4ed75aeaf02ad99f801
     harmful_generation_performed: false
     raw_harmful_text_committed: false
     valid_for_paper: false

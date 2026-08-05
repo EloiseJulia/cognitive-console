@@ -108,6 +108,6 @@ Withhold presentation as a validated user-facing control for the tested model/me
 
 ### 3.3 What this contributes beyond one negative run
 
-The contribution is a **decision discipline**: teams can avoid shipping brittle latent controls by using a frozen adjudication and explicit no-go criteria, while still reporting honest scoped negatives as cumulative knowledge. The executed robustness arm shows the negative is not a single CAA×Qwen accident, but the scope remains exactly the tested 2 model families × 2 naive steering families.
+The contribution is a **decision discipline** intended to help teams identify when tested evidence does not warrant presenting an affordance as validated control, while still reporting honest scoped negatives as cumulative knowledge. The executed robustness arm shows the negative is not a single CAA×Qwen accident, but the scope remains exactly the tested 2 model families × 2 naive steering families.
 This directly answers the "method not tuned / so what" challenge by turning failures into reusable evaluation infrastructure rather than narrative-only conclusions, without claiming a universal limit on latent control.
 **Critic alignment:** especially `R3-M2`, plus `R2-B1` scope control and `R1-F1` robustness framing.

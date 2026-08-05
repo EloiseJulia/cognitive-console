@@ -8,5 +8,17 @@ evidence_ids:
   - E-0006
   - E-0007
   - E-0008
+  - E-0013
+source_experiments:
+  - experiment_id: E-0013
+    evidence_id: E-0013
+    run_commit: 70af3996ddea4f881efbb4c0bff9241aad3849ce
+    claim_scope: Narrow CAA×Qwen format-robustness caveat for F2 only; the other three cells support no E-0013 claim.
+source_artifacts:
+  - path: results/E-0013-uncertainty-recheck/reanalysis.json
+    experiment_id: E-0013
+    evidence_id: E-0013
+    sha256: ea91f10cce1de06f9c38c4777064e85b7fcf44f295f7ef983092ca0843edfd01
+    role: Narrow CAA×Qwen evidence for the F2 direct steer-vs-baseline approximately-zero caveat.
 claim_scope: Proposed evidence-accounting framework derived from model evidence; no deployment or HCI-effectiveness claim.
 rebuild_command: python docs\paper\scripts\make_failure_taxonomy.py

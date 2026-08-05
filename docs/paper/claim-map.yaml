@@ -11,14 +11,16 @@ claims:
   C2:
     statement: "Legibility does not transfer to behavioral controllability for naive/bounded CAA/ITI steering: across CAA/ITI x Qwen2.5-7B/Llama-3-8B, steering shows no demonstrated superiority over the bounded best-prompt baseline on any tested axis under the pre-registered pass rule (failed-superiority, not equivalence) and harms uncertainty calibration in all four cells; a post-hoc TOST equivalence analysis shows the uncertainty harm is robust while deliberation/skepticism non-detections are partly underpowered rather than proven equivalence."
     status: "supported as a pre-registered negative generalized across tested methods and models; single-seed caveat RETIRED (D-0055): pre-registered negative is robust across five DEV/TEST split seeds over the same item pool (E-0011)"
-    supporting_evidence_ids: ["E-0005", "E-0006", "E-0009", "E-0011"]
-    scope: "Frozen C2b adjudicator; core headline is {CAA, ITI} x {Qwen2.5-7B, Llama-3-8B}; axes deliberation, skepticism, uncertainty_awareness; bounded prompt effort; naive/off-the-shelf steering. E-0009 is exploratory supporting evidence only for robustness to method strength on Qwen2.5-7B. E-0011 is exploratory-confirmatory split-seed robustness arm (five DEV/TEST split seeds over the same item pool — NOT independent item draws)."
+    supporting_evidence_ids: ["E-0005", "E-0006", "E-0009", "E-0011", "E-0013", "E-0014", "E-0015"]
+    scope: "Frozen C2b adjudicator; core headline is {CAA, ITI} x {Qwen2.5-7B, Llama-3-8B}; axes deliberation, skepticism, uncertainty_awareness; bounded prompt effort; naive/off-the-shelf steering. E-0009 is exploratory method-strength context. E-0011 varies five DEV/TEST split seeds over the same item pool. E-0013 is valid only for the CAA×Qwen format-robustness/limitation claim; three cells remain unverified. E-0014 and E-0015 are valid only as positive-control and assay-sensitivity limitations, not as positive latent-control evidence or universal negatives."
     paper_sections: ["Abstract", "Introduction", "Methods", "Results", "Limitations", "Conclusion"]
     main_artifacts: ["table-c2-delta-4cell", "fig-calibration-harm-4cell"]
     valid_for_paper: true
     exploratory_supporting_evidence_ids: ["E-0009"]
     core_evidence_ids: ["E-0005", "E-0006", "E-0011"]
-    gate_notes: "Passes Abstract/Contributions/Conclusion evidence gate via E-0005 and E-0006 (frozen core). E-0011 (valid_for_paper=true per D-0055) added as core robustness companion: five DEV/TEST split seeds over the same item pool all NON_TRANSFER_GENERALIZED, uncertainty CI_hi<0 in all 4 cells × all 5 split seeds, any_true_pass=false, DROP_SINGLE_SEED_CAVEAT enacted. Disclosure required: E-0011 item pool is shared with E-0006 (same first-N deterministic slice; only DEV/TEST split varies by seed, NOT independent item draws). Uncertainty calibration-harm/non-transfer claims are anchored to the C2 behavioral deltas (not inferred from C1 facade ratios). E-0009 is single-model/single-seed/valid_for_paper=false exploratory support; it must not overwrite or upgrade the frozen headline. Scope guard preserved: bounded prompt vs naive/off-the-shelf CAA/ITI; 2 models × 2 methods; NOT an impossibility theorem."
+    scoped_limitation_evidence_ids: ["E-0013", "E-0014", "E-0015"]
+    excluded_diagnostic_ids: ["E-0015-logit-diagnostic"]
+    gate_notes: "Passes Abstract/Contributions/Conclusion evidence gate via E-0005/E-0006 and the E-0011 split-seed robustness companion. E-0013 supports only D-0078's CAA×Qwen format-robustness statement, including post-generation conditioning and missingness caveats; ITI×Qwen and both Llama cells were not rechecked. E-0014 supports endpoint-live plus bounded-latent-null limitation wording and is not a passing latent positive control. E-0015 supports a scale-corrected coherent-null/assay-sensitivity limitation with ceiling and MDE caveats, not a universal/core latent negative. E-0015-logit-diagnostic is valid_for_paper=false, appendix-only, and supports no claim. Scope guard: bounded prompt vs naive/off-the-shelf CAA/ITI; 2 models × 2 methods; not an impossibility theorem."
   C2-mech:
     statement: "Calibration harm might be explained by off-manifold steering distance."
     status: "hypothesis/future work only; directly tested and not supported"
@@ -38,20 +40,20 @@ claims:
     valid_for_paper: "background citation only; not our empirical claim"
     gate_notes: "No project evidence row because it is not our claim. Must not enter Abstract/Contributions/Conclusion as an empirical contribution."
   C3:
-    statement: "From the frozen C2 adjudication, a cognitive console should expose an interface-evaluation contract for latent-control affordances: READ status, TRANSFER verdict, bounded best-prompt baseline comparison, calibration-harm warning, and evidence tier."
-    status: "interface-evaluation implication from C2 only; no standalone evidence row and no user study yet"
+    statement: "We propose and artifact-instantiate an evidence-accounting and evaluation framework for latent-control affordances: READ status, TRANSFER verdict, bounded best-prompt comparison, calibration warning, and evidence tier."
+    status: "primary methodological contribution derived from model evidence; proposed HCI framework with unvalidated comprehensibility, usability, reliance effects, and benefit"
     supporting_evidence_ids: []
     scope: "Pure-model route; no formative or controlled user study; human study deferred/owner-gated"
     paper_sections: ["Abstract", "Introduction", "Interface-evaluation contract", "Limitations", "Conclusion"]
     main_artifacts: []
-    valid_for_paper: "flagged: no standalone evidence row; usable only as a non-empirical interface-evaluation implication derived from C2, not as an empirical contribution"
-    gate_notes: "FLAG: lacks a direct evidence row. If C3 enters Abstract/Contributions/Conclusion as a standalone claim or empirical HCI contribution, the bidirectional gate fails; it may only appear as a clearly marked interface-evaluation implication from C2."
+    valid_for_paper: "true as a proposed, artifact-instantiated methodological framework derived from model evidence; false as a validated HCI-effectiveness claim"
+    gate_notes: "C3 may be the primary methodological contribution when consistently described as a proposed evidence-accounting/evaluation framework instantiated by C1/C2 model evidence. No claim of user comprehension, usability, reduced over-trust, calibrated reliance, or benefit is permitted without human evidence."
   C4:
     statement: "Discussion-only exploratory social-inference-axis extension: the novice/user-model axis is legible in latent space (READ_HOLDS), but the powered LLM-judge TEST finds an honest behavioral null on implemented M1 option-pushing and M4 deference; M2/M3 are not implemented and support no claim."
     status: "discussion-only exploratory extension; behavioral honest-null on implemented M1/M4; READ_HOLDS; valid_for_paper=false"
     supporting_evidence_ids: ["E-0010"]
     scope: "Qwen2.5-7B-Instruct only; single seed; frozen disjoint TEST pool N=54/k=5 for novice-disclosure behavior; LLM-judge-only with human-alpha PENDING, so not confirmatory. B-A M1=+0.00148 CI[-0.0483,+0.0467] p_bonf=1.0; B-E M1=-0.0119 p_bonf=1.0; M4=0. M2/M3 INVALID/not_implemented and must not be described as null dimensions. READ token-blind novice axis holds at layer 8 with AUC=0.954 (literal 1.0, drop 4.6pp, null p95=0.786). Prior DEV/L0 B>A=+0.074/+0.078 did not replicate at power and should be described as DEV noise, not a positive signal. Steer arm HELD per D-0048. Breadth axis remains contextual exploratory material only: single-run facade ratio ~0.271 plus underpowered suppression null with deterministic-echo and general_reasoning dead-zone caveats."
-    paper_sections: ["Discussion", "Future Work"]
+    paper_sections: ["Appendix/context only if retained"]
     main_artifacts: []
     valid_for_paper: false
     evidence_artifacts:
@@ -90,7 +92,7 @@ reverse_artifact_map:
     artifact_type: "exploratory powered result artifact"
     supports_claims: ["C4"]
     manifest: "none; E-0010 ledger row + results/flagship_powered/summary.md"
-    gate_status: "exploratory only, valid_for_paper=false; LLM-judge-only/human-alpha PENDING; honest-null on implemented M1/M4 plus READ_HOLDS"
+    gate_status: "appendix context only if used; excluded from the central console figure and claim-bearing submission evidence; valid_for_paper=false"
   breadth-social-l0:
     artifact_type: "exploratory result artifact"
     supports_claims: ["C4"]
@@ -104,16 +106,16 @@ gate_summary:
       gate_result: "pass only with exploratory/two-model aggregate and axis-heterogeneity caveat"
     - claim: "C2"
       has_project_evidence_row: true
-      evidence_ids: ["E-0005", "E-0006", "E-0009", "E-0011"]
-      gate_result: "pass via E-0005/E-0006 frozen core; E-0011 (valid_for_paper=true, D-0055) added as robustness companion (five DEV/TEST split seeds over the same item pool all NON_TRANSFER_GENERALIZED, DROP_SINGLE_SEED_CAVEAT enacted, item-pool-shared disclosure required); E-0009 is exploratory supporting evidence only"
+      evidence_ids: ["E-0005", "E-0006", "E-0009", "E-0011", "E-0013", "E-0014", "E-0015"]
+      gate_result: "pass via E-0005/E-0006 frozen core and E-0011 robustness; E-0013/14/15 are scoped limitation evidence only; E-0015-logit-diagnostic is excluded"
     - claim: "C3"
       has_project_evidence_row: false
       evidence_ids: []
-      gate_result: "FLAGGED: no direct evidence row; allowed only as interface-evaluation implication/contract, not standalone contribution"
+      gate_result: "pass as the primary proposed methodological framework derived from model evidence; HCI comprehensibility, usability, reliance effects, and benefit remain unvalidated"
     - claim: "C4"
       has_project_evidence_row: true
       evidence_ids: ["E-0010"]
-      gate_result: "pass only as explicitly exploratory/framing extension; valid_for_paper=false, LLM-judge-only/human-alpha PENDING, powered honest-null on implemented M1/M4 plus READ_HOLDS; not a confirmatory manipulation or control claim"
+      gate_result: "excluded from Abstract/Contributions/Conclusion and the central console figure; appendix context only if retained with all caveats"
   claims_not_allowed_as_contributions:
     - claim: "C2-mech"
       reason: "E-0007 is valid null; mechanism open"

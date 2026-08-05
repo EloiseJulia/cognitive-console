@@ -101,7 +101,6 @@ def _select_cards(cards: Iterable[dict]) -> list[dict]:
     return [
         by_axis["deliberation"],
         by_axis["uncertainty_awareness"],
-        by_axis["social_inference_novice_disclosure"],
     ]
 
 
@@ -112,14 +111,12 @@ def _content_stream(payload: dict) -> str:
     ops.append(_line_ops(44, 772, "All numbers are read from frozen local artifacts; no humans/GPU/API/model calls.", 8))
     x0 = 44
     y0 = 520
-    w = 238
+    w = 360
     h = 224
     gap = 18
     for i, card in enumerate(cards):
         x = x0 + i * (w + gap)
         color = (1.0, 0.88, 0.88) if card["calibration_harm"].get("severity") == "red" else (0.92, 0.94, 1.0)
-        if card["axis"] == "social_inference_novice_disclosure":
-            color = (1.0, 0.94, 0.78)
         ops.append(_rect_ops(x, y0, w, h, color))
         ops.append(_line_ops(x + 10, y0 + h - 18, card["label"], 11))
         y = y0 + h - 38

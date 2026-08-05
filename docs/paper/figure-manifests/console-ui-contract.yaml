@@ -8,7 +8,6 @@ evidence_ids:
   - E-0006
   - E-0008
   - E-0009
-  - E-0010
 artifact_inputs:
   - results/gpu_7b_2026-07-23/c1/c1_facade_results.json
   - results/llama_c1_facade_2026-07-24/c1_facade_results.json
@@ -18,8 +17,6 @@ artifact_inputs:
   - results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json
   - results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json
   - results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json
-  - results/flagship_powered/behavior/flagship_l0_results.json
-  - results/flagship_powered/read/flagship_read_results.json
   - results/psr_qwen_primary/psr_c2b_adjudication_results.json
-claim_scope: UI artifact / instrument demonstration only; does not upgrade exploratory evidence to confirmatory.
+claim_scope: Two-axis UI artifact illustrating the proposed evidence-accounting contract; no social-axis evidence and no HCI effectiveness claim.
 rebuild_command: python docs\paper\scripts\plot_console_ui_contract.py

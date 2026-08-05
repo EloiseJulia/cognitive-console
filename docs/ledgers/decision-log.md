@@ -5,6 +5,11 @@
 
 ---
 
+## 2026-08-05 · D-0094 · E-0016 Regime-B protocol audit passed; exact run commit frozen, GPU budget pending
+- Targeted independent protocol re-audit closed both D-0093 documentation findings. The Regime-B-only protocol is frozen and merged at `4def9ba59a00909d4cf2aae7dbdb1665877d6204`; this is the exact clean commit authorized for any future E-0016 execution.
+- Owner decisions remain binding: benign XSTest generation only; DEV baseline false-refusal must be `>=0.25`; otherwise emit `INVALID_REGIME_B_UNDERPOWERED` and stop before TEST. Harmful prompts remain forward-pass-only direction inputs; Regime A generation is excluded.
+- This freeze is not GPU authorization. Regime-B GPU budget approval remains pending, and no GPU run, result, or paper-valid evidence exists.
+
 ## 2026-08-05 · D-0093 · E-0016 freeze-candidate status correction; final run commit remains pending
 - This append-only correction supersedes D-0092 only where D-0092 described E-0016 as finally frozen or execution-ready. The audited harness is merged at `4513820a679408b071984b8500cc9c5636255a49`, and the D-0091 scoped harness findings remain closed.
 - Commit `c36a438977ae51be5172587e900811508fe77468` contains the first Regime-B freeze-document candidate. It is a **protocol freeze candidate prepared, pending independent protocol audit and the final merged run commit**, not the run commit and not GPU authorization.

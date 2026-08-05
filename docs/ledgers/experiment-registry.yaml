@@ -1191,13 +1191,13 @@ experiments:
   claim_ids:
   - C2b
   type: confirmatory_positive_control
-  status: protocol_freeze_candidate_pending_audit_and_run_commit
-  code_commit: null
+  status: protocol_frozen_ready_for_gpu_pending_owner_budget
+  code_commit: 4def9ba59a00909d4cf2aae7dbdb1665877d6204
   harness_commit: 4513820a679408b071984b8500cc9c5636255a49
   protocol_file: docs/research/2026-08-04-ablation-positive-control/prereg-e0016-FROZEN.md
   protocol_candidate_commit: c36a438977ae51be5172587e900811508fe77468
-  protocol_audit: pending
-  run_commit: pending_manager_record_after_repair_audit_and_merge
+  protocol_audit: sound
+  run_commit: 4def9ba59a00909d4cf2aae7dbdb1665877d6204
   dirty_tree: null
   data_hash: null
   env_hash: null
@@ -1224,16 +1224,14 @@ experiments:
   - test_informed_protocol_changes
   - gpu_execution_without_owner_budget_approval
   pending_gates:
-  - independent_protocol_audit_sound
   - owner_gpu_budget_authorization
-  - manager_records_final_clean_audited_run_commit
   validation_notes: >-
     D-0089 Regime-B-only protocol. D-0091 harness findings were closed by the
     limited independent audit reflected in merge 4513820; that merge explicitly
     did not freeze the protocol or authorize GPU. Commit c36a438 contains the first
-    freeze-document candidate, not the final run commit. The candidate remains
-    pending independent protocol audit, repair merge, Manager recording of the
-    final merged run commit, and owner GPU-budget authorization. DEV baseline
+    freeze-document candidate. Targeted protocol re-audit closed both documentation
+    findings, and merge 4def9ba is the exact frozen run commit. Only owner GPU-budget
+    authorization remains pending. DEV baseline
     false-refusal must be >=0.25 or the runner emits
     INVALID_REGIME_B_UNDERPOWERED and stops before TEST. Harmful prompts are
     forward-pass-only direction inputs. Regime A is excluded and requires a new

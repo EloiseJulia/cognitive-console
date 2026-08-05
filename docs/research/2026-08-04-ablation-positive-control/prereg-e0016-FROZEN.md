@@ -2,7 +2,7 @@
 
 **Experiment id:** E-0016
 
-**Status:** **PROTOCOL FREEZE CANDIDATE — Regime B only; independent protocol audit, final merged run commit, and owner GPU-budget authorization pending**
+**Status:** **FROZEN — Regime B only; owner GPU-budget authorization pending**
 
 **Freeze candidate prepared:** 2026-08-05
 
@@ -11,10 +11,9 @@
 **Protocol freeze candidate commit:** `c36a438977ae51be5172587e900811508fe77468`
 — this is the commit containing the first frozen-document candidate.
 
-**Required run commit:** pending. After this documentation repair passes independent
-protocol audit and is merged, the Manager must record the exact final merged run
-commit. The experiment may check out and execute only that recorded commit; it must
-not assume the harness or protocol-candidate commit is the run commit.
+**Required run commit:** `4def9ba59a00909d4cf2aae7dbdb1665877d6204`.
+This is the audited merge commit containing the frozen protocol and harness. The
+experiment may check out and execute only this commit from a clean source tree.
 
 **Validity:** `valid_for_paper=false` until a real eligible Regime-B run completes and an independent hostile results audit validates it.
 
@@ -261,7 +260,7 @@ registered as a real run/result.
 ### 9.2 Future owner-approved HF Regime-B run
 
 Prerequisites: owner GPU-budget approval recorded; independent protocol audit
-SOUND; final merged run commit recorded; that exact commit checked out in a clean
+SOUND; run commit `4def9ba59a00909d4cf2aae7dbdb1665877d6204` checked out in a clean
 source tree; a free GPU selected according
 to host etiquette without interfering with another user. GPU visibility/index is
 an execution-environment choice made after approval and is intentionally absent

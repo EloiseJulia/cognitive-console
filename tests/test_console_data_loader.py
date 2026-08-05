@@ -202,6 +202,9 @@ def test_console_ui_contract_figure_script_runs():
     try:
         plot_console_ui_contract(["--out", out])
         assert out.exists()
-        assert out.read_bytes().startswith(b"%PDF-1.4")
+        pdf = out.read_bytes()
+        assert pdf.startswith(b"%PDF-1.4")
+        content = pdf.decode("utf-8")
+        assert content.count("0 0 0 rg 0 0 0 RG BT") == content.count(" BT")
     finally:
         out.unlink(missing_ok=True)

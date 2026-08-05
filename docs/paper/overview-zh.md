@@ -53,11 +53,11 @@ Latent-control 界面把“可读的内部方向”翻译成“可操作的控�
 在 Qwen2.5-7B 和 Llama-3-8B 上，对 CAA/ITI 使用同一冻结框架：
 
 - prompt channel：16 个预先编写候选，只在 DEV 选；
-- latent channel：单位方向单层加法 `h + alpha*u`，`alpha in {2,4,6,8,12,16,24}`，只在 DEV 选；
+- latent channel：method-specific 单层加法 `h'_L = h_L + alpha*s_m*u_m`，其中 `s_CAA=1`，`s_ITI=sigma_L`；两者都只在 DEV 从 `alpha in {2,4,6,8,12,16,24}` 选择系数，但 effective injected norm 不同；
 - TEST：同 item 配对比较，item-cluster bootstrap；
 - 三轴内 Bonferroni；
 - superiority margin `delta=0.05`；
-- coherence ratio 必须不超过 1.5。
+- coherence gate 使用 `g_a^S <= 1.5*g_a^0 + 0.02`；`0.02` 是 baseline 接近 0 时的 additive floor，不是纯 ratio gate。
 
 该实验比较的是“steering 替代 bounded prompt”，不是 prompt+steer 组合。
 
@@ -67,7 +67,7 @@ Latent-control 界面把“可读的内部方向”翻译成“可操作的控�
 
 这只支持：
 
-> 在测试的 7–8B 模型、任务和 bounded naive single-layer additive CAA/ITI (`alpha<=24`) 范围内，没有展示出超过 bounded best prompt 的控制优势。
+> 在测试的 7–8B 模型、任务和 frozen method-specific single-layer additive CAA/ITI convention（系数 `alpha<=24`）范围内，没有展示出超过 bounded best prompt 的控制优势。这里 `alpha<=24` 不是共同 injected-norm 上界：CAA 使用 unit direction，ITI 使用 `alpha*sigma_L`。
 
 不支持：
 
@@ -81,6 +81,8 @@ Latent-control 界面把“可读的内部方向”翻译成“可操作的控�
 ### 5.1 READ：可读是前提，不是结论
 
 C1 是 exploratory facade measurement。两个模型都在聚合上 3/4 轴 hold，但轴组成不同：
+
+Facade denominator 是 same-origin positive-pole reach：`<mean(extraction-positive)-mean(neutral), u_hat>`。它不是 positive-minus-negative contrast vector 的 norm；后者只用于推导 CAA direction。分子同样从 neutral origin 测量 strongest-prompt displacement。
 
 - deliberation、skepticism：两模型都 hold；
 - uncertainty：Qwen hold，Llama 不 hold；
@@ -187,7 +189,7 @@ Console 不是展示更多模型内部信息，而是决定一个 affordance 的
 - ITI 没有对应 READ validation；
 - F1 只复查 CAA×Qwen complete cases，adversarial bounds 跨 0，其余三格未复查；
 - skepticism 严重欠功效，deliberation 混合；
-- headline 只限 tested bounded naive single-layer additive CAA/ITI、7–8B models/tasks、`alpha<=24`；
+- headline 只限 tested bounded naive CAA/ITI、7–8B models/tasks 和 frozen method-specific single-layer additive convention（coefficient `alpha<=24`；CAA `s=1`，ITI `s=sigma_L`）；
 - E-0015 scale correction 只覆盖 Qwen single-layer CAA；
 - split-seed robustness 共用 item pool；
 - Bonferroni 是 cell 内三轴，不是全 12-cell family；

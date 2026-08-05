@@ -30,8 +30,8 @@ The reusable unit is a **frozen adjudication protocol** for testing whether late
 4. Require three simultaneous pass conditions per axis:
    - corrected CI excludes 0
    - point estimate `mean(d) >= delta`
-   - coherence gate passes
-   with `delta = 0.05` and pre-registered coherence threshold.
+   - coherence gate `g_steer <= 1.5 * g_baseline + 0.02` passes
+   with `delta = 0.05`. The additive `0.02` floor prevents a near-zero baseline from turning the gate into an exact-zero test.
    **Source:** `prereg-c2b-adjudication` §4, §5.
 
 5. Aggregate to a three-tier verdict (`STRONG GO`, `CONDITIONAL GO`, `KILL`) based on number of passing axes.

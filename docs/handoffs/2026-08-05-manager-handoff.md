@@ -65,7 +65,7 @@ The paper has moved from a chained hostile-review **REJECT** to an independently
 ### Design
 
 - `docs/research/2026-08-04-ablation-positive-control/design.md`
-- `docs/research/2026-08-04-ablation-positive-control/prereg-e0016-DRAFT.md`
+- `docs/research/2026-08-04-ablation-positive-control/prereg-e0016-FROZEN.md` (renamed and frozen after this handoff; see D-0092)
 - Design commit on main: `728a0d7`.
 - Pass rule: refusal-rate reduction `>=0.25`, paired bootstrap CI excludes 0 positively, coherence passes, random-direction ablation does not pass.
 - Scope guard: a pass establishes assay sensitivity to a known-effective **non-metacognitive, different-method** latent intervention. It does not validate metacognitive control or naive additive CAA/ITI and does not weaken the scoped negative.
@@ -160,7 +160,7 @@ docs/ledgers/failure-log.md                  <- placeholder/guard lessons
 docs/ledgers/experiment-registry.yaml        <- experiment lineage
 docs/research/2026-08-04-ablation-positive-control/
   design.md
-  prereg-e0016-DRAFT.md
+  prereg-e0016-FROZEN.md
 scripts/run_e0016_ablation_positive_control.py  <- branch only until audit/merge
 results/E-0015-scale-corrected-positive-control/
 results/E-0015-logit-delta/

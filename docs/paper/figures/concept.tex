@@ -15,7 +15,7 @@
 
   \draw[->, thick] (user) -- node[above, font=\scriptsize]{legible instruction} (llm);
   \draw[->, thick] (llm) -- node[above, font=\scriptsize]{task behavior} (behavior);
-  \draw[->, thick, orange!80!black] (latent) -- node[right, font=\scriptsize]{$h' = h + \alpha\hat v$} (llm);
+  \draw[->, thick, orange!80!black] (latent) -- node[right, font=\scriptsize]{$h' = h + \alpha\hat u$} (llm);
   \draw[->, dashed] (console) -- node[left, font=\scriptsize]{measures facade} (user);
   \draw[->, dashed] (console) -- node[below, font=\scriptsize]{paired frozen test} (limits);
   \draw[->, dashed] (limits) -- node[right, font=\scriptsize]{trust calibration} (behavior);

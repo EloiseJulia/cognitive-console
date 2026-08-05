@@ -477,7 +477,7 @@ def build_latex_table(arm_results: List[Dict[str, Any]], sesoi: float = SESOI) -
         r"\begin{table*}[t]",
         r"  \centering",
         r"  \caption{%",
-        r"    \textbf{[POST-HOC / exploratory — NOT pre-registered.]}",
+        r"    \textbf{[POST-HOC / exploratory---NOT pre-registered.]}",
         r"    TOST equivalence analysis on frozen C2b arm results (E-0005/E-0006).",
         r"    SESOI = $\pm\delta = "
         + f"{sesoi:.2f}"

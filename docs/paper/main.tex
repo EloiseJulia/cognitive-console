@@ -40,7 +40,7 @@ We evaluate the contract using a frozen prompt-vs-latent adjudicator on Qwen2.5-
 
 Positive-control work narrows rather than removes the claim boundary. A refusal prompt reaches 95\% refusal, whereas bounded latent CAA reaches 0\%. Raw-magnitude scale correction still yields no latent pass within a coherent perturbation ceiling of about \(0.5\)--\(0.66\times\lVert h\rVert\); a random uncertainty direction is detected at \(-0.24\), CI [\(-0.36\), \(-0.12\)]. Thus the endpoint and instrument respond, and under-scaling is substantially excluded within that coherent range, but no latent behavioral positive control passes. Deliberation is mixed and skepticism is underpowered, with minimum detectable effects near 0.19 or larger. The evidence supports a bounded failed-superiority finding for the tested naive additive methods, not a general limit on latent control.
 
-The resulting console instantiates a proposed evidence-accounting and evaluation framework derived from model evidence. Its HCI comprehensibility, usability, and effects on reliance remain untested. The methodological contribution is the artifact-instantiated contract: legibility is diagnostic evidence; control is a comparative behavioral claim; negative evidence can be represented as an interface state; and evidence must be re-established when the model, method, or axis changes.
+The resulting console instantiates a proposed framework for evidence accounting and evaluation derived from model evidence. Its HCI comprehensibility, usability, and effects on reliance remain untested. The methodological contribution is a contract instantiated with artifacts: legibility is diagnostic evidence; control is a comparative behavioral claim; negative evidence can be represented as an interface state; and evidence must be re-established when the model, method, or axis changes.
 \end{abstract}
 
 \maketitle
@@ -106,7 +106,7 @@ Recent evidence makes the comparison important. Steering can be context-sensitiv
 
 Two claims are often compressed into the phrase ``latent control.'' The first is representational: an internal direction is interpretable or readable. The second is behavioral: intervening on that direction produces a useful outcome. Mishra et al.\ show internal non-surjectivity, where bounded prompts do not reproduce all steered residual states \cite{mishra2026nonsurj}. That result motivates our question but does not answer it. Our adjudicator tests a behavioral comparison on shared items.
 
-This distinction also clarifies novelty. Among the reviewed systems, we found no explicit criterion that compares a latent candidate against the prompt channel and then maps the result to what an interface may claim. Our contribution is an artifact-instantiated proposed evaluation contract for that decision, rather than a new steering vector or broad benchmark. Table~\ref{tab:novelty-neighbors} summarizes the closest contrasts.
+This distinction also clarifies novelty. Among the reviewed systems, we found no explicit criterion that compares a latent candidate against the prompt channel and then maps the result to what an interface may claim. Our contribution is a proposed evaluation contract instantiated with artifacts for that decision, rather than a new steering vector or broad benchmark. Table~\ref{tab:novelty-neighbors} summarizes the closest contrasts.
 
 \begin{table*}[t]
   \centering
@@ -151,12 +151,14 @@ The method is organized around interface inference risks. C1 checks whether the 
 
 \subsection{READ Precondition: Exploratory Facade Measurement}
 
-C1 measures a representational facade on Qwen2.5-7B-Instruct and Llama-3-8B-Instruct. For each metacognitive axis, contrastive examples define a CAA-style direction. We then measure how far the strongest readable prompt moves along that direction relative to the extracted pole:
+C1 measures a representational facade on Qwen2.5-7B-Instruct and Llama-3-8B-Instruct. For each metacognitive axis \(a\), contrastive examples define a CAA-style direction. Let \(\operatorname{reach}_{\mathrm{prompt},a}\) be the strongest readable prompt's displacement along that direction and \(\operatorname{reach}_{\mathrm{pole},a}\) the displacement between the extracted contrastive poles. Their ratio is
 \begin{equation}
-  r_a = \frac{\mathrm{prompt\_reach}_a}{\mathrm{pole\_reach}_a}.
+  r_a =
+  \frac{\operatorname{reach}_{\mathrm{prompt},a}}
+       {\operatorname{reach}_{\mathrm{pole},a}}.
   \label{eq:facade-ratio}
 \end{equation}
-A ratio below one with an interval below one indicates that the readable prompt moves in the intended direction without spanning the extracted pole reach. The measurement answers a labeling question. It does not establish that adding the direction changes behavior, and it does not validate ITI's probe-derived directions. Each model contributes one exploratory run, so READ evidence remains axis- and method-specific.
+The facade criterion requires Equation~\ref{eq:facade-ratio} and its interval to lie below one. This answers a labeling question; it neither establishes behavioral transfer nor validates ITI's probe-derived directions. Each model contributes one exploratory run, so READ evidence remains axis- and method-specific.
 
 \subsection{TRANSFER Adjudication: Why the Comparator Is Part of the Method}
 
@@ -174,35 +176,43 @@ For uncertainty, both conditions receive the same request to end with an answer 
 
 \subsection{Frozen Decision Rule}
 
-CAA uses a contrastive mean-difference direction:
-\begin{equation}
-  v = \mathbb{E}_{x \in A^+}[h_L(x)] - \mathbb{E}_{x \in A^-}[h_L(x)],
-  \qquad
-  h'_L = h_L + \alpha \hat{v}.
-  \label{eq:caa-steering}
-\end{equation}
-ITI uses the same additive intervention form with a probe-derived direction \cite{li2023iti}. The headline scope is the tested single-layer unit-direction convention, \(\alpha\hat{u}\) with \(\alpha\le24\).
-
-For TEST item \(i\), the paired comparison is
-\begin{equation}
-  d_i = \mathrm{steer}_i - \mathrm{prompt}_i.
-  \label{eq:paired-diff}
-\end{equation}
-The item-cluster bootstrap resamples TEST items, each carrying its \(k=5\) samples. We use \(B=10000\) and a two-sided Bonferroni interval
-\begin{equation}
-  1 - \frac{0.05}{3} = 0.98333
-  \label{eq:bonferroni-ci}
-\end{equation}
-for the three axes within each adjudication cell. An axis passes only if
+For axis \(a\) at layer \(L\), CAA uses the contrastive mean-difference direction
 \begin{equation}
   \begin{aligned}
-    0 &\notin \mathrm{CI}_{0.98333}(\bar d_a), \\
-    \bar d_a &\ge 0.05, \\
-    \mathrm{coherence\ ratio}_a &\le 1.5.
+    v_a
+      &= \mathbb{E}_{x \in A_a^+}[h_L(x)]
+       - \mathbb{E}_{x \in A_a^-}[h_L(x)], \\
+    \hat v_a
+      &= \frac{v_a}{\lVert v_a\rVert},
+    & h'_L
+      &= h_L + \alpha\hat v_a.
   \end{aligned}
+  \label{eq:caa-steering}
+\end{equation}
+In Equation~\ref{eq:caa-steering}, \(\hat v_a\) is unit-normalized. More generally, \(\hat u_a\) denotes the method-specific unit direction: \(\hat u_a=\hat v_a\) for CAA, while ITI supplies a unit-normalized probe direction \cite{li2023iti}. Both use \(h'_L=h_L+\alpha\hat u_a\) at one layer, with \(\alpha\le24\).
+
+For TEST item \(i\) on axis \(a\), let \(y^{(s)}_{iaj}\) be generation \(j\)'s outcome under condition \(s\). Equation~\ref{eq:paired-diff} first aggregates the \(k\) generations within each item, then forms the paired difference:
+\begin{equation}
+  \bar y^{(s)}_{ia}=\frac{1}{k}\sum_{j=1}^{k}y^{(s)}_{iaj},
+  \qquad
+  d_{ia}=\bar y^{(\mathrm{steer})}_{ia}
+         -\bar y^{(\mathrm{prompt})}_{ia}.
+  \label{eq:paired-diff}
+\end{equation}
+The item-cluster bootstrap resamples TEST items, not individual generations, with \(k=5\) and \(B=10000\). Across three axes within a cell, the Bonferroni two-sided confidence level is \(1-0.05/3\approx0.9833\) (98.33\%). Let \(I_a=[\ell_a,u_a]\) be this interval for \(\bar d_a\), and let \(c_a\) be the registered steer-to-baseline coherence ratio. With \(\delta=0.05\) and \(\tau=1.5\), the frozen rule is
+\begin{equation}
+  \operatorname{pass}(a)
+  \iff
+  \ell_a>0
+  \;\land\;
+  \bar d_a\ge\delta
+  \;\land\;
+  c_a\le\tau,
+  \qquad
+  \delta=0.05,\quad \tau=1.5.
   \label{eq:axis-pass}
 \end{equation}
-The margin prevents a statistically detectable but negligible difference from licensing a control. The coherence gate prevents degradation or repetition from being counted as successful steering. The cell verdict is positive for at least two passing axes, conditional for one, and negative for none. This is a superiority test, not an equivalence test.
+Equation~\ref{eq:axis-pass} requires a positive interval, the meaningful margin, and bounded coherence. The margin prevents negligible differences from licensing a control; the coherence gate rejects gains due to degradation or repetition. The cell verdict is positive for at least two passing axes, conditional for one, and negative for none. This is a superiority test, not an equivalence test.
 
 Bonferroni correction applies within a cell across three axes. It does not provide familywise control over the full descriptive 12-cell grid. A separate preregistered robustness analysis varies five DEV/TEST split seeds over the same item pool. It measures split sensitivity, not independent item-sampling generalization.
 
@@ -370,7 +380,7 @@ Future work should proceed in the same order as the contract. First, establish a
 
 A readable latent axis has not earned a slider merely because it can be named. In our tested setting, bounded naive single-layer CAA/ITI steering does not demonstrate superiority over a bounded prompt channel, and the sharpest uncertainty result is a comparator-specific calibration warning rather than direct steering harm. Positive controls show that the endpoint and instrument respond and that simple under-scaling is not a sufficient explanation within the coherent range, but no latent behavioral intervention passes.
 
-The primary methodological contribution is an artifact-instantiated proposed evidence-accounting and evaluation framework for interface decisions. It keeps READ-positive evidence diagnostic, requires comparative TRANSFER evidence before a tested control is presented as validated, retains the prompt comparator and calibration contrast, and marks unresolved or negative evidence as interface states. Its HCI effectiveness remains future work.
+The primary methodological contribution is a proposed evidence-accounting and evaluation framework instantiated with artifacts for interface decisions. It keeps READ-positive evidence diagnostic, requires comparative TRANSFER evidence before a tested control is presented as validated, retains the prompt comparator and calibration contrast, and marks unresolved or negative evidence as interface states. Its HCI effectiveness remains future work.
 
 \appendix
 \section{E-0015 Logit Diagnostic}

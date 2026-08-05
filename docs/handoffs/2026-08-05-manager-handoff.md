@@ -8,7 +8,7 @@
 
 ## 0. One-paragraph state
 
-The paper has moved from a chained hostile-review **REJECT** to an independently reassessed **BORDERLINE for IUI (about 30–35%)**. The current paper is an honest, scoped negative about bounded/naive single-layer additive CAA/ITI, not an impossibility claim about latent control. F1 (calibration-format confound) is addressed; F3 (unsupported console/user-benefit claim) is resolved by making the model-evidence evaluation contract the primary methodological contribution; F2 (no passing latent positive control) is no longer fatal but remains the main MAJOR risk. E-0014 and E-0015 showed that prompts move behavior while naive additive latent steering does not, even after raw-magnitude scale correction within a coherent 0.5–0.66× residual-norm ceiling. An appendix-level logit diagnostic shows the refusal direction strongly changes target first-token probability mass but still yields 0/5 scored refusals, strengthening `representational push != behavioral control`. The owner has authorized one final high-impact attempt to close F2: **E-0016 Arditi all-layer refusal-direction projection ablation**, using benign XSTest Regime B first. E-0016 implementation exists only on an isolated branch and is still at the hostile code-audit gate. No E-0016 GPU run or result exists.
+The paper has moved from a chained hostile-review **REJECT** to an independently reassessed **BORDERLINE for IUI (about 30–35%)**. The current paper is an honest, scoped negative about bounded/naive single-layer additive CAA/ITI, not an impossibility claim about latent control. F1 (calibration-format confound) is addressed; F3 (unsupported console/user-benefit claim) is resolved by making the model-evidence evaluation contract the primary methodological contribution; F2 (no passing latent positive control) is no longer fatal but remains the main MAJOR risk. E-0014 and E-0015 showed that prompts move behavior while naive additive latent steering does not, even after raw-magnitude scale correction within a coherent 0.5–0.66× residual-norm ceiling. An appendix-level logit diagnostic shows the refusal direction strongly changes target first-token probability mass but still yields 0/5 scored refusals, strengthening `representational push != behavioral control`. The owner has authorized one final high-impact attempt to close F2: **E-0016 Arditi all-layer refusal-direction projection ablation**, using benign XSTest Regime B first. E-0016 implementation exists only on an isolated branch. Its retirement-time hostile audit returned **NOT SOUND (4 BLOCKER, 2 MAJOR)**. No merge, prereg freeze, GPU run, or result exists.
 
 ## 1. Frozen paper claim and required scope guard
 
@@ -88,12 +88,18 @@ The paper has moved from a chained hostile-review **REJECT** to an independently
 
 ### Audit/gate state
 
-- A fresh background audit was launched as `audit-e0016-code` immediately before retirement.
-- **No verdict was recovered into the repository before handoff.**
-- A new Manager may not be able to read the old runtime agent. If the result is unavailable, launch a fresh hostile audit of `main...feature/e0016-ablation`.
+- Hostile audit verdict: **NOT SOUND; 4 BLOCKER + 2 MAJOR** (D-0091).
+- BLOCKER:
+  1. Hook-bites runs after DEV baseline/ablation/random generation instead of before all generation.
+  2. Hook-bites compares global `max(before)` with global `max(after)` rather than enforcing the per-token inequality, and it does not assert exact coverage of all decoder layers.
+  3. HF real-data provenance is bypassable by renamed local CSVs; it must lock dataset ID/revision/content hash/schema.
+  4. HF defaults are smoke-sized (DEV=4, TEST=8, K=2, layers 1/2/3); HF must reject anything except a fully frozen N/K/candidate-layer/data configuration.
+- MAJOR:
+  1. Manifest lacks seed, resolved model revision, real dirty-tree state, and full frozen-config hash.
+  2. Tests do not cover actual-hook no-op/wrong/missing-layer failures, runner-level eligibility stop, or immutable-data-hash rejection.
 - Do not merge, freeze, or run GPU until:
-  1. all audit BLOCKER/MAJOR findings are closed;
-  2. the branch is re-audited SOUND;
+  1. a fresh implement subagent closes every finding;
+  2. an independent delta re-audit returns SOUND;
   3. prereg is frozen with exact run commit/command;
   4. owner approves the benign Regime-B GPU budget.
 
@@ -133,8 +139,8 @@ Historical branch `feature/46-e0012-results` and several `run/e0012-*` branches 
 ## 8. Immediate next steps for incoming Manager
 
 1. Pass the acceptance exam in §10 and announce takeover.
-2. Recover or repeat hostile code audit for `feature/e0016-ablation`.
-3. Triage findings; send fixes to a fresh implement subagent; re-audit.
+2. Read D-0091; dispatch a fresh implement subagent to close all 4 BLOCKER + 2 MAJOR on `feature/e0016-ablation`.
+3. Re-audit the fix delta independently; require explicit SOUND.
 4. If SOUND, merge harness, freeze `prereg-e0016-FROZEN.md`, register exact run commit/command.
 5. Ask owner for Regime-B GPU budget sign-off. Do not assume D-0089 is GPU approval.
 6. Pre-cache/check `Paul/XSTest`, Alpaca, and the local hashed AdvBench source.
@@ -179,4 +185,4 @@ The incoming Manager must answer these before executing:
 
 ---
 
-*Prepared by outgoing Manager on 2026-08-05. Main was clean at handoff preparation; pre-handoff HEAD `1d7d7a7`. No GPU running. E-0016 remained isolated and unaudited for merge.*
+*Prepared by outgoing Manager on 2026-08-05. Main was clean at handoff preparation; pre-handoff HEAD `1d7d7a7`. No GPU running. E-0016 remained isolated and audit-blocked (4 BLOCKER, 2 MAJOR).*

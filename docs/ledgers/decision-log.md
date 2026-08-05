@@ -5,10 +5,20 @@
 
 ---
 
+## 2026-08-05 · D-0091 · E-0016 hostile code audit = NOT SOUND; 4 BLOCKER + 2 MAJOR, no freeze/GPU
+- The retirement-time hostile audit (`audit-e0016-code`) completed after D-0090. Verdict: **NOT SOUND; do not freeze, merge, or authorize Regime-B GPU**.
+- BLOCKER 1: ablation hook-bites runs only after DEV baseline/ablation/random generation. It must run and persist before any generation for every candidate direction.
+- BLOCKER 2: hook-bites compares global maxima, not the required per-token inequality, and does not prove every decoder layer is hooked. Fix with per-element violation count/max violation and exact layer-set equality.
+- BLOCKER 3: HF real-data guard can be bypassed by any renamed local CSV; an existing test even accepts placeholder harmful rows in `backend="hf"`. HF must accept only frozen dataset ID/revision/content hash/schema; local overrides must match approved immutable hashes.
+- BLOCKER 4: HF defaults are smoke-sized (DEV=4, TEST=8, K=2, layers 1/2/3) while prereg minimum is TEST N=80/K=3 and candidate layers are still unfrozen. HF must reject every non-frozen configuration; synthetic-smoke parameters must be separated.
+- MAJOR 1: manifest lacks seed/model revision/real dirty-tree state and full frozen-config hash.
+- MAJOR 2: tests do not exercise actual hook no-op/wrong-hook/missing-layer failures, runner-level eligibility stop, or immutable-data-hash rejection.
+- Tests passing (681 passed/6 skipped; E-0016 9 passed; synthetic smoke PASS) do **not** cover these runtime failures. Incoming Manager must dispatch a fix subagent, re-audit the delta, and only proceed after SOUND.
+
 ## 2026-08-05 · D-0090 · Manager retirement handoff; E-0016 remains at pre-GPU hostile-audit gate
 - Outgoing Manager is retiring because the session is saturated. New primary re-entry point: `docs/handoffs/2026-08-05-manager-handoff.md`.
 - `main` was clean at handoff preparation; HEAD before the handoff commit was `1d7d7a7`. Current paper state: audited BORDERLINE, IUI estimated 30–35%; F1 addressed, F3 resolved, F2 downgraded fatal→MAJOR but still open because no latent intervention has passed.
-- E-0016 status at handoff: design/prereg draft committed on main (`728a0d7`); implementation is isolated in `.worktrees/e0016`, branch `feature/e0016-ablation`, commit `c1c4d90`; tests + synthetic smoke reportedly pass. A fresh independent hostile code audit (`audit-e0016-code`) was launched by the outgoing Manager, but **no verdict had been recovered at handoff time**. The incoming Manager must not trust or merge the branch until it independently recovers/repeats the hostile audit and closes every finding.
+- E-0016 status at initial handoff preparation: design/prereg draft committed on main (`728a0d7`); implementation isolated in `.worktrees/e0016`, branch `feature/e0016-ablation`, commit `c1c4d90`; tests + synthetic smoke reportedly pass. The retirement-time audit subsequently returned **NOT SOUND**; D-0091 and the handoff contain the binding findings.
 - No E-0016 prereg freeze, GPU authorization, GPU run, result, or paper integration exists. Owner decision D-0089 remains binding: benign XSTest Regime B first; DEV false-refusal eligibility floor 0.25; if underpowered, STOP and ask owner again before any harmful Regime A generation.
 - Session-local SQL todos (`ws1-signoff`, `ws2a-guardrails`, `e0012-fetch`, `e0012-results-audit`) are stale historical state and must not be resumed. Repository ledgers and this handoff supersede them.
 

@@ -77,7 +77,7 @@ DEGENERACY_SCORER_VERSION = "degeneracy_score_v1"
 GENERATION_RECORD_SCHEMA_VERSION = 2
 CHECKPOINT_SCHEMA_VERSION = 3
 SOURCE_STATE_SCHEMA_VERSION = 2
-ENVIRONMENT_SCHEMA_VERSION = 2
+ENVIRONMENT_SCHEMA_VERSION = 3
 ARTIFACT_MANIFEST_SCHEMA_VERSION = 1
 TEST_PLAN_SCHEMA_VERSION = 1
 RECORD_VALIDATOR_VERSION = "e0016_strict_record_validator_v2_rescore"
@@ -754,11 +754,25 @@ def _canonical_identity_value(value: object) -> object:
             "special": value.special,
         }
     if isinstance(value, dict):
-        if any(not isinstance(key, str) for key in value):
-            raise TypeError("environment identity dictionaries require string keys")
-        return {
-            key: _canonical_identity_value(item)
+        items = [
+            {
+                "key": _canonical_identity_dict_key(key),
+                "value": _canonical_identity_value(item),
+            }
             for key, item in value.items()
+        ]
+        items.sort(
+            key=lambda entry: json.dumps(
+                entry["key"],
+                sort_keys=True,
+                ensure_ascii=False,
+                separators=(",", ":"),
+                allow_nan=False,
+            )
+        )
+        return {
+            "__type__": "builtins.dict",
+            "items": items,
         }
     if isinstance(value, list):
         return [_canonical_identity_value(item) for item in value]
@@ -770,6 +784,26 @@ def _canonical_identity_value(value: object) -> object:
     raise TypeError(
         "unsupported non-JSON object in environment identity: "
         f"{type(value).__module__}.{type(value).__qualname__}"
+    )
+
+
+def _canonical_identity_dict_key(key: object) -> Dict[str, object]:
+    key_type = type(key)
+    if key_type is str:
+        return {"__type__": "builtins.str", "value": key}
+    if key_type is bool:
+        return {"__type__": "builtins.bool", "value": key}
+    if key_type is int:
+        return {"__type__": "builtins.int", "value": str(key)}
+    if key_type is float:
+        if not math.isfinite(key):
+            raise TypeError("environment identity dictionary float keys must be finite")
+        return {"__type__": "builtins.float", "value": key.hex()}
+    if key is None:
+        return {"__type__": "builtins.NoneType"}
+    raise TypeError(
+        "unsupported dictionary key in environment identity: "
+        f"{key_type.__module__}.{key_type.__qualname__}"
     )
 
 

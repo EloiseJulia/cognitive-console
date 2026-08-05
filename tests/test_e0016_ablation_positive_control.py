@@ -1550,7 +1550,14 @@ def test_added_token_nested_config_has_stable_semantic_identity():
     }
 
     canonical = e0016._canonical_identity_value(original)
-    token_identity = canonical["nested"][0]["token"]
+    canonical_items = {
+        entry["key"]["value"]: entry["value"] for entry in canonical["items"]
+    }
+    nested_items = {
+        entry["key"]["value"]: entry["value"]
+        for entry in canonical_items["nested"][0]["items"]
+    }
+    token_identity = nested_items["token"]
     assert token_identity == {
         "__type__": "tokenizers.AddedToken",
         "content": "<tool>",
@@ -1560,7 +1567,7 @@ def test_added_token_nested_config_has_stable_semantic_identity():
         "normalized": False,
         "special": True,
     }
-    assert canonical["nested"][1]["__type__"] == "builtins.tuple"
+    assert canonical_items["nested"][1]["__type__"] == "builtins.tuple"
     assert e0016._object_config_identity(original) == e0016._object_config_identity(
         reordered
     )
@@ -1582,7 +1589,44 @@ def test_environment_identity_serializer_rejects_unknown_objects():
         e0016._object_config_identity({"unknown": object()})
 
 
-def test_cpu_hf_environment_identity_accepts_nested_added_token(monkeypatch):
+def test_dictionary_key_types_are_collision_free_and_order_stable():
+    assert (
+        e0016._object_config_identity({1: "value"})["sha256"]
+        != e0016._object_config_identity({"1": "value"})["sha256"]
+    )
+    assert (
+        e0016._object_config_identity({1: "value"})["sha256"]
+        != e0016._object_config_identity({2: "value"})["sha256"]
+    )
+    assert (
+        e0016._object_config_identity({True: "value"})["sha256"]
+        != e0016._object_config_identity({1: "value"})["sha256"]
+    )
+    assert (
+        e0016._object_config_identity({1.0: "value"})["sha256"]
+        != e0016._object_config_identity({1: "value"})["sha256"]
+    )
+    assert (
+        e0016._object_config_identity({None: "value"})["sha256"]
+        != e0016._object_config_identity({"None": "value"})["sha256"]
+    )
+    original = {2: "two", "1": "one", None: "none", False: "false", 1.5: "float"}
+    reordered = dict(reversed(list(original.items())))
+    assert e0016._object_config_identity(original) == e0016._object_config_identity(
+        reordered
+    )
+
+
+def test_environment_identity_serializer_rejects_complex_dictionary_keys():
+    with pytest.raises(TypeError, match="unsupported dictionary key"):
+        e0016._object_config_identity({("complex",): "value"})
+    with pytest.raises(TypeError, match="float keys must be finite"):
+        e0016._object_config_identity({float("nan"): "value"})
+
+
+def test_cpu_hf_environment_identity_accepts_real_pretrained_config(monkeypatch):
+    from transformers import PretrainedConfig
+
     token = AddedToken(
         "<tool>",
         single_word=True,
@@ -1599,11 +1643,13 @@ def test_cpu_hf_environment_identity_accepts_nested_added_token(monkeypatch):
         def get_vocab():
             return {"<tool>": 1, "plain": 0}
 
+    config = PretrainedConfig(num_labels=3)
+    assert all(type(key) is int for key in config.to_dict()["id2label"])
     model = SimpleNamespace(generation_config={"do_sample": True})
     backend = SimpleNamespace(
         _model=model,
         _tokenizer=Tokenizer(),
-        _config={"hidden_size": 4},
+        _config=config,
     )
     monkeypatch.setattr(e0016, "_package_version", lambda name: f"{name}-test")
 
@@ -1613,7 +1659,7 @@ def test_cpu_hf_environment_identity_accepts_nested_added_token(monkeypatch):
         hook_backend=backend,
     )
 
-    assert identity["schema_version"] == 2
+    assert identity["schema_version"] == 3
     assert identity["environment_identity_hash"].startswith("sha256:")
     assert identity["hf_runtime"]["tokenizer_config"]["bytes"] > 0
 

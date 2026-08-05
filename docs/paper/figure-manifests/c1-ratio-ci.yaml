@@ -28,11 +28,14 @@ required_caveats:
 paper_location: "Results / READ Establishes a Diagnostic Precondition (Figure fig:c1-ratio-ci)"
 source_experiments: ["c1-facade-d710b4b4-0001 (E-0003)"]
 aggregation_script: "docs/paper/scripts/plot_c1_ratio_ci.py"
-aggregation_script_commit: "2110a706bace5b3911043b354deca3103712c636"
+generator_commit: "2110a706bace5b3911043b354deca3103712c636"
+source_artifact_commits:
+  "results/gpu_7b_2026-07-23/c1/c1_facade_results.json": "05b33ede9c4d9677d4a32c4d74766933d96d563d"
+  "results/gpu_7b_2026-07-23/c1/c1_facade_summary.md": "05b33ede9c4d9677d4a32c4d74766933d96d563d"
 source_artifact_hashes:
   "results/gpu_7b_2026-07-23/c1/c1_facade_results.json": "c48dab0bc2debc369678d4e397d74c4157a98763c1feef3044cca2b6fdffd455"
 output_file: "docs/paper/figures/c1-ratio-ci.pdf"
 output_sha256: "db54b447fa4de4a07c2dc243b37bef9e2a46fb3f343be3978d0723a05661405f"
 manual_edits_allowed: false
-last_verified: "2026-08-05"
+last_verified: "2026-08-06"
 verdict: "verified exploratory main figure; Qwen C1 only, with Llama heterogeneity carried by the companion table"

@@ -5,6 +5,11 @@
 
 ---
 
+## 2026-08-05 · D-0096 · E-0016 pre-DEV infrastructure failure validated; audited serialization repair authorizes retry within D-0095
+- Independent audit validated attempt 1 as a **VALID PRE-DEV INFRA FAILURE**, not a scientific result. Result branch/commit: `run/e0016-regime-b-20260805` / `c461c3c295ba96243d746f8fbfc60389a2635d1b`. The exact old run commit was `4def9ba59a00909d4cf2aae7dbdb1665877d6204`; DEV and TEST did not run, `valid_for_paper=false`, and no harmful generation or raw-harmful-text leakage occurred.
+- Root cause: transformers 5.14.1 exposed a tokenizer `AddedToken` during environment-identity capture, and the old canonical JSON path could not serialize it. Repair commits `75834b1f5913933ac412f93d5d41a44a58868060` and `fa58dcf5c739e7d89b36e6af7694e9ea0df84d27` add canonical `AddedToken` and typed configuration-key serialization (environment identity schema v3). The repair was independently audited **SOUND** and merged as the new exact run/code commit `c094f07fa3592c2210f46caba9e69c49a5a92fad`.
+- This is a pre-DEV infrastructure-only amendment with zero scientific-parameter or protocol drift. Attempt 1 consumed at most 0.00722222 A800 GPU-hours, leaving a hard cap of 2.99277778 GPU-hours. Retry is authorized under the original D-0095 approval; no new owner approval is required because the retry remains within the original 3-hour cap and unchanged Regime-B protocol. Real run and independent hostile results audit remain pending.
+
 ## 2026-08-05 · D-0095 · Owner authorizes E-0016 full benign Regime-B run, maximum 3 A800 GPU-hours
 - Owner selected: "批准完整 Regime-B，预算上限 3 GPU 小时（推荐）".
 - Authorization covers only the frozen Regime-B protocol at run commit `4def9ba59a00909d4cf2aae7dbdb1665877d6204`: DEV=60, TEST=160, K=5, benign XSTest generation only.

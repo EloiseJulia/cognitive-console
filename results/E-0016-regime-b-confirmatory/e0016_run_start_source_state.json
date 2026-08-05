@@ -1,0 +1,12 @@
+{
+  "changed_paths": [],
+  "changed_paths_sha256": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "dirty": false,
+  "excluded_output_directory": "/home/elzhang/cc_l0/e0016-run-20260805/results/E-0016-regime-b-confirmatory",
+  "head": "4def9ba59a00909d4cf2aae7dbdb1665877d6204",
+  "schema_version": 2,
+  "tracked_diff_bytes": 0,
+  "tracked_diff_sha256": "51c825907cd617c412e5f334cca72816f50dd641bf1251bf877596ab5bd75ce1",
+  "untracked_files": [],
+  "untracked_identity_sha256": "sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+}

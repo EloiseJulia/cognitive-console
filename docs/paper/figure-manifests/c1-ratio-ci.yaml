@@ -13,6 +13,7 @@ provenance_rule: "Plot directly from c1_facade_results.json; summary.md is expla
 axes:
   x: "cognitive axis (deliberation, skepticism, uncertainty_awareness, focus)"
   y: "facade_ratio = prompt_reach / pole_reach"
+  denominator: "same-origin extraction-positive displacement relative to neutral, projected onto the CAA axis; not the positive-minus-negative contrast-vector norm"
   interval: "bootstrap 95% CI"
   reference_lines:
     - "ratio = 1.0 (no under-reach threshold)"

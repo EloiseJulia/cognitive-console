@@ -67,7 +67,11 @@ def _reader_text(text: object) -> str:
 
 
 def _line_ops(x: float, y: float, text: str, size: int = 8) -> str:
-    return f"BT /F1 {size} Tf {x:.1f} {y:.1f} Td ({_esc(_reader_text(text))}) Tj ET\n"
+    return (
+        f"0 0 0 rg 0 0 0 RG "
+        f"BT /F1 {size} Tf {x:.1f} {y:.1f} Td "
+        f"({_esc(_reader_text(text))}) Tj ET\n"
+    )
 
 
 def _rect_ops(x: float, y: float, w: float, h: float, fill: tuple[float, float, float]) -> str:

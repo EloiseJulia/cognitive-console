@@ -275,6 +275,9 @@ class TestOutputGenerators:
         tex = PE.build_latex_table(arm_results)
         assert "AUTO-GENERATED" in tex
         assert "POST-HOC" in tex
+        assert "—" not in tex
+        assert r"\textemdash" not in tex
+        assert "---" not in tex
 
     def test_latex_no_hand_edit_warning(self, arm_results):
         tex = PE.build_latex_table(arm_results)

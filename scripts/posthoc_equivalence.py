@@ -477,7 +477,7 @@ def build_latex_table(arm_results: List[Dict[str, Any]], sesoi: float = SESOI) -
         r"\begin{table*}[t]",
         r"  \centering",
         r"  \caption{%",
-        r"    \textbf{[POST-HOC / exploratory---NOT pre-registered.]}",
+        r"    \textbf{[POST-HOC / exploratory; not pre-registered.]}",
         r"    TOST equivalence analysis on frozen C2b arm results (E-0005/E-0006).",
         r"    SESOI = $\pm\delta = "
         + f"{sesoi:.2f}"
@@ -514,7 +514,7 @@ def build_latex_table(arm_results: List[Dict[str, Any]], sesoi: float = SESOI) -
             t_hi = ax["tost_ci_hi"]
             verdict = ax["tost_verdict"]
             mde_s = ax.get("mde", {}).get("mde_superiority_80pct_power")
-            mde_s_str = f"{mde_s:.3f}" if mde_s is not None else r"\textemdash"
+            mde_s_str = f"{mde_s:.3f}" if mde_s is not None else r"N/A"
             # Verdict short labels
             vshort = {
                 VERDICT_CALIBRATION_HARM: r"\textsc{Harm}",

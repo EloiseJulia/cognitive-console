@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-08-05 · D-0098 · Paper scope corrected to implemented method-specific scaling and exact coherence gate
+- This is a paper-fact correction only. It changes no frozen protocol, result artifact, numerical result, evidence verdict, or scientific conclusion.
+- C2's additive intervention is now stated as `h'_L = h_L + alpha*s_m*u_m`, with `s_CAA=1` and `s_ITI=sigma_L`. The shared grid bounds the coefficient at `alpha<=24`; it is not a common injected-norm bound. The frozen ITI `sigma_L` is the sample standard deviation of combined extraction positive/negative activations projected onto the unit probe direction, matching `src/cognitive_console/steering/iti.py` and `scripts/run_c2b_adjudication.py`.
+- The coherence gate is now stated exactly as `g_steer <= 1.5*g_baseline + 0.02`; the implementation's additional `1e-12` is only floating-point comparison tolerance. The facade denominator is clarified as same-origin extraction-positive displacement relative to neutral projected onto the CAA axis, not the positive-minus-negative contrast-vector norm.
+- E-0014/E-0015 remain CAA-only scale evidence and are not extended to ITI. The failed-superiority verdict and all reported values remain unchanged.
+
 ## 2026-08-05 · D-0097 · Paper lineage synchronized to D-0078 and D-0081..D-0087 without changing scientific conclusions
 - This repair closes a bookkeeping gap in the IUI rewrite. It does not authorize a new experiment, citation, number, claim, protocol change, or validity upgrade beyond Manager-approved paper uses already recorded in D-0078 and D-0081..D-0087.
 - E-0013 is registered as `valid_for_paper=true` only for the audited CAA×Qwen format-robustness/limitation claim. ITI×Qwen and both Llama cells remain unverified and support no E-0013 claim. The post-generation complete-case restriction and adversarial missingness bounds remain mandatory.

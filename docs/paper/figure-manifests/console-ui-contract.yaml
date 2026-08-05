@@ -1,5 +1,6 @@
 figure_id: console-ui-contract
 output: docs/paper/figures/console-ui-contract.pdf
+output_sha256: ed52591f883b2973ba6ac20a271aaeebb4cc1ae0eba1e18dcf1d9a3622c4493c
 generator: docs/paper/scripts/plot_console_ui_contract.py
 purpose: Static paper figure for the console v2 five-signal UI contract.
 evidence_ids:
@@ -20,3 +21,5 @@ artifact_inputs:
   - results/psr_qwen_primary/psr_c2b_adjudication_results.json
 claim_scope: Two-axis UI artifact illustrating the proposed evidence-accounting contract; no social-axis evidence and no HCI effectiveness claim.
 rebuild_command: python docs\paper\scripts\plot_console_ui_contract.py
+rendering_notes:
+  - Every PDF text segment explicitly sets black non-stroking and stroking color for high contrast on card fills and grayscale printing.

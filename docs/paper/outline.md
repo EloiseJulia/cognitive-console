@@ -68,7 +68,8 @@ Citation hygiene rule for this table: use only works verified in `docs/research/
 - Source protocol: `docs/ledgers/prereg-c2b-adjudication.md`.
 - Outcomes: deliberation accuracy, skepticism false-premise rejection, uncertainty `(1 - Brier)`.
 - Fairness: DEV selects best prompt and alpha; TEST adjudicates paired steer-prompt differences.
-- Statistics: item-cluster bootstrap, B≥10000, Bonferroni 98.33% CI, δ=0.05, coherence gate ≤1.5×.
+- Steering scale: `h'=h+alpha*s_m*u_m`, with `s_CAA=1`, `s_ITI=sigma_L`; the shared grid bounds the coefficient at `alpha<=24`, not ITI's injected norm.
+- Statistics: item-cluster bootstrap, B≥10000, Bonferroni 98.33% CI, δ=0.05, coherence gate `g_steer <= 1.5*g_baseline + 0.02`.
 
 ### 3.3 Steering families and models
 - CAA × Qwen2.5-7B begins with E-0005; robustness arm E-0006 extends to CAA/ITI × Qwen/Llama.
@@ -120,5 +121,4 @@ Citation hygiene rule for this table: use only works verified in `docs/research/
 ## 8. Conclusion (claims carried: C1 scoped; C2 headline; C3 implication)
 - Repeat only evidence-backed claims: exploratory legibility facade, generalized C2 non-transfer across tested cells, robust calibration harm, and interface-evaluation implication.
 - Do not conclude that all steering fails, that prompts are behaviorally non-surjective in general, or that users empirically benefit from the console.
-
 

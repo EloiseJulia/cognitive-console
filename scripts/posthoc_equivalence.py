@@ -10,9 +10,10 @@ hardening). All numbers read from frozen JSON artifacts; none hand-coded.
 PURPOSE
 -------
 Distinguish two qualitatively different outcomes within the C2 negative:
-  1. CALIBRATION_HARM (comparator-bound): uncertainty_awareness axis CI excludes
-     zero from below for steer minus bounded prompt in all 4 cells under the
-     frozen scorer. Direct Qwen/CAA steer-vs-baseline is near zero.
+  1. NEGATIVE_STEER_VS_PROMPT_CONTRAST (comparator-bound):
+     uncertainty_awareness axis CI excludes zero from below for steer minus
+     bounded prompt in all 4 cells under the frozen scorer. Direct Qwen/CAA
+     steer-vs-baseline is near zero.
   2. UNDERPOWERED: deliberation/skepticism CI includes zero AND extends into
      the range of potentially meaningful effects (|bound| > SESOI). We cannot
      rule out a meaningful positive (or harmful) effect — this is a power issue,
@@ -52,7 +53,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -104,7 +105,7 @@ _AXIS_LABEL = {
 }
 
 # TOST verdict values
-VERDICT_CALIBRATION_HARM = "CALIBRATION_HARM"
+VERDICT_NEGATIVE_STEER_VS_PROMPT_CONTRAST = "NEGATIVE_STEER_VS_PROMPT_CONTRAST"
 VERDICT_EQUIVALENT = "EQUIVALENT"
 VERDICT_SUPERIORITY = "SUPERIORITY"
 VERDICT_UNDERPOWERED = "UNDERPOWERED"
@@ -165,18 +166,31 @@ def tost_verdict(
     """Classify a cell×axis result using the 90% CI and SESOI.
 
     Rules (post-hoc; NOT part of the prereg decision rule):
-      CALIBRATION_HARM : ci_hi_90 < 0   (steering definitively harms; CI below 0)
+      NEGATIVE_STEER_VS_PROMPT_CONTRAST : ci_hi_90 < 0
+                                          (steer-minus-prompt CI below 0)
       SUPERIORITY      : ci_lo_90 > 0 and point >= sesoi  (would exceed prereg bar)
       EQUIVALENT       : ci_lo_90 > -sesoi and ci_hi_90 < sesoi  (within SESOI bounds)
       UNDERPOWERED     : otherwise (CI spans 0 and/or one bound exceeds |SESOI|)
     """
     if ci_hi_90 < 0.0:
-        return VERDICT_CALIBRATION_HARM
+        return VERDICT_NEGATIVE_STEER_VS_PROMPT_CONTRAST
     if ci_lo_90 > 0.0 and point >= sesoi:
         return VERDICT_SUPERIORITY
     if ci_lo_90 > -sesoi and ci_hi_90 < sesoi:
         return VERDICT_EQUIVALENT
     return VERDICT_UNDERPOWERED
+
+
+def stable_artifact_path(path: Path) -> str:
+    """Return a checkout-independent repo-relative path or semantic identifier."""
+    resolved = path.absolute()
+    try:
+        return resolved.relative_to(_REPO.absolute()).as_posix()
+    except ValueError:
+        parts = resolved.parts
+        if "results" in parts:
+            return PurePosixPath(*parts[parts.index("results"):]).as_posix()
+        return f"artifact:{path.name}"
 
 
 # ---------------------------------------------------------------------------
@@ -284,7 +298,7 @@ def analyse_cell(
         })
 
     return {
-        "cell_json": str(cell_json),
+        "cell_json": stable_artifact_path(cell_json),
         "method": method,
         "model": model_key,
         "axes": axes_out,
@@ -406,7 +420,10 @@ def build_conclusions_md(
     del_verdicts = axis_verdicts.get("deliberation", [])
     skep_verdicts = axis_verdicts.get("skepticism", [])
 
-    n_unc_harm = sum(1 for v in unc_verdicts if v == VERDICT_CALIBRATION_HARM)
+    n_unc_negative = sum(
+        1 for v in unc_verdicts
+        if v == VERDICT_NEGATIVE_STEER_VS_PROMPT_CONTRAST
+    )
     n_del_equiv = sum(1 for v in del_verdicts if v == VERDICT_EQUIVALENT)
     n_del_under = sum(1 for v in del_verdicts if v == VERDICT_UNDERPOWERED)
 
@@ -414,12 +431,13 @@ def build_conclusions_md(
         "",
         "## Interpretation",
         "",
-        "### uncertainty_awareness (Calibration Harm — Robust)",
+        "### uncertainty_awareness (Negative Steer-vs-Prompt Contrast — Robust)",
         f"TOST verdict across 4 cells: {_verdict_counts(unc_verdicts)}.",
-        f"The 90% CI lies entirely below zero in all {n_unc_harm}/4 cells.",
-        "Steering **definitively harms** uncertainty calibration regardless of",
-        "method (CAA/ITI) or model (Qwen/Llama). This is not an underpowered null —",
-        "the harm signal is **robust** (CI excludes zero from below).",
+        f"The steer-minus-prompt 90% CI lies entirely below zero in all {n_unc_negative}/4 cells.",
+        "The **negative steer-vs-bounded-prompt contrast** appears for both",
+        "methods (CAA/ITI) and models (Qwen/Llama). This is not an underpowered null:",
+        "the comparator-bound contrast is **robust** (CI excludes zero from below).",
+        "Direct Qwen/CAA steer-vs-baseline remains near zero.",
         "",
         "### deliberation (Mixed — Partially Equivalent, Partially Underpowered)",
         f"TOST verdict across 4 cells: {_verdict_counts(del_verdicts)}.",
@@ -438,8 +456,8 @@ def build_conclusions_md(
         "",
         "## Summary",
         "",
-        "The post-hoc analysis sharpens the C2 negative result: **uncertainty calibration**",
-        "harm is robustly demonstrated (CI excludes zero in all 4 cells). **Deliberation** shows",
+        "The post-hoc analysis sharpens the C2 negative result: the **uncertainty**",
+        "steer-vs-bounded-prompt contrast excludes zero in all 4 cells. **Deliberation** shows",
         "a nuanced pattern — ITI is practically equivalent to the best-prompt baseline, while",
         "CAA is underpowered to conclude equivalence. **Skepticism** remains fully inconclusive.",
         "There is NO evidence of superiority (steer > best-prompt) on any axis in any cell.",
@@ -456,7 +474,7 @@ def build_conclusions_md(
             "## E-0011 Multi-Seed Appendix (exploratory)",
             "",
             "TOST verdicts are consistent across all 4 new seeds (20260724–20260727):",
-            "uncertainty_awareness remains CALIBRATION_HARM in all cells×seeds;",
+            "uncertainty_awareness remains NEGATIVE_STEER_VS_PROMPT_CONTRAST in all cells×seeds;",
             "deliberation/skepticism show the same split as arm_full.",
             "Full per-seed JSON in `results/posthoc_equivalence/posthoc_equivalence_e0011.json`.",
             "",
@@ -505,7 +523,7 @@ def build_latex_table(arm_results: List[Dict[str, Any]], sesoi: float = SESOI) -
             mde_s_str = f"{mde_s:.3f}" if mde_s is not None else r"N/A"
             # Verdict short labels
             vshort = {
-                VERDICT_CALIBRATION_HARM: r"\textsc{Harm}",
+                VERDICT_NEGATIVE_STEER_VS_PROMPT_CONTRAST: r"\textsc{Neg. contrast}",
                 VERDICT_EQUIVALENT: r"\textsc{Equiv}",
                 VERDICT_SUPERIORITY: r"\textsc{Sup}",
                 VERDICT_UNDERPOWERED: r"\textsc{Under}",
@@ -569,7 +587,7 @@ def main(args: Optional[argparse.Namespace] = None) -> None:
     main_payload: Dict[str, Any] = {
         "posthoc_label": POSTHOC_LABEL,
         "source": "scripts/posthoc_equivalence.py",
-        "arm_dir": str(args.arm_dir),
+        "arm_dir": stable_artifact_path(args.arm_dir),
         "sesoi": SESOI,
         "tost_ci_level": TOST_CI_LEVEL,
         "bootstrap_b": args.bootstrap_b,
@@ -589,7 +607,7 @@ def main(args: Optional[argparse.Namespace] = None) -> None:
         e0011_payload: Dict[str, Any] = {
             "posthoc_label": POSTHOC_LABEL,
             "source": "scripts/posthoc_equivalence.py",
-            "e0011_dir": str(args.e0011_dir),
+            "e0011_dir": stable_artifact_path(args.e0011_dir),
             "sesoi": SESOI,
             "tost_ci_level": TOST_CI_LEVEL,
             "bootstrap_b": args.bootstrap_b,
@@ -653,7 +671,7 @@ def main(args: Optional[argparse.Namespace] = None) -> None:
         '  - mde_superiority',
         'notes:',
         f'  - "SESOI = ±{SESOI} symmetric to prereg δ per D-0056."',
-        '  - "TOST verdict: CALIBRATION_HARM=CI90 below 0; EQUIVALENT=CI90 within SESOI; UNDERPOWERED=inconclusive."',
+        '  - "TOST verdict: NEGATIVE_STEER_VS_PROMPT_CONTRAST=steer-minus-prompt CI90 below 0; EQUIVALENT=CI90 within SESOI; UNDERPOWERED=inconclusive."',
         '  - "MDE_superiority uses normal approx with z_bonf=2.394 and z_80=0.842."',
         '  - "Brier decomposition: DEFERRED (raw conf+correct pairs not in committed artifacts)."',
     ]

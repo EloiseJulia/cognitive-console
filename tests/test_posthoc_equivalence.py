@@ -68,13 +68,16 @@ class TestBootstrapCI:
 # tost_verdict
 # ---------------------------------------------------------------------------
 class TestTostVerdict:
-    def test_calibration_harm_when_ci_hi_below_zero(self):
-        assert PE.tost_verdict(point=-0.10, ci_lo_90=-0.15, ci_hi_90=-0.03) == PE.VERDICT_CALIBRATION_HARM
+    def test_negative_steer_vs_prompt_contrast_when_ci_hi_below_zero(self):
+        assert (
+            PE.tost_verdict(point=-0.10, ci_lo_90=-0.15, ci_hi_90=-0.03)
+            == PE.VERDICT_NEGATIVE_STEER_VS_PROMPT_CONTRAST
+        )
 
-    def test_calibration_harm_boundary(self):
-        # ci_hi exactly 0 → NOT calibration_harm (must be strictly < 0)
+    def test_negative_steer_vs_prompt_contrast_boundary(self):
+        # ci_hi exactly 0 does not qualify (must be strictly < 0)
         result = PE.tost_verdict(point=-0.05, ci_lo_90=-0.10, ci_hi_90=0.0)
-        assert result != PE.VERDICT_CALIBRATION_HARM
+        assert result != PE.VERDICT_NEGATIVE_STEER_VS_PROMPT_CONTRAST
 
     def test_equivalent_when_ci_within_sesoi(self):
         # CI entirely within (-0.05, +0.05)
@@ -193,21 +196,22 @@ class TestAnalyseCell:
                 f"{ax['axis']}: TOST CI width {tost_width:.4f} > prereg CI width {prereg_width:.4f}"
             )
 
-    def test_uncertainty_calibration_harm(self, cell_result):
-        # All 4 cells must show CALIBRATION_HARM on uncertainty_awareness
+    def test_uncertainty_negative_steer_vs_prompt_contrast(self, cell_result):
+        # All 4 cells must show the comparator-bound negative contrast.
         for ax in cell_result["axes"]:
             if ax["axis"] == "uncertainty_awareness":
-                assert ax["tost_verdict"] == PE.VERDICT_CALIBRATION_HARM, (
-                    f"Expected CALIBRATION_HARM for uncertainty but got {ax['tost_verdict']}"
+                assert ax["tost_verdict"] == PE.VERDICT_NEGATIVE_STEER_VS_PROMPT_CONTRAST, (
+                    "Expected NEGATIVE_STEER_VS_PROMPT_CONTRAST for uncertainty "
+                    f"but got {ax['tost_verdict']}"
                 )
 
     def test_deliberation_and_skepticism_not_harm_or_superior(self, cell_result):
-        # deliberation and skepticism should NOT be CALIBRATION_HARM or SUPERIORITY
+        # deliberation and skepticism should not be negative contrasts or superiority.
         # (they may be EQUIVALENT or UNDERPOWERED depending on the cell)
         for ax in cell_result["axes"]:
             if ax["axis"] in ("deliberation", "skepticism"):
                 assert ax["tost_verdict"] not in (
-                    PE.VERDICT_CALIBRATION_HARM,
+                    PE.VERDICT_NEGATIVE_STEER_VS_PROMPT_CONTRAST,
                     PE.VERDICT_SUPERIORITY,
                 ), (
                     f"Unexpected verdict {ax['tost_verdict']} for {ax['axis']}"
@@ -233,14 +237,14 @@ class TestAnalyseArm:
         results = PE.analyse_arm(ARM_FULL, b=2000, seed=0)
         assert len(results) == 4
 
-    def test_all_uncertainty_axes_are_harm(self):
+    def test_all_uncertainty_axes_are_negative_steer_vs_prompt_contrasts(self):
         results = PE.analyse_arm(ARM_FULL, b=2000, seed=0)
-        harm_count = sum(
+        negative_count = sum(
             1 for cell in results for ax in cell["axes"]
             if ax["axis"] == "uncertainty_awareness"
-            and ax["tost_verdict"] == PE.VERDICT_CALIBRATION_HARM
+            and ax["tost_verdict"] == PE.VERDICT_NEGATIVE_STEER_VS_PROMPT_CONTRAST
         )
-        assert harm_count == 4, f"Expected 4 CALIBRATION_HARM, got {harm_count}"
+        assert negative_count == 4, f"Expected 4 negative contrasts, got {negative_count}"
 
     def test_no_superiority_verdicts(self):
         results = PE.analyse_arm(ARM_FULL, b=2000, seed=0)
@@ -267,9 +271,10 @@ class TestOutputGenerators:
         md = PE.build_conclusions_md(arm_results, None)
         assert "DEFERRED" in md
 
-    def test_md_contains_calibration_harm_section(self, arm_results):
+    def test_md_contains_negative_steer_vs_prompt_section(self, arm_results):
         md = PE.build_conclusions_md(arm_results, None)
-        assert "CALIBRATION_HARM" in md or "Calibration Harm" in md or "definitively harms" in md
+        assert "NEGATIVE_STEER_VS_PROMPT_CONTRAST" in md
+        assert "Direct Qwen/CAA steer-vs-baseline remains near zero." in md
 
     def test_latex_contains_autogens_header(self, arm_results):
         tex = PE.build_latex_table(arm_results)
@@ -332,3 +337,21 @@ class TestBrierFeasibility:
     def test_reason_no_fabricated_data(self):
         # The reason must explicitly state no numbers were imputed
         assert "not" in PE.BRIER_REASON.lower() or "cannot" in PE.BRIER_REASON.lower()
+
+
+class TestCheckoutIndependentProvenance:
+    def test_stable_artifact_path_ignores_checkout_root(self):
+        suffix = Path("results") / "arm_full" / "cell_caa__qwen2.5-7b" / "c2b_adjudication_results.json"
+        first = PE.stable_artifact_path(Path("C:/checkout-one") / suffix)
+        second = PE.stable_artifact_path(Path("D:/different/depth/checkout-two") / suffix)
+        assert first == second == suffix.as_posix()
+
+    @pytest.mark.skipif(not ARM_FULL.exists(), reason="arm_full artifacts not present")
+    def test_analysis_json_is_byte_identical_for_relative_and_absolute_paths(self):
+        relative = ARM_FULL.relative_to(REPO)
+        first = PE.analyse_arm(REPO / relative, b=100, seed=7)
+        second = PE.analyse_arm((REPO / relative).resolve(), b=100, seed=7)
+        first_bytes = json.dumps(first, indent=2).encode("utf-8")
+        second_bytes = json.dumps(second, indent=2).encode("utf-8")
+        assert first_bytes == second_bytes
+        assert str(REPO.resolve()).encode("utf-8") not in first_bytes

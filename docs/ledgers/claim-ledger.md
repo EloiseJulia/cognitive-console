@@ -84,13 +84,15 @@ Status values: proposed | partially-supported | supported | contradicted | withd
   empirical contribution (C2) is the behavioral non-transfer, not internal non-surjectivity.
 - **Falsified if:** a bounded prompt search reproduces the steered internal state.
 
-## C3 — Console as Boundary/Limit + Trust-Calibration Instrument (RQ3, DESIGN/HCI — Plan B elevated)
-- **Statement:** Re-cast the interface from a "latent control slider" to an instrument that surfaces WHERE
-  legible latent control fails/degrades behavior and helps non-experts recalibrate trust and attribute
-  prompt↔latent conflict.
-- **Scope:** formative + 4-condition controlled study; open white-box models.
-- **Type:** design/HCI contribution (empirical user study)
-- **Status:** **proposed.** Evidence = formative + controlled study — NOT yet run; IRB/human-subjects = §5,
-  human-gated.
-- **Known limits:** cross-model automatic re-mapping is the hardest engineering piece.
-- **Paper location:** Contribution 4 (design).
+## C3 — Evidence Contract for Latent-Control Affordances (RQ3, METHODOLOGICAL/HCI)
+- **Statement:** We propose and artifact-instantiate an evidence-accounting and evaluation framework for
+  latent-control affordances: READ status, TRANSFER verdict, bounded best-prompt comparison, calibration
+  warning, and evidence tier.
+- **Scope:** Pure-model route; no formative or controlled user study; human evaluation remains deferred
+  and owner-gated.
+- **Type:** proposed methodological/HCI framework instantiated by the C1/C2 model-evidence artifacts
+- **Status:** **proposed.** The artifact instantiates the evidence contract; comprehensibility, usability,
+  reliance effects, effectiveness, and benefit are NOT validated.
+- **Known limits:** No user evidence supports claims about mental models, interaction quality, reliance,
+  or benefit.
+- **Paper location:** Contribution 3 (methodological framework and worked artifact instantiation).

@@ -6,7 +6,7 @@ Status: writing scaffold, not paper freeze. Route follows D-0035/D-0036/D-0041: 
 Legible Need Not Be Controllable: A Frozen Reality Check for Prompt-vs-Latent Behavioral Control in LLMs
 
 ## Novelty unit
-A frozen, fairness-controlled, independently-audited behavioral adjudication showing that representational legibility does **not** transfer to control, generalized across 2 steering methods × 2 model families, with a replicated calibration-harm sub-finding.
+A frozen, fairness-controlled, independently-audited behavioral adjudication showing that representational legibility does **not** transfer to control, generalized across 2 steering methods × 2 model families, with a replicated negative steer-vs-bounded-prompt uncertainty contrast.
 
 ## Abstract (claims carried: C1 scoped; C2 headline; C3 interface-evaluation implication only)
 - Problem: HCI tools increasingly promise readable controls over LLM behavior, but a readable cognitive axis may not be a usable control primitive.
@@ -50,7 +50,7 @@ Citation hygiene rule for this table: use only works verified in `docs/research/
 
 | prior work (year; cite key) | what THEY test | what WE uniquely adjudicate |
 |---|---|---|
-| Sprejer et al., *Mind the Performance Gap* (2026; `sprejer2026mindgap`) | Closest empirical neighbor: feature steering can induce capability--behavior trade-offs and degradation relative to prompting | External corroboration for C2/calibration-harm, not a scoop: Goodfire SAE features, MMLU, no pre-registration, no CAA/ITI 2×2 model grid, no HCI legibility-console framing |
+| Sprejer et al., *Mind the Performance Gap* (2026; `sprejer2026mindgap`) | Closest empirical neighbor: feature steering can induce capability--behavior trade-offs and degradation relative to prompting | External context for the C2 comparator-bound contrast, not a scoop: Goodfire SAE features, MMLU, no pre-registration, no CAA/ITI 2×2 model grid, no HCI legibility-console framing |
 | Mishra et al., *Steered LLM Activations are Non-Surjective* (2026 workshop; `mishra2026nonsurj`) | Internal residual-state non-surjectivity under activation steering | A behavioral prompt-vs-latent transfer test under frozen DEV/TEST adjudication; Mishra is background, not our result |
 | Heyman & Vandeputte, *Steer Like the LLM* (2026; `heyman2026steer`) | Trained steering that mimics prompting | Naive/bounded off-the-shelf CAA/ITI failure; PSR is a threat and planned response, not covered by C2 |
 | Rimsky et al. CAA + Li et al. ITI (2024/2023; `rimsky2024caa`, `li2023iti`) | Activation steering methods | Whether those legible directions beat the best prompt on task outcomes, with fairness controls and hostile audits |
@@ -116,7 +116,7 @@ Citation hygiene rule for this table: use only works verified in `docs/research/
 - Run the frozen latent-recovery arm (`prereg-latent-recovery-arm.md`) to test faithful PSR-style DEV-optimized steering.
 - Run Llama C1 facade replication (Workstream A) before promoting C1 beyond exploratory.
 - Design and preregister a human study only if owner approves the venue fork.
-- Investigate calibration-harm mechanisms in a new preregistered package; do not re-mine E-0007 data.
+- Investigate mechanisms behind the negative steer-vs-bounded-prompt contrast in a new preregistered package; do not re-mine E-0007 data.
 
 ## 8. Conclusion (claims carried: C1 scoped; C2 headline; C3 implication)
 - Repeat only evidence-backed claims: exploratory legibility facade, generalized C2 non-transfer across tested cells, the four-cell steer-vs-bounded-prompt negative calibration contrast under the frozen scorer, and the interface-evaluation implication. Keep direct Qwen/CAA steer-vs-baseline near zero (+0.011 compliance, +0.0008 1-Brier).

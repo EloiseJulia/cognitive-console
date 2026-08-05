@@ -40,8 +40,8 @@ claims:
     valid_for_paper: "background citation only; not our empirical claim"
     gate_notes: "No project evidence row because it is not our claim. Must not enter Abstract/Contributions/Conclusion as an empirical contribution."
   C3:
-    statement: "We propose and artifact-instantiate an evidence-accounting and evaluation framework for latent-control affordances: READ status, TRANSFER verdict, bounded best-prompt comparison, calibration warning, and evidence tier."
-    status: "primary methodological contribution derived from model evidence; proposed HCI framework with unvalidated comprehensibility, usability, reliance effects, and benefit"
+    statement: "Proposed, artifact-instantiated evidence-accounting and evaluation framework for latent-control affordances: READ status, TRANSFER verdict, bounded best-prompt comparison, calibration warning, and evidence tier."
+    status: "proposed, artifact-instantiated methodological contribution derived from model evidence; no validated comprehensibility, usability, reliance effect, effectiveness, or benefit"
     supporting_evidence_ids: []
     scope: "Pure-model route; no formative or controlled user study; human study deferred/owner-gated"
     paper_sections: ["Abstract", "Introduction", "Interface-evaluation contract", "Limitations", "Conclusion"]

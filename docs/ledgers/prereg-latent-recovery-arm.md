@@ -180,7 +180,7 @@ This guard is required because E-0006's audit found a lineage weakness: same-mod
 ## 8. Honest-fail and frozen-record separation
 
 - **No re-mining:** if faithful PSR fails, do not search for a different mechanism, post-hoc axis subset, alternate confidence parser, alternate bootstrap, manifold-constrained rescue, or new off-manifold statistic on the same data.
-- **No reinterpretation of E-0007:** E-0007 remains a valid null for the distance-correlation mechanism. Any optional manifold ablation is a separate design ablation, not evidence that distance caused calibration harm.
+- **No reinterpretation of E-0007:** E-0007 remains a valid null for the distance-correlation mechanism. Any optional manifold ablation is a separate design ablation, not evidence that distance caused the negative steer-vs-prompt contrast.
 - **No frozen-record edits:** E-0005/E-0006/E-0007 and the frozen adjudicator remain intact regardless of this arm's outcome.
 - **No TEST tuning:** any TEST-informed change creates a new exploratory record and cannot support the frozen success criterion.
 - **Owner gate:** this prereg remains inert until Manager review and owner sign-off for protocol freeze and GPU spend.

@@ -288,8 +288,10 @@ class HFActivationProvider(ActivationProvider):
         dtype: str = "float32",
         cache_dir: str | os.PathLike | None = None,
         max_length: int = 256,
+        model_revision: str | None = None,
     ) -> None:
         self.model_name = model_name
+        self.model_revision = model_revision
         self._layers = list(layers) if layers is not None else []
         self.device = device
         self.dtype = dtype
@@ -327,18 +329,31 @@ class HFActivationProvider(ActivationProvider):
             raise NotImplementedError(_HF_INSTALL_HINT) from exc
 
         dtype = getattr(torch, self.dtype, torch.float32)
-        self._config = AutoConfig.from_pretrained(self.model_name)
-        self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        revision_kwargs = (
+            {"revision": self.model_revision} if self.model_revision else {}
+        )
+        self._config = AutoConfig.from_pretrained(
+            self.model_name, **revision_kwargs
+        )
+        self._tokenizer = AutoTokenizer.from_pretrained(
+            self.model_name, **revision_kwargs
+        )
         if self._tokenizer.pad_token is None:
             self._tokenizer.pad_token = self._tokenizer.eos_token
         # transformers >=5 renamed `torch_dtype` -> `dtype`; support both.
         try:
             model = AutoModelForCausalLM.from_pretrained(
-                self.model_name, dtype=dtype, low_cpu_mem_usage=True
+                self.model_name,
+                dtype=dtype,
+                low_cpu_mem_usage=True,
+                **revision_kwargs,
             )
         except TypeError:
             model = AutoModelForCausalLM.from_pretrained(
-                self.model_name, torch_dtype=dtype, low_cpu_mem_usage=True
+                self.model_name,
+                torch_dtype=dtype,
+                low_cpu_mem_usage=True,
+                **revision_kwargs,
             )
         model.to(self.device)
         model.eval()
@@ -377,7 +392,7 @@ class HFActivationProvider(ActivationProvider):
         # device/dtype are part of the key: an fp16/cuda forward yields numerically
         # different activations than an fp32/cpu one, so a warm cpu-fp32 cache must
         # NOT be silently reused for a gpu-fp16 run (would corrupt the GPU results).
-        for part in (self.model_name, str(layer), self._POOLING,
+        for part in (self.model_name, str(self.model_revision), str(layer), self._POOLING,
                      self.device, self.dtype, text):
             h.update(part.encode("utf-8"))
             h.update(b"\x1f")

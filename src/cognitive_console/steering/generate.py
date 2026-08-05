@@ -611,7 +611,22 @@ class SteeredHFBackend(GenBackend):
         return np.concatenate(out_rows, axis=0)
 
     # -- all-layer projection ablation (E-0016; distinct from additive hook) -
-    def _make_ablation_hook(self, ablation: AblationConfig, *, stats: Optional[dict] = None, layer: Optional[int] = None):
+    @staticmethod
+    def _apply_ablation(hidden, vec):
+        import torch
+
+        comp = torch.sum(hidden * vec, dim=-1, keepdim=True)
+        return hidden - comp * vec
+
+    def _make_ablation_hook(
+        self,
+        ablation: AblationConfig,
+        *,
+        stats: Optional[dict] = None,
+        layer: Optional[int] = None,
+        abs_tol: Optional[float] = None,
+        rel_tol: Optional[float] = None,
+    ):
         import torch
 
         u = ablation.unit()
@@ -619,13 +634,29 @@ class SteeredHFBackend(GenBackend):
         def hook(module, inputs, output):
             hidden = output[0] if isinstance(output, tuple) else output
             vec = torch.as_tensor(u, dtype=hidden.dtype, device=hidden.device)
-            comp = torch.sum(hidden * vec, dim=-1, keepdim=True)
-            new_hidden = hidden - comp * vec
+            new_hidden = self._apply_ablation(hidden, vec)
             if stats is not None and layer is not None:
                 with torch.no_grad():
                     before = torch.sum(hidden.to(torch.float32) * vec.to(torch.float32), dim=-1).detach().abs()
                     after = torch.sum(new_hidden.to(torch.float32) * vec.to(torch.float32), dim=-1).detach().abs()
-                    rec = stats.setdefault(int(layer), {"max_abs_before": 0.0, "max_abs_after": 0.0, "mean_abs_before": 0.0, "mean_abs_after": 0.0, "n_values": 0})
+                    allowed = torch.maximum(
+                        torch.full_like(before, float(abs_tol)),
+                        before * float(rel_tol),
+                    )
+                    excess = after - allowed
+                    violations = excess > 0
+                    rec = stats.setdefault(
+                        int(layer),
+                        {
+                            "max_abs_before": 0.0,
+                            "max_abs_after": 0.0,
+                            "mean_abs_before": 0.0,
+                            "mean_abs_after": 0.0,
+                            "n_values": 0,
+                            "violation_count": 0,
+                            "max_violation": 0.0,
+                        },
+                    )
                     n_old = int(rec["n_values"])
                     n_new = int(before.numel())
                     rec["max_abs_before"] = max(float(rec["max_abs_before"]), float(before.max().item()))
@@ -633,21 +664,48 @@ class SteeredHFBackend(GenBackend):
                     rec["mean_abs_before"] = (float(rec["mean_abs_before"]) * n_old + float(before.mean().item()) * n_new) / max(1, n_old + n_new)
                     rec["mean_abs_after"] = (float(rec["mean_abs_after"]) * n_old + float(after.mean().item()) * n_new) / max(1, n_old + n_new)
                     rec["n_values"] = n_old + n_new
+                    rec["violation_count"] = int(rec["violation_count"]) + int(violations.sum().item())
+                    rec["max_violation"] = max(
+                        float(rec["max_violation"]),
+                        float(torch.clamp(excess, min=0).max().item()),
+                    )
             if isinstance(output, tuple):
                 return (new_hidden,) + tuple(output[1:])
             return new_hidden
 
         return hook
 
-    def _register_all_layer_ablation_hooks(self, ablation: AblationConfig, *, stats: Optional[dict] = None):
+    def _register_all_layer_ablation_hooks(
+        self,
+        ablation: AblationConfig,
+        *,
+        stats: Optional[dict] = None,
+        abs_tol: Optional[float] = None,
+        rel_tol: Optional[float] = None,
+    ):
         """Register projection-ablation hooks on every decoder block."""
         self._ensure_loaded()
         if np.asarray(ablation.unit()).size != self.hidden_dim:
             raise ValueError("ablation direction dim does not match model hidden_dim")
         handles = []
         for idx, block in enumerate(self._layers, start=1):
-            handles.append(block.register_forward_hook(self._make_ablation_hook(ablation, stats=stats, layer=idx)))
+            handles.append(
+                block.register_forward_hook(
+                    self._make_ablation_hook(
+                        ablation,
+                        stats=stats,
+                        layer=idx,
+                        abs_tol=abs_tol,
+                        rel_tol=rel_tol,
+                    )
+                )
+            )
         return handles
+
+    @property
+    def decoder_layer_indices(self) -> List[int]:
+        self._ensure_loaded()
+        return list(range(1, len(self._layers) + 1))
 
     def capture_ablation_hook_bites(
         self,
@@ -655,6 +713,8 @@ class SteeredHFBackend(GenBackend):
         ablation: AblationConfig,
         *,
         batch_size: Optional[int] = 2,
+        abs_tol: float = 1e-5,
+        rel_tol: float = 0.05,
     ) -> Dict[int, Dict[str, float]]:
         """Forward-pass-only guard proving all-layer ablation removes r_hat.
 
@@ -677,7 +737,12 @@ class SteeredHFBackend(GenBackend):
             self._tokenizer.padding_side = "left"
             enc = self._tokenizer(texts, return_tensors="pt", padding=True, truncation=True, max_length=self.max_length)
             enc = {k: v.to(self.device) for k, v in enc.items()}
-            handles = self._register_all_layer_ablation_hooks(ablation, stats=stats)
+            handles = self._register_all_layer_ablation_hooks(
+                ablation,
+                stats=stats,
+                abs_tol=abs_tol,
+                rel_tol=rel_tol,
+            )
             try:
                 with torch.no_grad():
                     base_model(**enc, use_cache=False)

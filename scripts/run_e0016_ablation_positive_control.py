@@ -15,10 +15,11 @@ import io
 import json
 import math
 import os
+import operator
 import subprocess
 import sys
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -63,11 +64,15 @@ HF_BACKEND_MAX_LENGTH = 512
 GENERATION_DO_SAMPLE = True
 GENERATION_TEMPERATURE = 0.7
 GENERATION_TOP_P = None
-GENERATION_BATCH_SCHEME = "one_fixed_full-condition_batch_in_item-sample_order"
+GENERATION_BATCH_SCHEME = "bounded_fixed_microbatches_in_item-sample_order"
+HF_FROZEN_GENERATION_BATCH_SIZE = 1
+SYNTHETIC_DEFAULT_GENERATION_BATCH_SIZE = 3
 HOOK_BITES_BATCH_SIZE = 2
 HOOK_BITES_REL_TOL = 0.05
 SCORER_VERSION = "score_refusal_marker_v1"
 DEGENERACY_SCORER_VERSION = "degeneracy_score_v1"
+GENERATION_RECORD_SCHEMA_VERSION = 1
+CHECKPOINT_SCHEMA_VERSION = 1
 RANDOM_DIRECTION_SEED_OFFSET = 909
 SYNTHETIC_SMOKE_DEV_N = 4
 SYNTHETIC_SMOKE_TEST_N = 8
@@ -110,6 +115,7 @@ class ImmutableDataSpec:
     schema: Tuple[str, ...]
     format: str
     column: Optional[str] = None
+    expected_row_count: Optional[int] = None
 
     @property
     def resolved_url(self) -> str:
@@ -155,9 +161,10 @@ HARMLESS_SPEC = ImmutableDataSpec(
     split="train",
     content_path="data/train-00000-of-00001-a09b74b3ef9c3b56.parquet",
     content_sha256="06391b656a06fd3fb9d213160ef2398796c3b7f3dc75ef1e3ced30d461517073",
-    schema=("instruction", "input", "output"),
+    schema=("instruction", "input", "output", "text"),
     format="parquet",
     column="instruction",
+    expected_row_count=52002,
 )
 
 
@@ -177,7 +184,7 @@ class SharedHFHandles:
     from_pretrained_loads_expected: int = 1
 
 
-@dataclass
+@dataclass(frozen=True)
 class DirectionBundle:
     direction: np.ndarray
     source_layer: int
@@ -191,6 +198,7 @@ class EvalResult:
     per_item_scores: np.ndarray
     per_item_degeneracy: np.ndarray
     per_item_hashes: List[str]
+    records: List[Dict[str, object]] = field(default_factory=list)
 
     @property
     def mean_refusal(self) -> float:
@@ -207,6 +215,47 @@ def sha_text(text: str) -> str:
 
 def vector_sha256(vec: np.ndarray) -> str:
     return hashlib.sha256(np.asarray(vec, dtype=np.float64).ravel().tobytes()).hexdigest()
+
+
+def immutable_direction(vec: np.ndarray) -> np.ndarray:
+    copied = np.array(vec, dtype=np.float64, copy=True).ravel()
+    if not np.isfinite(copied).all():
+        raise ValueError("direction must contain only finite values")
+    copied.setflags(write=False)
+    return copied
+
+
+def assert_direction_hash(
+    direction: np.ndarray, expected_sha256: object, *, context: str
+) -> str:
+    actual = vector_sha256(direction)
+    if not isinstance(expected_sha256, str) or actual != expected_sha256:
+        raise ValueError(
+            f"{context} direction hash mismatch: expected={expected_sha256}, actual={actual}"
+        )
+    return actual
+
+
+def atomic_write_json(path: Path, payload: object) -> None:
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    raw = json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False).encode(
+        "utf-8"
+    )
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        with tmp.open("wb") as handle:
+            handle.write(raw)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(tmp, path)
+    finally:
+        if tmp.exists():
+            tmp.unlink()
+
+
+def filesystem_hash_token(value: str) -> str:
+    return str(value).split(":", 1)[-1][:16]
 
 
 def read_jsonl(path: Path) -> List[dict]:
@@ -250,6 +299,32 @@ def _schema_of_rows(rows: Sequence[dict]) -> Tuple[str, ...]:
     return schema
 
 
+def _canonical_rows_sha256(rows: Sequence[dict], schema: Sequence[str]) -> str:
+    digest = hashlib.sha256()
+    for row in rows:
+        canonical = [row.get(column) for column in schema]
+        digest.update(
+            json.dumps(
+                canonical,
+                ensure_ascii=False,
+                separators=(",", ":"),
+                allow_nan=False,
+            ).encode("utf-8")
+        )
+        digest.update(b"\n")
+    return digest.hexdigest()
+
+
+def _parse_parquet_bytes(raw: bytes) -> List[dict]:
+    try:
+        import pyarrow.parquet as pq
+    except ImportError as exc:
+        raise NotImplementedError(
+            "HF parquet sources require pyarrow; install with `pip install -e .[hf]`."
+        ) from exc
+    return [dict(row) for row in pq.read_table(io.BytesIO(raw)).to_pylist()]
+
+
 def _parse_immutable_bytes(raw: bytes, spec: ImmutableDataSpec) -> List[dict]:
     if spec.format == "csv":
         rows = list(csv.DictReader(io.StringIO(raw.decode("utf-8"))))
@@ -259,7 +334,15 @@ def _parse_immutable_bytes(raw: bytes, spec: ImmutableDataSpec) -> List[dict]:
                 f"{spec.name} schema mismatch: expected {spec.schema}, got {schema}"
             )
         return rows
-    raise ValueError(f"{spec.name} bytes require datasets parquet loading")
+    if spec.format == "parquet":
+        rows = _parse_parquet_bytes(raw)
+        schema = _schema_of_rows(rows)
+        if schema != spec.schema:
+            raise ValueError(
+                f"{spec.name} schema mismatch: expected {spec.schema}, got {schema}"
+            )
+        return rows
+    raise ValueError(f"unsupported immutable format: {spec.format}")
 
 
 def _load_immutable_hf_rows(
@@ -288,34 +371,18 @@ def _load_immutable_hf_rows(
             f"{spec.name} immutable content hash mismatch: "
             f"expected {spec.content_sha256}, got {actual_hash}"
         )
-    if spec.format == "csv":
-        rows = _parse_immutable_bytes(raw, spec)
-    else:
-        try:
-            from datasets import load_dataset
-        except ImportError as exc:
-            raise NotImplementedError(
-                "HF parquet sources require `datasets`; install with `pip install -e .[hf]`."
-            ) from exc
-        if source_type == "approved_local_override":
-            ds = load_dataset("parquet", data_files=source_text, split="train")
-        else:
-            ds = load_dataset(
-                spec.dataset_id,
-                split=spec.split,
-                revision=spec.revision,
-            )
-        if tuple(ds.column_names) != spec.schema:
-            raise ValueError(
-                f"{spec.name} schema mismatch: expected {spec.schema}, "
-                f"got {tuple(ds.column_names)}"
-            )
-        rows = [dict(x) for x in ds]
+    rows = _parse_immutable_bytes(raw, spec)
     if _schema_of_rows(rows) != spec.schema:
         raise ValueError(
             f"{spec.name} loaded schema mismatch: expected {spec.schema}, "
             f"got {_schema_of_rows(rows)}"
         )
+    if spec.expected_row_count is not None and len(rows) != spec.expected_row_count:
+        raise ValueError(
+            f"{spec.name} row-count mismatch: expected {spec.expected_row_count}, "
+            f"got {len(rows)}"
+        )
+    loaded_rows_sha256 = _canonical_rows_sha256(rows, spec.schema)
     return rows, {
         "source_type": source_type,
         "source": resolved_source,
@@ -326,6 +393,9 @@ def _load_immutable_hf_rows(
         "content_sha256": actual_hash,
         "schema": list(spec.schema),
         "count_loaded": len(rows),
+        "expected_row_count": spec.expected_row_count,
+        "loaded_rows_sha256": loaded_rows_sha256,
+        "canonicalization": "ordered rows as compact JSON arrays in frozen schema order",
     }
 
 
@@ -467,14 +537,23 @@ def git_dirty_tree() -> bool:
     return bool(result.stdout.strip())
 
 
+def strict_positive_integer(value: object, *, name: str) -> int:
+    if type(value) is not int:
+        raise ValueError(f"{name} must be a genuine integer")
+    if value < 0:
+        raise ValueError(f"{name} must be non-negative")
+    return operator.index(value)
+
+
 def pre_load_eligibility_config(args: argparse.Namespace) -> Dict[str, Any]:
-    return {
+    seed = strict_positive_integer(args.seed, name="seed")
+    config = {
         "experiment_id": EXPERIMENT_ID,
         "primary_regime": PRIMARY_REGIME,
         "backend": args.backend,
         "model_id": args.model_id,
         "model_revision": args.model_revision,
-        "seed": int(args.seed),
+        "seed": seed,
         "dev_n": int(args.dev_n),
         "test_n": int(args.test_n),
         "k": int(args.k),
@@ -533,6 +612,21 @@ def pre_load_eligibility_config(args: argparse.Namespace) -> Dict[str, Any]:
             "eps_floor": float(adj.COHERENCE_EPS_FLOOR),
         },
     }
+    if args.backend == "synthetic":
+        config["synthetic"] = {
+            "baseline_refusal_rate": float(args.synthetic_baseline_refusal_rate),
+            "random_refusal_rate": 0.75,
+            "activation_dim": 16,
+            "activation_noise_scale": 0.01,
+            "contrast_magnitude": 4.0,
+            "layer_gain_recipe": "1.0 + 0.1 * layer",
+        }
+    config["generation_batch_size"] = strict_positive_integer(
+        args.generation_batch_size, name="generation_batch_size"
+    )
+    if config["generation_batch_size"] < 1:
+        raise ValueError("generation_batch_size must be at least 1")
+    return config
 
 
 def frozen_run_config(args: argparse.Namespace) -> Dict[str, Any]:
@@ -560,6 +654,10 @@ def _dataset_identity(provenance: Dict[str, object]) -> Dict[str, object]:
             "split",
             "content_path",
             "content_sha256",
+            "expected_row_count",
+            "count_loaded",
+            "loaded_rows_sha256",
+            "canonicalization",
         )
     } | {
         "schema": schema,
@@ -609,13 +707,10 @@ def resolved_frozen_run_config(
             "top_p": GENERATION_TOP_P,
             "max_new_tokens": int(args.max_new_tokens),
             "batch_scheme": GENERATION_BATCH_SCHEME,
-            "batch_sizes": {
-                "dev_condition": int(args.dev_n * args.k),
-                "test_condition": int(args.test_n * args.k),
-            },
+            "generation_batch_size": int(args.generation_batch_size),
             "sample_seed_recipe": (
                 "sha256(run_seed|item_id|condition|sample_index) mod 2**31; "
-                "batch torch seed=sha256(ordered per-sample seeds) mod 2**31"
+                "HF frozen batch size 1 reseeds each stable sample identity"
             ),
         },
         "data": {
@@ -692,10 +787,15 @@ def finalized_run_identity(
     if dev_payload.get("status") != "ELIGIBLE":
         raise ValueError("cannot finalize a selected intervention for ineligible DEV")
     selected_row = dict(dev_payload.get("selected") or {})
+    actual_direction_sha256 = assert_direction_hash(
+        selected.direction,
+        selected.provenance.get("direction_sha256"),
+        context="finalize selected",
+    )
     expected = {
         "source_layer": int(selected.source_layer),
         "position": selected.position,
-        "direction_sha256": selected.provenance.get("direction_sha256"),
+        "direction_sha256": actual_direction_sha256,
     }
     if any(selected_row.get(key) != value for key, value in expected.items()):
         raise ValueError(
@@ -727,10 +827,11 @@ def finalized_run_identity(
 def assert_hf_frozen_config(args: argparse.Namespace) -> None:
     if args.backend != "hf":
         return
+    seed = strict_positive_integer(args.seed, name="seed")
     actual = {
         "model_id": args.model_id,
         "model_revision": args.model_revision,
-        "seed": int(args.seed),
+        "seed": seed,
         "dev_n": int(args.dev_n),
         "test_n": int(args.test_n),
         "k": int(args.k),
@@ -741,6 +842,9 @@ def assert_hf_frozen_config(args: argparse.Namespace) -> None:
         "harmful_source": args.harmful_source,
         "harmless_source": args.harmless_source,
         "combined_contrast": args.contrast_jsonl,
+        "generation_batch_size": strict_positive_integer(
+            args.generation_batch_size, name="generation_batch_size"
+        ),
     }
     expected = {
         "model_id": DEFAULT_MODEL,
@@ -756,6 +860,7 @@ def assert_hf_frozen_config(args: argparse.Namespace) -> None:
         "harmful_source": DEFAULT_HARMFUL_SOURCE,
         "harmless_source": DEFAULT_HARMLESS_SOURCE,
         "combined_contrast": None,
+        "generation_batch_size": HF_FROZEN_GENERATION_BATCH_SIZE,
     }
     local_override_keys = {
         "xstest_source": XSTEST_SPEC,
@@ -820,7 +925,7 @@ def derive_refusal_direction(provider, harmful: Sequence[str], harmless: Sequenc
         harm = provider.get_activations(harmful, layer)
         safe = provider.get_activations(harmless, layer)
         vec = mean_difference_vector(harm, safe)
-        direction = unit_vector(vec)
+        direction = immutable_direction(unit_vector(vec))
         diag = layer_diagnostics(harm, safe, layer)
         prov = {
             "experiment_id": EXPERIMENT_ID,
@@ -892,6 +997,11 @@ def assert_real_not_smoke(
         raise ValueError("real HF direction must be finite and unit norm")
     if np.allclose(arr, arr[0]):
         raise ValueError("real HF direction is constant/ones-like placeholder")
+    assert_direction_hash(
+        arr,
+        bundle.provenance.get("direction_sha256"),
+        context=f"real-not-smoke source layer {bundle.source_layer}",
+    )
     low = json.dumps({"direction": bundle.provenance, "xstest": xstest_prov}, sort_keys=True).lower()
     banned = ("fixture", "smoke", "placeholder", "synthetic", "random", "np.ones")
     if any(tok in low for tok in banned):
@@ -1013,49 +1123,331 @@ class SyntheticRegimeBBackend:
         return "Here is a concise safe answer with high-level, benign guidance."
 
 
-def eval_synthetic(items: Sequence[Item], backend: SyntheticRegimeBBackend, condition: str, *, k: int) -> EvalResult:
-    scores, degs = [], []
-    for it in items:
-        row_s, row_d = [], []
-        for sample in range(k):
-            text = backend.generate(it, condition, sample)
-            row_s.append(score_refusal(text, None))
-            row_d.append(degeneracy_score(text))
-        scores.append(row_s)
-        degs.append(row_d)
-    return EvalResult(condition, np.asarray(scores, dtype=np.float64), np.asarray(degs, dtype=np.float64), [sha_text(x.prompt) for x in items])
+def _sample_seed(seed: int, item_id: str, condition: str, sample: int) -> int:
+    return (
+        int(
+            hashlib.sha256(
+                f"{seed}|{item_id}|{condition}|{sample}".encode()
+            ).hexdigest(),
+            16,
+        )
+        % (2**31)
+    )
 
 
-def eval_hf(items: Sequence[Item], backend: SteeredHFBackend, condition: str, direction: Optional[np.ndarray], *, k: int, max_new_tokens: int, seed: int) -> EvalResult:
-    prompts, item_hashes, seeds = [], [], []
-    for it in items:
-        for sample in range(k):
-            prompts.append(it.prompt)
-            item_hashes.append(sha_text(it.prompt))
-            seeds.append(int(hashlib.sha256(f"{seed}|{it.id}|{condition}|{sample}".encode()).hexdigest(), 16) % (2**31))
+def _generation_jobs(
+    items: Sequence[Item], condition: str, *, k: int, seed: int
+) -> List[Dict[str, object]]:
+    jobs = []
+    for item_index, item in enumerate(items):
+        prompt_sha256 = sha_text(item.prompt)
+        for sample_index in range(k):
+            identity = {
+                "item_id": item.id,
+                "item_index": item_index,
+                "item_prompt_sha256": prompt_sha256,
+                "sample_index": sample_index,
+                "condition": condition,
+                "seed": _sample_seed(seed, item.id, condition, sample_index),
+            }
+            jobs.append(
+                {
+                    **identity,
+                    "sample_identity_sha256": config_hash(identity),
+                    "prompt": item.prompt,
+                }
+            )
+    return jobs
+
+
+def _checkpoint_payload(
+    *,
+    condition: str,
+    checkpoint_identity: Dict[str, object],
+    records: Sequence[Dict[str, object]],
+    complete: bool = False,
+) -> Dict[str, object]:
+    return {
+        "schema_version": CHECKPOINT_SCHEMA_VERSION,
+        "experiment_id": EXPERIMENT_ID,
+        "condition": condition,
+        "checkpoint_identity": checkpoint_identity,
+        "checkpoint_identity_hash": config_hash(checkpoint_identity),
+        "records": list(records),
+        "complete": bool(complete),
+        "valid_for_paper": False,
+    }
+
+
+def _load_checkpoint(
+    path: Optional[Path],
+    *,
+    condition: str,
+    checkpoint_identity: Dict[str, object],
+) -> List[Dict[str, object]]:
+    if path is None or not path.exists():
+        return []
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    expected_hash = config_hash(checkpoint_identity)
+    if (
+        payload.get("schema_version") != CHECKPOINT_SCHEMA_VERSION
+        or payload.get("experiment_id") != EXPERIMENT_ID
+        or payload.get("condition") != condition
+        or payload.get("checkpoint_identity_hash") != expected_hash
+        or payload.get("checkpoint_identity") != checkpoint_identity
+    ):
+        raise ValueError("checkpoint config/finalized identity mismatch")
+    records = list(payload.get("records") or [])
+    identities = [record.get("sample_identity_sha256") for record in records]
+    if len(identities) != len(set(identities)) or any(not x for x in identities):
+        raise ValueError("checkpoint contains duplicate or missing sample identities")
+    return records
+
+
+def _record_generation(
+    job: Dict[str, object],
+    text: str,
+    *,
+    direction_sha256_actual_used: Optional[str],
+) -> Dict[str, object]:
+    return {
+        key: job[key]
+        for key in (
+            "item_id",
+            "item_index",
+            "item_prompt_sha256",
+            "sample_index",
+            "condition",
+            "seed",
+            "sample_identity_sha256",
+        )
+    } | {
+        "output_sha256": sha_text(text),
+        "refusal_score": int(score_refusal(text, None)),
+        "degeneracy_score": float(degeneracy_score(text)),
+        "direction_sha256_actual_used": direction_sha256_actual_used,
+        "raw_prompt_stored": False,
+        "raw_output_stored": False,
+    }
+
+
+def eval_from_records(
+    records: Sequence[Dict[str, object]],
+    *,
+    condition: str,
+    n_items: int,
+    k: int,
+) -> EvalResult:
+    selected = [row for row in records if row.get("condition") == condition]
+    expected = n_items * k
+    if len(selected) != expected:
+        raise ValueError(
+            f"{condition} record count mismatch: expected {expected}, got {len(selected)}"
+        )
+    ordered = sorted(
+        selected, key=lambda row: (int(row["item_index"]), int(row["sample_index"]))
+    )
+    identities = [str(row["sample_identity_sha256"]) for row in ordered]
+    if len(identities) != len(set(identities)):
+        raise ValueError(f"{condition} records contain duplicate sample identities")
+    expected_coordinates = [
+        (item_index, sample_index)
+        for item_index in range(n_items)
+        for sample_index in range(k)
+    ]
+    observed_coordinates = [
+        (int(row["item_index"]), int(row["sample_index"])) for row in ordered
+    ]
+    if observed_coordinates != expected_coordinates:
+        raise ValueError(f"{condition} records have incomplete sample coordinates")
+    scores = np.asarray(
+        [float(row["refusal_score"]) for row in ordered], dtype=np.float64
+    ).reshape(n_items, k)
+    degeneracy = np.asarray(
+        [float(row["degeneracy_score"]) for row in ordered], dtype=np.float64
+    ).reshape(n_items, k)
+    item_hashes = [
+        str(ordered[item_index * k]["item_prompt_sha256"])
+        for item_index in range(n_items)
+    ]
+    return EvalResult(
+        condition, scores, degeneracy, item_hashes, records=[dict(x) for x in ordered]
+    )
+
+
+def eval_synthetic(
+    items: Sequence[Item],
+    backend: SyntheticRegimeBBackend,
+    condition: str,
+    *,
+    k: int,
+    seed: int = HF_FROZEN_SEED,
+    generation_batch_size: int = SYNTHETIC_DEFAULT_GENERATION_BATCH_SIZE,
+    checkpoint_path: Optional[Path] = None,
+    checkpoint_identity: Optional[Dict[str, object]] = None,
+    direction_sha256_actual_used: Optional[str] = None,
+) -> EvalResult:
+    batch_size = strict_positive_integer(
+        generation_batch_size, name="generation_batch_size"
+    )
+    if batch_size < 1:
+        raise ValueError("generation_batch_size must be at least 1")
+    jobs = _generation_jobs(items, condition, k=k, seed=seed)
+    identity = checkpoint_identity or {
+        "backend": "synthetic",
+        "condition": condition,
+        "jobs_sha256": config_hash(
+            [{k: v for k, v in job.items() if k != "prompt"} for job in jobs]
+        ),
+    }
+    records = _load_checkpoint(
+        checkpoint_path, condition=condition, checkpoint_identity=identity
+    )
+    completed = {str(row["sample_identity_sha256"]) for row in records}
+    pending = [job for job in jobs if job["sample_identity_sha256"] not in completed]
+    for start in range(0, len(pending), batch_size):
+        for job in pending[start : start + batch_size]:
+            text = backend.generate(
+                Item(str(job["item_id"]), str(job["prompt"]), "checkpointed"),
+                condition,
+                int(job["sample_index"]),
+            )
+            records.append(
+                _record_generation(
+                    job,
+                    text,
+                    direction_sha256_actual_used=direction_sha256_actual_used,
+                )
+            )
+        if checkpoint_path is not None:
+            atomic_write_json(
+                checkpoint_path,
+                _checkpoint_payload(
+                    condition=condition,
+                    checkpoint_identity=identity,
+                    records=records,
+                ),
+            )
+    if checkpoint_path is not None:
+        atomic_write_json(
+            checkpoint_path,
+            _checkpoint_payload(
+                condition=condition,
+                checkpoint_identity=identity,
+                records=records,
+                complete=True,
+            ),
+        )
+    return eval_from_records(records, condition=condition, n_items=len(items), k=k)
+
+
+def eval_hf(
+    items: Sequence[Item],
+    backend: SteeredHFBackend,
+    condition: str,
+    direction: Optional[np.ndarray],
+    *,
+    k: int,
+    max_new_tokens: int,
+    seed: int,
+    generation_batch_size: int = HF_FROZEN_GENERATION_BATCH_SIZE,
+    checkpoint_path: Optional[Path] = None,
+    checkpoint_identity: Optional[Dict[str, object]] = None,
+    expected_direction_sha256: Optional[str] = None,
+) -> EvalResult:
+    batch_size = strict_positive_integer(
+        generation_batch_size, name="generation_batch_size"
+    )
+    if batch_size < 1:
+        raise ValueError("generation_batch_size must be at least 1")
+    actual_direction_sha256 = None
     if condition == "baseline":
-        texts = backend.generate_batch(
-            prompts,
-            steer=None,
-            max_new_tokens=max_new_tokens,
-            seeds=seeds,
-            do_sample=GENERATION_DO_SAMPLE,
-            temperature=GENERATION_TEMPERATURE,
-        )
+        if direction is not None or expected_direction_sha256 is not None:
+            raise ValueError("baseline must not carry an ablation direction")
     else:
-        assert direction is not None
-        texts = backend.generate_batch_with_ablation(
-            prompts,
-            AblationConfig(direction),
-            max_new_tokens=max_new_tokens,
-            seeds=seeds,
-            do_sample=GENERATION_DO_SAMPLE,
-            temperature=GENERATION_TEMPERATURE,
-            top_p=GENERATION_TOP_P,
+        if direction is None:
+            raise ValueError(f"{condition} requires an ablation direction")
+        actual_direction_sha256 = assert_direction_hash(
+            direction,
+            expected_direction_sha256,
+            context=f"{condition} condition start",
         )
-    scores = np.asarray([score_refusal(t, None) for t in texts], dtype=np.float64).reshape(len(items), k)
-    degs = np.asarray([degeneracy_score(t) for t in texts], dtype=np.float64).reshape(len(items), k)
-    return EvalResult(condition, scores, degs, [sha_text(x.prompt) for x in items])
+    jobs = _generation_jobs(items, condition, k=k, seed=seed)
+    identity = checkpoint_identity or {
+        "backend": "hf",
+        "condition": condition,
+        "direction_sha256": actual_direction_sha256,
+        "jobs_sha256": config_hash(
+            [{k: v for k, v in job.items() if k != "prompt"} for job in jobs]
+        ),
+    }
+    records = _load_checkpoint(
+        checkpoint_path, condition=condition, checkpoint_identity=identity
+    )
+    completed = {str(row["sample_identity_sha256"]) for row in records}
+    pending = [job for job in jobs if job["sample_identity_sha256"] not in completed]
+    for start in range(0, len(pending), batch_size):
+        batch = pending[start : start + batch_size]
+        prompts = [str(job["prompt"]) for job in batch]
+        seeds = [int(job["seed"]) for job in batch]
+        if condition == "baseline":
+            texts = backend.generate_batch(
+                prompts,
+                steer=None,
+                max_new_tokens=max_new_tokens,
+                seeds=seeds,
+                do_sample=GENERATION_DO_SAMPLE,
+                temperature=GENERATION_TEMPERATURE,
+            )
+        else:
+            assert direction is not None
+            assert_direction_hash(
+                direction,
+                actual_direction_sha256,
+                context=f"{condition} actual hook/use",
+            )
+            texts = backend.generate_batch_with_ablation(
+                prompts,
+                AblationConfig(direction),
+                max_new_tokens=max_new_tokens,
+                seeds=seeds,
+                do_sample=GENERATION_DO_SAMPLE,
+                temperature=GENERATION_TEMPERATURE,
+                top_p=GENERATION_TOP_P,
+            )
+        if len(texts) != len(batch):
+            raise ValueError(
+                f"{condition} backend output count mismatch: "
+                f"expected {len(batch)}, got {len(texts)}"
+            )
+        records.extend(
+            _record_generation(
+                job,
+                text,
+                direction_sha256_actual_used=actual_direction_sha256,
+            )
+            for job, text in zip(batch, texts)
+        )
+        if checkpoint_path is not None:
+            atomic_write_json(
+                checkpoint_path,
+                _checkpoint_payload(
+                    condition=condition,
+                    checkpoint_identity=identity,
+                    records=records,
+                ),
+            )
+    if checkpoint_path is not None:
+        atomic_write_json(
+            checkpoint_path,
+            _checkpoint_payload(
+                condition=condition,
+                checkpoint_identity=identity,
+                records=records,
+                complete=True,
+            ),
+        )
+    return eval_from_records(records, condition=condition, n_items=len(items), k=k)
 
 
 def dev_eligibility_status(baseline: EvalResult, floor: float = DEV_BASELINE_FLOOR) -> Tuple[bool, str, float]:
@@ -1107,36 +1499,109 @@ def pass_rule(baseline: EvalResult, ablated: EvalResult, random_control: EvalRes
     }
 
 
-def select_direction_on_dev(bundles: Sequence[DirectionBundle], dev_items: Sequence[Item], *, backend_name: str, synth_backend: Optional[SyntheticRegimeBBackend], hf_backend: Optional[SteeredHFBackend], k: int, seed: int, max_new_tokens: int) -> Tuple[DirectionBundle, Dict[str, object]]:
-    baseline = eval_synthetic(dev_items, synth_backend, "baseline", k=k) if backend_name == "synthetic" else eval_hf(dev_items, hf_backend, "baseline", None, k=k, max_new_tokens=max_new_tokens, seed=seed)
+def reconstruct_test_from_generation_artifact(
+    artifact: Dict[str, object], *, seed: int
+) -> Dict[str, object]:
+    if artifact.get("schema_version") != GENERATION_RECORD_SCHEMA_VERSION:
+        raise ValueError("generation-record artifact schema mismatch")
+    if artifact.get("experiment_id") != EXPERIMENT_ID:
+        raise ValueError("generation-record artifact experiment mismatch")
+    if artifact.get("raw_prompts_stored") or artifact.get("raw_outputs_stored"):
+        raise ValueError("generation-record artifact violates privacy-safe lineage")
+    n_items = strict_positive_integer(artifact.get("n_items"), name="n_items")
+    k = strict_positive_integer(artifact.get("k"), name="k")
+    if n_items < 1 or k < 1:
+        raise ValueError("generation-record artifact dimensions must be positive")
+    records = list(artifact.get("records") or [])
+    base = eval_from_records(records, condition="baseline", n_items=n_items, k=k)
+    ablated = eval_from_records(records, condition="ablation", n_items=n_items, k=k)
+    random_eval = eval_from_records(records, condition="random", n_items=n_items, k=k)
+    selected_sha = artifact.get("selected_direction_sha256_actual_used")
+    random_sha = artifact.get("random_direction_sha256_actual_used")
+    if not isinstance(selected_sha, str) or not isinstance(random_sha, str):
+        raise ValueError("generation-record artifact lacks actual-used direction hashes")
+    if selected_sha == random_sha:
+        raise ValueError("selected and random direction identities must differ")
+    for row in ablated.records:
+        if row.get("direction_sha256_actual_used") != selected_sha:
+            raise ValueError("ablation record actual-used direction hash mismatch")
+    for row in random_eval.records:
+        if row.get("direction_sha256_actual_used") != random_sha:
+            raise ValueError("random record actual-used direction hash mismatch")
+    for row in base.records:
+        if row.get("direction_sha256_actual_used") is not None:
+            raise ValueError("baseline record unexpectedly carries a direction hash")
+    test = pass_rule(base, ablated, random_eval, bootstrap_seed=seed)
+    return {
+        "test": test,
+        "test_baseline": as_eval_payload(base),
+        "test_ablation": as_eval_payload(ablated),
+        "test_random": as_eval_payload(random_eval),
+        "ci_inputs": {
+            "ablation_reductions": (
+                base.per_item_scores - ablated.per_item_scores
+            ).tolist(),
+            "random_reductions": (
+                base.per_item_scores - random_eval.per_item_scores
+            ).tolist(),
+        },
+    }
+
+
+def select_direction_on_dev(bundles: Sequence[DirectionBundle], dev_items: Sequence[Item], *, backend_name: str, synth_backend: Optional[SyntheticRegimeBBackend], hf_backend: Optional[SteeredHFBackend], k: int, seed: int, max_new_tokens: int, generation_batch_size: int = SYNTHETIC_DEFAULT_GENERATION_BATCH_SIZE, checkpoint_dir: Optional[Path] = None, run_config_hash: Optional[str] = None) -> Tuple[DirectionBundle, Dict[str, object]]:
+    baseline_identity = {
+        "phase": "dev",
+        "condition": "baseline",
+        "run_config_hash": run_config_hash,
+    }
+    baseline_path = None if checkpoint_dir is None else checkpoint_dir / "dev_baseline.json"
+    baseline = eval_synthetic(dev_items, synth_backend, "baseline", k=k, seed=seed, generation_batch_size=generation_batch_size, checkpoint_path=baseline_path, checkpoint_identity=baseline_identity) if backend_name == "synthetic" else eval_hf(dev_items, hf_backend, "baseline", None, k=k, max_new_tokens=max_new_tokens, seed=seed, generation_batch_size=generation_batch_size, checkpoint_path=baseline_path, checkpoint_identity=baseline_identity)
     eligible, status, rate = dev_eligibility_status(baseline)
     if not eligible:
         return bundles[0], {"status": status, "baseline_false_refusal_rate": rate, "baseline": as_eval_payload(baseline), "dev_test_was_not_run": True}
     rows = []
     for b in bundles:
         if backend_name == "synthetic":
-            ab = eval_synthetic(dev_items, synth_backend, "ablation", k=k)
-            rnd = eval_synthetic(dev_items, synth_backend, "random", k=k)
+            ab = eval_synthetic(dev_items, synth_backend, "ablation", k=k, seed=seed, generation_batch_size=generation_batch_size, checkpoint_path=None if checkpoint_dir is None else checkpoint_dir / f"dev_layer_{b.source_layer}_ablation.json", checkpoint_identity={"phase": "dev", "condition": "ablation", "source_layer": b.source_layer, "run_config_hash": run_config_hash, "direction_sha256": b.provenance.get("direction_sha256")})
+            rnd = eval_synthetic(dev_items, synth_backend, "random", k=k, seed=seed, generation_batch_size=generation_batch_size, checkpoint_path=None if checkpoint_dir is None else checkpoint_dir / f"dev_layer_{b.source_layer}_random.json", checkpoint_identity={"phase": "dev", "condition": "random", "source_layer": b.source_layer, "run_config_hash": run_config_hash})
         else:
-            ab = eval_hf(dev_items, hf_backend, "ablation", b.direction, k=k, max_new_tokens=max_new_tokens, seed=seed)
+            direction_sha256 = assert_direction_hash(
+                b.direction,
+                b.provenance.get("direction_sha256"),
+                context=f"DEV source layer {b.source_layer}",
+            )
+            ab = eval_hf(dev_items, hf_backend, "ablation", b.direction, k=k, max_new_tokens=max_new_tokens, seed=seed, generation_batch_size=generation_batch_size, checkpoint_path=None if checkpoint_dir is None else checkpoint_dir / f"dev_layer_{b.source_layer}_ablation.json", checkpoint_identity={"phase": "dev", "condition": "ablation", "source_layer": b.source_layer, "run_config_hash": run_config_hash, "direction_sha256": direction_sha256}, expected_direction_sha256=direction_sha256)
             rnd_dir = random_unit_direction(
                 b.direction.size, seed + RANDOM_DIRECTION_SEED_OFFSET
             )
-            rnd = eval_hf(dev_items, hf_backend, "random", rnd_dir, k=k, max_new_tokens=max_new_tokens, seed=seed)
+            random_sha256 = vector_sha256(rnd_dir)
+            rnd = eval_hf(dev_items, hf_backend, "random", rnd_dir, k=k, max_new_tokens=max_new_tokens, seed=seed, generation_batch_size=generation_batch_size, checkpoint_path=None if checkpoint_dir is None else checkpoint_dir / f"dev_layer_{b.source_layer}_random.json", checkpoint_identity={"phase": "dev", "condition": "random", "source_layer": b.source_layer, "run_config_hash": run_config_hash, "direction_sha256": random_sha256}, expected_direction_sha256=random_sha256)
         pr = pass_rule(baseline, ab, rnd, bootstrap_seed=seed)
         rows.append({"source_layer": b.source_layer, "position": b.position, "direction_sha256": b.provenance["direction_sha256"], "mean_reduction": pr["mean_reduction"], "coherence_ok": pr["coherence_ok"], "random_mean_reduction": pr["random_control"]["mean_reduction"]})
     best_row = max(rows, key=lambda r: (float(r["mean_reduction"]) if r["coherence_ok"] else -999.0, -int(r["source_layer"])))
-    best = next(b for b in bundles if b.source_layer == best_row["source_layer"])
+    source = next(b for b in bundles if b.source_layer == best_row["source_layer"])
+    copied_direction = immutable_direction(source.direction)
+    assert_direction_hash(
+        copied_direction,
+        source.provenance.get("direction_sha256"),
+        context="DEV selected immutable copy",
+    )
+    best = DirectionBundle(
+        direction=copied_direction,
+        source_layer=source.source_layer,
+        position=source.position,
+        provenance=json.loads(json.dumps(source.provenance)),
+    )
     return best, {"status": "ELIGIBLE", "baseline_false_refusal_rate": rate, "baseline": as_eval_payload(baseline), "selection_rows": rows, "selected": best_row}
 
 
 def random_unit_direction(dim: int, seed: int) -> np.ndarray:
     rng = np.random.default_rng(seed)
-    return unit_vector(rng.standard_normal(int(dim)))
+    return immutable_direction(unit_vector(rng.standard_normal(int(dim))))
 
 
 def as_eval_payload(result: EvalResult) -> Dict[str, object]:
-    return {"condition": result.name, "mean_refusal": result.mean_refusal, "mean_degeneracy": result.mean_degeneracy, "n_items": int(result.per_item_scores.shape[0]), "k": int(result.per_item_scores.shape[1]), "item_hashes": result.per_item_hashes}
+    return {"condition": result.name, "mean_refusal": result.mean_refusal, "mean_degeneracy": result.mean_degeneracy, "n_items": int(result.per_item_scores.shape[0]), "k": int(result.per_item_scores.shape[1]), "item_hashes": result.per_item_hashes, "generation_records": result.records}
 
 
 def synthetic_provider_and_direction(harmful: Sequence[str], harmless: Sequence[str], layers: Sequence[int], seed: int) -> SyntheticActivationProvider:
@@ -1154,6 +1619,19 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
     eligibility_config = pre_load_eligibility_config(args)
     eligibility_config_hash = config_hash(eligibility_config)
     dirty_tree = git_dirty_tree()
+    current_code_commit = git_commit(str(_REPO))
+    manifest_path = out_dir / "e0016_ablation_positive_control_results.json"
+    if manifest_path.exists():
+        existing = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if (
+            existing.get("pre_load_eligibility_config_hash")
+            != eligibility_config_hash
+            or existing.get("code_commit") != current_code_commit
+            or existing.get("dirty_tree") != dirty_tree
+        ):
+            raise ValueError(
+                "output directory contains a result from a different config/code identity"
+            )
     use_fixture_xstest = backend == "synthetic" and not args.xstest_jsonl and args.xstest_source == DEFAULT_XSTEST_SOURCE
     xstest_source = str(XSTEST_FIXTURE) if use_fixture_xstest else (args.xstest_jsonl or args.xstest_source)
     combined_contrast = str(CONTRAST_FIXTURE) if backend == "synthetic" and not args.contrast_jsonl else args.contrast_jsonl
@@ -1210,6 +1688,10 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         hidden_dim=provider.hidden_dim,
         declared_decoder_layers=declared_decoder_layers,
     )
+    run_config["implementation"] = {
+        "code_commit": current_code_commit,
+        "dirty_tree": dirty_tree,
+    }
     run_config_hash = config_hash(run_config)
 
     bundles = derive_refusal_direction(provider, harmful, harmless, layers, backend=backend, model_id=args.model_id, contrast_prov=contrast_prov)
@@ -1257,12 +1739,12 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                 ),
                 "candidates": candidate_hook_bites,
             }
-            guard_path.write_text(
-                json.dumps(
-                    {
+            atomic_write_json(
+                guard_path,
+                {
                         "experiment_id": EXPERIMENT_ID,
                         "created_at": utcnow(),
-                        "code_commit": git_commit(str(_REPO)),
+                        "code_commit": current_code_commit,
                         "dirty_tree": dirty_tree,
                         "seed": int(args.seed),
                         "model_id": args.model_id,
@@ -1276,20 +1758,16 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                         "hook_bites": hook_bites_payload,
                         "generation_started": False,
                         "valid_for_paper": False,
-                    },
-                    indent=2,
-                    sort_keys=True,
-                ),
-                encoding="utf-8",
+                },
             )
         except Exception as exc:
-            guard_path.write_text(
-                json.dumps(
-                    {
+            atomic_write_json(
+                guard_path,
+                {
                         "experiment_id": EXPERIMENT_ID,
                         "status": "PRE_GENERATION_GUARD_FAILED",
                         "error": str(exc),
-                        "code_commit": git_commit(str(_REPO)),
+                        "code_commit": current_code_commit,
                         "dirty_tree": dirty_tree,
                         "pre_load_eligibility_config": eligibility_config,
                         "pre_load_eligibility_config_hash": eligibility_config_hash,
@@ -1297,14 +1775,11 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                         "frozen_config_hash": run_config_hash,
                         "generation_started": False,
                         "valid_for_paper": False,
-                    },
-                    indent=2,
-                    sort_keys=True,
-                ),
-                encoding="utf-8",
+                },
             )
             raise
 
+    checkpoint_dir = out_dir / "checkpoints" / filesystem_hash_token(run_config_hash)
     selected, dev_payload = select_direction_on_dev(
         bundles,
         dev,
@@ -1314,6 +1789,9 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         k=args.k,
         seed=args.seed,
         max_new_tokens=args.max_new_tokens,
+        generation_batch_size=args.generation_batch_size,
+        checkpoint_dir=checkpoint_dir,
+        run_config_hash=run_config_hash,
     )
 
     payload: Dict[str, object] = {
@@ -1321,7 +1799,7 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         "status": dev_payload["status"],
         "primary_regime": PRIMARY_REGIME,
         "created_at": utcnow(),
-        "code_commit": git_commit(str(_REPO)),
+        "code_commit": current_code_commit,
         "dirty_tree": dirty_tree,
         "seed": int(args.seed),
         "pre_load_eligibility_config": eligibility_config,
@@ -1347,14 +1825,13 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         "harmful_generation_performed": False,
         "generation_prompt_scope": "benign XSTest-safe prompts only",
     }
-    manifest_path = out_dir / "e0016_ablation_positive_control_results.json"
     dev_selection_path = out_dir / "e0016_dev_selection_manifest.json"
     finalized_identity_path = out_dir / "e0016_finalized_run_identity.json"
 
     if dev_payload["status"] != "ELIGIBLE":
-        dev_selection_path.write_text(
-            json.dumps(
-                {
+        atomic_write_json(
+            dev_selection_path,
+            {
                     k: payload[k]
                     for k in (
                         "experiment_id",
@@ -1370,17 +1847,24 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                         "valid_for_paper",
                         "scope_guard",
                     )
-                },
-                indent=2,
-                sort_keys=True,
-            ),
-            encoding="utf-8",
+            },
         )
-        manifest_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+        atomic_write_json(manifest_path, payload)
         return payload
 
     finalized_identity = finalized_run_identity(run_config, selected, dev_payload)
     finalized_identity_hash = config_hash(finalized_identity)
+    if finalized_identity_path.exists():
+        existing_finalized = json.loads(
+            finalized_identity_path.read_text(encoding="utf-8")
+        )
+        if (
+            existing_finalized.get("finalized_run_identity_hash")
+            != finalized_identity_hash
+        ):
+            raise ValueError(
+                "output directory contains a different finalized run identity"
+            )
     artifact_identity = {
         "experiment_id": EXPERIMENT_ID,
         "finalized_run_identity_hash": finalized_identity_hash,
@@ -1392,9 +1876,9 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
             "artifact_identity": artifact_identity,
         }
     )
-    finalized_identity_path.write_text(
-        json.dumps(
-            {
+    atomic_write_json(
+        finalized_identity_path,
+        {
                 "experiment_id": EXPERIMENT_ID,
                 "created_at": utcnow(),
                 "finalized_run_identity": finalized_identity,
@@ -1402,15 +1886,11 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                 "artifact_identity": artifact_identity,
                 "test_generation_started": False,
                 "valid_for_paper": False,
-            },
-            indent=2,
-            sort_keys=True,
-        ),
-        encoding="utf-8",
+        },
     )
-    dev_selection_path.write_text(
-        json.dumps(
-            {
+    atomic_write_json(
+        dev_selection_path,
+        {
                 k: payload[k]
                 for k in (
                     "experiment_id",
@@ -1429,37 +1909,71 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                     "valid_for_paper",
                     "scope_guard",
                 )
-            },
-            indent=2,
-            sort_keys=True,
-        ),
-        encoding="utf-8",
+        },
     )
-    manifest_path.write_text(
-        json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8"
-    )
+    payload["status"] = "TEST_PENDING"
+    atomic_write_json(manifest_path, payload)
 
+    test_checkpoint_dir = checkpoint_dir / filesystem_hash_token(
+        finalized_identity_hash
+    )
+    common_checkpoint_identity = {
+        "phase": "test",
+        "run_config_hash": run_config_hash,
+        "finalized_run_identity_hash": finalized_identity_hash,
+    }
+    selected_direction_sha256 = assert_direction_hash(
+        selected.direction,
+        finalized_identity["selected_intervention"]["direction_sha256"],
+        context="pre-TEST selected",
+    )
+    random_direction = random_unit_direction(
+        selected.direction.size, args.seed + RANDOM_DIRECTION_SEED_OFFSET
+    )
+    random_direction_sha256 = vector_sha256(random_direction)
     if backend == "synthetic":
-        base = eval_synthetic(test, synth, "baseline", k=args.k)
-        ablated = eval_synthetic(test, synth, "ablation", k=args.k)
-        random_eval = eval_synthetic(test, synth, "random", k=args.k)
+        base = eval_synthetic(test, synth, "baseline", k=args.k, seed=args.seed, generation_batch_size=args.generation_batch_size, checkpoint_path=test_checkpoint_dir / "baseline.json", checkpoint_identity={**common_checkpoint_identity, "condition": "baseline"})
+        ablated = eval_synthetic(test, synth, "ablation", k=args.k, seed=args.seed, generation_batch_size=args.generation_batch_size, checkpoint_path=test_checkpoint_dir / "ablation.json", checkpoint_identity={**common_checkpoint_identity, "condition": "ablation", "direction_sha256": selected_direction_sha256}, direction_sha256_actual_used=selected_direction_sha256)
+        random_eval = eval_synthetic(test, synth, "random", k=args.k, seed=args.seed, generation_batch_size=args.generation_batch_size, checkpoint_path=test_checkpoint_dir / "random.json", checkpoint_identity={**common_checkpoint_identity, "condition": "random", "direction_sha256": random_direction_sha256}, direction_sha256_actual_used=random_direction_sha256)
     else:
-        base = eval_hf(test, hook_backend, "baseline", None, k=args.k, max_new_tokens=args.max_new_tokens, seed=args.seed)
-        ablated = eval_hf(test, hook_backend, "ablation", selected.direction, k=args.k, max_new_tokens=args.max_new_tokens, seed=args.seed)
+        base = eval_hf(test, hook_backend, "baseline", None, k=args.k, max_new_tokens=args.max_new_tokens, seed=args.seed, generation_batch_size=args.generation_batch_size, checkpoint_path=test_checkpoint_dir / "baseline.json", checkpoint_identity={**common_checkpoint_identity, "condition": "baseline"})
+        ablated = eval_hf(test, hook_backend, "ablation", selected.direction, k=args.k, max_new_tokens=args.max_new_tokens, seed=args.seed, generation_batch_size=args.generation_batch_size, checkpoint_path=test_checkpoint_dir / "ablation.json", checkpoint_identity={**common_checkpoint_identity, "condition": "ablation", "direction_sha256": selected_direction_sha256}, expected_direction_sha256=selected_direction_sha256)
         random_eval = eval_hf(
             test,
             hook_backend,
             "random",
-            random_unit_direction(
-                selected.direction.size, args.seed + RANDOM_DIRECTION_SEED_OFFSET
-            ),
+            random_direction,
             k=args.k,
             max_new_tokens=args.max_new_tokens,
             seed=args.seed,
+            generation_batch_size=args.generation_batch_size,
+            checkpoint_path=test_checkpoint_dir / "random.json",
+            checkpoint_identity={**common_checkpoint_identity, "condition": "random", "direction_sha256": random_direction_sha256},
+            expected_direction_sha256=random_direction_sha256,
         )
-    test_payload = pass_rule(base, ablated, random_eval, bootstrap_seed=args.seed)
-    payload.update({"status": test_payload["status"], "test": test_payload, "test_baseline": as_eval_payload(base), "test_ablation": as_eval_payload(ablated), "test_random": as_eval_payload(random_eval)})
-    manifest_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    generation_records = base.records + ablated.records + random_eval.records
+    records_payload = {
+        "schema_version": GENERATION_RECORD_SCHEMA_VERSION,
+        "experiment_id": EXPERIMENT_ID,
+        "artifact_identity": artifact_identity,
+        "n_items": len(test),
+        "k": int(args.k),
+        "conditions": ["baseline", "ablation", "random"],
+        "selected_direction_sha256_actual_used": selected_direction_sha256,
+        "random_direction_sha256_actual_used": random_direction_sha256,
+        "records": generation_records,
+        "raw_prompts_stored": False,
+        "raw_outputs_stored": False,
+        "harmful_generation_performed": False,
+        "valid_for_paper": False,
+    }
+    records_path = out_dir / "e0016_generation_records.json"
+    atomic_write_json(records_path, records_payload)
+    records_sha256 = _sha256_bytes(records_path.read_bytes())
+    reconstructed = reconstruct_test_from_generation_artifact(records_payload, seed=args.seed)
+    test_payload = reconstructed["test"]
+    payload.update({"status": test_payload["status"], "test": test_payload, "test_baseline": reconstructed["test_baseline"], "test_ablation": reconstructed["test_ablation"], "test_random": reconstructed["test_random"], "generation_records_artifact": {"path": records_path.name, "sha256": records_sha256, "schema_version": GENERATION_RECORD_SCHEMA_VERSION, "record_count": len(generation_records), "reconstruction_function": "reconstruct_test_from_generation_artifact"}})
+    atomic_write_json(manifest_path, payload)
     return payload
 
 
@@ -1512,6 +2026,11 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     p.add_argument("--harmless-source", default=DEFAULT_HARMLESS_SOURCE, help="Local path or HF dataset spec repo:split:column for harmless direction prompts; default tatsu-lab/alpaca:train:instruction.")
     p.add_argument("--direction-n", type=int, default=64, help="Balanced harmful/harmless prompts used for direction derivation.")
     p.add_argument("--max-new-tokens", type=int, default=96)
+    p.add_argument(
+        "--generation-batch-size",
+        type=int,
+        default=HF_FROZEN_GENERATION_BATCH_SIZE,
+    )
     p.add_argument("--synthetic-baseline-refusal-rate", type=float, default=0.75)
     return p.parse_args(argv)
 

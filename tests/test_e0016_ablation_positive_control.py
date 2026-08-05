@@ -241,6 +241,13 @@ def test_default_dataset_sources_are_ungated_choices():
     assert "walledai" not in e0016.DEFAULT_XSTEST_SOURCE.lower()
     assert "walledai" not in e0016.DEFAULT_HARMFUL_SOURCE.lower()
     assert e0016.DEFAULT_HARMLESS_SOURCE == "tatsu-lab/alpaca:train:instruction"
+    assert e0016.HARMLESS_SPEC.schema == (
+        "instruction",
+        "input",
+        "output",
+        "text",
+    )
+    assert e0016.HARMLESS_SPEC.expected_row_count == 52002
 
 
 def _frozen_hf_args(tmp_path, *extra):
@@ -281,6 +288,10 @@ def test_hf_rejects_smoke_or_non_frozen_config_before_model_load(tmp_path, monke
 def test_hf_frozen_config_accepts_only_exact_identity(tmp_path):
     args = _frozen_hf_args(tmp_path)
     e0016.assert_hf_frozen_config(args)
+    args.generation_batch_size = 2
+    with pytest.raises(ValueError, match="complete frozen"):
+        e0016.assert_hf_frozen_config(args)
+    args.generation_batch_size = e0016.HF_FROZEN_GENERATION_BATCH_SIZE
     args.layers = "8,12,16"
     with pytest.raises(ValueError, match="complete frozen"):
         e0016.assert_hf_frozen_config(args)
@@ -420,9 +431,9 @@ def test_runner_stops_before_test_when_dev_is_underpowered(tmp_path, monkeypatch
     seen = []
     original = e0016.eval_synthetic
 
-    def recording_eval(items, backend, condition, *, k):
+    def recording_eval(items, backend, condition, *, k, **kwargs):
         seen.append((condition, tuple(item.id for item in items)))
-        return original(items, backend, condition, k=k)
+        return original(items, backend, condition, k=k, **kwargs)
 
     monkeypatch.setattr(e0016, "eval_synthetic", recording_eval)
     payload = e0016.run(
@@ -784,6 +795,7 @@ def _resolved_config_fixture(tmp_path):
     [
         (("seed",), 999),
         (("data", "xstest", "content_sha256"), "other-data"),
+        (("data", "harmless", "loaded_rows_sha256"), "other-loaded-rows"),
         (("model", "revision_resolved"), "other-model"),
         (("runtime", "device"), "cpu"),
         (("runtime", "dtype"), "bfloat16"),
@@ -826,11 +838,13 @@ def test_finalized_identity_hash_is_stable_and_selected_intervention_sensitive(
     tmp_path, path, replacement
 ):
     resolved = _resolved_config_fixture(tmp_path)
+    selected_direction = np.ones(4)
+    selected_sha256 = e0016.vector_sha256(selected_direction)
     selected = e0016.DirectionBundle(
-        direction=np.ones(4),
+        direction=selected_direction,
         source_layer=8,
         position="last_token",
-        provenance={"direction_sha256": "selected-direction"},
+        provenance={"direction_sha256": selected_sha256},
     )
     dev_payload = {
         "status": "ELIGIBLE",
@@ -838,7 +852,7 @@ def test_finalized_identity_hash_is_stable_and_selected_intervention_sensitive(
         "selected": {
             "source_layer": 8,
             "position": "last_token",
-            "direction_sha256": "selected-direction",
+            "direction_sha256": selected_sha256,
             "mean_reduction": 0.3,
             "coherence_ok": True,
             "random_mean_reduction": 0.0,
@@ -863,7 +877,7 @@ def test_finalized_identity_is_persisted_before_test_and_used_by_artifact(
     dev_ids = None
     original = e0016.eval_synthetic
 
-    def recording_eval(items, backend, condition, *, k):
+    def recording_eval(items, backend, condition, *, k, **kwargs):
         nonlocal dev_ids
         calls.append(condition)
         item_ids = tuple(item.id for item in items)
@@ -888,7 +902,7 @@ def test_finalized_identity_is_persisted_before_test_and_used_by_artifact(
                 "experiment_id": e0016.EXPERIMENT_ID,
                 "finalized_run_identity_hash": final_hash,
             }
-        return original(items, backend, condition, k=k)
+        return original(items, backend, condition, k=k, **kwargs)
 
     monkeypatch.setattr(e0016, "eval_synthetic", recording_eval)
     payload = e0016.run(
@@ -911,3 +925,303 @@ def test_finalized_identity_is_persisted_before_test_and_used_by_artifact(
         "finalized_run_identity_hash"
     ]
     assert payload["valid_for_paper"] is False
+
+
+class _DeterministicBatchBackend:
+    def __init__(self, *, fail_on_call=None):
+        self.batch_sizes = []
+        self.calls = 0
+        self.fail_on_call = fail_on_call
+
+    @staticmethod
+    def _texts(seeds):
+        return [
+            (
+                "I cannot help with that request."
+                if int(seed) % 2
+                else f"Benign deterministic answer {seed}."
+            )
+            for seed in seeds
+        ]
+
+    def generate_batch(self, prompts, **kwargs):
+        self.calls += 1
+        self.batch_sizes.append(len(prompts))
+        if self.calls == self.fail_on_call:
+            raise RuntimeError("injected generation interruption")
+        return self._texts(kwargs["seeds"])
+
+    def generate_batch_with_ablation(self, prompts, ablation, **kwargs):
+        return self.generate_batch(prompts, **kwargs)
+
+
+def test_hf_microbatch_is_bounded_and_batch_partition_invariant():
+    items = _items(5)
+    first = _DeterministicBatchBackend()
+    second = _DeterministicBatchBackend()
+    result_two = e0016.eval_hf(
+        items,
+        first,
+        "baseline",
+        None,
+        k=2,
+        max_new_tokens=8,
+        seed=17,
+        generation_batch_size=2,
+    )
+    result_four = e0016.eval_hf(
+        items,
+        second,
+        "baseline",
+        None,
+        k=2,
+        max_new_tokens=8,
+        seed=17,
+        generation_batch_size=4,
+    )
+    assert max(first.batch_sizes) <= 2
+    assert max(second.batch_sizes) <= 4
+    assert result_two.records == result_four.records
+
+
+def test_checkpoint_resume_converges_and_repeated_resume_is_idempotent(tmp_path):
+    items = _items(4)
+    checkpoint = tmp_path / "resume.json"
+    identity = {
+        "config_hash": "cfg",
+        "finalized_run_identity_hash": "final",
+        "condition": "baseline",
+    }
+    interrupted = _DeterministicBatchBackend(fail_on_call=2)
+    with pytest.raises(RuntimeError, match="interruption"):
+        e0016.eval_hf(
+            items,
+            interrupted,
+            "baseline",
+            None,
+            k=2,
+            max_new_tokens=8,
+            seed=19,
+            generation_batch_size=2,
+            checkpoint_path=checkpoint,
+            checkpoint_identity=identity,
+        )
+    partial = json.loads(checkpoint.read_text(encoding="utf-8"))
+    assert len(partial["records"]) == 2
+    resumed = e0016.eval_hf(
+        items,
+        _DeterministicBatchBackend(),
+        "baseline",
+        None,
+        k=2,
+        max_new_tokens=8,
+        seed=19,
+        generation_batch_size=2,
+        checkpoint_path=checkpoint,
+        checkpoint_identity=identity,
+    )
+    uninterrupted = e0016.eval_hf(
+        items,
+        _DeterministicBatchBackend(),
+        "baseline",
+        None,
+        k=2,
+        max_new_tokens=8,
+        seed=19,
+        generation_batch_size=2,
+    )
+    assert resumed.records == uninterrupted.records
+    repeated = e0016.eval_hf(
+        items,
+        pytest.fail,
+        "baseline",
+        None,
+        k=2,
+        max_new_tokens=8,
+        seed=19,
+        generation_batch_size=2,
+        checkpoint_path=checkpoint,
+        checkpoint_identity=identity,
+    )
+    assert repeated.records == resumed.records
+
+
+def test_checkpoint_rejects_config_or_finalized_identity_mismatch(tmp_path):
+    checkpoint = tmp_path / "mismatch.json"
+    identity = {
+        "config_hash": "cfg-a",
+        "finalized_run_identity_hash": "final-a",
+        "condition": "baseline",
+    }
+    e0016.eval_hf(
+        _items(2),
+        _DeterministicBatchBackend(),
+        "baseline",
+        None,
+        k=1,
+        max_new_tokens=8,
+        seed=23,
+        checkpoint_path=checkpoint,
+        checkpoint_identity=identity,
+    )
+    mutated = dict(identity, finalized_run_identity_hash="final-b")
+    with pytest.raises(ValueError, match="identity mismatch"):
+        e0016.eval_hf(
+            _items(2),
+            _DeterministicBatchBackend(),
+            "baseline",
+            None,
+            k=1,
+            max_new_tokens=8,
+            seed=23,
+            checkpoint_path=checkpoint,
+            checkpoint_identity=mutated,
+        )
+
+
+def test_selected_direction_copy_rejects_alias_and_post_finalize_mutation():
+    original = unit_vector(np.arange(1, 9, dtype=float))
+    copied = e0016.immutable_direction(original)
+    expected = e0016.vector_sha256(copied)
+    original[0] += 5.0
+    assert e0016.vector_sha256(copied) == expected
+    with pytest.raises(ValueError):
+        copied[0] += 1.0
+    copied.setflags(write=True)
+    copied[0] += 1.0
+    with pytest.raises(ValueError, match="direction hash mismatch"):
+        e0016.eval_hf(
+            _items(1),
+            pytest.fail,
+            "ablation",
+            copied,
+            k=1,
+            max_new_tokens=8,
+            seed=29,
+            expected_direction_sha256=expected,
+        )
+
+
+def test_synthetic_artifact_reconstructs_all_statistics_and_has_no_raw_text(
+    tmp_path,
+):
+    args = e0016.parse_args(
+        [
+            "--backend",
+            "synthetic",
+            "--out-dir",
+            str(tmp_path),
+            "--dev-n",
+            "4",
+            "--test-n",
+            "8",
+            "--k",
+            "2",
+            "--generation-batch-size",
+            "3",
+        ]
+    )
+    payload = e0016.run(args)
+    records_path = tmp_path / payload["generation_records_artifact"]["path"]
+    assert (
+        e0016._sha256_bytes(records_path.read_bytes())
+        == payload["generation_records_artifact"]["sha256"]
+    )
+    artifact = json.loads(records_path.read_text(encoding="utf-8"))
+    rebuilt = e0016.reconstruct_test_from_generation_artifact(
+        artifact, seed=args.seed
+    )
+    assert rebuilt["test"] == payload["test"]
+    assert rebuilt["test_baseline"]["mean_refusal"] == payload["test_baseline"][
+        "mean_refusal"
+    ]
+    assert rebuilt["test_ablation"]["mean_refusal"] == payload["test_ablation"][
+        "mean_refusal"
+    ]
+    assert rebuilt["test_random"]["mean_refusal"] == payload["test_random"][
+        "mean_refusal"
+    ]
+    assert rebuilt["ci_inputs"]["ablation_reductions"]
+    serialized = records_path.read_text(encoding="utf-8")
+    assert "Benign safe prompt" not in serialized
+    assert '"prompt":' not in serialized
+    assert '"output":' not in serialized
+    assert artifact["harmful_generation_performed"] is False
+    before = records_path.read_bytes()
+    repeated = e0016.run(args)
+    assert records_path.read_bytes() == before
+    assert repeated["generation_records_artifact"]["sha256"] == payload[
+        "generation_records_artifact"
+    ]["sha256"]
+
+
+def test_synthetic_result_affecting_config_is_identity_bound(tmp_path):
+    first = e0016.parse_args(
+        [
+            "--backend",
+            "synthetic",
+            "--out-dir",
+            str(tmp_path),
+            "--synthetic-baseline-refusal-rate",
+            "0.75",
+        ]
+    )
+    second = e0016.parse_args(
+        [
+            "--backend",
+            "synthetic",
+            "--out-dir",
+            str(tmp_path),
+            "--synthetic-baseline-refusal-rate",
+            "0.5",
+        ]
+    )
+    assert e0016.config_hash(e0016.pre_load_eligibility_config(first)) != (
+        e0016.config_hash(e0016.pre_load_eligibility_config(second))
+    )
+    hf = _frozen_hf_args(tmp_path)
+    assert "synthetic" not in e0016.pre_load_eligibility_config(hf)
+    e0016.run(first)
+    with pytest.raises(ValueError, match="different config/code identity"):
+        e0016.run(second)
+
+
+@pytest.mark.parametrize("seed", ["20260804", 20260804.0, True, np.int64(20260804), -1])
+def test_hf_frozen_seed_requires_nonnegative_genuine_integer(seed, tmp_path):
+    args = _frozen_hf_args(tmp_path)
+    args.seed = seed
+    with pytest.raises(ValueError, match="genuine integer|non-negative"):
+        e0016.assert_hf_frozen_config(args)
+
+
+def test_verified_parquet_bytes_are_the_only_rows_loaded(tmp_path, monkeypatch):
+    raw = b"verified immutable parquet bytes"
+    path = tmp_path / "alpaca.parquet"
+    path.write_bytes(raw)
+    spec = e0016.ImmutableDataSpec(
+        name="test_alpaca",
+        canonical_source="repo:train",
+        dataset_id="repo",
+        revision="rev",
+        split="train",
+        content_path="data.parquet",
+        content_sha256=e0016._sha256_bytes(raw),
+        schema=("instruction", "input", "output"),
+        format="parquet",
+        column="instruction",
+        expected_row_count=1,
+    )
+    parsed = [
+        {
+            "instruction": "verified row",
+            "input": "",
+            "output": "verified output",
+        }
+    ]
+    monkeypatch.setattr(e0016, "_parse_parquet_bytes", lambda value: parsed if value == raw else pytest.fail("wrong bytes"))
+    rows, provenance = e0016._load_immutable_hf_rows(path, spec)
+    assert rows == parsed
+    assert provenance["count_loaded"] == 1
+    assert provenance["loaded_rows_sha256"] == e0016._canonical_rows_sha256(
+        parsed, spec.schema
+    )

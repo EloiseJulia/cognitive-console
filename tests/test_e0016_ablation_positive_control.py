@@ -258,7 +258,7 @@ def _frozen_hf_args(tmp_path, *extra):
             "--backend",
             "hf",
             "--out-dir",
-            str(tmp_path),
+            str(tmp_path / "E-0016-unit-test"),
             "--dev-n",
             str(e0016.HF_FROZEN_DEV_N),
             "--test-n",
@@ -403,7 +403,7 @@ def test_hf_hook_bites_are_persisted_before_first_dev_generation(
     monkeypatch.setattr(e0016, "assert_real_not_smoke", lambda *a, **k: None)
 
     def stop_on_dev(*a, **k):
-        guard = tmp_path / "e0016_pre_generation_guards.json"
+        guard = Path(args.out_dir) / "e0016_pre_generation_guards.json"
         assert guard.exists()
         assert json.loads(guard.read_text(encoding="utf-8"))[
             "generation_started"
@@ -1106,7 +1106,7 @@ def test_selected_direction_copy_rejects_alias_and_post_finalize_mutation():
         )
 
 
-def test_synthetic_artifact_reconstructs_all_statistics_and_has_no_raw_text(
+def test_synthetic_artifact_reconstructs_all_statistics_from_benign_text(
     tmp_path,
 ):
     args = e0016.parse_args(
@@ -1129,13 +1129,14 @@ def test_synthetic_artifact_reconstructs_all_statistics_and_has_no_raw_text(
     records_path = tmp_path / payload["generation_records_artifact"]["path"]
     assert (
         e0016._sha256_bytes(records_path.read_bytes())
-        == payload["generation_records_artifact"]["sha256"]
+        == payload["generation_records_artifact"]["artifact_file_sha256"]
     )
     artifact = json.loads(records_path.read_text(encoding="utf-8"))
     rebuilt = e0016.reconstruct_test_from_generation_artifact(
         artifact,
         seed=args.seed,
         expected_artifact_identity=payload["artifact_identity"],
+        expected_finalized_run_identity=payload["finalized_run_identity"],
     )
     assert rebuilt["test"] == payload["test"]
     assert rebuilt["test_baseline"]["mean_refusal"] == payload["test_baseline"][
@@ -1151,14 +1152,20 @@ def test_synthetic_artifact_reconstructs_all_statistics_and_has_no_raw_text(
     serialized = records_path.read_text(encoding="utf-8")
     assert "Benign safe prompt" not in serialized
     assert '"prompt":' not in serialized
-    assert '"output":' not in serialized
+    assert '"output_text":' in serialized
+    assert all(
+        row["output_text_encoding"] == "utf-8"
+        and row["output_content_class"] == "benign_xstest_safe_generation"
+        and e0016.sha_text(row["output_text"]) == row["output_sha256"]
+        for row in artifact["records"]
+    )
     assert artifact["harmful_generation_performed"] is False
     before = records_path.read_bytes()
     repeated = e0016.run(args)
     assert records_path.read_bytes() == before
-    assert repeated["generation_records_artifact"]["sha256"] == payload[
+    assert repeated["generation_records_artifact"]["artifact_file_sha256"] == payload[
         "generation_records_artifact"
-    ]["sha256"]
+    ]["artifact_file_sha256"]
 
 
 def test_synthetic_result_affecting_config_is_identity_bound(tmp_path):
@@ -1244,11 +1251,33 @@ def _completed_artifact(tmp_path):
     return args, manifest, artifact
 
 
+def _artifact_load_kwargs(manifest):
+    return {
+        "seed": manifest["seed"],
+        "expected_artifact_identity": manifest["artifact_identity"],
+        "expected_finalized_run_identity": manifest["finalized_run_identity"],
+        "expected_environment_identity": manifest["environment_identity"],
+        "expected_full_config_hash": manifest["pre_load_eligibility_config_hash"],
+        "expected_frozen_config_hash": manifest["frozen_config_hash"],
+        "expected_data_identity_hash": e0016.config_hash(
+            manifest["frozen_config"]["data"]
+        ),
+    }
+
+
 def test_output_directory_rejects_traversal_and_source_hiding():
     with pytest.raises(ValueError, match="traversal"):
         e0016.resolve_output_directory(Path("results") / ".." / "src")
     with pytest.raises(ValueError, match="exact results"):
         e0016.resolve_output_directory(e0016._REPO / "src" / "hidden-output")
+    with pytest.raises(ValueError, match="dedicated"):
+        e0016.assert_dedicated_output_directory(
+            e0016._REPO / "results", backend="hf"
+        )
+    with pytest.raises(ValueError, match="direct dedicated"):
+        e0016.assert_dedicated_output_directory(
+            e0016._REPO / "results" / "parent" / "E-0016-run", backend="hf"
+        )
 
 
 @pytest.mark.parametrize(
@@ -1294,10 +1323,47 @@ def test_strict_record_validator_rejects_flipped_refusal(tmp_path):
         "refusal_score"
     ]
     mutated["records_sha256"] = e0016.config_hash(mutated["records"])
-    with pytest.raises(ValueError, match="record identity"):
+    mutated["records"][0]["record_identity_sha256"] = e0016._record_identity(
+        mutated["records"][0]
+    )
+    mutated["records_sha256"] = e0016.config_hash(mutated["records"])
+    with pytest.raises(ValueError, match="current frozen scorer"):
         e0016.reconstruct_test_from_generation_artifact(
             mutated,
             seed=e0016.HF_FROZEN_SEED,
+            expected_artifact_identity=manifest["artifact_identity"],
+        )
+
+
+def test_record_text_hash_and_rescore_are_independently_enforced(tmp_path):
+    _, manifest, artifact = _completed_artifact(tmp_path)
+    changed_text = deepcopy(artifact)
+    changed_text["records"][0]["output_text"] += " modified"
+    changed_text["records"][0]["record_identity_sha256"] = e0016._record_identity(
+        changed_text["records"][0]
+    )
+    changed_text["records_sha256"] = e0016.config_hash(changed_text["records"])
+    with pytest.raises(ValueError, match="text/hash"):
+        e0016.reconstruct_test_from_generation_artifact(
+            changed_text,
+            seed=manifest["seed"],
+            expected_artifact_identity=manifest["artifact_identity"],
+        )
+
+    rehashed = deepcopy(artifact)
+    row = rehashed["records"][0]
+    row["output_text"] = (
+        "Here is a plain safe answer."
+        if row["refusal_score"]
+        else "I cannot help with that request."
+    )
+    row["output_sha256"] = e0016.sha_text(row["output_text"])
+    row["record_identity_sha256"] = e0016._record_identity(row)
+    rehashed["records_sha256"] = e0016.config_hash(rehashed["records"])
+    with pytest.raises(ValueError, match="current frozen scorer"):
+        e0016.reconstruct_test_from_generation_artifact(
+            rehashed,
+            seed=manifest["seed"],
             expected_artifact_identity=manifest["artifact_identity"],
         )
 
@@ -1352,12 +1418,110 @@ def test_checkpoint_validator_accepts_only_valid_strict_subset(tmp_path):
     _, _, artifact = _completed_artifact(tmp_path)
     subset = artifact["records"][:3]
     assert e0016.validate_generation_records(
-        subset, artifact["expected_jobs"], allow_subset=True
+        subset, artifact["test_plan"]["jobs"], allow_subset=True
     ) == subset
     with pytest.raises(ValueError, match="exactly match"):
         e0016.validate_generation_records(
-            subset, artifact["expected_jobs"], allow_subset=False
+            subset, artifact["test_plan"]["jobs"], allow_subset=False
         )
+
+
+def test_checkpoint_rejects_gap_order_and_false_complete(tmp_path):
+    _, _, artifact = _completed_artifact(tmp_path)
+    jobs = artifact["test_plan"]["jobs"][:4]
+    records = artifact["records"][:4]
+    source = e0016.capture_source_state(None)
+    identity = {"condition": "baseline", "environment_identity_hash": "sha256:" + "1" * 64}
+    checkpoint = tmp_path / "checkpoint.json"
+
+    for bad_records, complete, message in (
+        ([records[0], records[2]], False, "prefix"),
+        ([records[1], records[0]], False, "prefix"),
+        (records[:2], True, "complete"),
+    ):
+        payload = e0016._checkpoint_payload(
+            condition="baseline",
+            checkpoint_identity=identity,
+            run_start_source_state=source,
+            expected_jobs_hash=e0016.config_hash(jobs),
+            records=bad_records,
+            complete=complete,
+        )
+        checkpoint.write_text(json.dumps(payload), encoding="utf-8")
+        with pytest.raises(ValueError, match=message):
+            e0016._load_checkpoint(
+                checkpoint,
+                condition="baseline",
+                checkpoint_identity=identity,
+                run_start_source_state=source,
+                expected_jobs=jobs,
+                out_dir=None,
+            )
+
+
+@pytest.mark.parametrize(
+    ("mutator", "message"),
+    [
+        (lambda meta: meta.__setitem__("path", "forged.json"), "metadata"),
+        (lambda meta: meta.__setitem__("manifest_schema_version", 99), "metadata"),
+        (lambda meta: meta.__setitem__("record_count", 1), "record count|metadata"),
+        (lambda meta: meta.__setitem__("expected_plan_hash", "sha256:" + "0" * 64), "metadata"),
+        (lambda meta: meta.__setitem__("artifact_identity_sha256", "sha256:" + "0" * 64), "metadata"),
+        (lambda meta: meta.__setitem__("environment_identity_hash", "sha256:" + "0" * 64), "metadata"),
+    ],
+)
+def test_manifest_metadata_forgery_is_rejected(tmp_path, mutator, message):
+    _, manifest, _ = _completed_artifact(tmp_path)
+    forged = deepcopy(manifest)
+    mutator(forged["generation_records_artifact"])
+    with pytest.raises(ValueError, match=message):
+        e0016.load_and_reconstruct_generation_artifact(
+            tmp_path / "e0016_generation_records.json",
+            forged,
+            **_artifact_load_kwargs(manifest),
+        )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("seed", 123),
+        ("condition", "extra"),
+        ("direction_sha256_actual_used", "f" * 64),
+    ],
+)
+def test_canonical_test_plan_rejects_seed_condition_and_direction_forgery(
+    tmp_path, field, value
+):
+    _, manifest, artifact = _completed_artifact(tmp_path)
+    forged = deepcopy(artifact)
+    forged["test_plan"]["jobs"][0][field] = value
+    plan_material = {
+        key: val
+        for key, val in forged["test_plan"].items()
+        if key != "test_plan_hash"
+    }
+    forged["test_plan"]["test_plan_hash"] = e0016.config_hash(plan_material)
+    forged["test_plan_hash"] = forged["test_plan"]["test_plan_hash"]
+    with pytest.raises(ValueError, match="canonical rebuild"):
+        e0016.reconstruct_test_from_generation_artifact(
+            forged,
+            seed=manifest["seed"],
+            expected_artifact_identity=manifest["artifact_identity"],
+        )
+
+
+def test_environment_identity_mutation_rejects_resume(tmp_path, monkeypatch):
+    args, _, _ = _completed_artifact(tmp_path)
+    original = e0016._package_version
+
+    def mutated(name):
+        value = original(name)
+        return "forged-version" if name == "numpy" else value
+
+    monkeypatch.setattr(e0016, "_package_version", mutated)
+    with pytest.raises(ValueError, match="environment identity changed"):
+        e0016.run(args)
 
 
 def test_artifact_identity_and_manifest_hash_chain_reject_forgery(tmp_path):
@@ -1379,8 +1543,14 @@ def test_artifact_identity_and_manifest_hash_chain_reject_forgery(tmp_path):
             records_path,
             manifest,
             seed=args.seed,
-            expected_jobs=artifact["expected_jobs"],
             expected_artifact_identity=manifest["artifact_identity"],
+            expected_finalized_run_identity=manifest["finalized_run_identity"],
+            expected_environment_identity=manifest["environment_identity"],
+            expected_full_config_hash=manifest["pre_load_eligibility_config_hash"],
+            expected_frozen_config_hash=manifest["frozen_config_hash"],
+            expected_data_identity_hash=e0016.config_hash(
+                manifest["frozen_config"]["data"]
+            ),
         )
 
 

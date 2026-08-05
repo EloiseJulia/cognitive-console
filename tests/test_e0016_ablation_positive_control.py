@@ -8,6 +8,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from tokenizers import AddedToken
 
 from cognitive_console.steering.generate import project_out_direction_array, unit_vector
 from scripts import run_e0016_ablation_positive_control as e0016
@@ -346,10 +347,16 @@ def test_hf_hook_bites_are_persisted_before_first_dev_generation(
         },
     }
 
+    class Config:
+        _commit_hash = e0016.FROZEN_MODEL_REVISION
+
+        def to_dict(self):
+            return {"_commit_hash": self._commit_hash}
+
     class Provider:
         hidden_dim = 16
         max_length = e0016.HF_PROVIDER_MAX_LENGTH
-        _config = SimpleNamespace(_commit_hash=e0016.FROZEN_MODEL_REVISION)
+        _config = Config()
 
     class HookBackend:
         decoder_layer_indices = [1, 2]
@@ -1522,6 +1529,93 @@ def test_environment_identity_mutation_rejects_resume(tmp_path, monkeypatch):
     monkeypatch.setattr(e0016, "_package_version", mutated)
     with pytest.raises(ValueError, match="environment identity changed"):
         e0016.run(args)
+
+
+def test_added_token_nested_config_has_stable_semantic_identity():
+    token = AddedToken(
+        "<tool>",
+        single_word=True,
+        lstrip=True,
+        rstrip=False,
+        normalized=False,
+        special=True,
+    )
+    original = {
+        "nested": [{"token": token}, (token,)],
+        "ordinary": "value",
+    }
+    reordered = {
+        "ordinary": "value",
+        "nested": [{"token": token}, (token,)],
+    }
+
+    canonical = e0016._canonical_identity_value(original)
+    token_identity = canonical["nested"][0]["token"]
+    assert token_identity == {
+        "__type__": "tokenizers.AddedToken",
+        "content": "<tool>",
+        "single_word": True,
+        "lstrip": True,
+        "rstrip": False,
+        "normalized": False,
+        "special": True,
+    }
+    assert canonical["nested"][1]["__type__"] == "builtins.tuple"
+    assert e0016._object_config_identity(original) == e0016._object_config_identity(
+        reordered
+    )
+    assert original["nested"][0]["token"] is token
+    assert token.content == "<tool>"
+
+
+def test_added_token_semantic_field_change_changes_identity_hash():
+    base = AddedToken("<tool>", normalized=False, special=True)
+    changed = AddedToken("<tool>", normalized=True, special=True)
+    assert (
+        e0016._object_config_identity({"token": base})["sha256"]
+        != e0016._object_config_identity({"token": changed})["sha256"]
+    )
+
+
+def test_environment_identity_serializer_rejects_unknown_objects():
+    with pytest.raises(TypeError, match="unsupported non-JSON object"):
+        e0016._object_config_identity({"unknown": object()})
+
+
+def test_cpu_hf_environment_identity_accepts_nested_added_token(monkeypatch):
+    token = AddedToken(
+        "<tool>",
+        single_word=True,
+        lstrip=True,
+        normalized=False,
+        special=True,
+    )
+
+    class Tokenizer:
+        init_kwargs = {"added_tokens": [{"tool": token}]}
+        special_tokens_map = {"additional_special_tokens": [token]}
+
+        @staticmethod
+        def get_vocab():
+            return {"<tool>": 1, "plain": 0}
+
+    model = SimpleNamespace(generation_config={"do_sample": True})
+    backend = SimpleNamespace(
+        _model=model,
+        _tokenizer=Tokenizer(),
+        _config={"hidden_size": 4},
+    )
+    monkeypatch.setattr(e0016, "_package_version", lambda name: f"{name}-test")
+
+    identity = e0016.capture_environment_identity(
+        backend="hf",
+        provider=SimpleNamespace(_config={"hidden_size": 4}),
+        hook_backend=backend,
+    )
+
+    assert identity["schema_version"] == 2
+    assert identity["environment_identity_hash"].startswith("sha256:")
+    assert identity["hf_runtime"]["tokenizer_config"]["bytes"] > 0
 
 
 def test_artifact_identity_and_manifest_hash_chain_reject_forgery(tmp_path):

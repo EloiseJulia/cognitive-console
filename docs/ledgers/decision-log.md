@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-08-05 · D-0093 · E-0016 freeze-candidate status correction; final run commit remains pending
+- This append-only correction supersedes D-0092 only where D-0092 described E-0016 as finally frozen or execution-ready. The audited harness is merged at `4513820a679408b071984b8500cc9c5636255a49`, and the D-0091 scoped harness findings remain closed.
+- Commit `c36a438977ae51be5172587e900811508fe77468` contains the first Regime-B freeze-document candidate. It is a **protocol freeze candidate prepared, pending independent protocol audit and the final merged run commit**, not the run commit and not GPU authorization.
+- After this documentation repair passes targeted protocol re-audit and is merged, the Manager must record the exact final merged run commit. E-0016 may execute only from a clean checkout of that recorded commit.
+- Protocol audit, final run-commit registration, and owner GPU-budget authorization are pending. No GPU run, result, or paper-valid evidence is registered.
+
 ## 2026-08-05 · D-0092 · E-0016 audited harness merged; Regime-B-only protocol frozen, GPU remains owner-gated
 - The limited independent delta-audit closed the D-0091 harness findings, and the audited fixes were merged as harness commit `4513820a679408b071984b8500cc9c5636255a49`. The merge message explicitly states that it did not freeze the protocol or authorize GPU execution.
 - E-0016 is now frozen strictly as benign XSTest **Regime B only** in `docs/research/2026-08-04-ablation-positive-control/prereg-e0016-FROZEN.md`, faithful to the audited runner constants and CLI. DEV baseline false-refusal eligibility is `>=0.25`; below that, the runner emits `INVALID_REGIME_B_UNDERPOWERED` and stops before TEST.

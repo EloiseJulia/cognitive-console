@@ -16,6 +16,7 @@
 \setcopyright{none}
 \settopmatter{printacmref=false, printccs=false, printfolios=true}
 \renewcommand\footnotetextcopyrightpermission[1]{}
+\acmConference[IUI Anonymous Submission]{ACM International Conference on Intelligent User Interfaces}{Anonymous submission}{Under review}
 
 \ccsdesc[500]{Human-centered computing~Interactive systems and tools}
 \ccsdesc[300]{Computing methodologies~Natural language generation}
@@ -34,7 +35,7 @@
 \begin{document}
 
 \begin{abstract}
-Naming a model property and placing a slider beside it creates a promise that moving the slider will control the named behavior. That promise can shape reliance even when the interface exposes only a readable representation. We introduce a five-field evidence contract for deciding what such an interface can support as a diagnostic and what it can present as a control. The contract records READ, TRANSFER, a bounded prompt comparator, a calibration warning, and an evidence tier. Our methodological contribution makes the control claim comparative, local to a tested setting, and reconstructable from artifacts. The accompanying console instantiates the contract as a model-evidence artifact. We apply the complete contract through a frozen evaluation procedure for bounded naive single-layer CAA/ITI steering across two instruction-model families. Positive controls probe endpoint activity, instrument sensitivity, and intervention scale. Across the tested grid, no method-model cell passes the preregistered superiority rule. The most informative uncertainty result remains a comparator-specific steer-vs-bounded-prompt contrast, while deliberation is mixed and skepticism is underpowered. Together, the evidence contract and its worked artifact instantiation show how an intelligent interface can represent diagnostic, unresolved, and withheld-control states without converting a readable axis into an unsupported control claim.
+Placing a slider beside a named model property tells a user that dragging it will change the named behavior. An intervention may change output without providing reliable control beyond a bounded, usable prompt channel. We introduce a five-field evidence contract for deciding what such an interface can support as a diagnostic and what it can present as a control. The contract records READ, TRANSFER, a bounded prompt comparator, a calibration warning, and an evidence tier. Our methodological contribution makes the control claim comparative, local to a tested setting, and reconstructable from artifacts. The accompanying console instantiates the contract as a model-evidence artifact. We apply the complete contract through a frozen evaluation procedure for bounded naive single-layer CAA/ITI steering across two instruction-model families. We use positive controls to probe endpoint activity, instrument sensitivity, and intervention scale. Across the tested grid, no method-model cell passes the preregistered superiority rule. The most informative uncertainty result remains a comparator-specific steer-vs-bounded-prompt contrast, while deliberation is mixed and skepticism is underpowered. Together, the evidence contract and its worked artifact instantiation show how an intelligent interface can represent diagnostic, unresolved, and withheld-control states without converting a readable axis into an unsupported control claim.
 \end{abstract}
 
 \maketitle
@@ -42,13 +43,13 @@ Naming a model property and placing a slider beside it creates a promise that mo
 \section{Introduction}
 \label{sec:introduction}
 
-Consider an illustrative design scenario. Alex is drafting a difficult message with an AI assistant and sees a slider labeled ``skepticism.'' Alex moves it upward, expecting the assistant to challenge a false premise more reliably. The label and familiar widget make that expectation reasonable, although the underlying axis may only be readable in the model's activations. If the intervention has not passed a behavioral comparison, the interface has turned a diagnostic observation into an unsupported control promise. The design error lies in the affordance: the slider communicates dependable actionability before the evidence has established it.
+Consider an illustrative design scenario. Alex is drafting a difficult message with an AI assistant and sees a slider labeled ``skepticism.'' Alex moves it upward, expecting the assistant to challenge a false premise more reliably. A weak threshold for control asks only whether the intervention changes output. For this interface, the relevant threshold is stronger: whether the latent channel provides reliable incremental behavioral control over a bounded, usable prompt channel. If the intervention has not passed that comparison, the slider turns a readable activation direction into an unsupported control promise.
 
-A user of a generative system must monitor qualities such as care, uncertainty, and resistance to faulty premises alongside the final answer \cite{tankelevitch2024metacog}. Interface signals shape trust and reliance \cite{lee2004trust}. Additional confidence or explanation cues do not guarantee better calibration, and interventions intended to reduce over-reliance can have weak or adverse effects \cite{bansal2019beyond,bucinca2021trust}. Human-AI design guidance therefore links useful transparency to available action \cite{amershi2019guidelines,liao2024transparency}. A latent slider invites action because its visual form implies that the represented axis is a working behavioral handle.
+Activation-steering demonstrations and interfaces often establish that an intervention changes output without showing that the latent affordance adds dependable control beyond prompting. A user of a generative system must monitor qualities such as care, uncertainty, and resistance to faulty premises alongside the final answer \cite{tankelevitch2024metacog}. Interface signals shape trust and reliance \cite{lee2004trust}. Additional confidence or explanation cues do not guarantee better calibration, and interventions intended to reduce over-reliance can have weak or adverse effects \cite{bansal2019beyond,bucinca2021trust}. Human-AI design guidance therefore links useful transparency to available action \cite{amershi2019guidelines,liao2024transparency}. A latent slider invites action because its visual form implies that the represented axis is a working behavioral handle.
 
 A designer can see the problem in existing interfaces. Prompt instruments turn natural-language commands into manipulable objects \cite{riche2025aiinstr}. Feature-steering interfaces expose interpretable latent features to non-experts \cite{huang2025steering}. Human-centered activation-steering workflows and latent-space manipulation tools likewise move internal structure toward the interaction surface \cite{labarta2026attribution,raval2026latman}. These systems establish that latent structure can be visible and interactive. A separate criterion must determine whether a particular axis supports control or remains diagnostic information.
 
-The missing criterion is comparative. A text change alone cannot establish useful control. A user already has a prompt channel, and a designer needs evidence that the latent channel adds dependable control relative to a bounded, usable version of that channel. This question separates internal reachability from behavioral actionability. Mishra et al.\ show that steering can reach residual states that bounded prompting does not reproduce \cite{mishra2026nonsurj}, yet internal non-surjectivity does not entail behavioral advantage. Trained steering can also mimic prompting \cite{heyman2026steer}; results for simple additive methods therefore remain local to those methods.
+The missing criterion is comparative. Output change alone cannot establish useful control. A user already has a prompt channel, and a designer needs evidence that the latent channel adds dependable control relative to a bounded, usable version of that channel. This question separates internal reachability from behavioral actionability. Mishra et al.\ show that steering can reach residual states that bounded prompting does not reproduce \cite{mishra2026nonsurj}, yet internal non-surjectivity does not entail behavioral advantage. Trained steering can also mimic prompting \cite{heyman2026steer}; results for simple additive methods therefore remain local to those methods.
 
 We ask:
 \begin{quote}
@@ -64,9 +65,9 @@ We probed three alternative explanations through positive control studies. A ref
 
 The paper makes three contributions:
 \begin{enumerate}
-  \item \textbf{A conceptual distinction between legibility and control.} A designer must separate a readable internal direction from the comparative behavioral evidence required by an actionable interface affordance.
-  \item \textbf{A five-field evidence contract.} Our primary methodological contribution specifies READ, TRANSFER, a bounded prompt comparator, a calibration warning, and an evidence tier for each candidate control.
-  \item \textbf{A fully worked artifact instantiation.} The frozen evaluation grid applies every field to bounded naive CAA/ITI, and the console translates the resulting evidence states into diagnostic, unresolved, and withheld-control presentations.
+  \item \textbf{A conceptual distinction between legibility and control.} We define control as reliable incremental behavioral performance over a bounded, usable prompt channel, rather than readability or output change alone.
+  \item \textbf{A five-field evidence contract.} Our primary methodological contribution specifies the READ, TRANSFER, comparator, warning, and scope records needed to evaluate that incremental-control claim for each candidate affordance.
+  \item \textbf{A fully worked artifact instantiation.} The frozen grid applies this comparative metric to bounded naive CAA/ITI, and the console maps the resulting no-pass and unresolved evidence to diagnostic and withheld-control presentations.
 \end{enumerate}
 
 The console visualizes the evidence contract from frozen model artifacts. Our design process moves from model measurements to a failure taxonomy, then to the contract, and finally to the affordances that the console may show or withhold.
@@ -88,19 +89,17 @@ A user encounters a transparency design that must decide what information about 
 
 A designer faces a sharper actionability problem when one widget couples representation and action. Huang and Lim expose SAE features for lay feature steering \cite{huang2025steering}. Labarta et al.\ organize activation steering as a human-centered expert workflow in vision and CLIP \cite{labarta2026attribution}. Raval et al.\ let users manipulate embedding visualizations \cite{raval2026latman}. AI-Instruments remains in the prompt channel but shows how prompts become reusable direct-manipulation objects \cite{riche2025aiinstr}. Work on system prompts and instruction conflict also shows that users negotiate control across layers whose authority and effects are not always visible \cite{neumann2026whocontrols,he2025coninstruct}. Our focus is the evidentiary step between exposing an axis and licensing it as a behavioral control.
 
-A designer can treat model cards and datasheets as a precedent \cite{mitchell2019modelcards,gebru2021datasheets}. They prevent availability from being mistaken for suitability by attaching scope and limitation information to an artifact. Our unit is smaller: one candidate control affordance. The proposed contract asks what has been shown for that axis, method, model, comparator, and outcome before the affordance is presented as actionable.
-
 \subsection{Activation Steering and the Prompt Comparator}
 
 We compare two established intervention families. Contrastive Activation Addition derives a mean-difference direction from paired examples and adds it during inference \cite{rimsky2024caa}. Inference-Time Intervention uses probe-derived directions to alter truthful-answer behavior \cite{li2023iti}. Activation addition and representation engineering broaden the family \cite{turner2023actadd,zou2023repe}, while instruction-steering work connects natural-language instructions to activation-space interventions \cite{stolfo2025instr}. These methods establish that internal interventions can affect generation. They do not by themselves answer whether a user-facing latent control adds value over prompting.
 
 Recent evidence makes the comparison important. Steering can be context-sensitive, brittle, or unsafe \cite{fan2026asteer,korznikov2025rogue}. Sprejer et al.\ report capability-behavior trade-offs in SAE feature steering relative to prompting \cite{sprejer2026mindgap}. Their task, steering family, and registration differ from ours, so the studies identify a shared design risk through distinct results. Heyman and Vandeputte provide the strongest boundary condition by showing that trained steering can mimic prompting \cite{heyman2026steer}. We therefore study only the tested bounded naive additive CAA/ITI convention and treat stronger or trained methods as requiring their own evidence tier.
 
-\subsection{Internal Legibility Is Not Behavioral Transfer}
+\subsection{Internal Legibility and Behavioral Transfer}
 
 We separate two claims that are often compressed into the phrase ``latent control.'' The first is representational: an internal direction is interpretable or readable. The second is behavioral: intervening on that direction produces a useful outcome. Mishra et al.\ show internal non-surjectivity, where bounded prompts do not reproduce all steered residual states \cite{mishra2026nonsurj}. That result motivates our question and leaves the behavioral comparison open. Our evaluation procedure tests that comparison on shared items.
 
-This distinction also clarifies novelty. Among the reviewed systems, we found no explicit criterion that compares a latent candidate against the prompt channel and then maps the result to what an interface may claim. Our contribution is a proposed evaluation contract instantiated with artifacts for that decision. We do not introduce a new steering vector or broad benchmark. Table~\ref{tab:novelty-neighbors} summarizes the closest contrasts.
+The interface decision clarifies the novelty. Among the reviewed systems, we found no explicit criterion that compares a latent candidate against the prompt channel and then maps the result to what an interface may claim. Our contribution is a proposed evaluation contract instantiated with artifacts for that decision. We do not introduce a new steering vector or broad benchmark. Table~\ref{tab:novelty-neighbors} summarizes the closest contrasts.
 
 \begin{table*}[t]
   \centering
@@ -125,16 +124,18 @@ This distinction also clarifies novelty. Among the reviewed systems, we found no
 \section{From Interface Risk to Evaluation Contract}
 \label{sec:contract-derivation}
 
-A designer begins with an inference risk. The console can observe an interpretable direction, label it, and make it adjustable. Each step strengthens the implied claim. Observation requires a readable measurement, labeling requires semantic validity, and adjustment requires evidence that intervention produces the intended behavior. A useful control claim also requires a comparator and an explicit scope.
+A designer begins with an inference risk. Placing a slider beside an interpretable direction tells the user that dragging it will change the named behavior, even when the evidence establishes only readability or output movement. The recorded failures therefore determine what the contract must preserve before the interface presents a control.
 
 The console operationalizes this progression as five fields:
 \begin{enumerate}
-  \item \textbf{READ} identifies the measurement under which an axis is legible. READ is a precondition for a semantic control label; it does not show that intervention works.
-  \item \textbf{TRANSFER} reports whether the intervention passes a behavioral test on the intended outcome. A change in activation or token probability does not substitute for this field.
-  \item \textbf{BOUNDED PROMPT COMPARATOR} records what the visible prompt channel achieves under a stated budget. Control is an incremental claim, so the comparator belongs in the affordance record.
-  \item \textbf{CALIBRATION WARNING} distinguishes steer-vs-prompt from steer-vs-baseline. It reports a trust-relevant contrast without turning it into an unsupported causal or mechanism claim.
-  \item \textbf{EVIDENCE TIER} binds the result to the tested model, method, axis, task, protocol, and statistical strength. Evidence does not migrate automatically when any of those change.
+  \item \textbf{READ.} The facade measurement makes a CAA direction readable but supplies neither ITI READ evidence nor a control test. This field records the measurement, model, and direction family without granting actionability.
+  \item \textbf{TRANSFER.} Activation and logit movement can occur without a scored behavioral change. This field therefore requires the intervention to pass a behavioral test on the intended outcome.
+  \item \textbf{BOUNDED PROMPT COMPARATOR.} Output change can hide that a usable prompt already reaches the same or a better outcome. The contract records the prompt budget and result because control is an incremental claim.
+  \item \textbf{CALIBRATION WARNING.} The frozen rule for missing confidence can change calibration scores. A steering comparison with prompting can also be misread as evidence of harm from baseline. This field keeps the comparator and missingness limits attached.
+  \item \textbf{EVIDENCE TIER.} Model, method, and axis results can diverge. The contract therefore binds each verdict to the tested setting and statistical strength rather than allowing evidence to migrate.
 \end{enumerate}
+
+Model cards and datasheets provide a precedent for attaching scope, provenance, and limitations to technical artifacts \cite{mitchell2019modelcards,gebru2021datasheets}. The contract adopts that documentation practice at the level of one control widget and adds the comparative behavioral criterion needed to judge its metric validity.
 
 The console uses these fields to define three proposed interface states. An axis with READ evidence and no TRANSFER evidence may appear as a diagnostic. A failed or underpowered TRANSFER test withholds control presentation while keeping the failure or uncertainty visible. A slider becomes evidence-supported only after a specified intervention passes the comparative behavioral test and coherence requirements for the intended setting. Our artifact instantiates the first two states from model evidence. The third remains uninstantiated because no latent behavioral positive control passes.
 
@@ -267,7 +268,7 @@ Figure~\ref{fig:c1-ratio-ci} and Table~\ref{tab:c1-twomodel} show why READ must 
 
 \input{tables/c2-delta-4cell.tex}
 
-A designer can use Table~\ref{tab:c2-delta-4cell} to answer the control-affordance question under the frozen rule. No CAA/ITI by Qwen/Llama cell produces a passing axis, so the result is a failed-superiority verdict for the named tasks, axes, models, methods, and intervention scale.
+A designer can use Table~\ref{tab:c2-delta-4cell} to answer the control-affordance question under the frozen rule. The tested CAA/ITI interventions did not beat the selected prompts on any axis in any Qwen/Llama cell. This result is limited to the named tasks, axes, models, methods, comparator budget, and intervention scale.
 
 A designer should distinguish the strength of that verdict by axis. Deliberation is mixed. A post-hoc exploratory equivalence analysis places the two ITI cells within the \(\pm0.05\) interval, but the CAA cells remain underpowered. These boundary verdicts do not convert the preregistered superiority test into an equivalence claim. Skepticism is less informative: its minimum detectable superiority effects are 0.188, 0.268, 0.225, and 0.279 across the four cells, far above the registered 0.05 margin. The skepticism rows show that no superiority was demonstrated, not that small or moderate effects are absent.
 
@@ -294,7 +295,7 @@ We find no mechanism support in the preregistered off-manifold test. Whitened Ma
 \subsection{Positive-Control Boundary: Three Alternative Explanations}
 \label{sec:positive-controls}
 
-We tested three alternative explanations in sequence. First, the bounded refusal control confirms that refusal is a live behavioral endpoint. A direct refusal prompt reaches 95\%, whereas bounded unit-direction CAA produces 0\% refusal for every \(\alpha\le24\). The natural refusal class-difference norm is about 216 while the injected norm is at most 24, so this study exposes a scale limitation and leaves latent sensitivity open.
+We actively tested endpoint inertness, instrument insensitivity, and under-scaling as three alternative explanations. First, the bounded refusal control confirms that refusal is a live behavioral endpoint. A direct refusal prompt reaches 95\%, whereas bounded unit-direction CAA produces 0\% refusal for every \(\alpha\le24\). The natural refusal class-difference norm is about 216 while the injected norm is at most 24, so this study exposes a scale limitation and leaves latent sensitivity open.
 
 Second, we address under-scaling with the scale-corrected raw-magnitude CAA control. Refusal remains 0\% at every coherent \(\beta\), and all metacognitive steer-vs-neutral intervals include zero. Third, the random uncertainty direction moves the measured outcome by \(-0.24\), CI [\(-0.36\), \(-0.12\)], which provides instrument-sensitivity evidence for behavioral change. Refusal output degeneracy rises when \(\beta=2\) exceeds the coherent range. Coherent perturbations reach about \(0.5\)--\(0.66\times\lVert h\rVert\); the only point near \(1.05\times\lVert h\rVert\) is degenerate. We therefore find that scale correction does not rescue naive single-layer CAA within the coherent range. No latent behavioral positive control passes, and null cells have MDE near 0.19, so this result cannot exclude effects below that resolution.
 
@@ -351,7 +352,7 @@ The console uses the two-model facade result to show why READ must be local. Agg
 
 \subsection{Control Requires a Comparative Behavioral Claim}
 
-A designer should require more than observable model change before calling an axis a control. The claim requires a target outcome, a comparator, a meaningful margin, and a coherence condition. The bounded prompt comparator changes the interpretation of the uncertainty result. Without it, steer near baseline looks like no effect. With it, the relevant design fact is that the latent channel does not add what the prompt channel provides. Neither description is complete alone.
+A designer should require more than observable model change before calling an axis a control. The claim requires a target outcome, a comparator, a meaningful margin, and a coherence condition. The bounded prompt comparator changes the interpretation of the uncertainty result. Without it, steer near baseline looks like no effect. With it, the relevant design fact is that the latent channel does not add what the prompt channel provides.
 
 The comparator also marks the limit of this study. We test steering as a substitute for the selected prompt. A compositional interface in which users retain a prompt and adjust a latent control raises a different question about interaction and interference. The present result does not answer that question.
 
@@ -363,9 +364,9 @@ The console uses the calibration case to show why the state must retain statisti
 
 \subsection{Evidence Tiers Prevent Method and Model Substitution}
 
-A designer can reuse interface components without treating latent directions as interchangeable controls. Trained steering can mimic prompting \cite{heyman2026steer}; SAE feature steering, projection ablation, multi-layer schedules, and naive single-layer addition make different behavioral claims. The present failed-superiority result cannot be transferred to those methods. By the same logic, a future success for a projection or trained method would not retroactively validate the CAA/ITI sliders tested here.
+A designer can reuse interface components without treating latent directions as interchangeable controls. Trained steering can mimic prompting \cite{heyman2026steer}; SAE feature steering, projection ablation, multi-layer schedules, and naive single-layer addition make different behavioral claims. Evidence for one model, method, and axis cannot endorse a slider for another setting. By the same logic, a future success for a projection or trained method would not retroactively validate the CAA/ITI sliders tested here.
 
-The console uses this specificity as the contract's safeguard. It prevents a compelling demonstration in one setting from becoming a product-wide affordance claim. A control should remain tied to the evidence that earned it.
+The console uses this specificity as the contract's safeguard. It prevents a compelling demonstration in one setting from becoming a product-wide affordance claim. An interface can implement this specificity as a versioned, evidence-gated lifecycle. A candidate begins as diagnostic, becomes a control only after comparator-bound evaluation, and returns to diagnostic when the model, method, or version changes until re-evaluation. This lifecycle is a design implication of the evidence tier, not evidence that the interface is effective for users.
 
 \subsection{Design Objective and Decision Question}
 
@@ -399,7 +400,7 @@ The console uses the contract's evidence obligations to define the remaining dec
 \section{Conclusion}
 \label{sec:conclusion}
 
-The five-field evidence contract gives designers a method for deciding what a latent-control interface can support. It keeps READ evidence diagnostic, requires comparative TRANSFER evidence for a validated control, retains the prompt comparator and calibration contrast, and binds each result to an evidence tier. In the fully worked CAA/ITI instantiation, no tested cell demonstrates superiority over the bounded prompt channel. Positive controls establish an active endpoint, a responsive instrument, and a substantially reduced under-scaling explanation within the coherent range, while no latent behavioral positive control passes. The console turns these findings into diagnostic, unresolved, and withheld-control states as a reconstructable model-evidence artifact.
+The five-field evidence contract gives designers a method for deciding what a latent-control interface can support. Designers should treat output change as insufficient and require reliable, comparator-bound incremental behavioral evidence before presenting a slider or other control. The contract keeps READ evidence diagnostic, retains the prompt comparator and calibration contrast, and binds each result to an evidence tier. In the fully worked CAA/ITI instantiation, no tested cell demonstrates superiority over the bounded prompt channel. Positive controls establish an active endpoint, a responsive instrument, and a substantially reduced under-scaling explanation within the coherent range, while no latent behavioral positive control passes. The console records this worked-case output as diagnostic, unresolved, and withheld-control states in a reconstructable model-evidence artifact.
 
 \appendix
 \section{Non-Claim-Bearing Logit Diagnostic}

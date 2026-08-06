@@ -22,8 +22,8 @@ claim_scope: Two-axis UI artifact illustrating the proposed evidence-accounting 
 rebuild_command: python docs\paper\scripts\plot_console_ui_contract.py
 rendering_notes:
   - Every PDF text segment explicitly sets black non-stroking and stroking color for high contrast on card fills and grayscale printing.
-  - Native 504x230-point figure* layout; embedded text uses 7-point or larger fonts.
-  - Main-figure cards omit artifact paths and retain only state, READ, TRANSFER, bounded prompt comparator, calibration warning, evidence tier, and next action.
+  - Native 504x260-point figure* layout; embedded text uses 7-point or larger fonts.
+  - The two cards summarize axis state, evidence tier, key comparator or calibration evidence, and the resulting next action; they do not reproduce every five-field record item on each card.
 artifact_id: fig-console-ui-contract
 artifact_type: main figure
 paper_location: "Interface-Evaluation Contract in Use / Illustrative Design Scenario (Figure fig:console)"

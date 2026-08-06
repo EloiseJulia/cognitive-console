@@ -15,6 +15,20 @@ CHECKER = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None
 SPEC.loader.exec_module(CHECKER)
 
+TAXONOMY_SCRIPT = (
+    Path(__file__).resolve().parents[1]
+    / "docs"
+    / "paper"
+    / "scripts"
+    / "make_failure_taxonomy.py"
+)
+TAXONOMY_SPEC = importlib.util.spec_from_file_location(
+    "make_failure_taxonomy", TAXONOMY_SCRIPT
+)
+TAXONOMY = importlib.util.module_from_spec(TAXONOMY_SPEC)
+assert TAXONOMY_SPEC.loader is not None
+TAXONOMY_SPEC.loader.exec_module(TAXONOMY)
+
 
 def test_abstract_counter_excludes_model_identifiers():
     text = (
@@ -36,6 +50,42 @@ def test_abstract_counter_retains_decimal_ci_and_percent_values():
         "-0.17",
         "+0.0008",
     ]
+
+
+def test_numeric_values_ignore_includegraphics_crop_and_layout_coordinates():
+    base = (
+        r"\includegraphics[trim=1 2 3 4,clip,width=0.8\linewidth]{figure.pdf}"
+        "\n"
+        r"\draw (1.5,2.5) -- (3.5,4.5);"
+        "\n"
+        r"\vspace{-0.7em}"
+    )
+    changed = (
+        r"\includegraphics[trim=9 8 7 6,clip,width=0.9\linewidth]{figure.pdf}"
+        "\n"
+        r"\draw (5.5,6.5) -- (7.5,8.5);"
+        "\n"
+        r"\vspace{-1.2em}"
+    )
+    assert CHECKER.numeric_values(base) == CHECKER.numeric_values(changed) == set()
+
+
+def test_numeric_values_detect_body_margin_ci_and_mde_changes():
+    base = r"The margin is \(0.05\), CI [-0.51,-0.17], and MDE is 0.19."
+    changed = r"The margin is \(0.06\), CI [-0.50,-0.16], and MDE is 0.20."
+    assert CHECKER.numeric_values(base) != CHECKER.numeric_values(changed)
+
+
+def test_numeric_values_detect_scientific_number_in_figure_caption():
+    base = r"\caption{The registered margin is 0.05.}"
+    changed = r"\caption{The registered margin is 0.06.}"
+    assert CHECKER.numeric_values(base) != CHECKER.numeric_values(changed)
+
+
+def test_failure_taxonomy_scopes_direct_near_baseline_to_rechecked_cell():
+    rendered = TAXONOMY.render()
+    assert "direct steer-vs-baseline is near zero only in the rechecked CAA" in rendered
+    assert "Four-cell support is limited to the steer-vs-prompt comparator-negative contrast" in rendered
 
 
 def test_checklist_routes_each_condition_to_exact_state():

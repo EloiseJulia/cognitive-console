@@ -4,7 +4,7 @@ Status: narrative outline synchronized to the evidence-gated rewrite. Evidence, 
 
 ## Working title
 
-**When Does a Legible Latent Axis Earn a Control? A Comparative Evidence Gate for Bounded Naive CAA/ITI Steering**
+**When Does a Legible Latent Axis Earn a Control? A Comparator-Bound Evaluation Contract for Latent-Control Interfaces**
 
 ## Headline
 
@@ -14,13 +14,13 @@ A readable latent axis should not automatically become a control. Actionability 
 
 1. **Problem and metric shift.** A slider implies behavioral control. Legibility and output movement do not establish incremental actionability over the prompt channel.
 2. **Method and artifact.** A comparative evidence gate tests the candidate latent route against a strong but bounded 16-prompt channel. READ, TRANSFER, comparator, calibration warning, and evidence tier record why an affordance is diagnostic, unresolved, withheld, or qualified.
-3. **Evidence and implication.** The full CAA/ITI × Qwen/Llama grid yields 0/12 axis-cell passes. Four prospectively frozen new split seeds plus the previously observed frozen seed yielded the same verdict across all five over the shared item pool. Positive controls narrow endpoint, instrument, and scale alternatives without supplying a passing latent behavioral positive control.
+3. **Evidence and implication.** No tested cell demonstrates superiority. The four uncertainty contrasts resolve in the comparator-negative direction, deliberation is mixed, and skepticism is underpowered near the registered margin. Four prospectively frozen new split seeds plus the previously observed frozen seed yield the same verdict across all five over the shared item pool. Positive controls narrow endpoint, instrument, and scale alternatives without supplying a passing latent behavioral positive control.
 
 ## Section roles
 
 ### Abstract
 
-Important interface promise → output-change criterion is insufficient → comparative gate and five-field record → frozen procedure → 0/12 and five-way shared-pool split-sensitivity result with its prospective timing stated → qualified positive-control boundary → scoped design meaning.
+Important interface promise → output-change criterion is insufficient → comparator-bound gate and five-field artifact → scoped CAA/ITI instantiation → axis-specific resolution and five-way shared-pool split sensitivity → qualified positive-control boundary → scoped design meaning.
 
 ### 1. Introduction
 
@@ -76,12 +76,9 @@ Do not redefine the five fields. Show how the evidence record produces diagnosti
 
 ### 7. Discussion
 
-- Legibility can support diagnosis without actionability.
-- Control is a comparative behavioral claim.
-- Prompt-plus-steer composition is a separate next question about complementarity and interference that needs a new preregistration and protocol.
-- Negative and underpowered evidence are distinct interface states.
-- Evidence tiers prevent model/method substitution.
-- A versioned lifecycle demotes a control to diagnostic whenever the model, method, direction, or version changes, pending re-evaluation.
+1. A control is a comparative claim: legibility supports diagnosis, while actionability requires the bounded comparator, margin, and coherence.
+2. Evidence tier and versioned lifecycle: failed, underpowered, unstable, and untested states remain distinct; model or method changes trigger re-evaluation.
+3. Scope creates new obligations: prompt-plus-steer composition, stronger methods, mechanism claims, and user effects each need a new protocol.
 
 ### 8. Scope
 

@@ -7,9 +7,16 @@ rebuildable in the base test environment.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Iterable
+
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+from matplotlib.patches import Rectangle
 
 ROOT = Path(__file__).resolve().parents[3]
 SRC = ROOT / "src"
@@ -19,10 +26,7 @@ if str(SRC) not in sys.path:
 from cognitive_console.console.data_loader import build_console_payload  # noqa: E402
 
 OUT = ROOT / "docs" / "paper" / "figures" / "console-ui-contract.pdf"
-
-
-def _esc(text: object) -> str:
-    return str(text).replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+E0013 = ROOT / "results" / "E-0013-uncertainty-recheck" / "reanalysis.json"
 
 
 def _fmt(value: object, digits: int = 3) -> str:
@@ -35,7 +39,7 @@ def _fmt(value: object, digits: int = 3) -> str:
     return str(value)
 
 
-def _wrap(text: str, width: int = 58) -> list[str]:
+def _wrap(text: str, width: int = 52, max_lines: int = 2) -> list[str]:
     words = text.split()
     lines: list[str] = []
     cur: list[str] = []
@@ -48,7 +52,7 @@ def _wrap(text: str, width: int = 58) -> list[str]:
             cur.append(word)
     if cur:
         lines.append(" ".join(cur))
-    return lines[:5]
+    return lines[:max_lines]
 
 
 def _reader_text(text: object) -> str:
@@ -61,6 +65,7 @@ def _reader_text(text: object) -> str:
         "human-alpha PENDING -> not-yet-confirmatory": "not yet confirmatory",
         "calibration harm": "steer-vs-prompt calibration contrast",
         "uncertainty harm": "uncertainty steer-vs-prompt contrast",
+        "LEGIBLE: no added control demonstrated": "WITHHELD CONTROL / diagnostic retained",
     }
     out = str(text)
     for old, new in replacements.items():
@@ -68,38 +73,81 @@ def _reader_text(text: object) -> str:
     return out
 
 
-def _line_ops(x: float, y: float, text: str, size: int = 8) -> str:
-    return (
-        f"0 0 0 rg 0 0 0 RG "
-        f"BT /F1 {size} Tf {x:.1f} {y:.1f} Td "
-        f"({_esc(_reader_text(text))}) Tj ET\n"
-    )
+def _signal_line(label: str, body: str) -> tuple[str, str]:
+    return label, body
 
 
-def _rect_ops(x: float, y: float, w: float, h: float, fill: tuple[float, float, float]) -> str:
-    r, g, b = fill
-    return f"{r:.3f} {g:.3f} {b:.3f} rg {x:.1f} {y:.1f} {w:.1f} {h:.1f} re f\n0 0 0 RG {x:.1f} {y:.1f} {w:.1f} {h:.1f} re S\n"
-
-
-def _signal_line(label: str, body: str) -> str:
-    return f"{label}: {body}"
-
-
-def _card_lines(card: dict) -> list[str]:
-    read = card["read_status"]
+def _transfer_summary(card: dict) -> str:
     transfer = card["transfer_verdict"]
+    if card["axis"] == "deliberation":
+        return f"{transfer.get('verdict')}; full-grid resolution is mixed."
+    replications = card["calibration_harm"].get("arm_replications", [])
+    if card["axis"] == "uncertainty_awareness" and replications:
+        negative = sum(1 for row in replications if row.get("robust_harm"))
+        return (
+            f"{transfer.get('verdict')}; {negative}/{len(replications)} "
+            "frozen contrasts comparator-negative."
+        )
+    return f"{transfer.get('verdict')}; {transfer.get('summary', '')}"
+
+
+def _load_e0013() -> dict:
+    with E0013.open(encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def _card_state(card: dict) -> str:
+    if card["axis"] == "deliberation":
+        return "UNRESOLVED"
+    return "WITHHELD CONTROL"
+
+
+def _card_lines(card: dict, e0013: dict, grid_size: int) -> list[tuple[str, str]]:
+    read = card["read_status"]
     ceiling = card["prompt_ceiling"]
-    harm = card["calibration_harm"]
-    tier = card["evidence_tier"]
-    lines = [
-        card["headline"],
-        _signal_line("READ", f"{read.get('status')} {read.get('summary', '')}"),
-        _signal_line("TRANSFER", f"{transfer.get('verdict')} {transfer.get('summary', '')}"),
-        _signal_line("PROMPT-CEILING", ceiling.get("summary", "n/a")),
-        _signal_line("CALIBRATION-CONTRAST", f"{harm.get('status')} {harm.get('summary', '')}"),
-        _signal_line("EVIDENCE-TIER", f"{tier.get('tier')} ({'; '.join(tier.get('notes', []))})"),
+    if card["axis"] == "deliberation":
+        return [
+            _signal_line("READ", f"{read.get('status')}; local CAA evidence only."),
+            _signal_line("TRANSFER", "Mixed resolution: ITI exploratory equivalence; CAA underpowered."),
+            _signal_line("BOUNDED PROMPT COMPARATOR", ceiling.get("summary", "n/a")),
+            _signal_line(
+                "EXACT EVIDENCE TIER",
+                "Frozen 2x2 grid; mixed resolution; split-sensitivity only.",
+            ),
+            _signal_line(
+                "NEXT ACTION",
+                "More evidence at the registered margin or a new powered evaluation.",
+            ),
+        ]
+
+    cells = e0013["test_split_only"]
+    rechecked = len(cells)
+    cell = next(iter(cells.values()))
+    conditions = cell["conditions"]
+    direct_delta = (
+        conditions["steer"]["mean_frozen_imputed_1minus_brier"]
+        - conditions["baseline"]["mean_frozen_imputed_1minus_brier"]
+    )
+    bounds = [
+        row["delta"]
+        for row in cell["sensitivity"]["worst_case_imputation_bounds"]["bounds"]
     ]
-    return lines
+    assert min(bounds) <= 0 <= max(bounds)
+    assert abs(direct_delta) < 0.01
+    assert "format_compliant_only_delta_steer_minus_prompt" in cell
+    assert rechecked == 1 and grid_size >= rechecked
+    return [
+        _signal_line("READ", f"{read.get('status')}; local CAA evidence only."),
+        _signal_line("TRANSFER", _transfer_summary(card)),
+        _signal_line("DIRECT VS BASELINE", "Near-baseline only in the CAA x Qwen recheck."),
+        _signal_line("FORMAT RECHECK", "Complete-case result only for CAA x Qwen."),
+        _signal_line("MISSINGNESS", "Adversarial bounds cross zero."),
+        _signal_line("UNRECHECKED SCOPE", f"Other {grid_size - rechecked} method-model cells unrechecked."),
+        _signal_line(
+            "EXACT EVIDENCE TIER",
+            "Frozen 2x2 comparator result; targeted CAA x Qwen recheck.",
+        ),
+    ]
 
 
 def _select_cards(cards: Iterable[dict]) -> list[dict]:
@@ -110,54 +158,74 @@ def _select_cards(cards: Iterable[dict]) -> list[dict]:
     ]
 
 
-def _content_stream(payload: dict) -> str:
+def write_pdf(payload: dict, out_path: Path) -> None:
     cards = _select_cards(payload["ui_contract"]["cards"])
-    ops = []
-    ops.append(_line_ops(44, 790, "Cognitive Console v2: five-signal UI contract", 16))
-    ops.append(_line_ops(44, 772, "All numbers are read from frozen local artifacts; no humans/GPU/API/model calls.", 8))
-    x0 = 44
-    y0 = 520
-    w = 360
-    h = 224
-    gap = 18
+    e0013 = _load_e0013()
+    grid_size = len(payload["arm"]["cells"])
+    matplotlib.rcParams["pdf.fonttype"] = 42
+    matplotlib.rcParams["font.family"] = "DejaVu Sans"
+    fig, ax = plt.subplots(figsize=(7, 260 / 72))
+    fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
+    ax.set_xlim(0, 504)
+    ax.set_ylim(0, 260)
+    ax.axis("off")
+    ax.text(18, 241, "COMPARATOR-BOUND CONTROL RECORD", fontsize=12, fontweight="bold", va="baseline")
+    ax.text(18, 228, "Artifact-derived interface states; no user-effect claim.", fontsize=7, va="baseline")
+    x0 = 18
+    y0 = 18
+    w = 230
+    h = 198
+    gap = 8
     for i, card in enumerate(cards):
         x = x0 + i * (w + gap)
-        color = (1.0, 0.88, 0.88) if card["calibration_harm"].get("severity") == "red" else (0.92, 0.94, 1.0)
-        ops.append(_rect_ops(x, y0, w, h, color))
-        ops.append(_line_ops(x + 10, y0 + h - 18, card["label"], 11))
-        y = y0 + h - 38
-        for raw in _card_lines(card):
-            for line in _wrap(raw):
-                ops.append(_line_ops(x + 10, y, line, 7))
-                y -= 10
+        ax.add_patch(Rectangle((x, y0), w, h, facecolor="white", edgecolor="black", linewidth=0.8))
+        ax.add_patch(
+            Rectangle(
+                (x, y0 + h - 42),
+                w,
+                42,
+                facecolor="0.88",
+                edgecolor="black",
+                linewidth=0.8,
+            )
+        )
+        ax.text(
+            x + 8,
+            y0 + h - 14,
+            _reader_text(card["label"].upper()),
+            fontsize=9.5,
+            fontweight="bold",
+            va="baseline",
+        )
+        ax.text(
+            x + 8,
+            y0 + h - 31,
+            _card_state(card),
+            fontsize=8.5,
+            fontweight="bold",
+            va="baseline",
+        )
+        y = y0 + h - 55
+        for label, body in _card_lines(card, e0013, grid_size):
+            ax.text(x + 8, y, label, fontsize=7, fontweight="bold", va="baseline")
+            y -= 9
+            for line in _wrap(body, width=54):
+                ax.text(x + 8, y, _reader_text(line), fontsize=7, va="baseline")
+                y -= 8
             y -= 2
-    ops.append(_line_ops(44, 500, "Numbers derived from frozen, independently audited artifacts.", 7))
-    return "".join(ops)
-
-
-def write_pdf(content: str, out_path: Path) -> None:
-    objects = [
-        b"<< /Type /Catalog /Pages 2 0 R >>",
-        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
-        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
-    ]
-    stream = content.encode("utf-8")
-    objects.append(b"<< /Length " + str(len(stream)).encode("ascii") + b" >>\nstream\n" + stream + b"endstream")
-    pdf = bytearray(b"%PDF-1.4\n")
-    offsets = [0]
-    for idx, obj in enumerate(objects, start=1):
-        offsets.append(len(pdf))
-        pdf.extend(f"{idx} 0 obj\n".encode("ascii"))
-        pdf.extend(obj)
-        pdf.extend(b"\nendobj\n")
-    xref = len(pdf)
-    pdf.extend(f"xref\n0 {len(objects) + 1}\n0000000000 65535 f \n".encode("ascii"))
-    for off in offsets[1:]:
-        pdf.extend(f"{off:010d} 00000 n \n".encode("ascii"))
-    pdf.extend(f"trailer << /Root 1 0 R /Size {len(objects) + 1} >>\nstartxref\n{xref}\n%%EOF\n".encode("ascii"))
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_bytes(pdf)
+    artifact_time = datetime.fromisoformat(e0013["generated_at"])
+    fig.savefig(
+        out_path,
+        format="pdf",
+        dpi=72,
+        metadata={
+            "Creator": "plot_console_ui_contract.py",
+            "CreationDate": artifact_time,
+            "ModDate": artifact_time,
+        },
+    )
+    plt.close(fig)
 
 
 def main(argv: list[str] | None = None) -> Path:
@@ -167,7 +235,7 @@ def main(argv: list[str] | None = None) -> Path:
         argv = [str(arg) for arg in argv]
     args = parser.parse_args(argv)
     payload = build_console_payload()
-    write_pdf(_content_stream(payload), args.out)
+    write_pdf(payload, args.out)
     print(f"Wrote {args.out}")
     return args.out
 

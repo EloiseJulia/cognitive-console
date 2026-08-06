@@ -42,6 +42,50 @@ def test_checklist_routes_each_condition_to_exact_state():
     assert CHECKER.checklist_routes(paper) == CHECKER.EXPECTED_ROUTES
 
 
+def test_state_consistency_parses_cross_line_textbf_from_latex_source():
+    paper = CHECKER.PAPER.read_text(encoding="utf-8")
+    assert r"\textbf{" + "\nwithheld-control}" in paper
+    assert all(CHECKER.state_consistency(paper).values())
+
+
+class _PaperSource:
+    def __init__(self, text):
+        self.text = text
+
+    def read_text(self, encoding):
+        assert encoding == "utf-8"
+        return self.text
+
+
+def _assert_main_rejects(monkeypatch, paper):
+    monkeypatch.setattr(CHECKER, "PAPER", _PaperSource(paper))
+    assert CHECKER.main([]) == 1
+
+
+def test_main_rejects_failed_comparison_routed_to_diagnostic(monkeypatch):
+    paper = CHECKER.PAPER.read_text(encoding="utf-8").replace(
+        "A failed comparative test yields withheld-control",
+        "A failed comparative test yields diagnostic only",
+    )
+    _assert_main_rejects(monkeypatch, paper)
+
+
+def test_main_rejects_underpowered_result_routed_to_withheld(monkeypatch):
+    paper = CHECKER.PAPER.read_text(encoding="utf-8").replace(
+        "An underpowered result is unresolved",
+        "An underpowered result is withheld-control",
+    )
+    _assert_main_rejects(monkeypatch, paper)
+
+
+def test_main_rejects_version_change_returning_directly_to_diagnostic(monkeypatch):
+    paper = CHECKER.PAPER.read_text(encoding="utf-8").replace(
+        "change returns it to unresolved; new READ support is required before diagnostic",
+        "change returns it directly to diagnostic",
+    )
+    _assert_main_rejects(monkeypatch, paper)
+
+
 def test_concept_figure_routes_each_branch_to_exact_state():
     source = CHECKER.CONCEPT_FIGURE.read_text(encoding="utf-8")
     assert CHECKER.concept_edges(source) == CHECKER.EXPECTED_FIGURE_EDGES

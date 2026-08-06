@@ -191,7 +191,7 @@ The denominator uses the extraction-positive and neutral activations from the sa
   \label{eq:facade-ratio}
 \end{equation}
 In plain language, this ratio asks what fraction of the neutral-to-positive-pole distance the strongest readable prompt covers along the extracted direction.
-The facade criterion requires Equation~\ref{eq:facade-ratio} and its interval to lie below one. This answers a labeling question; it neither establishes behavioral transfer nor validates ITI's probe-derived directions. Each model contributes one exploratory run, so READ evidence remains axis- and method-specific.
+The facade criterion requires Equation~\ref{eq:facade-ratio} and its interval to lie below one. This answers a labeling question; it neither establishes behavioral transfer nor validates ITI's probe-derived directions. Each model contributes one exploratory run, so READ evidence is axis- and method-specific.
 
 \subsection{TRANSFER Evaluation: Why the Comparator Is Part of the Method}
 
@@ -333,15 +333,16 @@ The non-confirmatory first-token diagnostic appears only in Appendix~\ref{app:lo
 
 \input{tables/failure-taxonomy.tex}
 
-The failure taxonomy turns the comparative gate into conditional interface states. Legible-but-non-transfer evidence supports a diagnostic while withholding actionability. An underpowered test is unresolved. Coherence failure records instability, and an untested method or model receives no inherited verdict. Figure~\ref{fig:console} renders the complete record rather than collapsing these cases into a green or red slider.
+The failure taxonomy turns the comparative gate into conditional interface states. Legible-but-non-transfer evidence yields \textbf{
+withheld-control}; diagnostic information remains visible within that presentation. An underpowered test is unresolved. Coherence failure yields withheld-control due to instability, and an untested method or model is unresolved. Figure~\ref{fig:console} renders failed comparative tests as withheld-control, underpowered or untested cases as unresolved, and READ-only cases as diagnostic rather than collapsing them into a green or red slider.
 
 The uncertainty card shows why the record matters. It names the steer-vs-bounded-prompt contrast, reports steer near baseline only where rechecked, and carries the complete-case and missingness limits. The deliberation card preserves mixed resolution. Both cards bind their states to the tested model, direction construction, layer, task, comparator budget, and protocol.
 
 \subsection{Illustrative Design Scenario}
 
-Consider a product team building a writing assistant for policy analysts who inspect whether a model recognizes uncertainty before drafting a recommendation. Its prototype begins with an ``uncertainty awareness'' slider. The Qwen CAA direction has exploratory READ support, so its label can remain in an inspection view; the behavioral comparison does not pass, so actionability is withheld.
+Consider a product team building a writing assistant for policy analysts who inspect whether a model recognizes uncertainty before drafting a recommendation. Its prototype begins with an ``uncertainty awareness'' slider. The Qwen CAA direction has exploratory READ support, so its label can stay in an inspection view; the behavioral comparison does not pass, so the primary state is withheld-control.
 
-The team replaces the slider with a diagnostic trace beside a bounded-prompt and latent-output comparison. Opening the warning reveals that the frozen contrast is steer versus prompt, that steering is near baseline in the rechecked lineage, and that unrestricted missingness leaves the all-generation sign unresolved. This design move is evidence-derived: the interface preserves inspection while declining a control promise that the gate did not qualify.
+The team replaces the slider with a non-actionable diagnostic and comparator view. This is a withheld-control presentation that retains diagnostic information rather than a diagnostic state. Opening the warning reveals that the frozen contrast is steer versus prompt, that steering is near baseline in the rechecked lineage, and that unrestricted missingness leaves the all-generation sign unresolved. This design move is evidence-derived: the interface preserves inspection while declining a control promise that the gate did not qualify.
 
 \begin{figure*}[t]
   \centering
@@ -370,7 +371,7 @@ Prompt-plus-steer composition is therefore a separate next research question abo
 
 \subsection{Negative Evidence Becomes Interface State}
 
-Negative and inconclusive evidence determine the state of the affordance itself. Failed superiority supports ``diagnostic only''; an underpowered result supports ``control evidence unresolved.'' Coherence failure yields ``withheld due to instability,'' while a model or method swap resets the state to ``untested.'' This vocabulary preserves why actionability is absent more precisely than a binary slider/no-slider decision.
+Negative and inconclusive evidence determine the state of the affordance itself. A failed comparative test yields withheld-control; diagnostic evidence may remain visible. An underpowered result is unresolved. Coherence failure yields withheld-control due to instability, while a model or method swap is unresolved and untested. This vocabulary preserves why actionability is absent more precisely than a binary slider/no-slider decision.
 
 The calibration case shows why the state must retain statistical structure. An absolute calibration-hazard label is too coarse. The evidence says that steer is lower than bounded prompt under the frozen scorer in four cells; steer is near baseline in the rechecked lineage; complete-case format analysis remains negative; unrestricted missingness can reverse the sign; and three cells lack rechecks. A well-designed warning should expose this contrast structure and avoid an absolute hazard label.
 
@@ -378,7 +379,7 @@ The calibration case shows why the state must retain statistical structure. An a
 
 Evidence tiers support reuse of interface components without treating latent directions as interchangeable controls. Trained steering can mimic prompting \cite{heyman2026steer}; SAE feature steering, projection ablation, multi-layer schedules, and naive single-layer addition make different behavioral claims. Evidence for one model and method cannot endorse a slider in another setting. Axis changes also require new evidence. By the same logic, a future success for a projection or trained method would not retroactively validate the CAA/ITI sliders tested here.
 
-This specificity supports a versioned, evidence-gated affordance lifecycle. A candidate begins as diagnostic, becomes actionable only after comparator-bound evaluation, and drops back to diagnostic whenever the model, method, direction, or version changes. Re-evaluation can then restore actionability under the new tier.
+This specificity supports a versioned, evidence-gated affordance lifecycle. A candidate begins as unresolved. Local READ support can move it to diagnostic. It becomes actionable only after comparator-bound evaluation passes. A model, method, direction, or version change returns it to unresolved; new READ support is required before diagnostic, and a new comparative pass is required before actionability.
 
 \subsection{A Deployment Decision, Not Another Warning}
 

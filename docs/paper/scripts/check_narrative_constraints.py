@@ -78,6 +78,63 @@ def prose(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def normalized_latex_source(text: str) -> str:
+    """Preserve LaTeX argument text while normalizing commands and whitespace."""
+    text = strip_comments(text)
+    text = re.sub(r"\\\\", " ", text)
+    previous = None
+    while text != previous:
+        previous = text
+        text = re.sub(
+            r"\\(?:textbf|textsc|emph|textrm|textit|texttt)\s*\{([^{}]*)\}",
+            r" \1 ",
+            text,
+            flags=re.S,
+        )
+    text = re.sub(r"\\(?:cite|ref|label|input|includegraphics)\s*\{[^{}]*\}", " ", text)
+    text = re.sub(r"\\[A-Za-z*]+(?:\[[^]]*\])?", " ", text)
+    text = re.sub(r"[{}$`'\";:,.!?()/\-]+", " ", text)
+    return re.sub(r"\s+", " ", text).strip().lower()
+
+
+def state_consistency(text: str) -> dict[str, bool]:
+    source = normalized_latex_source(text)
+    return {
+        "interface_failed_to_withheld": (
+            "legible but non transfer evidence yields withheld control" in source
+            and "diagnostic information remains visible within that presentation" in source
+        ),
+        "interface_inconclusive_to_unresolved": (
+            "an underpowered test is unresolved" in source
+            and "an untested method or model is unresolved" in source
+        ),
+        "interface_read_only_to_diagnostic": (
+            "read only cases as diagnostic" in source
+        ),
+        "discussion_failed_to_withheld": (
+            "a failed comparative test yields withheld control" in source
+            and "diagnostic evidence may remain visible" in source
+        ),
+        "discussion_inconclusive_and_instability": (
+            "an underpowered result is unresolved" in source
+            and "coherence failure yields withheld control due to instability" in source
+            and "a model or method swap is unresolved and untested" in source
+        ),
+        "lifecycle_requires_read_again": (
+            "a candidate begins as unresolved" in source
+            and "local read support can move it to diagnostic" in source
+            and "it becomes actionable only after comparator bound evaluation passes" in source
+            and "change returns it to unresolved new read support is required before diagnostic"
+            in source
+        ),
+        "scenario_primary_withheld": (
+            "the primary state is withheld control" in source
+            and "this is a withheld control presentation that retains diagnostic information rather than a diagnostic state"
+            in source
+        ),
+    }
+
+
 def checklist_routes(text: str) -> dict[str, str]:
     routes = {}
     for condition, state in re.findall(
@@ -243,10 +300,10 @@ def paragraph_opener(paragraph: str) -> str:
     return " ".join(words[:2])
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base", help="Git revision used for numeric-value comparison")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     text = PAPER.read_text(encoding="utf-8")
     abstract = environment(text, "abstract")
@@ -312,8 +369,8 @@ def main() -> int:
         ),
         "no_user_study_once": len(scope_sentence) == 1,
     }
-    concept = prose(CONCEPT_FIGURE.read_text(encoding="utf-8"))
     concept_source = CONCEPT_FIGURE.read_text(encoding="utf-8")
+    concept = normalized_latex_source(concept_source)
     routes = checklist_routes(text)
     edges = concept_edges(concept_source)
     positions = concept_positions(concept_source)
@@ -330,10 +387,10 @@ def main() -> int:
         "figure_states": all(
             phrase in concept
             for phrase in (
-                "UNRESOLVED",
-                "DIAGNOSTIC ONLY",
-                "WITHHELD CONTROL",
-                "EVIDENCE-SUPPORTED CONTROL",
+                "unresolved",
+                "diagnostic only",
+                "withheld control",
+                "evidence supported control",
             )
         ),
         "checklist_semantic_routes": routes == EXPECTED_ROUTES,
@@ -363,6 +420,7 @@ def main() -> int:
             and "effects have not been validated" in prose(text)
         ),
     }
+    state_routes = state_consistency(text)
 
     print(f"Abstract sentences: {len(sentences)}")
     print(f"Abstract numeric expressions: {len(abstract_numbers)} {abstract_numbers}")
@@ -376,6 +434,7 @@ def main() -> int:
     print(f"Caption disclaimers: {len(caption_disclaimers)}")
     print(f"Scope red lines: {red_lines}")
     print(f"Actionability structure: {actionability_structure}")
+    print(f"State consistency: {state_routes}")
     print(f"Over-dense two-word paragraph openers: {dense_openers}")
     print(f"Consecutive repeated paragraph openers: {len(consecutive_openers)}")
     for line, opener in consecutive_openers:
@@ -412,6 +471,8 @@ def main() -> int:
         failures.append("scope red-line statement missing")
     if not all(actionability_structure.values()):
         failures.append("actionability workflow or decision-state structure missing")
+    if not all(state_routes.values()):
+        failures.append("paper contains inconsistent evidence-state routing")
     if dense_openers:
         failures.append("a two-word paragraph opener appears more than four times")
     if consecutive_openers:

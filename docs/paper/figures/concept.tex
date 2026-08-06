@@ -1,22 +1,29 @@
 \begin{tikzpicture}[
   >=Latex,
-  channel/.style={draw, rounded corners, align=center, minimum width=2.6cm, minimum height=0.8cm, fill=blue!6},
-  latent/.style={draw, rounded corners, align=center, minimum width=3.2cm, minimum height=1.05cm, fill=orange!10},
-  model/.style={draw, rounded corners, align=center, minimum width=2.5cm, minimum height=1.1cm, fill=gray!8},
-  probe/.style={draw, dashed, rounded corners, align=center, minimum width=2.6cm, minimum height=0.8cm, fill=green!6}
+  font=\footnotesize,
+  node distance=8mm and 10mm,
+  stagebox/.style={draw, rounded corners, align=center, minimum height=10mm, text width=28mm, inner sep=3pt},
+  check/.style={draw, diamond, aspect=2.1, align=center, inner sep=1.5pt, text width=21mm},
+  state/.style={draw, rounded corners, align=left, minimum height=15mm, text width=42mm, inner sep=4pt},
+  unresolved/.style={state, dashed},
+  warning/.style={state, double},
+  supported/.style={state, line width=0.9pt},
+  flow/.style={->, thick},
+  branch/.style={font=\scriptsize, fill=white, inner sep=1pt}
 ]
-  \node[channel] (user) {User-facing\\prompt channel};
-  \node[model, right=1.25cm of user] (llm) {LLM\\policy};
-  \node[channel, right=1.25cm of llm] (behavior) {Behavioral\\outcome};
+  \node[stagebox] (candidate) {\textbf{Candidate axis}\\Named outcome + model, method, layer, task};
+  \node[check, right=of candidate] (read) {\textbf{READ}\\supported?};
+  \node[stagebox, right=of read] (compare) {\textbf{Bounded comparator}\\Select usable prompt and latent channels on DEV};
+  \node[check, right=of compare] (transfer) {\textbf{TRANSFER}\\margin + coherence pass?};
 
-  \node[latent, below=1.0cm of llm] (latent) {Latent steering\\$h'_L=h_L+\alpha s_m\hat u_m$\\[-1pt]\scriptsize $s_{\rm CAA}=1,\ s_{\rm ITI}=\sigma_L$};
-  \node[probe, below=1.0cm of user] (console) {Cognitive console\\adjudicator};
-  \node[probe, below=1.0cm of behavior] (limits) {Limits surfaced:\\non-transfer, harm};
+  \node[unresolved, below=13mm of read] (unresolved) {\textbf{Unresolved}\\No semantic control label\\\scriptsize Evidence tier attached; record READ as unsupported or untested};
+  \node[warning, below=13mm of compare] (withheld) {\textbf{Diagnostic or withheld control}\\Keep inspection only where READ supports it\\\scriptsize Attach calibration or resolution warning and exact evidence tier};
+  \node[supported, below=13mm of transfer] (control) {\textbf{Evidence-supported control}\\Grant actionability only within the passing tier\\\scriptsize Preserve comparator, protocol, and coherence conditions};
 
-  \draw[->, thick] (user) -- node[above, font=\scriptsize]{legible instruction} (llm);
-  \draw[->, thick] (llm) -- node[above, font=\scriptsize]{task behavior} (behavior);
-  \draw[->, thick, orange!80!black] (latent) -- (llm);
-  \draw[->, dashed] (console) -- node[left, font=\scriptsize]{measures facade} (user);
-  \draw[->, dashed] (console.south) to[out=-35,in=-145] node[below, font=\scriptsize]{paired frozen test} (limits.south);
-  \draw[->, dashed] (limits) -- node[right, font=\scriptsize]{trust calibration} (behavior);
+  \draw[flow] (candidate) -- (read);
+  \draw[flow] (read) -- node[branch, above]{yes} (compare);
+  \draw[flow] (compare) -- (transfer);
+  \draw[flow] (read) -- node[branch, left]{no / untested} (unresolved);
+  \draw[flow] (transfer) -- node[branch, left]{no / underpowered} (withheld);
+  \draw[flow] (transfer) -- node[branch, right]{yes} (control);
 \end{tikzpicture}

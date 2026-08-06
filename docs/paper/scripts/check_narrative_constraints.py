@@ -11,6 +11,7 @@ from pathlib import Path
 
 
 PAPER = Path(__file__).resolve().parents[1] / "main.tex"
+CONCEPT_FIGURE = PAPER.parent / "figures" / "concept.tex"
 ROOT = PAPER.parents[2]
 RESULT_TERMS = re.compile(
     r"\b(no .*pass|failed-superiority|null|no method-model cell)\b", re.I
@@ -257,6 +258,43 @@ def main() -> int:
         ),
         "no_user_study_once": len(scope_sentence) == 1,
     }
+    concept = prose(CONCEPT_FIGURE.read_text(encoding="utf-8"))
+    actionability_structure = {
+        "candidate_to_state_checklist": all(
+            phrase in prose(text)
+            for phrase in (
+                "From Candidate Axis to Interface State",
+                "Bound a usable comparator",
+                "Run TRANSFER with coherence",
+                "evidence-supported control",
+            )
+        ),
+        "three_figure_exits": all(
+            phrase in concept
+            for phrase in (
+                "Unresolved",
+                "Diagnostic or withheld control",
+                "Evidence-supported control",
+                "Evidence tier attached",
+            )
+        ),
+        "resolution_note_follows_table": bool(
+            re.search(
+                r"\\input\{tables/c2-delta-4cell\.tex\}\s*"
+                r"\\FloatBarrier\s*\\noindent\\textbf\{Resolution note\.\}",
+                text,
+            )
+        ),
+        "positive_control_order": text.index(
+            r"\(-0.24\), CI [\(-0.36\), \(-0.12\)]"
+        )
+        < text.index("The bounded refusal check establishes"),
+        "workflow_not_user_validated": (
+            "This checklist is a proposed interface-evaluation workflow"
+            in prose(text)
+            and "effects have not been validated" in prose(text)
+        ),
+    }
 
     print(f"Abstract sentences: {len(sentences)}")
     print(f"Abstract numeric expressions: {len(abstract_numbers)} {abstract_numbers}")
@@ -269,6 +307,7 @@ def main() -> int:
         print(f"  line {line_number(body, match.start())}: {match.group(0)}")
     print(f"Caption disclaimers: {len(caption_disclaimers)}")
     print(f"Scope red lines: {red_lines}")
+    print(f"Actionability structure: {actionability_structure}")
     print(f"Over-dense two-word paragraph openers: {dense_openers}")
     print(f"Consecutive repeated paragraph openers: {len(consecutive_openers)}")
     for line, opener in consecutive_openers:
@@ -303,6 +342,8 @@ def main() -> int:
         failures.append("caption contains scope/disclaimer language")
     if not all(red_lines.values()):
         failures.append("scope red-line statement missing")
+    if not all(actionability_structure.values()):
+        failures.append("actionability workflow or decision-state structure missing")
     if dense_openers:
         failures.append("a two-word paragraph opener appears more than four times")
     if consecutive_openers:

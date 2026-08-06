@@ -46,6 +46,8 @@ Derive each field from a recorded breakdown:
 
 Model cards and datasheets are documentation precedents; the contribution adds an ex-ante actionability gate at widget level.
 
+The section ends with an actionable candidate-to-state checklist: define the target and local READ evidence, establish a bounded usable prompt comparator, run TRANSFER plus coherence, attach warning and tier, then emit unresolved, diagnostic/withheld-control, or evidence-supported control. This is a proposed workflow, not a user-validated result.
+
 ### 4. Methods
 
 Organize by argument role:
@@ -64,9 +66,9 @@ Preserve all frozen formulas, outcome definitions, statistics, method-specific s
 2. Full 4×3 table: 0/12 axis-cell passes.
 3. Split sensitivity: the previously observed frozen seed and four prospectively frozen new seeds yield the same verdict across all five over the shared item pool.
 4. Calibration warning: four frozen steer-vs-prompt contrasts; Qwen/CAA steer≈baseline; complete-case contrast negative; adversarial bounds cross zero; three cells unrechecked.
-5. “We tested three alternative explanations”: endpoint live, instrument responsive, under-scaling substantially weakened within the coherent range; no latent behavioral positive control passes.
+5. “What the positive controls establish”: random-direction movement shows the pipeline can detect latent perturbation-induced behavioral change; prompt refusal shows the endpoint is live; scale correction weakens under-scaling within the coherent range; no target-specific latent behavioral positive control passes.
 
-Post-hoc TOST remains appendix context. Main prose retains mixed deliberation, the four skepticism MDE values, the registered 0.05 margin, and the fact that below-resolution effects remain possible.
+The four skepticism MDE values and registered 0.05 margin appear immediately after the main table. Post-hoc TOST remains appendix context, and below-resolution effects remain possible.
 
 ### 6. Interface Contract in Use
 
@@ -76,6 +78,7 @@ Do not redefine the five fields. Show how the evidence record produces diagnosti
 
 - Legibility can support diagnosis without actionability.
 - Control is a comparative behavioral claim.
+- Prompt-plus-steer composition is a separate next question about complementarity and interference that needs a new preregistration and protocol.
 - Negative and underpowered evidence are distinct interface states.
 - Evidence tiers prevent model/method substitution.
 - A versioned lifecycle demotes a control to diagnostic whenever the model, method, direction, or version changes, pending re-evaluation.

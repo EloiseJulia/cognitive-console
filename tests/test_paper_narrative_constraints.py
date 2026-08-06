@@ -35,3 +35,10 @@ def test_abstract_counter_retains_decimal_ci_and_percent_values():
         "-0.17",
         "+0.0008",
     ]
+
+
+def test_concept_figure_exposes_three_distinct_interface_states():
+    concept = CHECKER.prose(CHECKER.CONCEPT_FIGURE.read_text(encoding="utf-8"))
+    assert "Unresolved" in concept
+    assert "Diagnostic or withheld control" in concept
+    assert "Evidence-supported control" in concept

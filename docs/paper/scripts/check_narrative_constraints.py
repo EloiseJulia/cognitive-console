@@ -352,7 +352,34 @@ def line_number(text: str, offset: int) -> int:
 
 
 def numeric_values(text: str) -> set[str]:
-    clean = re.sub(r"\b[ED]-\d+\b", "", strip_comments(text))
+    clean = strip_comments(text)
+    clean = re.sub(
+        r"\\includegraphics\s*(?:\[[^\]]*\])?\s*\{[^{}]*\}",
+        " ",
+        clean,
+        flags=re.S,
+    )
+    clean = re.sub(
+        r"\\(?:vspace|hspace|addvspace|kern|mkern)\*?\s*\{[^{}]*\}",
+        " ",
+        clean,
+    )
+    clean = re.sub(
+        r"\\(?:setlength|addtolength)\s*\{[^{}]*\}\s*\{[^{}]*\}",
+        " ",
+        clean,
+    )
+    layout_lines = []
+    for line in clean.splitlines():
+        if re.search(r"\\(?:draw|path|node|coordinate)\b", line):
+            line = re.sub(
+                r"\(\s*-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?\s*\)",
+                " ",
+                line,
+            )
+        layout_lines.append(line)
+    clean = "\n".join(layout_lines)
+    clean = re.sub(r"\b[ED]-\d+\b", "", clean)
     return {m.group(0) for m in NUMERIC.finditer(clean)}
 
 

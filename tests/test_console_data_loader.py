@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import json
+from io import BytesIO
 import re
 from pathlib import Path
 
 import pytest
+import fitz
+from pypdf import PdfReader
 
 from cognitive_console.console.data_loader import build_console_payload, build_demo_report
 from cognitive_console.console.demo import write_demo_artifacts
@@ -205,13 +208,43 @@ def test_console_ui_contract_figure_script_runs():
         assert out.exists()
         pdf = out.read_bytes()
         assert pdf.startswith(b"%PDF-1.4")
-        content = pdf.decode("utf-8")
-        assert content.count("0 0 0 rg 0 0 0 RG BT") == content.count(" BT")
-        assert "/MediaBox [0 0 504 230]" in content
-        assert "BOUNDED PROMPT COMPARATOR" in content
-        assert "PROMPT-CEILING" not in content
-        assert "EVIDENCE TIER / NEXT ACTION" in content
-        font_sizes = [float(size) for size in re.findall(r"/F[12] ([0-9.]+) Tf", content)]
+        assert pdf == (
+            REPO / "docs" / "paper" / "figures" / "console-ui-contract.pdf"
+        ).read_bytes()
+        with fitz.open(stream=pdf, filetype="pdf") as document:
+            page = document[0]
+            assert page.rect.width == pytest.approx(504)
+            assert page.rect.height == pytest.approx(260)
+            content = page.get_text()
+            normalized_content = " ".join(content.split())
+            assert "BOUNDED PROMPT COMPARATOR" in normalized_content
+            assert "PROMPT-CEILING" not in normalized_content
+            for expected in (
+                "UNRESOLVED",
+                "WITHHELD CONTROL",
+                "Frozen 2x2 grid; mixed resolution; split-sensitivity only.",
+                "Frozen 2x2 comparator result; targeted CAA x Qwen recheck.",
+                "Near-baseline only in the CAA x Qwen recheck.",
+                "Complete-case result only for CAA x Qwen.",
+                "Adversarial bounds cross zero.",
+                "Other 3 method-model cells unrechecked.",
+            ):
+                assert expected in normalized_content
+            font_sizes = [
+                span["size"]
+                for block in page.get_text("dict")["blocks"]
+                for line in block.get("lines", [])
+                for span in line["spans"]
+            ]
         assert min(font_sizes) >= 7.0
+        reader = PdfReader(BytesIO(pdf))
+        fonts = reader.pages[0]["/Resources"]["/Font"]
+        assert fonts
+        for font_ref in fonts.values():
+            font = font_ref.get_object()
+            if "/DescendantFonts" in font:
+                font = font["/DescendantFonts"][0].get_object()
+            descriptor = font["/FontDescriptor"].get_object()
+            assert any(key in descriptor for key in ("/FontFile", "/FontFile2", "/FontFile3"))
     finally:
         out.unlink(missing_ok=True)

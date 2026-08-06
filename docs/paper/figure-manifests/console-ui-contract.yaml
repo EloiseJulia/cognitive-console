@@ -7,7 +7,6 @@ evidence_ids:
   - E-0005
   - E-0006
   - E-0008
-  - E-0009
 artifact_inputs:
   - results/gpu_7b_2026-07-23/c1/c1_facade_results.json
   - results/llama_c1_facade_2026-07-24/c1_facade_results.json
@@ -17,7 +16,6 @@ artifact_inputs:
   - results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json
   - results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json
   - results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json
-  - results/psr_qwen_primary/psr_c2b_adjudication_results.json
 claim_scope: Two-axis UI artifact illustrating the proposed evidence-accounting contract; no social-axis evidence and no HCI effectiveness claim.
 rebuild_command: python docs\paper\scripts\plot_console_ui_contract.py
 rendering_notes:
@@ -26,9 +24,9 @@ artifact_id: fig-console-ui-contract
 artifact_type: main figure
 paper_location: "Interface-Evaluation Contract in Use / Illustrative Design Scenario (Figure fig:console)"
 supports_claims: ["C2", "C3"]
-source_experiments: ["E-0003", "E-0005", "E-0006", "E-0008", "E-0009"]
+source_experiments: ["E-0003", "E-0005", "E-0006", "E-0008"]
 aggregation_script: docs/paper/scripts/plot_console_ui_contract.py
-generator_commit: 2110a706bace5b3911043b354deca3103712c636
+generator_commit: 82a276f82e80f0225217c4f08d7500f0c2f9c3d4
 source_artifact_commits:
   "results/gpu_7b_2026-07-23/c1/c1_facade_results.json": 05b33ede9c4d9677d4a32c4d74766933d96d563d
   "results/llama_c1_facade_2026-07-24/c1_facade_results.json": 31678173e83f01c2de2b8775b2f87f068fbc190e
@@ -38,7 +36,6 @@ source_artifact_commits:
   "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json": 76482794d6eedec14ee215ab5cf73b9bbd509361
   "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json": 76482794d6eedec14ee215ab5cf73b9bbd509361
   "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json": 76482794d6eedec14ee215ab5cf73b9bbd509361
-  "results/psr_qwen_primary/psr_c2b_adjudication_results.json": ea7a520fe7703c23bfab3d8753ea6dbe0329cc44
 source_artifact_hashes:
   "results/gpu_7b_2026-07-23/c1/c1_facade_results.json": c48dab0bc2debc369678d4e397d74c4157a98763c1feef3044cca2b6fdffd455
   "results/llama_c1_facade_2026-07-24/c1_facade_results.json": 10fd45ba439695aec0c3ed62d4d274eff2a5e15f8765ca9f0a51a7102d155aa9
@@ -48,9 +45,8 @@ source_artifact_hashes:
   "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json": d301bacf70744406356fd2e1a597c01b8738c10d392a9901feae461bebfa0f42
   "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json": e168392f4c44d29467791883da122d27b470ce0770bc81c8b5d705119bc6647e
   "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json": ac9d18aa67a5e2afe9b37441fa08c008cfad139a557f323fa5052d8c38f85282
-  "results/psr_qwen_primary/psr_c2b_adjudication_results.json": 6604a65d1cb0bb27be69cc44701c684ced6812e39f43903cb79e7a1a2a044aee
 output_file: docs/paper/figures/console-ui-contract.pdf
-output_sha256: 1b2dded6abd92797976e897ad55c4420195832cc200c88a86ef428d5f9c6bf40
+output_sha256: aa98e07fe2998b3de692df924f89f5fadc3ba96c12d8db0ddca3dd3cff8ed5d6
 manual_edits_allowed: false
 last_verified: "2026-08-06"
 verdict: "verified static model-evidence artifact; illustrates C2/C3 contract states and supports no HCI outcome claim"

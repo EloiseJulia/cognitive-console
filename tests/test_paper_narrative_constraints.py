@@ -1,4 +1,5 @@
 import importlib.util
+import re
 from pathlib import Path
 
 
@@ -62,26 +63,81 @@ def _assert_main_rejects(monkeypatch, paper):
     assert CHECKER.main([]) == 1
 
 
-def test_main_rejects_failed_comparison_routed_to_diagnostic(monkeypatch):
-    paper = CHECKER.PAPER.read_text(encoding="utf-8").replace(
-        "A failed comparative test yields withheld-control",
-        "A failed comparative test yields diagnostic only",
+def _mutate_checklist_state(paper, condition_pattern, replacement):
+    block = CHECKER.checklist_block(paper)
+    mutated, count = re.subn(
+        rf"(\\item\s+\\textbf\s*\{{[^}}]*{condition_pattern}[^}}]*\}}"
+        rf".*?\\\(\\rightarrow\\\)\s+\\textsc\s*\{{)[^}}]+(\}})",
+        rf"\g<1>{replacement}\2",
+        block,
+        count=1,
+        flags=re.I | re.S,
+    )
+    assert count == 1
+    return paper.replace(block, mutated, 1)
+
+
+def test_main_accepts_current_paper(monkeypatch):
+    paper = CHECKER.PAPER.read_text(encoding="utf-8")
+    monkeypatch.setattr(CHECKER, "PAPER", _PaperSource(paper))
+    assert CHECKER.main([]) == 0
+
+
+def test_main_accepts_cross_line_textbf_in_checklist(monkeypatch):
+    paper = CHECKER.PAPER.read_text(encoding="utf-8")
+    block = CHECKER.checklist_block(paper)
+    mutated = block.replace(
+        r"\textbf{READ unsupported}",
+        "\\textbf{\nREAD unsupported}",
+        1,
+    )
+    assert mutated != block
+    paper = paper.replace(block, mutated, 1)
+    monkeypatch.setattr(CHECKER, "PAPER", _PaperSource(paper))
+    assert CHECKER.main([]) == 0
+
+
+def test_main_rejects_checklist_unsupported_mapping_mutation(monkeypatch):
+    paper = _mutate_checklist_state(
+        CHECKER.PAPER.read_text(encoding="utf-8"),
+        r"READ\s+unsupported",
+        "Diagnostic only",
     )
     _assert_main_rejects(monkeypatch, paper)
 
 
-def test_main_rejects_underpowered_result_routed_to_withheld(monkeypatch):
-    paper = CHECKER.PAPER.read_text(encoding="utf-8").replace(
-        "An underpowered result is unresolved",
-        "An underpowered result is withheld-control",
+def test_main_rejects_checklist_read_only_mapping_mutation(monkeypatch):
+    paper = _mutate_checklist_state(
+        CHECKER.PAPER.read_text(encoding="utf-8"),
+        r"READ\s+supported;\s+TRANSFER\s+not\s+yet\s+tested",
+        "Unresolved",
     )
     _assert_main_rejects(monkeypatch, paper)
 
 
-def test_main_rejects_version_change_returning_directly_to_diagnostic(monkeypatch):
-    paper = CHECKER.PAPER.read_text(encoding="utf-8").replace(
-        "change returns it to unresolved; new READ support is required before diagnostic",
-        "change returns it directly to diagnostic",
+def test_main_rejects_checklist_failed_mapping_mutation(monkeypatch):
+    paper = _mutate_checklist_state(
+        CHECKER.PAPER.read_text(encoding="utf-8"),
+        r"TRANSFER\s+tested\s+and\s+failed",
+        "Diagnostic only",
+    )
+    _assert_main_rejects(monkeypatch, paper)
+
+
+def test_main_rejects_checklist_underpowered_mapping_mutation(monkeypatch):
+    paper = _mutate_checklist_state(
+        CHECKER.PAPER.read_text(encoding="utf-8"),
+        r"TRANSFER\s+underpowered\s+or\s+inconclusive",
+        "Withheld control",
+    )
+    _assert_main_rejects(monkeypatch, paper)
+
+
+def test_main_rejects_checklist_coherence_mapping_mutation(monkeypatch):
+    paper = _mutate_checklist_state(
+        CHECKER.PAPER.read_text(encoding="utf-8"),
+        r"Comparative\s+pass\s+with\s+coherence",
+        "Withheld control",
     )
     _assert_main_rejects(monkeypatch, paper)
 

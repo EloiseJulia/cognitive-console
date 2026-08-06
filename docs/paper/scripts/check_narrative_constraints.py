@@ -97,53 +97,138 @@ def normalized_latex_source(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip().lower()
 
 
+def heading_block(text: str, title: str, level: str) -> str:
+    """Return one section/subsection body, bounded by the next peer heading."""
+    levels = {"section": 1, "subsection": 2}
+    headings = list(
+        re.finditer(
+            r"\\(section|subsection)\*?\s*\{([^{}]*)\}",
+            text,
+            re.S,
+        )
+    )
+    wanted = normalized_latex_source(title)
+    for index, match in enumerate(headings):
+        if (
+            match.group(1) == level
+            and normalized_latex_source(match.group(2)) == wanted
+        ):
+            end = len(text)
+            for following in headings[index + 1 :]:
+                if levels[following.group(1)] <= levels[level]:
+                    end = following.start()
+                    break
+            return text[match.end() : end]
+    raise ValueError(f"missing {level} heading: {title}")
+
+
+def checklist_block(text: str) -> str:
+    subsection = heading_block(
+        text, "From Candidate Axis to Interface State", "subsection"
+    )
+    itemize = re.search(
+        r"\\begin\{itemize\}(.*?)\\end\{itemize\}",
+        strip_comments(subsection),
+        re.S,
+    )
+    if not itemize:
+        raise ValueError("candidate-to-interface-state checklist has no itemize block")
+    return itemize.group(1)
+
+
+def canonical_condition(text: str) -> str | None:
+    words = set(normalized_latex_source(text).split())
+    if {"read", "unsupported"} <= words:
+        return "READ unsupported"
+    if "read" in words and "transfer" in words and (
+        "not" in words or "untested" in words or "only" in words
+    ):
+        return "READ supported; TRANSFER not yet tested"
+    if "transfer" in words and ({"failed", "failure"} & words):
+        return "TRANSFER tested and failed"
+    if {"underpowered", "inconclusive"} & words:
+        return "TRANSFER underpowered or inconclusive"
+    if "pass" in words and {"coherence", "coherent"} & words:
+        return "Comparative pass with coherence"
+    return None
+
+
+def canonical_state(text: str) -> str | None:
+    words = set(normalized_latex_source(text).split())
+    if "unresolved" in words:
+        return "Unresolved"
+    if "diagnostic" in words:
+        return "Diagnostic only"
+    if {"withheld", "control"} <= words:
+        return "Withheld control"
+    if {"evidence", "supported", "control"} <= words:
+        return "Evidence-supported control"
+    return None
+
+
 def state_consistency(text: str) -> dict[str, bool]:
-    source = normalized_latex_source(text)
+    interface = normalized_latex_source(
+        heading_block(text, "Interface-Evaluation Contract in Use", "section")
+    )
+    discussion = normalized_latex_source(
+        heading_block(text, "Discussion", "section")
+    )
     return {
         "interface_failed_to_withheld": (
-            "legible but non transfer evidence yields withheld control" in source
-            and "diagnostic information remains visible within that presentation" in source
+            "legible but non transfer evidence yields withheld control" in interface
+            and "diagnostic information remains visible within that presentation"
+            in interface
         ),
         "interface_inconclusive_to_unresolved": (
-            "an underpowered test is unresolved" in source
-            and "an untested method or model is unresolved" in source
+            "an underpowered test is unresolved" in interface
+            and "an untested method or model is unresolved" in interface
         ),
         "interface_read_only_to_diagnostic": (
-            "read only cases as diagnostic" in source
+            "read only cases as diagnostic" in interface
         ),
         "discussion_failed_to_withheld": (
-            "a failed comparative test yields withheld control" in source
-            and "diagnostic evidence may remain visible" in source
+            "a failed comparative test yields withheld control" in discussion
+            and "diagnostic evidence may remain visible" in discussion
         ),
         "discussion_inconclusive_and_instability": (
-            "an underpowered result is unresolved" in source
-            and "coherence failure yields withheld control due to instability" in source
-            and "a model or method swap is unresolved and untested" in source
+            "an underpowered result is unresolved" in discussion
+            and "coherence failure yields withheld control due to instability"
+            in discussion
+            and "a model or method swap is unresolved and untested" in discussion
         ),
         "lifecycle_requires_read_again": (
-            "a candidate begins as unresolved" in source
-            and "local read support can move it to diagnostic" in source
-            and "it becomes actionable only after comparator bound evaluation passes" in source
+            "a candidate begins as unresolved" in discussion
+            and "local read support can move it to diagnostic" in discussion
+            and "it becomes actionable only after comparator bound evaluation passes"
+            in discussion
             and "change returns it to unresolved new read support is required before diagnostic"
-            in source
+            in discussion
         ),
         "scenario_primary_withheld": (
-            "the primary state is withheld control" in source
+            "the primary state is withheld control" in interface
             and "this is a withheld control presentation that retains diagnostic information rather than a diagnostic state"
-            in source
+            in interface
         ),
     }
 
 
 def checklist_routes(text: str) -> dict[str, str]:
-    routes = {}
-    for condition, state in re.findall(
-        r"\\item\s+\\textbf\{([^}]+)\}\s*(?:\\newline\s*)?"
-        r"\\\(\\rightarrow\\\)\s+"
-        r"\\textsc\{([^}]+)\}",
-        strip_comments(text),
-    ):
-        routes[condition.strip()] = state.strip()
+    routes: dict[str, str] = {}
+    for index, item in enumerate(re.split(r"\\item\b", checklist_block(text))[1:]):
+        condition_match = re.search(r"\\textbf\s*\{([^{}]+)\}", item, re.S)
+        state_match = re.search(
+            r"\\\(\\rightarrow\\\).*?\\textsc\s*\{([^{}]+)\}",
+            item,
+            re.S,
+        )
+        condition = (
+            canonical_condition(condition_match.group(1)) if condition_match else None
+        )
+        state = canonical_state(state_match.group(1)) if state_match else None
+        if condition is None or state is None or condition in routes:
+            routes[f"__invalid_item_{index}"] = normalized_latex_source(item)
+            continue
+        routes[condition] = state
     return routes
 
 
@@ -372,18 +457,20 @@ def main(argv: list[str] | None = None) -> int:
     concept_source = CONCEPT_FIGURE.read_text(encoding="utf-8")
     concept = normalized_latex_source(concept_source)
     routes = checklist_routes(text)
+    checklist = normalized_latex_source(
+        heading_block(text, "From Candidate Axis to Interface State", "subsection")
+    )
     edges = concept_edges(concept_source)
     positions = concept_positions(concept_source)
     actionability_structure = {
         "candidate_to_state_checklist": all(
-            phrase in prose(text)
+            phrase in checklist
             for phrase in (
-                "From Candidate Axis to Interface State",
-                "Bound a usable comparator",
-                "Run TRANSFER with coherence",
-                "evidence-supported control",
+                "bound a usable comparator",
+                "run transfer with coherence",
             )
-        ),
+        )
+        and routes == EXPECTED_ROUTES,
         "figure_states": all(
             phrase in concept
             for phrase in (

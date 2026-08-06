@@ -11,6 +11,7 @@ from pathlib import Path
 
 
 PAPER = Path(__file__).resolve().parents[1] / "main.tex"
+CONCEPT_FIGURE = PAPER.parent / "figures" / "concept.tex"
 ROOT = PAPER.parents[2]
 RESULT_TERMS = re.compile(
     r"\b(no .*pass|failed-superiority|null|no method-model cell)\b", re.I
@@ -37,6 +38,23 @@ DISCLAIMER = re.compile(
 NON_PROSE_ENVIRONMENTS = re.compile(
     r"\\begin\{(?:equation|align|figure|figure\*|table|table\*|tabular|enumerate|quote)\}"
 )
+EXPECTED_ROUTES = {
+    "READ unsupported": "Unresolved",
+    "READ supported; TRANSFER not yet tested": "Diagnostic only",
+    "TRANSFER tested and failed": "Withheld control",
+    "TRANSFER underpowered or inconclusive": "Unresolved",
+    "Comparative pass with coherence": "Evidence-supported control",
+}
+EXPECTED_FIGURE_EDGES = {
+    ("candidate", "", "read"),
+    ("read", "yes", "transfer"),
+    ("read", "no", "unresolved"),
+    ("transfer", "tested", "outcome"),
+    ("transfer", "not tested", "diagnostic"),
+    ("outcome", "underpowered / inconclusive", "unresolved"),
+    ("outcome", "failed", "withheld"),
+    ("outcome", "pass + coherent", "supported"),
+}
 
 
 def strip_comments(text: str) -> str:
@@ -58,6 +76,185 @@ def prose(text: str) -> str:
     text = re.sub(r"\\[A-Za-z*]+(?:\[[^]]*\])?", "", text)
     text = text.replace("{", "").replace("}", "")
     return re.sub(r"\s+", " ", text).strip()
+
+
+def normalized_latex_source(text: str) -> str:
+    """Preserve LaTeX argument text while normalizing commands and whitespace."""
+    text = strip_comments(text)
+    text = re.sub(r"\\\\", " ", text)
+    previous = None
+    while text != previous:
+        previous = text
+        text = re.sub(
+            r"\\(?:textbf|textsc|emph|textrm|textit|texttt)\s*\{([^{}]*)\}",
+            r" \1 ",
+            text,
+            flags=re.S,
+        )
+    text = re.sub(r"\\(?:cite|ref|label|input|includegraphics)\s*\{[^{}]*\}", " ", text)
+    text = re.sub(r"\\[A-Za-z*]+(?:\[[^]]*\])?", " ", text)
+    text = re.sub(r"[{}$`'\";:,.!?()/\-]+", " ", text)
+    return re.sub(r"\s+", " ", text).strip().lower()
+
+
+def heading_block(text: str, title: str, level: str) -> str:
+    """Return one section/subsection body, bounded by the next peer heading."""
+    levels = {"section": 1, "subsection": 2}
+    headings = list(
+        re.finditer(
+            r"\\(section|subsection)\*?\s*\{([^{}]*)\}",
+            text,
+            re.S,
+        )
+    )
+    wanted = normalized_latex_source(title)
+    for index, match in enumerate(headings):
+        if (
+            match.group(1) == level
+            and normalized_latex_source(match.group(2)) == wanted
+        ):
+            end = len(text)
+            for following in headings[index + 1 :]:
+                if levels[following.group(1)] <= levels[level]:
+                    end = following.start()
+                    break
+            return text[match.end() : end]
+    raise ValueError(f"missing {level} heading: {title}")
+
+
+def checklist_block(text: str) -> str:
+    subsection = heading_block(
+        text, "From Candidate Axis to Interface State", "subsection"
+    )
+    itemize = re.search(
+        r"\\begin\{itemize\}(.*?)\\end\{itemize\}",
+        strip_comments(subsection),
+        re.S,
+    )
+    if not itemize:
+        raise ValueError("candidate-to-interface-state checklist has no itemize block")
+    return itemize.group(1)
+
+
+def canonical_condition(text: str) -> str | None:
+    words = set(normalized_latex_source(text).split())
+    if {"read", "unsupported"} <= words:
+        return "READ unsupported"
+    if "read" in words and "transfer" in words and (
+        "not" in words or "untested" in words or "only" in words
+    ):
+        return "READ supported; TRANSFER not yet tested"
+    if "transfer" in words and ({"failed", "failure"} & words):
+        return "TRANSFER tested and failed"
+    if {"underpowered", "inconclusive"} & words:
+        return "TRANSFER underpowered or inconclusive"
+    if "pass" in words and {"coherence", "coherent"} & words:
+        return "Comparative pass with coherence"
+    return None
+
+
+def canonical_state(text: str) -> str | None:
+    words = set(normalized_latex_source(text).split())
+    if "unresolved" in words:
+        return "Unresolved"
+    if "diagnostic" in words:
+        return "Diagnostic only"
+    if {"withheld", "control"} <= words:
+        return "Withheld control"
+    if {"evidence", "supported", "control"} <= words:
+        return "Evidence-supported control"
+    return None
+
+
+def state_consistency(text: str) -> dict[str, bool]:
+    interface = normalized_latex_source(
+        heading_block(text, "Interface-Evaluation Contract in Use", "section")
+    )
+    discussion = normalized_latex_source(
+        heading_block(text, "Discussion", "section")
+    )
+    return {
+        "interface_failed_to_withheld": (
+            "legible but non transfer evidence yields withheld control" in interface
+            and "diagnostic information remains visible within that presentation"
+            in interface
+        ),
+        "interface_inconclusive_to_unresolved": (
+            "an underpowered test is unresolved" in interface
+            and "an untested method or model is unresolved" in interface
+        ),
+        "interface_read_only_to_diagnostic": (
+            "read only cases as diagnostic" in interface
+        ),
+        "discussion_failed_to_withheld": (
+            "a failed comparative test yields withheld control" in discussion
+            and "diagnostic evidence may remain visible" in discussion
+        ),
+        "discussion_inconclusive_and_instability": (
+            "an underpowered result is unresolved" in discussion
+            and "coherence failure yields withheld control due to instability"
+            in discussion
+            and "a model or method swap is unresolved and untested" in discussion
+        ),
+        "lifecycle_requires_read_again": (
+            "a candidate begins as unresolved" in discussion
+            and "local read support can move it to diagnostic" in discussion
+            and "it becomes actionable only after comparator bound evaluation passes"
+            in discussion
+            and "change returns it to unresolved new read support is required before diagnostic"
+            in discussion
+        ),
+        "scenario_primary_withheld": (
+            "the primary state is withheld control" in interface
+            and "this is a withheld control presentation that retains diagnostic information rather than a diagnostic state"
+            in interface
+        ),
+    }
+
+
+def checklist_routes(text: str) -> dict[str, str]:
+    routes: dict[str, str] = {}
+    for index, item in enumerate(re.split(r"\\item\b", checklist_block(text))[1:]):
+        condition_match = re.search(r"\\textbf\s*\{([^{}]+)\}", item, re.S)
+        state_match = re.search(
+            r"\\\(\\rightarrow\\\).*?\\textsc\s*\{([^{}]+)\}",
+            item,
+            re.S,
+        )
+        condition = (
+            canonical_condition(condition_match.group(1)) if condition_match else None
+        )
+        state = canonical_state(state_match.group(1)) if state_match else None
+        if condition is None or state is None or condition in routes:
+            routes[f"__invalid_item_{index}"] = normalized_latex_source(item)
+            continue
+        routes[condition] = state
+    return routes
+
+
+def concept_edges(text: str) -> set[tuple[str, str, str]]:
+    edges = set()
+    for statement in re.findall(r"\\draw\[flow\]\s+(.*?);", strip_comments(text), re.S):
+        endpoints = re.findall(r"\(([A-Za-z]+)(?:\.[A-Za-z]+)?\)", statement)
+        if len(endpoints) < 2:
+            continue
+        label_match = re.search(r"node\[branch,[^]]*\]\{([^}]+)\}", statement)
+        if not label_match:
+            label_match = re.search(r"node\[branch\]\{([^}]+)\}", statement)
+        label = label_match.group(1).strip() if label_match else ""
+        edges.add((endpoints[0], label, endpoints[-1]))
+    return edges
+
+
+def concept_positions(text: str) -> dict[str, tuple[float, float]]:
+    return {
+        name: (float(x), float(y))
+        for name, x, y in re.findall(
+            r"\\node\[[^]]+\]\s+\(([A-Za-z]+)\)\s+at\s+\((-?\d+(?:\.\d+)?),"
+            r"(-?\d+(?:\.\d+)?)\)",
+            strip_comments(text),
+        )
+    }
 
 
 def sentence_list(text: str) -> list[str]:
@@ -188,10 +385,10 @@ def paragraph_opener(paragraph: str) -> str:
     return " ".join(words[:2])
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base", help="Git revision used for numeric-value comparison")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     text = PAPER.read_text(encoding="utf-8")
     abstract = environment(text, "abstract")
@@ -257,6 +454,60 @@ def main() -> int:
         ),
         "no_user_study_once": len(scope_sentence) == 1,
     }
+    concept_source = CONCEPT_FIGURE.read_text(encoding="utf-8")
+    concept = normalized_latex_source(concept_source)
+    routes = checklist_routes(text)
+    checklist = normalized_latex_source(
+        heading_block(text, "From Candidate Axis to Interface State", "subsection")
+    )
+    edges = concept_edges(concept_source)
+    positions = concept_positions(concept_source)
+    actionability_structure = {
+        "candidate_to_state_checklist": all(
+            phrase in checklist
+            for phrase in (
+                "bound a usable comparator",
+                "run transfer with coherence",
+            )
+        )
+        and routes == EXPECTED_ROUTES,
+        "figure_states": all(
+            phrase in concept
+            for phrase in (
+                "unresolved",
+                "diagnostic only",
+                "withheld control",
+                "evidence supported control",
+            )
+        ),
+        "checklist_semantic_routes": routes == EXPECTED_ROUTES,
+        "figure_semantic_routes": edges == EXPECTED_FIGURE_EDGES,
+        "figure_vertical_order": (
+            positions.get("candidate", (0, 1))[1]
+            > positions.get("read", (0, 0))[1]
+            > positions.get("transfer", (0, -1))[1]
+            > positions.get("outcome", (0, -2))[1]
+            > positions.get("unresolved", (0, -3))[1]
+            > positions.get("annotation", (0, -4))[1]
+        ),
+        "resolution_note_follows_table": bool(
+            re.search(
+                r"\\input\{tables/c2-delta-4cell\.tex\}\s*"
+                r"\\FloatBarrier\s*\\noindent\\textbf\{Resolution note\.\}",
+                text,
+            )
+        ),
+        "positive_control_order": text.index(
+            r"\(-0.24\), CI [\(-0.36\), \(-0.12\)]"
+        )
+        < text.index("The bounded refusal check establishes"),
+        "workflow_not_user_validated": (
+            "This checklist is a proposed interface-evaluation workflow"
+            in prose(text)
+            and "effects have not been validated" in prose(text)
+        ),
+    }
+    state_routes = state_consistency(text)
 
     print(f"Abstract sentences: {len(sentences)}")
     print(f"Abstract numeric expressions: {len(abstract_numbers)} {abstract_numbers}")
@@ -269,6 +520,8 @@ def main() -> int:
         print(f"  line {line_number(body, match.start())}: {match.group(0)}")
     print(f"Caption disclaimers: {len(caption_disclaimers)}")
     print(f"Scope red lines: {red_lines}")
+    print(f"Actionability structure: {actionability_structure}")
+    print(f"State consistency: {state_routes}")
     print(f"Over-dense two-word paragraph openers: {dense_openers}")
     print(f"Consecutive repeated paragraph openers: {len(consecutive_openers)}")
     for line, opener in consecutive_openers:
@@ -303,6 +556,10 @@ def main() -> int:
         failures.append("caption contains scope/disclaimer language")
     if not all(red_lines.values()):
         failures.append("scope red-line statement missing")
+    if not all(actionability_structure.values()):
+        failures.append("actionability workflow or decision-state structure missing")
+    if not all(state_routes.values()):
+        failures.append("paper contains inconsistent evidence-state routing")
     if dense_openers:
         failures.append("a two-word paragraph opener appears more than four times")
     if consecutive_openers:

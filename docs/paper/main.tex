@@ -346,7 +346,7 @@ The team replaces the slider with a non-actionable diagnostic and comparator vie
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/console-ui-contract.pdf}
-  \caption{Artifact-derived deliberation and uncertainty cards summarize axis state, evidence tier, key comparator or calibration evidence, and next action without making a user-effect claim.}
+  \caption{Artifact-derived cards summarize deliberation and uncertainty state, evidence tier, key evidence, and next action.}
   \Description{Two grayscale-readable console cards summarize axis state, evidence tier, key comparator or calibration evidence, and the resulting next action. The deliberation card shows an unresolved state, mixed comparative evidence, its bounded prompt comparator, and a request for additional powered evidence. The uncertainty card shows withheld control, comparator-negative TRANSFER evidence, the targeted baseline and format recheck, missingness and unrechecked-scope caveats, and its evidence tier.}
   \label{fig:console}
 \end{figure*}
@@ -447,9 +447,10 @@ The console uses Table~\ref{tab:artifact-registry} to map experiment identifiers
   \end{tabular}
 \end{table*}
 
+\FloatBarrier
+
 We exclude E-0012, which is invalid for paper use, and E-0016, whose recorded attempt produced no scientific result. Neither contributes paper evidence.
 
-\FloatBarrier
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{references}
 

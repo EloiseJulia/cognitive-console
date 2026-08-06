@@ -1,7 +1,7 @@
 table_id: failure-taxonomy
 output: docs/paper/tables/failure-taxonomy.tex
 generator: docs/paper/scripts/make_failure_taxonomy.py
-purpose: Evidence-scoped definitions mapping tested model results to conditional interface states.
+purpose: Evidence-scoped taxonomy distinguishing observed patterns and conditions from prospective safeguards.
 evidence_ids:
   - E-0003
   - E-0005
@@ -27,13 +27,13 @@ artifact_type: main table
 paper_location: "Interface-Evaluation Contract in Use (Table tab:failure-taxonomy)"
 supports_claims: ["C2", "C3"]
 aggregation_script: docs/paper/scripts/make_failure_taxonomy.py
-generator_commit: 841965f641a10bf68659bfda04cd6f65f2c4643f
+generator_commit: fd83861be1d107ace6dddc0427e0e4289ee6c048
 source_artifact_commits:
   "results/E-0013-uncertainty-recheck/reanalysis.json": 70af3996ddea4f881efbb4c0bff9241aad3849ce
 source_artifact_hashes:
   "results/E-0013-uncertainty-recheck/reanalysis.json": ea91f10cce1de06f9c38c4777064e85b7fcf44f295f7ef983092ca0843edfd01
 output_file: docs/paper/tables/failure-taxonomy.tex
-output_sha256: 6cf9ac51913662912e39407d67110e1dc0995dfda1d12f7d6a08770e213270c3
+output_sha256: e962adf7e6567e11892205600eec554dc7155f2cea5ddebe3a668e321b55dcb2
 manual_edits_allowed: false
-last_verified: "2026-08-06"
-verdict: "verified static taxonomy generated from audited definitions; E-0013 supports only the narrow CAA×Qwen F2 caveat"
+last_verified: "2026-08-07"
+verdict: "verified static taxonomy separating observed patterns/conditions from the untriggered prospective coherence safeguard; E-0013 supports only the narrow CAA×Qwen F2 caveat"

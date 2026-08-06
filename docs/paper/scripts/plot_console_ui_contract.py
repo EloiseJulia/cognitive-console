@@ -131,16 +131,7 @@ def _content_stream(payload: dict) -> str:
                 ops.append(_line_ops(x + 10, y, line, 7))
                 y -= 10
             y -= 2
-    psr = payload["ui_contract"]["psr_method_strength"]
-    ops.append(_rect_ops(44, 424, 750, 62, (0.94, 0.94, 0.94)))
-    ops.append(_line_ops(56, 468, "Method-strength robustness: steering still fails on TEST", 11))
-    psr_bits = [
-        f"{row['label']}: pass={row['passed']} Δ={_fmt(row['delta'])} CI=[{_fmt(row['ci_lo'])},{_fmt(row['ci_hi'])}]"
-        for row in psr["rows"]
-    ]
-    ops.append(_line_ops(56, 450, f"{psr['summary']} Outcome={psr['verdict']}.", 8))
-    ops.append(_line_ops(56, 436, " | ".join(psr_bits), 7))
-    ops.append(_line_ops(44, 396, "Numbers derived from frozen, independently audited artifacts.", 7))
+    ops.append(_line_ops(44, 500, "Numbers derived from frozen, independently audited artifacts.", 7))
     return "".join(ops)
 
 

@@ -14,13 +14,13 @@ A readable latent axis should not automatically become a control. Actionability 
 
 1. **Problem and metric shift.** A slider implies behavioral control. Legibility and output movement do not establish incremental actionability over the prompt channel.
 2. **Method and artifact.** A comparative evidence gate tests the candidate latent route against a strong but bounded 16-prompt channel. READ, TRANSFER, comparator, calibration warning, and evidence tier record why an affordance is diagnostic, unresolved, withheld, or qualified.
-3. **Evidence and implication.** The full CAA/ITI × Qwen/Llama grid yields 0/12 axis-cell passes. Five of five split seeds preserve the verdict over the shared item pool. Positive controls narrow endpoint, instrument, and scale alternatives without supplying a passing latent behavioral positive control.
+3. **Evidence and implication.** The full CAA/ITI × Qwen/Llama grid yields 0/12 axis-cell passes. Four prospectively frozen new split seeds plus the previously observed frozen seed yielded the same verdict across all five over the shared item pool. Positive controls narrow endpoint, instrument, and scale alternatives without supplying a passing latent behavioral positive control.
 
 ## Section roles
 
 ### Abstract
 
-Important interface promise → output-change criterion is insufficient → comparative gate and five-field record → frozen procedure → 0/12 and 5/5 shared-pool result → qualified positive-control boundary → scoped design meaning.
+Important interface promise → output-change criterion is insufficient → comparative gate and five-field record → frozen procedure → 0/12 and five-way shared-pool split-sensitivity result with its prospective timing stated → qualified positive-control boundary → scoped design meaning.
 
 ### 1. Introduction
 
@@ -54,7 +54,7 @@ Organize by argument role:
 - full grid for incremental control;
 - targeted format recheck for a measurement-artifact explanation;
 - refusal/random/scale controls for endpoint, instrument, and under-scaling alternatives;
-- five split seeds for DEV/TEST selection sensitivity.
+- four prospectively frozen new split seeds plus the previously observed frozen seed for DEV/TEST selection sensitivity over one shared item pool.
 
 Preserve all frozen formulas, outcome definitions, statistics, method-specific scaling, exact coherence gate, and artifact lineage.
 
@@ -62,7 +62,7 @@ Preserve all frozen formulas, outcome definitions, statistics, method-specific s
 
 1. Exploratory READ evidence and model/axis heterogeneity.
 2. Full 4×3 table: 0/12 axis-cell passes.
-3. Split robustness: 5/5 seeds, same item pool.
+3. Split sensitivity: the previously observed frozen seed and four prospectively frozen new seeds yield the same verdict across all five over the shared item pool.
 4. Calibration warning: four frozen steer-vs-prompt contrasts; Qwen/CAA steer≈baseline; complete-case contrast negative; adversarial bounds cross zero; three cells unrechecked.
 5. “We tested three alternative explanations”: endpoint live, instrument responsive, under-scaling substantially weakened within the coherent range; no latent behavioral positive control passes.
 

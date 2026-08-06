@@ -18,6 +18,11 @@ RESULT_TERMS = re.compile(
 NUMERIC = re.compile(
     r"(?<![A-Za-z])[-+]?(?:\d+(?:\.\d+)?|\.\d+)(?:\\?%|×|x)?"
 )
+MODEL_IDENTIFIER = re.compile(
+    r"\b(?:Qwen\d+(?:\.\d+)*(?:-\d+B)?(?:-Instruct)?|"
+    r"(?:Meta-)?Llama-\d+(?:\.\d+)*(?:-\d+B)?(?:-Instruct)?|CAA|ITI)\b",
+    re.I,
+)
 NOT_BUT = re.compile(r"\bnot\b[^.!?\n]{0,180}\bbut\b", re.I)
 INTERNAL = re.compile(
     r"\b[ED]-00\d+\b|valid_for_paper|(?:[\w.-]+/)+[\w.-]+\.(?:ya?ml|json|md)",
@@ -112,10 +117,11 @@ def verify_derived_summaries(abstract_text: str) -> dict[str, bool]:
         and "0 of 12 axis-cell passes" in clean,
         "five_of_five_matches_artifact": len(seed_records) == 5
         and seed_no_pass == 5
-        and "5 of 5 DEV/TEST split seeds" in clean,
+        and "all five preserve that verdict" in clean,
         "shared_pool_caveat_same_sentence": bool(
             re.search(
-                r"5 of 5 DEV/TEST split seeds[^.]*shared item pool",
+                r"previously observed seed[^.]*four prospectively frozen new "
+                r"DEV/TEST split seeds[^.]*all five[^.]*shared item pool",
                 clean,
                 re.I,
             )
@@ -130,6 +136,11 @@ def line_number(text: str, offset: int) -> int:
 def numeric_values(text: str) -> set[str]:
     clean = re.sub(r"\b[ED]-\d+\b", "", strip_comments(text))
     return {m.group(0) for m in NUMERIC.finditer(clean)}
+
+
+def abstract_numeric_expressions(text: str) -> list[str]:
+    clean = MODEL_IDENTIFIER.sub("", prose(text))
+    return NUMERIC.findall(clean)
 
 
 def prose_paragraphs(text: str) -> list[tuple[int, str]]:
@@ -185,7 +196,7 @@ def main() -> int:
     text = PAPER.read_text(encoding="utf-8")
     abstract = environment(text, "abstract")
     sentences = sentence_list(abstract)
-    abstract_numbers = NUMERIC.findall(prose(abstract))
+    abstract_numbers = abstract_numeric_expressions(abstract)
 
     registry_start = text.index(r"\section{Artifact Registry}")
     body = text[:registry_start]

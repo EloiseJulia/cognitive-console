@@ -67,7 +67,7 @@ READ 表示某个内部方向在指定测量下可读；CONTROL 表示该干预�
 
 该 application 的输出是 scoped failed-superiority：
 
-`{CAA, ITI} x {Qwen2.5-7B, Llama-3-8B}` 四格中，没有任何轴通过预注册 superiority rule。五个 DEV/TEST split seeds 在同一 item pool 上保持相同 no-pass verdict。
+`{CAA, ITI} x {Qwen2.5-7B, Llama-3-8B}` 四格中，没有任何轴通过预注册 superiority rule。原先已观察的 frozen seed 加上随后前瞻冻结的四个新 DEV/TEST split seeds，在同一 shared item pool 上的五次 split 均得到相同 no-pass verdict；该结果检验的是 split sensitivity。
 
 这只支持：
 

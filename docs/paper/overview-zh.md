@@ -1,11 +1,11 @@
 # 论文总览（中文内部理解版）
 
-> 当前标题：**When Does a Legible Latent Axis Earn a Control? An Evaluation Contract for Bounded Naive CAA/ITI Steering**
+> 当前标题：**When Does a Legible Latent Axis Earn a Control? A Comparative Evidence Gate for Bounded Naive CAA/ITI Steering**
 > 目标 venue：IUI。本文档只同步当前论文 framing。数字以生成表、冻结 artifact、evidence ledger 和 `main.tex` 为准。
 
 ## 1. 一句话叙事
 
-给模型属性命名并放置 slider，会形成“移动 slider 就能控制对应行为”的承诺。本文的主贡献是五字段 evidence contract；console 是 model-evidence artifact instantiation，完整实证 grid 是该 contract 的首个 worked application。“No cell passes”是 contract 对这一案例给出的状态，不是论文对 latent control 的最终结论。
+给模型属性命名并放置 slider，会形成“移动 slider 就能控制对应行为”的承诺。本文主张先设 comparative evidence gate：只有通过预注册、prompt-comparative、coherence-gated 的行为检验，界面才授予 actionability。五字段 contract 是该 gate 的 interface-facing record format；console 是 model-evidence artifact instantiation。“0/12 axis-cell passes”是该 worked application 的输出，不是对 latent control 的普遍否定。
 
 ## 2. HCI 问题
 
@@ -29,11 +29,11 @@
 
 ## 4. 主要贡献（严格顺序）
 
-### 4.1 Conceptual distinction
+### 4.1 Comparative actionability criterion
 
-READ 表示某个内部方向在指定测量下可读；CONTROL 表示该干预在指定比较器、结果、margin 与 coherence 条件下通过行为检查。可读性先支持 diagnostic，不自动支持 slider。
+READ 表示某个内部方向在指定测量下可读；CONTROL 表示该干预在指定比较器、结果、margin 与 coherence 条件下通过行为检查。领域常用的 output movement 门槛不足；正确门槛是相对 bounded prompt channel 的增量行为控制。
 
-### 4.2 Five-field evidence contract（主贡献）
+### 4.2 Five-field evidence contract（gate 的记录格式）
 
 合同有五个字段：
 

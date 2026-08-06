@@ -1,0 +1,85 @@
+base_commit: 0472d91c2949898fef28a8f19e99d7bf8b59645b
+main_tex_sha256: f322da85f787b436fb1e88ad8af034edb476d684b219c863d0b96052939ab266
+purpose: "Immutable rhetoric-rewrite guard; evidence values may move but not change."
+
+formula_labels:
+  - eq:facade-reaches
+  - eq:facade-ratio
+  - eq:caa-steering
+  - eq:method-specific-steering
+  - eq:paired-diff
+  - eq:axis-pass
+
+citation_keys:
+  - amershi2019guidelines
+  - bansal2019beyond
+  - bucinca2021trust
+  - fan2026asteer
+  - gebru2021datasheets
+  - he2025coninstruct
+  - heyman2026steer
+  - huang2025steering
+  - korznikov2025rogue
+  - labarta2026attribution
+  - lee2004trust
+  - li2023iti
+  - liao2024transparency
+  - mishra2026nonsurj
+  - mitchell2019modelcards
+  - neumann2026whocontrols
+  - raval2026latman
+  - riche2025aiinstr
+  - rimsky2024caa
+  - sprejer2026mindgap
+  - stolfo2025instr
+  - tankelevitch2024metacog
+  - turner2023actadd
+  - zou2023repe
+
+critical_numbers:
+  grid: "0/12 axis-cell passes; four method-model cells, three axes each"
+  robustness: "5/5 DEV/TEST split seeds; shared item pool, split membership only"
+  prompt_budget: 16
+  alpha_grid: [2, 4, 6, 8, 12, 16, 24]
+  superiority_margin: 0.05
+  coherence_gate: "g_steer <= 1.5*g_baseline + 0.02"
+  samples_per_item: 5
+  temperature: 0.7
+  max_new_tokens: 64
+  bootstrap_replicates: 10000
+  bonferroni_ci: "98.33%"
+  skepticism_mde: [0.188, 0.268, 0.225, 0.279]
+  direct_qwen_caa_steer_vs_baseline:
+    compliance: 0.011
+    one_minus_brier: 0.0008
+  format_recheck:
+    steer_compliance: 0.826
+    prompt_compliance: 0.445
+    complete_case_delta: -0.34
+    complete_case_ci: [-0.51, -0.17]
+    adversarial_bounds: [-0.478, 0.250]
+    unrechecked_cells: 3
+  positive_controls:
+    prompt_refusal: "95%"
+    bounded_caa_refusal: "0%"
+    natural_direction_norm: 216
+    random_uncertainty_delta: -0.24
+    random_uncertainty_ci: [-0.36, -0.12]
+    coherent_residual_norm_range: "0.5-0.66"
+    degenerate_point_residual_norm: 1.05
+    null_mde: "about 0.19"
+  appendix_logit_context:
+    beta_one_delta_nats: 13.9
+    refusals: "0/5"
+    byte_identical_item_delta_nats: 16.9
+
+scope_facts:
+  - "C1 is exploratory and CAA-style; ITI has no inherited READ verdict."
+  - "Core superiority and split robustness use frozen timing; TOST is post-hoc."
+  - "The headline is a scoped failed-superiority/control-qualification boundary, not a true null or impossibility theorem."
+  - "Scope is tested Qwen2.5-7B and Llama-3-8B tasks with bounded prompts and method-specific single-layer naive CAA/ITI at coefficient alpha<=24."
+  - "E-0013 supports only the CAA×Qwen targeted recheck; adversarial bounds cross zero and three cells remain unrechecked."
+  - "E-0014 and E-0015 establish endpoint/instrument evidence and weaken under-scaling within the coherent range; no latent behavioral positive control passes."
+  - "E-0015 logit and the social axis are appendix-only, non-claim-bearing context."
+  - "E-0016 produced no scientific result and is excluded."
+  - "No user study was conducted."

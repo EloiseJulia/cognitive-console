@@ -73,13 +73,13 @@ The paper makes three contributions:
 
 Frozen artifacts populate the contract visualized by the console. The result is a versioned decision record: evidence first, affordance second.
 
-Figure~\ref{fig:concept} previews the decision flow. The current artifact instantiates unresolved and diagnostic or withheld-control exits; no tested arm instantiates the evidence-supported control exit.
+Figure~\ref{fig:concept} previews the decision flow. In the current study, the artifact instantiates only diagnostic, unresolved, and withheld-control states; no tested arm instantiates the evidence-supported control state.
 
 \begin{figure*}[t]
   \centering
   \input{figures/concept.tex}
-  \caption{Decision flow from a candidate latent axis through READ and comparative TRANSFER checks to three evidence-tiered interface states.}
-  \Description{A candidate axis first receives a READ check. Unsupported or untested READ exits as unresolved. READ-supported candidates undergo bounded-prompt comparison, behavioral transfer, and coherence checks, producing either a diagnostic or withheld-control state with a warning, or an evidence-supported control state for the exact evidence tier.}
+  \caption{Decision flow from a candidate latent axis through READ and comparative TRANSFER evidence to an evidence-tiered interface state.}
+  \Description{A candidate axis first receives a READ check. Unsupported READ evidence routes to unresolved. Supported READ evidence proceeds to TRANSFER evidence: an untested comparison routes to diagnostic only, a failed tested comparison routes to withheld control, an underpowered or inconclusive comparison routes to unresolved, and a comparative pass with coherence routes to evidence-supported control. Every state carries an evidence tier, and comparator-specific risk adds a calibration warning.}
   \label{fig:concept}
 \end{figure*}
 
@@ -140,7 +140,7 @@ Each field answers a specific breakdown:
 
 Model cards and datasheets provide a precedent for attaching scope and provenance to technical artifacts \cite{mitchell2019modelcards,gebru2021datasheets}. Our record operates at the level of one candidate control and adds a comparative behavioral gate: evidence is not merely documented after deployment but determines whether actionability is granted.
 
-The gate produces three current interface states. READ evidence without comparative TRANSFER supports a diagnostic. Failed or underpowered TRANSFER produces withheld-control or unresolved status while preserving why the gate did not open. Actionability is granted only after the specified intervention passes the behavioral comparison and coherence requirements in its evidence tier. The artifact instantiates the first two states; no tested latent arm instantiates the third.
+The gate distinguishes four labels. READ evidence without a TRANSFER test supports diagnostic inspection only. A tested failure withholds control, whereas an underpowered or inconclusive test stays unresolved. Actionability is granted only after the specified intervention passes the behavioral comparison and coherence requirements in its evidence tier. The current study instantiates diagnostic, unresolved, and withheld-control states; no tested latent arm instantiates the evidence-supported control state.
 
 \subsection{From Candidate Axis to Interface State}
 
@@ -150,7 +150,15 @@ The contract can be applied as a compact design checklist:
   \item \textbf{Define the target outcome and READ evidence.} State what behavior the proposed control names and whether that semantic label has local representational support.
   \item \textbf{Bound a usable comparator.} Select both the prompt and latent channels without TEST access, and preserve the prompt budget and selected comparator in the record.
   \item \textbf{Run TRANSFER with coherence.} Test the preregistered comparative margin and reject an actionable state when useful gain requires incoherent output.
-  \item \textbf{Attach the warning and issue a state.} Record calibration and resolution limits, then emit one of three outcomes: READ unsupported or untested becomes \emph{unresolved}, with no semantic control label; READ supported but TRANSFER not passed or underpowered becomes \emph{diagnostic} or \emph{withheld control} with the reason visible; comparative passage with coherence becomes an \emph{evidence-supported control} only for the exact tier.
+  \item \textbf{Issue the evidence-tiered state.} Apply these branches:
+  \begin{itemize}
+    \item \textbf{READ unsupported} \(\rightarrow\) \textsc{Unresolved}: no semantic control label.
+    \item \textbf{READ supported; TRANSFER not yet tested} \(\rightarrow\) \textsc{Diagnostic only}: allow inspection without presenting validated control.
+    \item \textbf{TRANSFER tested and failed} \(\rightarrow\) \textsc{Withheld control}: show the comparator and failure.
+    \item \textbf{TRANSFER underpowered or inconclusive} \(\rightarrow\) \textsc{Unresolved}: show uncertainty and do not count the result as failure.
+    \item \textbf{Comparative pass with coherence}\newline \(\rightarrow\) \textsc{Evidence-supported control}: restrict the control to the exact evidence tier.
+  \end{itemize}
+  Attach the evidence tier to every state. Attach a calibration warning when comparator-specific risk exists.
 \end{enumerate}
 This checklist is a proposed interface-evaluation workflow. Its user-facing comprehension and effects have not been validated.
 

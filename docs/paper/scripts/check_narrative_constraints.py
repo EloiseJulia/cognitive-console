@@ -38,6 +38,23 @@ DISCLAIMER = re.compile(
 NON_PROSE_ENVIRONMENTS = re.compile(
     r"\\begin\{(?:equation|align|figure|figure\*|table|table\*|tabular|enumerate|quote)\}"
 )
+EXPECTED_ROUTES = {
+    "READ unsupported": "Unresolved",
+    "READ supported; TRANSFER not yet tested": "Diagnostic only",
+    "TRANSFER tested and failed": "Withheld control",
+    "TRANSFER underpowered or inconclusive": "Unresolved",
+    "Comparative pass with coherence": "Evidence-supported control",
+}
+EXPECTED_FIGURE_EDGES = {
+    ("candidate", "", "read"),
+    ("read", "yes", "transfer"),
+    ("read", "no", "unresolved"),
+    ("transfer", "tested", "outcome"),
+    ("transfer", "not tested", "diagnostic"),
+    ("outcome", "underpowered / inconclusive", "unresolved"),
+    ("outcome", "failed", "withheld"),
+    ("outcome", "pass + coherent", "supported"),
+}
 
 
 def strip_comments(text: str) -> str:
@@ -59,6 +76,43 @@ def prose(text: str) -> str:
     text = re.sub(r"\\[A-Za-z*]+(?:\[[^]]*\])?", "", text)
     text = text.replace("{", "").replace("}", "")
     return re.sub(r"\s+", " ", text).strip()
+
+
+def checklist_routes(text: str) -> dict[str, str]:
+    routes = {}
+    for condition, state in re.findall(
+        r"\\item\s+\\textbf\{([^}]+)\}\s*(?:\\newline\s*)?"
+        r"\\\(\\rightarrow\\\)\s+"
+        r"\\textsc\{([^}]+)\}",
+        strip_comments(text),
+    ):
+        routes[condition.strip()] = state.strip()
+    return routes
+
+
+def concept_edges(text: str) -> set[tuple[str, str, str]]:
+    edges = set()
+    for statement in re.findall(r"\\draw\[flow\]\s+(.*?);", strip_comments(text), re.S):
+        endpoints = re.findall(r"\(([A-Za-z]+)(?:\.[A-Za-z]+)?\)", statement)
+        if len(endpoints) < 2:
+            continue
+        label_match = re.search(r"node\[branch,[^]]*\]\{([^}]+)\}", statement)
+        if not label_match:
+            label_match = re.search(r"node\[branch\]\{([^}]+)\}", statement)
+        label = label_match.group(1).strip() if label_match else ""
+        edges.add((endpoints[0], label, endpoints[-1]))
+    return edges
+
+
+def concept_positions(text: str) -> dict[str, tuple[float, float]]:
+    return {
+        name: (float(x), float(y))
+        for name, x, y in re.findall(
+            r"\\node\[[^]]+\]\s+\(([A-Za-z]+)\)\s+at\s+\((-?\d+(?:\.\d+)?),"
+            r"(-?\d+(?:\.\d+)?)\)",
+            strip_comments(text),
+        )
+    }
 
 
 def sentence_list(text: str) -> list[str]:
@@ -259,6 +313,10 @@ def main() -> int:
         "no_user_study_once": len(scope_sentence) == 1,
     }
     concept = prose(CONCEPT_FIGURE.read_text(encoding="utf-8"))
+    concept_source = CONCEPT_FIGURE.read_text(encoding="utf-8")
+    routes = checklist_routes(text)
+    edges = concept_edges(concept_source)
+    positions = concept_positions(concept_source)
     actionability_structure = {
         "candidate_to_state_checklist": all(
             phrase in prose(text)
@@ -269,14 +327,24 @@ def main() -> int:
                 "evidence-supported control",
             )
         ),
-        "three_figure_exits": all(
+        "figure_states": all(
             phrase in concept
             for phrase in (
-                "Unresolved",
-                "Diagnostic or withheld control",
-                "Evidence-supported control",
-                "Evidence tier attached",
+                "UNRESOLVED",
+                "DIAGNOSTIC ONLY",
+                "WITHHELD CONTROL",
+                "EVIDENCE-SUPPORTED CONTROL",
             )
+        ),
+        "checklist_semantic_routes": routes == EXPECTED_ROUTES,
+        "figure_semantic_routes": edges == EXPECTED_FIGURE_EDGES,
+        "figure_vertical_order": (
+            positions.get("candidate", (0, 1))[1]
+            > positions.get("read", (0, 0))[1]
+            > positions.get("transfer", (0, -1))[1]
+            > positions.get("outcome", (0, -2))[1]
+            > positions.get("unresolved", (0, -3))[1]
+            > positions.get("annotation", (0, -4))[1]
         ),
         "resolution_note_follows_table": bool(
             re.search(

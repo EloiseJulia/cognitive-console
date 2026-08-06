@@ -1,29 +1,35 @@
 \begin{tikzpicture}[
   >=Latex,
   font=\footnotesize,
-  node distance=8mm and 10mm,
-  stagebox/.style={draw, rounded corners, align=center, minimum height=10mm, text width=28mm, inner sep=3pt},
-  check/.style={draw, diamond, aspect=2.1, align=center, inner sep=1.5pt, text width=21mm},
-  state/.style={draw, rounded corners, align=left, minimum height=15mm, text width=42mm, inner sep=4pt},
+  stagebox/.style={draw, rounded corners, align=center, minimum height=9mm, text width=42mm, inner sep=3pt},
+  check/.style={draw, diamond, aspect=2.5, align=center, inner sep=1.5pt, text width=25mm},
+  state/.style={draw, rounded corners, align=center, minimum height=14mm, text width=34mm, inner sep=3pt},
   unresolved/.style={state, dashed},
-  warning/.style={state, double},
+  withheld/.style={state, double},
   supported/.style={state, line width=0.9pt},
   flow/.style={->, thick},
-  branch/.style={font=\scriptsize, fill=white, inner sep=1pt}
+  branch/.style={font=\footnotesize, fill=white, inner sep=1.5pt},
+  note/.style={draw, align=center, text width=154mm, inner sep=3pt}
 ]
-  \node[stagebox] (candidate) {\textbf{Candidate axis}\\Named outcome + model, method, layer, task};
-  \node[check, right=of candidate] (read) {\textbf{READ}\\supported?};
-  \node[stagebox, right=of read] (compare) {\textbf{Bounded comparator}\\Select usable prompt and latent channels on DEV};
-  \node[check, right=of compare] (transfer) {\textbf{TRANSFER}\\margin + coherence pass?};
+  \node[stagebox] (candidate) at (0,0) {\textbf{Candidate axis}\\Named outcome and exact evidence tier};
+  \node[check] (read) at (0,-1.55) {\textbf{READ}\\supported?};
+  \node[check] (transfer) at (0,-3.25) {\textbf{TRANSFER evidence}\\tested?};
+  \node[check] (outcome) at (0,-5.05) {\textbf{Comparative outcome}\\with coherence};
 
-  \node[unresolved, below=13mm of read] (unresolved) {\textbf{Unresolved}\\No semantic control label\\\scriptsize Evidence tier attached; record READ as unsupported or untested};
-  \node[warning, below=13mm of compare] (withheld) {\textbf{Diagnostic or withheld control}\\Keep inspection only where READ supports it\\\scriptsize Attach calibration or resolution warning and exact evidence tier};
-  \node[supported, below=13mm of transfer] (control) {\textbf{Evidence-supported control}\\Grant actionability only within the passing tier\\\scriptsize Preserve comparator, protocol, and coherence conditions};
+  \node[unresolved] (unresolved) at (-5.9,-7.15) {\textbf{UNRESOLVED}\\Show uncertainty; no\\semantic control label\\when READ is unsupported};
+  \node[state] (diagnostic) at (-1.97,-7.15) {\textbf{DIAGNOSTIC ONLY}\\Inspection allowed; no validated control};
+  \node[withheld] (withheld) at (1.97,-7.15) {\textbf{WITHHELD CONTROL}\\Show comparator and failure};
+  \node[supported] (supported) at (5.9,-7.15) {\textbf{EVIDENCE-SUPPORTED}\\\textbf{CONTROL}\\Only for the exact passing tier};
 
   \draw[flow] (candidate) -- (read);
-  \draw[flow] (read) -- node[branch, above]{yes} (compare);
-  \draw[flow] (compare) -- (transfer);
-  \draw[flow] (read) -- node[branch, left]{no / untested} (unresolved);
-  \draw[flow] (transfer) -- node[branch, left]{no / underpowered} (withheld);
-  \draw[flow] (transfer) -- node[branch, right]{yes} (control);
+  \draw[flow] (read) -- node[branch, right]{yes} (transfer);
+  \draw[flow] (read.west) -| node[branch, near start, above]{no} (-5.9,-5.75) -- (unresolved.north);
+  \draw[flow] (transfer) -- node[branch, right]{tested} (outcome);
+  \draw[flow] (transfer.west) -| node[branch, near start, above]{not tested} (-1.97,-5.75) -- (diagnostic.north);
+  \draw[flow] (outcome.west) -| node[branch, near start, above]{underpowered / inconclusive} (-5.25,-5.75) -- (unresolved.north);
+  \draw[flow] (outcome) -| node[branch, near start, above]{failed} (withheld.north);
+  \draw[flow] (outcome.east) -| node[branch, near start, above]{pass + coherent} (supported.north);
+
+  \node[note] (annotation) at (0,-8.75) {\textbf{All states:} attach the exact evidence tier.\quad
+    \textbf{When comparator-specific risk exists:} attach a calibration warning.};
 \end{tikzpicture}

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import re
 import subprocess
+from collections import Counter
 from pathlib import Path
 
 
@@ -25,10 +26,6 @@ DISCLAIMER = re.compile(
     r"does not establish|not a (?:result|deployment)|post-hoc|exploratory|"
     r"not pre-registered|valid_for_paper|claim status",
     re.I,
-)
-ACTIVE_SUBJECT = re.compile(
-    r"\b(?:We|The console|A designer|A user|Alex|Maya)\s+"
-    r"(?:[A-Za-z]+|\\[A-Za-z]+)",
 )
 NON_PROSE_ENVIRONMENTS = re.compile(
     r"\\begin\{(?:equation|align|figure|figure\*|table|table\*|tabular|enumerate|quote)\}"
@@ -109,6 +106,11 @@ def prose_paragraphs(text: str) -> list[tuple[int, str]]:
     return paragraphs
 
 
+def paragraph_opener(paragraph: str) -> str:
+    words = re.findall(r"[A-Za-z]+(?:-[A-Za-z]+)?", paragraph)
+    return " ".join(words[:2])
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base", help="Git revision used for numeric-value comparison")
@@ -137,10 +139,20 @@ def main() -> int:
         prose(text),
         re.I,
     )
-    active_paragraph_failures = [
-        (line, paragraph)
-        for line, paragraph in prose_paragraphs(text)
-        if not ACTIVE_SUBJECT.search(paragraph)
+    paragraphs = prose_paragraphs(text)
+    openers = [
+        (line, paragraph_opener(paragraph))
+        for line, paragraph in paragraphs
+        if paragraph_opener(paragraph)
+    ]
+    opener_counts = Counter(opener for _, opener in openers)
+    dense_openers = {
+        opener: count for opener, count in opener_counts.items() if count > 4
+    }
+    consecutive_openers = [
+        (line, opener)
+        for (_, previous), (line, opener) in zip(openers, openers[1:])
+        if opener == previous
     ]
     red_lines = {
         "missingness_bounds_cross_zero": "adversarial missingness bounds span zero" in prose(text),
@@ -162,12 +174,10 @@ def main() -> int:
         print(f"  line {line_number(body, match.start())}: {match.group(0)}")
     print(f"Caption disclaimers: {len(caption_disclaimers)}")
     print(f"Scope red lines: {red_lines}")
-    print(
-        "Prose paragraphs without an approved active subject: "
-        f"{len(active_paragraph_failures)}"
-    )
-    for line, paragraph in active_paragraph_failures:
-        print(f"  line {line}: {paragraph[:180]}")
+    print(f"Over-dense two-word paragraph openers: {dense_openers}")
+    print(f"Consecutive repeated paragraph openers: {len(consecutive_openers)}")
+    for line, opener in consecutive_openers:
+        print(f"  line {line}: {opener}")
 
     failures = []
     if first_result is None or first_result < 8:
@@ -182,8 +192,10 @@ def main() -> int:
         failures.append("caption contains scope/disclaimer language")
     if not all(red_lines.values()):
         failures.append("scope red-line statement missing")
-    if active_paragraph_failures:
-        failures.append("prose paragraph lacks approved active subject")
+    if dense_openers:
+        failures.append("a two-word paragraph opener appears more than four times")
+    if consecutive_openers:
+        failures.append("consecutive prose paragraphs repeat the same opener")
 
     if args.base:
         base = subprocess.run(
@@ -195,14 +207,14 @@ def main() -> int:
             encoding="utf-8",
         ).stdout
         candidate_without_registry = text[:registry_start]
-        base_without_bibliography = base[: base.index(r"\bibliographystyle")]
+        base_without_registry = base[: base.index(r"\section{Artifact Registry}")]
         removed = sorted(
-            numeric_values(base_without_bibliography)
+            numeric_values(base_without_registry)
             - numeric_values(candidate_without_registry)
         )
         added = sorted(
             numeric_values(candidate_without_registry)
-            - numeric_values(base_without_bibliography)
+            - numeric_values(base_without_registry)
         )
         print(f"Quantitative values removed outside registry: {removed}")
         print(f"Quantitative values added outside registry: {added}")

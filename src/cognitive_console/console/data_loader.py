@@ -788,7 +788,7 @@ def build_console_payload(
             "signals": [
                 "READ status",
                 "TRANSFER verdict",
-                "PROMPT-CEILING",
+                "BOUNDED PROMPT COMPARATOR",
                 "CALIBRATION-HARM",
                 "EVIDENCE-TIER",
             ],

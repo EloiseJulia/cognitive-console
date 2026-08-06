@@ -1,11 +1,11 @@
 # 论文总览（中文内部理解版）
 
-> 当前标题：**When Does a Legible Latent Axis Earn a Control? A Comparative Evidence Gate for Bounded Naive CAA/ITI Steering**
+> 当前标题：**When Does a Legible Latent Axis Earn a Control? A Comparator-Bound Evaluation Contract for Latent-Control Interfaces**
 > 目标 venue：IUI。本文档只同步当前论文 framing。数字以生成表、冻结 artifact、evidence ledger 和 `main.tex` 为准。
 
 ## 1. 一句话叙事
 
-给模型属性命名并放置 slider，会形成“移动 slider 就能控制对应行为”的承诺。本文主张先设 comparative evidence gate：只有通过预注册、prompt-comparative、coherence-gated 的行为检验，界面才授予 actionability。五字段 contract 是该 gate 的 interface-facing record format；console 是 model-evidence artifact instantiation。“0/12 axis-cell passes”是该 worked application 的输出，不是对 latent control 的普遍否定。
+给模型属性命名并放置 slider，会形成“移动 slider 就能控制对应行为”的承诺。本文主张先设 comparator-bound evaluation gate：只有通过预注册、prompt-comparative、coherence-gated 的行为检验，界面才授予 actionability。五字段 contract 是该 gate 的 interface-facing artifact；console 是 model-evidence instantiation。主叙事先报告没有测试 cell 展示 superiority，再区分 uncertainty、deliberation 与 skepticism 的证据分辨率，不把程序性 0/12 输出写成统一 resolved null。
 
 ## 2. HCI 问题
 

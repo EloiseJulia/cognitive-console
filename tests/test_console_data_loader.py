@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -206,5 +207,11 @@ def test_console_ui_contract_figure_script_runs():
         assert pdf.startswith(b"%PDF-1.4")
         content = pdf.decode("utf-8")
         assert content.count("0 0 0 rg 0 0 0 RG BT") == content.count(" BT")
+        assert "/MediaBox [0 0 504 230]" in content
+        assert "BOUNDED PROMPT COMPARATOR" in content
+        assert "PROMPT-CEILING" not in content
+        assert "EVIDENCE TIER / NEXT ACTION" in content
+        font_sizes = [float(size) for size in re.findall(r"/F[12] ([0-9.]+) Tf", content)]
+        assert min(font_sizes) >= 7.0
     finally:
         out.unlink(missing_ok=True)

@@ -6,50 +6,67 @@ endobj
 << /Type /Pages /Kids [3 0 R] /Count 1 >>
 endobj
 3 0 obj
-<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 504 230] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>
 endobj
 4 0 obj
 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
 endobj
 5 0 obj
-<< /Length 2203 >>
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+6 0 obj
+<< /Length 2811 >>
 stream
-0 0 0 rg 0 0 0 RG BT /F1 16 Tf 44.0 790.0 Td (Cognitive Console v2: five-signal UI contract) Tj ET
-0 0 0 rg 0 0 0 RG BT /F1 8 Tf 44.0 772.0 Td (All numbers are read from frozen local artifacts; no humans/GPU/API/model calls.) Tj ET
-0.920 0.940 1.000 rg 44.0 520.0 360.0 224.0 re f
-0 0 0 RG 44.0 520.0 360.0 224.0 re S
-0 0 0 rg 0 0 0 RG BT /F1 11 Tf 54.0 726.0 Td (Deliberation) Tj ET
-0 0 0 rg 0 0 0 RG BT /F1 7 Tf 54.0 706.0 Td (LEGIBLE: no added control demonstrated) Tj ET
-0 0 0 rg 0 0 0 RG BT /F1 7 Tf 54.0 694.0 Td (READ: HOLDS facade ratio=0.583) Tj ET
-0 0 0 rg 0 0 0 RG BT /F1 7 Tf 54.0 682.0 Td (TRANSFER: FAIL Δ=0.015) Tj ET
-0 0 0 rg 0 0 0 RG BT /F1 7 Tf 54.0 670.0 Td (PROMPT-CEILING: TEST prompt mean=0.020) Tj ET
-0 0 0 rg 0 0 0 RG BT /F1 7 Tf 54.0 658.0 Td (CALIBRATION-CONTRAST: NO_ROBUST_HARM No robust calibration) Tj ET
-0 0 0 rg 0 0 0 RG BT /F1 7 Tf 54.0 648.0 Td (harm flag for this axis.) Tj ET
-0 0 0 rg 0 0 0 RG BT /F1 7 Tf 54.0 636.0 Td (EVIDENCE-TIER: exploratory \(single-run facade READ; C2) Tj ET
-0 0 0 rg 0 0 0 RG BT /F1 7 Tf 54.0 626.0 Td (behavior has 2×2 robustness for uncertainty steer-vs-prompt contrast\)) Tj ET
-1.000 0.880 0.880 rg 422.0 520.0 360.0 224.0 re f
-0 0 0 RG 422.0 520.0 360.0 224.0 re S
-0 0 0 rg 0 0 0 RG BT /F1 11 Tf 432.0 726.0 Td (Uncertainty-awareness) Tj ET
-0 0 0 rg 0 0 0 RG BT /F1 7 Tf 432.0 706.0 Td (LEGIBLE: no added control demonstrated) Tj ET
-0 0 0 rg 0 0 0 RG BT /F1 7 Tf 432.0 694.0 Td (READ: HOLDS facade ratio=0.713) Tj ET
-0 0 0 rg 0 0 0 RG BT /F1 7 Tf 432.0 682.0 Td (TRANSFER: FAIL Δ=-0.228) Tj ET
-0 0 0 rg 0 0 0 RG BT /F1 7 Tf 432.0 670.0 Td (PROMPT-CEILING: TEST prompt mean=0.848) Tj ET
-0 0 0 rg 0 0 0 RG BT /F1 7 Tf 432.0 658.0 Td (CALIBRATION-CONTRAST: HARM steer-vs-prompt calibration contrast Δ=-0.228,) Tj ET
-0 0 0 rg 0 0 0 RG BT /F1 7 Tf 432.0 648.0 Td (CI=[-0.370,-0.092]) Tj ET
-0 0 0 rg 0 0 0 RG BT /F1 7 Tf 432.0 636.0 Td (EVIDENCE-TIER: exploratory \(single-run facade READ; C2) Tj ET
-0 0 0 rg 0 0 0 RG BT /F1 7 Tf 432.0 626.0 Td (behavior has 2×2 robustness for uncertainty steer-vs-prompt contrast\)) Tj ET
-0 0 0 rg 0 0 0 RG BT /F1 7 Tf 44.0 500.0 Td (Numbers derived from frozen, independently audited artifacts.) Tj ET
+0 0 0 rg 0 0 0 RG BT /F2 12.0 Tf 18.0 211.0 Td (COMPARATOR-BOUND CONTROL RECORD) Tj ET
+0 0 0 rg 0 0 0 RG BT /F1 7.0 Tf 18.0 198.0 Td (Artifact-derived interface states; no user-effect claim.) Tj ET
+1.000 1.000 1.000 rg 18.0 18.0 230.0 168.0 re f
+0 0 0 RG 18.0 18.0 230.0 168.0 re S
+0.880 0.880 0.880 rg 18.0 153.0 230.0 33.0 re f
+0 0 0 RG 18.0 153.0 230.0 33.0 re S
+0 0 0 rg 0 0 0 RG BT /F2 9.5 Tf 26.0 172.0 Td (DELIBERATION) Tj ET
+0 0 0 rg 0 0 0 RG BT /F2 7.5 Tf 26.0 159.0 Td (WITHHELD CONTROL / diagnostic retained) Tj ET
+0 0 0 rg 0 0 0 RG BT /F2 7.0 Tf 26.0 139.0 Td (READ) Tj ET
+0 0 0 rg 0 0 0 RG BT /F1 7.0 Tf 26.0 130.0 Td (HOLDS / facade ratio=0.583) Tj ET
+0 0 0 rg 0 0 0 RG BT /F2 7.0 Tf 26.0 119.0 Td (TRANSFER) Tj ET
+0 0 0 rg 0 0 0 RG BT /F1 7.0 Tf 26.0 110.0 Td (FAIL; full-grid resolution is mixed.) Tj ET
+0 0 0 rg 0 0 0 RG BT /F2 7.0 Tf 26.0 99.0 Td (BOUNDED PROMPT COMPARATOR) Tj ET
+0 0 0 rg 0 0 0 RG BT /F1 7.0 Tf 26.0 90.0 Td (TEST prompt mean=0.020) Tj ET
+0 0 0 rg 0 0 0 RG BT /F2 7.0 Tf 26.0 79.0 Td (CALIBRATION WARNING) Tj ET
+0 0 0 rg 0 0 0 RG BT /F1 7.0 Tf 26.0 70.0 Td (No resolved comparator-negative calibration contrast) Tj ET
+0 0 0 rg 0 0 0 RG BT /F1 7.0 Tf 26.0 62.0 Td (for this axis.) Tj ET
+0 0 0 rg 0 0 0 RG BT /F2 7.0 Tf 26.0 51.0 Td (EVIDENCE TIER / NEXT ACTION) Tj ET
+0 0 0 rg 0 0 0 RG BT /F1 7.0 Tf 26.0 42.0 Td (READ exploratory; TRANSFER frozen; WITHHOLD CONTROL;) Tj ET
+0 0 0 rg 0 0 0 RG BT /F1 7.0 Tf 26.0 34.0 Td (retain diagnostic evidence.) Tj ET
+1.000 1.000 1.000 rg 256.0 18.0 230.0 168.0 re f
+0 0 0 RG 256.0 18.0 230.0 168.0 re S
+0.880 0.880 0.880 rg 256.0 153.0 230.0 33.0 re f
+0 0 0 RG 256.0 153.0 230.0 33.0 re S
+0 0 0 rg 0 0 0 RG BT /F2 9.5 Tf 264.0 172.0 Td (UNCERTAINTY-AWARENESS) Tj ET
+0 0 0 rg 0 0 0 RG BT /F2 7.5 Tf 264.0 159.0 Td (WITHHELD CONTROL / diagnostic retained) Tj ET
+0 0 0 rg 0 0 0 RG BT /F2 7.0 Tf 264.0 139.0 Td (READ) Tj ET
+0 0 0 rg 0 0 0 RG BT /F1 7.0 Tf 264.0 130.0 Td (HOLDS / facade ratio=0.713) Tj ET
+0 0 0 rg 0 0 0 RG BT /F2 7.0 Tf 264.0 119.0 Td (TRANSFER) Tj ET
+0 0 0 rg 0 0 0 RG BT /F1 7.0 Tf 264.0 110.0 Td (FAIL; 4/4 frozen contrasts comparator-negative.) Tj ET
+0 0 0 rg 0 0 0 RG BT /F2 7.0 Tf 264.0 99.0 Td (BOUNDED PROMPT COMPARATOR) Tj ET
+0 0 0 rg 0 0 0 RG BT /F1 7.0 Tf 264.0 90.0 Td (TEST prompt mean=0.848) Tj ET
+0 0 0 rg 0 0 0 RG BT /F2 7.0 Tf 264.0 79.0 Td (CALIBRATION WARNING) Tj ET
+0 0 0 rg 0 0 0 RG BT /F1 7.0 Tf 264.0 70.0 Td (Steer - bounded prompt: delta=-0.228, CI [-0.370,) Tj ET
+0 0 0 rg 0 0 0 RG BT /F1 7.0 Tf 264.0 62.0 Td (-0.092].) Tj ET
+0 0 0 rg 0 0 0 RG BT /F2 7.0 Tf 264.0 51.0 Td (EVIDENCE TIER / NEXT ACTION) Tj ET
+0 0 0 rg 0 0 0 RG BT /F1 7.0 Tf 264.0 42.0 Td (READ exploratory; TRANSFER frozen; WITHHOLD CONTROL;) Tj ET
+0 0 0 rg 0 0 0 RG BT /F1 7.0 Tf 264.0 34.0 Td (retain diagnostic evidence.) Tj ET
 endstream
 endobj
 xref
-0 6
+0 7
 0000000000 65535 f 
 0000000009 00000 n 
 0000000058 00000 n 
 0000000115 00000 n 
-0000000241 00000 n 
-0000000311 00000 n 
-trailer << /Root 1 0 R /Size 6 >>
+0000000251 00000 n 
+0000000321 00000 n 
+0000000396 00000 n 
+trailer << /Root 1 0 R /Size 7 >>
 startxref
-2565
+3258
 %%EOF

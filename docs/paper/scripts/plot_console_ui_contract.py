@@ -35,7 +35,7 @@ def _fmt(value: object, digits: int = 3) -> str:
     return str(value)
 
 
-def _wrap(text: str, width: int = 58) -> list[str]:
+def _wrap(text: str, width: int = 52, max_lines: int = 2) -> list[str]:
     words = text.split()
     lines: list[str] = []
     cur: list[str] = []
@@ -48,7 +48,7 @@ def _wrap(text: str, width: int = 58) -> list[str]:
             cur.append(word)
     if cur:
         lines.append(" ".join(cur))
-    return lines[:5]
+    return lines[:max_lines]
 
 
 def _reader_text(text: object) -> str:
@@ -61,6 +61,7 @@ def _reader_text(text: object) -> str:
         "human-alpha PENDING -> not-yet-confirmatory": "not yet confirmatory",
         "calibration harm": "steer-vs-prompt calibration contrast",
         "uncertainty harm": "uncertainty steer-vs-prompt contrast",
+        "LEGIBLE: no added control demonstrated": "WITHHELD CONTROL / diagnostic retained",
     }
     out = str(text)
     for old, new in replacements.items():
@@ -68,10 +69,17 @@ def _reader_text(text: object) -> str:
     return out
 
 
-def _line_ops(x: float, y: float, text: str, size: int = 8) -> str:
+def _line_ops(
+    x: float,
+    y: float,
+    text: str,
+    size: float = 8,
+    *,
+    font: str = "F1",
+) -> str:
     return (
         f"0 0 0 rg 0 0 0 RG "
-        f"BT /F1 {size} Tf {x:.1f} {y:.1f} Td "
+        f"BT /{font} {size:.1f} Tf {x:.1f} {y:.1f} Td "
         f"({_esc(_reader_text(text))}) Tj ET\n"
     )
 
@@ -81,25 +89,58 @@ def _rect_ops(x: float, y: float, w: float, h: float, fill: tuple[float, float, 
     return f"{r:.3f} {g:.3f} {b:.3f} rg {x:.1f} {y:.1f} {w:.1f} {h:.1f} re f\n0 0 0 RG {x:.1f} {y:.1f} {w:.1f} {h:.1f} re S\n"
 
 
-def _signal_line(label: str, body: str) -> str:
-    return f"{label}: {body}"
+def _signal_line(label: str, body: str) -> tuple[str, str]:
+    return label, body
 
 
-def _card_lines(card: dict) -> list[str]:
-    read = card["read_status"]
+def _next_action(card: dict) -> str:
     transfer = card["transfer_verdict"]
+    if transfer.get("passed"):
+        return "Restrict actionability to this exact evidence tier."
+    if transfer.get("verdict") == "FAIL":
+        return "WITHHOLD CONTROL; retain diagnostic evidence."
+    return "UNRESOLVED; do not present an actionable control."
+
+
+def _transfer_summary(card: dict) -> str:
+    transfer = card["transfer_verdict"]
+    if card["axis"] == "deliberation":
+        return f"{transfer.get('verdict')}; full-grid resolution is mixed."
+    replications = card["calibration_harm"].get("arm_replications", [])
+    if card["axis"] == "uncertainty_awareness" and replications:
+        negative = sum(1 for row in replications if row.get("robust_harm"))
+        return (
+            f"{transfer.get('verdict')}; {negative}/{len(replications)} "
+            "frozen contrasts comparator-negative."
+        )
+    return f"{transfer.get('verdict')}; {transfer.get('summary', '')}"
+
+
+def _warning_summary(card: dict) -> str:
+    warning = card["calibration_harm"]
+    if card["axis"] == "uncertainty_awareness":
+        return (
+            "Steer - bounded prompt: "
+            f"delta={warning.get('delta'):.3f}, "
+            f"CI [{warning.get('ci_lo'):.3f}, {warning.get('ci_hi'):.3f}]."
+        )
+    return "No resolved comparator-negative calibration contrast for this axis."
+
+
+def _card_lines(card: dict) -> list[tuple[str, str]]:
+    read = card["read_status"]
     ceiling = card["prompt_ceiling"]
-    harm = card["calibration_harm"]
     tier = card["evidence_tier"]
-    lines = [
-        card["headline"],
-        _signal_line("READ", f"{read.get('status')} {read.get('summary', '')}"),
-        _signal_line("TRANSFER", f"{transfer.get('verdict')} {transfer.get('summary', '')}"),
-        _signal_line("PROMPT-CEILING", ceiling.get("summary", "n/a")),
-        _signal_line("CALIBRATION-CONTRAST", f"{harm.get('status')} {harm.get('summary', '')}"),
-        _signal_line("EVIDENCE-TIER", f"{tier.get('tier')} ({'; '.join(tier.get('notes', []))})"),
+    return [
+        _signal_line("READ", f"{read.get('status')} / {read.get('summary', '')}"),
+        _signal_line("TRANSFER", _transfer_summary(card)),
+        _signal_line("BOUNDED PROMPT COMPARATOR", ceiling.get("summary", "n/a")),
+        _signal_line("CALIBRATION WARNING", _warning_summary(card)),
+        _signal_line(
+            "EVIDENCE TIER / NEXT ACTION",
+            f"READ {tier.get('tier')}; TRANSFER frozen; {_next_action(card)}",
+        ),
     ]
-    return lines
 
 
 def _select_cards(cards: Iterable[dict]) -> list[dict]:
@@ -113,25 +154,27 @@ def _select_cards(cards: Iterable[dict]) -> list[dict]:
 def _content_stream(payload: dict) -> str:
     cards = _select_cards(payload["ui_contract"]["cards"])
     ops = []
-    ops.append(_line_ops(44, 790, "Cognitive Console v2: five-signal UI contract", 16))
-    ops.append(_line_ops(44, 772, "All numbers are read from frozen local artifacts; no humans/GPU/API/model calls.", 8))
-    x0 = 44
-    y0 = 520
-    w = 360
-    h = 224
-    gap = 18
+    ops.append(_line_ops(18, 211, "COMPARATOR-BOUND CONTROL RECORD", 12, font="F2"))
+    ops.append(_line_ops(18, 198, "Artifact-derived interface states; no user-effect claim.", 7))
+    x0 = 18
+    y0 = 18
+    w = 230
+    h = 168
+    gap = 8
     for i, card in enumerate(cards):
         x = x0 + i * (w + gap)
-        color = (1.0, 0.88, 0.88) if card["calibration_harm"].get("severity") == "red" else (0.92, 0.94, 1.0)
-        ops.append(_rect_ops(x, y0, w, h, color))
-        ops.append(_line_ops(x + 10, y0 + h - 18, card["label"], 11))
-        y = y0 + h - 38
-        for raw in _card_lines(card):
-            for line in _wrap(raw):
-                ops.append(_line_ops(x + 10, y, line, 7))
-                y -= 10
-            y -= 2
-    ops.append(_line_ops(44, 500, "Numbers derived from frozen, independently audited artifacts.", 7))
+        ops.append(_rect_ops(x, y0, w, h, (1.0, 1.0, 1.0)))
+        ops.append(_rect_ops(x, y0 + h - 33, w, 33, (0.88, 0.88, 0.88)))
+        ops.append(_line_ops(x + 8, y0 + h - 14, card["label"].upper(), 9.5, font="F2"))
+        ops.append(_line_ops(x + 8, y0 + h - 27, card["headline"], 7.5, font="F2"))
+        y = y0 + h - 47
+        for label, body in _card_lines(card):
+            ops.append(_line_ops(x + 8, y, label, 7, font="F2"))
+            y -= 9
+            for line in _wrap(body):
+                ops.append(_line_ops(x + 8, y, line, 7))
+                y -= 8
+            y -= 3
     return "".join(ops)
 
 
@@ -139,8 +182,9 @@ def write_pdf(content: str, out_path: Path) -> None:
     objects = [
         b"<< /Type /Catalog /Pages 2 0 R >>",
         b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 842 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 504 230] /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> /Contents 6 0 R >>",
         b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
     ]
     stream = content.encode("utf-8")
     objects.append(b"<< /Length " + str(len(stream)).encode("ascii") + b" >>\nstream\n" + stream + b"endstream")

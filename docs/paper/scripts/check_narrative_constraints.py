@@ -307,17 +307,38 @@ def verify_derived_summaries(abstract_text: str) -> dict[str, bool]:
         and not record["any_cell_has_pass"]
         for record in seed_records
     )
+    uncertainty_negative = []
+    for cell in grid["cells"]:
+        result = json.loads(
+            (
+                ROOT
+                / "results"
+                / "arm_full"
+                / f"cell_{cell['cell_key']}"
+                / "c2b_adjudication_results.json"
+            ).read_text(encoding="utf-8")
+        )
+        uncertainty = next(
+            axis
+            for axis in result["axes"]
+            if axis["axis"] == "uncertainty_awareness"
+        )
+        uncertainty_negative.append(uncertainty["ci_hi"] < 0)
     clean = prose(abstract_text)
     return {
-        "zero_of_twelve_matches_artifact": axis_tests == 12
+        "no_tested_cell_superior_matches_artifact": axis_tests == 12
         and axis_passes == 0
-        and "0 of 12 axis-cell passes" in clean,
-        "five_of_five_matches_artifact": len(seed_records) == 5
+        and "No tested cell demonstrated superiority" in clean,
+        "four_uncertainty_contrasts_match_artifact": len(grid["cells"]) == 4
+        and all(uncertainty_negative)
+        and "All four uncertainty contrasts were resolved in the negative direction"
+        in clean,
+        "five_split_seeds_match_artifact": len(seed_records) == 5
         and seed_no_pass == 5
-        and "all five preserve that verdict" in clean,
+        and "across all five" in clean,
         "shared_pool_caveat_same_sentence": bool(
             re.search(
-                r"previously observed seed[^.]*four prospectively frozen new "
+                r"previously observed split seed[^.]*four prospectively frozen new "
                 r"DEV/TEST split seeds[^.]*all five[^.]*shared item pool",
                 clean,
                 re.I,
@@ -394,6 +415,9 @@ def main(argv: list[str] | None = None) -> int:
     abstract = environment(text, "abstract")
     sentences = sentence_list(abstract)
     abstract_numbers = abstract_numeric_expressions(abstract)
+    abstract_spelled_counts = re.findall(
+        r"\b(?:four|five)\b", prose(abstract), re.I
+    )
 
     registry_start = text.index(r"\section{Artifact Registry}")
     body = text[:registry_start]
@@ -493,7 +517,7 @@ def main(argv: list[str] | None = None) -> int:
         "resolution_note_follows_table": bool(
             re.search(
                 r"\\input\{tables/c2-delta-4cell\.tex\}\s*"
-                r"\\FloatBarrier\s*\\noindent\\textbf\{Resolution note\.\}",
+                r"\\noindent\\textbf\{Resolution note\.\}",
                 text,
             )
         ),
@@ -511,6 +535,10 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"Abstract sentences: {len(sentences)}")
     print(f"Abstract numeric expressions: {len(abstract_numbers)} {abstract_numbers}")
+    print(
+        "Abstract spelled concrete counts: "
+        f"{len(abstract_spelled_counts)} {abstract_spelled_counts}"
+    )
     print(f"Derived abstract summaries: {derived}")
     print(f"not-X-but-Y count: {len(not_but)}")
     for match in not_but:
@@ -544,8 +572,8 @@ def main(argv: list[str] | None = None) -> int:
 
     failures = []
     warnings = []
-    if len(abstract_numbers) < 2:
-        failures.append("abstract contains fewer than two numeric expressions")
+    if len(abstract_numbers) + len(abstract_spelled_counts) < 2:
+        failures.append("abstract contains fewer than two concrete counts")
     if not all(derived.values()):
         failures.append("abstract derived summaries do not match committed artifacts")
     if len(not_but) > 3:

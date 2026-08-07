@@ -32,7 +32,7 @@ Important interface promise → output-change criterion is insufficient → comp
 
 ### 2. Related Work
 
-Each subsection answers why existing transparency, steering, or manipulation work does not provide comparative affordance qualification. Mishra et al. supplies internal non-surjectivity as background, not our empirical claim. Stronger and trained methods bound the tested naive-additive scope.
+Bo et al. supplies the closest user-facing comparator evidence: three personalization interfaces, an unscaffolded prompting-only baseline, and heterogeneous exploratory user preferences. The remaining gap is the explicit per-affordance, comparator-bound qualification gate. Golden Gate Claude appears only as neutral motivation for publicly visible internal-feature amplification. Mishra et al. supplies internal non-surjectivity as background, not our empirical claim; stronger and trained methods bound the tested naive-additive scope.
 
 ### 3. Comparative Gate and Contract
 
@@ -82,7 +82,7 @@ Do not redefine the five fields. Show how the evidence record produces diagnosti
 
 ### 8. Scope
 
-State scope as applicability conditions, not apology. Include once: no user study. Preserve positive-control limits, C1 exploratory status, ITI READ gap, missingness bounds, three unrechecked cells, skepticism power limits, same-pool split scope, and bounded method-specific single-layer CAA/ITI with coefficient α≤24.
+State scope as applicability conditions, not apology. Preserve that Bo et al.'s exploratory user evidence concerns their preference-control interfaces, whereas this paper contributes model-evidence qualification and conducted no user study. Preserve positive-control limits, C1 exploratory status, ITI READ gap, missingness bounds, three unrechecked cells, skepticism power limits, same-pool split scope, and bounded method-specific single-layer CAA/ITI with coefficient α≤24.
 
 ### 9. Conclusion
 

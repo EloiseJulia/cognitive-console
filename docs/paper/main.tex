@@ -48,6 +48,8 @@ We instantiate the gate across two models, two additive steering families (CAA a
 
 Alex is drafting a difficult message with an AI assistant and sees a slider labeled ``skepticism.'' Moving it upward appears to promise that the assistant will challenge a false premise more reliably. The widget makes a control claim. Yet the evidence commonly used to justify latent controls, such as readable features or changed outputs, does not show that the latent route improves behavior beyond instructions that a user can already give.
 
+Anthropic's 24-hour Golden Gate Claude research demonstration made direct amplification of an internal Claude~3 Sonnet feature publicly visible, distinct from role-play or a system prompt; the public demonstration did not include a matched prompt-comparator qualification \cite{anthropic2024goldengate}.
+
 This paper changes the metric. A candidate latent affordance must demonstrate reliable incremental behavioral control over a bounded prompt channel, not merely movement in activations or text. The comparator is deliberately strong but fair. Sixteen authored prompt candidates cover varied wording and specificity; prompt and latent settings are selected on DEV only, and neither channel sees TEST during selection. The bounded channel is usable and reconstructable. It is harder to dismiss than a single casual prompt.
 
 Figure~\ref{fig:concept} previews the resulting artifact logic. In the current study, the artifact instantiates only diagnostic, unresolved, and withheld-control states; no tested arm instantiates the evidence-supported control state.
@@ -62,7 +64,7 @@ Figure~\ref{fig:concept} previews the resulting artifact logic. In the current s
 
 The problem matters at the interface. People monitor care, uncertainty, and resistance to faulty premises while using generative systems \cite{tankelevitch2024metacog}, and interface signals shape trust and reliance \cite{lee2004trust}. Confidence and explanation cues do not reliably improve calibration; some interventions intended to reduce over-reliance have weak or adverse effects \cite{bansal2019beyond,bucinca2021trust}. Human-AI guidance consequently links exposed information to an available action \cite{amershi2019guidelines,liao2024transparency}. A latent slider supplies that action visually, whether or not its behavioral qualification has been tested.
 
-Prompt instruments, feature-steering interfaces, human-centered activation-steering workflows, and latent-space manipulation tools already bring model structure to the interaction surface \cite{riche2025aiinstr,huang2025steering,labarta2026attribution,raval2026latman}. Their visibility makes qualification urgent. Mishra et al.\ show that steering can reach residual states that bounded prompting does not reproduce \cite{mishra2026nonsurj}, but internal non-surjectivity does not entail behavioral advantage. Trained steering can also mimic prompting \cite{heyman2026steer}. The right question is therefore local and comparative: has this method, on this axis and model, earned actionability over the existing channel?
+Prompt instruments, feature-steering interfaces, personalization steering, human-centered activation-steering workflows, and latent-space manipulation tools already bring model structure to the interaction surface \cite{riche2025aiinstr,huang2025steering,bo2026steerable,labarta2026attribution,raval2026latman}. Bo et al.\ also compare steering interfaces with an unscaffolded prompting-only baseline; our gap is an explicit per-affordance, comparator-bound qualification gate. Their visibility makes qualification urgent. Mishra et al.\ show that steering can reach residual states that bounded prompting does not reproduce \cite{mishra2026nonsurj}, but internal non-surjectivity does not entail behavioral advantage. Trained steering can also mimic prompting \cite{heyman2026steer}. The right question is therefore local and comparative: has this method, on this axis and model, earned actionability over the existing channel?
 
 We ask:
 \begin{quote}
@@ -94,6 +96,8 @@ Transparency research asks what to expose and whether the exposure supports huma
 
 Several systems make that omission concrete. Huang and Lim expose SAE features for lay steering \cite{huang2025steering}; Labarta et al.\ support expert activation-steering work in vision and CLIP \cite{labarta2026attribution}; Raval et al.\ make embeddings manipulable \cite{raval2026latman}; and AI-Instruments turns prompts into reusable interface objects \cite{riche2025aiinstr}. System-prompt and instruction-conflict studies further show that control is negotiated across layers with uneven authority and visibility \cite{neumann2026whocontrols,he2025coninstruct}. None of these interface forms, by itself, supplies comparative behavioral qualification for each latent affordance.
 
+Bo et al.\ study three activation-steering designs for cold-start personalization: SELECT, CALIBRATE, and LEARN. Their Gemma~2 9B IT evaluation includes an unscaffolded PROMPT baseline \cite{bo2026steerable}. The exploratory within-subject study (\(n=14\)) evaluates preference expression and alignment through computational and self-reported measures, finding heterogeneous user preferences rather than blanket superiority \cite{bo2026steerable}. That work supplies user evidence about interaction designs; our complementary target is a preregistered, per-axis model-evidence gate against a bounded selected prompt comparator, with an explicit margin, coherence check, and evidence tier.
+
 \subsection{Activation Steering and the Prompt Comparator}
 
 We compare two established intervention families. Contrastive Activation Addition derives a mean-difference direction from paired examples and adds it during inference \cite{rimsky2024caa}. Inference-Time Intervention uses probe-derived directions to alter truthful-answer behavior \cite{li2023iti}. Activation addition and representation engineering broaden the family \cite{turner2023actadd,zou2023repe}, while instruction-steering work connects natural-language instructions to activation-space interventions \cite{stolfo2025instr}. These methods establish internal intervention and output movement. An interface still needs to know whether the intervention adds behavioral control over prompting.
@@ -104,7 +108,7 @@ Steering can be brittle or unsafe, and its effects depend on context \cite{fan20
 
 We separate two claims that are often compressed into the phrase ``latent control.'' The first is representational: an internal direction is interpretable or readable. The second is behavioral: intervening on that direction produces a useful outcome. Mishra et al.\ show internal non-surjectivity, where bounded prompts do not reproduce all steered residual states \cite{mishra2026nonsurj}. That result motivates our question and leaves the behavioral comparison open. Our evaluation procedure tests that comparison on shared items.
 
-The novelty lies in the interface decision. Among the reviewed systems, we found no explicit gate that compares a latent candidate against the prompt channel and maps the verdict to an affordance state. We contribute that gate and its artifact-backed record format, not a new vector or broad benchmark. Table~\ref{tab:novelty-neighbors} summarizes the closest contrasts.
+The novelty lies in the interface decision. Prior work already compares user-facing steering designs with prompting \cite{bo2026steerable}; the open step is an explicit per-affordance gate that binds the selected comparator, margin, coherence requirement, and evidence tier to the resulting affordance state. We contribute that gate and its artifact-backed record format, not a new vector or broad benchmark. Table~\ref{tab:novelty-neighbors} summarizes the closest contrasts.
 
 \begin{table*}[t]
   \centering
@@ -117,6 +121,7 @@ The novelty lies in the interface decision. Among the reviewed systems, we found
     Prior work & What it establishes & What remains for an interface decision \\
     \midrule
     Huang and Lim \cite{huang2025steering} & A lay interface for SAE feature steering and persona construction. & Whether each visible feature has comparative behavioral evidence sufficient for a control affordance. \\
+    Bo et al. \cite{bo2026steerable} & SELECT, CALIBRATE, and LEARN interfaces for cold-start personalization, compared with an unscaffolded PROMPT baseline in an exploratory within-subject study (\(n=14\)). & Whether each candidate affordance passes a preregistered per-axis qualification against a bounded selected prompt comparator, with margin, coherence, and evidence tier. \\
     Riche et al.; Labarta et al.; Raval et al. \cite{riche2025aiinstr,labarta2026attribution,raval2026latman} & Prompt instruments, expert activation-steering workflow, and embedding-visualization manipulation. & A prompt-vs-latent behavioral contract for LLM generation. \\
     Mishra et al. \cite{mishra2026nonsurj} & Internal residual-state non-surjectivity under bounded prompts. & Whether internal reach yields superior user-visible behavior. \\
     Heyman and Vandeputte \cite{heyman2026steer} & Trained steering that mimics prompting. & Evidence local to the trained method; it bounds our naive-method claim. \\
@@ -378,6 +383,8 @@ New settings create new obligations rather than inheriting the current verdict. 
 \label{sec:limitations}
 
 We conducted no user study; the contract's comprehensibility, usability, and effects on calibrated reliance remain untested. The console is a model-evidence artifact instantiation, and any claim about people's mental models, interaction quality, or reliance requires a separate human evaluation.
+
+Bo et al.\ supply exploratory user evidence for preference-control interface designs \cite{bo2026steerable}. Our study instead supplies a model-evidence qualification procedure for objective and task outcomes and does not transfer their user evidence to this artifact.
 
 \paragraph{READ condition.}
 The READ field covers only the exploratory contrastive CAA-style measurement in each tested model. Each model contributes one run, the axis composition differs, and facade ratios are linear proxies. ITI directions and stable semantic-feature claims require new READ evidence.

@@ -11,6 +11,8 @@
 
 界面一旦给 latent axis 命名并配置 slider，就会暗示该轴不仅可解释，而且能可靠改变目标行为。这一暗示可能影响 calibrated reliance。已有 HCI 文献支持“可见信号会塑造依赖判断”以及“更多 confidence/quality cues 不保证更好校准”，但本文没有访谈、形成性研究或真实用户反馈。因此用户侧问题严格写成 literature-grounded design problem，而不是需求发现。
 
+Bo et al. 已为 SELECT/CALIBRATE/LEARN 三种个性化 steering 界面及未脚手架化的 PROMPT baseline 提供 \(n=14\) 探索性被试内用户证据，且用户偏好呈异质性。本文不继承该用户证据，而是补充面向 objective/task outcomes 的逐 affordance、comparator-bound 模型证据 qualification procedure；Golden Gate Claude 仅作为内部特征放大公开可见的中性动机，不进入本文测试范围。
+
 本文的设计过程也不是虚构的迭代故事，而是：
 
 `model evidence -> failure taxonomy -> interface-evaluation contract -> console instantiation`

@@ -192,6 +192,24 @@ def test_main_rejects_checklist_coherence_mapping_mutation(monkeypatch):
     _assert_main_rejects(monkeypatch, paper)
 
 
+def test_main_rejects_abstract_without_steer_vs_prompt_qualifier(monkeypatch):
+    paper = CHECKER.PAPER.read_text(encoding="utf-8")
+    mutated = paper.replace(
+        "All four steer-vs-prompt uncertainty contrasts",
+        "All four uncertainty contrasts",
+        1,
+    )
+    assert mutated != paper
+    _assert_main_rejects(monkeypatch, mutated)
+
+
+def test_main_rejects_abstract_diagnostic_state_without_only(monkeypatch):
+    paper = CHECKER.PAPER.read_text(encoding="utf-8")
+    mutated = paper.replace("diagnostic-only", "diagnostic", 1)
+    assert mutated != paper
+    _assert_main_rejects(monkeypatch, mutated)
+
+
 def test_concept_figure_routes_each_branch_to_exact_state():
     source = CHECKER.CONCEPT_FIGURE.read_text(encoding="utf-8")
     assert CHECKER.concept_edges(source) == CHECKER.EXPECTED_FIGURE_EDGES

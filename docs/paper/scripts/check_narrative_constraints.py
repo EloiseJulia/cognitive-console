@@ -329,10 +329,11 @@ def verify_derived_summaries(abstract_text: str) -> dict[str, bool]:
         "no_tested_cell_superior_matches_artifact": axis_tests == 12
         and axis_passes == 0
         and "No tested cell demonstrated superiority" in clean,
-        "four_uncertainty_contrasts_match_artifact": len(grid["cells"]) == 4
+        "four_steer_vs_prompt_uncertainty_contrasts_match_artifact": len(grid["cells"]) == 4
         and all(uncertainty_negative)
-        and "All four uncertainty contrasts were resolved in the negative direction"
+        and "All four steer-vs-prompt uncertainty contrasts were resolved in the negative direction"
         in clean,
+        "abstract_uses_diagnostic_only_state": "diagnostic-only" in clean,
         "five_split_seeds_match_artifact": len(seed_records) == 5
         and seed_no_pass == 5
         and "across all five" in clean,

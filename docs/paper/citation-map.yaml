@@ -105,6 +105,33 @@ references:
     claim_links: ["C3"]
     paper_sections: ["Related Work"]
 
+  bo_steerable_chatbots:
+    status: VERIFIED
+    verification_scope: "v3 metadata and full paper: SELECT/CALIBRATE/LEARN interfaces, cold-start personalization, exploratory within-subject n=14 study on Gemma2-9b-it, unscaffolded PROMPT baseline, and preference-expression/alignment measures; no blanket-superiority interpretation"
+    cite_key: "bo2026steerable"
+    title: "Steerable Chatbots: Exploring Personalization Control Interfaces via LLM Activation Steering"
+    year: 2026
+    venue_or_source: "UIST 2026"
+    primary_urls:
+      - "https://arxiv.org/abs/2505.04260"
+      - "https://doi.org/10.1145/3830398.3830533"
+    how_we_use_it: "Closest user-facing comparator neighbor: exploratory evidence about three activation-steering personalization interfaces and an unscaffolded prompting-only baseline. It motivates, but does not supply, our per-affordance preregistered model-evidence qualification gate."
+    claim_links: ["C3"]
+    paper_sections: ["Introduction", "Related Work", "Scope and Conditions of the Contract"]
+
+  anthropic_golden_gate:
+    status: VERIFIED
+    verification_scope: "official page dated 2024-05-23: 24-hour Claude 3 Sonnet research demonstration, direct amplification of a dictionary-learned internal Golden Gate Bridge feature, explicitly distinguished from role-play and system prompting; no matched prompt-comparator qualification stated for the public demonstration"
+    cite_key: "anthropic2024goldengate"
+    title: "Golden Gate Claude"
+    year: 2024
+    venue_or_source: "Anthropic research demonstration"
+    primary_urls:
+      - "https://www.anthropic.com/news/golden-gate-claude"
+    how_we_use_it: "Neutral Introduction motivation showing that direct internal-feature amplification became publicly visible; not a product claim, behavioral evaluation claim, or tested SAE scope for this paper."
+    claim_links: []
+    paper_sections: ["Introduction"]
+
   labarta_attribution_action:
     status: VERIFIED
     cite_key: "labarta2026attribution"

@@ -76,7 +76,7 @@ def route_state(inputs: dict[str, Any]) -> str:
         return "Q1_UNRESOLVED"
     if ci_high <= 0 or (ci_low > 0 and estimate < margin):
         return "Q1_WITHHELD"
-    if ci_low >= margin and estimate >= margin:
+    if ci_low > 0 and estimate >= margin:
         return "Q1_SUPPORTED" if inputs["coherence_status"] == "pass" else "Q1_WITHHELD"
     return "Q1_UNRESOLVED"
 
@@ -91,13 +91,11 @@ def single_row_q1(inputs: dict[str, Any]) -> str:
         return "Q1_WITHHELD"
     if comparison["ci_low"] <= 0 <= comparison["ci_high"]:
         return "Q1_UNRESOLVED"
-    if (
-        comparison["registered_margin"] is not None
-        and comparison["estimate"] is not None
-        and comparison["ci_low"] >= comparison["registered_margin"]
-        and comparison["estimate"] >= comparison["registered_margin"]
-    ):
-        return "Q1_SUPPORTED"
+    if comparison["registered_margin"] is not None and comparison["estimate"] is not None:
+        if comparison["ci_low"] > 0 and comparison["estimate"] >= comparison["registered_margin"]:
+            return "Q1_SUPPORTED"
+        if comparison["ci_low"] > 0 and comparison["estimate"] < comparison["registered_margin"]:
+            return "Q1_WITHHELD"
     return "Q1_UNRESOLVED"
 
 
@@ -133,7 +131,7 @@ def _majority_key(keys: list[str]) -> str:
 
 
 def _validate_source_schema(stimuli: dict[str, Any], sequences: dict[str, Any]) -> None:
-    assert stimuli["schema_version"] == "microstudy-stimuli-v4"
+    assert stimuli["schema_version"] == "microstudy-stimuli-v5"
     assert sequences["schema_version"] == "microstudy-sequences-v1"
     assert len(stimuli["items"]) == 10
     assert len(stimuli["q2_templates"]) == 3
@@ -174,6 +172,115 @@ def _validate_source_schema(stimuli: dict[str, Any], sequences: dict[str, Any]) 
         assert item["source_note"]
     assert not any("attention_check" in field for field in stimuli["export_schema"]["session_fields"])
     assert stimuli["export_schema"]["free_text_fields"] == []
+
+
+def _validate_render_contract(stimuli: dict[str, Any]) -> None:
+    render = stimuli["render_contract"]
+    primitive_ids = stimuli["primitive_ids"]
+    expected_contract_labels = {
+        "representation": "READ",
+        "comparison": "TRANSFER",
+        "comparator": "BOUNDED PROMPT COMPARATOR",
+        "coherence": "CALIBRATION WARNING",
+        "scope": "EVIDENCE TIER",
+    }
+    expected_flat_labels = [f"Evidence {letter}" for letter in "ABCDE"]
+    assert render["version"] == "microstudy-render-contract-v1"
+    assert render["common_evidence_text_source"] == "items[*].primitive_evidence"
+    assert stimuli["contract_headings"] == expected_contract_labels
+    assert render["conditions"]["contract"] == {
+        "labels": expected_contract_labels,
+        "role_order_source": "primitive_ids",
+        "role_order": primitive_ids,
+    }
+    assert render["conditions"]["flat"] == {
+        "labels_by_position": expected_flat_labels,
+        "label_binding": "display position 1-5 after applying the current item's flat_order",
+        "role_order_source": "items[*].flat_order",
+    }
+
+    dom = render["dom"]
+    assert dom["card"] == {
+        "tag": "article",
+        "classes": ["evidence-card"],
+        "data_attributes": ["data-condition", "data-stimulus-id"],
+    }
+    assert dom["rows_container"] == {"tag": "dl", "classes": ["evidence-rows"]}
+    assert dom["row"] == {
+        "tag": "div",
+        "classes": ["evidence-row"],
+        "data_attributes": ["data-evidence-id", "data-position"],
+    }
+    assert dom["label"] == {"tag": "dt", "classes": ["evidence-label"]}
+    assert dom["body"] == {"tag": "dd", "classes": ["evidence-body"]}
+    assert "primitive_evidence" in dom["text_binding"]
+    assert "only condition-dependent fields" in dom["text_binding"]
+
+    geometry = render["geometry"]
+    assert geometry["desktop_viewport"] == {
+        "width_px": 1440,
+        "height_px": 900,
+        "minimum_width_px": 1280,
+    }
+    assert geometry["card"] == {
+        "max_width_px": 960,
+        "padding_px": 24,
+        "row_gap_px": 12,
+        "overflow": "visible",
+    }
+    assert geometry["row"] == {
+        "label_width_px": 240,
+        "body_width_px": 648,
+        "min_height_px": 72,
+        "padding_block_px": 12,
+        "column_gap_px": 24,
+    }
+    assert geometry["typography"] == {
+        "label_font_size_px": 14,
+        "body_font_size_px": 16,
+        "line_height": 1.5,
+    }
+    assert (
+        2 * geometry["card"]["padding_px"]
+        + geometry["row"]["label_width_px"]
+        + geometry["row"]["column_gap_px"]
+        + geometry["row"]["body_width_px"]
+        == geometry["card"]["max_width_px"]
+    )
+    assert "identical" in geometry["condition_invariance"]
+    assert "no internal scrollbars" in geometry["desktop_overflow"]
+    assert "may scroll" in geometry["zoom_200"] and "clipped or hidden" in geometry["zoom_200"]
+
+    audit = render["parity_audit"]
+    assert audit["viewports"] == [
+        {"width_px": 1440, "height_px": 900},
+        {"width_px": 1280, "height_px": 800},
+    ]
+    assert audit["geometry_tolerance_px"] == 1
+    assert len(audit["dom_expectations"]) == 4
+    assert "byte-identical by evidence ID" in audit["text_identity"]
+    assert audit["forbidden_evidence_row_content"] == [
+        "answer",
+        "state",
+        "verdict",
+        "action",
+    ]
+    assert "Mask label text glyphs only" in audit["screenshot_comparison"]["pixel_mask"]
+    assert "declared row permutation" in audit["screenshot_comparison"]["structural_expectation"]
+    forbidden = set(audit["forbidden_evidence_row_content"])
+    for item in stimuli["items"]:
+        assert not forbidden.intersection(
+            token
+            for evidence_text in item["primitive_evidence"].values()
+            for token in tokens(evidence_text)
+        )
+
+    treatment = render["treatment_acknowledgement"]
+    assert "word count" in treatment["label_word_count_and_visual_difference"]
+    assert "part of the semantic-organization treatment" in treatment[
+        "label_word_count_and_visual_difference"
+    ]
+    assert "Do not add filler words" in treatment["no_filler_padding"]
 
 
 def _validate_tutorial_and_post_task(stimuli: dict[str, Any]) -> None:
@@ -386,6 +493,7 @@ def validate_materials(
 ) -> dict[str, Any]:
     stimuli, sequences = load_sources(stimuli_path, sequences_path)
     _validate_source_schema(stimuli, sequences)
+    _validate_render_contract(stimuli)
     _validate_tutorial_and_post_task(stimuli)
     template_reuse = _validate_parity_and_keys(stimuli)
     sequence_metrics = _validate_sequences(sequences)

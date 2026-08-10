@@ -7,7 +7,7 @@
 
 ## 1. Scope and design
 
-This exploratory formative within-participant study estimates whether a semantic-organization package changes technical GenAI users' structured application of a four-state contract to simulated records. Contract uses semantic grouping, labels, and fixed role order; Flat uses neutral labels and deterministic balanced row shuffles. It does not test deep integration, transfer, benefit, trust, safety, productivity, deployment, or latent control.
+This exploratory formative within-participant study estimates whether a semantic-organization package changes technical GenAI users' structured application of a four-state contract to simulated records. Contract uses the exact semantic labels `READ`, `TRANSFER`, `BOUNDED PROMPT COMPARATOR`, `CALIBRATION WARNING`, and `EVIDENCE TIER` in fixed order; Flat uses exact neutral labels `Evidence A`–`Evidence E` and deterministic per-item row shuffles. Label word-count and visual differences are acknowledged parts of treatment; no filler padding is permitted. It does not test deep integration, transfer, benefit, trust, safety, productivity, deployment, or latent control.
 
 There are ten formal trials, five per condition in two blocks, plus one different unscored practice. Q1 locks before Q2. The sole primary outcome is:
 
@@ -44,9 +44,13 @@ must pass. The validator reads JSON directly and freezes tokenization and heuris
 
 All no-evidence tests use inclusive exact upper tails with no tuning. Q2 reuse is `4/4/2`; keys are `A2/B2/C3/D3`. P3-Y's next step is its genuinely missing scope boundary, not coherence; its resolved non-superiority keeps Q1 withheld.
 
+The normative router defines TRANSFER pass as `tested && ci_low > 0 && estimate >= registered_margin`, followed by coherence pass→supported and coherence fail/unavailable→withheld. A CI crossing or touching zero is unresolved; resolved non-superiority and a positive-CI estimate below margin are withheld. Comparisons use exact JSON numbers without floating tolerance.
+
 ## 3. Participant materials and manipulation diagnostic
 
 The exact common legend/tutorial explains the five inputs and ordered router in plain language without revealing trial answers. Practice and feedback are exact and common across conditions. The post-task format-recognition diagnostic is fixed, descriptive, and never excludes. Block ease uses `SEQ1`–`SEQ7`, appears after each block, is nullable, and is descriptive. There is no attention check and no free text.
+
+The JSON `render_contract` is authoritative for DOM tags/classes/data attributes, the single `primitive_evidence` text binding, Contract fixed order, Flat per-item order, shared CSS geometry, 100% no-internal-scroll behavior, 200% no-clipping behavior, and screenshot/DOM parity. Audits use fixed `1440×900` and `1280×800` viewports, `1px` geometry tolerance, byte-identical evidence text after label/order normalization, forbidden answer/state/verdict/action row content, and label-only pixel masks with declared-permutation structural comparison.
 
 ## 4. Missingness, identity, and exclusions
 

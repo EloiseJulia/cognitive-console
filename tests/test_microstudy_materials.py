@@ -70,6 +70,56 @@ def test_p3_y_q2_requests_missing_scope_without_changing_q1():
     assert route_state(item["state_routing_inputs"]) == "Q1_WITHHELD"
 
 
+def test_transfer_pass_uses_positive_ci_and_point_estimate_margin():
+    base = {
+        "tier": "S1",
+        "evaluation_tier": "S1",
+        "read_status": "supported",
+        "comparison": {
+            "tested": True,
+            "estimate": 0.1,
+            "ci_low": 0.001,
+            "ci_high": 0.2,
+            "registered_margin": 0.1,
+        },
+        "coherence_status": "pass",
+    }
+    assert route_state(base) == "Q1_SUPPORTED"
+
+    touches_zero = json.loads(json.dumps(base))
+    touches_zero["comparison"]["ci_low"] = 0.0
+    assert route_state(touches_zero) == "Q1_UNRESOLVED"
+
+    below_margin = json.loads(json.dumps(base))
+    below_margin["comparison"]["estimate"] = 0.1 - 1e-12
+    assert route_state(below_margin) == "Q1_WITHHELD"
+
+
+def test_render_contract_is_exact_and_machine_validated():
+    stimuli, _ = load_sources()
+    render = stimuli["render_contract"]
+    assert render["conditions"]["contract"]["labels"] == {
+        "representation": "READ",
+        "comparison": "TRANSFER",
+        "comparator": "BOUNDED PROMPT COMPARATOR",
+        "coherence": "CALIBRATION WARNING",
+        "scope": "EVIDENCE TIER",
+    }
+    assert render["conditions"]["flat"]["labels_by_position"] == [
+        "Evidence A",
+        "Evidence B",
+        "Evidence C",
+        "Evidence D",
+        "Evidence E",
+    ]
+    assert render["conditions"]["contract"]["role_order"] == stimuli["primitive_ids"]
+    assert render["conditions"]["flat"]["role_order_source"] == "items[*].flat_order"
+    assert render["parity_audit"]["geometry_tolerance_px"] == 1
+    assert render["treatment_acknowledgement"]["no_filler_padding"].startswith(
+        "Do not add filler words"
+    )
+
+
 def test_sources_are_json_and_cli_emits_report():
     assert STIMULI_PATH.suffix == ".json"
     assert SEQUENCES_PATH.suffix == ".json"

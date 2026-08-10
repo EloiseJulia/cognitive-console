@@ -1,14 +1,103 @@
 {
-  "schema_version": "microstudy-stimuli-v4",
-  "materials_version": "microstudy-contract-application-20260810-v4",
+  "schema_version": "microstudy-stimuli-v5",
+  "materials_version": "microstudy-contract-application-20260810-v5",
   "status": "DRAFT_NOT_FROZEN_MATERIALS_ONLY",
   "primitive_ids": ["representation", "comparison", "comparator", "coherence", "scope"],
   "contract_headings": {
-    "representation": "Representation relation",
-    "comparison": "Comparative effect",
-    "comparator": "Comparator construction",
-    "coherence": "Coherence qualification",
-    "scope": "Scope boundary"
+    "representation": "READ",
+    "comparison": "TRANSFER",
+    "comparator": "BOUNDED PROMPT COMPARATOR",
+    "coherence": "CALIBRATION WARNING",
+    "scope": "EVIDENCE TIER"
+  },
+  "render_contract": {
+    "version": "microstudy-render-contract-v1",
+    "common_evidence_text_source": "items[*].primitive_evidence",
+    "conditions": {
+      "contract": {
+        "labels": {
+          "representation": "READ",
+          "comparison": "TRANSFER",
+          "comparator": "BOUNDED PROMPT COMPARATOR",
+          "coherence": "CALIBRATION WARNING",
+          "scope": "EVIDENCE TIER"
+        },
+        "role_order_source": "primitive_ids",
+        "role_order": ["representation", "comparison", "comparator", "coherence", "scope"]
+      },
+      "flat": {
+        "labels_by_position": ["Evidence A", "Evidence B", "Evidence C", "Evidence D", "Evidence E"],
+        "label_binding": "display position 1-5 after applying the current item's flat_order",
+        "role_order_source": "items[*].flat_order"
+      }
+    },
+    "dom": {
+      "card": {
+        "tag": "article",
+        "classes": ["evidence-card"],
+        "data_attributes": ["data-condition", "data-stimulus-id"]
+      },
+      "rows_container": {
+        "tag": "dl",
+        "classes": ["evidence-rows"]
+      },
+      "row": {
+        "tag": "div",
+        "classes": ["evidence-row"],
+        "data_attributes": ["data-evidence-id", "data-position"]
+      },
+      "label": {
+        "tag": "dt",
+        "classes": ["evidence-label"]
+      },
+      "body": {
+        "tag": "dd",
+        "classes": ["evidence-body"]
+      },
+      "text_binding": "Each evidence-body textContent is read directly from the current item's primitive_evidence value for data-evidence-id; labels and order are the only condition-dependent fields."
+    },
+    "geometry": {
+      "desktop_viewport": {"width_px": 1440, "height_px": 900, "minimum_width_px": 1280},
+      "card": {"max_width_px": 960, "padding_px": 24, "row_gap_px": 12, "overflow": "visible"},
+      "row": {
+        "label_width_px": 240,
+        "body_width_px": 648,
+        "min_height_px": 72,
+        "padding_block_px": 12,
+        "column_gap_px": 24
+      },
+      "typography": {
+        "label_font_size_px": 14,
+        "body_font_size_px": 16,
+        "line_height": 1.5
+      },
+      "condition_invariance": "All geometry and typography tokens are identical in Contract and Flat.",
+      "desktop_overflow": "At 100% zoom the evidence card has no internal scrollbars and no clipped or hidden content.",
+      "zoom_200": "At 200% zoom the page may scroll vertically or horizontally, but no evidence, label, question, or response content may be clipped or hidden."
+    },
+    "parity_audit": {
+      "viewports": [
+        {"width_px": 1440, "height_px": 900},
+        {"width_px": 1280, "height_px": 800}
+      ],
+      "geometry_tolerance_px": 1,
+      "dom_expectations": [
+        "Both conditions match the declared tags, classes, and data attributes.",
+        "Contract row order equals conditions.contract.role_order.",
+        "Flat row order equals the current item's flat_order.",
+        "Every declared evidence ID occurs exactly once."
+      ],
+      "text_identity": "After removing condition labels and ignoring declared row order, evidence-body textContent must be byte-identical by evidence ID across conditions and equal primitive_evidence.",
+      "forbidden_evidence_row_content": ["answer", "state", "verdict", "action"],
+      "screenshot_comparison": {
+        "pixel_mask": "Mask label text glyphs only; do not mask row boxes, evidence bodies, spacing, clipping, or overflow.",
+        "structural_expectation": "After applying the declared row permutation, row/card bounds and masked screenshots must match within geometry_tolerance_px at every fixed viewport."
+      }
+    },
+    "treatment_acknowledgement": {
+      "label_word_count_and_visual_difference": "Contract labels intentionally differ from Flat labels in wording, word count, and visual footprint; this is part of the semantic-organization treatment.",
+      "no_filler_padding": "Do not add filler words, hidden text, blank rows, spacer glyphs, or condition-specific padding to equalize labels."
+    }
   },
   "simulated_record_notice": "Simulated evaluation record",
   "q1": {
@@ -53,14 +142,16 @@
     }
   ],
   "router": {
-    "version": "state-router-v1",
+    "version": "state-router-v2",
+    "transfer_pass_prerequisite": "tested && ci_low > 0 && estimate >= registered_margin",
+    "numeric_tolerance": "none; comparisons use exact JSON numeric values, estimate >= margin is inclusive, and ci_low > 0 is strict",
     "priority": [
       "tier_mismatch",
       "read_unsupported",
       "comparison_untested",
-      "comparison_unresolved",
-      "resolved_non_superiority_or_below_margin",
-      "positive_margin_coherence",
+      "ci_crosses_or_touches_zero_unresolved",
+      "resolved_non_superiority_or_positive_estimate_below_margin_withheld",
+      "transfer_pass_then_coherence",
       "fallback_unresolved"
     ]
   },
@@ -308,7 +399,7 @@
   ],
   "participant_materials": {
     "setup_placeholder": "Study information and consent text will be supplied by the owner after the applicable ethics and recruitment process. This materials draft does not provide or imply ethics approval.",
-    "legend": "Use all five facts together. The inputs are: whether the READ relation is supported at the named tier; whether a matched comparison was run and what its estimate, interval, and registered margin show; how the unsteered comparator was constructed; whether the registered coherence check passed; and the exact model, method, task, and tier scope. Apply them in this order: a tier change needs new tier-specific evidence; unsupported READ stays unresolved; supported READ with an untested comparison is diagnostic only; a missing comparison result or an interval crossing zero stays unresolved; a resolved result showing no superiority, or a positive estimate below the margin, is withheld; a positive result meeting the margin is withheld if coherence fails and is supported only if coherence passes. Display order carries no meaning.",
+    "legend": "Use all five facts together. The inputs are: whether the READ relation is supported at the named tier; whether a matched comparison was run and what its estimate, interval, and registered margin show; how the unsteered comparator was constructed; whether the registered coherence check passed; and the exact model, method, task, and tier scope. Apply them in this order: a tier change needs new tier-specific evidence; unsupported READ stays unresolved; supported READ with an untested comparison is diagnostic only; a missing comparison result or an interval crossing zero stays unresolved; a resolved result showing no superiority, or a wholly positive interval whose estimate is below the margin, is withheld; when the interval lower bound is above zero and the estimate meets or equals the margin, the result is withheld if coherence fails and is supported only if coherence passes. Display order carries no meaning.",
     "tutorial": "First answer which interface state follows from all five facts and the routing order in the legend. After you submit Q1, it is locked and Q2 appears. Q2 separately asks what evidence, baseline relation, scope boundary, or tier-specific evaluation is established or still needed. A formal trial counts as correct only when both answers are correct. Formal trials give no feedback. The Contract and Flat versions use the same facts, questions, options, and routing rule.",
     "practice": {
       "notice": "Simulated evaluation record",
@@ -401,7 +492,7 @@
       "oracle_template": "For each template choose its most frequent key across all items; ties use alphabetical key order.",
       "loo_template": "For each held-out item choose the most frequent key among other uses of that template; ties use alphabetical key order.",
       "global_position": "Choose the globally most frequent key; ties use alphabetical key order.",
-      "single_row_q1": "untested->Q1_DIAGNOSTIC; ci_high<=0->Q1_WITHHELD; ci_low<=0<=ci_high->Q1_UNRESOLVED; positive margin-resolved->Q1_SUPPORTED; otherwise Q1_UNRESOLVED."
+      "single_row_q1": "untested->Q1_DIAGNOSTIC; ci_high<=0->Q1_WITHHELD; ci_low<=0<=ci_high->Q1_UNRESOLVED; ci_low>0 and estimate>=margin->Q1_SUPPORTED; ci_low>0 and estimate<margin->Q1_WITHHELD; otherwise Q1_UNRESOLVED. Exact numeric comparisons; no floating tolerance."
     },
     "expected_counts": {
       "oracle_template": 3,

@@ -15,7 +15,7 @@ The sole source of truth for trial materials and exported material fields is:
 - [`../../data/microstudy_contract_application/stimuli.json`](../../data/microstudy_contract_application/stimuli.json)
 - [`../../data/microstudy_contract_application/sequences.json`](../../data/microstudy_contract_application/sequences.json)
 
-The JSON contains the exact ten records, proposition strings, Flat permutations, Q1 text/options, Q2 templates and assignments, structured router inputs, provenance, tutorial/legend, practice and feedback, post-task diagnostic, block-ease item, debrief, export fields, tokenization, heuristic definitions, and generated sequences. Documentation summarizes those records and must not become a second answer-key or stimulus source. A future website must consume these files and must not hardcode another materials copy.
+The JSON contains the exact ten records, proposition strings, Flat permutations, Q1 text/options, Q2 templates and assignments, structured router inputs, render contract, provenance, tutorial/legend, practice and feedback, post-task diagnostic, block-ease item, debrief, export fields, tokenization, heuristic definitions, and generated sequences. Documentation summarizes those records and must not become a second answer-key or stimulus source. A future website must consume these files and must not hardcode another materials copy.
 
 Run:
 
@@ -32,8 +32,8 @@ The study measures **structured rule application**: whether technical GenAI user
 
 The treatment is a semantic-organization package:
 
-- **Contract:** semantic headings, grouping, and fixed role order.
-- **Flat:** neutral labels and item-specific deterministic row shuffles.
+- **Contract:** exact labels `READ`, `TRANSFER`, `BOUNDED PROMPT COMPARATOR`, `CALIBRATION WARNING`, `EVIDENCE TIER`, in fixed role order.
+- **Flat:** exact neutral labels `Evidence A`–`Evidence E`, with per-item order read from `flat_order`.
 - Both consume the same canonical proposition map and use identical questions, options, dimensions, word limits, viewport, and no-scroll behavior.
 
 Every practice/formal card begins `Simulated evaluation record`. Q1 is persisted and irreversibly locked before Q2 appears. Formal trials show no correctness feedback. The primary outcome is:
@@ -49,12 +49,12 @@ The five-input router in `stimuli.json` is the sole Q1 authority. Its priority i
 1. tier mismatch → unresolved;
 2. READ unsupported → unresolved;
 3. READ supported plus comparison untested → diagnostic-only;
-4. missing comparison resolution or CI crossing zero → unresolved;
-5. resolved non-superiority, or positive resolved estimate below margin → withheld;
-6. positive result meeting margin plus coherence fail/unavailable → withheld;
-7. positive result meeting margin plus coherence pass → supported at the exact tier.
+4. missing comparison resolution or a CI crossing/touching zero (`ci_low <= 0 <= ci_high`) → unresolved;
+5. resolved non-superiority, or a wholly positive CI with point estimate below the registered margin → withheld;
+6. TRANSFER passes only when `tested && ci_low > 0 && estimate >= registered_margin`; then coherence fail/unavailable → withheld;
+7. the same TRANSFER pass plus coherence pass → supported at the exact tier.
 
-A tier change invalidates inherited inputs. Item IDs and pattern IDs are never state authority.
+A tier change invalidates inherited inputs. Item IDs and pattern IDs are never state authority. Numeric comparisons use the exact JSON values with no floating tolerance: `estimate >= margin` is inclusive and `ci_low > 0` is strict.
 
 `MS-P3-Y` remains Q1 withheld because its resolved interval is wholly non-positive. Its Q2 no longer asks for coherence: coherence cannot be the next required evaluation after non-superiority has already resolved the state. The authoritative record instead makes the scope boundary unavailable and uses `Q2-NEXT` option C, “Establish the missing scope boundary at this tier now.” This changes no Q1 routing input or Q1 key.
 
@@ -87,6 +87,12 @@ Parity validation additionally proves:
 - byte-identical question/options for every use of a Q2 template;
 - zero answer-state phrases in formal primitive/Q2 text;
 - fixed row/card geometry, viewport, no-scroll, DOM, screenshot-mask, keyboard, and screen-reader parity are required when the web layer exists.
+
+The authoritative `render_contract` fixes the DOM as `article.evidence-card[data-condition][data-stimulus-id]` containing `dl.evidence-rows`, with each `div.evidence-row[data-evidence-id][data-position]` containing `dt.evidence-label` and `dd.evidence-body`. Evidence-body text has one source only: the current item's `primitive_evidence`; labels and order are the only condition-dependent fields.
+
+CSS tokens are exact and shared by both conditions: desktop `1440×900` with minimum width `1280`; card max width `960px`, padding `24px`, row gap `12px`; row label/body widths `240/648px`, minimum height `72px`, block padding `12px`, column gap `24px`; label/body fonts `14/16px`, line-height `1.5`. At 100% zoom there is no internal card scroll or clipped/hidden content. At 200% zoom page scrolling is allowed, but clipping/hiding is not.
+
+Parity audit uses fixed `1440×900` and `1280×800` viewports and `1px` geometry tolerance. After labels are removed and declared order is normalized, evidence text must be byte-identical by evidence ID. Evidence rows may contain no answer, state, verdict, or action text. Screenshot comparison masks label glyphs only, applies the declared row permutation, and checks row/card bounds and remaining pixels structurally. Contract labels intentionally differ in word count and visual footprint as part of treatment; filler text, blank rows, spacer glyphs, hidden text, and condition-specific padding are forbidden.
 
 ## 5. Participant-facing materials
 

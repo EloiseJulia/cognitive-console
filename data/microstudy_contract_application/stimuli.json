@@ -1,0 +1,511 @@
+{
+  "schema_version": "microstudy-stimuli-v6",
+  "materials_version": "microstudy-contract-application-20260810-v6",
+  "status": "DRAFT_NOT_FROZEN_MATERIALS_ONLY",
+  "primitive_ids": ["representation", "comparison", "comparator", "coherence", "scope"],
+  "contract_headings": {
+    "representation": "READ",
+    "comparison": "TRANSFER",
+    "comparator": "BOUNDED PROMPT COMPARATOR",
+    "coherence": "CALIBRATION WARNING",
+    "scope": "EVIDENCE TIER"
+  },
+  "render_contract": {
+    "version": "microstudy-render-contract-v1",
+    "common_evidence_text_source": "items[*].primitive_evidence",
+    "conditions": {
+      "contract": {
+        "labels": {
+          "representation": "READ",
+          "comparison": "TRANSFER",
+          "comparator": "BOUNDED PROMPT COMPARATOR",
+          "coherence": "CALIBRATION WARNING",
+          "scope": "EVIDENCE TIER"
+        },
+        "role_order_source": "primitive_ids",
+        "role_order": ["representation", "comparison", "comparator", "coherence", "scope"]
+      },
+      "flat": {
+        "labels_by_position": ["Evidence A", "Evidence B", "Evidence C", "Evidence D", "Evidence E"],
+        "label_binding": "display position 1-5 after applying the current item's flat_order",
+        "role_order_source": "items[*].flat_order"
+      }
+    },
+    "dom": {
+      "card": {
+        "tag": "article",
+        "classes": ["evidence-card"],
+        "data_attributes": ["data-condition", "data-stimulus-id"]
+      },
+      "rows_container": {
+        "tag": "dl",
+        "classes": ["evidence-rows"]
+      },
+      "row": {
+        "tag": "div",
+        "classes": ["evidence-row"],
+        "data_attributes": ["data-evidence-id", "data-position"]
+      },
+      "label": {
+        "tag": "dt",
+        "classes": ["evidence-label"]
+      },
+      "body": {
+        "tag": "dd",
+        "classes": ["evidence-body"]
+      },
+      "text_binding": "Each evidence-body textContent is read directly from the current item's primitive_evidence value for data-evidence-id; labels and order are the only condition-dependent fields."
+    },
+    "geometry": {
+      "desktop_viewport": {"width_px": 1440, "height_px": 900, "minimum_width_px": 1280},
+      "card": {"max_width_px": 960, "padding_px": 24, "row_gap_px": 12, "overflow": "visible"},
+      "row": {
+        "label_width_px": 240,
+        "body_width_px": 648,
+        "min_height_px": 72,
+        "padding_block_px": 12,
+        "column_gap_px": 24
+      },
+      "typography": {
+        "label_font_size_px": 14,
+        "body_font_size_px": 16,
+        "line_height": 1.5
+      },
+      "condition_invariance": "All geometry and typography tokens are identical in Contract and Flat.",
+      "desktop_overflow": "At 100% zoom the evidence card has no internal scrollbars and no clipped or hidden content.",
+      "zoom_200": "At 200% zoom the page may scroll vertically or horizontally, but no evidence, label, question, or response content may be clipped or hidden."
+    },
+    "parity_audit": {
+      "viewports": [
+        {"width_px": 1440, "height_px": 900},
+        {"width_px": 1280, "height_px": 800}
+      ],
+      "geometry_tolerance_px": 1,
+      "dom_expectations": [
+        "Both conditions match the declared tags, classes, and data attributes.",
+        "Contract row order equals conditions.contract.role_order.",
+        "Flat row order equals the current item's flat_order.",
+        "Every declared evidence ID occurs exactly once."
+      ],
+      "text_identity": "After removing condition labels and ignoring declared row order, evidence-body textContent must be byte-identical by evidence ID across conditions and equal primitive_evidence.",
+      "forbidden_evidence_row_content": ["answer", "state", "verdict", "action"],
+      "screenshot_comparison": {
+        "pixel_mask": "Mask label text glyphs only; do not mask row boxes, evidence bodies, spacing, clipping, or overflow.",
+        "structural_expectation": "After applying the declared row permutation, row/card bounds and masked screenshots must match within geometry_tolerance_px at every fixed viewport."
+      }
+    },
+    "treatment_acknowledgement": {
+      "label_word_count_and_visual_difference": "Contract labels intentionally differ from Flat labels in wording, word count, and visual footprint; this is part of the semantic-organization treatment.",
+      "no_filler_padding": "Do not add filler words, hidden text, blank rows, spacer glyphs, or condition-specific padding to equalize labels."
+    }
+  },
+  "simulated_record_notice": "Simulated evaluation record",
+  "q1": {
+    "text": "Which interface state follows after applying the rule to this record?",
+    "options": [
+      {"key": "Q1_UNRESOLVED", "text": "Unresolved"},
+      {"key": "Q1_DIAGNOSTIC", "text": "Diagnostic only"},
+      {"key": "Q1_WITHHELD", "text": "Withheld control"},
+      {"key": "Q1_SUPPORTED", "text": "Evidence-supported control at the exact stated tier"}
+    ]
+  },
+  "q2_templates": [
+    {
+      "template_id": "Q2-NEXT",
+      "text": "Which next evaluation is required?",
+      "options": [
+        {"key": "A", "text": "Establish the READ relation at this tier now."},
+        {"key": "B", "text": "Run a decisive comparison at this tier now."},
+        {"key": "C", "text": "Establish the missing scope boundary at this tier now."},
+        {"key": "D", "text": "Retest the rule at a newly specified tier."}
+      ]
+    },
+    {
+      "template_id": "Q2-BASELINE",
+      "text": "What follows about the unsteered baseline?",
+      "options": [
+        {"key": "A", "text": "The baseline is below the reference range here."},
+        {"key": "B", "text": "The baseline is near the reference range here."},
+        {"key": "C", "text": "The baseline relation is unknown from this record."},
+        {"key": "D", "text": "The baseline is above the reference range here."}
+      ]
+    },
+    {
+      "template_id": "Q2-COVERAGE",
+      "text": "Which evidence is directly established in this record?",
+      "options": [
+        {"key": "A", "text": "The record directly establishes READ evidence alone."},
+        {"key": "B", "text": "The record directly establishes comparative evidence alone."},
+        {"key": "C", "text": "The record directly establishes both evidence types."},
+        {"key": "D", "text": "The record directly establishes neither evidence type."}
+      ]
+    }
+  ],
+  "router": {
+    "version": "state-router-v2",
+    "transfer_pass_prerequisite": "tested && ci_low > 0 && estimate >= registered_margin",
+    "numeric_tolerance": "none; comparisons use exact JSON numeric values, estimate >= margin is inclusive, and ci_low > 0 is strict",
+    "priority": [
+      "tier_mismatch",
+      "read_unsupported",
+      "comparison_untested",
+      "ci_crosses_or_touches_zero_unresolved",
+      "resolved_non_superiority_or_positive_estimate_below_margin_withheld",
+      "transfer_pass_then_coherence",
+      "fallback_unresolved"
+    ]
+  },
+  "items": [
+    {
+      "stimulus_id": "MS-P1-X",
+      "content_set": "X",
+      "pattern_id": "P1",
+      "source_status": "real_inspired_non_pass",
+      "source_note": "Semantic artifact source: incomplete representation/comparison pattern; fabricated teaching values; no raw internal IDs; not paper evidence.",
+      "hypothetical": false,
+      "primitive_evidence": {
+        "representation": "The tier-specific READ evaluation has not been completed.",
+        "comparison": "The matched ledger contains 0 completed observations.",
+        "comparator": "Budget: 16 candidates, fixed item split, 5 samples each.",
+        "coherence": "Bound 0.10; no paired outputs are available to calculate change.",
+        "scope": "Alder / North / editing / S1."
+      },
+      "flat_order": ["comparison", "scope", "representation", "coherence", "comparator"],
+      "q2": {"template_id": "Q2-COVERAGE", "correct_key": "D"},
+      "state_routing_inputs": {
+        "tier": "S1", "evaluation_tier": "S1", "read_status": "unsupported",
+        "comparison": {"tested": false, "estimate": null, "ci_low": null, "ci_high": null, "registered_margin": 0.10},
+        "coherence_status": "unavailable"
+      },
+      "expected_q1_key": "Q1_UNRESOLVED",
+      "required_primitive_ids": ["representation", "comparison"]
+    },
+    {
+      "stimulus_id": "MS-P1-Y",
+      "content_set": "Y",
+      "pattern_id": "P1",
+      "source_status": "real_inspired_non_pass",
+      "source_note": "Semantic artifact source: interval-resolution non-pass pattern; fabricated teaching values; no raw internal IDs; not paper evidence.",
+      "hypothetical": false,
+      "primitive_evidence": {
+        "representation": "Alignment estimate 0.31; registered minimum 0.25.",
+        "comparison": "Matched effect +0.03; 95% interval [−0.07, +0.13].",
+        "comparator": "Registered advantage +0.08; the unsteered baseline is below the reference range.",
+        "coherence": "Change 0.02 against absolute bound 0.08.",
+        "scope": "Birch / Cedar / triage / S2."
+      },
+      "flat_order": ["comparator", "representation", "scope", "comparison", "coherence"],
+      "q2": {"template_id": "Q2-BASELINE", "correct_key": "A"},
+      "state_routing_inputs": {
+        "tier": "S2", "evaluation_tier": "S2", "read_status": "supported",
+        "comparison": {"tested": true, "estimate": 0.03, "ci_low": -0.07, "ci_high": 0.13, "registered_margin": 0.08},
+        "coherence_status": "pass"
+      },
+      "expected_q1_key": "Q1_UNRESOLVED",
+      "required_primitive_ids": ["representation", "comparison", "comparator"]
+    },
+    {
+      "stimulus_id": "MS-P2-X",
+      "content_set": "X",
+      "pattern_id": "P2",
+      "source_status": "synthetic_rule_case",
+      "source_note": "Synthetic rule case created for representation-only routing; fabricated teaching values; not paper evidence.",
+      "hypothetical": false,
+      "primitive_evidence": {
+        "representation": "Alignment estimate 0.31; registered minimum 0.20.",
+        "comparison": "The matched ledger contains 0 completed observations.",
+        "comparator": "Budget: 16 candidates, fixed item split, 5 samples each.",
+        "coherence": "Bound 0.10; no paired outputs are available to calculate change.",
+        "scope": "Alder / Cedar / summarization / S1."
+      },
+      "flat_order": ["scope", "representation", "coherence", "comparator", "comparison"],
+      "q2": {"template_id": "Q2-NEXT", "correct_key": "B"},
+      "state_routing_inputs": {
+        "tier": "S1", "evaluation_tier": "S1", "read_status": "supported",
+        "comparison": {"tested": false, "estimate": null, "ci_low": null, "ci_high": null, "registered_margin": 0.10},
+        "coherence_status": "unavailable"
+      },
+      "expected_q1_key": "Q1_DIAGNOSTIC",
+      "required_primitive_ids": ["representation", "comparison"]
+    },
+    {
+      "stimulus_id": "MS-P2-Y",
+      "content_set": "Y",
+      "pattern_id": "P2",
+      "source_status": "synthetic_rule_case",
+      "source_note": "Synthetic rule case created for representation-only routing; fabricated teaching values; not paper evidence.",
+      "hypothetical": false,
+      "primitive_evidence": {
+        "representation": "Alignment estimate 0.34; registered minimum 0.25.",
+        "comparison": "The matched ledger contains 0 completed observations.",
+        "comparator": "Registered advantage +0.08; the unsteered baseline relation is unknown.",
+        "coherence": "Bound 0.08; no paired outputs are available to calculate change.",
+        "scope": "Birch / North / classification / S2."
+      },
+      "flat_order": ["representation", "scope", "comparison", "coherence", "comparator"],
+      "q2": {"template_id": "Q2-BASELINE", "correct_key": "C"},
+      "state_routing_inputs": {
+        "tier": "S2", "evaluation_tier": "S2", "read_status": "supported",
+        "comparison": {"tested": false, "estimate": null, "ci_low": null, "ci_high": null, "registered_margin": 0.08},
+        "coherence_status": "unavailable"
+      },
+      "expected_q1_key": "Q1_DIAGNOSTIC",
+      "required_primitive_ids": ["representation", "comparison"]
+    },
+    {
+      "stimulus_id": "MS-P3-X",
+      "content_set": "X",
+      "pattern_id": "P3",
+      "source_status": "real_inspired_non_pass",
+      "source_note": "Semantic artifact source: coherence-qualified non-pass pattern; fabricated teaching values; no raw internal IDs; not paper evidence.",
+      "hypothetical": false,
+      "primitive_evidence": {
+        "representation": "Alignment estimate 0.32; registered minimum 0.20.",
+        "comparison": "Matched effect +0.16; 95% interval [+0.11, +0.21].",
+        "comparator": "Registered advantage +0.10; budget, split, and 5 samples are matched.",
+        "coherence": "The registered coherence evaluation is unavailable.",
+        "scope": "Alder / North / planning / S1."
+      },
+      "flat_order": ["representation", "coherence", "comparator", "comparison", "scope"],
+      "q2": {"template_id": "Q2-COVERAGE", "correct_key": "C"},
+      "state_routing_inputs": {
+        "tier": "S1", "evaluation_tier": "S1", "read_status": "supported",
+        "comparison": {"tested": true, "estimate": 0.16, "ci_low": 0.11, "ci_high": 0.21, "registered_margin": 0.10},
+        "coherence_status": "unavailable"
+      },
+      "expected_q1_key": "Q1_WITHHELD",
+      "required_primitive_ids": ["comparison", "comparator", "coherence"]
+    },
+    {
+      "stimulus_id": "MS-P3-Y",
+      "content_set": "Y",
+      "pattern_id": "P3",
+      "source_status": "real_inspired_non_pass",
+      "source_note": "Semantic artifact source: matched-comparator non-advantage pattern; fabricated teaching values; no raw internal IDs; not paper evidence.",
+      "hypothetical": false,
+      "primitive_evidence": {
+        "representation": "Alignment estimate 0.36; registered minimum 0.25.",
+        "comparison": "Matched effect −0.04; 95% interval [−0.11, −0.01].",
+        "comparator": "Registered advantage +0.08; budget, split, and 5 samples are matched.",
+        "coherence": "Change 0.02 against absolute bound 0.08.",
+        "scope": "The registered scope boundary is unavailable."
+      },
+      "flat_order": ["scope", "comparison", "coherence", "comparator", "representation"],
+      "q2": {"template_id": "Q2-NEXT", "correct_key": "C"},
+      "state_routing_inputs": {
+        "tier": "S2", "evaluation_tier": "S2", "read_status": "supported",
+        "comparison": {"tested": true, "estimate": -0.04, "ci_low": -0.11, "ci_high": -0.01, "registered_margin": 0.08},
+        "coherence_status": "pass"
+      },
+      "expected_q1_key": "Q1_WITHHELD",
+      "required_primitive_ids": ["comparison", "comparator"]
+    },
+    {
+      "stimulus_id": "MS-P4-X",
+      "content_set": "X",
+      "pattern_id": "P4",
+      "source_status": "real_inspired_non_pass",
+      "source_note": "Semantic artifact source: interval-resolution pattern; fabricated teaching values; no raw internal IDs; not paper evidence.",
+      "hypothetical": false,
+      "primitive_evidence": {
+        "representation": "The tier-specific READ evaluation is unavailable.",
+        "comparison": "Matched effect +0.05; 95% interval [−0.09, +0.19].",
+        "comparator": "Registered advantage +0.10; budget, split, and 5 samples are matched.",
+        "coherence": "Change 0.03 against absolute bound 0.10.",
+        "scope": "Alder / Cedar / extraction / S1."
+      },
+      "flat_order": ["coherence", "comparator", "comparison", "scope", "representation"],
+      "q2": {"template_id": "Q2-NEXT", "correct_key": "A"},
+      "state_routing_inputs": {
+        "tier": "S1", "evaluation_tier": "S1", "read_status": "unsupported",
+        "comparison": {"tested": true, "estimate": 0.05, "ci_low": -0.09, "ci_high": 0.19, "registered_margin": 0.10},
+        "coherence_status": "pass"
+      },
+      "expected_q1_key": "Q1_UNRESOLVED",
+      "required_primitive_ids": ["representation", "comparison"]
+    },
+    {
+      "stimulus_id": "MS-P4-Y",
+      "content_set": "Y",
+      "pattern_id": "P4",
+      "source_status": "real_inspired_non_pass",
+      "source_note": "Semantic artifact source: interval-resolution pattern; fabricated teaching values; no raw internal IDs; not paper evidence.",
+      "hypothetical": false,
+      "primitive_evidence": {
+        "representation": "Alignment estimate 0.37; registered minimum 0.25.",
+        "comparison": "Matched effect +0.03; 95% interval [−0.07, +0.13].",
+        "comparator": "Registered advantage +0.08; the unsteered baseline is near the reference range.",
+        "coherence": "Change 0.02 against absolute bound 0.08.",
+        "scope": "Birch / North / ranking / S2."
+      },
+      "flat_order": ["comparison", "coherence", "comparator", "representation", "scope"],
+      "q2": {"template_id": "Q2-BASELINE", "correct_key": "B"},
+      "state_routing_inputs": {
+        "tier": "S2", "evaluation_tier": "S2", "read_status": "supported",
+        "comparison": {"tested": true, "estimate": 0.03, "ci_low": -0.07, "ci_high": 0.13, "registered_margin": 0.08},
+        "coherence_status": "pass"
+      },
+      "expected_q1_key": "Q1_UNRESOLVED",
+      "required_primitive_ids": ["comparison", "comparator"]
+    },
+    {
+      "stimulus_id": "MS-P5-X",
+      "content_set": "X",
+      "pattern_id": "P5",
+      "source_status": "synthetic_rule_case",
+      "source_note": "Hypothetical synthetic positive rule case; fabricated teaching values; the current paper contains no passing latent behavioral positive control.",
+      "hypothetical": true,
+      "primitive_evidence": {
+        "representation": "Alignment estimate 0.35; registered minimum 0.20.",
+        "comparison": "Matched effect +0.16; 95% interval [+0.11, +0.21].",
+        "comparator": "Registered advantage +0.10; budget, split, and 5 samples are matched.",
+        "coherence": "Change 0.03 against absolute bound 0.10.",
+        "scope": "Alder / North / routing / S1 only; another tier requires retesting."
+      },
+      "flat_order": ["comparator", "comparison", "scope", "representation", "coherence"],
+      "q2": {"template_id": "Q2-NEXT", "correct_key": "D"},
+      "state_routing_inputs": {
+        "tier": "S1", "evaluation_tier": "S1", "read_status": "supported",
+        "comparison": {"tested": true, "estimate": 0.16, "ci_low": 0.11, "ci_high": 0.21, "registered_margin": 0.10},
+        "coherence_status": "pass"
+      },
+      "expected_q1_key": "Q1_SUPPORTED",
+      "required_primitive_ids": ["comparison", "comparator", "coherence", "scope"]
+    },
+    {
+      "stimulus_id": "MS-P5-Y",
+      "content_set": "Y",
+      "pattern_id": "P5",
+      "source_status": "synthetic_rule_case",
+      "source_note": "Hypothetical synthetic positive rule case; fabricated teaching values; the current paper contains no passing latent behavioral positive control.",
+      "hypothetical": true,
+      "primitive_evidence": {
+        "representation": "Alignment estimate 0.39; registered minimum 0.25.",
+        "comparison": "Matched effect +0.14; 95% interval [+0.09, +0.19].",
+        "comparator": "Registered advantage +0.08; the unsteered baseline is above the reference range.",
+        "coherence": "Change 0.02 against absolute bound 0.08.",
+        "scope": "Birch / Cedar / verification / S2 only."
+      },
+      "flat_order": ["coherence", "comparator", "representation", "scope", "comparison"],
+      "q2": {"template_id": "Q2-BASELINE", "correct_key": "D"},
+      "state_routing_inputs": {
+        "tier": "S2", "evaluation_tier": "S2", "read_status": "supported",
+        "comparison": {"tested": true, "estimate": 0.14, "ci_low": 0.09, "ci_high": 0.19, "registered_margin": 0.08},
+        "coherence_status": "pass"
+      },
+      "expected_q1_key": "Q1_SUPPORTED",
+      "required_primitive_ids": ["comparison", "comparator", "coherence", "scope"]
+    }
+  ],
+  "participant_materials": {
+    "setup_placeholder": "Study information and consent text will be supplied by the owner after the applicable ethics and recruitment process. This materials draft does not provide or imply ethics approval.",
+    "legend": "Use all five facts together. The inputs are: whether the READ relation is supported at the named tier; whether a matched comparison was run and what its estimate, interval, and registered margin show; how the unsteered comparator was constructed; whether the registered coherence check passed; and the exact model, method, task, and tier scope. Apply them in this order: a tier change needs new tier-specific evidence; unsupported READ stays unresolved; supported READ with an untested comparison is diagnostic only; a missing comparison result or an interval crossing zero stays unresolved; a resolved result showing no superiority, or a wholly positive interval whose estimate is below the margin, is withheld; when the interval lower bound is above zero and the estimate meets or equals the margin, the result is withheld if coherence fails and is supported only if coherence passes. Display order carries no meaning.",
+    "tutorial": "First answer which interface state follows from all five facts and the routing order in the legend. After you submit Q1, it is locked and Q2 appears. Q2 separately asks what evidence, baseline relation, scope boundary, or tier-specific evaluation is established or still needed. A formal trial counts as correct only when both answers are correct. Formal trials give no feedback. The Contract and Flat versions use the same facts, questions, options, and routing rule.",
+    "practice": {
+      "notice": "Simulated evaluation record",
+      "primitive_evidence": {
+        "representation": "Fit estimate 0.27; registered minimum 0.20.",
+        "comparison": "Matched effect +0.02; 95% interval [−0.06, +0.10].",
+        "comparator": "Registered advantage +0.07; budget and split are matched.",
+        "coherence": "Change 0.01 against absolute bound 0.05.",
+        "scope": "Juniper / East / labeling / T1."
+      },
+      "q1": {
+        "text": "Which interface state follows after applying the rule to this record?",
+        "correct_key": "Q1_UNRESOLVED"
+      },
+      "q2": {
+        "text": "Which conclusion respects the comparison and scope?",
+        "options": [
+          {"key": "A", "text": "Generalize to all Juniper tasks."},
+          {"key": "B", "text": "The interval does not resolve the registered advantage within Juniper/East labeling T1."},
+          {"key": "C", "text": "The coherence value alone establishes comparative advantage."},
+          {"key": "D", "text": "The matched budget permits use at every tier."}
+        ],
+        "correct_key": "B"
+      },
+      "feedback": "The interval crosses zero, so the comparison is unresolved. The named model, method, task, and tier remain the boundary. This example teaches the two-step response format; it is not a formal item."
+    },
+    "post_task_manipulation_diagnostic": {
+      "question": "What was the main difference between the two card formats?",
+      "options": [
+        {"key": "A", "text": "One format grouped and named the five evidence roles; the other used neutral labels and shuffled rows."},
+        {"key": "B", "text": "One format contained more evidence facts than the other."},
+        {"key": "C", "text": "One format revealed the correct answers after each formal trial."},
+        {"key": "D", "text": "The two formats used different routing rules."}
+      ],
+      "correct_key": "A",
+      "used_for_exclusion": false,
+      "feedback": null
+    },
+    "block_ease": {
+      "question": "How easy or difficult was it to apply the rule in the block you just completed?",
+      "options": [
+        {"key": "SEQ1", "text": "Very difficult"},
+        {"key": "SEQ2", "text": "Difficult"},
+        {"key": "SEQ3", "text": "Somewhat difficult"},
+        {"key": "SEQ4", "text": "Neither difficult nor easy"},
+        {"key": "SEQ5", "text": "Somewhat easy"},
+        {"key": "SEQ6", "text": "Easy"},
+        {"key": "SEQ7", "text": "Very easy"}
+      ],
+      "when_shown": "Once immediately after each five-trial block, before the next block or post-task diagnostic.",
+      "required": false,
+      "export_fields": ["block_1_ease", "block_2_ease"],
+      "nullable": true,
+      "used_for_exclusion": false
+    },
+    "debrief": "These were simulated teaching records with fabricated values. They assess structured rule application, not deep integration or real-world benefit. No item reports a current paper pass, and no response changes the paper's claims."
+  },
+  "export_schema": {
+    "session_fields": [
+      "attempt_id", "run_id", "attempt_serial", "participant_code", "sequence", "completion_status", "complete",
+      "practice_presented", "practice_q1_submitted", "practice_q2_submitted", "practice_complete",
+      "post_task_diagnostic_presented", "post_task_diagnostic_submitted", "post_task_diagnostic_response", "post_task_diagnostic_correct",
+      "block_1_ease", "block_2_ease", "mechanical_exclusion", "mechanical_exclusion_reason"
+    ],
+    "trial_fields": [
+      "slot_index", "condition", "item", "pattern", "content_set", "block", "position",
+      "planned", "presented", "q1_submitted", "q2_submitted", "complete", "submitted",
+      "q1", "q2", "q1_correct", "q2_correct", "cca_correct", "rt_q1_ms", "rt_q2_ms",
+      "rt_total_ms", "hidden_ms", "source_status", "source_note", "hypothetical",
+      "q1_missing", "q2_missing", "q1_correct_missing", "q2_correct_missing",
+      "cca_correct_missing", "rt_q1_missing", "rt_q2_missing", "rt_total_missing",
+      "hidden_ms_missing", "materials_version"
+    ],
+    "mechanical_exclusion_reasons": [
+      "none", "duplicate_attempt", "technical_corrupt", "sequence_mismatch",
+      "materials_version_mismatch", "impossible_state_transition"
+    ],
+    "free_text_fields": []
+  },
+  "validation_contract": {
+    "tokenization": {
+      "version": "unicode-nfkc-word-v1",
+      "algorithm": "NFKC lowercase; tokens are maximal Unicode alphanumeric sequences; punctuation and symbols are separators."
+    },
+    "heuristics": {
+      "equal_length": "Choose the option with token count closest to the median option-token count; ties use alphabetical key order.",
+      "negation_marker": "Choose the first option containing one of: neither, no, not, unknown, unavailable; otherwise A.",
+      "modal_marker": "Choose the first option containing one of: required, require, requires, now, must; otherwise A.",
+      "read_lexical": "Choose the first option containing the token READ; otherwise A.",
+      "oracle_template": "For each template choose its most frequent key across all items; ties use alphabetical key order.",
+      "loo_template": "For each held-out item choose the most frequent key among other uses of that template; ties use alphabetical key order.",
+      "global_position": "Choose the globally most frequent key; ties use alphabetical key order.",
+      "single_row_q1": "untested->Q1_DIAGNOSTIC; ci_high<=0->Q1_WITHHELD; ci_low<=0<=ci_high->Q1_UNRESOLVED; ci_low>0 and estimate>=margin->Q1_SUPPORTED; ci_low>0 and estimate<margin->Q1_WITHHELD; otherwise Q1_UNRESOLVED. Exact numeric comparisons; no floating tolerance."
+    },
+    "expected_counts": {
+      "oracle_template": 3,
+      "loo_template": 0,
+      "global_position": 3,
+      "equal_length": 2,
+      "negation_marker": 3,
+      "modal_marker": 2,
+      "read_lexical": 2,
+      "single_row_q1": 8,
+      "combined_oracle_cca": 2,
+      "combined_loo_cca": 0,
+      "router": 10
+    }
+  }
+}

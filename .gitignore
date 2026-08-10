@@ -28,6 +28,7 @@ results/**/*.npz
 .worktrees/
 copilot-session-*.md
 *.bundle
+.runtime/
 
 results/arm_full/**/transcripts/
 results/arm_full/**/checkpoints/

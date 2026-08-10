@@ -1,0 +1,33 @@
+{
+  "schema_version": "microstudy-sequences-v1",
+  "base_pattern_order": ["P1", "P3", "P2", "P5", "P4"],
+  "block_2_rotation_offset": 2,
+  "letter_mapping": {
+    "A": {"block_1": {"condition": "Contract", "content_set": "X"}, "block_2": {"condition": "Flat", "content_set": "Y"}},
+    "B": {"block_1": {"condition": "Flat", "content_set": "Y"}, "block_2": {"condition": "Contract", "content_set": "X"}},
+    "C": {"block_1": {"condition": "Contract", "content_set": "Y"}, "block_2": {"condition": "Flat", "content_set": "X"}},
+    "D": {"block_1": {"condition": "Flat", "content_set": "X"}, "block_2": {"condition": "Contract", "content_set": "Y"}}
+  },
+  "sequences": [
+    {"code": "A1", "block_1": ["P1", "P3", "P2", "P5", "P4"], "block_2": ["P2", "P5", "P4", "P1", "P3"]},
+    {"code": "A2", "block_1": ["P3", "P2", "P5", "P4", "P1"], "block_2": ["P5", "P4", "P1", "P3", "P2"]},
+    {"code": "A3", "block_1": ["P2", "P5", "P4", "P1", "P3"], "block_2": ["P4", "P1", "P3", "P2", "P5"]},
+    {"code": "A4", "block_1": ["P5", "P4", "P1", "P3", "P2"], "block_2": ["P1", "P3", "P2", "P5", "P4"]},
+    {"code": "A5", "block_1": ["P4", "P1", "P3", "P2", "P5"], "block_2": ["P3", "P2", "P5", "P4", "P1"]},
+    {"code": "B1", "block_1": ["P1", "P3", "P2", "P5", "P4"], "block_2": ["P2", "P5", "P4", "P1", "P3"]},
+    {"code": "B2", "block_1": ["P3", "P2", "P5", "P4", "P1"], "block_2": ["P5", "P4", "P1", "P3", "P2"]},
+    {"code": "B3", "block_1": ["P2", "P5", "P4", "P1", "P3"], "block_2": ["P4", "P1", "P3", "P2", "P5"]},
+    {"code": "B4", "block_1": ["P5", "P4", "P1", "P3", "P2"], "block_2": ["P1", "P3", "P2", "P5", "P4"]},
+    {"code": "B5", "block_1": ["P4", "P1", "P3", "P2", "P5"], "block_2": ["P3", "P2", "P5", "P4", "P1"]},
+    {"code": "C1", "block_1": ["P1", "P3", "P2", "P5", "P4"], "block_2": ["P2", "P5", "P4", "P1", "P3"]},
+    {"code": "C2", "block_1": ["P3", "P2", "P5", "P4", "P1"], "block_2": ["P5", "P4", "P1", "P3", "P2"]},
+    {"code": "C3", "block_1": ["P2", "P5", "P4", "P1", "P3"], "block_2": ["P4", "P1", "P3", "P2", "P5"]},
+    {"code": "C4", "block_1": ["P5", "P4", "P1", "P3", "P2"], "block_2": ["P1", "P3", "P2", "P5", "P4"]},
+    {"code": "C5", "block_1": ["P4", "P1", "P3", "P2", "P5"], "block_2": ["P3", "P2", "P5", "P4", "P1"]},
+    {"code": "D1", "block_1": ["P1", "P3", "P2", "P5", "P4"], "block_2": ["P2", "P5", "P4", "P1", "P3"]},
+    {"code": "D2", "block_1": ["P3", "P2", "P5", "P4", "P1"], "block_2": ["P5", "P4", "P1", "P3", "P2"]},
+    {"code": "D3", "block_1": ["P2", "P5", "P4", "P1", "P3"], "block_2": ["P4", "P1", "P3", "P2", "P5"]},
+    {"code": "D4", "block_1": ["P5", "P4", "P1", "P3", "P2"], "block_2": ["P1", "P3", "P2", "P5", "P4"]},
+    {"code": "D5", "block_1": ["P4", "P1", "P3", "P2", "P5"], "block_2": ["P3", "P2", "P5", "P4", "P1"]}
+  ]
+}

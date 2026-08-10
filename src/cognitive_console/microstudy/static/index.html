@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Study Preview — Local only</title>
+  <link rel="stylesheet" href="study.css">
+  <script src="study.js" type="module"></script>
+</head>
+<body>
+  <header>
+    <strong>Study Preview · local only</strong>
+    <span>No participant data is persisted by the local server.</span>
+    <button id="save-exit-button" type="button" data-action="save-exit" hidden>Save &amp; Exit</button>
+  </header>
+  <main id="app" tabindex="-1" aria-live="polite">
+    <section id="start" class="panel">
+      <h1>Contract application study preview</h1>
+      <p class="warning">Owner-operated future-use preview. Use a desktop window at least 1280px wide. This page does not claim ethics approval or recruit participants.</p>
+      <label>Owner-assigned anonymous participant code
+        <input id="participant-code" autocomplete="off" maxlength="64" required>
+      </label>
+      <label>Owner-assigned sequence
+        <select id="sequence" required></select>
+      </label>
+      <button id="start-button" type="button">Start preview</button>
+      <p id="start-error" class="error" role="alert" tabindex="-1"></p>
+    </section>
+    <section id="stage" class="panel" tabindex="-1" hidden>
+      <p id="stage-error" class="error" role="alert" tabindex="-1"></p>
+    </section>
+  </main>
+  <footer>Simulated materials · loopback server · in-memory only</footer>
+</body>
+</html>

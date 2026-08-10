@@ -1387,3 +1387,80 @@ experiments:
     forward-pass-only direction inputs. Regime A is excluded and requires a new
     owner decision and new protocol. Retry and its independent results audit remain
     pending.
+
+- experiment_id: microstudy-contract-application-20260810
+  parent: null
+  hypothesis_id: H-MICROSTUDY-CONTRACT-APPLICATION
+  claim_ids: []
+  type: exploratory_formative_human_protocol
+  status: implemented_pending_reaudit_nohuman
+  code_commit: null
+  dirty_tree: null
+  data_hash: null
+  env_hash: null
+  config_hash: null
+  model: null
+  dataset: 10 simulated evaluation records; no human data; no live model
+  seed: 20260810
+  hardware: local desktop preview only; no participant run authorized
+  started_at: null
+  ended_at: null
+  exit_code: null
+  raw_metrics: null
+  summary_metrics: null
+  artifacts:
+  - data/microstudy_contract_application/stimuli.json
+  - data/microstudy_contract_application/sequences.json
+  - src/cognitive_console/microstudy_materials.py
+  - scripts/validate_microstudy_materials.py
+  - tests/test_microstudy_materials.py
+  - src/cognitive_console/microstudy/materials.py
+  - src/cognitive_console/microstudy/server.py
+  - src/cognitive_console/microstudy/analysis.py
+  - src/cognitive_console/microstudy/static/index.html
+  - src/cognitive_console/microstudy/static/study.css
+  - src/cognitive_console/microstudy/static/study.js
+  - src/cognitive_console/microstudy/static/study_core.mjs
+  - tests/test_microstudy_web.py
+  - tests/browser_cdp.py
+  - docs/specs/microstudy-contract-application.md
+  - docs/research/2026-08-10-microstudy-contract-application-DRAFT.md
+  - docs/plans/microstudy-contract-application-web.md
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    D-0100 authorizes protocol, simulated materials, and loopback-only web engineering;
+    D-0101 records the first audit revision, D-0102 the second, D-0103 the executable
+    materials repair, D-0104 the initial implementation, D-0105 its first repair,
+    and D-0106 the second hostile-audit implementation repair.
+    Authoritative JSON now supplies all ten items, three byte-identical
+    cross-pattern templates, keys, routing inputs, participant text, export fields, and
+    A1..D5 sequences. The checked-in validator freezes tokenization and heuristic algorithms
+    and reproduces reuse 4/4/2, keys A2/B2/C3/D3, oracle 3/10, LOO 0/10, global position
+    3/10, lexical heuristics at 2-3/10, comparison-row Q1 8/10, combined CCA 2/10 and 0/10,
+    router 10/10, Flat primitive-position balance, and all 200 sequence rows. P3-Y now asks
+    for its genuinely missing scope boundary rather than unnecessary coherence while its Q1
+    remains withheld under resolved non-superiority. The export schema contains practice,
+    post-task manipulation-diagnostic, nullable SEQ1-7 block-ease, provenance, missingness,
+    and analysis-derived exclusion fields; it has no attention-check or free-text field.
+    Duplicate decisions freeze before outcomes; raw retains all attempts and ITT excludes
+    only non-kept duplicates and technical-corrupt attempts. The protocol also preserves
+    irreversible Q1-to-Q2 flow, semantic-organization treatment declaration, balanced Flat
+    shuffles, complete missingness truth table, blinded A1..D5 replacement, orthogonal
+    r/r+2 rotations, and frozen bootstrap/sign-flip settings.
+    The local implementation now emits strict signed complete/partial v3 exports with
+    random run_id and monotonic attempt_serial, requires an explicit global-order
+    manifest for cross-run duplicates, deduplicates byte-identical repeated files
+    by attempt_id, and hard-fails conflicting payload/signature reuse. Completion
+    and Save & Exit freeze an immutable export_ready product retained until TTL;
+    JSON/CSV downloads are manual, idempotent, and retryable. It protects loopback requests with exact
+    Host/origin, JSON, CSRF/capability, request-size, capacity, TTL, per-session-lock,
+    and request-id gates. Current-machine Chrome/Edge tests execute full keyboard flows
+    at both viewports and zoom levels and validate DOM geometry/accessibility plus PNG
+    artifacts. Manual screen-reader evaluation is UNVERIFIED PRE-RECRUITMENT.
+    Real-browser cases now use isolated ephemeral servers with readiness waits
+    and owned cleanup. The implementation and assumption-labelled DRAFT MDE tool remain pending
+    hostile re-audit and are not a run or paper evidence. Recruitment, ethics
+    administration, public deployment, owner pilot, and human data collection are not
+    authorized. The preregistration remains DRAFT and not frozen; this row records
+    materials and implementation preparation only and must not be represented as a run.

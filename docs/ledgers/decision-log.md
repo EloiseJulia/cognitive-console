@@ -5,6 +5,61 @@
 
 ---
 
+## 2026-08-10 · D-0105 · Hostile-audit implementation repair completed; no human run
+- Moved formal planning, state transitions, scoring, canonical export, CSV
+  hardening, and HMAC-SHA256 signing into the volatile loopback server. The
+  browser receives no formal keys/router internals and cannot skip phases.
+- Made analysis verify owner-held keys/signatures and strict schemas, resolve
+  first-complete duplicates before assignment classification, separate primary
+  eligibility from missing-as-incorrect ITT, and record mechanical reasons.
+- Replaced string-theater flow checks with real headless Chrome A1/D5 completion,
+  download/signature, Q1 lock/Q2 reveal, 1440×900 geometry, and 200% zoom checks.
+- Status remains `implemented_pending_reaudit_nohuman`: DRAFT, no recruitment,
+  human data, public deployment, paper edit, protocol freeze, or claim upgrade.
+
+## 2026-08-10 · D-0104 · Local micro-study implementation completed pending hostile audit
+- Implemented a Python-standard-library loopback server and vanilla HTML/CSS/JS
+  without React, FastAPI, npm, remote services, or new dependencies.
+- The site consumes authoritative JSON, derives Q1 through the audited router,
+  preserves exact sequence assignment and ten-slot exports, and keeps browser state
+  in memory only. It does not recruit, collect human data remotely, or deploy publicly.
+- Added strict export reconstruction, mechanical duplicate/corruption handling,
+  preregistered paired CCA/sign-flip/bootstrap analysis, and a separately labelled
+  DRAFT assumption-sensitivity MDE tool.
+- Status is `materials_implemented_pending_hostile_audit_no_human_data`; this is not
+  READY, protocol freeze, participant authorization, paper evidence, or claim upgrade.
+
+## 2026-08-10 · D-0103 · Micro-study materials become executable JSON with checked-in validation; status remains materials-only
+- Made `data/microstudy_contract_application/stimuli.json` and `sequences.json` the only normative sources for the ten records, templates/keys, router inputs, Flat orders, participant strings, export fields, and `A1..D5` sequences. Spec, preregistration, and plan now reference and summarize those files rather than duplicating complete stimuli or answer keys; a future website must consume them directly.
+- Checked in a deterministic validator and pytest coverage. They freeze Unicode NFKC alphanumeric tokenization, lexical/length heuristics, oracle/LOO/global baselines, single-comparison-row Q1, combined CCA, router derivation, source schema, formal-text state-word prohibition, proposition parity, primitive-position balance, template reuse/key variation, and the generated 200-row sequence balance.
+- Corrected P3-Y without changing Q1: resolved non-superiority still routes to withheld, so coherence is not requested as the next required evaluation. Its scope boundary is now genuinely unavailable and `Q2-NEXT` C requests that missing boundary. All ten metrics remain oracle/LOO/global `3/0/3`, lexical family `2/3/2/2`, single-row Q1 `8`, combined CCA `2/0`, router `10`.
+- Materialized one common plain-language routing legend/tutorial, exact practice/feedback, a descriptive post-task format diagnostic, and nullable post-block `SEQ1..SEQ7` ease responses. Removed attention-check fields entirely; diagnostic, ease, practice, RT, and performance never exclude; no free text exists.
+- This is deterministic materials validation only. Experiment status remains `not_started_materials_only`; there is no web application, recruitment, pilot, human data, paper evidence, protocol freeze, or claim upgrade.
+
+## 2026-08-10 · D-0102 · Second hostile-audit protocol revision closes CCA, allocation, missingness, and analysis ambiguities
+- Reframed the construct as structured rule application and the treatment as a semantic-organization package (grouping, labels, fixed role order), not deep integration or a pure-headings manipulation. Flat now uses exact item-specific deterministic shuffles balanced so every primitive role occupies every position twice.
+- Made Q1→Q2 strictly sequential and irreversible. Q2 now uses item-specific scope/comparator/generalization judgments with no state names or state-option mapping. Leakage acceptance targets end-to-end CCA at the four-option `0.25` chance bound rather than requiring every single-row Q1 heuristic to be at chance.
+- Froze the complete trial-state truth table, `submitted==complete` compatibility alias, complete-only primary, `4/condition + 8/10` eligibility, all-ten-slot missing-as-incorrect sensitivity, and export of every planned slot.
+- Replaced same-rotation blocks with orthogonal `r` / `r+2 mod 5` rotations and froze blinded `A1..D5` slot allocation: dropout/primary-ineligible attempts reuse a slot; a ten-trial completion later mechanically excluded consumes it, is not replaced, and remains in ITT sensitivity.
+- Froze participant bootstrap (`B=10000`, seed `20260810`, percentile 2.5/97.5) and full exact sign-flip enumeration over nonzero differences. Removed GLMM and all numerical MDE language; MDE is pending a reproducible, independently audited simulation before protocol freeze.
+- Froze the exact three-person timing rule and exact tutorial/practice/feedback/debrief materials, standardized provenance on `source_status`, and retained materials-only/DRAFT status. This revision implements no web app, recruits nobody, collects no data, and changes no paper.
+
+## 2026-08-10 · D-0101 · Hostile-audit protocol findings closed; materials remain DRAFT and no study run is authorized
+- Replaced answer-leaking evidence/status prose with ten exact common proposition arrays and multi-row Q1/Q2 derivations. Frozen blind single-row, keyword, second-row, and fixed-position heuristics must remain at or below empirical majority chance (`0.40`).
+- Removed all held-out/transfer subset naming and claims. All formal combinations are unseen in the one different practice example; Q2 is scope/reason application and the sole primary remains conjunctive rule-application accuracy.
+- Expanded parity to exact five-row geometry, common strings/order, ≤5% visible-word difference, exact body word/line/row/card dimensions, DOM snapshots, and masked pixel/screenshot audits.
+- Expanded export to ten pre-generated planned slots and froze primary eligibility at ≥4 submitted per condition and ≥8/10 total; ten-slot missing-as-incorrect sensitivity and condition/sequence missingness are mandatory, with no performance-based exclusion.
+- Replaced A–D-only allocation with 20 exact orthogonal sequence codes `A1..D5`, combining A–D condition/set/block mapping with five balanced pattern-position rotations.
+- Replaced forced ten-minute pacing with a no-timeout owner-pilot gate (median ≤10 minutes, P90 ≤12), strengthened accessibility/privacy requirements, closed provenance enums, and added export-only analysis/MDE implementation and end-to-end test plans.
+- Interpretation is estimation-first: one primary sign-flip test plus bootstrap CI; descriptive categories are not pass/fail gates. This revision changes no paper, authorizes no participant activity, and leaves the preregistration DRAFT/materials-only pending fresh hostile re-audit.
+
+## 2026-08-10 · D-0100 · Owner authorizes materials/local-web phase only for exploratory contract-application micro-study
+- Owner authorized only protocol, stimulus/material, and local web engineering for an exploratory formative `contract legibility/application micro-study` (`N≈20`, desktop-only, approximately 10 minutes, technical GenAI users).
+- Recruitment, ethics administration, public deployment, human pilot, and human data collection remain outside scope and owner-managed. This decision does not authorize a study run.
+- The study is limited to within-subject Contract UI versus Info-Matched Flat Panel, 10 scored trials (5/condition), one practice, and four-sequence counterbalancing. It tests contract legibility/rule application, not calibrated reliance or user benefit.
+- Materials must use simulated evaluation records, preserve machine-checkable information parity, mirror the current four-state checker, and avoid final-state/aggregate-TRANSFER/recommended-action leakage. The current paper has no pass; any passing record is explicitly hypothetical.
+- The preregistration remains DRAFT/not frozen. No exploratory result may be upgraded to confirmatory evidence or used to change paper claims without a new owner decision and all applicable gates.
+
 ## 2026-08-05 · D-0099 · Comparator-bound calibration framing repaired without changing claims
 - This repair changes framing only. It changes no frozen protocol, result, number, confidence interval, formula, evidence validity, or Claim verdict.
 - C2 now states the uncertainty result as a **steer-vs-bounded-prompt negative calibration contrast under the frozen scorer**, with confidence intervals excluding zero in all four CAA/ITI-by-Qwen/Llama cells. It also carries the audited direct Qwen/CAA steer-vs-baseline result: near zero (`+0.011` compliance, `+0.0008` 1-Brier).
@@ -1141,3 +1196,9 @@
 - Budget caps (GPU hours, paid-API ceiling, max_full_runs).
 - Human-subjects/IRB path for Formative + controlled study.
 - Any L4 full run, paid/private API, GPU allocation, external submission.
+## 2026-08-10 · D-0106 · Second hostile-audit repair adds signed partials, explicit attempt order, and real browser/security gates
+- Formal-stage `Save & Exit` now atomically signs all ten slots as `complete=false`, downloads JSON/CSV, and ends without performance feedback. Silent no-export abandonment is explicitly unobservable and outside study-export ITT; a future recruitment platform completion log is the only permitted separate count.
+- Exports sign random per-server `run_id` and monotonic `attempt_serial`. Same-run duplicate resolution uses serial, while cross-run duplicate participant codes hard-fail without a versioned owner `attempt_id→global_order` manifest; file order has no authority.
+- Loopback requests now enforce exact Host/origin, JSON POST, bootstrap CSRF, per-session capability, size/cap/TTL limits, per-session locking, and request-id idempotency. Key permissions are best-effort owner-only and the key remains absent from browser/export.
+- Current-machine Chrome/Edge tests run full flows at both specified viewports and 100%/200% zoom, operate formal Q1/Q2 by Tab/Space/Enter, inspect DOM geometry/accessibility/overflow/hidden semantics, and verify PNG dimensions. Manual screen-reader review remains `UNVERIFIED PRE-RECRUITMENT`.
+- Status remains `implemented_pending_reaudit_nohuman`; MDE remains DRAFT, and this decision authorizes no recruitment, human data, public deployment, protocol freeze, paper edit, or claim upgrade.

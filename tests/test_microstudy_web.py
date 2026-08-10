@@ -235,6 +235,17 @@ def test_signed_export_validation_tamper_wrong_key_and_csv(live_server):
     assert "verification_signature" in csv_text
 
 
+def test_export_ready_is_frozen_retryable_and_retained(live_server):
+    base, server = live_server
+    data = complete_attempt(base)
+    attempt = data["attempt_id"]
+    assert server.sessions[attempt]["phase"] == "export_ready"
+    first = request_json(base, f"/api/export?attempt_id={attempt}&format=json")
+    second = request_json(base, f"/api/export?attempt_id={attempt}&format=json")
+    assert first == second == data
+    assert server.sessions[attempt]["signed_export"] == data
+
+
 def test_duplicate_first_complete_then_assignment_and_itt(live_server):
     base, _ = live_server
     first = complete_attempt(base, "P-DUP", "A1")
@@ -472,6 +483,7 @@ def test_load_exports_rejects_corrupt_unsigned_and_unknown_fields(live_server):
     good.write_text(json.dumps(data), encoding="utf-8")
     unsigned.write_text(json.dumps({k: v for k, v in data.items() if k != "verification"}), encoding="utf-8")
     value = copy.deepcopy(data)
+    value["attempt_id"] = str(uuid.uuid4())
     value["unexpected"] = True
     unknown.write_text(json.dumps(sign_export(value, TEST_KEY)), encoding="utf-8")
     corrupt.write_text("{", encoding="utf-8")
@@ -480,6 +492,40 @@ def test_load_exports_rejects_corrupt_unsigned_and_unknown_fields(live_server):
     assert Counter(row["reason"] for row in rejected) == {
         "technical_corrupt": 3,
     }
+
+
+def test_load_exports_deduplicates_same_path_and_identical_copy(live_server):
+    base, _ = live_server
+    data = complete_attempt(base)
+    RUNTIME.mkdir(parents=True, exist_ok=True)
+    original = RUNTIME / "attempt.json"
+    copied = RUNTIME / "attempt-copy.json"
+    encoded = json.dumps(data, sort_keys=True)
+    original.write_text(encoded, encoding="utf-8")
+    copied.write_text(encoded, encoding="utf-8")
+    valid, rejected = load_exports([original, original, copied], TEST_KEY)
+    assert len(valid) == 1
+    assert rejected == []
+
+
+def test_load_exports_hard_fails_attempt_id_conflict(live_server):
+    base, _ = live_server
+    data = complete_attempt(base)
+    conflicting = copy.deepcopy(data)
+    conflicting["participant_code"] = "CONFLICT"
+    conflicting = sign_export(conflicting, TEST_KEY)
+    RUNTIME.mkdir(parents=True, exist_ok=True)
+    first = RUNTIME / "first.json"
+    second = RUNTIME / "second.json"
+    first.write_text(json.dumps(data), encoding="utf-8")
+    second.write_text(json.dumps(conflicting), encoding="utf-8")
+    with pytest.raises(ExportError, match="conflicting payload or signature"):
+        load_exports([first, second], TEST_KEY)
+    signature_conflict = copy.deepcopy(data)
+    signature_conflict["verification"]["signature"] = "0" * 64
+    second.write_text(json.dumps(signature_conflict), encoding="utf-8")
+    with pytest.raises(ExportError, match="conflicting payload or signature"):
+        load_exports([first, second], TEST_KEY)
 
 
 def test_static_dom_accessibility_and_no_semantic_attributes():
@@ -510,11 +556,11 @@ def _free_port():
         return sock.getsockname()[1]
 
 
-def test_real_chrome_edge_full_flow_keyboard_geometry_and_screenshots():
-    websocket = pytest.importorskip("websocket")
+def test_real_chrome_edge_full_partial_isolated_server_gate():
+    pytest.importorskip("websocket")
     from browser_cdp import CDP
 
-    browser_candidates = {
+    candidates = {
         "edge": Path(os.environ.get(
             "EDGE_PATH", r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
         )),
@@ -522,237 +568,71 @@ def test_real_chrome_edge_full_flow_keyboard_geometry_and_screenshots():
             "CHROME_PATH", r"C:\Program Files\Google\Chrome\Application\chrome.exe"
         )),
     }
-    browsers = {name: path for name, path in browser_candidates.items() if path.exists()}
+    browsers = {name: path for name, path in candidates.items() if path.exists()}
     assert browsers, "Chrome or Edge is required for the real-browser gate"
-
     RUNTIME.mkdir(parents=True, exist_ok=True)
-    key_path = RUNTIME / "browser.key"
-    key_path.write_bytes(TEST_KEY)
-    server = create_server("127.0.0.1", 0, key_path)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
     downloads = RUNTIME / "downloads"
-    downloads.mkdir()
     screenshots = RUNTIME / "screenshots"
-    screenshots.mkdir()
+    downloads.mkdir(exist_ok=True)
+    screenshots.mkdir(exist_ok=True)
 
-    def press(cdp, key, code, virtual_key):
-        cdp.call("Input.dispatchKeyEvent", {
-            "type": "keyDown", "key": key, "code": code,
-            "windowsVirtualKeyCode": virtual_key,
-            "text": "\r" if key == "Enter" else (key if key == " " else ""),
-        })
-        cdp.call("Input.dispatchKeyEvent", {
-            "type": "keyUp", "key": key, "code": code,
-            "windowsVirtualKeyCode": virtual_key,
-        })
+    @contextlib.contextmanager
+    def isolated_server(label):
+        key_path = RUNTIME / f"{label}-{uuid.uuid4().hex}.key"
+        key_path.write_bytes(TEST_KEY)
+        server = create_server("127.0.0.1", 0, key_path)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        base = f"http://127.0.0.1:{server.server_port}"
+        deadline = time.time() + 10
+        while True:
+            try:
+                with urllib.request.urlopen(f"{base}/api/bootstrap") as response:
+                    assert response.status == 200
+                break
+            except OSError:
+                if time.time() > deadline:
+                    pytest.fail(f"{label} server readiness timed out")
+                time.sleep(0.05)
+        try:
+            yield base, server
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=10)
+            assert not thread.is_alive()
+            CLIENTS.pop(base, None)
 
-    def screenshot(cdp, path, width, height):
-        result = cdp.call("Page.captureScreenshot", {
-            "format": "png", "captureBeyondViewport": False,
-        })
-        content = base64.b64decode(result["data"])
-        path.write_bytes(content)
-        assert path.exists() and path.stat().st_size > 5000
-        assert content[:8] == b"\x89PNG\r\n\x1a\n"
-        assert int.from_bytes(content[16:20], "big") == width
-        assert int.from_bytes(content[20:24], "big") == height
-
-    processes = []
-    try:
-        flow_number = 0
-        for browser_name, browser in browsers.items():
-            port = _free_port()
-            profile = RUNTIME / f"{browser_name}-profile-{uuid.uuid4().hex}"
-            profile.mkdir()
-            stderr_path = RUNTIME / f"{browser_name}-stderr.txt"
-            stderr_handle = stderr_path.open("w+", encoding="utf-8")
-            process = subprocess.Popen([
-                str(browser), "--headless=new", "--no-sandbox", "--disable-gpu",
-                "--no-first-run", "--disable-features=msEdgeFirstRunExperience",
-                "--no-default-browser-check", "--remote-allow-origins=*",
-                f"--remote-debugging-port={port}", f"--user-data-dir={profile.resolve()}",
-                "about:blank",
-            ], stdout=subprocess.DEVNULL, stderr=stderr_handle)
-            processes.append((process, stderr_handle, port))
-            deadline = time.time() + 15
-            while True:
-                try:
-                    with urllib.request.urlopen(f"http://127.0.0.1:{port}/json/version"):
-                        break
-                except OSError:
-                    if time.time() > deadline:
-                        stderr_handle.flush()
-                        pytest.fail(
-                            f"{browser_name} CDP failed (exit={process.poll()}): "
-                            f"{stderr_path.read_text(encoding='utf-8')}"
-                        )
-                    time.sleep(0.1)
-            for width, height in ((1280, 800), (1440, 900)):
-                for zoom in (1, 2):
-                    flow_number += 1
-                    cdp = CDP.new_page(port, f"http://127.0.0.1:{server.server_port}/")
-                    try:
-                        cdp.call("Browser.setDownloadBehavior", {
-                            "behavior": "allow", "downloadPath": str(downloads),
-                        })
-                        cdp.call("Emulation.setDeviceMetricsOverride", {
-                            "width": width, "height": height,
-                            "deviceScaleFactor": 1, "mobile": False,
-                        })
-                        cdp.call("Emulation.setPageScaleFactor", {"pageScaleFactor": zoom})
-                        cdp.wait("document.querySelector('#sequence option')")
-                        cdp.eval(
-                            f"document.querySelector('#participant-code').value='B{flow_number}';"
-                            "document.querySelector('#participant-code').focus();"
-                            "document.querySelector('#sequence').value='A1';"
-                        )
-                        press(cdp, "Tab", "Tab", 9)
-                        press(cdp, "Tab", "Tab", 9)
-                        assert cdp.eval("document.activeElement.id") == "start-button"
-                        press(cdp, "Enter", "Enter", 13)
-                        cdp.wait("document.querySelector('[data-action=\"show-practice\"]')")
-                        cdp.click("show-practice")
-                        cdp.choose_and_click("practice-q1", "practice-q1")
-                        cdp.choose_and_click("practice-q2", "practice-q2")
-                        cdp.wait("document.querySelector('[data-action=\"begin-formal\"]')")
-                        cdp.click("begin-formal")
-                        captured = set()
-                        for index in range(10):
-                            cdp.wait(
-                                "document.querySelector('[data-action=\"formal-q1\"]')"
-                                " && !document.querySelector('[data-action=\"formal-q1\"]').disabled"
-                            )
-                            audit = cdp.eval("""(() => {
-                              const card=document.querySelector('.evidence-card');
-                              const rows=[...document.querySelectorAll('.evidence-row')];
-                              const labels=rows.map(r=>r.querySelector('.evidence-label').innerText);
-                              const forbidden=[...document.querySelectorAll('*')].flatMap(node =>
-                                [...node.attributes].map(a=>a.name)).filter(name =>
-                                /condition|stimulus|evidence-id|answer|correct|router/i.test(name));
-                              const tabbable=[...document.querySelectorAll(
-                                'button:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex="0"]'
-                              )].map(node=>node.id||node.dataset.action||node.name);
-                              return {
-                                aria:card.getAttribute('aria-label'), rows:rows.length, labels,
-                                cardWidth:card.getBoundingClientRect().width,
-                                cardOverflow:card.scrollWidth>card.clientWidth,
-                                documentOverflow:document.documentElement.scrollWidth>
-                                  document.documentElement.clientWidth,
-                                rowHeights:rows.map(r=>r.getBoundingClientRect().height),
-                                labelWidths:rows.map(r=>r.querySelector('dt').getBoundingClientRect().width),
-                                bodyWidths:rows.map(r=>r.querySelector('dd').getBoundingClientRect().width),
-                                labelFonts:rows.map(r=>parseFloat(getComputedStyle(r.querySelector('dt')).fontSize)),
-                                bodyFonts:rows.map(r=>parseFloat(getComputedStyle(r.querySelector('dd')).fontSize)),
-                                forbidden, tabbable,
-                                saveVisible:!document.querySelector('#save-exit-button').hidden
-                              };
-                            })()""")
-                            assert audit["aria"] == "Evidence panel"
-                            assert audit["rows"] == 5 and audit["saveVisible"]
-                            assert not audit["cardOverflow"] and not audit["documentOverflow"]
-                            assert audit["cardWidth"] <= 961
-                            assert all(value >= 71 for value in audit["rowHeights"])
-                            assert all(abs(value - 240) <= 1 for value in audit["labelWidths"])
-                            assert all(abs(value - 648) <= 1 for value in audit["bodyWidths"])
-                            assert audit["labelFonts"] == [14] * 5
-                            assert audit["bodyFonts"] == [16] * 5
-                            assert not audit["forbidden"]
-                            assert "formal-q1" in audit["tabbable"]
-                            condition = "flat" if audit["labels"][0].startswith("Evidence ") else "contract"
-                            if condition not in captured:
-                                screenshot(
-                                    cdp,
-                                    screenshots / (
-                                        f"{browser_name}-{width}x{height}-z{zoom}-{condition}.png"
-                                    ),
-                                    width, height,
-                                )
-                                captured.add(condition)
-                            press(cdp, "Tab", "Tab", 9)
-                            assert cdp.eval("document.activeElement.name") == "formal-q1"
-                            press(cdp, " ", "Space", 32)
-                            press(cdp, "Tab", "Tab", 9)
-                            assert cdp.eval("document.activeElement.dataset.action") == "formal-q1"
-                            press(cdp, "Enter", "Enter", 13)
-                            cdp.wait("document.activeElement?.name === 'formal-q2'")
-                            press(cdp, " ", "Space", 32)
-                            press(cdp, "Tab", "Tab", 9)
-                            assert cdp.eval("document.activeElement.dataset.action") == "formal-q2"
-                            press(cdp, "Enter", "Enter", 13)
-                            if index in (4, 9):
-                                cdp.wait("document.querySelector('[data-action=\"ease-skip\"]')")
-                                cdp.click("ease-skip")
-                        assert captured == {"contract", "flat"}
-                        cdp.wait("document.querySelector('[data-action=\"diagnostic-skip\"]')")
-                        cdp.click("diagnostic-skip")
-                        cdp.wait("document.querySelector('[data-action=\"download-json\"]')")
-                        before_json = len(list(downloads.glob("*.json")))
-                        before_csv = len(list(downloads.glob("*.csv")))
-                        cdp.click("download-json")
-                        cdp.click("download-csv")
-                        deadline = time.time() + 10
-                        while (
-                            len(list(downloads.glob("*.json"))) <= before_json
-                            or len(list(downloads.glob("*.csv"))) <= before_csv
-                        ):
-                            if time.time() > deadline:
-                                pytest.fail("browser downloads did not complete")
-                            time.sleep(0.1)
-                    finally:
-                        cdp.close()
-            if browser_name == next(iter(browsers)):
-                cdp = CDP.new_page(port, f"http://127.0.0.1:{server.server_port}/")
-                try:
-                    cdp.call("Browser.setDownloadBehavior", {
-                        "behavior": "allow", "downloadPath": str(downloads),
-                    })
-                    cdp.wait("document.querySelector('#sequence option')")
-                    cdp.eval(
-                        "document.querySelector('#participant-code').value='BPARTIAL';"
-                        "document.querySelector('#sequence').value='A1';"
-                        "document.querySelector('#start-button').click()"
+    @contextlib.contextmanager
+    def browser_process(name, executable):
+        port = _free_port()
+        profile = RUNTIME / f"{name}-profile-{uuid.uuid4().hex}"
+        profile.mkdir()
+        stderr_path = RUNTIME / f"{name}-{uuid.uuid4().hex}.stderr.txt"
+        stderr_handle = stderr_path.open("w+", encoding="utf-8")
+        process = subprocess.Popen([
+            str(executable), "--headless=new", "--no-sandbox", "--disable-gpu",
+            "--no-first-run", "--disable-features=msEdgeFirstRunExperience",
+            "--no-default-browser-check", "--remote-allow-origins=*",
+            f"--remote-debugging-port={port}", f"--user-data-dir={profile.resolve()}",
+            "about:blank",
+        ], stdout=subprocess.DEVNULL, stderr=stderr_handle)
+        deadline = time.time() + 15
+        while True:
+            try:
+                with urllib.request.urlopen(f"http://127.0.0.1:{port}/json/version"):
+                    break
+            except OSError:
+                if time.time() > deadline:
+                    stderr_handle.flush()
+                    pytest.fail(
+                        f"{name} CDP failed (exit={process.poll()}): "
+                        f"{stderr_path.read_text(encoding='utf-8')}"
                     )
-                    cdp.wait("document.querySelector('[data-action=\"show-practice\"]')")
-                    cdp.click("show-practice")
-                    cdp.choose_and_click("practice-q1", "practice-q1")
-                    cdp.choose_and_click("practice-q2", "practice-q2")
-                    cdp.wait("document.querySelector('[data-action=\"begin-formal\"]')")
-                    cdp.click("begin-formal")
-                    cdp.wait("!document.querySelector('#save-exit-button').hidden")
-                    before_json = len(list(downloads.glob("*.json")))
-                    before_csv = len(list(downloads.glob("*.csv")))
-                    cdp.eval("document.querySelector('#save-exit-button').click()")
-                    cdp.wait("document.body.innerText.includes('Session ended')")
-                    deadline = time.time() + 10
-                    while (
-                        len(list(downloads.glob("*.json"))) <= before_json
-                        or len(list(downloads.glob("*.csv"))) <= before_csv
-                    ):
-                        if time.time() > deadline:
-                            pytest.fail("partial browser downloads did not complete")
-                        time.sleep(0.1)
-                    assert "performance feedback" in cdp.eval("document.body.innerText").lower()
-                finally:
-                    cdp.close()
-            control = CDP.new_page(port, "about:blank")
-            control.call("Browser.close")
-            control.socket.close()
-            if process.poll() is None:
-                process.wait(timeout=10)
-            stderr_handle.close()
-            processes.remove((process, stderr_handle, port))
-        assert len(list(screenshots.glob("*.png"))) == len(browsers) * 8
-        validated = [
-            validate_export(json.loads(path.read_text(encoding="utf-8")), TEST_KEY)
-            for path in downloads.glob("*.json")
-        ]
-        assert any(data["complete"] is False and len(data["trials"]) == 10 for data in validated)
-    finally:
-        server.shutdown()
-        server.server_close()
-        thread.join()
-        for process, stderr_handle, port in processes:
+                time.sleep(0.1)
+        try:
+            yield port
+        finally:
             try:
                 control = CDP.new_page(port, "about:blank")
                 control.call("Browser.close")
@@ -763,4 +643,198 @@ def test_real_chrome_edge_full_flow_keyboard_geometry_and_screenshots():
             if process.poll() is None:
                 process.wait(timeout=10)
             stderr_handle.close()
+
+    def press(cdp, key, code, virtual_key):
+        params = {
+            "key": key, "code": code, "windowsVirtualKeyCode": virtual_key,
+            "text": "\r" if key == "Enter" else (key if key == " " else ""),
+        }
+        cdp.call("Input.dispatchKeyEvent", {"type": "keyDown", **params})
+        cdp.call("Input.dispatchKeyEvent", {"type": "keyUp", **params})
+
+    def start_formal(cdp, participant, sequence, keyboard=False):
+        cdp.wait("document.querySelector('#sequence option')")
+        cdp.eval(
+            f"document.querySelector('#participant-code').value={json.dumps(participant)};"
+            "document.querySelector('#participant-code').focus();"
+            f"document.querySelector('#sequence').value={json.dumps(sequence)};"
+        )
+        if keyboard:
+            press(cdp, "Tab", "Tab", 9)
+            press(cdp, "Tab", "Tab", 9)
+            assert cdp.eval("document.activeElement.id") == "start-button"
+            press(cdp, "Enter", "Enter", 13)
+        else:
+            cdp.eval("document.querySelector('#start-button').click()")
+        cdp.wait("document.querySelector('[data-action=\"show-practice\"]')")
+        cdp.click("show-practice")
+        cdp.choose_and_click("practice-q1", "practice-q1")
+        cdp.choose_and_click("practice-q2", "practice-q2")
+        cdp.wait("document.querySelector('[data-action=\"begin-formal\"]')")
+        cdp.click("begin-formal")
+
+    def finish_formal(cdp, audit_geometry=False, screenshot_prefix=None):
+        captured = set()
+        for index in range(10):
+            cdp.wait(
+                "document.querySelector('[data-action=\"formal-q1\"]')"
+                " && !document.querySelector('[data-action=\"formal-q1\"]').disabled"
+            )
+            if audit_geometry:
+                audit = cdp.eval("""(() => {
+                  const card=document.querySelector('.evidence-card');
+                  const rows=[...document.querySelectorAll('.evidence-row')];
+                  const labels=rows.map(r=>r.querySelector('.evidence-label').innerText);
+                  const forbidden=[...document.querySelectorAll('*')].flatMap(node =>
+                    [...node.attributes].map(a=>a.name)).filter(name =>
+                    /condition|stimulus|evidence-id|answer|correct|router/i.test(name));
+                  return {
+                    aria:card.getAttribute('aria-label'), labels,
+                    cardWidth:card.getBoundingClientRect().width,
+                    cardOverflow:card.scrollWidth>card.clientWidth,
+                    documentOverflow:document.documentElement.scrollWidth>
+                      document.documentElement.clientWidth,
+                    rowHeights:rows.map(r=>r.getBoundingClientRect().height),
+                    labelWidths:rows.map(r=>r.querySelector('dt').getBoundingClientRect().width),
+                    bodyWidths:rows.map(r=>r.querySelector('dd').getBoundingClientRect().width),
+                    labelFonts:rows.map(r=>parseFloat(getComputedStyle(r.querySelector('dt')).fontSize)),
+                    bodyFonts:rows.map(r=>parseFloat(getComputedStyle(r.querySelector('dd')).fontSize)),
+                    forbidden, saveVisible:!document.querySelector('#save-exit-button').hidden
+                  };
+                })()""")
+                assert audit["aria"] == "Evidence panel" and audit["saveVisible"]
+                assert not audit["cardOverflow"] and not audit["documentOverflow"]
+                assert audit["cardWidth"] <= 961
+                assert all(value >= 71 for value in audit["rowHeights"])
+                assert all(abs(value - 240) <= 1 for value in audit["labelWidths"])
+                assert all(abs(value - 648) <= 1 for value in audit["bodyWidths"])
+                assert audit["labelFonts"] == [14] * 5
+                assert audit["bodyFonts"] == [16] * 5
+                assert not audit["forbidden"]
+                condition = "flat" if audit["labels"][0].startswith("Evidence ") else "contract"
+                if condition not in captured:
+                    result = cdp.call("Page.captureScreenshot", {
+                        "format": "png", "captureBeyondViewport": False,
+                    })
+                    content = base64.b64decode(result["data"])
+                    path = screenshots / f"{screenshot_prefix}-{condition}.png"
+                    path.write_bytes(content)
+                    assert content[:8] == b"\x89PNG\r\n\x1a\n" and len(content) > 5000
+                    captured.add(condition)
+            cdp.choose_and_click("formal-q1", "formal-q1")
+            cdp.choose_and_click("formal-q2", "formal-q2")
+            if index in (4, 9):
+                cdp.wait("document.querySelector('[data-action=\"ease-skip\"]')")
+                cdp.click("ease-skip")
+        cdp.wait("document.querySelector('[data-action=\"diagnostic-skip\"]')")
+        cdp.click("diagnostic-skip")
+        cdp.wait("document.querySelector('[data-action=\"download-json\"]')")
+        assert cdp.eval("document.querySelector('[data-action=\"download-csv\"]') !== null")
+        assert cdp.eval("document.querySelector('[data-action=\"finish\"]') !== null")
+        if audit_geometry:
+            assert captured == {"contract", "flat"}
+
+    def assert_manual_downloads(cdp, server):
+        before_json = len(list(downloads.glob("*.json")))
+        before_csv = len(list(downloads.glob("*.csv")))
+        time.sleep(0.2)
+        assert len(list(downloads.glob("*.json"))) == before_json
+        assert len(list(downloads.glob("*.csv"))) == before_csv
+        attempt = next(iter(server.sessions))
+        capability = server.sessions[attempt]["capability"]
+        server.sessions[attempt]["capability"] = "temporarily-invalid"
+        cdp.click("download-json")
+        cdp.wait("document.querySelector('#stage-error').textContent.includes('failed')")
+        assert cdp.eval(
+            "document.querySelector('#stage-error').getAttribute('role') === 'alert'"
+            " && document.querySelector('[data-action=\"download-json\"]') !== null"
+            " && document.querySelector('[data-action=\"download-csv\"]') !== null"
+        )
+        server.sessions[attempt]["capability"] = capability
+        cdp.click("download-json")
+        cdp.click("download-csv")
+        deadline = time.time() + 10
+        while (
+            len(list(downloads.glob("*.json"))) <= before_json
+            or len(list(downloads.glob("*.csv"))) <= before_csv
+        ):
+            if time.time() > deadline:
+                pytest.fail("manual browser downloads did not complete")
+            time.sleep(0.1)
+
+    geometry_cases = [
+        ("A1", 1280, 800, 1), ("D5", 1280, 800, 2),
+        ("A1", 1440, 900, 2), ("D5", 1440, 900, 1),
+    ]
+    stress_iterations = int(os.environ.get("MICROSTUDY_BROWSER_STRESS_ITERATIONS", "1"))
+    try:
+        for browser_name, executable in browsers.items():
+            with browser_process(browser_name, executable) as port:
+                for case_index, (sequence, width, height, zoom) in enumerate(geometry_cases):
+                    label = f"{browser_name}-{sequence}-{width}-z{zoom}"
+                    with isolated_server(label) as (base, server):
+                        cdp = CDP.new_page(port, f"{base}/")
+                        try:
+                            cdp.call("Browser.setDownloadBehavior", {
+                                "behavior": "allow", "downloadPath": str(downloads),
+                            })
+                            cdp.call("Emulation.setDeviceMetricsOverride", {
+                                "width": width, "height": height,
+                                "deviceScaleFactor": 1, "mobile": False,
+                            })
+                            cdp.call("Emulation.setPageScaleFactor", {"pageScaleFactor": zoom})
+                            start_formal(cdp, f"G{case_index}{browser_name[0]}", sequence, True)
+                            finish_formal(cdp, True, label)
+                            assert_manual_downloads(cdp, server)
+                        finally:
+                            cdp.close()
+                for iteration in range(stress_iterations):
+                    sequence = "A1" if iteration % 2 == 0 else "D5"
+                    label = f"{browser_name}-stress-full-{iteration}"
+                    with isolated_server(label) as (base, _):
+                        cdp = CDP.new_page(port, f"{base}/")
+                        try:
+                            cdp.call("Browser.setDownloadBehavior", {
+                                "behavior": "allow", "downloadPath": str(downloads),
+                            })
+                            start_formal(cdp, f"SF{iteration}{browser_name[0]}", sequence)
+                            finish_formal(cdp)
+                        finally:
+                            cdp.close()
+                    label = f"{browser_name}-stress-partial-{iteration}"
+                    with isolated_server(label) as (base, server):
+                        cdp = CDP.new_page(port, f"{base}/")
+                        try:
+                            cdp.call("Browser.setDownloadBehavior", {
+                                "behavior": "allow", "downloadPath": str(downloads),
+                            })
+                            start_formal(cdp, f"SP{iteration}{browser_name[0]}", sequence)
+                            cdp.wait("!document.querySelector('#save-exit-button').hidden")
+                            attempt = next(iter(server.sessions))
+                            cdp.click("save-exit")
+                            cdp.wait("document.body.innerText.includes('Session ended')")
+                            time.sleep(0.2)
+                            assert not list(downloads.glob(f"microstudy-{attempt}.*"))
+                            assert "retry as often as needed" in cdp.eval(
+                                "document.body.innerText"
+                            ).lower()
+                            assert cdp.eval(
+                                "document.querySelector('[data-action=\"download-json\"]') !== null"
+                                " && document.querySelector('[data-action=\"download-csv\"]') !== null"
+                            )
+                            assert server.sessions[attempt]["phase"] == "export_ready"
+                            assert_manual_downloads(cdp, server)
+                            cdp.click("finish")
+                            cdp.wait("document.body.innerText.includes('browser view is cleared')")
+                            assert attempt in server.sessions
+                        finally:
+                            cdp.close()
+        assert len(list(screenshots.glob("*.png"))) == len(browsers) * 8
+        validated = [
+            validate_export(json.loads(path.read_text(encoding="utf-8")), TEST_KEY)
+            for path in downloads.glob("*.json")
+        ]
+        assert any(data["complete"] is False for data in validated)
+        assert any(data["complete"] is True for data in validated)
+    finally:
         shutil.rmtree(RUNTIME, ignore_errors=True)

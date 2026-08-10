@@ -293,13 +293,43 @@ def load_exports(
     paths: Iterable[Path], verification_key: bytes
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     valid, rejected = [], []
+    attempts: dict[str, tuple[bytes, str, str]] = {}
     for path in paths:
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(raw, dict):
+                attempt_id = raw.get("attempt_id")
+                verification = raw.get("verification")
+                signature = (
+                    verification.get("signature")
+                    if isinstance(verification, dict) else None
+                )
+                if isinstance(attempt_id, str) and isinstance(signature, str):
+                    fingerprint = (canonical_bytes(raw), signature, str(path))
+                    previous = attempts.get(attempt_id)
+                    if previous is not None:
+                        if previous[:2] != fingerprint[:2]:
+                            raise ExportError(
+                                "same attempt_id has conflicting payload or signature: "
+                                f"{previous[2]} vs {path}",
+                                "attempt_id_conflict",
+                            )
+                        continue
+                    attempts[attempt_id] = fingerprint
             data = validate_export(raw, verification_key)
             data["_source_file"] = str(path)
             valid.append(data)
-        except (OSError, json.JSONDecodeError, ExportError, KeyError, TypeError) as exc:
+        except ExportError as exc:
+            if exc.reason == "attempt_id_conflict":
+                raise
+            rejected.append(
+                {
+                    "source_file": str(path),
+                    "reason": exc.reason,
+                    "detail": str(exc),
+                }
+            )
+        except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
             rejected.append(
                 {
                     "source_file": str(path),

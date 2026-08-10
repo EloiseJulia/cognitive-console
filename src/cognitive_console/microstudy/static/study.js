@@ -249,17 +249,28 @@ async function submitDiagnostic(skip) {
 }
 
 function showDebrief() {
+  showExportScreen(true);
+}
+
+function showExportScreen(complete) {
   app.ended = true;
   setFormal(false);
   const jsonLink = el("button", {type: "button", "data-action": "download-json"}, "Download signed JSON");
   const csvLink = el("button", {type: "button", "data-action": "download-csv"}, "Download signed CSV");
+  const finish = el("button", {type: "button", "data-action": "finish"}, "Finish");
   replaceStage(
-    el("h1", {}, "Preview complete"),
-    el("p", {}, app.materials.participant_materials.debrief),
-    el("p", {}, "Completed formal trials: 10 of 10."),
+    el("h1", {}, complete ? "Preview complete" : "Session ended"),
+    ...(complete ? [
+      el("p", {}, app.materials.participant_materials.debrief),
+      el("p", {}, "Completed formal trials: 10 of 10."),
+    ] : [
+      el("p", {}, "Your signed partial export is ready. No performance feedback is shown."),
+    ]),
+    el("p", {id: "export-status"}, "Export ready. Choose each format to download manually."),
+    el("p", {}, "If a download fails, the buttons remain available; retry as often as needed while this local server retains the export."),
     el("div", {class: "actions"}),
   );
-  stage.lastChild.append(jsonLink, csvLink);
+  stage.lastChild.append(jsonLink, csvLink, finish);
 }
 
 async function downloadExport(format) {
@@ -276,18 +287,23 @@ async function downloadExport(format) {
   link.click();
   link.remove();
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  document.getElementById("export-status").textContent =
+    `${format.toUpperCase()} download started. Both formats remain available.`;
 }
 
 async function saveAndExit(button) {
   button.disabled = true;
-  await api("/api/save-exit", {attempt_id: app.attemptId});
+  const response = await api("/api/save-exit", {attempt_id: app.attemptId});
+  if (response.phase !== "export_ready") throw new Error("Signed export is not ready.");
+  showExportScreen(false);
+}
+
+function finish() {
   app.ended = true;
   setFormal(false);
-  await downloadExport("json");
-  await downloadExport("csv");
   replaceStage(
-    el("h1", {}, "Session ended"),
-    el("p", {}, "Your signed partial JSON and CSV exports were downloaded. No performance feedback is shown."),
+    el("h1", {}, "Finished"),
+    el("p", {}, "This browser view is cleared. The local server retains the signed export until its session TTL expires."),
   );
 }
 
@@ -318,10 +334,11 @@ document.addEventListener("click", event => {
     "save-exit": () => saveAndExit(button),
     "download-json": () => downloadExport("json"),
     "download-csv": () => downloadExport("csv"),
+    "finish": () => finish(),
   };
   Promise.resolve(actions[button.dataset.action]?.()).catch(error => {
     showError(error);
-    if (!app.ended) button.disabled = false;
+    button.disabled = false;
   });
 });
 

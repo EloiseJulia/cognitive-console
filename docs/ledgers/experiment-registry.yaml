@@ -1450,12 +1450,16 @@ experiments:
     r/r+2 rotations, and frozen bootstrap/sign-flip settings.
     The local implementation now emits strict signed complete/partial v3 exports with
     random run_id and monotonic attempt_serial, requires an explicit global-order
-    manifest for cross-run duplicates, and protects loopback requests with exact
+    manifest for cross-run duplicates, deduplicates byte-identical repeated files
+    by attempt_id, and hard-fails conflicting payload/signature reuse. Completion
+    and Save & Exit freeze an immutable export_ready product retained until TTL;
+    JSON/CSV downloads are manual, idempotent, and retryable. It protects loopback requests with exact
     Host/origin, JSON, CSRF/capability, request-size, capacity, TTL, per-session-lock,
     and request-id gates. Current-machine Chrome/Edge tests execute full keyboard flows
     at both viewports and zoom levels and validate DOM geometry/accessibility plus PNG
     artifacts. Manual screen-reader evaluation is UNVERIFIED PRE-RECRUITMENT.
-    The implementation and assumption-labelled DRAFT MDE tool remain pending
+    Real-browser cases now use isolated ephemeral servers with readiness waits
+    and owned cleanup. The implementation and assumption-labelled DRAFT MDE tool remain pending
     hostile re-audit and are not a run or paper evidence. Recruitment, ethics
     administration, public deployment, owner pilot, and human data collection are not
     authorized. The preregistration remains DRAFT and not frozen; this row records

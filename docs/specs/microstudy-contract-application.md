@@ -144,8 +144,13 @@ and relative monotonic timing only in volatile memory. Its strict endpoints are
 start/practice/Q1/Q2/ease/diagnostic/complete/save-exit/export; the browser cannot skip a
 phase or construct a completed export. All ten planned slots are exported only
 as server-signed complete or partial products. During every formal-study stage,
-`Save & Exit` atomically creates a signed partial export (`complete=false`),
-downloads JSON and CSV, and ends the session without performance feedback.
+`Save & Exit` atomically transitions the session to `export_ready` and freezes a
+signed partial export (`complete=false`). Full completion uses the same
+`export_ready` lifecycle. The server retains that immutable product until the
+session TTL expires; JSON and CSV GETs are idempotent and retryable. The browser
+shows persistent manual JSON/CSV download buttons, never auto-downloads, reports
+download failure with `role=alert` while retaining both buttons, and may offer
+`Finish` only to clear the client view without deleting the server export.
 Required trial-state invariants are:
 
 ```text
@@ -208,6 +213,10 @@ idempotent without duplicate transitions. It suppresses access logs, stores no
 IP/UA/header/absolute timestamp or participant data on disk, and loses volatile
 sessions at shutdown. Automated keyboard Tab/Space/Enter checks are required;
 manual screen-reader semantic evaluation remains `UNVERIFIED PRE-RECRUITMENT`.
+Every real-browser case starts its own loopback server on an ephemeral port,
+waits for readiness, and owns its shutdown; cases never share a server lifecycle.
+Chrome and Edge exercise A1/D5, complete/partial paths, failed-download button
+retention, security probes, and a configurable repeated stress gate.
 
 ## 10. Acceptance criteria
 

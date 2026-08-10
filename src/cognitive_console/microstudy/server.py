@@ -292,7 +292,7 @@ class StudyHandler(BaseHTTPRequestHandler):
                 capability = self.headers.get("X-Study-Capability", "")
                 if (
                     session is None
-                    or session["phase"] != "ended"
+                    or session["phase"] != "export_ready"
                     or not hmac.compare_digest(capability, session["capability"])
                 ):
                     self._error(409, "export is not available")
@@ -528,8 +528,12 @@ class StudyHandler(BaseHTTPRequestHandler):
             raise ValueError("attempt cannot be completed")
         export = self._canonical_export(session, complete=True)
         session["signed_export"] = sign_export(export, self.server.verification_key)
-        session["phase"] = "ended"
-        return {"phase": "ended", "attempt_id": session["attempt_id"], "complete": True}
+        session["phase"] = "export_ready"
+        session["last_seen"] = time.monotonic()
+        return {
+            "phase": "export_ready", "attempt_id": session["attempt_id"],
+            "complete": True,
+        }
 
     def _save_exit(self, body: dict[str, Any], *, session: dict[str, Any]) -> dict[str, Any]:
         if set(body) != {"attempt_id", "request_id"}:
@@ -538,8 +542,12 @@ class StudyHandler(BaseHTTPRequestHandler):
             raise ValueError("save and exit is available only during the formal study")
         export = self._canonical_export(session, complete=False)
         session["signed_export"] = sign_export(export, self.server.verification_key)
-        session["phase"] = "ended"
-        return {"phase": "ended", "attempt_id": session["attempt_id"], "complete": False}
+        session["phase"] = "export_ready"
+        session["last_seen"] = time.monotonic()
+        return {
+            "phase": "export_ready", "attempt_id": session["attempt_id"],
+            "complete": False,
+        }
 
     def _canonical_export(self, session: dict[str, Any], *, complete: bool) -> dict[str, Any]:
         diagnostic = validated_sources()[0]["participant_materials"]["post_task_manipulation_diagnostic"]
@@ -565,7 +573,7 @@ class StudyHandler(BaseHTTPRequestHandler):
             ),
             "block_1_ease": session["ease"][1], "block_2_ease": session["ease"][2],
             "mechanical_exclusion": False, "mechanical_exclusion_reason": "none",
-            "trials": session["trials"],
+            "trials": json.loads(json.dumps(session["trials"])),
         }
 
     @staticmethod

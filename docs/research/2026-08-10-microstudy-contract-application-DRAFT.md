@@ -15,7 +15,7 @@ The study does not measure deep integration, transfer, calibrated reliance, bene
 - Within participant; ten planned formal slots, five per condition, in two blocks.
 - One different unscored practice item.
 - Q1 is submitted and irreversibly locked before Q2 appears.
-- Q2 is an independent scope/comparator/generalization judgment; its options contain no state names and do not map one-to-one onto Q1 states.
+- Q2 is an independent evidence/scope/comparator judgment drawn from three cross-pattern templates; its options contain no state names and do not map one-to-one onto Q1 states.
 - Every formal card begins `Simulated evaluation record`.
 - Common primitive propositions are identical across conditions.
 - Exact 20-code allocation `A1..D5`; block 2 uses rotation `r+2 mod 5`, not the block-1 rotation.
@@ -35,9 +35,20 @@ d_i = mean complete Contract CCA_i - mean complete Flat CCA_i
 estimand = mean_i(d_i)
 ```
 
-Q1 may be partly predictable from a single primitive because the contract logic permits one fact to strongly constrain a state. Leakage acceptance therefore targets CCA. All forty Q2 options are parallel positive action/interpretation statements with ten normalized tokens, zero occurrences of `no/not/only/without/within/must/cannot`, and identical scope-marker positions. The frozen option-only heuristic uses only length, negation, modal, scope-marker, and option-position features under leave-one-item-out evaluation. It must not significantly exceed `0.25`.
+Q1 may be partly predictable from a single primitive because the contract logic permits one fact to strongly constrain a state. Leakage acceptance therefore targets CCA. Q2 uses byte-identical question/options within `Q2-NEXT` (four uses), `Q2-BASELINE` (four), and `Q2-COVERAGE` (two). Their within-template correct positions are `{A,B,C,D}`, `{A,B,C,D}`, and `{C,D}`; overall keys are `A=2, B=2, C=3, D=3`.
 
-Materials verification found the option-only fixed-position ceiling at `3/10` (`p=0.4744`, exact one-sided binomial versus `0.25`). The frozen single-comparison-row mapping predicts Q1 for `8/10`; combined with any option-only position it reaches at most `2/10 CCA = 20%` (`p=0.7560`). The normative five-input router scores all `10/10`. These figures came from a disposable deterministic script and must be recreated as implementation tests.
+Before implementation, the frozen no-evidence audit is:
+
+- oracle fixed answer per repeated template: `3/10`, `p=0.4744`;
+- leave-one-item-out template-frequency with alphabetical tie-breaking: `0/10`, `p=1.0000`;
+- global best fixed position, reported separately: `3/10`, `p=0.4744`;
+- equal-length, modal, and READ-lexical heuristics: `2/10` each, `p=0.7560`;
+- negation-marker heuristic: `3/10`, `p=0.4744`;
+- single-comparison-row Q1: `8/10`, descriptive only;
+- single-row plus oracle question/options answer: `2/10 CCA`, `p=0.7560`;
+- single-row plus LOO template answer: `0/10 CCA`, `p=1.0000`.
+
+Every inferential value is an inclusive exact one-sided binomial test versus `0.25`. All preregistered no-evidence heuristics must remain nonsignificant (`p>=.05`), and every allowed single-row+question/options combined heuristic must remain `≤25% CCA`. The normative five-input router scores `10/10`. These figures came from a disposable deterministic script and must be recreated as implementation tests; the LOO and global fixed-position results must never be conflated.
 
 ## 4. State routing and key authority
 
@@ -50,7 +61,7 @@ The sole Q1 authority is the ordered function of READ status, comparison tested/
 5. Positive CI meeting margin plus coherence failure → withheld.
 6. Positive CI meeting margin plus coherence pass → evidence-supported at the exact tier.
 
-A tier change invalidates inherited READ/evaluation inputs and returns unresolved until new tier-specific inputs exist. Q1 keys are generated and validated by this router; item IDs are never state authority. The ten derived states are P1 unresolved, P2 diagnostic-only, P3 withheld, P4 unresolved, and P5 evidence-supported at S1/S2, for both X/Y records.
+A tier change invalidates inherited READ/evaluation inputs and returns unresolved until new tier-specific inputs exist. Q1 keys are generated and validated by this router; item IDs are never state authority. The ten derived states remain P1 unresolved, P2 diagnostic-only, P3 withheld, P4 unresolved, and P5 evidence-supported at S1/S2, for both X/Y records. P1-Y is unresolved because its interval crosses zero; P3-X is withheld because its positive margin-resolved comparison lacks coherence; P4-X is unresolved because tier-specific READ is unavailable.
 
 ## 5. Missingness, identity, and exclusions
 
@@ -104,9 +115,9 @@ MDE status is `pending reproducible simulation before protocol freeze`. This DRA
 
 ## 8. Materials and provenance
 
-The exact ten stimuli, item-specific Q2s, keys, Flat orders, tutorial, practice, feedback, and debrief are normative in the protocol.
+The exact ten stimuli, Q2 template assignments/keys, Flat orders, tutorial, practice, feedback, and debrief are normative in the protocol.
 
-The provenance field is exactly `source_status`. P1/P3/P4 are `real_inspired_non_pass` with semantic artifact source notes and no raw internal IDs. P2/P5 are `synthetic_rule_case`; P5 has `hypothetical=true`. All values are fabricated. The debrief states there is no current paper pass.
+The provenance field is exactly `source_status`. P1/P3/P4 are `real_inspired_non_pass` with item-exact semantic artifact source notes and no raw internal IDs. P2/P5 are `synthetic_rule_case`; P5 has `hypothetical=true`. P1-Y is an interval-resolution non-pass and P3-X a coherence-qualified non-pass. All values are fabricated. The debrief states there is no current paper pass.
 
 Contract and Flat share fixed dimensions, word-count constraints, viewport, and no-scroll behavior. Flat role order is balanced so every primitive occupies every position exactly twice across ten items.
 

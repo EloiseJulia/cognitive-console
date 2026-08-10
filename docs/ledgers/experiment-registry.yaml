@@ -1417,8 +1417,11 @@ experiments:
   validation_notes: >-
     D-0100 authorizes protocol, simulated materials, and loopback-only web engineering;
     D-0101 records the first audit revision and D-0102 the second. The protocol-finalization
-    revision rewrites all 40 Q2 options as parallel ten-token positive statements and
-    records disposable-script checks: option-only 3/10 (p=0.4744), comparison-row Q1
+    revision replaces item-specific Q2 wording with three byte-identical cross-pattern
+    templates reused 4/4/2 times, with keys A2/B2/C3/D3. Disposable-script checks record
+    oracle fixed-per-template 3/10 (p=0.4744), leave-one-item-out template-frequency
+    0/10 (p=1.0000), separately reported global fixed-position 3/10 (p=0.4744),
+    lexical/length/negation/modal heuristics at no more than 3/10, comparison-row Q1
     8/10, combined CCA 2/10 (p=0.7560), and router 10/10. It makes the ordered READ /
     comparison / coherence / tier router the sole Q1 key authority, invalidates tier
     inheritance, and expands raw export with UUID attempt identity, participant code,

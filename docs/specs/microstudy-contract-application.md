@@ -107,24 +107,32 @@ Q1_WITHHELD — Withheld control
 Q1_SUPPORTED — Evidence-supported control at the exact stated tier
 ```
 
-### 3.2 Item-specific Q2
+### 3.2 Cross-pattern Q2 template pool
 
-Every Q2 has four options, shown in the listed order. Q2 wording and keys are independent scope/comparator/generalization judgments and contain no Q1 state name.
+Q2 uses three templates. A template's question and ordered options are byte-identical across all of its uses; only the primitive evidence changes the key. Every template is used by at least two patterns, has at least two correct positions across uses, contains no Q1 state name, and has no pattern-specific term in its options.
 
-| Item | Exact Q2 | Options (`A`–`D`) | Key |
-|---|---|---|---|
-| `MS-P1-X` | Which use is licensed by the available comparison record? | A: Treat pending observations as comparative prerequisite for the named scope. B: Treat candidate budgeting as comparative support for the named scope. C: Treat alignment evidence as comparative support for the named scope. D: Treat coherence evidence as comparative support for the named scope. | A |
-| `MS-P1-Y` | What is the narrowest warranted conclusion about the named scope? | A: Treat candidate budgeting as comparative support for the named scope. B: Treat completed observations as comparative prerequisite for the named scope. C: Treat alignment evidence as comparative support for the named scope. D: Treat coherence evidence as comparative support for the named scope. | B |
-| `MS-P2-X` | Which boundary should be preserved when using this record? | A: Treat representation evidence as interpretive aid for the named scope. B: Treat candidate evidence as comparative basis for the named scope. C: Treat alignment evidence as comparative basis for the named scope. D: Treat coherence evidence as comparative basis for the named scope. | A |
-| `MS-P2-Y` | Which statement respects the comparator evidence? | A: Treat candidate budgeting as comparative support for the named scope. B: Treat alignment evidence as comparative support for the named scope. C: Treat coherence evidence as comparative support for the named scope. D: Treat representation evidence as interpretive aid for the named scope. | D |
-| `MS-P3-X` | Which comparator judgment is warranted? | A: Treat coherence qualification as overriding basis for the named scope. B: Treat resolved shortfall as retention basis for the named scope. C: Treat matched budgeting as extension basis for the named scope. D: Treat positive point direction as advantage for the named scope. | B |
-| `MS-P3-Y` | What may be concluded about generalization? | A: Treat matched methods as extension basis for the named scope. B: Treat coherence qualification as extension basis for the named scope. C: Treat resolved shortfall as retention basis for the named scope. D: Treat candidate counting as extension basis for the named scope. | C |
-| `MS-P4-X` | Which interpretation fits the interval and margin? | A: Treat interval spanning as deferral basis for the named scope. B: Treat synthetic naming as decisive comparison for the named scope. C: Treat coherence qualification as decisive comparison for the named scope. D: Treat interval spanning as extension support for the named scope. | A |
-| `MS-P4-Y` | Which scope statement follows from the interval and margin? | A: Treat interval spanning as extension support for the named scope. B: Treat comparator matching as sufficient evidence for the named scope. C: Treat level matching as extension support for the named scope. D: Treat interval spanning as deferral basis for the named scope. | D |
-| `MS-P5-X` | Which use stays at the record's registered boundary? | A: Apply registered action broadly to methods for the named scope. B: Apply registered action exactly at S1 for the named scope. C: Apply registered action broadly to tasks for the named scope. D: Apply registered action broadly to models for the named scope. | B |
-| `MS-P5-Y` | Which generalization is justified? | A: Apply registered action broadly to levels for the named scope. B: Apply registered action broadly to tasks for the named scope. C: Apply registered action exactly at S2 for the named scope. D: Apply registered action broadly to models for the named scope. | C |
+| Template | Exact question | Exact options (`A`–`D`) |
+|---|---|---|
+| `Q2-NEXT` | Which next evaluation is required? | A: Establish the READ relation at this tier now. B: Run a decisive comparison at this tier now. C: Check coherence at the registered tier again now. D: Retest the rule at a newly specified tier. |
+| `Q2-BASELINE` | What follows about the unsteered baseline? | A: The baseline is below the reference range here. B: The baseline is near the reference range here. C: The baseline relation is unknown from this record. D: The baseline is above the reference range here. |
+| `Q2-COVERAGE` | Which evidence is directly established in this record? | A: The record directly establishes READ evidence alone. B: The record directly establishes comparative evidence alone. C: The record directly establishes both evidence types. D: The record directly establishes neither evidence type. |
 
-All forty options are positive action/interpretation statements. Within each item they are parallel in voice and exactly ten normalized lexical tokens. The high-identifiability markers `no`, `not`, `only`, `without`, `within`, `must`, and `cannot` occur zero times in every option and therefore have identical count and position. Each option contains `named` and `scope` exactly once at normalized token positions 9 and 10; the other frozen scope markers `boundary`, `tier`, `across`, `all`, `any`, and `every` occur zero times. No correct option has a unique negation, modal, scope marker, or length.
+Exact assignment and primitive-evidence justification:
+
+| Item | Template | Key | Primitive-evidence basis |
+|---|---|---:|---|
+| `MS-P1-X` | `Q2-COVERAGE` | D | Neither a tier-specific READ result nor a completed comparison exists. |
+| `MS-P2-X` | `Q2-NEXT` | B | READ is established; the matched comparison has not been run. |
+| `MS-P2-Y` | `Q2-BASELINE` | C | The comparator row explicitly says the baseline relation is unknown. |
+| `MS-P1-Y` | `Q2-BASELINE` | A | The comparator row explicitly places the baseline below the reference range. |
+| `MS-P3-X` | `Q2-COVERAGE` | C | Both READ and comparative results are directly established. |
+| `MS-P3-Y` | `Q2-NEXT` | C | The resolved comparison is available but the coherence evaluation is unavailable. |
+| `MS-P4-X` | `Q2-NEXT` | A | The interval is available but the tier-specific READ evaluation is unavailable. |
+| `MS-P4-Y` | `Q2-BASELINE` | B | The comparator row explicitly places the baseline near the reference range. |
+| `MS-P5-X` | `Q2-NEXT` | D | Current evidence is restricted to S1; another tier requires a new evaluation. |
+| `MS-P5-Y` | `Q2-BASELINE` | D | The comparator row explicitly places the baseline above the reference range. |
+
+Template reuse is `Q2-NEXT=4`, `Q2-BASELINE=4`, and `Q2-COVERAGE=2`. Correct positions within the three templates are respectively `{A,B,C,D}`, `{A,B,C,D}`, and `{C,D}`. Overall key balance is `A=2, B=2, C=3, D=3`. Q2 remains hidden until Q1 is irreversibly submitted and locked.
 
 ## 4. Stimulus schema and provenance
 
@@ -146,7 +154,7 @@ primitive_evidence:
 flat_order: [primitive_id, primitive_id, primitive_id, primitive_id, primitive_id]
 questions:
   q1: {derived_key: string}
-  q2: {text: string, options: [{key: A|B|C|D, text: string}], correct_key: A|B|C|D}
+  q2: {template_id: string, text: string, options: [{key: A|B|C|D, text: string}], correct_key: A|B|C|D}
 state_routing_inputs:
   tier: string
   evaluation_tier: string
@@ -169,10 +177,10 @@ Exact provenance by item:
 | Item | `source_status` | `hypothetical` | Exact `source_note` |
 |---|---|---:|---|
 | `MS-P1-X` | `real_inspired_non_pass` | false | `Semantic artifact source: incomplete representation/comparison pattern; fabricated teaching values; no raw internal IDs; not paper evidence.` |
-| `MS-P1-Y` | `real_inspired_non_pass` | false | `Semantic artifact source: incomplete representation/comparison pattern; fabricated teaching values; no raw internal IDs; not paper evidence.` |
+| `MS-P1-Y` | `real_inspired_non_pass` | false | `Semantic artifact source: interval-resolution non-pass pattern; fabricated teaching values; no raw internal IDs; not paper evidence.` |
 | `MS-P2-X` | `synthetic_rule_case` | false | `Synthetic rule case created for representation-only routing; fabricated teaching values; not paper evidence.` |
 | `MS-P2-Y` | `synthetic_rule_case` | false | `Synthetic rule case created for representation-only routing; fabricated teaching values; not paper evidence.` |
-| `MS-P3-X` | `real_inspired_non_pass` | false | `Semantic artifact source: matched-comparator non-advantage pattern; fabricated teaching values; no raw internal IDs; not paper evidence.` |
+| `MS-P3-X` | `real_inspired_non_pass` | false | `Semantic artifact source: coherence-qualified non-pass pattern; fabricated teaching values; no raw internal IDs; not paper evidence.` |
 | `MS-P3-Y` | `real_inspired_non_pass` | false | `Semantic artifact source: matched-comparator non-advantage pattern; fabricated teaching values; no raw internal IDs; not paper evidence.` |
 | `MS-P4-X` | `real_inspired_non_pass` | false | `Semantic artifact source: interval-resolution pattern; fabricated teaching values; no raw internal IDs; not paper evidence.` |
 | `MS-P4-Y` | `real_inspired_non_pass` | false | `Semantic artifact source: interval-resolution pattern; fabricated teaching values; no raw internal IDs; not paper evidence.` |
@@ -187,16 +195,16 @@ The following are the canonical common primitive propositions. They contain no i
 
 | Item | Representation | Comparison | Comparator | Coherence | Scope | Q1 / Q2 |
 |---|---|---|---|---|---|---|
-| `MS-P1-X` | Alignment estimate 0.08; registered minimum 0.20. | The matched ledger contains 0 completed observations. | Budget: 16 candidates, fixed item split, 5 samples each. | Bound 0.10; no paired outputs are available to calculate change. | Alder / North / editing / S1. | `Q1_UNRESOLVED` / A |
-| `MS-P1-Y` | Alignment estimate 0.14; registered minimum 0.25. | The matched ledger contains 0 completed observations. | Budget: 12 candidates, fixed item split, 5 samples each. | Bound 0.08; no paired outputs are available to calculate change. | Birch / Cedar / triage / S2. | `Q1_UNRESOLVED` / B |
-| `MS-P2-X` | Alignment estimate 0.31; registered minimum 0.20. | The matched ledger contains 0 completed observations. | Budget: 16 candidates, fixed item split, 5 samples each. | Bound 0.10; no paired outputs are available to calculate change. | Alder / Cedar / summarization / S1. | `Q1_DIAGNOSTIC` / A |
-| `MS-P2-Y` | Alignment estimate 0.34; registered minimum 0.25. | The matched ledger contains 0 completed observations. | Budget: 12 candidates, fixed item split, 5 samples each. | Bound 0.08; no paired outputs are available to calculate change. | Birch / North / classification / S2. | `Q1_DIAGNOSTIC` / D |
-| `MS-P3-X` | Alignment estimate 0.32; registered minimum 0.20. | Matched effect −0.07; 95% interval [−0.15, −0.01]. | Registered advantage +0.10; budget, split, and 5 samples are matched. | Change 0.03 against absolute bound 0.10. | Alder / North / planning / S1. | `Q1_WITHHELD` / B |
-| `MS-P3-Y` | Alignment estimate 0.36; registered minimum 0.25. | Matched effect −0.04; 95% interval [−0.11, −0.01]. | Registered advantage +0.08; budget, split, and 5 samples are matched. | Change 0.02 against absolute bound 0.08. | Birch / Cedar / review / S2. | `Q1_WITHHELD` / C |
-| `MS-P4-X` | Alignment estimate 0.33; registered minimum 0.20. | Matched effect +0.05; 95% interval [−0.09, +0.19]. | Registered advantage +0.10; budget, split, and 5 samples are matched. | Change 0.03 against absolute bound 0.10. | Alder / Cedar / extraction / S1. | `Q1_UNRESOLVED` / A |
-| `MS-P4-Y` | Alignment estimate 0.37; registered minimum 0.25. | Matched effect +0.03; 95% interval [−0.07, +0.13]. | Registered advantage +0.08; budget, split, and 5 samples are matched. | Change 0.02 against absolute bound 0.08. | Birch / North / ranking / S2. | `Q1_UNRESOLVED` / D |
-| `MS-P5-X` | Alignment estimate 0.35; registered minimum 0.20. | Matched effect +0.16; 95% interval [+0.11, +0.21]. | Registered advantage +0.10; budget, split, and 5 samples are matched. | Change 0.03 against absolute bound 0.10. | Alder / North / routing / S1 only. | `Q1_SUPPORTED` / B |
-| `MS-P5-Y` | Alignment estimate 0.39; registered minimum 0.25. | Matched effect +0.14; 95% interval [+0.09, +0.19]. | Registered advantage +0.08; budget, split, and 5 samples are matched. | Change 0.02 against absolute bound 0.08. | Birch / Cedar / verification / S2 only. | `Q1_SUPPORTED` / C |
+| `MS-P1-X` | The tier-specific READ evaluation has not been completed. | The matched ledger contains 0 completed observations. | Budget: 16 candidates, fixed item split, 5 samples each. | Bound 0.10; no paired outputs are available to calculate change. | Alder / North / editing / S1. | `Q1_UNRESOLVED` / D |
+| `MS-P1-Y` | Alignment estimate 0.31; registered minimum 0.25. | Matched effect +0.03; 95% interval [−0.07, +0.13]. | Registered advantage +0.08; the unsteered baseline is below the reference range. | Change 0.02 against absolute bound 0.08. | Birch / Cedar / triage / S2. | `Q1_UNRESOLVED` / A |
+| `MS-P2-X` | Alignment estimate 0.31; registered minimum 0.20. | The matched ledger contains 0 completed observations. | Budget: 16 candidates, fixed item split, 5 samples each. | Bound 0.10; no paired outputs are available to calculate change. | Alder / Cedar / summarization / S1. | `Q1_DIAGNOSTIC` / B |
+| `MS-P2-Y` | Alignment estimate 0.34; registered minimum 0.25. | The matched ledger contains 0 completed observations. | Registered advantage +0.08; the unsteered baseline relation is unknown. | Bound 0.08; no paired outputs are available to calculate change. | Birch / North / classification / S2. | `Q1_DIAGNOSTIC` / C |
+| `MS-P3-X` | Alignment estimate 0.32; registered minimum 0.20. | Matched effect +0.16; 95% interval [+0.11, +0.21]. | Registered advantage +0.10; budget, split, and 5 samples are matched. | The registered coherence evaluation is unavailable. | Alder / North / planning / S1. | `Q1_WITHHELD` / C |
+| `MS-P3-Y` | Alignment estimate 0.36; registered minimum 0.25. | Matched effect −0.04; 95% interval [−0.11, −0.01]. | Registered advantage +0.08; budget, split, and 5 samples are matched. | The registered coherence evaluation is unavailable. | Birch / Cedar / review / S2. | `Q1_WITHHELD` / C |
+| `MS-P4-X` | The tier-specific READ evaluation is unavailable. | Matched effect +0.05; 95% interval [−0.09, +0.19]. | Registered advantage +0.10; budget, split, and 5 samples are matched. | Change 0.03 against absolute bound 0.10. | Alder / Cedar / extraction / S1. | `Q1_UNRESOLVED` / A |
+| `MS-P4-Y` | Alignment estimate 0.37; registered minimum 0.25. | Matched effect +0.03; 95% interval [−0.07, +0.13]. | Registered advantage +0.08; the unsteered baseline is near the reference range. | Change 0.02 against absolute bound 0.08. | Birch / North / ranking / S2. | `Q1_UNRESOLVED` / B |
+| `MS-P5-X` | Alignment estimate 0.35; registered minimum 0.20. | Matched effect +0.16; 95% interval [+0.11, +0.21]. | Registered advantage +0.10; budget, split, and 5 samples are matched. | Change 0.03 against absolute bound 0.10. | Alder / North / routing / S1 only; another tier requires retesting. | `Q1_SUPPORTED` / D |
+| `MS-P5-Y` | Alignment estimate 0.39; registered minimum 0.25. | Matched effect +0.14; 95% interval [+0.09, +0.19]. | Registered advantage +0.08; the unsteered baseline is above the reference range. | Change 0.02 against absolute bound 0.08. | Birch / Cedar / verification / S2 only. | `Q1_SUPPORTED` / D |
 
 ### 5.1 Normative state-routing function
 
@@ -231,12 +239,12 @@ Normative truth table for the ten records:
 | Item | READ | Comparison classification | Coherence | Tier | Derived Q1 |
 |---|---|---|---|---|---|
 | `MS-P1-X` | unsupported | untested | unavailable | S1 | `Q1_UNRESOLVED` |
-| `MS-P1-Y` | unsupported | untested | unavailable | S2 | `Q1_UNRESOLVED` |
+| `MS-P1-Y` | supported | CI crosses 0 | pass | S2 | `Q1_UNRESOLVED` |
 | `MS-P2-X` | supported | untested | unavailable | S1 | `Q1_DIAGNOSTIC` |
 | `MS-P2-Y` | supported | untested | unavailable | S2 | `Q1_DIAGNOSTIC` |
-| `MS-P3-X` | supported | resolved non-superiority, CI≤0 | pass | S1 | `Q1_WITHHELD` |
-| `MS-P3-Y` | supported | resolved non-superiority, CI≤0 | pass | S2 | `Q1_WITHHELD` |
-| `MS-P4-X` | supported | CI crosses 0 | pass | S1 | `Q1_UNRESOLVED` |
+| `MS-P3-X` | supported | positive CI meets +0.10 margin | unavailable | S1 | `Q1_WITHHELD` |
+| `MS-P3-Y` | supported | resolved non-superiority, CI≤0 | unavailable | S2 | `Q1_WITHHELD` |
+| `MS-P4-X` | unsupported | CI crosses 0 | pass | S1 | `Q1_UNRESOLVED` |
 | `MS-P4-Y` | supported | CI crosses 0 | pass | S2 | `Q1_UNRESOLVED` |
 | `MS-P5-X` | supported | positive CI meets +0.10 margin | pass | S1 | `Q1_SUPPORTED(S1)` |
 | `MS-P5-Y` | supported | positive CI meets +0.08 margin | pass | S2 | `Q1_SUPPORTED(S2)` |
@@ -246,7 +254,8 @@ Implementations must never use `stimulus_id`, `pattern_id`, or an item-ID lookup
 Required derivation primitives:
 
 ```text
-P1: representation + comparison
+P1-X: representation + comparison
+P1-Y: representation + comparison + comparator
 P2: representation + comparison
 P3: comparison + comparator + coherence
 P4: comparison + comparator
@@ -257,18 +266,34 @@ P5: comparison + comparator + coherence + scope
 
 The primary leakage target is CCA, not row-wise Q1 chance.
 
-Frozen tests:
+Frozen pre-implementation tests:
 
-1. Q1-only single-row, keyword, fixed-position, and lexical heuristics may predict part of Q1; their exact leave-one-X/Y-pair-out Q1 accuracy is reported, not treated as an automatic failure.
-2. Give each heuristic its Q1 prediction but no Q2 information. With four Q2 choices, deterministic option guessing is evaluated over all four fixed guesses and seeded uniform guessing; expected CCA must be `≤0.25`.
-3. The normalized option-only baseline uses only option token length; counts/positions of `no/not/only/without/within`; counts/positions of `must/cannot`; the frozen scope-marker counts/positions; and option position. Under leave-one-item-out evaluation, it must not significantly exceed chance over ten questions.
-4. The single-comparison-row baseline maps `untested→Q1_DIAGNOSTIC`, `CI≤0→Q1_WITHHELD`, `CI crosses 0→Q1_UNRESOLVED`, and positive margin-resolved→Q1_SUPPORTED`. It may predict part of Q1. Combining it with every option-only prediction must yield CCA `≤25%` and remain nonsignificant.
-5. Significance test: exact one-sided binomial test against `p=0.25`, alpha `0.05`, no tuning after data or materials inspection.
-6. Combined rule checker must score `10/10`; each derivation uses at least two primitive IDs.
+1. A question+options-only observer must emit one fixed answer per repeated template because the displayed Q2 text is identical across that template's uses. Report the oracle best fixed-per-template ceiling, not a fitted result.
+2. Report separately: (a) leave-one-item-out template-frequency prediction with deterministic alphabetical tie-breaking and (b) the global best fixed-position prediction. Never call the global result leave-one-out.
+3. Report option-only lexical, normalized-token-length, negation, modal, and position heuristics. These heuristics may inspect question/options but never primitive evidence, item ID, pattern ID, condition, or Q1 response.
+4. The single-comparison-row baseline maps `untested→Q1_DIAGNOSTIC`, `CI≤0→Q1_WITHHELD`, `CI crosses 0→Q1_UNRESOLVED`, and positive margin-resolved→Q1_SUPPORTED`, while deliberately ignoring READ, coherence, and tier mismatch.
+5. Cross the single-row Q1 prediction with every allowed question/options-only prediction and report the maximum CCA. The combined ceiling must be `≤25%`.
+6. Every no-evidence accuracy is tested by an exact one-sided binomial test against `p=0.25`, alpha `0.05`, inclusive upper tail, with no post-inspection tuning. Every preregistered heuristic must have `p>=0.05`.
+7. The normative five-input router must score `10/10`; each derivation uses at least two primitive IDs.
 
-If Q2 option count changes, the chance bound is recomputed as `1 / option_count` and frozen before any pilot. Q2 keys are balanced `A=3, B=3, C=2, D=2`, and item-specific wording prevents a state-to-option lookup.
+If Q2 option count changes, chance is frozen again as `1 / option_count` before any pilot.
 
-Temporary deterministic verification on 2026-08-10 found: all 40 options have 10 tokens; every high-identifiability marker count is 0; normalized within-item scope features are tied; Q2 question/options contain zero Q1 state names; the best option-only baseline is the most frequent fixed position at `3/10 = 30%`, exact one-sided binomial `p=0.4744`; the comparison-row Q1 baseline is `8/10`; and its best combined CCA is `2/10 = 20%`, exact one-sided binomial `p=0.7560`. The script was intentionally not retained because this is a materials-only verification; implementation must recreate these checks as tests.
+Temporary deterministic verification on 2026-08-10 found:
+
+| Audit | Correct | Accuracy | Exact one-sided `p` vs `.25` |
+|---|---:|---:|---:|
+| Oracle fixed answer per repeated template | 3/10 | 30% | 0.4744 |
+| Leave-one-item-out template-frequency, alphabetical tie-break | 0/10 | 0% | 1.0000 |
+| Global best fixed position | 3/10 | 30% | 0.4744 |
+| Equal-length heuristic, ties→A | 2/10 | 20% | 0.7560 |
+| Negation-marker heuristic, otherwise ties→A | 3/10 | 30% | 0.4744 |
+| Modal-marker heuristic, ties→A | 2/10 | 20% | 0.7560 |
+| READ-lexical heuristic, otherwise ties→A | 2/10 | 20% | 0.7560 |
+| Single-comparison-row Q1 | 8/10 | 80% | descriptive only |
+| Single-row + oracle template answer CCA | 2/10 | 20% | 0.7560 |
+| Single-row + LOO template answer CCA | 0/10 | 0% | 1.0000 |
+
+All questions/options contain zero Q1 state names. All allowed no-evidence heuristics are nonsignificant; the maximum combined CCA is 20%. The disposable verification script was not retained. Implementation must recreate the exact template identities, assignments, truth table, heuristic definitions, and values as tests.
 
 ## 7. Practice/tutorial/debrief materials
 
@@ -515,7 +540,7 @@ This document does not authorize the owner pilot or provide ethics/recruitment w
 1. Ten canonical items, exact Q2/options/keys, exact `source_status/source_note/hypothetical`, and exact Flat orders validate.
 2. Every card starts with `Simulated evaluation record`; debrief says there is no current paper pass.
 3. Q1 locks before Q2; Q2 contains no state names or state-option mapping.
-4. Q2 lexical checks reproduce 40/40 ten-token options, balanced marker features, option-only `3/10` (`p=0.4744`), comparison-row `8/10`, and combined CCA `2/10` (`p=0.7560`); router checker is `10/10`.
+4. Q2 leakage checks reproduce template reuse `4/4/2`, keys `A2/B2/C3/D3`, oracle template `3/10`, LOO template `0/10`, global fixed-position `3/10`, all lexical/length/negation/modal heuristics `≤3/10` with `p>=.05`, comparison-row Q1 `8/10`, and combined CCA `2/10`; router checker is `10/10`.
 5. Contract/Flat proposition identity, treatment declaration, geometry, word count, viewport, and no-scroll tests pass.
 6. Flat primitive-role×position counts equal two; all 20 sequence and cross-block balance invariants pass.
 7. Allocation replacement/consumption/duplicate rules are machine represented and outcome blind.

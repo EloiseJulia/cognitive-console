@@ -47,7 +47,7 @@ tests/
 
 ### Materials
 
-- Materialize the ten exact proposition maps, Q2 text/options/keys, Flat orders, and tutorial/practice/debrief.
+- Materialize the ten exact proposition maps, three byte-identical cross-pattern Q2 templates, template assignments/keys, Flat orders, and tutorial/practice/debrief.
 - Validate exact `source_status`, `source_note`, and `hypothetical`.
 - Show `Simulated evaluation record` atop every card; show no raw internal IDs.
 - Keep one canonical proposition source for both renderers.
@@ -58,9 +58,11 @@ tests/
 - Reject state names and one-to-one state mappings in Q2 options.
 - Implement the ordered five-input state router; generate and validate Q1 keys from structured inputs.
 - Reject item-ID/pattern-ID hardcoding as state authority and invalidate inheritance after any tier change.
-- Freeze the normalized option-only baseline and single-comparison-row+option CCA baseline.
+- Freeze the question/options-only template baseline, lexical/length/negation/modal/position baselines, and single-comparison-row+question/options CCA baseline.
 - Compute actual chance as `1/option_count`; currently `0.25`.
-- Reproduce lexical `3/10, p=0.4744`, comparison Q1 `8/10`, combined CCA `2/10, p=0.7560`.
+- Reproduce template reuse `4/4/2`, keys `A2/B2/C3/D3`, oracle fixed-per-template `3/10`, LOO template-frequency `0/10`, and global fixed-position `3/10`.
+- Reproduce equal-length/modal/READ-lexical `2/10`, negation `3/10`, comparison Q1 `8/10`, oracle combined CCA `2/10`, and LOO combined CCA `0/10`; use exact binomial `p>=.05` for every no-evidence heuristic.
+- Report LOO and global fixed-position independently; never label the global result as LOO.
 - Require checker `10/10` and ≥2 derivation primitives.
 
 ### Treatment and parity
@@ -113,7 +115,7 @@ tests/
 | Area | Required machine proof |
 |---|---|
 | Materials | exact 10 items, Q2s/keys, provenance, notices, tutorial strings |
-| Leakage/routing | two-step lock; generated router keys `10/10`; lexical `3/10`; comparison Q1 `8/10`; combined CCA `2/10`; exact binomial values |
+| Leakage/routing | two-step lock; Q2 templates `4/4/2`; keys `2/2/3/3`; router `10/10`; oracle/LOO/global `3/0/3`; lexical family ≤`3/10`; comparison Q1 `8/10`; combined CCA ≤`2/10`; exact binomial values |
 | Treatment | canonical common propositions; declared package; exact Flat permutations; primitive×position=2 |
 | Sequences | exact `A1..D5`; `r/r+2`; generated 200-row balance table; no repeated content |
 | Allocation | outcome-blind slot ledger; UUID attempts; pre-outcome duplicate rule; reuse/consume cases |
@@ -128,9 +130,13 @@ tests/
 ```text
 test_q1_locked_before_q2
 test_q2_has_no_state_names_or_state_option_map
-test_q2_options_are_parallel_ten_token_positive_statements
-test_q2_marker_counts_and_positions_are_balanced
-test_option_only_baseline_is_three_of_ten_and_nonsignificant
+test_q2_template_question_and_options_are_byte_identical
+test_q2_templates_cross_patterns_and_use_multiple_key_positions
+test_q2_template_reuse_and_key_distribution
+test_question_options_oracle_is_three_of_ten
+test_leave_one_item_out_template_frequency_is_zero_of_ten
+test_global_fixed_position_is_three_of_ten_and_reported_separately
+test_option_lexical_length_negation_modal_heuristics_are_nonsignificant
 test_comparison_baseline_is_eight_of_ten
 test_combined_baseline_is_two_of_ten_and_nonsignificant
 test_router_derives_all_ten_q1_keys

@@ -162,5 +162,7 @@ Automated keyboard, focus, screen-reader, contrast, reduced-motion, 200% zoom, a
 2. Validator metrics exactly match Section 4.
 3. P3-Y Q2 requests missing scope and Q1 remains withheld.
 4. No attention-check field, free text, duplicate materials source, or hardcoded website key exists.
-5. Registry and decision notes remain materials-only.
-6. No web implementation, recruitment, pilot, human data, paper edit, or claim upgrade occurs in this revision.
+5. Registry and decision notes identify implementation pending hostile audit.
+6. The website is loopback-only, memory-only, and consumes authoritative JSON.
+7. No recruitment, pilot, human data, public deployment, paper edit, or claim
+   upgrade occurs in this revision.

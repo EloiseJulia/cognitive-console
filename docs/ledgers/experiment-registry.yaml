@@ -1393,7 +1393,7 @@ experiments:
   hypothesis_id: H-MICROSTUDY-CONTRACT-APPLICATION
   claim_ids: []
   type: exploratory_formative_human_protocol
-  status: not_started_materials_only
+  status: materials_implemented_pending_hostile_audit_no_human_data
   code_commit: null
   dirty_tree: null
   data_hash: null
@@ -1414,6 +1414,13 @@ experiments:
   - src/cognitive_console/microstudy_materials.py
   - scripts/validate_microstudy_materials.py
   - tests/test_microstudy_materials.py
+  - src/cognitive_console/microstudy/materials.py
+  - src/cognitive_console/microstudy/server.py
+  - src/cognitive_console/microstudy/analysis.py
+  - src/cognitive_console/microstudy/static/index.html
+  - src/cognitive_console/microstudy/static/study.css
+  - src/cognitive_console/microstudy/static/study.js
+  - tests/test_microstudy_web.py
   - docs/specs/microstudy-contract-application.md
   - docs/research/2026-08-10-microstudy-contract-application-DRAFT.md
   - docs/plans/microstudy-contract-application-web.md
@@ -1437,8 +1444,8 @@ experiments:
     irreversible Q1-to-Q2 flow, semantic-organization treatment declaration, balanced Flat
     shuffles, complete missingness truth table, blinded A1..D5 replacement, orthogonal
     r/r+2 rotations, and frozen bootstrap/sign-flip settings.
-    Numerical MDE remains pending reproducible audited simulation. Recruitment, ethics
+    The local implementation and assumption-labelled MDE tool now exist but remain pending
+    hostile audit and are not a run or paper evidence. Recruitment, ethics
     administration, public deployment, owner pilot, and human data collection are not
     authorized. The preregistration remains DRAFT and not frozen; this row records
-    materials preparation and deterministic validation only and must not be represented as
-    a run.
+    materials and implementation preparation only and must not be represented as a run.

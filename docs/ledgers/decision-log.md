@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-08-10 · D-0104 · Local micro-study implementation completed pending hostile audit
+- Implemented a Python-standard-library loopback server and vanilla HTML/CSS/JS
+  without React, FastAPI, npm, remote services, or new dependencies.
+- The site consumes authoritative JSON, derives Q1 through the audited router,
+  preserves exact sequence assignment and ten-slot exports, and keeps browser state
+  in memory only. It does not recruit, collect human data remotely, or deploy publicly.
+- Added strict export reconstruction, mechanical duplicate/corruption handling,
+  preregistered paired CCA/sign-flip/bootstrap analysis, and a separately labelled
+  DRAFT assumption-sensitivity MDE tool.
+- Status is `materials_implemented_pending_hostile_audit_no_human_data`; this is not
+  READY, protocol freeze, participant authorization, paper evidence, or claim upgrade.
+
 ## 2026-08-10 · D-0103 · Micro-study materials become executable JSON with checked-in validation; status remains materials-only
 - Made `data/microstudy_contract_application/stimuli.json` and `sequences.json` the only normative sources for the ten records, templates/keys, router inputs, Flat orders, participant strings, export fields, and `A1..D5` sequences. Spec, preregistration, and plan now reference and summarize those files rather than duplicating complete stimuli or answer keys; a future website must consume them directly.
 - Checked in a deterministic validator and pytest coverage. They freeze Unicode NFKC alphanumeric tokenization, lexical/length heuristics, oracle/LOO/global baselines, single-comparison-row Q1, combined CCA, router derivation, source schema, formal-text state-word prohibition, proposition parity, primitive-position balance, template reuse/key variation, and the generated 200-row sequence balance.

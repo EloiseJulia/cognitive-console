@@ -1416,11 +1416,18 @@ experiments:
   valid_for_paper: false
   validation_notes: >-
     D-0100 authorizes protocol, simulated materials, and loopback-only web engineering;
-    D-0101 records the first audit revision and D-0102 the second. D-0102 targets
-    end-to-end CCA leakage, freezes irreversible Q1-to-Q2 flow and independent Q2
-    judgments, declares the semantic-organization package, balances Flat row shuffles,
-    defines the complete missingness truth table and blinded A1..D5 slot replacement,
-    uses orthogonal r/r+2 block rotations, and freezes bootstrap/sign-flip settings.
+    D-0101 records the first audit revision and D-0102 the second. The protocol-finalization
+    revision rewrites all 40 Q2 options as parallel ten-token positive statements and
+    records disposable-script checks: option-only 3/10 (p=0.4744), comparison-row Q1
+    8/10, combined CCA 2/10 (p=0.7560), and router 10/10. It makes the ordered READ /
+    comparison / coherence / tier router the sole Q1 key authority, invalidates tier
+    inheritance, and expands raw export with UUID attempt identity, participant code,
+    attention/practice status, provenance, missing flags, and analysis-derived exclusions.
+    Duplicate decisions freeze before outcomes; raw retains all attempts and ITT excludes
+    only non-kept duplicates and technical-corrupt attempts. The protocol also preserves
+    irreversible Q1-to-Q2 flow, semantic-organization treatment declaration, balanced Flat
+    shuffles, complete missingness truth table, blinded A1..D5 replacement, orthogonal
+    r/r+2 rotations, and frozen bootstrap/sign-flip settings.
     Numerical MDE remains pending reproducible audited simulation. Recruitment, ethics
     administration, public deployment, owner pilot, and human data collection are not
     authorized. The preregistration remains DRAFT and not frozen; this row records

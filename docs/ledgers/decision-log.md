@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-08-10 · D-0103 · Micro-study materials become executable JSON with checked-in validation; status remains materials-only
+- Made `data/microstudy_contract_application/stimuli.json` and `sequences.json` the only normative sources for the ten records, templates/keys, router inputs, Flat orders, participant strings, export fields, and `A1..D5` sequences. Spec, preregistration, and plan now reference and summarize those files rather than duplicating complete stimuli or answer keys; a future website must consume them directly.
+- Checked in a deterministic validator and pytest coverage. They freeze Unicode NFKC alphanumeric tokenization, lexical/length heuristics, oracle/LOO/global baselines, single-comparison-row Q1, combined CCA, router derivation, source schema, formal-text state-word prohibition, proposition parity, primitive-position balance, template reuse/key variation, and the generated 200-row sequence balance.
+- Corrected P3-Y without changing Q1: resolved non-superiority still routes to withheld, so coherence is not requested as the next required evaluation. Its scope boundary is now genuinely unavailable and `Q2-NEXT` C requests that missing boundary. All ten metrics remain oracle/LOO/global `3/0/3`, lexical family `2/3/2/2`, single-row Q1 `8`, combined CCA `2/0`, router `10`.
+- Materialized one common plain-language routing legend/tutorial, exact practice/feedback, a descriptive post-task format diagnostic, and nullable post-block `SEQ1..SEQ7` ease responses. Removed attention-check fields entirely; diagnostic, ease, practice, RT, and performance never exclude; no free text exists.
+- This is deterministic materials validation only. Experiment status remains `not_started_materials_only`; there is no web application, recruitment, pilot, human data, paper evidence, protocol freeze, or claim upgrade.
+
 ## 2026-08-10 · D-0102 · Second hostile-audit protocol revision closes CCA, allocation, missingness, and analysis ambiguities
 - Reframed the construct as structured rule application and the treatment as a semantic-organization package (grouping, labels, fixed role order), not deep integration or a pure-headings manipulation. Flat now uses exact item-specific deterministic shuffles balanced so every primitive role occupies every position twice.
 - Made Q1→Q2 strictly sequential and irreversible. Q2 now uses item-specific scope/comparator/generalization judgments with no state names or state-option mapping. Leakage acceptance targets end-to-end CCA at the four-option `0.25` chance bound rather than requiring every single-row Q1 heuristic to be at chance.

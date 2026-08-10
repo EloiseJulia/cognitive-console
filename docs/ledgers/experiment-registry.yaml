@@ -1409,6 +1409,11 @@ experiments:
   raw_metrics: null
   summary_metrics: null
   artifacts:
+  - data/microstudy_contract_application/stimuli.json
+  - data/microstudy_contract_application/sequences.json
+  - src/cognitive_console/microstudy_materials.py
+  - scripts/validate_microstudy_materials.py
+  - tests/test_microstudy_materials.py
   - docs/specs/microstudy-contract-application.md
   - docs/research/2026-08-10-microstudy-contract-application-DRAFT.md
   - docs/plans/microstudy-contract-application-web.md
@@ -1416,16 +1421,17 @@ experiments:
   valid_for_paper: false
   validation_notes: >-
     D-0100 authorizes protocol, simulated materials, and loopback-only web engineering;
-    D-0101 records the first audit revision and D-0102 the second. The protocol-finalization
-    revision replaces item-specific Q2 wording with three byte-identical cross-pattern
-    templates reused 4/4/2 times, with keys A2/B2/C3/D3. Disposable-script checks record
-    oracle fixed-per-template 3/10 (p=0.4744), leave-one-item-out template-frequency
-    0/10 (p=1.0000), separately reported global fixed-position 3/10 (p=0.4744),
-    lexical/length/negation/modal heuristics at no more than 3/10, comparison-row Q1
-    8/10, combined CCA 2/10 (p=0.7560), and router 10/10. It makes the ordered READ /
-    comparison / coherence / tier router the sole Q1 key authority, invalidates tier
-    inheritance, and expands raw export with UUID attempt identity, participant code,
-    attention/practice status, provenance, missing flags, and analysis-derived exclusions.
+    D-0101 records the first audit revision, D-0102 the second, and D-0103 the executable
+    materials repair. Authoritative JSON now supplies all ten items, three byte-identical
+    cross-pattern templates, keys, routing inputs, participant text, export fields, and
+    A1..D5 sequences. The checked-in validator freezes tokenization and heuristic algorithms
+    and reproduces reuse 4/4/2, keys A2/B2/C3/D3, oracle 3/10, LOO 0/10, global position
+    3/10, lexical heuristics at 2-3/10, comparison-row Q1 8/10, combined CCA 2/10 and 0/10,
+    router 10/10, Flat primitive-position balance, and all 200 sequence rows. P3-Y now asks
+    for its genuinely missing scope boundary rather than unnecessary coherence while its Q1
+    remains withheld under resolved non-superiority. The export schema contains practice,
+    post-task manipulation-diagnostic, nullable SEQ1-7 block-ease, provenance, missingness,
+    and analysis-derived exclusion fields; it has no attention-check or free-text field.
     Duplicate decisions freeze before outcomes; raw retains all attempts and ITT excludes
     only non-kept duplicates and technical-corrupt attempts. The protocol also preserves
     irreversible Q1-to-Q2 flow, semantic-organization treatment declaration, balanced Flat
@@ -1434,4 +1440,5 @@ experiments:
     Numerical MDE remains pending reproducible audited simulation. Recruitment, ethics
     administration, public deployment, owner pilot, and human data collection are not
     authorized. The preregistration remains DRAFT and not frozen; this row records
-    materials preparation only and must not be represented as a run.
+    materials preparation and deterministic validation only and must not be represented as
+    a run.

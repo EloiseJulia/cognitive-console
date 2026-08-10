@@ -49,17 +49,20 @@ applicable approvals. It does not recruit people or collect data remotely.
 
 ```powershell
 python -m cognitive_console.microstudy --host 127.0.0.1 --port 8765 `
-  --verification-key-file .runtime\microstudy-verification.key --open
+  --verification-key-file .runtime\microstudy-verification.key `
+  --max-sessions 100 --session-ttl-seconds 7200 --open
 ```
 
 Assign an anonymous code and an exact sequence (`A1`–`D5`). Session state stays
-only in server memory; shutdown discards it. Completed JSON/CSV exports are
-server-generated and HMAC-SHA256 signed. Keep the owner verification key private.
+only in server memory; shutdown discards it. Formal stages continuously expose
+`Save & Exit`; complete and partial JSON/CSV exports are server-generated and
+HMAC-SHA256 signed. Keep the owner verification key private.
 
 ```powershell
 python -m cognitive_console.microstudy.analysis analyze export1.json export2.json `
   --verification-key-file .runtime\microstudy-verification.key `
   --assignments frozen-owner-assignments.csv `
+  --attempt-order-manifest frozen-attempt-order.json `
   --json-out microstudy-summary.json --csv-out microstudy-participants.csv
 python -m cognitive_console.microstudy.analysis mde --n 20 `
   --json-out microstudy-mde-DRAFT.json
@@ -67,3 +70,7 @@ python -m cognitive_console.microstudy.analysis mde --n 20 `
 
 Analysis rejects unsigned, forged, tampered, wrong-key, wrong-hash, and
 schema-invalid exports. It remains explicitly DRAFT, not paper evidence.
+The attempt-order manifest is required only when a participant code spans server
+run IDs; input-file order is never used. Silent no-export abandonment is
+unobservable by the local server and must be reported separately from a future
+recruitment-platform completion log.

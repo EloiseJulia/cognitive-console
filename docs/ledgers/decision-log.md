@@ -1196,3 +1196,9 @@
 - Budget caps (GPU hours, paid-API ceiling, max_full_runs).
 - Human-subjects/IRB path for Formative + controlled study.
 - Any L4 full run, paid/private API, GPU allocation, external submission.
+## 2026-08-10 · D-0106 · Second hostile-audit repair adds signed partials, explicit attempt order, and real browser/security gates
+- Formal-stage `Save & Exit` now atomically signs all ten slots as `complete=false`, downloads JSON/CSV, and ends without performance feedback. Silent no-export abandonment is explicitly unobservable and outside study-export ITT; a future recruitment platform completion log is the only permitted separate count.
+- Exports sign random per-server `run_id` and monotonic `attempt_serial`. Same-run duplicate resolution uses serial, while cross-run duplicate participant codes hard-fail without a versioned owner `attempt_id→global_order` manifest; file order has no authority.
+- Loopback requests now enforce exact Host/origin, JSON POST, bootstrap CSRF, per-session capability, size/cap/TTL limits, per-session locking, and request-id idempotency. Key permissions are best-effort owner-only and the key remains absent from browser/export.
+- Current-machine Chrome/Edge tests run full flows at both specified viewports and 100%/200% zoom, operate formal Q1/Q2 by Tab/Space/Enter, inspect DOM geometry/accessibility/overflow/hidden semantics, and verify PNG dimensions. Manual screen-reader review remains `UNVERIFIED PRE-RECRUITMENT`.
+- Status remains `implemented_pending_reaudit_nohuman`; MDE remains DRAFT, and this decision authorizes no recruitment, human data, public deployment, protocol freeze, paper edit, or claim upgrade.

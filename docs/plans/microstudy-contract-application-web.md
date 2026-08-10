@@ -65,7 +65,10 @@ src/cognitive_console/microstudy/
 - Use exact validated `A1..D5` rows.
 - Generate a server-side random UUID attempt ID.
 - Preserve ten planned slots and all truth-table states in volatile server memory.
-- Generate completed exports canonically on the server and HMAC-SHA256 sign them.
+- Generate complete and Save-&-Exit partial exports canonically on the server and
+  HMAC-SHA256 sign them; partials retain all ten slots and nullable fields.
+- Sign random per-run `run_id` and monotonic per-start `attempt_serial`; require an
+  explicit global-order manifest for duplicate participant codes across runs.
 - Keep the verification key in an owner-selected file (default gitignored
   `.runtime/microstudy-verification.key`); never send it to the browser or export.
 - Keep post-task diagnostic and block ease nullable/descriptive.
@@ -75,7 +78,7 @@ src/cognitive_console/microstudy/
 
 - Verify signature/hash/schema before analysis; reject forged/tampered exports.
 - Resolve duplicate attempts by first-complete rule before assignment/mechanical
-  classification. Keep assignment-mismatch attempts in missing-as-incorrect ITT
+  classification without using input-file order. Keep assignment-mismatch attempts in missing-as-incorrect ITT
   sensitivity while excluding them from primary eligibility.
 - Provide only a DRAFT sign-binomial MDE sensitivity; primary-test MDE remains
   `UNVERIFIED_NOT_ESTIMATED`.
@@ -83,6 +86,12 @@ src/cognitive_console/microstudy/
 ### Privacy
 
 - Loopback only, no access logging, persistence, remote requests, timestamps, IP, UA, headers, demographics, or fingerprints.
+- Exact Host/origin, JSON-only POST, bootstrap CSRF and session capability checks;
+  16 KiB request limit, configurable session cap/monotonic TTL, per-session locks,
+  and request-id idempotency.
+- Real Chrome/Edge full-flow CDP gates cover both viewports and zooms, keyboard
+  operation, geometry/overflow/focus/ARIA/hidden attributes, and PNG artifacts.
+  Manual screen-reader testing remains `UNVERIFIED PRE-RECRUITMENT`.
 
 ## 4. Current acceptance
 

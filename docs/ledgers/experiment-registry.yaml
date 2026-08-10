@@ -1420,6 +1420,7 @@ experiments:
   - src/cognitive_console/microstudy/static/index.html
   - src/cognitive_console/microstudy/static/study.css
   - src/cognitive_console/microstudy/static/study.js
+  - src/cognitive_console/microstudy/static/study_core.mjs
   - tests/test_microstudy_web.py
   - tests/browser_cdp.py
   - docs/specs/microstudy-contract-application.md
@@ -1429,8 +1430,10 @@ experiments:
   valid_for_paper: false
   validation_notes: >-
     D-0100 authorizes protocol, simulated materials, and loopback-only web engineering;
-    D-0101 records the first audit revision, D-0102 the second, and D-0103 the executable
-    materials repair. Authoritative JSON now supplies all ten items, three byte-identical
+    D-0101 records the first audit revision, D-0102 the second, D-0103 the executable
+    materials repair, D-0104 the initial implementation, D-0105 its first repair,
+    and D-0106 the second hostile-audit implementation repair.
+    Authoritative JSON now supplies all ten items, three byte-identical
     cross-pattern templates, keys, routing inputs, participant text, export fields, and
     A1..D5 sequences. The checked-in validator freezes tokenization and heuristic algorithms
     and reproduces reuse 4/4/2, keys A2/B2/C3/D3, oracle 3/10, LOO 0/10, global position
@@ -1445,8 +1448,15 @@ experiments:
     irreversible Q1-to-Q2 flow, semantic-organization treatment declaration, balanced Flat
     shuffles, complete missingness truth table, blinded A1..D5 replacement, orthogonal
     r/r+2 rotations, and frozen bootstrap/sign-flip settings.
-    The local implementation and assumption-labelled MDE tool now exist but remain pending
-    hostile audit and are not a run or paper evidence. Recruitment, ethics
+    The local implementation now emits strict signed complete/partial v3 exports with
+    random run_id and monotonic attempt_serial, requires an explicit global-order
+    manifest for cross-run duplicates, and protects loopback requests with exact
+    Host/origin, JSON, CSRF/capability, request-size, capacity, TTL, per-session-lock,
+    and request-id gates. Current-machine Chrome/Edge tests execute full keyboard flows
+    at both viewports and zoom levels and validate DOM geometry/accessibility plus PNG
+    artifacts. Manual screen-reader evaluation is UNVERIFIED PRE-RECRUITMENT.
+    The implementation and assumption-labelled DRAFT MDE tool remain pending
+    hostile re-audit and are not a run or paper evidence. Recruitment, ethics
     administration, public deployment, owner pilot, and human data collection are not
     authorized. The preregistration remains DRAFT and not frozen; this row records
     materials and implementation preparation only and must not be represented as a run.

@@ -97,7 +97,15 @@ condition-dependent fields.
 
 CSS tokens are exact and shared by both conditions: desktop `1440×900` with minimum width `1280`; card max width `960px`, padding `24px`, row gap `12px`; row label/body widths `240/648px`, minimum height `72px`, block padding `12px`, column gap `24px`; label/body fonts `14/16px`, line-height `1.5`. At 100% zoom there is no internal card scroll or clipped/hidden content. At 200% zoom page scrolling is allowed, but clipping/hiding is not.
 
-Parity audit uses fixed `1440×900` and `1280×800` viewports and `1px` geometry tolerance. After labels are removed and declared order is normalized, evidence text must be byte-identical by evidence ID. Evidence rows may contain no answer, state, verdict, or action text. Screenshot comparison masks label glyphs only, applies the declared row permutation, and checks row/card bounds and remaining pixels structurally. Contract labels intentionally differ in word count and visual footprint as part of treatment; filler text, blank rows, spacer glyphs, hidden text, and condition-specific padding are forbidden.
+Parity audit uses headless Chrome and Edge on the current machine at fixed
+`1440×900` and `1280×800` viewports, 100% and 200% zoom, and `1px` DOM-geometry
+tolerance. It executes the full flow and captures nontrivial, dimension-checked
+Contract and Flat PNG artifacts. CDP checks card/row bounds, exact shared widths
+and fonts, overflow, clipping, focus order, accessible names, and forbidden hidden
+semantic attributes. After declared order normalization, evidence text must be
+byte-identical by evidence ID. Pixel equality is not an acceptance criterion:
+labels and declared row order intentionally differ. Filler text, blank rows,
+spacer glyphs, hidden text, and condition-specific padding remain forbidden.
 
 ## 5. Participant-facing materials
 
@@ -121,15 +129,24 @@ There is no attention check or attention-check export field.
 
 Before outcomes, the owner prepares one blinded slot per sequence. Dropout or primary-ineligible completion reuses the slot. A ten-trial completion later mechanically excluded consumes it and remains in the specified sensitivity. Assignment never uses outcomes, RT, ease, practice, or diagnostic responses.
 
-Duplicate decisions use anonymous `participant_code` and freeze before outcomes: retain the first complete attempt; if none completes, retain the most complete and break ties by owner-log order. All raw attempts remain.
+Each server start creates a signed random `run_id` and assigns a signed monotonic
+`attempt_serial`; neither is an absolute time. Within one run, retain the complete
+attempt with the lowest serial; if none completes, retain the most complete and
+break ties by lowest serial. If a participant code appears across run IDs,
+analysis hard-fails unless the owner supplies the explicit versioned
+`--attempt-order-manifest` mapping every relevant `attempt_id` to a unique global
+order. Input-file order is never authority. All raw exported attempts remain.
 
 ## 7. Missingness, export, and exclusions
 
 The stdlib loopback server keeps attempts, sequence plans, phase, index, responses,
 and relative monotonic timing only in volatile memory. Its strict endpoints are
-start/practice/Q1/Q2/ease/diagnostic/complete/export; the browser cannot skip a
+start/practice/Q1/Q2/ease/diagnostic/complete/save-exit/export; the browser cannot skip a
 phase or construct a completed export. All ten planned slots are exported only
-after the complete debrief sequence. Required trial-state invariants are:
+as server-signed complete or partial products. During every formal-study stage,
+`Save & Exit` atomically creates a signed partial export (`complete=false`),
+downloads JSON and CSV, and ends the session without performance feedback.
+Required trial-state invariants are:
 
 ```text
 complete == q1_submitted && q2_submitted
@@ -141,7 +158,7 @@ The exact session/trial fields and exclusion enum are normative in `export_schem
 
 Primary eligibility requires complete Contract `>=4`, complete Flat `>=4`, and complete total `>=8`. The primary uses complete trials only. The required ten-slot sensitivity treats a missing component as incorrect.
 
-Completed JSON and CSV are canonical server products. JSON is HMAC-SHA256 signed
+Complete and partial JSON and CSV are canonical server products. JSON is HMAC-SHA256 signed
 with an owner-held key generated at startup in an owner-selected file (default
 gitignored runtime path). The key is never sent to the browser or written into an
 export. Analysis requires the key and rejects unsigned, forged, tampered,
@@ -154,6 +171,11 @@ ease, practice, and diagnostic results never exclude. Assignment-mismatch attemp
 are excluded from primary eligibility but retained in the ten-slot
 missing-as-incorrect ITT sensitivity; only non-kept duplicates and
 technical-corrupt attempts are omitted there.
+
+Browser abandonment without a signed export is not observable by this memory-only
+server and cannot enter study-export ITT. If recruitment is later authorized, the
+recruitment platform completion log reports that separate count. The protocol
+makes no promise to reconstruct silent/no-export dropouts.
 
 No absolute timestamp, IP, UA, headers, demographics, free text, or fingerprint is collected.
 
@@ -177,9 +199,15 @@ sign-flip MDE remains `UNVERIFIED_NOT_ESTIMATED` before protocol freeze.
 The owner-run timing pilot is exactly three people and passes only if median completion is `<=10 min`, every participant is `<=12 min`, and forced timeouts equal zero. This DRAFT does not authorize that pilot.
 
 Automated keyboard, focus, screen-reader, contrast, reduced-motion, 200% zoom, and
-no-horizontal-scroll checks are separate. The implementation binds loopback only,
-suppresses access logs, stores no IP/UA/header/absolute timestamp or participant
-data on disk, and loses volatile sessions at shutdown.
+no-horizontal-scroll checks are separate. The implementation binds loopback only, checks the exact loopback Host/port,
+rejects cross-origin and non-JSON POSTs, requires a same-origin bootstrap CSRF
+token plus per-session capability, limits request size, caps sessions (default
+100), expires them using monotonic TTL (default two hours), and serializes each
+session under its own lock. Request nonces make duplicate endpoint calls
+idempotent without duplicate transitions. It suppresses access logs, stores no
+IP/UA/header/absolute timestamp or participant data on disk, and loses volatile
+sessions at shutdown. Automated keyboard Tab/Space/Enter checks are required;
+manual screen-reader semantic evaluation remains `UNVERIFIED PRE-RECRUITMENT`.
 
 ## 10. Acceptance criteria
 

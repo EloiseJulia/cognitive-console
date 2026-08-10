@@ -50,7 +50,14 @@ The normative router defines TRANSFER pass as `tested && ci_low > 0 && estimate 
 
 The exact common legend/tutorial explains the five inputs and ordered router in plain language without revealing trial answers. Practice and feedback are exact and common across conditions. The post-task format-recognition diagnostic is fixed, descriptive, and never excludes. Block ease uses `SEQ1`–`SEQ7`, appears after each block, is nullable, and is descriptive. There is no attention check and no free text.
 
-The JSON `render_contract` is authoritative for DOM tags/classes/data attributes, the single `primitive_evidence` text binding, Contract fixed order, Flat per-item order, shared CSS geometry, 100% no-internal-scroll behavior, 200% no-clipping behavior, and screenshot/DOM parity. Audits use fixed `1440×900` and `1280×800` viewports, `1px` geometry tolerance, byte-identical evidence text after label/order normalization, forbidden answer/state/verdict/action row content, and label-only pixel masks with declared-permutation structural comparison.
+The JSON `render_contract` is authoritative for DOM tags/classes/data attributes,
+the single `primitive_evidence` text binding, Contract fixed order, Flat per-item
+order, shared CSS geometry, 100% no-internal-scroll behavior, and 200% no-clipping
+behavior. Current-machine headless Chrome/Edge audits execute the full flow at
+`1440×900` and `1280×800`, 100%/200% zoom, check DOM geometry within `1px`,
+overflow, focus, ARIA and hidden attributes, and retain dimension-checked Contract
+and Flat screenshots. Pixel equality is inappropriate because labels and declared
+row order differ. Manual screen-reader evaluation is `UNVERIFIED PRE-RECRUITMENT`.
 
 ## 4. Missingness, identity, and exclusions
 
@@ -64,7 +71,16 @@ submitted == complete
 
 Primary available-case CCA uses complete trials only. Eligibility requires at least four complete trials per condition and eight total. The required sensitivity uses all ten planned trials and treats a missing component as incorrect.
 
-Duplicate resolution happens first using the preregistered first-complete rule;
+The formal-stage `Save & Exit` creates a signed partial export with all ten slots,
+nullable ease/diagnostic fields, and relative RTs, downloads JSON/CSV, and ends
+without performance feedback. Silent browser abandonment produces no export and
+is unobservable here; if recruitment is authorized, only the recruitment-platform
+completion log can report it, and it cannot be inserted into study-export ITT.
+
+Duplicate resolution happens first using signed `run_id` and `attempt_serial`.
+Within-run ordering is lowest serial; cross-run duplicate participant codes
+hard-fail without an explicit versioned owner attempt-order manifest. File order
+has no authority. The preregistered first-complete/most-complete rule then applies;
 assignment and other mechanical classification happen only afterward. Performance,
 RT, practice, manipulation-diagnostic, and ease responses never exclude. Raw
 attempts remain; missing-as-incorrect ITT omits only non-kept duplicates and

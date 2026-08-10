@@ -64,7 +64,13 @@ submitted == complete
 
 Primary available-case CCA uses complete trials only. Eligibility requires at least four complete trials per condition and eight total. The required sensitivity uses all ten planned trials and treats a missing component as incorrect.
 
-Duplicate resolution and all mechanical exclusions freeze before outcomes. Performance, RT, practice, manipulation-diagnostic, and ease responses never exclude. Raw attempts remain; ITT omits only non-kept duplicates and technical-corrupt attempts. No absolute timestamps, IP, UA, headers, demographics, free text, or fingerprints are collected.
+Duplicate resolution happens first using the preregistered first-complete rule;
+assignment and other mechanical classification happen only afterward. Performance,
+RT, practice, manipulation-diagnostic, and ease responses never exclude. Raw
+attempts remain; missing-as-incorrect ITT omits only non-kept duplicates and
+technical-corrupt attempts. Completed exports are canonical server products signed
+with an owner-held HMAC-SHA256 key. No absolute timestamps, IP, UA, headers,
+demographics, free text, or fingerprints are collected or persisted.
 
 ## 5. Allocation and statistics
 
@@ -72,7 +78,9 @@ The exact `A1..D5` generator is normative in `sequences.json`. A slot is consume
 
 The primary estimand is the mean participant paired Contract-minus-Flat CCA difference. Report a participant bootstrap (`B=10000`, seed `20260810`, percentile 2.5/97.5), exact one-sided sign flip, and exact two-sided sensitivity. Remove/report zero ties, enumerate all remaining sign assignments, include equality, and use no `+1`.
 
-MDE remains `pending reproducible simulation before protocol freeze`.
+The available sign-binomial simulation is sensitivity-only and does not match the
+primary paired sign-flip test. Primary-test MDE remains
+`UNVERIFIED_NOT_ESTIMATED` before protocol freeze.
 
 ## 6. No-upgrade rule
 

@@ -88,7 +88,12 @@ Parity validation additionally proves:
 - zero answer-state phrases in formal primitive/Q2 text;
 - fixed row/card geometry, viewport, no-scroll, DOM, screenshot-mask, keyboard, and screen-reader parity are required when the web layer exists.
 
-The authoritative `render_contract` fixes the DOM as `article.evidence-card[data-condition][data-stimulus-id]` containing `dl.evidence-rows`, with each `div.evidence-row[data-evidence-id][data-position]` containing `dt.evidence-label` and `dd.evidence-body`. Evidence-body text has one source only: the current item's `primitive_evidence`; labels and order are the only condition-dependent fields.
+The participant DOM uses neutral `article.evidence-card[aria-label="Evidence panel"]`
+and opaque `div.evidence-row[data-row-id][data-position]` nodes. It must not expose
+condition, stimulus, primitive-role, answer-key, or router semantics through ARIA,
+hidden text, or data attributes. Evidence-body text has one source only: the
+current item's `primitive_evidence`; visible labels and order are the only
+condition-dependent fields.
 
 CSS tokens are exact and shared by both conditions: desktop `1440×900` with minimum width `1280`; card max width `960px`, padding `24px`, row gap `12px`; row label/body widths `240/648px`, minimum height `72px`, block padding `12px`, column gap `24px`; label/body fonts `14/16px`, line-height `1.5`. At 100% zoom there is no internal card scroll or clipped/hidden content. At 200% zoom page scrolling is allowed, but clipping/hiding is not.
 
@@ -120,7 +125,11 @@ Duplicate decisions use anonymous `participant_code` and freeze before outcomes:
 
 ## 7. Missingness, export, and exclusions
 
-All ten planned slots are exported. Required trial-state invariants are:
+The stdlib loopback server keeps attempts, sequence plans, phase, index, responses,
+and relative monotonic timing only in volatile memory. Its strict endpoints are
+start/practice/Q1/Q2/ease/diagnostic/complete/export; the browser cannot skip a
+phase or construct a completed export. All ten planned slots are exported only
+after the complete debrief sequence. Required trial-state invariants are:
 
 ```text
 complete == q1_submitted && q2_submitted
@@ -132,7 +141,19 @@ The exact session/trial fields and exclusion enum are normative in `export_schem
 
 Primary eligibility requires complete Contract `>=4`, complete Flat `>=4`, and complete total `>=8`. The primary uses complete trials only. The required ten-slot sensitivity treats a missing component as incorrect.
 
-Mechanical reasons are limited to duplicate attempt, technical corruption, sequence mismatch, materials-version mismatch, and impossible state transition. Performance, RT, ease, practice, and diagnostic results never exclude. Analysis re-derives exclusions from raw export plus the frozen owner assignment list.
+Completed JSON and CSV are canonical server products. JSON is HMAC-SHA256 signed
+with an owner-held key generated at startup in an owner-selected file (default
+gitignored runtime path). The key is never sent to the browser or written into an
+export. Analysis requires the key and rejects unsigned, forged, tampered,
+wrong-key, wrong-hash, unknown-field, and impossible-state exports.
+
+Duplicate resolution precedes assignment/mechanical classification. Mechanical
+reasons are limited to duplicate attempt, technical corruption, sequence mismatch,
+materials-version mismatch, and impossible state transition. Performance, RT,
+ease, practice, and diagnostic results never exclude. Assignment-mismatch attempts
+are excluded from primary eligibility but retained in the ten-slot
+missing-as-incorrect ITT sensitivity; only non-kept duplicates and
+technical-corrupt attempts are omitted there.
 
 No absolute timestamp, IP, UA, headers, demographics, free text, or fingerprint is collected.
 
@@ -148,13 +169,17 @@ The primary estimand is the mean eligible-participant paired difference in Contr
 
 Q1, Q2, RT, block ease, post-task diagnostic, pattern, block, sequence, and position are descriptive.
 
-Numerical MDE status remains `pending reproducible simulation before protocol freeze`.
+The sign-binomial MDE simulation is explicitly sensitivity-only. Primary paired
+sign-flip MDE remains `UNVERIFIED_NOT_ESTIMATED` before protocol freeze.
 
 ## 9. Timing, accessibility, and privacy
 
 The owner-run timing pilot is exactly three people and passes only if median completion is `<=10 min`, every participant is `<=12 min`, and forced timeouts equal zero. This DRAFT does not authorize that pilot.
 
-Automated keyboard, focus, screen-reader, contrast, reduced-motion, 200% zoom, and no-horizontal-scroll checks are separate. A future implementation must bind loopback only, suppress access logs, use no persistence or remote network, and export only the frozen anonymous schema.
+Automated keyboard, focus, screen-reader, contrast, reduced-motion, 200% zoom, and
+no-horizontal-scroll checks are separate. The implementation binds loopback only,
+suppresses access logs, stores no IP/UA/header/absolute timestamp or participant
+data on disk, and loses volatile sessions at shutdown.
 
 ## 10. Acceptance criteria
 

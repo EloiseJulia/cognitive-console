@@ -5,6 +5,18 @@
 
 ---
 
+## 2026-08-10 · D-0105 · Hostile-audit implementation repair completed; no human run
+- Moved formal planning, state transitions, scoring, canonical export, CSV
+  hardening, and HMAC-SHA256 signing into the volatile loopback server. The
+  browser receives no formal keys/router internals and cannot skip phases.
+- Made analysis verify owner-held keys/signatures and strict schemas, resolve
+  first-complete duplicates before assignment classification, separate primary
+  eligibility from missing-as-incorrect ITT, and record mechanical reasons.
+- Replaced string-theater flow checks with real headless Chrome A1/D5 completion,
+  download/signature, Q1 lock/Q2 reveal, 1440×900 geometry, and 200% zoom checks.
+- Status remains `implemented_pending_reaudit_nohuman`: DRAFT, no recruitment,
+  human data, public deployment, paper edit, protocol freeze, or claim upgrade.
+
 ## 2026-08-10 · D-0104 · Local micro-study implementation completed pending hostile audit
 - Implemented a Python-standard-library loopback server and vanilla HTML/CSS/JS
   without React, FastAPI, npm, remote services, or new dependencies.

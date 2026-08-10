@@ -1393,7 +1393,7 @@ experiments:
   hypothesis_id: H-MICROSTUDY-CONTRACT-APPLICATION
   claim_ids: []
   type: exploratory_formative_human_protocol
-  status: materials_implemented_pending_hostile_audit_no_human_data
+  status: implemented_pending_reaudit_nohuman
   code_commit: null
   dirty_tree: null
   data_hash: null
@@ -1421,6 +1421,7 @@ experiments:
   - src/cognitive_console/microstudy/static/study.css
   - src/cognitive_console/microstudy/static/study.js
   - tests/test_microstudy_web.py
+  - tests/browser_cdp.py
   - docs/specs/microstudy-contract-application.md
   - docs/research/2026-08-10-microstudy-contract-application-DRAFT.md
   - docs/plans/microstudy-contract-application-web.md

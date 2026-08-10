@@ -41,6 +41,12 @@ def canonical_bytes(data: dict[str, Any]) -> bytes:
     ).encode("utf-8")
 
 
+def request_bytes(data: dict[str, Any]) -> bytes:
+    return json.dumps(
+        data, ensure_ascii=False, sort_keys=True, separators=(",", ":")
+    ).encode("utf-8")
+
+
 def sign_export(data: dict[str, Any], key: bytes) -> dict[str, Any]:
     signed = dict(data)
     signed["verification"] = {
@@ -57,11 +63,21 @@ def load_or_create_key(path: Path) -> bytes:
         key = path.read_bytes()
         if len(key) < 32:
             raise ValueError("verification key file must contain at least 32 bytes")
+        _restrict_key_permissions(path)
         return key
     key = secrets.token_bytes(32)
     with path.open("xb") as handle:
         handle.write(key)
+    _restrict_key_permissions(path)
     return key
+
+
+def _restrict_key_permissions(path: Path) -> None:
+    """Best-effort owner-only permissions; failure never exposes the key to clients."""
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
 
 
 def participant_materials() -> dict[str, Any]:
@@ -116,11 +132,44 @@ def _empty_trial(slot: dict[str, Any], item: dict[str, Any], version: str) -> di
 
 
 class StudyServer(ThreadingHTTPServer):
-    def __init__(self, address: tuple[str, int], key: bytes):
+    def __init__(
+        self, address: tuple[str, int], key: bytes, *,
+        max_sessions: int = 100, session_ttl_seconds: float = 7200,
+    ):
         super().__init__(address, StudyHandler)
         self.verification_key = key
         self.sessions: dict[str, dict[str, Any]] = {}
         self.session_lock = threading.RLock()
+        self.max_sessions = max_sessions
+        self.session_ttl_seconds = session_ttl_seconds
+        self.run_id = str(uuid.uuid4())
+        self.attempt_serial = 0
+        self.csrf_token = secrets.token_urlsafe(32)
+        self.start_requests: dict[str, tuple[bytes, dict[str, Any]]] = {}
+
+    @property
+    def origin(self) -> str:
+        return f"http://{self.server_address[0]}:{self.server_port}"
+
+    @property
+    def allowed_host(self) -> str:
+        return f"{self.server_address[0]}:{self.server_port}"
+
+    def cleanup_expired(self) -> None:
+        now = time.monotonic()
+        with self.session_lock:
+            expired = [
+                attempt for attempt, session in self.sessions.items()
+                if now - session["last_seen"] >= self.session_ttl_seconds
+            ]
+            for attempt in expired:
+                del self.sessions[attempt]
+            expired_set = set(expired)
+            self.start_requests = {
+                request_id: cached
+                for request_id, cached in self.start_requests.items()
+                if cached[1].get("attempt_id") not in expired_set
+            }
 
 
 class StudyHandler(BaseHTTPRequestHandler):
@@ -140,6 +189,7 @@ class StudyHandler(BaseHTTPRequestHandler):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("Cross-Origin-Opener-Policy", "same-origin")
+        self.send_header("Cross-Origin-Resource-Policy", "same-origin")
         self.end_headers()
 
     def _send(self, body: bytes, content_type: str, status: int = 200) -> None:
@@ -167,11 +217,40 @@ class StudyHandler(BaseHTTPRequestHandler):
         except (ValueError, json.JSONDecodeError):
             raise ValueError("invalid JSON request") from None
 
+    def _request_origin_ok(self, *, post: bool) -> bool:
+        if self.headers.get("Host") != self.server.allowed_host:
+            return False
+        origin = self.headers.get("Origin")
+        if origin is not None and origin != self.server.origin:
+            return False
+        if self.headers.get("Sec-Fetch-Site") == "cross-site":
+            return False
+        if post:
+            return (
+                self.headers.get_content_type() == "application/json"
+                and origin == self.server.origin
+                and hmac.compare_digest(
+                    self.headers.get("X-CSRF-Token", ""), self.server.csrf_token
+                )
+            )
+        return True
+
+    def _request_id(self, body: dict[str, Any]) -> str:
+        request_id = body.get("request_id")
+        if not isinstance(request_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]{16,128}", request_id):
+            raise ValueError("invalid request_id")
+        return request_id
+
     def _session(self, body: dict[str, Any]) -> dict[str, Any]:
         attempt_id = body.get("attempt_id")
         if not isinstance(attempt_id, str) or attempt_id not in self.server.sessions:
             raise ValueError("unknown attempt")
-        return self.server.sessions[attempt_id]
+        session = self.server.sessions[attempt_id]
+        capability = self.headers.get("X-Study-Capability", "")
+        if not hmac.compare_digest(capability, session["capability"]):
+            raise ValueError("invalid session capability")
+        session["last_seen"] = time.monotonic()
+        return session
 
     def _trial_payload(self, session: dict[str, Any]) -> dict[str, Any]:
         index = session["index"]
@@ -192,8 +271,15 @@ class StudyHandler(BaseHTTPRequestHandler):
         }
 
     def do_GET(self) -> None:
+        self.server.cleanup_expired()
+        if not self._request_origin_ok(post=False):
+            self._error(403, "request origin rejected")
+            return
         parsed = urlsplit(self.path)
         path = unquote(parsed.path)
+        if path == "/api/bootstrap":
+            self._json({"csrf_token": self.server.csrf_token, "materials": participant_materials()})
+            return
         if path == "/api/materials":
             self._json(participant_materials())
             return
@@ -203,7 +289,12 @@ class StudyHandler(BaseHTTPRequestHandler):
             output_format = query.get("format", ["json"])[0]
             with self.server.session_lock:
                 session = self.server.sessions.get(attempt or "")
-                if session is None or session["phase"] != "complete":
+                capability = self.headers.get("X-Study-Capability", "")
+                if (
+                    session is None
+                    or session["phase"] != "ended"
+                    or not hmac.compare_digest(capability, session["capability"])
+                ):
                     self._error(409, "export is not available")
                     return
                 export = session["signed_export"]
@@ -237,26 +328,52 @@ class StudyHandler(BaseHTTPRequestHandler):
         self._send(candidate.read_bytes(), mime)
 
     def do_POST(self) -> None:
+        self.server.cleanup_expired()
+        if not self._request_origin_ok(post=True):
+            self._error(403, "request origin rejected")
+            return
         path = urlsplit(self.path).path
         try:
             body = self._body()
-            with self.server.session_lock:
-                handlers = {
-                    "/api/start": self._start, "/api/practice": self._practice,
-                    "/api/q1": self._q1, "/api/q2": self._q2,
-                    "/api/ease": self._ease, "/api/diagnostic": self._diagnostic,
-                    "/api/complete": self._complete,
-                }
-                handler = handlers.get(path)
-                if handler is None:
-                    self._error(404, "not found")
-                    return
-                self._json(handler(body))
+            handlers = {
+                "/api/start": self._start, "/api/practice": self._practice,
+                "/api/q1": self._q1, "/api/q2": self._q2,
+                "/api/ease": self._ease, "/api/diagnostic": self._diagnostic,
+                "/api/complete": self._complete, "/api/save-exit": self._save_exit,
+            }
+            handler = handlers.get(path)
+            if handler is None:
+                self._error(404, "not found")
+                return
+            request_id = self._request_id(body)
+            if path == "/api/start":
+                with self.server.session_lock:
+                    cached = self.server.start_requests.get(request_id)
+                    if cached is not None:
+                        if cached[0] != request_bytes(body):
+                            raise ValueError("request_id reuse with different payload")
+                        self._json(cached[1])
+                        return
+                    result = handler(body)
+                    self.server.start_requests[request_id] = (request_bytes(body), result)
+            else:
+                with self.server.session_lock:
+                    session = self._session(body)
+                with session["lock"]:
+                    cached = session["requests"].get((path, request_id))
+                    if cached is not None:
+                        if cached[0] != request_bytes(body):
+                            raise ValueError("request_id reuse with different payload")
+                        self._json(cached[1])
+                        return
+                    result = handler(body, session=session)
+                    session["requests"][(path, request_id)] = (request_bytes(body), result)
+            self._json(result)
         except ValueError as exc:
             self._error(409, str(exc))
 
     def _start(self, body: dict[str, Any]) -> dict[str, Any]:
-        if set(body) != {"participant_code", "sequence"}:
+        if set(body) != {"participant_code", "sequence", "request_id"}:
             raise ValueError("invalid start fields")
         participant = body["participant_code"]
         sequence = body["sequence"]
@@ -266,10 +383,16 @@ class StudyHandler(BaseHTTPRequestHandler):
             raise ValueError("invalid sequence")
         plan = planned_trials(sequence)
         stimuli, sequences = validated_sources()
+        if len(self.server.sessions) >= self.server.max_sessions:
+            raise ValueError("session capacity reached")
         attempt = str(uuid.uuid4())
+        capability = secrets.token_urlsafe(32)
+        self.server.attempt_serial += 1
         items = {row["stimulus_id"]: row for row in stimuli["items"]}
         self.server.sessions[attempt] = {
             "attempt_id": attempt, "participant_code": participant,
+            "run_id": self.server.run_id, "attempt_serial": self.server.attempt_serial,
+            "capability": capability, "lock": threading.RLock(), "requests": {},
             "sequence": sequence, "plan": plan, "items": items,
             "trials": [_empty_trial(slot, items[slot["item"]], stimuli["materials_version"])
                        for slot in plan],
@@ -280,13 +403,17 @@ class StudyHandler(BaseHTTPRequestHandler):
             "diagnostic_submitted": False, "diagnostic_response": None,
             "material_schema_version": stimuli["schema_version"],
             "sequence_schema_version": sequences["schema_version"],
+            "last_seen": time.monotonic(),
         }
-        return {"attempt_id": attempt, "phase": "practice_q1"}
+        return {
+            "attempt_id": attempt, "phase": "practice_q1",
+            "capability": capability, "run_id": self.server.run_id,
+            "attempt_serial": self.server.attempt_serial,
+        }
 
-    def _practice(self, body: dict[str, Any]) -> dict[str, Any]:
-        if set(body) != {"attempt_id", "step", "answer"}:
+    def _practice(self, body: dict[str, Any], *, session: dict[str, Any]) -> dict[str, Any]:
+        if set(body) != {"attempt_id", "step", "answer", "request_id"}:
             raise ValueError("invalid practice fields")
-        session = self._session(body)
         practice = validated_sources()[0]["participant_materials"]["practice"]
         if body["step"] == "q1" and session["phase"] == "practice_q1":
             if body["answer"] not in {row["key"] for row in validated_sources()[0]["q1"]["options"]}:
@@ -303,10 +430,9 @@ class StudyHandler(BaseHTTPRequestHandler):
             return payload
         raise ValueError("invalid practice transition")
 
-    def _q1(self, body: dict[str, Any]) -> dict[str, Any]:
-        if set(body) != {"attempt_id", "answer"}:
+    def _q1(self, body: dict[str, Any], *, session: dict[str, Any]) -> dict[str, Any]:
+        if set(body) != {"attempt_id", "answer", "request_id"}:
             raise ValueError("invalid Q1 fields")
-        session = self._session(body)
         if session["phase"] != "q1":
             raise ValueError("Q1 is not available")
         answer = body["answer"]
@@ -328,10 +454,9 @@ class StudyHandler(BaseHTTPRequestHandler):
                         if row["template_id"] == slot["q2_template_id"])
         return {"phase": "q2", "q2": {"text": template["text"], "options": template["options"]}}
 
-    def _q2(self, body: dict[str, Any]) -> dict[str, Any]:
-        if set(body) != {"attempt_id", "answer", "hidden_ms"}:
+    def _q2(self, body: dict[str, Any], *, session: dict[str, Any]) -> dict[str, Any]:
+        if set(body) != {"attempt_id", "answer", "hidden_ms", "request_id"}:
             raise ValueError("invalid Q2 fields")
-        session = self._session(body)
         if session["phase"] != "q2":
             raise ValueError("Q2 is not available")
         hidden_ms = body["hidden_ms"]
@@ -363,10 +488,9 @@ class StudyHandler(BaseHTTPRequestHandler):
             return {"phase": "ease", "block": block}
         return self._trial_payload(session)
 
-    def _ease(self, body: dict[str, Any]) -> dict[str, Any]:
-        if set(body) != {"attempt_id", "block", "answer"}:
+    def _ease(self, body: dict[str, Any], *, session: dict[str, Any]) -> dict[str, Any]:
+        if set(body) != {"attempt_id", "block", "answer", "request_id"}:
             raise ValueError("invalid ease fields")
-        session = self._session(body)
         block = body["block"]
         if type(block) is not int or block not in (1, 2) or session["phase"] != f"ease_{block}":
             raise ValueError("invalid ease transition")
@@ -382,10 +506,9 @@ class StudyHandler(BaseHTTPRequestHandler):
         session["diagnostic_presented"] = True
         return {"phase": "diagnostic"}
 
-    def _diagnostic(self, body: dict[str, Any]) -> dict[str, Any]:
-        if set(body) != {"attempt_id", "answer"}:
+    def _diagnostic(self, body: dict[str, Any], *, session: dict[str, Any]) -> dict[str, Any]:
+        if set(body) != {"attempt_id", "answer", "request_id"}:
             raise ValueError("invalid diagnostic fields")
-        session = self._session(body)
         if session["phase"] != "diagnostic":
             raise ValueError("invalid diagnostic transition")
         diagnostic = validated_sources()[0]["participant_materials"]["post_task_manipulation_diagnostic"]
@@ -398,28 +521,40 @@ class StudyHandler(BaseHTTPRequestHandler):
         session["phase"] = "ready_complete"
         return {"phase": "ready_complete"}
 
-    def _complete(self, body: dict[str, Any]) -> dict[str, Any]:
-        if set(body) != {"attempt_id"}:
+    def _complete(self, body: dict[str, Any], *, session: dict[str, Any]) -> dict[str, Any]:
+        if set(body) != {"attempt_id", "request_id"}:
             raise ValueError("invalid complete fields")
-        session = self._session(body)
         if session["phase"] != "ready_complete" or session["index"] != 10:
             raise ValueError("attempt cannot be completed")
-        export = self._canonical_export(session)
+        export = self._canonical_export(session, complete=True)
         session["signed_export"] = sign_export(export, self.server.verification_key)
-        session["phase"] = "complete"
-        return {"phase": "complete", "attempt_id": session["attempt_id"]}
+        session["phase"] = "ended"
+        return {"phase": "ended", "attempt_id": session["attempt_id"], "complete": True}
 
-    def _canonical_export(self, session: dict[str, Any]) -> dict[str, Any]:
+    def _save_exit(self, body: dict[str, Any], *, session: dict[str, Any]) -> dict[str, Any]:
+        if set(body) != {"attempt_id", "request_id"}:
+            raise ValueError("invalid save-exit fields")
+        if session["phase"] not in {"q1", "q2", "ease_1", "ease_2", "diagnostic", "ready_complete"}:
+            raise ValueError("save and exit is available only during the formal study")
+        export = self._canonical_export(session, complete=False)
+        session["signed_export"] = sign_export(export, self.server.verification_key)
+        session["phase"] = "ended"
+        return {"phase": "ended", "attempt_id": session["attempt_id"], "complete": False}
+
+    def _canonical_export(self, session: dict[str, Any], *, complete: bool) -> dict[str, Any]:
         diagnostic = validated_sources()[0]["participant_materials"]["post_task_manipulation_diagnostic"]
         response = session["diagnostic_response"]
         return {
-            "export_schema_version": "microstudy-export-v2-signed",
+            "export_schema_version": "microstudy-export-v3-signed",
             "material_schema_version": session["material_schema_version"],
             "sequence_schema_version": session["sequence_schema_version"],
             "material_hashes": material_hashes(),
             "attempt_id": session["attempt_id"],
+            "run_id": session["run_id"], "attempt_serial": session["attempt_serial"],
             "participant_code": session["participant_code"],
-            "sequence": session["sequence"], "completion_status": "complete",
+            "sequence": session["sequence"],
+            "completion_status": "complete" if complete else "partial",
+            "complete": complete,
             "practice_presented": True, "practice_q1_submitted": session["practice_q1"],
             "practice_q2_submitted": session["practice_q2"], "practice_complete": True,
             "post_task_diagnostic_presented": session["diagnostic_presented"],
@@ -465,6 +600,7 @@ class StudyHandler(BaseHTTPRequestHandler):
 def create_server(
     host: str = "127.0.0.1", port: int = 8765,
     verification_key_file: Path | None = None,
+    *, max_sessions: int = 100, session_ttl_seconds: float = 7200,
 ) -> StudyServer:
     try:
         address = ipaddress.ip_address(host)
@@ -473,7 +609,12 @@ def create_server(
     if not address.is_loopback:
         raise ValueError("refusing non-loopback host")
     key = load_or_create_key(verification_key_file or DEFAULT_KEY_FILE)
-    return StudyServer((host, port), key)
+    if max_sessions < 1 or session_ttl_seconds <= 0:
+        raise ValueError("session limits must be positive")
+    return StudyServer(
+        (host, port), key, max_sessions=max_sessions,
+        session_ttl_seconds=session_ttl_seconds,
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -482,8 +623,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--verification-key-file", type=Path, default=DEFAULT_KEY_FILE)
     parser.add_argument("--open", action="store_true", dest="open_browser")
+    parser.add_argument("--max-sessions", type=int, default=100)
+    parser.add_argument("--session-ttl-seconds", type=float, default=7200)
     args = parser.parse_args(argv)
-    server = create_server(args.host, args.port, args.verification_key_file)
+    server = create_server(
+        args.host, args.port, args.verification_key_file,
+        max_sessions=args.max_sessions, session_ttl_seconds=args.session_ttl_seconds,
+    )
     url = f"http://{args.host}:{server.server_port}/"
     print(f"Local study preview: {url}")
     print(f"Verification key: {args.verification_key_file}")

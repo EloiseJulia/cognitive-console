@@ -11,6 +11,7 @@
   <header>
     <strong>Study Preview · local only</strong>
     <span>No participant data is persisted by the local server.</span>
+    <button id="save-exit-button" type="button" data-action="save-exit" hidden>Save &amp; Exit</button>
   </header>
   <main id="app" tabindex="-1" aria-live="polite">
     <section id="start" class="panel">
@@ -23,9 +24,11 @@
         <select id="sequence" required></select>
       </label>
       <button id="start-button" type="button">Start preview</button>
-      <p id="start-error" role="alert"></p>
+      <p id="start-error" class="error" role="alert" tabindex="-1"></p>
     </section>
-    <section id="stage" class="panel" tabindex="-1" hidden></section>
+    <section id="stage" class="panel" tabindex="-1" hidden>
+      <p id="stage-error" class="error" role="alert" tabindex="-1"></p>
+    </section>
   </main>
   <footer>Simulated materials · loopback server · in-memory only</footer>
 </body>

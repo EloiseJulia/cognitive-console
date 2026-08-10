@@ -61,7 +61,7 @@ def validate_export(data: dict[str, Any], verification_key: bytes) -> dict[str, 
         and hmac.compare_digest(verification["signature"], signature),
         "signature mismatch",
     )
-    _check(data.get("export_schema_version") == "microstudy-export-v2-signed", "wrong export schema")
+    _check(data.get("export_schema_version") == "microstudy-export-v3-signed", "wrong export schema")
     _check(
         data.get("material_schema_version") == stimuli["schema_version"],
         "wrong material schema",
@@ -93,13 +93,21 @@ def validate_export(data: dict[str, Any], verification_key: bytes) -> dict[str, 
     for field in (
         "practice_presented", "practice_q1_submitted", "practice_q2_submitted",
         "practice_complete", "post_task_diagnostic_presented",
-        "post_task_diagnostic_submitted", "mechanical_exclusion",
+        "post_task_diagnostic_submitted", "mechanical_exclusion", "complete",
     ):
         _check(_is_bool(data[field]), f"{field} must be boolean")
     try:
         _check(uuid.UUID(data["attempt_id"]).version == 4, "attempt_id must be UUIDv4")
     except (ValueError, AttributeError, TypeError):
         raise ExportError("attempt_id must be UUIDv4") from None
+    try:
+        _check(uuid.UUID(data["run_id"]).version == 4, "run_id must be UUIDv4")
+    except (ValueError, AttributeError, TypeError):
+        raise ExportError("run_id must be UUIDv4") from None
+    _check(
+        type(data["attempt_serial"]) is int and data["attempt_serial"] >= 1,
+        "attempt_serial must be a positive integer",
+    )
     _check(
         isinstance(data["participant_code"], str)
         and 1 <= len(data["participant_code"]) <= 64
@@ -239,13 +247,41 @@ def validate_export(data: dict[str, Any], verification_key: bytes) -> dict[str, 
         _check(trial["source_note"] == item["source_note"], "source note mismatch")
         _check(trial["hypothetical"] == item["hypothetical"], "hypothetical mismatch")
     completed = sum(row["complete"] for row in trials)
-    _check(completed == 10, "signed final export must contain ten complete trials")
-    _check(data["completion_status"] == "complete", "completion status mismatch")
+    presented = sum(row["presented"] for row in trials)
     _check(
-        data["post_task_diagnostic_presented"],
-        "complete export requires diagnostic presentation",
+        [row["presented"] for row in trials]
+        == [True] * presented + [False] * (10 - presented),
+        "presented trials must form a prefix",
         "impossible_state_transition",
     )
+    _check(
+        [row["complete"] for row in trials]
+        == [True] * completed + [False] * (10 - completed),
+        "complete trials must form a prefix",
+        "impossible_state_transition",
+    )
+    _check(
+        presented in {completed, completed + 1},
+        "at most one presented trial may be incomplete",
+        "impossible_state_transition",
+    )
+    if data["post_task_diagnostic_presented"]:
+        _check(
+            completed == 10,
+            "diagnostic cannot precede ten complete trials",
+            "impossible_state_transition",
+        )
+    if data["complete"]:
+        _check(completed == 10, "signed complete export must contain ten complete trials")
+        _check(data["completion_status"] == "complete", "completion status mismatch")
+        _check(
+            data["post_task_diagnostic_presented"],
+            "complete export requires diagnostic presentation",
+            "impossible_state_transition",
+        )
+    else:
+        _check(presented >= 1, "partial export requires a formal trial presentation")
+        _check(data["completion_status"] == "partial", "completion status mismatch")
     return data
 
 
@@ -257,11 +293,10 @@ def load_exports(
     paths: Iterable[Path], verification_key: bytes
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     valid, rejected = [], []
-    for order, path in enumerate(paths):
+    for path in paths:
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
             data = validate_export(raw, verification_key)
-            data["_input_order"] = order
             data["_source_file"] = str(path)
             valid.append(data)
         except (OSError, json.JSONDecodeError, ExportError, KeyError, TypeError) as exc:
@@ -275,18 +310,61 @@ def load_exports(
     return valid, rejected
 
 
-def resolve_duplicates(exports: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def load_attempt_order_manifest(path: Path) -> dict[str, int]:
+    raw = json.loads(path.read_text(encoding="utf-8"))
+    _check(isinstance(raw, dict), "attempt-order manifest must be an object")
+    mapping = raw.get("attempt_order")
+    _check(
+        set(raw) == {"schema_version", "attempt_order"}
+        and raw["schema_version"] == "microstudy-attempt-order-v1"
+        and isinstance(mapping, dict),
+        "invalid attempt-order manifest schema",
+    )
+    _check(
+        all(
+            isinstance(attempt_id, str)
+            and type(order) is int and order >= 1
+            for attempt_id, order in mapping.items()
+        ),
+        "invalid attempt-order manifest entries",
+    )
+    _check(len(set(mapping.values())) == len(mapping), "attempt-order values must be unique")
+    return mapping
+
+
+def resolve_duplicates(
+    exports: list[dict[str, Any]],
+    attempt_order: dict[str, int] | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for data in exports:
         groups[data["participant_code"]].append(data)
     kept, excluded = [], []
     for attempts in groups.values():
-        complete = [row for row in attempts if _complete_count(row) == 10]
+        run_ids = {row["run_id"] for row in attempts}
+        if len(run_ids) > 1:
+            if attempt_order is None:
+                raise ExportError(
+                    "participant appears across run_ids; --attempt-order-manifest is required",
+                    "duplicate_order_ambiguous",
+                )
+            missing = {row["attempt_id"] for row in attempts} - set(attempt_order)
+            _check(not missing, f"attempt-order manifest missing attempts: {sorted(missing)}")
+            order_key = lambda row: attempt_order[row["attempt_id"]]
+        else:
+            serials = [row["attempt_serial"] for row in attempts]
+            _check(
+                len(serials) == len(set(serials)),
+                "duplicate attempt_serial within run",
+                "duplicate_order_ambiguous",
+            )
+            order_key = lambda row: row["attempt_serial"]
+        complete = [row for row in attempts if row["complete"]]
         if complete:
-            winner = min(complete, key=lambda row: row.get("_input_order", 0))
+            winner = min(complete, key=order_key)
         else:
             winner = min(
-                attempts, key=lambda row: (-_complete_count(row), row.get("_input_order", 0))
+                attempts, key=lambda row: (-_complete_count(row), order_key(row))
             )
         kept.append(winner)
         excluded.extend(
@@ -548,6 +626,14 @@ def main(argv: list[str] | None = None) -> int:
         "--verification-key-file", type=Path, required=True,
         help="Owner-held HMAC verification key generated by the study server.",
     )
+    analyze_parser.add_argument(
+        "--attempt-order-manifest", type=Path,
+        help=(
+            "Required when one participant_code appears across server run_ids. "
+            "JSON schema: {schema_version: microstudy-attempt-order-v1, "
+            "attempt_order: {attempt_id: global_order}}."
+        ),
+    )
     mde_parser = sub.add_parser("mde")
     mde_parser.add_argument("--n", type=int, required=True)
     mde_parser.add_argument("--simulations", type=int, default=10_000)
@@ -557,7 +643,11 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "analyze":
         key = args.verification_key_file.read_bytes()
         valid, rejected = load_exports(args.exports, key)
-        valid, duplicate_exclusions = resolve_duplicates(valid)
+        attempt_order = (
+            load_attempt_order_manifest(args.attempt_order_manifest)
+            if args.attempt_order_manifest else None
+        )
+        valid, duplicate_exclusions = resolve_duplicates(valid, attempt_order)
         valid, assignment_exclusions = apply_assignments(valid, args.assignments)
         summary = analyze(
             valid, rejected + duplicate_exclusions, assignment_exclusions,

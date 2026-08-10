@@ -131,7 +131,7 @@ def _majority_key(keys: list[str]) -> str:
 
 
 def _validate_source_schema(stimuli: dict[str, Any], sequences: dict[str, Any]) -> None:
-    assert stimuli["schema_version"] == "microstudy-stimuli-v5"
+    assert stimuli["schema_version"] == "microstudy-stimuli-v6"
     assert sequences["schema_version"] == "microstudy-sequences-v1"
     assert len(stimuli["items"]) == 10
     assert len(stimuli["q2_templates"]) == 3

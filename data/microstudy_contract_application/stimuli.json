@@ -1,6 +1,6 @@
 {
-  "schema_version": "microstudy-stimuli-v5",
-  "materials_version": "microstudy-contract-application-20260810-v5",
+  "schema_version": "microstudy-stimuli-v6",
+  "materials_version": "microstudy-contract-application-20260810-v6",
   "status": "DRAFT_NOT_FROZEN_MATERIALS_ONLY",
   "primitive_ids": ["representation", "comparison", "comparator", "coherence", "scope"],
   "contract_headings": {
@@ -459,7 +459,7 @@
   },
   "export_schema": {
     "session_fields": [
-      "attempt_id", "participant_code", "sequence", "completion_status",
+      "attempt_id", "run_id", "attempt_serial", "participant_code", "sequence", "completion_status", "complete",
       "practice_presented", "practice_q1_submitted", "practice_q2_submitted", "practice_complete",
       "post_task_diagnostic_presented", "post_task_diagnostic_submitted", "post_task_diagnostic_response", "post_task_diagnostic_correct",
       "block_1_ease", "block_2_ease", "mechanical_exclusion", "mechanical_exclusion_reason"

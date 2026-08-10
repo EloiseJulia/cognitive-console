@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-08-10 · D-0102 · Second hostile-audit protocol revision closes CCA, allocation, missingness, and analysis ambiguities
+- Reframed the construct as structured rule application and the treatment as a semantic-organization package (grouping, labels, fixed role order), not deep integration or a pure-headings manipulation. Flat now uses exact item-specific deterministic shuffles balanced so every primitive role occupies every position twice.
+- Made Q1→Q2 strictly sequential and irreversible. Q2 now uses item-specific scope/comparator/generalization judgments with no state names or state-option mapping. Leakage acceptance targets end-to-end CCA at the four-option `0.25` chance bound rather than requiring every single-row Q1 heuristic to be at chance.
+- Froze the complete trial-state truth table, `submitted==complete` compatibility alias, complete-only primary, `4/condition + 8/10` eligibility, all-ten-slot missing-as-incorrect sensitivity, and export of every planned slot.
+- Replaced same-rotation blocks with orthogonal `r` / `r+2 mod 5` rotations and froze blinded `A1..D5` slot allocation: dropout/primary-ineligible attempts reuse a slot; a ten-trial completion later mechanically excluded consumes it, is not replaced, and remains in ITT sensitivity.
+- Froze participant bootstrap (`B=10000`, seed `20260810`, percentile 2.5/97.5) and full exact sign-flip enumeration over nonzero differences. Removed GLMM and all numerical MDE language; MDE is pending a reproducible, independently audited simulation before protocol freeze.
+- Froze the exact three-person timing rule and exact tutorial/practice/feedback/debrief materials, standardized provenance on `source_status`, and retained materials-only/DRAFT status. This revision implements no web app, recruits nobody, collects no data, and changes no paper.
+
 ## 2026-08-10 · D-0101 · Hostile-audit protocol findings closed; materials remain DRAFT and no study run is authorized
 - Replaced answer-leaking evidence/status prose with ten exact common proposition arrays and multi-row Q1/Q2 derivations. Frozen blind single-row, keyword, second-row, and fixed-position heuristics must remain at or below empirical majority chance (`0.40`).
 - Removed all held-out/transfer subset naming and claims. All formal combinations are unseen in the one different practice example; Q2 is scope/reason application and the sole primary remains conjunctive rule-application accuracy.

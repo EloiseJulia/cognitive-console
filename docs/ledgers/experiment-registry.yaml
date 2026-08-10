@@ -1416,10 +1416,12 @@ experiments:
   valid_for_paper: false
   validation_notes: >-
     D-0100 authorizes protocol, simulated materials, and loopback-only web engineering;
-    D-0101 records closure of the first hostile-audit protocol findings. The revision
-    removes transfer/held-out claims, freezes ten-slot export and A1..D5 balancing,
-    strengthens leakage/parity/privacy/accessibility/analysis acceptance tests, and keeps
-    all values as teaching material rather than paper evidence. Recruitment, ethics
+    D-0101 records the first audit revision and D-0102 the second. D-0102 targets
+    end-to-end CCA leakage, freezes irreversible Q1-to-Q2 flow and independent Q2
+    judgments, declares the semantic-organization package, balances Flat row shuffles,
+    defines the complete missingness truth table and blinded A1..D5 slot replacement,
+    uses orthogonal r/r+2 block rotations, and freezes bootstrap/sign-flip settings.
+    Numerical MDE remains pending reproducible audited simulation. Recruitment, ethics
     administration, public deployment, owner pilot, and human data collection are not
-    authorized. The preregistration is DRAFT and not frozen. This registry row records
+    authorized. The preregistration remains DRAFT and not frozen; this row records
     materials preparation only and must not be represented as a run.

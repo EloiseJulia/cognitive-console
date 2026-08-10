@@ -2,174 +2,107 @@
 
 - **Status:** `DRAFT — NOT FROZEN — NOT AUTHORIZED FOR HUMAN DATA`
 - **Date:** 2026-08-10
-- **Study type:** exploratory formative micro-study
 - **Protocol:** [`../specs/microstudy-contract-application.md`](../specs/microstudy-contract-application.md)
 
-## 1. Scope
+## 1. Scope and treatment
 
-This study estimates whether semantic organization changes technical GenAI users' application of a four-state interface contract to simulated records. It does not study calibrated reliance, user benefit, trust, safety, productivity, deployment, model behavior, or current paper evidence.
+This exploratory formative study estimates whether a semantic-organization package changes technical GenAI users' structured application of a four-state contract to simulated records. Contract uses semantic grouping, semantic labels, and fixed role order. Flat uses neutral labels and item-specific deterministic shuffled order. The treatment is not characterized as pure headings.
 
-The owner retains responsibility for ethics, recruitment, and any pilot/data collection. Current authorization is materials and loopback implementation only.
+The study does not measure deep integration, transfer, calibrated reliance, benefit, trust, safety, productivity, deployment, latent control, or current-paper evidence. The owner remains responsible for ethics, recruitment, and any pilot/data collection; none is authorized by this DRAFT.
 
-## 2. Design
+## 2. Design and flow
 
-- Within participant: Contract UI versus information-matched Flat Panel.
-- Ten planned formal slots: five per condition in two blocks.
-- One different, unscored practice example.
-- Exact 20-code counterbalance `A1..D5`: A–D crosses condition/set/block mapping; 1–5 applies balanced Latin rotations.
-- Every participant sees ten unique content IDs once.
-- All formal combinations are unseen in practice. There is no separately designated subset or separate generalization outcome.
-- Primitive evidence strings/order, legend, questions, options, keys, geometry, typography, color, viewport, and no-scroll behavior are frozen equal. Only semantic versus neutral row labels differ.
+- Within participant; ten planned formal slots, five per condition, in two blocks.
+- One different unscored practice item.
+- Q1 is submitted and irreversibly locked before Q2 appears.
+- Q2 is an independent scope/comparator/generalization judgment; its options contain no state names and do not map one-to-one onto Q1 states.
+- Every formal card begins `Simulated evaluation record`.
+- Common primitive propositions are identical across conditions.
+- Exact 20-code allocation `A1..D5`; block 2 uses rotation `r+2 mod 5`, not the block-1 rotation.
 
-## 3. Outcomes
+## 3. Primary outcome and leakage target
 
-### Primary: conjunctive rule-application accuracy
-
-For submitted trial \(j\) from participant \(i\):
+For a complete trial:
 
 ```text
-CCA_ij = 1 only when Q1 state and Q2 scope/reason are both correct.
+CCA_ij = 1 iff Q1_ij is correct AND Q2_ij is correct.
 ```
 
-For primary-eligible participants:
+The primary estimand is the mean eligible-participant paired difference:
 
 ```text
-CCA_iC = mean submitted Contract trials
-CCA_iF = mean submitted Flat trials
-d_i = CCA_iC - CCA_iF
+d_i = mean complete Contract CCA_i - mean complete Flat CCA_i
+estimand = mean_i(d_i)
 ```
 
-### Secondary descriptive outcomes
+Q1 may be partly predictable from a single primitive because the contract logic permits one fact to strongly constrain a state. Leakage acceptance therefore targets CCA. Frozen single-row/keyword/fixed-position and `single row + option lexical` heuristics are evaluated end-to-end. With four Q2 options and no Q2 information, expected CCA must be `≤0.25`; no predeclared lexical heuristic may significantly exceed `0.25` under an exact one-sided binomial test at alpha `0.05`. The combined rule checker must score `10/10`.
 
-- Q1 state accuracy;
-- Q2 scope/reason application accuracy;
-- relative trial RT;
-- five-point block ease;
-- pattern, position, block, and sequence summaries.
+## 4. Missingness and exclusions
 
-Secondary analyses are descriptive. There is no confirmatory multiple-hypothesis family.
-
-## 4. Primary estimand and analysis
-
-The primary estimand is the arithmetic mean of participant-level paired CCA differences among eligible participants.
-
-Report:
-
-1. eligible N and missingness by condition/sequence;
-2. condition means;
-3. mean paired difference in percentage points;
-4. participant-bootstrap 95% percentile CI;
-5. individual paired differences;
-6. exact one-sided sign-flip p-value as the sole primary test;
-7. two-sided sign-flip sensitivity.
-
-The exact test flips each participant difference around zero and uses mean difference as the statistic. Enumerate all assignments when feasible; otherwise use at least 1,000,000 assignments with seed `20260810`. Zero differences remain zero.
-
-No GLMM is primary. Any model not listed above is post hoc and exploratory.
-
-## 5. Missingness and exclusions
-
-All ten planned records are pre-generated and exported, including unpresented/unsubmitted slots. A participant enters the available-case primary analysis only if:
+Every export contains all ten planned slots and the fields:
 
 ```text
-submitted Contract >= 4
-submitted Flat >= 4
-submitted total >= 8 of 10
+planned, presented, q1_submitted, q2_submitted, complete
 ```
 
-Otherwise the participant is excluded from the primary analysis with an explicit reason. There is no performance-, practice-, RT-, ease-, or suspected-effort exclusion.
-
-Primary CCA uses submitted trials among eligible participants. Required sensitivity counts every missing Q1/Q2 component as incorrect over all ten planned slots. Missing/presented/submitted counts are reported by condition and sequence.
-
-Impossible relative timing is flagged but does not remove accuracy data.
-
-## 6. Estimation-first interpretation
-
-The point estimate and CI are always primary. The following categories are descriptive labels, not progression gates:
-
-1. **Inconclusive/wide:** CI crosses both −10 and +10 percentage-point reference anchors.
-2. **Negative direction:** otherwise, point estimate is below zero.
-3. **Directionally positive:** otherwise, point estimate is above zero.
-4. **No directional signal:** point estimate equals zero.
-
-The ±10-point anchors are not pass/fail thresholds, equivalence margins, or smallest worthwhile effects. A positive point estimate is described only as directional. No category authorizes paper use or a benefit claim.
-
-Discordant accuracy, RT, or ease is reported as a tradeoff, not collapsed into a global verdict.
-
-## 7. Sample and resolution
-
-The planning target remains approximately 20 eligible completions. This is not a powered confirmatory study.
-
-The previously stated 20–25 percentage-point detectable range is a simulation estimate only. Before protocol freeze, `cognitive_console.microstudy.analysis` must regenerate the estimate from explicit assumptions, including N, baseline accuracy, within-participant correlation, binary-trial count, missingness scenario, test direction, and alpha. The generated artifact and assumptions, not this prose range, become authoritative.
-
-A null or small estimate cannot establish equivalence. Exact p-values do not repair low resolution.
-
-## 8. Materials, leakage, and provenance
-
-- Every item says: `Simulated evaluation record — not a current paper result.`
-- Evidence bodies contain no direct status vocabulary, role headings, aggregate verdict, or recommended action.
-- Q1/Q2 require at least two primitive rows.
-- Blind fixed-position, keyword, second-row-only, and single-row bag-of-words baselines are frozen implementation tests and may not exceed empirical majority chance (`0.40`).
-- Contract/Flat use exact common proposition strings/order and parity audits including DOM snapshots and masked screenshots.
-- Provenance enum is exactly `real_inspired_non_pass` or `synthetic_rule_case`, with required `source_note`.
-- P1/P3/P4 are real-inspired non-pass designs; P2/P5 are synthetic rule cases.
-- P5 is hypothetical and visibly states that the current paper contains no passing latent behavioral positive control.
-- All numeric values are fabricated teaching values and are not paper evidence.
-
-## 9. Sequence allocation
-
-The owner supplies one of `A1..D5`.
-
-- A/B: Contract receives X; C/D: Contract receives Y.
-- A/C: Contract first; B/D: Flat first.
-- Rotation 1–5 left-rotates `[P1,P3,P2,P5,P4]`.
-
-Across the exact 20 codes, each pattern occupies each within-block position eight times overall (four per condition and two per condition/set cell), every content ID is assigned ten times to each condition, and no participant repeats content. The implementation must machine-check the generated mapping.
-
-## 10. Timing, accessibility, and stop/revise gate
-
-The web app does not enforce a per-trial or study timeout. Design targets for an owner-authorized pilot are:
-
-- median completion ≤10 minutes;
-- P90 completion ≤12 minutes.
-
-Tutorial/practice are compressed; every evidence row and total evidence body obey the word caps in the spec.
-
-Before formal collection, the owner must approve a pilot gate. Stop and revise if P90 exceeds 12 minutes, keyboard-only flow fails, 200% zoom loses content/introduces horizontal scrolling, parity fails, keys disagree with the checker, exports fail, or any privacy/network violation occurs.
-
-These criteria do not authorize a pilot.
-
-## 11. Privacy
-
-The implementation is loopback-only and stores only anonymous owner code, sequence, answers, ease, and relative monotonic durations. It must:
-
-- suppress server access logging by overriding `log_message` or equivalent;
-- use no local/session storage, cookies, service worker, IndexedDB, Cache API, analytics, telemetry, remote asset, or external network request;
-- use a restrictive loopback CSP;
-- emit no IP, UA, request line, absolute timestamp, demographics, free text, fingerprint, or server-side response file;
-- pass tests capturing stdout, stderr, created files, server state, and exports.
-
-## 12. Export and reproducibility
-
-Each export has exactly ten planned slot records with:
+with:
 
 ```text
-presented, submitted, nullable q1/q2/correctness/rt_ms/hidden_ms,
-condition, item, pattern, position, block, sequence
+complete == q1_submitted && q2_submitted
+q2_submitted => q1_submitted => presented => planned
+submitted == complete
 ```
 
-JSON and CSV must rebuild, without hidden state:
+Primary available-case CCA uses complete trials only. Eligibility requires:
 
-- eligibility;
-- primary available-case inputs;
-- ten-slot missing-as-incorrect sensitivity;
-- missingness by condition/sequence;
-- participant bootstrap CI;
-- exact sign-flip test;
-- descriptive secondary summaries.
+```text
+complete Contract >= 4
+complete Flat >= 4
+complete total >= 8
+```
 
-End-to-end tests cover early exit, partial completion, a missing component, full completion, round-trip, and deterministic rebuild.
+Required sensitivity uses all ten planned trials and treats either missing component as incorrect. Reports enumerate not reached, viewed/no-Q1, Q1-only dropout, and complete states by condition and sequence. There is no performance-, RT-, ease-, or practice-based exclusion.
 
-## 13. No-upgrade rule
+## 5. Allocation and balance
 
-This preregistration is not frozen. Materials, unit tests, synthetic preview, and audit produce no human evidence. No result may be called confirmatory or used to change paper claims without owner authorization, frozen protocol/materials, ethics/recruitment approval, immutable registration, audited exports/analysis, and a separate paper-claim decision.
+Before outcomes, the owner prepares one blinded slot for each `A1..D5`. A slot is consumed only by a finalized ten-complete-trial participant. Dropout/primary-ineligible attempts reuse the same sequence. A fully completed participant later mechanically excluded consumes the slot, is not replaced, and remains in an ITT-style sensitivity.
+
+Base order is `[P1,P3,P2,P5,P4]`; suffix `r=0..4` uses `rotate(r)` in block 1 and `rotate(r+2 mod 5)` in block 2. A/B assign Contract X; C/D Contract Y. A/C put Contract first; B/D put Flat first.
+
+Across 20 codes, each pattern occupies each within-block position eight times overall, four times per condition, and twice per condition×set cell. Every content ID appears ten times per condition. The +2 rotation prevents a pattern from repeating its block-1 position. Machine tests, not prose, establish the generated 200-row table.
+
+## 6. Statistical analysis
+
+Report eligible N, condition means, mean paired CCA difference, individual differences, missingness, and:
+
+- participant bootstrap, `B=10000`, seed `20260810`, percentile `2.5/97.5`;
+- exact one-sided sign-flip as sole primary test;
+- exact two-sided sign-flip sensitivity.
+
+Zero differences are ties and removed before enumerating all `2^N_eff` assignments. Tail equality is included and there is no `+1` correction. Q1, Q2, RT, ease, pattern, block, sequence, and position are descriptive.
+
+MDE status is `pending reproducible simulation before protocol freeze`. This DRAFT makes no numerical MDE claim. A script with explicit assumptions, machine-readable outputs, and independent audit is required before freeze.
+
+## 7. Materials and provenance
+
+The exact ten stimuli, item-specific Q2s, keys, Flat orders, tutorial, practice, feedback, and debrief are normative in the protocol.
+
+The provenance field is exactly `source_status`. P1/P3/P4 are `real_inspired_non_pass` with semantic artifact source notes and no raw internal IDs. P2/P5 are `synthetic_rule_case`; P5 has `hypothetical=true`. All values are fabricated. The debrief states there is no current paper pass.
+
+Contract and Flat share fixed dimensions, word-count constraints, viewport, and no-scroll behavior. Flat role order is balanced so every primitive occupies every position exactly twice across ten items.
+
+## 8. Timing and accessibility
+
+The owner-run timing pilot is exactly three people and passes only if median completion is `≤10 min`, all three are `≤12 min`, and forced timeouts are zero. Failure requires revision and a new pilot.
+
+Automated accessibility testing is separate and not included in timing: keyboard, visible focus, screen-reader parity, contrast, reduced motion, 200% zoom, and no horizontal scrolling. This DRAFT does not authorize either activity.
+
+## 9. Privacy and reproducibility
+
+The future implementation is loopback-only, suppresses access logs, uses no browser/server persistence or remote network, and exports no IP, UA, absolute timestamp, demographics, free text, or fingerprint.
+
+Analysis must rebuild eligibility, primary inputs, ten-slot sensitivity, missingness, bootstrap, and sign-flip outputs from export alone.
+
+## 10. No-upgrade rule
+
+This protocol remains DRAFT/materials-only. It changes no paper and authorizes no recruitment, pilot, data collection, or claim upgrade. Human evidence requires owner authorization, applicable ethics/recruitment handling, frozen audited materials/protocol, and a separate paper-claim decision.

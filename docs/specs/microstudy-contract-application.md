@@ -1,377 +1,436 @@
 # Spec: Contract Legibility/Application Micro-Study
 
 - **Spec ID:** `microstudy-contract-application`
-- **Status:** `DRAFT / materials-only / ready for hostile re-audit`
+- **Status:** `DRAFT / NOT FROZEN / materials-only / second revision`
 - **Study class:** exploratory formative micro-study
-- **Authorized scope:** protocol, simulated materials, and loopback-only implementation
-- **Not authorized:** recruitment, ethics submission, pilot/data collection, public deployment, or paper changes
-- **Related preregistration:** [`../research/2026-08-10-microstudy-contract-application-DRAFT.md`](../research/2026-08-10-microstudy-contract-application-DRAFT.md)
+- **Authorized:** protocol, simulated materials, future loopback implementation
+- **Not authorized:** recruitment, ethics administration, pilot/data collection, public deployment, or paper changes
+- **Preregistration:** [`../research/2026-08-10-microstudy-contract-application-DRAFT.md`](../research/2026-08-10-microstudy-contract-application-DRAFT.md)
 - **Implementation plan:** [`../plans/microstudy-contract-application-web.md`](../plans/microstudy-contract-application-web.md)
 
-## 1. Objective, treatment, and claims
+## 1. Construct, treatment, and outcome
 
-The study asks whether semantic organization helps technical GenAI users apply a four-state interface contract to simulated records. It compares:
+The study measures **structured rule application**: whether technical GenAI users can combine five displayed contract facts to choose an interface state and then make a separate scope/comparator/generalization judgment. It does not measure or claim deep conceptual integration, transfer, calibrated reliance, user benefit, trust, safety, productivity, latent control, or current-paper evidence.
 
-- **Contract UI:** five rows labelled with the semantic field names below.
-- **Info-Matched Flat Panel:** the same five rows labelled with neutral IDs.
+The treatment is a **semantic-organization package**, not pure headings:
 
-The sole treatment is row labelling/grouping. The primary outcome is **conjunctive rule-application accuracy (CCA)**: Q1 and Q2 must both be correct. Q2 is **scope/reason application**, not transfer. The study makes no calibrated-reliance, benefit, trust, safety, productivity, latent-control, population, or paper-evidence claim.
+- **Contract:** semantic headings, grouping, and one fixed semantic role order.
+- **Flat:** neutral labels, no semantic grouping, and item-specific deterministic row shuffles.
+- Both use the same five primitive proposition strings, questions, answer options, dimensions, word-count limits, viewport, and no-scroll behavior.
 
-All ten formal items are novel combinations not shown in practice. Practice teaches the response format using one different example; there is no independent transfer outcome or inferential transfer claim.
+The sole primary outcome is **conjunctive rule-application accuracy (CCA)**. A trial is correct only if Q1 and Q2 are both correct. Q1 alone may sometimes be strongly constrained by one primitive; the leakage gate therefore targets CCA rather than requiring every Q1 row to be independently at chance.
 
-## 2. Design
+## 2. Trial flow and frozen display contract
 
-- Within participant; 10 planned formal slots, 5 per condition, two blocks.
-- One unscored practice item with different nouns, values, and combination.
-- Exact sequence codes `A1` through `D5`.
-- Every participant sees all ten content IDs once, never both renderings of one content ID.
-- Desktop target; minimum viewport `1024 × 700`.
-- No automatic timeout. Timing targets are usability gates, not exclusion rules.
-- Owner assignment is external; the site accepts only anonymous owner code and exact sequence code.
+1. Display `Simulated evaluation record` at the top of every practice and formal card.
+2. Display five evidence rows.
+3. Display Q1 only.
+4. On Q1 submission, persist and lock Q1; disable browser/app back navigation to the Q1 view.
+5. Only then display Q2. Q2 options contain no state names and do not map one-to-one onto the four Q1 states.
+6. On Q2 submission, mark the trial complete and advance. Formal trials show no correctness feedback.
 
-## 3. Frozen parity contract
+Minimum viewport is `1024 × 700`. The complete card, Q1, and Q2 views must fit without vertical or horizontal scrolling at the frozen viewport. Both conditions use exactly five fixed-height rows, fixed label/body columns, fixed card dimensions, identical typography/color/spacing, and row/body word caps.
 
-### 3.1 Common primitive propositions
+### 2.1 Semantic roles and common legend
 
-Each stimulus stores one ordered `primitive_evidence` array. Both renderers consume those exact strings in that exact order. Evidence bodies contain no role heading and may not contain these direct state cues, case-insensitively:
+Primitive IDs and Contract order are:
 
 ```text
-not tested
-failed
-failure
-inconclusive
-pass
-passed
-underpowered
-unresolved
-diagnostic only
-withheld control
-evidence-supported control
-transfer
-deploy
-recommended action
+representation, comparison, comparator, coherence, scope
 ```
 
-No condition may synthesize, prefix, or repeat a semantic role inside the evidence body.
+Contract headings in that order are:
 
-### 3.2 Labels and geometry
+```text
+Representation relation
+Comparative effect
+Comparator construction
+Coherence qualification
+Scope boundary
+```
 
-| Row | Contract label | Flat label |
-|---|---|---|
-| 1 | Representation relation | Evidence A |
-| 2 | Comparative effect | Evidence B |
-| 3 | Comparator construction | Evidence C |
-| 4 | Coherence qualification | Evidence D |
-| 5 | Scope boundary | Evidence E |
+Flat labels are `Evidence A` through `Evidence E`, assigned to the displayed shuffled positions. They do not identify primitive roles.
 
-The neutral labels are selected to approximate the semantic labels' visual width through fixed label-column sizing; labels never change body width.
+The identical legend is:
 
-Both conditions must have:
+> Use all five facts together. They concern representation, comparison, comparator construction, coherence, and scope; their displayed order carries no meaning.
 
-- exactly five fixed-height rows;
-- identical row order, label-column width, body width, font family/size/weight/line-height, colors, spacing, card/viewport dimensions, and no-scroll behavior;
-- identical qualification legend, question text, option text/order, controls, and navigation;
-- total visible word-count difference no greater than 5%;
-- exact equality of evidence-body word count, wrapped line count, row height, and total card height.
+The legend is a paragraph/unordered rule statement and supplies no position-to-role map.
 
-The legend is identical:
+### 2.2 Flat deterministic row orders
 
-> Combine the representation relation, comparative effect, comparator construction, coherence qualification, and exact scope. No single row determines the answer.
+Each list is primitive IDs in displayed positions 1→5:
 
-### 3.3 Required parity audits
+| Item | Flat order |
+|---|---|
+| `MS-P1-X` | `comparison, scope, representation, coherence, comparator` |
+| `MS-P2-X` | `scope, representation, coherence, comparator, comparison` |
+| `MS-P3-X` | `representation, coherence, comparator, comparison, scope` |
+| `MS-P4-X` | `coherence, comparator, comparison, scope, representation` |
+| `MS-P5-X` | `comparator, comparison, scope, representation, coherence` |
+| `MS-P1-Y` | `comparator, representation, scope, comparison, coherence` |
+| `MS-P2-Y` | `representation, scope, comparison, coherence, comparator` |
+| `MS-P3-Y` | `scope, comparison, coherence, comparator, representation` |
+| `MS-P4-Y` | `comparison, coherence, comparator, representation, scope` |
+| `MS-P5-Y` | `coherence, comparator, representation, scope, comparison` |
 
-Implementation acceptance must include:
+Machine checks must prove that, across ten items, every primitive role appears in every Flat position exactly twice. Contract always uses the fixed semantic role order. This deliberate difference is part of the declared treatment package.
 
-1. normalized string/order equality tests (NFKC, CRLF→LF, trim, whitespace collapse);
-2. word-count, wrapped-line-count, row-height, and card-height tests;
-3. DOM snapshots at the frozen viewport, allowing differences only in labels, grouping wrappers/classes, and associated ARIA references;
-4. pixel/screenshot comparison with masks limited to label glyph regions; all row/body geometry must match;
-5. CSS-token and no-scroll assertions;
-6. screen-reader evidence/options equality.
+### 2.3 Parity checks
 
-## 4. Routing questions and answer key
+Tests must enforce:
 
-### Q1
+- one canonical proposition map consumed by both renderers;
+- exact normalized proposition equality (`NFKC`, normalized newlines, trim, collapsed whitespace);
+- exactly five rows and fixed row/body/card dimensions;
+- fixed viewport and no scroll in Q1 and Q2 steps;
+- equal question/options/order and visible non-label text;
+- body word-count equality and total visible word-count difference ≤5%;
+- DOM snapshots allowing only declared grouping, label, order, and ARIA-reference differences;
+- screenshot masks limited to label glyph regions and the declared row-order permutation;
+- keyboard and screen-reader equivalence of evidence and options.
 
-**Which interface state follows after combining all five rows?**
+## 3. Questions and keys
 
-- `Q1_UNRESOLVED`: Unresolved
-- `Q1_DIAGNOSTIC`: Diagnostic only
-- `Q1_WITHHELD`: Withheld control
-- `Q1_SUPPORTED`: Evidence-supported control at the exact stated tier
+### 3.1 Q1
 
-### Q2: scope/reason application
+Exact text:
 
-**Which combination of contract facts justifies that state and scope?**
+> Which interface state follows after applying the rule to this record?
 
-- `Q2_UNRESOLVED_REASON`: The representation relation and comparative record together do not establish the required route at this scope.
-- `Q2_DIAGNOSTIC_REASON`: The representation threshold is met, while the comparative ledger has no completed observations, so only the representation-facing use is available.
-- `Q2_WITHHELD_REASON`: The representation threshold is met, but the matched comparison does not establish the required advantage; coherence alone cannot supply it.
-- `Q2_SUPPORTED_REASON`: The matched comparison establishes the registered advantage, coherence remains inside its bound, and support is limited to the named model–method–task–tier scope.
+Exact options:
 
-Every correct Q1/Q2 derivation requires at least two rows:
+```text
+Q1_UNRESOLVED — Unresolved
+Q1_DIAGNOSTIC — Diagnostic only
+Q1_WITHHELD — Withheld control
+Q1_SUPPORTED — Evidence-supported control at the exact stated tier
+```
 
-- P1: representation relation + comparative ledger;
-- P2: representation relation + comparative ledger;
-- P3: comparative effect + matched comparator (with coherence unable to override);
-- P4: comparative interval + registered margin/resolution;
-- P5: comparative effect + coherence + exact scope.
+### 3.2 Item-specific Q2
 
-## 5. Stimulus schema
+Every Q2 has four options, shown in the listed order. Q2 wording and keys are independent scope/comparator/generalization judgments and contain no Q1 state name.
+
+| Item | Exact Q2 | Options (`A`–`D`) | Key |
+|---|---|---|---|
+| `MS-P1-X` | Which use is licensed by the available comparison record? | A: Apply to Alder/North editing at S1. B: Apply to any Alder editing method. C: No comparative use is licensed from zero completed matched observations. D: Generalize to all S1 tasks. | C |
+| `MS-P1-Y` | What is the narrowest warranted conclusion about the named scope? | A: Birch/Cedar triage at S2 is established. B: The record does not warrant a comparative conclusion for the named scope. C: All Birch tasks inherit the result. D: The comparator budget substitutes for observations. | B |
+| `MS-P2-X` | Which boundary must be preserved when using this record? | A: Use only the representation-facing diagnostic for Alder/Cedar summarization S1. B: Treat the unobserved comparison as favorable. C: Extend to all summarization methods. D: Ignore the named tier. | A |
+| `MS-P2-Y` | Which statement respects the comparator evidence? | A: The candidate budget proves a comparative advantage. B: The record generalizes across Birch tasks. C: The S2 boundary can be dropped. D: Representation-facing use is available, but no comparative claim is available without observations. | D |
+| `MS-P3-X` | Which comparator judgment is warranted? | A: Coherence overrides the matched effect. B: The matched comparator does not establish the registered advantage for Alder/North planning S1. C: The result generalizes to unmatched budgets. D: The interval proves a positive advantage. | B |
+| `MS-P3-Y` | What may be concluded about generalization? | A: The matched result applies to every Birch method. B: The coherence bound licenses cross-task use. C: No extension beyond Birch/Cedar review S2 is warranted, and the registered advantage is not established there. D: Candidate count alone licenses extension. | C |
+| `MS-P4-X` | Why is a stronger comparative conclusion not licensed? | A: The interval does not resolve the registered advantage for the matched Alder/Cedar extraction S1 comparison. B: The model name is synthetic. C: Coherence is outside its bound. D: Scope may be generalized before resolving the interval. | A |
+| `MS-P4-Y` | Which scope statement follows from the interval and margin? | A: All Birch ranking settings are covered. B: The named comparator can be ignored. C: S2 automatically generalizes to other tiers. D: The evidence does not resolve the registered advantage even within Birch/North ranking S2. | D |
+| `MS-P5-X` | Which use stays within the record's supported boundary? | A: Any Alder routing method and tier. B: Alder/North routing at S1 only, with the matched comparator and coherence bound retained. C: All tasks sharing the candidate budget. D: Cross-model use if coherence is small. | B |
+| `MS-P5-Y` | Which generalization is justified? | A: Birch/Cedar verification at S2 only; no cross-model, method, task, or tier extension. B: All Birch verification tiers. C: Any Cedar task with five samples. D: Any model whose interval is positive. | A |
+
+## 4. Stimulus schema and provenance
 
 ```yaml
-schema_version: microstudy-stimuli-v2
+schema_version: microstudy-stimuli-v3
 stimulus_id: string
 content_set: X | Y
 pattern_id: P1 | P2 | P3 | P4 | P5
-provenance: real_inspired_non_pass | synthetic_rule_case
+source_status: real_inspired_non_pass | synthetic_rule_case
 source_note: nonempty string
 hypothetical: boolean
-no_current_pass_statement: string | null
-simulated_record_notice: "Simulated evaluation record — not a current paper result."
+simulated_record_notice: "Simulated evaluation record"
 primitive_evidence:
-  - primitive_id: read
-    proposition: string
-  - primitive_id: comparison
-    proposition: string
-  - primitive_id: comparator
-    proposition: string
-  - primitive_id: coherence
-    proposition: string
-  - primitive_id: scope
-    proposition: string
+  representation: string
+  comparison: string
+  comparator: string
+  coherence: string
+  scope: string
+flat_order: [primitive_id, primitive_id, primitive_id, primitive_id, primitive_id]
 questions:
   q1: {correct_key: string}
-  q2: {correct_key: string}
+  q2: {text: string, options: [{key: A|B|C|D, text: string}], correct_key: A|B|C|D}
 answer_key_derivation:
   required_primitive_ids: [string, ...]
-  claim_scope: rule_application_only
+  claim_scope: structured_rule_application_only
 ```
 
-Required provenance assignment:
+Exact provenance by item:
 
-- P1, P3, P4: `real_inspired_non_pass`;
-- P2, P5: `synthetic_rule_case`;
-- P5: `hypothetical=true` and `no_current_pass_statement="Hypothetical teaching case; the current paper contains no passing latent behavioral positive control."`;
-- all other patterns: `hypothetical=false`, `no_current_pass_statement=null`.
+| Item | `source_status` | `hypothetical` | Exact `source_note` |
+|---|---|---:|---|
+| `MS-P1-X` | `real_inspired_non_pass` | false | `Semantic artifact source: incomplete representation/comparison pattern; fabricated teaching values; no raw internal IDs; not paper evidence.` |
+| `MS-P1-Y` | `real_inspired_non_pass` | false | `Semantic artifact source: incomplete representation/comparison pattern; fabricated teaching values; no raw internal IDs; not paper evidence.` |
+| `MS-P2-X` | `synthetic_rule_case` | false | `Synthetic rule case created for representation-only routing; fabricated teaching values; not paper evidence.` |
+| `MS-P2-Y` | `synthetic_rule_case` | false | `Synthetic rule case created for representation-only routing; fabricated teaching values; not paper evidence.` |
+| `MS-P3-X` | `real_inspired_non_pass` | false | `Semantic artifact source: matched-comparator non-advantage pattern; fabricated teaching values; no raw internal IDs; not paper evidence.` |
+| `MS-P3-Y` | `real_inspired_non_pass` | false | `Semantic artifact source: matched-comparator non-advantage pattern; fabricated teaching values; no raw internal IDs; not paper evidence.` |
+| `MS-P4-X` | `real_inspired_non_pass` | false | `Semantic artifact source: interval-resolution pattern; fabricated teaching values; no raw internal IDs; not paper evidence.` |
+| `MS-P4-Y` | `real_inspired_non_pass` | false | `Semantic artifact source: interval-resolution pattern; fabricated teaching values; no raw internal IDs; not paper evidence.` |
+| `MS-P5-X` | `synthetic_rule_case` | true | `Hypothetical synthetic positive rule case; fabricated teaching values; the current paper contains no passing latent behavioral positive control.` |
+| `MS-P5-Y` | `synthetic_rule_case` | true | `Hypothetical synthetic positive rule case; fabricated teaching values; the current paper contains no passing latent behavioral positive control.` |
 
-`source_note` describes only the design provenance and must state that values are fabricated teaching values, not paper evidence.
+No UI field exposes raw internal experiment IDs. The debrief explicitly says that no current paper pass is represented.
 
-## 6. Ten formal stimuli and keys
+## 5. Exact formal stimuli
 
-All propositions below are the exact common body strings for both conditions. Values are fabricated and must never be represented as paper results.
+The following are the canonical common primitive propositions. They contain no interface-state words.
 
-| ID | Pattern | Five propositions in fixed order | Q1 / Q2 | Provenance |
-|---|---|---|---|---|
-| `MS-P1-X` | P1 | (1) Alignment estimate 0.08; registered representation minimum 0.20. (2) Comparative ledger contains 0 completed matched observations. (3) Prompt comparator budget is 16 candidates and 5 samples per item. (4) Coherence bound is 0.10; no paired output set exists for calculation. (5) Scope: model Alder, method North, editing, tier S1. | `Q1_UNRESOLVED` / `Q2_UNRESOLVED_REASON` | `real_inspired_non_pass` |
-| `MS-P1-Y` | P1 | (1) Alignment estimate 0.14; registered representation minimum 0.25. (2) Comparative ledger contains 0 completed matched observations. (3) Prompt comparator budget is 12 candidates and 5 samples per item. (4) Coherence bound is 0.08; no paired output set exists for calculation. (5) Scope: model Birch, method Cedar, triage, tier S2. | `Q1_UNRESOLVED` / `Q2_UNRESOLVED_REASON` | `real_inspired_non_pass` |
-| `MS-P2-X` | P2 | (1) Alignment estimate 0.31; registered representation minimum 0.20. (2) Comparative ledger contains 0 completed matched observations. (3) Prompt comparator budget is 16 candidates and 5 samples per item. (4) Coherence bound is 0.10; no paired output set exists for calculation. (5) Scope: model Alder, method Cedar, summarization, tier S1. | `Q1_DIAGNOSTIC` / `Q2_DIAGNOSTIC_REASON` | `synthetic_rule_case` |
-| `MS-P2-Y` | P2 | (1) Alignment estimate 0.34; registered representation minimum 0.25. (2) Comparative ledger contains 0 completed matched observations. (3) Prompt comparator budget is 12 candidates and 5 samples per item. (4) Coherence bound is 0.08; no paired output set exists for calculation. (5) Scope: model Birch, method North, classification, tier S2. | `Q1_DIAGNOSTIC` / `Q2_DIAGNOSTIC_REASON` | `synthetic_rule_case` |
-| `MS-P3-X` | P3 | (1) Alignment estimate 0.32; registered representation minimum 0.20. (2) Matched effect is −0.07; 95% interval [−0.15, +0.01]. (3) Registered advantage is +0.10; comparator matched the 16-candidate budget, item split, and 5 samples. (4) Coherence change is 0.03 against an absolute bound of 0.10. (5) Scope: model Alder, method North, planning, tier S1. | `Q1_WITHHELD` / `Q2_WITHHELD_REASON` | `real_inspired_non_pass` |
-| `MS-P3-Y` | P3 | (1) Alignment estimate 0.36; registered representation minimum 0.25. (2) Matched effect is −0.04; 95% interval [−0.11, +0.03]. (3) Registered advantage is +0.08; comparator matched the 12-candidate budget, item split, and 5 samples. (4) Coherence change is 0.02 against an absolute bound of 0.08. (5) Scope: model Birch, method Cedar, review, tier S2. | `Q1_WITHHELD` / `Q2_WITHHELD_REASON` | `real_inspired_non_pass` |
-| `MS-P4-X` | P4 | (1) Alignment estimate 0.33; registered representation minimum 0.20. (2) Matched effect is +0.05; 95% interval [−0.09, +0.19]. (3) Registered advantage is +0.10; comparator matched the 16-candidate budget, item split, and 5 samples. (4) Coherence change is 0.03 against an absolute bound of 0.10. (5) Scope: model Alder, method Cedar, extraction, tier S1. | `Q1_UNRESOLVED` / `Q2_UNRESOLVED_REASON` | `real_inspired_non_pass` |
-| `MS-P4-Y` | P4 | (1) Alignment estimate 0.37; registered representation minimum 0.25. (2) Matched effect is +0.03; 95% interval [−0.07, +0.13]. (3) Registered advantage is +0.08; comparator matched the 12-candidate budget, item split, and 5 samples. (4) Coherence change is 0.02 against an absolute bound of 0.08. (5) Scope: model Birch, method North, ranking, tier S2. | `Q1_UNRESOLVED` / `Q2_UNRESOLVED_REASON` | `real_inspired_non_pass` |
-| `MS-P5-X` | P5 | (1) Alignment estimate 0.35; registered representation minimum 0.20. (2) Matched effect is +0.16; 95% interval [+0.11, +0.21]. (3) Registered advantage is +0.10; comparator matched the 16-candidate budget, item split, and 5 samples. (4) Coherence change is 0.03 against an absolute bound of 0.10. (5) Scope: model Alder, method North, routing, tier S1 only. | `Q1_SUPPORTED` / `Q2_SUPPORTED_REASON` | `synthetic_rule_case` |
-| `MS-P5-Y` | P5 | (1) Alignment estimate 0.39; registered representation minimum 0.25. (2) Matched effect is +0.14; 95% interval [+0.09, +0.19]. (3) Registered advantage is +0.08; comparator matched the 12-candidate budget, item split, and 5 samples. (4) Coherence change is 0.02 against an absolute bound of 0.08. (5) Scope: model Birch, method Cedar, verification, tier S2 only. | `Q1_SUPPORTED` / `Q2_SUPPORTED_REASON` | `synthetic_rule_case` |
+| Item | Representation | Comparison | Comparator | Coherence | Scope | Q1 / Q2 |
+|---|---|---|---|---|---|---|
+| `MS-P1-X` | Alignment estimate 0.08; registered minimum 0.20. | The matched ledger contains 0 completed observations. | Budget: 16 candidates, fixed item split, 5 samples each. | Bound 0.10; no paired outputs are available to calculate change. | Alder / North / editing / S1. | `Q1_UNRESOLVED` / C |
+| `MS-P1-Y` | Alignment estimate 0.14; registered minimum 0.25. | The matched ledger contains 0 completed observations. | Budget: 12 candidates, fixed item split, 5 samples each. | Bound 0.08; no paired outputs are available to calculate change. | Birch / Cedar / triage / S2. | `Q1_UNRESOLVED` / B |
+| `MS-P2-X` | Alignment estimate 0.31; registered minimum 0.20. | The matched ledger contains 0 completed observations. | Budget: 16 candidates, fixed item split, 5 samples each. | Bound 0.10; no paired outputs are available to calculate change. | Alder / Cedar / summarization / S1. | `Q1_DIAGNOSTIC` / A |
+| `MS-P2-Y` | Alignment estimate 0.34; registered minimum 0.25. | The matched ledger contains 0 completed observations. | Budget: 12 candidates, fixed item split, 5 samples each. | Bound 0.08; no paired outputs are available to calculate change. | Birch / North / classification / S2. | `Q1_DIAGNOSTIC` / D |
+| `MS-P3-X` | Alignment estimate 0.32; registered minimum 0.20. | Matched effect −0.07; 95% interval [−0.15, +0.01]. | Registered advantage +0.10; budget, split, and 5 samples are matched. | Change 0.03 against absolute bound 0.10. | Alder / North / planning / S1. | `Q1_WITHHELD` / B |
+| `MS-P3-Y` | Alignment estimate 0.36; registered minimum 0.25. | Matched effect −0.04; 95% interval [−0.11, +0.03]. | Registered advantage +0.08; budget, split, and 5 samples are matched. | Change 0.02 against absolute bound 0.08. | Birch / Cedar / review / S2. | `Q1_WITHHELD` / C |
+| `MS-P4-X` | Alignment estimate 0.33; registered minimum 0.20. | Matched effect +0.05; 95% interval [−0.09, +0.19]. | Registered advantage +0.10; budget, split, and 5 samples are matched. | Change 0.03 against absolute bound 0.10. | Alder / Cedar / extraction / S1. | `Q1_UNRESOLVED` / A |
+| `MS-P4-Y` | Alignment estimate 0.37; registered minimum 0.25. | Matched effect +0.03; 95% interval [−0.07, +0.13]. | Registered advantage +0.08; budget, split, and 5 samples are matched. | Change 0.02 against absolute bound 0.08. | Birch / North / ranking / S2. | `Q1_UNRESOLVED` / D |
+| `MS-P5-X` | Alignment estimate 0.35; registered minimum 0.20. | Matched effect +0.16; 95% interval [+0.11, +0.21]. | Registered advantage +0.10; budget, split, and 5 samples are matched. | Change 0.03 against absolute bound 0.10. | Alder / North / routing / S1 only. | `Q1_SUPPORTED` / B |
+| `MS-P5-Y` | Alignment estimate 0.39; registered minimum 0.25. | Matched effect +0.14; 95% interval [+0.09, +0.19]. | Registered advantage +0.08; budget, split, and 5 samples are matched. | Change 0.02 against absolute bound 0.08. | Birch / Cedar / verification / S2 only. | `Q1_SUPPORTED` / A |
 
-The UI shows the simulated-record notice on every item and the no-current-pass statement on P5 outside the five evidence rows.
-
-### 6.1 Answer-leakage audit
-
-Implementation tests must freeze and run blind baselines that receive no condition label or semantic heading:
-
-- fixed-position-only majority lookup;
-- single-row bag-of-words logistic/naive-Bayes baselines for each row separately;
-- forbidden-keyword/rule-word lookup;
-- record-B/second-row-only lookup.
-
-Use leave-one-X/Y-pair-out evaluation and report exact accuracy. No single-row, keyword, or fixed-position baseline may exceed the empirical Q1 majority-class chance (`4/10 = 0.40`); Q2 uses the same key distribution and threshold. A failure blocks materials. The combined rule checker must score `10/10`. Tests also assert every key's `required_primitive_ids` has length at least two.
-
-## 7. Practice
-
-Practice is one unscored synthetic example with different nouns and values. It demonstrates combining representation and comparison with one explanation after submission. It does not contain any formal item string, does not expose a formal answer, and does not create a “seen pattern” or transfer designation.
-
-## 8. Exact 20-sequence mapping
-
-Base mappings:
-
-| Letter | Block 1 | Block 2 | Contract set | Flat set |
-|---|---|---|---|---|
-| A | Contract X | Flat Y | X | Y |
-| B | Flat Y | Contract X | X | Y |
-| C | Contract Y | Flat X | Y | X |
-| D | Flat X | Contract Y | Y | X |
-
-Base within-block pattern order is `[P1, P3, P2, P5, P4]`. Rotation `r` (1–5) left-rotates this list by `r-1`. Sequence code is letter plus rotation, producing exactly:
+Required derivation primitives:
 
 ```text
-A1 A2 A3 A4 A5 B1 B2 B3 B4 B5 C1 C2 C3 C4 C5 D1 D2 D3 D4 D5
+P1: representation + comparison
+P2: representation + comparison
+P3: comparison + comparator + coherence
+P4: comparison + comparator
+P5: comparison + comparator + coherence + scope
 ```
 
-The same rotation is applied to both blocks. For example:
+## 6. Leakage gate
 
-| Rotation | Pattern positions 1→5 |
-|---|---|
-| 1 | P1 P3 P2 P5 P4 |
-| 2 | P3 P2 P5 P4 P1 |
-| 3 | P2 P5 P4 P1 P3 |
-| 4 | P5 P4 P1 P3 P2 |
-| 5 | P4 P1 P3 P2 P5 |
+The primary leakage target is CCA, not row-wise Q1 chance.
 
-Machine checks must prove across all 20 codes:
+Frozen tests:
 
-- exactly 10 unique content IDs and 5 per condition per sequence;
-- letter mapping and block order exactly match the table;
-- each pattern appears in every within-block position exactly eight times overall, four times per condition, and twice per condition/set assignment;
-- each content ID appears in Contract 10 times and Flat 10 times;
-- pattern, position, condition, set, and block counts match the generated expected table;
-- no participant repeats content.
+1. Q1-only single-row, keyword, fixed-position, and lexical heuristics may predict part of Q1; their exact leave-one-X/Y-pair-out Q1 accuracy is reported, not treated as an automatic failure.
+2. Give each heuristic its Q1 prediction but no Q2 information. With four Q2 choices, deterministic option guessing is evaluated over all four fixed guesses and seeded uniform guessing; expected CCA must be `≤0.25`.
+3. Evaluate every predeclared `single row + one option lexical` heuristic end-to-end under leave-one-X/Y-pair-out. No heuristic may significantly exceed the predeclared CCA chance bound `0.25`.
+4. Significance test: exact one-sided binomial test against `p=0.25`, alpha `0.05`, no tuning after data or materials inspection.
+5. Combined rule checker must score `10/10`; each derivation uses at least two primitive IDs.
 
-## 9. Timing and accessibility gate
+If Q2 option count changes, the chance bound is recomputed as `1 / option_count` and frozen before any pilot. Q2 keys are balanced `A=3, B=3, C=2, D=2`, and item-specific wording prevents a state-to-option lookup.
 
-Target completion distribution for owner pilot:
+## 7. Practice/tutorial/debrief materials
 
-- median `study_rt_ms ≤ 10 minutes`;
-- P90 `study_rt_ms ≤ 12 minutes`.
+### Setup and consent placeholder
 
-Tutorial and practice must be concise. Each formal row is capped at 24 visible words and each five-row evidence body at 110 visible words. The web app never auto-submits or times out.
+> Study information and consent text will be supplied by the owner after the applicable ethics and recruitment process. This materials draft does not provide or imply ethics approval.
 
-Before any formal collection, the owner must run an authorized pilot and approve the timing/accessibility gate. Stop and revise if P90 exceeds 12 minutes, any keyboard-only path fails, or any supported desktop view at 200% zoom loses content or requires horizontal scrolling.
+### Qualification legend
 
-Required accessibility: landmarks, heading hierarchy, fieldsets/legends, explicit labels, visible focus, keyboard-only operation, 4.5:1 text contrast, 3:1 control/focus contrast, reduced-motion support, no color-only meaning, and screen-reader parity.
+> Use all five facts together. They concern representation, comparison, comparator construction, coherence, and scope; their displayed order carries no meaning.
 
-## 10. Privacy and loopback security
+### Tutorial
 
-- Bind only to loopback; reject non-loopback IPv4/IPv6.
-- Override `BaseHTTPRequestHandler.log_message` (or equivalent) so request/access logs emit nothing.
-- No `localStorage`, `sessionStorage`, cookies, service worker, Cache API, IndexedDB, analytics, telemetry, remote assets, remote network calls, referrer collection, or server persistence.
-- CSP permits only required loopback static resources and blocks remote origins.
-- Session state exists only in page memory until explicit local download/reset.
-- Store only anonymous owner code, sequence code, responses, ease, and relative monotonic durations.
-- Never store/export IP, UA, headers, absolute timestamps, path outside the package, screen/device fingerprint, demographics, free text, or recruitment source.
+> First answer which interface state follows from the five facts. After you submit Q1, it is locked and Q2 appears. Q2 asks a separate question about scope, comparator, or generalization. A formal trial counts as correct only when both answers are correct. Formal trials give no feedback.
 
-Tests must capture stdout, stderr, created files, server state, and exports during representative requests/sessions and assert absence of IPs, UAs, request lines, absolute timestamps, and participant data. Static-source tests reject browser storage, service worker, analytics, and external URL APIs.
+### Exact practice item
 
-## 11. Complete ten-slot export
-
-At session start, pre-generate all ten planned response records. Export always contains all ten in planned order, including unpresented/unsubmitted slots:
-
-```json
-{
-  "schema_version": "microstudy-export-v2",
-  "study_id": "microstudy-contract-application",
-  "materials_version": "TBD_COMMIT",
-  "participant_code": "OWNER_ASSIGNED",
-  "sequence": "A1",
-  "responses": [{
-    "slot_index": 1,
-    "condition": "contract",
-    "item": "MS-P1-X",
-    "pattern": "P1",
-    "position": 1,
-    "block": 1,
-    "sequence": "A1",
-    "presented": true,
-    "submitted": true,
-    "q1": "Q1_UNRESOLVED",
-    "q2": "Q2_UNRESOLVED_REASON",
-    "q1_correct": true,
-    "q2_correct": true,
-    "cca_correct": true,
-    "rt_ms": 18000,
-    "hidden_ms": 0
-  }],
-  "block_ease": [],
-  "relative_timing": {"study_rt_ms": 480000},
-  "analysis_eligibility": {
-    "submitted_contract": 5,
-    "submitted_flat": 5,
-    "submitted_total": 10,
-    "eligible_primary": true,
-    "reason": null
-  }
-}
-```
-
-For unsubmitted slots, `submitted=false` and `q1`, `q2`, correctness fields, `rt_ms`, and `hidden_ms` are nullable. `presented` independently records whether the trial was displayed.
-
-Primary available-case CCA is computed only when:
+Top notice: `Simulated evaluation record`
 
 ```text
-submitted_contract >= 4
-AND submitted_flat >= 4
-AND submitted_total >= 8
+Representation relation: Fit estimate 0.27; registered minimum 0.20.
+Comparative effect: Matched effect +0.02; 95% interval [−0.06, +0.10].
+Comparator construction: Registered advantage +0.07; budget and split are matched.
+Coherence qualification: Change 0.01 against absolute bound 0.05.
+Scope boundary: Juniper / East / labeling / T1.
 ```
 
-Otherwise the participant is excluded from the primary analysis. There is no performance-, RT-, ease-, or practice-based exclusion. The required sensitivity treats every missing Q1/Q2 component as incorrect across all ten planned slots. Reports must show missing/presented/submitted counts by condition and sequence.
+Practice Q1:
 
-CSV is one row per planned slot with the exact response fields plus repeated session/eligibility fields. RFC 4180 quoting and spreadsheet-formula escaping are mandatory.
+> Which interface state follows after applying the rule to this record?
 
-## 12. Analysis and interpretation
+Correct: `Q1_UNRESOLVED`.
 
-### Primary
+Practice Q2:
 
-- Estimand: mean participant-level `CCA_contract − CCA_flat` among primary-eligible participants.
-- Estimation: condition means, paired difference, participant-bootstrap percentile 95% CI, individual paired differences.
-- Sole primary test: exact one-sided sign-flip test on participant differences; report two-sided sensitivity.
-- Secondary Q1, Q2, RT, ease, pattern, sequence, and position summaries are descriptive. No multiple-hypothesis family or confirmatory secondary claim.
-
-### Descriptive interpretation categories
-
-References `−0.10` and `+0.10` are symmetric descriptive anchors, not pass/fail gates, equivalence margins, or smallest worthwhile effects. Apply this precedence:
-
-1. **Inconclusive/wide:** CI crosses both −0.10 and +0.10.
-2. **Negative direction:** otherwise, point estimate < 0.
-3. **Directionally positive:** otherwise, point estimate > 0.
-4. **No directional signal:** point estimate = 0.
-
-Always report the point and CI; categories cannot authorize progression, paper use, or protocol claims.
-
-The current 20–25 percentage-point resolution statement is only a simulation estimate. `analysis.py` must recompute it from explicit assumptions before protocol freeze; generated output, not prose, becomes the frozen value.
-
-## 13. Implementation file plan
+> Which conclusion respects the comparison and scope?
 
 ```text
-src/cognitive_console/microstudy/
-  __init__.py
-  __main__.py
-  server.py
-  schema.py
-  sequencing.py
-  scoring.py
-  export.py
-  analysis.py
-  static/index.html
-  static/app.js
-  static/styles.css
-  data/stimuli.json
-  data/sequences.json
-tests/
-  test_microstudy_schema.py
-  test_microstudy_parity.py
-  test_microstudy_leakage.py
-  test_microstudy_routing.py
-  test_microstudy_sequences.py
-  test_microstudy_export.py
-  test_microstudy_analysis.py
-  test_microstudy_server.py
-  test_microstudy_end_to_end.py
+A: Generalize to all Juniper tasks.
+B: The interval does not resolve the registered advantage within Juniper/East labeling T1.
+C: The coherence value alone establishes comparative advantage.
+D: The matched budget permits use at every tier.
 ```
 
-`analysis.py` must rebuild eligibility, available-case primary inputs, ten-slot missing-as-incorrect sensitivity, bootstrap CI, exact sign-flip statistic, missingness tables, and MDE/resolution simulation from exports. End-to-end tests must cover early exit before presentation, partial condition completion, one missing answer component, full completion, JSON/CSV round-trip, and deterministic rebuild from export alone.
+Correct: B.
 
-## 14. Acceptance criteria
+Feedback after both answers:
 
-1. Ten items validate; P1/P3/P4 and P2/P5 provenance enums and notes are exact.
-2. P5 is hypothetical and displays the no-current-pass statement.
-3. Evidence contains no forbidden state terms/headings; all keys require at least two primitives.
-4. Frozen blind single-row/keyword/position heuristics score at most 0.40; combined checker scores 1.00.
-5. Common strings/order, legend, options, keys, geometry, word/line/height, DOM snapshot, and masked screenshot parity pass.
-6. All `A1..D5` sequence balance invariants pass.
-7. Export always has ten slots and applies the `4/condition + 8/10` primary rule exactly.
-8. Missing-as-incorrect sensitivity and missingness by condition/sequence rebuild from export.
-9. No performance-based exclusion exists.
-10. Server/browser privacy tests prove no access logs, storage, external network, absolute time, IP, UA, or persistence.
-11. Keyboard and 200% zoom checks pass; owner pilot gate remains required before formal collection.
-12. Analysis tests reproduce bootstrap/sign-flip/descriptive outputs and simulation assumptions.
-13. No web implementation, recruitment, data, paper edit, or claim upgrade is included in this protocol-revision commit.
+> The interval does not resolve the registered advantage. The named model, method, task, and tier remain the boundary. This example teaches the two-step response format; it is not a formal item.
+
+### Debrief
+
+> These were simulated teaching records with fabricated values. They assess structured rule application, not deep integration or real-world benefit. No item reports a current paper pass, and no response changes the paper's claims.
+
+## 8. Sequence generation and allocation
+
+### 8.1 Exact sequence algorithm
+
+Base pattern order `b=[P1,P3,P2,P5,P4]`. Let `r=0..4` for suffix `1..5`.
+
+- Block 1 order: `left_rotate(b, r)`.
+- Block 2 order: `left_rotate(b, (r+2) mod 5)`.
+
+Letter mapping:
+
+| Letter | Block 1 | Block 2 |
+|---|---|---|
+| A | Contract X | Flat Y |
+| B | Flat Y | Contract X |
+| C | Contract Y | Flat X |
+| D | Flat X | Contract Y |
+
+Exact order table:
+
+| Suffix | Block 1 | Block 2 |
+|---|---|---|
+| 1 | P1 P3 P2 P5 P4 | P2 P5 P4 P1 P3 |
+| 2 | P3 P2 P5 P4 P1 | P5 P4 P1 P3 P2 |
+| 3 | P2 P5 P4 P1 P3 | P4 P1 P3 P2 P5 |
+| 4 | P5 P4 P1 P3 P2 | P1 P3 P2 P5 P4 |
+| 5 | P4 P1 P3 P2 P5 | P3 P2 P5 P4 P1 |
+
+This yields exactly `A1..A5, B1..B5, C1..C5, D1..D5`.
+
+### 8.2 Balance proof obligations
+
+Across the 20 sequences:
+
+- each letter contributes five rotations, so every pattern occupies each position once in each block for that letter;
+- therefore every pattern occupies each position `4 letters × 2 blocks = 8` times overall;
+- A/B assign X to Contract and Y to Flat; C/D assign Y to Contract and X to Flat, giving each content ID 10 Contract and 10 Flat presentations;
+- each condition×set cell occurs in two letters and both block positions, with every pattern-position cell appearing twice per condition×set;
+- the `+2 mod 5` block-2 rotation is a derangement, so no pattern repeats its block-1 within-block position;
+- every sequence contains each of the ten content IDs exactly once.
+
+Tests generate the full 200 trial rows and assert these counts rather than trusting prose.
+
+### 8.3 Slot allocation
+
+Before outcomes exist, the owner creates a blinded allocation list containing exactly 20 sequence slots `A1..D5`, one of each code. Assignment sees only the next open slot and participant code.
+
+- A participant consumes a slot only after all ten trials are `complete` and the export is finalized.
+- Dropout or primary-ineligible completion does not consume the slot; the replacement receives the same sequence code.
+- A fully completed participant later excluded for a predeclared mechanical reason consumes the slot, is not replaced, and remains in an ITT-style sensitivity labeled with the mechanical exclusion.
+- Outcome data, accuracy, RT, or ease may never inform assignment or replacement.
+- Allocation log records slot, anonymous attempt ID, assignment status, consumption status, and mechanical-exclusion reason; no outcomes are present.
+
+## 9. Missingness truth table and export
+
+Per planned slot:
+
+| State | `planned` | `presented` | `q1_submitted` | `q2_submitted` | `complete` |
+|---|---:|---:|---:|---:|---:|
+| Not reached | true | false | false | false | false |
+| Viewed, no Q1 | true | true | false | false | false |
+| Q1 locked, dropout before Q2 | true | true | true | false | false |
+| Q1 and Q2 submitted | true | true | true | true | true |
+
+Invariants:
+
+```text
+complete == (q1_submitted && q2_submitted)
+q2_submitted implies q1_submitted
+q1_submitted implies presented
+presented implies planned
+submitted == complete  # compatibility alias only; never used independently
+```
+
+All ten planned slots are exported, including slots not reached. Each slot includes:
+
+```text
+slot_index, participant_code, sequence, condition, item, pattern, content_set,
+block, position, planned, presented, q1_submitted, q2_submitted, complete,
+submitted, q1, q2, q1_correct, q2_correct, cca_correct, rt_q1_ms, rt_q2_ms,
+rt_total_ms, hidden_ms, source_status, hypothetical, materials_version
+```
+
+Nullability:
+
+- no Q1: Q1 and all correctness fields null;
+- Q1 only: Q1/Q1 correctness populated; Q2/Q2 correctness/CCA null;
+- complete: both answers and all correctness fields populated.
+
+Primary available-case CCA uses **complete trials only**. Eligibility is:
+
+```text
+complete_contract >= 4
+AND complete_flat >= 4
+AND complete_total >= 8
+```
+
+Sensitivity uses all ten planned slots and sets `cca_correct=false` whenever either component is missing. Reports include every truth-table state by condition and sequence. No performance-, RT-, ease-, or practice-based exclusion exists.
+
+## 10. Statistics freeze
+
+Primary estimand:
+
+```text
+mean_i(CCA_contract_i - CCA_flat_i)
+```
+
+where each eligible participant's condition mean uses complete trials only.
+
+Bootstrap:
+
+- `B=10000`;
+- seed `20260810`;
+- resample participants with replacement;
+- recompute the mean paired difference;
+- percentile endpoints at `2.5%` and `97.5%`.
+
+Exact sign-flip:
+
+- remove zero participant differences before enumeration and report their count as ties;
+- let `N_eff` be nonzero differences;
+- enumerate all `2^N_eff` sign assignments, with no Monte Carlo fallback;
+- statistic is mean signed difference using the original eligible-participant denominator (zeros contribute zero);
+- one-sided p is the fraction of enumerated statistics `>=` observed;
+- two-sided sensitivity is the fraction with absolute statistic `>= abs(observed)`;
+- equality is included; no `+1` correction.
+
+Q1, Q2, RT, ease, pattern, block, sequence, and position analyses are descriptive.
+
+No numerical MDE claim is currently permitted. Status is:
+
+> `pending reproducible simulation before protocol freeze`
+
+Before freeze, an audited script must state N, baseline probabilities, paired correlation/data-generating mechanism, ten binary trials, missingness, alpha, direction, effect grid, iterations, and seed; emit machine-readable assumptions/results plus a plot/table; and be independently reproduced. Until then, the DRAFT must not cite a numerical MDE.
+
+## 11. Timing and accessibility gates
+
+Owner-run timing pilot: exactly three usability-pilot participants under the eventual authorized process.
+
+Pass iff:
+
+- median total completion time `≤10 min`;
+- every participant `≤12 min`;
+- forced timeout count `=0`.
+
+If any condition fails, revise and rerun a new three-person pilot. The app never forces timeout. Automated keyboard, screen-reader, contrast, reduced-motion, 200% zoom, and no-horizontal-scroll checks are separate and are not counted as timing participants or timing pass criteria.
+
+This document does not authorize the owner pilot or provide ethics/recruitment wording.
+
+## 12. Privacy and security
+
+- loopback binding only; reject non-loopback IPv4/IPv6;
+- suppress request/access logs;
+- no browser persistence, cookies, service worker, Cache API, IndexedDB, analytics, telemetry, remote assets, or external requests;
+- restrictive CSP;
+- export only anonymous codes, responses, allocation metadata, and relative monotonic durations;
+- no IP, UA, headers, absolute timestamps, demographics, free text, fingerprint, or server-side response persistence.
+
+## 13. Acceptance criteria
+
+1. Ten canonical items, exact Q2/options/keys, exact `source_status/source_note/hypothetical`, and exact Flat orders validate.
+2. Every card starts with `Simulated evaluation record`; debrief says there is no current paper pass.
+3. Q1 locks before Q2; Q2 contains no state names or state-option mapping.
+4. CCA leakage tests use the frozen `0.25` bound and exact binomial rule; combined checker is `10/10`.
+5. Contract/Flat proposition identity, treatment declaration, geometry, word count, viewport, and no-scroll tests pass.
+6. Flat primitive-role×position counts equal two; all 20 sequence and cross-block balance invariants pass.
+7. Allocation replacement/consumption rules are machine represented and outcome blind.
+8. Export has all ten slots and satisfies every truth-table invariant and nullability case.
+9. Primary uses complete trials only; eligibility and ten-slot missing-as-incorrect sensitivity rebuild from export.
+10. Bootstrap/sign-flip settings are exact; no numerical MDE claim remains.
+11. Exact tutorial/practice/feedback/debrief strings are materialized.
+12. Timing and accessibility gates remain separate and unauthorized for execution.
+13. No web implementation, recruitment, data, paper edit, or claim upgrade is included in this revision.

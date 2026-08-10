@@ -1,16 +1,13 @@
 # Implementation Plan: Local Contract-Application Micro-Study
 
 - **Plan ID:** `microstudy-contract-application-web`
-- **Status:** protocol revised; implementation pending fresh hostile audit
-- **Scope:** future loopback implementation only; this commit implements no web application
+- **Status:** second protocol revision; implementation pending fresh hostile audit
+- **Scope:** future loopback implementation only; this revision implements no web application
 - **Spec:** [`../specs/microstudy-contract-application.md`](../specs/microstudy-contract-application.md)
-- **DRAFT prereg:** [`../research/2026-08-10-microstudy-contract-application-DRAFT.md`](../research/2026-08-10-microstudy-contract-application-DRAFT.md)
 
 ## 1. Boundaries
 
-- No recruitment, ethics administration, pilot, data collection, public deployment, or paper edit.
-- No live model, remote dependency, analytics, telemetry, browser persistence, or server response persistence.
-- The DRAFT remains unfrozen and materials-only.
+No recruitment, ethics administration, pilot, data collection, public deployment, or paper edit. The DRAFT remains unfrozen and materials-only.
 
 ## 2. File plan
 
@@ -21,118 +18,146 @@ src/cognitive_console/microstudy/
   server.py
   schema.py
   sequencing.py
+  allocation.py
   scoring.py
   export.py
   analysis.py
+  simulation.py
   static/index.html
   static/app.js
   static/styles.css
   data/stimuli.json
   data/sequences.json
+  data/tutorial.json
 tests/
   test_microstudy_schema.py
   test_microstudy_parity.py
   test_microstudy_leakage.py
   test_microstudy_routing.py
   test_microstudy_sequences.py
+  test_microstudy_allocation.py
   test_microstudy_export.py
   test_microstudy_analysis.py
+  test_microstudy_simulation.py
   test_microstudy_server.py
   test_microstudy_end_to_end.py
 ```
 
-## 3. Slices
+## 3. Implementation slices
 
-### Slice 1 — Materials and provenance
+### Materials
 
-- Materialize all ten exact proposition arrays from the spec.
-- Enforce provenance enum `real_inspired_non_pass|synthetic_rule_case`, nonempty `source_note`, P1/P3/P4 real-inspired, P2/P5 synthetic, and P5 hypothetical/no-current-pass fields.
-- Reject forbidden direct state vocabulary and repeated role headings in evidence bodies.
-- Store answer-key primitive dependencies and require at least two.
-- Validate the combined checker at `10/10`.
+- Materialize the ten exact proposition maps, Q2 text/options/keys, Flat orders, and tutorial/practice/debrief.
+- Validate exact `source_status`, `source_note`, and `hypothetical`.
+- Show `Simulated evaluation record` atop every card; show no raw internal IDs.
+- Keep one canonical proposition source for both renderers.
 
-### Slice 2 — Leakage resistance
+### Two-step routing and leakage
 
-- Freeze fixed-position, forbidden-keyword, second-row-only, and per-row bag-of-words blind baselines.
-- Use leave-one-X/Y-pair-out evaluation.
-- Block materials if any blind baseline exceeds empirical majority chance `0.40`.
-- Keep these tests deterministic and versioned; do not tune them after viewing participant data.
+- Lock Q1 before rendering Q2; prohibit app/browser return to Q1.
+- Reject state names and one-to-one state mappings in Q2 options.
+- Freeze Q1 diagnostic heuristics and end-to-end CCA heuristics.
+- Compute actual chance as `1/option_count`; currently `0.25`.
+- Exact-binomial-block any predeclared single-row+lexical heuristic significantly above chance.
+- Require checker `10/10` and ≥2 derivation primitives.
 
-### Slice 3 — Twenty exact sequences
+### Treatment and parity
 
-- Generate A–D mapping and five left rotations into exactly `A1..D5`.
-- Validate pattern/position/condition/set/block balance across all 20 codes.
-- Validate 10 unique content IDs, five per condition, and no repeated rendering per participant.
-- Do not expose any subset-designation or separate-generalization field.
+- Contract: semantic grouping/headings/fixed role order.
+- Flat: neutral labels and exact item-specific shuffles.
+- Assert every primitive×Flat-position cell count equals two.
+- Enforce fixed rows, columns, word counts, viewport, and no scroll.
+- DOM, CSS-token, screen-reader, and declared-permutation screenshot checks.
 
-### Slice 4 — Rendering parity
+### Sequences and blinded allocation
 
-- Render both conditions from one proposition array.
-- Use exactly five fixed-height rows and fixed label/body columns.
-- Make legend, questions, options, typography, color, viewport, and no-scroll behavior identical.
-- Enforce ≤5% total visible word-count difference and exact body word/line/row/card dimensions.
-- Add DOM snapshots, CSS-token tests, and frozen-viewport pixel/screenshot comparison masking only label glyph regions.
-- Test screen-reader evidence/options equality.
+- Generate `A1..D5` using block rotations `r` and `r+2 mod 5`.
+- Generate and test all 200 trial rows for condition×set×pattern×position×block balance.
+- Represent allocation attempts separately from sequence slots.
+- Reuse slot for dropout/primary-ineligible attempts.
+- Consume slot for ten-trial completion, including later mechanical exclusion; retain excluded completion in ITT sensitivity.
+- Keep outcomes out of allocation state.
 
-### Slice 5 — Flow, timing, and accessibility
+### Export truth table
 
-- Landing, setup, compressed tutorial, one different practice example, two blocks, block ease, export.
-- Accept owner code and `A1..D5`; no runtime randomization.
-- No correctness feedback on formal trials and no automatic timeout/submission.
-- Relative monotonic timing only; pause/subtract hidden time.
-- Enforce row/body word caps.
-- Keyboard-only, visible focus, fieldsets/legends, contrast, reduced motion, and 200% zoom checks.
-- Keep owner pilot gate explicit: median ≤10 minutes, P90 ≤12; stop/revise if P90 exceeds 12 or accessibility fails.
+- Pre-generate ten slots.
+- Export `planned/presented/q1_submitted/q2_submitted/complete`; define `submitted==complete`.
+- Cover not reached, viewed/no-Q1, Q1-only dropout, and complete.
+- Primary uses complete trials only and exact `4+4+8` eligibility.
+- Ten-slot sensitivity maps any missing component to incorrect.
+- JSON/CSV export every slot and all listed metadata.
 
-### Slice 6 — Complete export and privacy
+### Analysis and simulation
 
-- Pre-generate ten response slots before presentation.
-- Export every slot with `presented`, `submitted`, nullable Q1/Q2/correctness/RT, and condition/item/pattern/position/block/sequence.
-- Eligibility is exactly ≥4 submitted per condition and ≥8/10 total.
-- Primary is available-case only for eligible participants.
-- Sensitivity marks missing components incorrect over all ten slots.
-- Report missingness by condition/sequence; prohibit performance-based exclusion.
-- Override server `log_message`; capture stdout/stderr/files in tests.
-- Reject local/session storage, cookies, service worker, Cache/IndexedDB, analytics, external network, UA/IP, absolute timestamps, request logs, or server persistence.
-- Enforce loopback binding and restrictive CSP.
+- Rebuild from export only.
+- Freeze bootstrap `B=10000`, seed `20260810`, participant resampling, percentile `2.5/97.5`.
+- Enumerate exact `2^N_eff` sign flips after reporting/removing zero ties; implement inclusive tails and no +1.
+- Implement a separate reproducible MDE simulation script before protocol freeze. Inputs must include N, baseline, paired mechanism/correlation, trial count, missingness, alpha, direction, effect grid, iterations, and seed. Outputs: JSON assumptions/results plus generated table/plot.
+- Independent audit must reproduce the simulation. Until then, no numerical MDE may be emitted by docs or UI.
 
-### Slice 7 — Analysis and rebuild
+### Timing, accessibility, privacy
 
-- `analysis.py` reads export only and rebuilds eligibility, primary paired CCA, ten-slot sensitivity, missingness tables, participant bootstrap CI, and exact sign-flip test.
-- Apply descriptive interpretation precedence from the prereg; never emit pass/fail.
-- Keep Q1/Q2/RT/ease/pattern/sequence/position analyses descriptive.
-- Implement MDE/resolution simulation with explicit N, baseline, correlation, trial count, missingness, alpha, direction, iterations, and seed.
-- Recompute the provisional 20–25 pp range before protocol freeze; generated artifact is authoritative.
-- Add end-to-end early-exit, partial, missing-component, full, round-trip, and rebuild tests.
+- Materialize exact placeholder/tutorial/practice/feedback/debrief strings.
+- Provide owner pilot export for exactly three people; evaluate median≤10, all≤12, zero forced timeout.
+- Keep automated accessibility results separate from timing.
+- Enforce loopback/no logging/no persistence/no external network and privacy-negative tests.
 
-## 4. Acceptance test matrix
+## 4. Acceptance matrix
 
-| Area | Required proof |
+| Area | Required machine proof |
 |---|---|
-| Materials | exact 10 IDs/keys; provenance closure; P5 notice; fabricated-value warning |
-| Leakage | no forbidden terms/headings; ≥2 primitives/key; all blind heuristics ≤0.40; checker=1.00 |
-| Sequences | exact `A1..D5`; machine-balanced pattern/position/condition/set/block; no repeated content |
-| Parity | same strings/order; legend/options/keys; five rows; word/line/height; DOM and masked screenshot parity |
-| Export | exactly ten planned slots; nullable incomplete fields; exact eligibility; missing sensitivity |
-| Analysis | export-only deterministic rebuild; bootstrap CI; sole primary sign-flip; simulation assumptions |
-| Privacy | no access log/storage/cookies/SW/network/analytics/IP/UA/absolute time/files |
-| Accessibility | keyboard and focus; 200% zoom; contrast; reduced motion; no horizontal scroll |
+| Materials | exact 10 items, Q2s/keys, provenance, notices, tutorial strings |
+| Leakage | two-step lock; no Q2 state cues; CCA chance `0.25`; exact-binomial heuristic gate; checker `10/10` |
+| Treatment | canonical common propositions; declared package; exact Flat permutations; primitive×position=2 |
+| Sequences | exact `A1..D5`; `r/r+2`; generated 200-row balance table; no repeated content |
+| Allocation | outcome-blind slot ledger; reuse/consume/mechanical-exclusion cases |
+| Export | ten slots; truth-table invariants/nullability; `submitted==complete`; exact eligibility |
+| Analysis | complete-only primary; ten-slot sensitivity; exact bootstrap/sign-flip |
+| Simulation | assumptions schema, deterministic artifacts, audit hook; no hard-coded MDE |
+| Timing | 3-person rule: median≤10, all≤12, zero timeout; accessibility separate |
+| Privacy/accessibility | loopback/no logs/storage/network; keyboard/zoom/contrast/screen-reader |
 
-## 5. Validation commands after implementation
+## 5. Targeted tests
+
+```text
+test_q1_locked_before_q2
+test_q2_has_no_state_names_or_state_option_map
+test_flat_role_position_balance_is_two
+test_cross_block_rotation_is_plus_two
+test_20_sequences_generate_200_balanced_rows
+test_dropout_reuses_sequence_slot
+test_primary_ineligible_reuses_sequence_slot
+test_complete_mechanical_exclusion_consumes_slot_and_enters_itt
+test_truth_table_not_reached
+test_truth_table_viewed_without_q1
+test_truth_table_q1_only_dropout
+test_truth_table_complete
+test_submitted_alias_equals_complete
+test_primary_uses_complete_trials_only
+test_missing_component_is_incorrect_in_ten_slot_sensitivity
+test_bootstrap_exact_configuration
+test_sign_flip_enumerates_nonzero_differences
+test_sign_flip_inclusive_ties_no_plus_one
+test_no_numeric_mde_before_simulation_artifact
+test_exact_tutorial_practice_feedback_debrief
+test_timing_gate_three_person_rule
+```
+
+## 6. Validation after implementation
 
 ```powershell
-python -m pytest -q tests\test_microstudy_schema.py tests\test_microstudy_parity.py tests\test_microstudy_leakage.py tests\test_microstudy_routing.py tests\test_microstudy_sequences.py tests\test_microstudy_export.py tests\test_microstudy_analysis.py tests\test_microstudy_server.py tests\test_microstudy_end_to_end.py
+python -m pytest -q tests\test_microstudy_schema.py tests\test_microstudy_parity.py tests\test_microstudy_leakage.py tests\test_microstudy_routing.py tests\test_microstudy_sequences.py tests\test_microstudy_allocation.py tests\test_microstudy_export.py tests\test_microstudy_analysis.py tests\test_microstudy_simulation.py tests\test_microstudy_server.py tests\test_microstudy_end_to_end.py
 python -m pytest -q
-python -c "import json, pathlib; json.loads(pathlib.Path('src/cognitive_console/microstudy/data/stimuli.json').read_text(encoding='utf-8')); json.loads(pathlib.Path('src/cognitive_console/microstudy/data/sequences.json').read_text(encoding='utf-8'))"
 python -c "import yaml, pathlib; yaml.safe_load(pathlib.Path('docs/ledgers/experiment-registry.yaml').read_text(encoding='utf-8'))"
 git diff --check
 ```
 
-## 6. Definition of done
+## 7. Definition of done
 
-- Every spec acceptance criterion is automated where feasible.
-- Synthetic preview is loopback-only, parity-constrained, accessible, and privacy-clean.
-- Export/analysis reconstruct all planned slots and missingness without hidden state.
+- All spec invariants are automated where feasible.
+- Generated sequence and leakage artifacts are inspectable.
+- Missingness and analysis rebuild from export alone.
+- MDE remains pending until independently reproducible simulation exists.
 - Registry remains `not_started_materials_only`.
-- Owner pilot gate remains unexecuted and required.
-- Fresh independent hostile audit reports no BLOCKER before merge or implementation.
+- No pilot/data/paper work occurs.
+- Fresh independent hostile audit reports no BLOCKER before implementation or merge.

@@ -1387,3 +1387,35 @@ experiments:
     forward-pass-only direction inputs. Regime A is excluded and requires a new
     owner decision and new protocol. Retry and its independent results audit remain
     pending.
+
+- experiment_id: microstudy-contract-application-20260810
+  parent: null
+  hypothesis_id: H-MICROSTUDY-CONTRACT-APPLICATION
+  claim_ids: []
+  type: exploratory_formative_human_protocol
+  status: not_started_materials_only
+  code_commit: null
+  dirty_tree: null
+  data_hash: null
+  env_hash: null
+  config_hash: null
+  model: null
+  dataset: 10 simulated evaluation records; no human data; no live model
+  seed: 20260810
+  hardware: local desktop preview only; no participant run authorized
+  started_at: null
+  ended_at: null
+  exit_code: null
+  raw_metrics: null
+  summary_metrics: null
+  artifacts:
+  - docs/specs/microstudy-contract-application.md
+  - docs/research/2026-08-10-microstudy-contract-application-DRAFT.md
+  - docs/plans/microstudy-contract-application-web.md
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    D-0100 authorizes protocol, simulated materials, and loopback-only web engineering.
+    Recruitment, ethics administration, public deployment, human pilot, and human data
+    collection are not authorized. The preregistration is DRAFT and not frozen. This
+    registry row records materials preparation only and must not be represented as a run.

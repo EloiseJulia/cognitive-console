@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-08-10 · D-0100 · Owner authorizes materials/local-web phase only for exploratory contract-application micro-study
+- Owner authorized only protocol, stimulus/material, and local web engineering for an exploratory formative `contract legibility/application micro-study` (`N≈20`, desktop-only, approximately 10 minutes, technical GenAI users).
+- Recruitment, ethics administration, public deployment, human pilot, and human data collection remain outside scope and owner-managed. This decision does not authorize a study run.
+- The study is limited to within-subject Contract UI versus Info-Matched Flat Panel, 10 scored trials (5/condition), one practice, and four-sequence counterbalancing. It tests contract legibility/rule application, not calibrated reliance or user benefit.
+- Materials must use simulated evaluation records, preserve machine-checkable information parity, mirror the current four-state checker, and avoid final-state/aggregate-TRANSFER/recommended-action leakage. The current paper has no pass; any passing record is explicitly hypothetical.
+- The preregistration remains DRAFT/not frozen. No exploratory result may be upgraded to confirmatory evidence or used to change paper claims without a new owner decision and all applicable gates.
+
 ## 2026-08-05 · D-0099 · Comparator-bound calibration framing repaired without changing claims
 - This repair changes framing only. It changes no frozen protocol, result, number, confidence interval, formula, evidence validity, or Claim verdict.
 - C2 now states the uncertainty result as a **steer-vs-bounded-prompt negative calibration contrast under the frozen scorer**, with confidence intervals excluding zero in all four CAA/ITI-by-Qwen/Llama cells. It also carries the audited direct Qwen/CAA steer-vs-baseline result: near zero (`+0.011` compliance, `+0.0008` 1-Brier).

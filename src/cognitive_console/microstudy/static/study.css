@@ -24,8 +24,9 @@ main { max-width: 1100px; margin: 24px auto; padding: 0 24px; }
 label { display:block; margin:16px 0; font-weight:600; }
 input, select, button { font:inherit; padding:10px 12px; margin-top:6px; }
 button { cursor:pointer; border:2px solid #174ea6; background:#174ea6; color:white; border-radius:4px; }
-button:focus-visible, input:focus-visible, select:focus-visible { outline:3px solid #e68a00; outline-offset:2px; }
+button:focus-visible, input:focus-visible, select:focus-visible, #stage:focus-visible, .button-link:focus-visible { outline:3px solid #e68a00; outline-offset:2px; }
 button[disabled] { opacity:.55; cursor:not-allowed; }
+.button-link { display:inline-block; padding:10px 12px; border:2px solid #174ea6; background:#174ea6; color:white; border-radius:4px; text-decoration:none; }
 .evidence-card {
   max-width: var(--card-max-width); padding:var(--card-padding); overflow:visible;
   border:2px solid #49637f; border-radius:6px; margin:16px auto; background:#fff;

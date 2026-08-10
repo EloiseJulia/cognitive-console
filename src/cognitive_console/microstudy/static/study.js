@@ -1,19 +1,8 @@
 "use strict";
 
-import {createEmptyTrial, csvEscape, submitQ1, submitQ2} from "./study_core.mjs";
-
 const app = {
-  materials: null,
-  plan: null,
-  exportData: null,
-  trialIndex: 0,
-  q1Start: 0,
-  q2Start: 0,
-  hiddenStarted: null,
-  hiddenMs: 0,
-  easeCompleted: {1: false, 2: false},
+  materials: null, attemptId: null, current: null, hiddenStarted: null, hiddenMs: 0,
 };
-
 const stage = document.getElementById("stage");
 const startPanel = document.getElementById("start");
 
@@ -51,28 +40,31 @@ function selected(name) {
 }
 
 function lock(name) {
-  document.querySelectorAll(`input[name="${name}"]`).forEach(node => {
-    node.disabled = true;
-  });
+  document.querySelectorAll(`input[name="${name}"]`).forEach(node => { node.disabled = true; });
 }
 
-function renderEvidence(item, condition, primitiveIds, headings, notice) {
-  const card = el("article", {
-    class: "evidence-card",
-    "data-condition": condition,
-    "data-stimulus-id": item.stimulus_id || "practice",
-    "aria-label": `${condition} simulated evaluation record`,
+async function api(path, data) {
+  const response = await fetch(path, {
+    method: "POST", cache: "no-store", credentials: "omit",
+    headers: {"Content-Type": "application/json"}, body: JSON.stringify(data),
   });
-  card.append(el("h2", {}, notice));
+  const value = await response.json();
+  if (!response.ok) throw new Error(value.error || "Study state error.");
+  return value;
+}
+
+function renderEvidence(item, condition) {
+  const card = el("article", {class: "evidence-card", "aria-label": "Evidence panel"});
+  card.append(el("h2", {}, app.materials.simulated_record_notice));
   const rows = el("dl", {class: "evidence-rows"});
-  const order = condition === "Contract" ? primitiveIds : item.flat_order;
+  const order = condition === "Contract" ? app.materials.primitive_ids : item.flat_order;
   order.forEach((evidenceId, index) => {
     const row = el("div", {
-      class: "evidence-row",
-      "data-evidence-id": evidenceId,
+      class: "evidence-row", "data-row-id": `row-${index + 1}`,
       "data-position": String(index + 1),
     });
-    const label = condition === "Contract" ? headings[evidenceId] : `Evidence ${"ABCDE"[index]}`;
+    const label = condition === "Contract"
+      ? app.materials.contract_headings[evidenceId] : `Evidence ${"ABCDE"[index]}`;
     row.append(
       el("dt", {class: "evidence-label"}, label),
       el("dd", {class: "evidence-body"}, item.primitive_evidence[evidenceId]),
@@ -83,274 +75,190 @@ function renderEvidence(item, condition, primitiveIds, headings, notice) {
   return card;
 }
 
-async function loadMaterials() {
-  const response = await fetch("/api/materials", {cache: "no-store", credentials: "omit"});
-  if (!response.ok) throw new Error("Could not load authoritative materials.");
-  app.materials = await response.json();
-  const sequence = document.getElementById("sequence");
-  for (const row of app.materials.sequences.sequences) {
-    sequence.append(el("option", {value: row.code}, row.code));
-  }
-}
-
 function showTutorial() {
-  const m = app.materials.stimuli.participant_materials;
-  const title = el("h1", {}, "Tutorial and legend");
-  const legend = el("p", {}, m.legend);
-  const tutorial = el("p", {}, m.tutorial);
-  const next = el("button", {type: "button"}, "Continue to practice");
-  next.addEventListener("click", showPractice);
-  replaceStage(title, legend, tutorial, next);
+  const m = app.materials.participant_materials;
+  const button = el("button", {type: "button", "data-action": "show-practice"}, "Continue to practice");
+  replaceStage(el("h1", {}, "Tutorial and legend"), el("p", {}, m.legend), el("p", {}, m.tutorial), button);
 }
 
 function showPractice() {
-  const stimuli = app.materials.stimuli;
-  const practice = stimuli.participant_materials.practice;
+  const practice = app.materials.participant_materials.practice;
   const item = {
-    stimulus_id: "practice",
-    primitive_evidence: practice.primitive_evidence,
-    flat_order: stimuli.primitive_ids,
+    stimulus_id: "practice", primitive_evidence: practice.primitive_evidence,
+    flat_order: app.materials.primitive_ids,
   };
-  app.exportData.practice_presented = true;
-  const card = renderEvidence(
-    item, "Contract", stimuli.primitive_ids, stimuli.contract_headings, practice.notice
+  replaceStage(
+    el("h1", {}, "Practice"), renderEvidence(item, "Contract"),
+    optionFieldset("practice-q1", practice.q1.text, app.materials.q1.options),
+    el("button", {type: "button", "data-action": "practice-q1"}, "Submit practice Q1"),
+    el("div", {id: "practice-next"}),
   );
-  const q1 = optionFieldset("practice-q1", practice.q1.text, stimuli.q1.options);
-  const submitQ1 = el("button", {type: "button"}, "Submit practice Q1");
-  const area = el("div");
-  submitQ1.addEventListener("click", () => {
-    if (!selected("practice-q1")) return;
-    lock("practice-q1");
-    submitQ1.disabled = true;
-    app.exportData.practice_q1_submitted = true;
-    const q2 = optionFieldset("practice-q2", practice.q2.text, practice.q2.options);
-    const submitQ2 = el("button", {type: "button"}, "Submit practice Q2");
-    submitQ2.addEventListener("click", () => {
-      if (!selected("practice-q2")) return;
-      lock("practice-q2");
-      submitQ2.disabled = true;
-      app.exportData.practice_q2_submitted = true;
-      app.exportData.practice_complete = true;
-      const feedback = el("p", {class: "feedback"}, practice.feedback);
-      const proceed = el("button", {type: "button"}, "Begin formal trials");
-      proceed.addEventListener("click", showTrial);
-      area.append(feedback, proceed);
-    });
-    area.append(q2, submitQ2);
-    q2.querySelector("input").focus();
-  });
-  replaceStage(el("h1", {}, "Practice"), card, q1, submitQ1, area);
 }
 
-function currentItem(slot) {
-  return app.materials.stimuli.items.find(item => item.stimulus_id === slot.item);
+async function practiceQ1(button) {
+  const answer = selected("practice-q1");
+  if (!answer) return;
+  await api("/api/practice", {attempt_id: app.attemptId, step: "q1", answer});
+  lock("practice-q1");
+  button.disabled = true;
+  const practice = app.materials.participant_materials.practice;
+  document.getElementById("practice-next").append(
+    optionFieldset("practice-q2", practice.q2.text, practice.q2.options),
+    el("button", {type: "button", "data-action": "practice-q2"}, "Submit practice Q2"),
+  );
+  document.querySelector('input[name="practice-q2"]').focus();
+}
+
+async function practiceQ2(button) {
+  const answer = selected("practice-q2");
+  if (!answer) return;
+  const response = await api("/api/practice", {
+    attempt_id: app.attemptId, step: "q2", answer,
+  });
+  lock("practice-q2");
+  button.disabled = true;
+  document.getElementById("practice-next").append(
+    el("p", {class: "feedback"}, response.feedback),
+    el("button", {type: "button", "data-action": "begin-formal"}, "Begin formal trials"),
+  );
+  app.current = response;
 }
 
 function showTrial() {
-  if (app.trialIndex >= app.plan.length) {
-    showDiagnostic();
-    return;
-  }
-  const slot = app.plan[app.trialIndex];
-  if (slot.position === 1 && app.trialIndex > 0 &&
-      !app.easeCompleted[slot.block - 1]) {
-    showEase(slot.block - 1);
-    return;
-  }
-  const stimuli = app.materials.stimuli;
-  const item = currentItem(slot);
-  const trial = app.exportData.trials[app.trialIndex];
-  trial.presented = true;
+  const trial = app.current;
   app.hiddenMs = 0;
   app.hiddenStarted = document.hidden ? performance.now() : null;
-  app.q1Start = performance.now();
-  const progress = el("p", {class: "progress"}, `Formal trial ${app.trialIndex + 1} of 10 · Block ${slot.block}`);
-  const card = renderEvidence(
-    item, slot.condition, stimuli.primitive_ids, stimuli.contract_headings,
-    stimuli.simulated_record_notice
+  replaceStage(
+    el("p", {class: "progress"}, `Formal trial ${trial.trial_index + 1} of 10 · Block ${trial.block}`),
+    renderEvidence(trial.item, trial.condition),
+    optionFieldset("formal-q1", app.materials.q1.text, app.materials.q1.options),
+    el("button", {type: "button", "data-action": "formal-q1"}, "Submit Q1 and lock answer"),
+    el("div", {id: "q2-area"}),
   );
-  const q1 = optionFieldset("formal-q1", stimuli.q1.text, stimuli.q1.options);
-  const submitQ1 = el("button", {type: "button"}, "Submit Q1 and lock answer");
-  const q2Area = el("div");
-  submitQ1.addEventListener("click", () => {
-    const answer = selected("formal-q1");
-    if (!answer) return;
-    submitQ1(trial, answer, slot.q1_key, performance.now() - app.q1Start);
-    lock("formal-q1");
-    submitQ1.disabled = true;
-    const template = stimuli.q2_templates.find(row => row.template_id === slot.q2_template_id);
-    const q2 = optionFieldset("formal-q2", template.text, template.options);
-    const submitQ2 = el("button", {type: "button"}, "Submit Q2 and continue");
-    app.q2Start = performance.now();
-    submitQ2.addEventListener("click", () => {
-      const q2Answer = selected("formal-q2");
-      if (!q2Answer) return;
-      submitQ2(
-        trial, q2Answer, slot.q2_key, performance.now() - app.q2Start,
-        app.hiddenMs + (app.hiddenStarted === null ? 0 : performance.now() - app.hiddenStarted)
-      );
-      lock("formal-q2");
-      submitQ2.disabled = true;
-      app.trialIndex += 1;
-      showTrial();
-    });
-    q2Area.append(q2, submitQ2);
-    q2.querySelector("input").focus();
+}
+
+async function formalQ1(button) {
+  const answer = selected("formal-q1");
+  if (!answer) return;
+  const response = await api("/api/q1", {attempt_id: app.attemptId, answer});
+  lock("formal-q1");
+  button.disabled = true;
+  const q2Area = document.getElementById("q2-area");
+  q2Area.append(
+    optionFieldset("formal-q2", response.q2.text, response.q2.options),
+    el("button", {type: "button", "data-action": "formal-q2"}, "Submit Q2 and continue"),
+  );
+  document.querySelector('input[name="formal-q2"]').focus();
+}
+
+async function formalQ2(button) {
+  const answer = selected("formal-q2");
+  if (!answer) return;
+  button.disabled = true;
+  const hidden = Math.round(app.hiddenMs + (
+    app.hiddenStarted === null ? 0 : performance.now() - app.hiddenStarted
+  ));
+  app.current = await api("/api/q2", {
+    attempt_id: app.attemptId, answer, hidden_ms: hidden,
   });
-  replaceStage(progress, card, q1, submitQ1, q2Area);
+  if (app.current.phase === "ease") showEase(app.current.block);
+  else showTrial();
 }
 
 function showEase(block) {
-  const material = app.materials.stimuli.participant_materials.block_ease;
-  const field = optionFieldset("ease", material.question, material.options);
-  const continueButton = el("button", {type: "button"}, "Continue");
-  const skipButton = el("button", {type: "button"}, "Prefer not to answer");
-  const finish = value => {
-    app.exportData[`block_${block}_ease`] = value;
-    app.easeCompleted[block] = true;
-    showTrial();
-  };
-  continueButton.addEventListener("click", () => {
-    const answer = selected("ease");
-    if (answer) finish(answer);
-  });
-  skipButton.addEventListener("click", () => finish(null));
-  replaceStage(el("h1", {}, `Block ${block} complete`), field,
-    el("div", {class: "actions"}));
-  stage.lastChild.append(continueButton, skipButton);
+  const material = app.materials.participant_materials.block_ease;
+  replaceStage(
+    el("h1", {}, `Block ${block} complete`),
+    optionFieldset("ease", material.question, material.options),
+    el("div", {class: "actions"},
+      null),
+  );
+  stage.lastChild.append(
+    el("button", {type: "button", "data-action": "ease", "data-block": String(block)}, "Continue"),
+    el("button", {type: "button", "data-action": "ease-skip", "data-block": String(block)}, "Prefer not to answer"),
+  );
+}
+
+async function submitEase(button, skip) {
+  const block = Number(button.dataset.block);
+  const answer = skip ? null : selected("ease");
+  if (!skip && !answer) return;
+  app.current = await api("/api/ease", {attempt_id: app.attemptId, block, answer});
+  if (app.current.phase === "diagnostic") showDiagnostic();
+  else showTrial();
 }
 
 function showDiagnostic() {
-  if (!app.easeCompleted[2]) {
-    showEase(2);
-    return;
-  }
-  const diagnostic = app.materials.stimuli.participant_materials.post_task_manipulation_diagnostic;
-  app.exportData.post_task_diagnostic_presented = true;
-  const field = optionFieldset("diagnostic", diagnostic.question, diagnostic.options);
-  const submit = el("button", {type: "button"}, "Submit");
-  const skip = el("button", {type: "button"}, "Prefer not to answer");
-  const finish = answer => {
-    app.exportData.post_task_diagnostic_submitted = answer !== null;
-    app.exportData.post_task_diagnostic_response = answer;
-    app.exportData.post_task_diagnostic_correct =
-      answer === null ? null : answer === diagnostic.correct_key;
-    showDebrief();
-  };
-  submit.addEventListener("click", () => {
-    const answer = selected("diagnostic");
-    if (answer) finish(answer);
-  });
-  skip.addEventListener("click", () => finish(null));
-  replaceStage(el("h1", {}, "Post-task format question"), field, el("div", {class:"actions"}));
-  stage.lastChild.append(submit, skip);
+  const material = app.materials.participant_materials.post_task_manipulation_diagnostic;
+  replaceStage(
+    el("h1", {}, "Post-task format question"),
+    optionFieldset("diagnostic", material.question, material.options),
+    el("div", {class: "actions"}),
+  );
+  stage.lastChild.append(
+    el("button", {type: "button", "data-action": "diagnostic"}, "Submit"),
+    el("button", {type: "button", "data-action": "diagnostic-skip"}, "Prefer not to answer"),
+  );
 }
 
-function csvText(data) {
-  const sessionFields = app.materials.stimuli.export_schema.session_fields;
-  const trialFields = app.materials.stimuli.export_schema.trial_fields;
-  const fields = ["export_schema_version", "stimuli_sha256", "sequences_sha256",
-    ...sessionFields, ...trialFields];
-  const lines = [fields.map(csvEscape).join(",")];
-  for (const trial of data.trials) {
-    const row = {
-      export_schema_version: data.export_schema_version,
-      stimuli_sha256: data.material_hashes.stimuli_sha256,
-      sequences_sha256: data.material_hashes.sequences_sha256,
-      ...data,
-      ...trial,
-    };
-    lines.push(fields.map(field => csvEscape(row[field])).join(","));
-  }
-  return `${lines.join("\r\n")}\r\n`;
-}
-
-function download(name, type, text) {
-  const url = URL.createObjectURL(new Blob([text], {type}));
-  const link = el("a", {href: url, download: name});
-  document.body.append(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
-}
-
-function currentExport() {
-  const snapshot = structuredClone(app.exportData);
-  snapshot.completion_status = snapshot.trials.every(row => row.complete)
-    ? "complete" : "partial";
-  return snapshot;
+async function submitDiagnostic(skip) {
+  const answer = skip ? null : selected("diagnostic");
+  if (!skip && !answer) return;
+  await api("/api/diagnostic", {attempt_id: app.attemptId, answer});
+  await api("/api/complete", {attempt_id: app.attemptId});
+  showDebrief();
 }
 
 function showDebrief() {
-  app.exportData.completion_status = app.exportData.trials.every(row => row.complete)
-    ? "complete" : "partial";
-  const complete = app.exportData.trials.filter(row => row.complete).length;
-  const jsonButton = el("button", {type: "button"}, "Download JSON");
-  const csvButton = el("button", {type: "button"}, "Download CSV");
-  jsonButton.addEventListener("click", () => download(
-    `microstudy-${app.exportData.attempt_id}.json`, "application/json",
-    `${JSON.stringify(app.exportData, null, 2)}\n`
-  ));
-  csvButton.addEventListener("click", () => download(
-    `microstudy-${app.exportData.attempt_id}.csv`, "text/csv;charset=utf-8",
-    csvText(app.exportData)
-  ));
+  const jsonLink = el("a", {
+    class: "button-link", download: `microstudy-${app.attemptId}.json`,
+    href: `/api/export?attempt_id=${encodeURIComponent(app.attemptId)}&format=json`,
+  }, "Download signed JSON");
+  const csvLink = el("a", {
+    class: "button-link", download: `microstudy-${app.attemptId}.csv`,
+    href: `/api/export?attempt_id=${encodeURIComponent(app.attemptId)}&format=csv`,
+  }, "Download signed CSV");
   replaceStage(
     el("h1", {}, "Preview complete"),
-    el("p", {}, app.materials.stimuli.participant_materials.debrief),
-    el("p", {}, `Completed formal trials: ${complete} of 10. Sequence: ${app.exportData.sequence}.`),
+    el("p", {}, app.materials.participant_materials.debrief),
+    el("p", {}, "Completed formal trials: 10 of 10."),
     el("div", {class: "actions"}),
   );
-  stage.lastChild.append(jsonButton, csvButton);
+  stage.lastChild.append(jsonLink, csvLink);
 }
 
 async function startStudy() {
   const participantCode = document.getElementById("participant-code").value.trim();
   const sequence = document.getElementById("sequence").value;
-  if (!participantCode || !/^[A-Za-z0-9._-]{1,64}$/.test(participantCode)) {
-    document.getElementById("start-error").textContent =
-      "Enter an anonymous code using letters, numbers, dot, underscore, or hyphen.";
-    return;
-  }
-  const response = await fetch(`/api/sequence/${encodeURIComponent(sequence)}`, {
-    cache: "no-store", credentials: "omit",
-  });
-  if (!response.ok) throw new Error("Invalid sequence.");
-  app.plan = await response.json();
-  const stimuli = app.materials.stimuli;
-  app.exportData = {
-    export_schema_version: "microstudy-export-v1",
-    material_schema_version: stimuli.schema_version,
-    sequence_schema_version: app.materials.sequences.schema_version,
-    material_hashes: app.materials.material_hashes,
-    attempt_id: crypto.randomUUID(),
-    participant_code: participantCode,
-    sequence,
-    completion_status: "in_progress",
-    practice_presented: false,
-    practice_q1_submitted: false,
-    practice_q2_submitted: false,
-    practice_complete: false,
-    post_task_diagnostic_presented: false,
-    post_task_diagnostic_submitted: false,
-    post_task_diagnostic_response: null,
-    post_task_diagnostic_correct: null,
-    block_1_ease: null,
-    block_2_ease: null,
-    mechanical_exclusion: false,
-    mechanical_exclusion_reason: "none",
-    trials: app.plan.map(slot => createEmptyTrial(
-      slot, stimuli.items.find(item => item.stimulus_id === slot.item),
-      stimuli.materials_version
-    )),
-  };
-  document.getElementById("download-current").hidden = false;
+  const response = await api("/api/start", {participant_code: participantCode, sequence});
+  app.attemptId = response.attempt_id;
   startPanel.hidden = true;
   showTutorial();
 }
 
+document.addEventListener("click", event => {
+  const button = event.target.closest("[data-action]");
+  if (!button) return;
+  const actions = {
+    "show-practice": () => showPractice(),
+    "practice-q1": () => practiceQ1(button),
+    "practice-q2": () => practiceQ2(button),
+    "begin-formal": () => showTrial(),
+    "formal-q1": () => formalQ1(button),
+    "formal-q2": () => formalQ2(button),
+    "ease": () => submitEase(button, false),
+    "ease-skip": () => submitEase(button, true),
+    "diagnostic": () => submitDiagnostic(false),
+    "diagnostic-skip": () => submitDiagnostic(true),
+  };
+  Promise.resolve(actions[button.dataset.action]?.()).catch(error => {
+    document.getElementById("start-error").textContent = error.message;
+    button.disabled = false;
+  });
+});
+
 document.addEventListener("visibilitychange", () => {
-  if (!app.exportData || app.trialIndex >= 10) return;
+  if (!app.attemptId) return;
   if (document.hidden && app.hiddenStarted === null) app.hiddenStarted = performance.now();
   if (!document.hidden && app.hiddenStarted !== null) {
     app.hiddenMs += performance.now() - app.hiddenStarted;
@@ -362,20 +270,18 @@ document.getElementById("start-button").addEventListener("click", () => {
   startStudy().catch(error => {
     document.getElementById("start-error").textContent = error.message;
   });
-  document.getElementById("download-current").addEventListener("click", () => {
-    if (!app.exportData) return;
-    const snapshot = currentExport();
-    download(
-      `microstudy-${snapshot.attempt_id}-current.json`,
-      "application/json",
-      `${JSON.stringify(snapshot, null, 2)}\n`,
-    );
+});
+
+fetch("/api/materials", {cache: "no-store", credentials: "omit"})
+  .then(response => response.ok ? response.json() : Promise.reject(new Error("Could not load materials.")))
+  .then(materials => {
+    app.materials = materials;
+    const select = document.getElementById("sequence");
+    for (const code of materials.sequence_codes) select.append(el("option", {value: code}, code));
+  })
+  .catch(error => {
+    document.getElementById("start-error").textContent = error.message;
+    document.getElementById("start-button").disabled = true;
   });
-});
 
-loadMaterials().catch(error => {
-  document.getElementById("start-error").textContent = error.message;
-  document.getElementById("start-button").disabled = true;
-});
-
-window.MicrostudyTest = {csvEscape, csvText, createEmptyTrial, renderEvidence};
+window.MicrostudyTest = {renderEvidence};

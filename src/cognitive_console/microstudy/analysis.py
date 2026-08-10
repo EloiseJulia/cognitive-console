@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
+import hmac
 import itertools
 import json
 import math
@@ -17,6 +19,7 @@ from typing import Any, Iterable
 from cognitive_console.microstudy_materials import route_state
 
 from .materials import material_hashes, planned_trials, validated_sources
+from .server import canonical_bytes
 
 BOOTSTRAP_B = 10_000
 BOOTSTRAP_SEED = 20_260_810
@@ -33,10 +36,32 @@ def _check(condition: bool, message: str, reason: str = "technical_corrupt") -> 
         raise ExportError(message, reason)
 
 
-def validate_export(data: dict[str, Any]) -> dict[str, Any]:
+def _is_bool(value: Any) -> bool:
+    return type(value) is bool
+
+
+def validate_export(data: dict[str, Any], verification_key: bytes) -> dict[str, Any]:
     stimuli, sequences = validated_sources()
     hashes = material_hashes()
-    _check(data.get("export_schema_version") == "microstudy-export-v1", "wrong export schema")
+    _check(isinstance(data, dict), "export must be an object")
+    verification = data.get("verification")
+    _check(
+        isinstance(verification, dict)
+        and set(verification) == {"algorithm", "key_id", "signature"},
+        "missing or invalid verification block",
+    )
+    _check(verification["algorithm"] == "HMAC-SHA256", "wrong signature algorithm")
+    _check(
+        verification["key_id"] == hashlib.sha256(verification_key).hexdigest()[:16],
+        "wrong verification key",
+    )
+    signature = hmac.new(verification_key, canonical_bytes(data), hashlib.sha256).hexdigest()
+    _check(
+        isinstance(verification["signature"], str)
+        and hmac.compare_digest(verification["signature"], signature),
+        "signature mismatch",
+    )
+    _check(data.get("export_schema_version") == "microstudy-export-v2-signed", "wrong export schema")
     _check(
         data.get("material_schema_version") == stimuli["schema_version"],
         "wrong material schema",
@@ -58,12 +83,19 @@ def validate_export(data: dict[str, Any]) -> dict[str, Any]:
         "material_schema_version",
         "sequence_schema_version",
         "material_hashes",
+        "verification",
         "trials",
         *session_fields,
     }
     _check(set(data) == expected_top, "unexpected or missing top-level export fields")
     for field in session_fields:
         _check(field in data, f"missing session field: {field}")
+    for field in (
+        "practice_presented", "practice_q1_submitted", "practice_q2_submitted",
+        "practice_complete", "post_task_diagnostic_presented",
+        "post_task_diagnostic_submitted", "mechanical_exclusion",
+    ):
+        _check(_is_bool(data[field]), f"{field} must be boolean")
     try:
         _check(uuid.UUID(data["attempt_id"]).version == 4, "attempt_id must be UUIDv4")
     except (ValueError, AttributeError, TypeError):
@@ -78,6 +110,11 @@ def validate_export(data: dict[str, Any]) -> dict[str, Any]:
         data["practice_complete"]
         == (data["practice_q1_submitted"] and data["practice_q2_submitted"]),
         "practice transition invalid",
+        "impossible_state_transition",
+    )
+    _check(
+        data["practice_presented"] and data["practice_complete"],
+        "complete export requires presented, completed practice",
         "impossible_state_transition",
     )
     _check(
@@ -126,6 +163,15 @@ def validate_export(data: dict[str, Any]) -> dict[str, Any]:
                 f"sequence mismatch at {field}",
                 "sequence_mismatch",
             )
+        for field in (
+            "planned", "presented", "q1_submitted", "q2_submitted", "complete",
+            "submitted", "hypothetical", "q1_missing", "q2_missing",
+            "q1_correct_missing", "q2_correct_missing", "cca_correct_missing",
+            "rt_q1_missing", "rt_q2_missing", "rt_total_missing", "hidden_ms_missing",
+        ):
+            _check(_is_bool(trial[field]), f"{field} must be boolean")
+        for field in ("q1_correct", "q2_correct", "cca_correct"):
+            _check(trial[field] is None or _is_bool(trial[field]), f"{field} must be boolean or null")
         _check(trial["planned"] is True, "planned must be true")
         _check(
             trial["q2_submitted"] <= trial["q1_submitted"] <= trial["presented"],
@@ -163,7 +209,7 @@ def validate_export(data: dict[str, Any]) -> dict[str, Any]:
             _check(trial["q2"] is None and trial["q2_correct"] is None, "unsubmitted Q2 populated")
         for field in ("rt_q1_ms", "rt_q2_ms", "rt_total_ms", "hidden_ms"):
             value = trial[field]
-            _check(value is None or (isinstance(value, int) and value >= 0), f"invalid {field}")
+            _check(value is None or (type(value) is int and value >= 0), f"invalid {field}")
         for value_field, missing_field in (
             ("q1", "q1_missing"),
             ("q2", "q2_missing"),
@@ -193,8 +239,13 @@ def validate_export(data: dict[str, Any]) -> dict[str, Any]:
         _check(trial["source_note"] == item["source_note"], "source note mismatch")
         _check(trial["hypothetical"] == item["hypothetical"], "hypothetical mismatch")
     completed = sum(row["complete"] for row in trials)
-    expected_completion = "complete" if completed == 10 else "partial"
-    _check(data["completion_status"] == expected_completion, "completion status mismatch")
+    _check(completed == 10, "signed final export must contain ten complete trials")
+    _check(data["completion_status"] == "complete", "completion status mismatch")
+    _check(
+        data["post_task_diagnostic_presented"],
+        "complete export requires diagnostic presentation",
+        "impossible_state_transition",
+    )
     return data
 
 
@@ -202,12 +253,14 @@ def _complete_count(data: dict[str, Any]) -> int:
     return sum(bool(row["complete"]) for row in data["trials"])
 
 
-def load_exports(paths: Iterable[Path]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def load_exports(
+    paths: Iterable[Path], verification_key: bytes
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     valid, rejected = [], []
     for order, path in enumerate(paths):
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
-            data = validate_export(raw)
+            data = validate_export(raw, verification_key)
             data["_input_order"] = order
             data["_source_file"] = str(path)
             valid.append(data)
@@ -262,7 +315,7 @@ def apply_assignments(
         with assignments_path.open(encoding="utf-8", newline="") as handle:
             rows = list(csv.DictReader(handle))
     assignments = {row["participant_code"]: row["sequence"] for row in rows}
-    kept, excluded = [], []
+    excluded = []
     for data in exports:
         if assignments.get(data["participant_code"]) != data["sequence"]:
             excluded.append(
@@ -272,9 +325,7 @@ def apply_assignments(
                     "reason": "sequence_mismatch",
                 }
             )
-        else:
-            kept.append(data)
-    return kept, excluded
+    return exports, excluded
 
 
 def exact_sign_flip(differences: list[float], two_sided: bool = False) -> dict[str, Any]:
@@ -313,8 +364,17 @@ def analyze(
     exports: list[dict[str, Any]],
     rejected: list[dict[str, Any]],
     assignment_exclusions: list[dict[str, Any]] | None = None,
+    *,
+    duplicates_resolved: bool = False,
 ) -> dict[str, Any]:
-    kept, duplicate_exclusions = resolve_duplicates(exports)
+    if duplicates_resolved:
+        kept, duplicate_exclusions = exports, []
+    else:
+        kept, duplicate_exclusions = resolve_duplicates(exports)
+    mechanical_ids = {
+        row["attempt_id"] for row in (assignment_exclusions or [])
+        if "attempt_id" in row
+    }
     participants = []
     differences = []
     sensitivity_differences = []
@@ -327,7 +387,11 @@ def analyze(
     }
     for data in kept:
         complete = Counter(row["condition"] for row in data["trials"] if row["complete"])
-        eligible = complete["Contract"] >= 4 and complete["Flat"] >= 4 and sum(complete.values()) >= 8
+        eligible = (
+            data["attempt_id"] not in mechanical_ids
+            and complete["Contract"] >= 4 and complete["Flat"] >= 4
+            and sum(complete.values()) >= 8
+        )
         scores: dict[str, float | None] = {}
         sensitivity: dict[str, float] = {}
         for condition in ("Contract", "Flat"):
@@ -362,6 +426,10 @@ def analyze(
                 "participant_code": data["participant_code"],
                 "sequence": data["sequence"],
                 "eligible_primary": eligible,
+                "mechanical_exclusion": data["attempt_id"] in mechanical_ids,
+                "mechanical_exclusion_reason": (
+                    "sequence_mismatch" if data["attempt_id"] in mechanical_ids else "none"
+                ),
                 "complete_contract": complete["Contract"],
                 "complete_flat": complete["Flat"],
                 "contract_cca": scores["Contract"],
@@ -381,7 +449,7 @@ def analyze(
         "analysis_version": "microstudy-analysis-v1",
         "status": "DRAFT_ANALYSIS_NOT_PAPER_EVIDENCE",
         "bootstrap": {"B": BOOTSTRAP_B, "seed": BOOTSTRAP_SEED},
-        "input_attempts": len(exports) + len(rejected) + len(assignment_exclusions or []),
+        "input_attempts": len(exports) + len(rejected),
         "kept_attempts": len(kept),
         "eligible_primary_n": len(differences),
         "rejected": rejected + (assignment_exclusions or []) + duplicate_exclusions,
@@ -416,6 +484,7 @@ def write_summary(summary: dict[str, Any], json_path: Path, csv_path: Path) -> N
     json_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     fields = [
         "attempt_id", "participant_code", "sequence", "eligible_primary",
+        "mechanical_exclusion", "mechanical_exclusion_reason",
         "complete_contract", "complete_flat", "contract_cca", "flat_cca",
         "paired_difference", "missing_incorrect_difference", "block_1_ease",
         "block_2_ease", "diagnostic_correct",
@@ -452,12 +521,13 @@ def simulate_mde(n: int, simulations: int, seed: int) -> dict[str, Any]:
             "paired_difference_distribution": "clipped Normal(effect, 0.5)",
             "alpha": 0.05,
             "one_sided": True,
-            "test_for_simulation": "exact positive-sign binomial sensitivity",
+            "test_for_simulation": "exact positive-sign binomial sensitivity only; not the primary sign-flip test",
             "n": n,
             "simulations": simulations,
             "seed": seed,
         },
         "estimated_mde_80_percent_power": mde,
+        "primary_mde_status": "UNVERIFIED_NOT_ESTIMATED",
         "power_by_effect": power,
     }
 
@@ -474,6 +544,10 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         help="Frozen owner assignment JSON or CSV with participant_code and sequence.",
     )
+    analyze_parser.add_argument(
+        "--verification-key-file", type=Path, required=True,
+        help="Owner-held HMAC verification key generated by the study server.",
+    )
     mde_parser = sub.add_parser("mde")
     mde_parser.add_argument("--n", type=int, required=True)
     mde_parser.add_argument("--simulations", type=int, default=10_000)
@@ -481,9 +555,14 @@ def main(argv: list[str] | None = None) -> int:
     mde_parser.add_argument("--json-out", type=Path, default=Path("microstudy-mde-DRAFT.json"))
     args = parser.parse_args(argv)
     if args.command == "analyze":
-        valid, rejected = load_exports(args.exports)
+        key = args.verification_key_file.read_bytes()
+        valid, rejected = load_exports(args.exports, key)
+        valid, duplicate_exclusions = resolve_duplicates(valid)
         valid, assignment_exclusions = apply_assignments(valid, args.assignments)
-        summary = analyze(valid, rejected, assignment_exclusions)
+        summary = analyze(
+            valid, rejected + duplicate_exclusions, assignment_exclusions,
+            duplicates_resolved=True,
+        )
         write_summary(summary, args.json_out, args.csv_out)
     else:
         args.json_out.write_text(

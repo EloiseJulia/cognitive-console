@@ -48,20 +48,22 @@ The loopback-only contract-application preview is for owner-led future use after
 applicable approvals. It does not recruit people or collect data remotely.
 
 ```powershell
-python -m cognitive_console.microstudy --host 127.0.0.1 --port 8765 --open
+python -m cognitive_console.microstudy --host 127.0.0.1 --port 8765 `
+  --verification-key-file .runtime\microstudy-verification.key --open
 ```
 
-Assign an anonymous code and an exact sequence (`A1`–`D5`). State stays only in
-memory; the completed anonymous export downloads locally as JSON or CSV. Closing
-or refreshing the tab discards in-progress state.
+Assign an anonymous code and an exact sequence (`A1`–`D5`). Session state stays
+only in server memory; shutdown discards it. Completed JSON/CSV exports are
+server-generated and HMAC-SHA256 signed. Keep the owner verification key private.
 
 ```powershell
 python -m cognitive_console.microstudy.analysis analyze export1.json export2.json `
+  --verification-key-file .runtime\microstudy-verification.key `
   --assignments frozen-owner-assignments.csv `
   --json-out microstudy-summary.json --csv-out microstudy-participants.csv
 python -m cognitive_console.microstudy.analysis mde --n 20 `
   --json-out microstudy-mde-DRAFT.json
 ```
 
-Analysis validates the authoritative material hashes and remains explicitly DRAFT,
-not paper evidence.
+Analysis rejects unsigned, forged, tampered, wrong-key, wrong-hash, and
+schema-invalid exports. It remains explicitly DRAFT, not paper evidence.

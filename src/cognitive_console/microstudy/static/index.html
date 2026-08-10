@@ -10,8 +10,7 @@
 <body>
   <header>
     <strong>Study Preview · local only</strong>
-    <span>No data leaves this browser tab.</span>
-    <button id="download-current" type="button" hidden>Download current JSON</button>
+    <span>No participant data is persisted by the local server.</span>
   </header>
   <main id="app" tabindex="-1" aria-live="polite">
     <section id="start" class="panel">
@@ -26,8 +25,8 @@
       <button id="start-button" type="button">Start preview</button>
       <p id="start-error" role="alert"></p>
     </section>
-    <section id="stage" class="panel" hidden></section>
+    <section id="stage" class="panel" tabindex="-1" hidden></section>
   </main>
-  <footer>Simulated materials · in-memory only · no network services</footer>
+  <footer>Simulated materials · loopback server · in-memory only</footer>
 </body>
 </html>

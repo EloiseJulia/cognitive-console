@@ -33,7 +33,7 @@ hf = [
 where = ["src"]
 
 [tool.setuptools.package-data]
-cognitive_console = ["social/data/*.json"]
+cognitive_console = ["social/data/*.json", "microstudy/static/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

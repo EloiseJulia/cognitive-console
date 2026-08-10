@@ -1,184 +1,127 @@
-# Implementation Plan: Local Contract-Application Micro-Study Web App
+# Implementation Plan: Local Contract-Application Micro-Study
 
 - **Plan ID:** `microstudy-contract-application-web`
-- **Authorization:** Manager-authorized protocol/material/local-web engineering only
-- **Status:** ready for implementation after independent protocol audit
-- **Branch target:** a new implementation branch/worktree; this plan branch contains no web implementation
+- **Status:** protocol revised; implementation pending fresh hostile audit
+- **Scope:** future loopback implementation only; this commit implements no web application
 - **Spec:** [`../specs/microstudy-contract-application.md`](../specs/microstudy-contract-application.md)
 - **DRAFT prereg:** [`../research/2026-08-10-microstudy-contract-application-DRAFT.md`](../research/2026-08-10-microstudy-contract-application-DRAFT.md)
 
-## 1. Hard boundaries
+## 1. Boundaries
 
-- Do not recruit, contact, compensate, or collect data from participants.
-- Do not deploy publicly or bind a server beyond `127.0.0.1`.
-- Do not add analytics, telemetry, remote assets, live models, or network dependencies.
-- Do not edit paper claims, paper prose, frozen results, current routing rules, or existing evidence verdicts.
-- Do not freeze the DRAFT preregistration.
-- Do not claim a study was run.
+- No recruitment, ethics administration, pilot, data collection, public deployment, or paper edit.
+- No live model, remote dependency, analytics, telemetry, browser persistence, or server response persistence.
+- The DRAFT remains unfrozen and materials-only.
 
-## 2. Proposed architecture
-
-Use the repository's existing standard-library local-server approach with a separate `cognitive_console.microstudy` package. Keep study assets isolated from the existing demonstration console.
+## 2. File plan
 
 ```text
 src/cognitive_console/microstudy/
-  __init__.py              package marker/version
-  __main__.py              CLI entry
-  server.py                loopback-only static server; no persistence
-  schema.py                stimulus/sequence/export validation
-  sequencing.py            exact A–D assignment lookup
-  scoring.py               Q1/Q2/CCA and completion rules
-  export.py                deterministic JSON/CSV serialization
-  static/
-    index.html             accessible shell
-    app.js                 local state machine and relative timing
-    styles.css             parity-constrained desktop presentation
-  data/
-    stimuli.json           generated from reviewed spec appendix
-    sequences.json         exact A–D table
+  __init__.py
+  __main__.py
+  server.py
+  schema.py
+  sequencing.py
+  scoring.py
+  export.py
+  analysis.py
+  static/index.html
+  static/app.js
+  static/styles.css
+  data/stimuli.json
+  data/sequences.json
 tests/
   test_microstudy_schema.py
   test_microstudy_parity.py
+  test_microstudy_leakage.py
   test_microstudy_routing.py
   test_microstudy_sequences.py
   test_microstudy_export.py
+  test_microstudy_analysis.py
   test_microstudy_server.py
+  test_microstudy_end_to_end.py
 ```
 
-No database is required. No response is posted to the server.
+## 3. Slices
 
-## 3. Executable checklist
+### Slice 1 — Materials and provenance
 
-### Slice 1 — Materialize and validate data
+- Materialize all ten exact proposition arrays from the spec.
+- Enforce provenance enum `real_inspired_non_pass|synthetic_rule_case`, nonempty `source_note`, P1/P3/P4 real-inspired, P2/P5 synthetic, and P5 hypothetical/no-current-pass fields.
+- Reject forbidden direct state vocabulary and repeated role headings in evidence bodies.
+- Store answer-key primitive dependencies and require at least two.
+- Validate the combined checker at `10/10`.
 
-- [ ] Create `stimuli.json` with schema version, 10 stimuli, two render descriptors per stimulus, exact options, correct keys, source labels, and held-out flags.
-- [ ] Create `sequences.json` implementing A–D exactly.
-- [ ] Add `schema.py` dataclasses/validators.
-- [ ] Fail closed on unknown fields, duplicate IDs, invalid keys, missing simulated-record notice, or unsupported source status.
-- [ ] Validate every answer key through a small pure routing function that mirrors, but does not modify, the current checker.
-- [ ] Add a generated material hash/version displayed in preview and export.
+### Slice 2 — Leakage resistance
 
-**Commit point 1:** material schema + sequence + routing tests.
+- Freeze fixed-position, forbidden-keyword, second-row-only, and per-row bag-of-words blind baselines.
+- Use leave-one-X/Y-pair-out evaluation.
+- Block materials if any blind baseline exceeds empirical majority chance `0.40`.
+- Keep these tests deterministic and versioned; do not tune them after viewing participant data.
 
-### Slice 2 — Enforce parity
+### Slice 3 — Twenty exact sequences
 
-- [ ] Represent primitive evidence once per stimulus; render both conditions from the same evidence array.
-- [ ] Store condition-specific headings separately from evidence text.
-- [ ] Implement normalization: NFKC, trim, whitespace collapse, CRLF→LF.
-- [ ] Add evidence equality tests across renderers.
-- [ ] Add answer-option/key equality tests.
-- [ ] Add DOM snapshot/structural allowlist test: only heading text, grouping wrappers, `aria-labelledby`, and class names may differ.
-- [ ] Add CSS token equality test for font/color/spacing/viewport/scroll.
-- [ ] Add forbidden-leak scanner for state answers, `TRANSFER`, aggregate verdicts, recommendations, pass/fail badges, green/deploy/check icons.
+- Generate A–D mapping and five left rotations into exactly `A1..D5`.
+- Validate pattern/position/condition/set/block balance across all 20 codes.
+- Validate 10 unique content IDs, five per condition, and no repeated rendering per participant.
+- Do not expose any subset-designation or separate-generalization field.
 
-**Commit point 2:** parity engine and tests.
+### Slice 4 — Rendering parity
 
-### Slice 3 — Implement local flow
+- Render both conditions from one proposition array.
+- Use exactly five fixed-height rows and fixed label/body columns.
+- Make legend, questions, options, typography, color, viewport, and no-scroll behavior identical.
+- Enforce ≤5% total visible word-count difference and exact body word/line/row/card dimensions.
+- Add DOM snapshots, CSS-token tests, and frozen-viewport pixel/screenshot comparison masking only label glyph regions.
+- Test screen-reader evidence/options equality.
 
-- [ ] Add landing, setup, tutorial, practice, block 1, ease, transition, block 2, ease, export pages.
-- [ ] Require valid anonymous code and sequence A–D.
-- [ ] Default to preview mode.
-- [ ] Keep scored session state only in browser memory.
-- [ ] Disable scored back navigation and correctness feedback.
-- [ ] Ensure exactly 5 trials per condition and 10 unique IDs.
-- [ ] Implement fixed sequence order without runtime randomization.
-- [ ] Mark exactly one designated held-out item per condition according to sequence.
-- [ ] Support owner-operated practice/preview without creating a completed export.
+### Slice 5 — Flow, timing, and accessibility
 
-**Commit point 3:** state machine and flow tests.
+- Landing, setup, compressed tutorial, one different practice example, two blocks, block ease, export.
+- Accept owner code and `A1..D5`; no runtime randomization.
+- No correctness feedback on formal trials and no automatic timeout/submission.
+- Relative monotonic timing only; pause/subtract hidden time.
+- Enforce row/body word caps.
+- Keyboard-only, visible focus, fieldsets/legends, contrast, reduced motion, and 200% zoom checks.
+- Keep owner pilot gate explicit: median ≤10 minutes, P90 ≤12; stop/revise if P90 exceeds 12 or accessibility fails.
 
-### Slice 4 — Timing, scoring, and export
+### Slice 6 — Complete export and privacy
 
-- [ ] Use monotonic `performance.now()` deltas only.
-- [ ] Pause/subtract timing while hidden and record relative `hidden_ms`.
-- [ ] Implement Q1, Q2, CCA scoring.
-- [ ] Implement `<8/10` primary exclusion metadata.
-- [ ] Implement missing-as-incorrect sensitivity fields without performance exclusion.
-- [ ] Add 1–5 block ease.
-- [ ] Implement deterministic `microstudy-export-v1` JSON.
-- [ ] Implement one-row-per-trial RFC 4180 CSV with spreadsheet-formula escaping.
-- [ ] Prohibit absolute timestamp, UA, IP, referrer, demographics, free text, and fingerprint fields in schema and tests.
-- [ ] Add local download and reset actions.
+- Pre-generate ten response slots before presentation.
+- Export every slot with `presented`, `submitted`, nullable Q1/Q2/correctness/RT, and condition/item/pattern/position/block/sequence.
+- Eligibility is exactly ≥4 submitted per condition and ≥8/10 total.
+- Primary is available-case only for eligible participants.
+- Sensitivity marks missing components incorrect over all ten slots.
+- Report missingness by condition/sequence; prohibit performance-based exclusion.
+- Override server `log_message`; capture stdout/stderr/files in tests.
+- Reject local/session storage, cookies, service worker, Cache/IndexedDB, analytics, external network, UA/IP, absolute timestamps, request logs, or server persistence.
+- Enforce loopback binding and restrictive CSP.
 
-**Commit point 4:** scoring/export and privacy tests.
+### Slice 7 — Analysis and rebuild
 
-### Slice 5 — Accessibility and loopback hardening
+- `analysis.py` reads export only and rebuilds eligibility, primary paired CCA, ten-slot sensitivity, missingness tables, participant bootstrap CI, and exact sign-flip test.
+- Apply descriptive interpretation precedence from the prereg; never emit pass/fail.
+- Keep Q1/Q2/RT/ease/pattern/sequence/position analyses descriptive.
+- Implement MDE/resolution simulation with explicit N, baseline, correlation, trial count, missingness, alpha, direction, iterations, and seed.
+- Recompute the provisional 20–25 pp range before protocol freeze; generated artifact is authoritative.
+- Add end-to-end early-exit, partial, missing-component, full, round-trip, and rebuild tests.
 
-- [ ] Fieldsets/legends, landmarks, correct headings, explicit labels, and live error summary.
-- [ ] Keyboard-only flow and visible focus.
-- [ ] Contrast checks; no color-only meaning and no green/deploy semantics.
-- [ ] Reduced-motion support and 200% zoom check.
-- [ ] Screen-reader parity check for evidence/options.
-- [ ] Server rejects `0.0.0.0`, non-loopback IPv4, and non-loopback IPv6.
-- [ ] Add Content-Security-Policy allowing only local static assets; no remote origins.
-- [ ] Test that application code contains no analytics/network endpoints.
+## 4. Acceptance test matrix
 
-**Commit point 5:** accessibility and security hardening.
+| Area | Required proof |
+|---|---|
+| Materials | exact 10 IDs/keys; provenance closure; P5 notice; fabricated-value warning |
+| Leakage | no forbidden terms/headings; ≥2 primitives/key; all blind heuristics ≤0.40; checker=1.00 |
+| Sequences | exact `A1..D5`; machine-balanced pattern/position/condition/set/block; no repeated content |
+| Parity | same strings/order; legend/options/keys; five rows; word/line/height; DOM and masked screenshot parity |
+| Export | exactly ten planned slots; nullable incomplete fields; exact eligibility; missing sensitivity |
+| Analysis | export-only deterministic rebuild; bootstrap CI; sole primary sign-flip; simulation assumptions |
+| Privacy | no access log/storage/cookies/SW/network/analytics/IP/UA/absolute time/files |
+| Accessibility | keyboard and focus; 200% zoom; contrast; reduced motion; no horizontal scroll |
 
-### Slice 6 — Documentation and verification
-
-- [ ] Add CLI help and local preview instructions to the spec or existing README only where directly relevant.
-- [ ] Run targeted micro-study tests.
-- [ ] Run full test suite.
-- [ ] Run Markdown link check.
-- [ ] Parse YAML registry and JSON materials.
-- [ ] Inspect `git diff --check`.
-- [ ] Produce screenshots only as local audit artifacts if requested; do not collect interaction data.
-- [ ] Request a fresh independent hostile protocol/material/web audit before merge.
-
-**Commit point 6:** verified implementation candidate.
-
-## 4. Required tests
-
-### Schema/material tests
-
-- exactly 10 scored IDs and 5 patterns × 2 content instances;
-- all source labels allowed and notices present;
-- P5 records marked hypothetical and current-paper-no-pass;
-- correct Q1/Q2 keys and rule derivation;
-- no current paper numbers or raw harmful content.
-
-### Sequence tests
-
-- A–D table exact;
-- 5 Contract + 5 Flat per sequence;
-- 10 unique stimulus IDs per participant;
-- each stimulus Contract in two sequences and Flat in two;
-- block order and item-set mapping crossed;
-- exactly one designated held-out item per condition.
-
-### Parity tests
-
-- normalized primitive evidence equality;
-- value, legend, order, question, option, and key equality;
-- equal style tokens and viewport/scroll contract;
-- only allowlisted semantic heading/DOM differences;
-- leak scanner rejects final states, direct `TRANSFER`, recommendations, and green/deploy icons.
-
-### Scoring/export tests
-
-- CCA requires both answers correct;
-- incomplete response behavior;
-- `<8/10` exclusion;
-- missing-as-incorrect sensitivity;
-- only relative RT;
-- exact JSON keys and CSV header/order;
-- formula injection escaping;
-- no forbidden privacy fields.
-
-### Server/security tests
-
-- loopback works;
-- non-loopback bind rejected;
-- no external resource URL;
-- CSP present;
-- preview produces no completed export automatically;
-- no server-side response storage.
-
-## 5. Validation commands
+## 5. Validation commands after implementation
 
 ```powershell
-python -m pytest -q tests\test_microstudy_schema.py tests\test_microstudy_parity.py tests\test_microstudy_routing.py tests\test_microstudy_sequences.py tests\test_microstudy_export.py tests\test_microstudy_server.py
+python -m pytest -q tests\test_microstudy_schema.py tests\test_microstudy_parity.py tests\test_microstudy_leakage.py tests\test_microstudy_routing.py tests\test_microstudy_sequences.py tests\test_microstudy_export.py tests\test_microstudy_analysis.py tests\test_microstudy_server.py tests\test_microstudy_end_to_end.py
 python -m pytest -q
 python -c "import json, pathlib; json.loads(pathlib.Path('src/cognitive_console/microstudy/data/stimuli.json').read_text(encoding='utf-8')); json.loads(pathlib.Path('src/cognitive_console/microstudy/data/sequences.json').read_text(encoding='utf-8'))"
 python -c "import yaml, pathlib; yaml.safe_load(pathlib.Path('docs/ledgers/experiment-registry.yaml').read_text(encoding='utf-8'))"
@@ -187,9 +130,9 @@ git diff --check
 
 ## 6. Definition of done
 
-- All acceptance criteria in the spec are automated where feasible.
-- Local preview is usable on desktop, accessible, offline, loopback-only, and exports the exact schema.
-- No human data was collected and no study-result artifact exists.
+- Every spec acceptance criterion is automated where feasible.
+- Synthetic preview is loopback-only, parity-constrained, accessible, and privacy-clean.
+- Export/analysis reconstruct all planned slots and missingness without hidden state.
 - Registry remains `not_started_materials_only`.
-- Independent protocol/material/web audit reports no BLOCKER before merge.
-
+- Owner pilot gate remains unexecuted and required.
+- Fresh independent hostile audit reports no BLOCKER before merge or implementation.

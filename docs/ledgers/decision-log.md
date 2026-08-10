@@ -5,6 +5,15 @@
 
 ---
 
+## 2026-08-10 · D-0101 · Hostile-audit protocol findings closed; materials remain DRAFT and no study run is authorized
+- Replaced answer-leaking evidence/status prose with ten exact common proposition arrays and multi-row Q1/Q2 derivations. Frozen blind single-row, keyword, second-row, and fixed-position heuristics must remain at or below empirical majority chance (`0.40`).
+- Removed all held-out/transfer subset naming and claims. All formal combinations are unseen in the one different practice example; Q2 is scope/reason application and the sole primary remains conjunctive rule-application accuracy.
+- Expanded parity to exact five-row geometry, common strings/order, ≤5% visible-word difference, exact body word/line/row/card dimensions, DOM snapshots, and masked pixel/screenshot audits.
+- Expanded export to ten pre-generated planned slots and froze primary eligibility at ≥4 submitted per condition and ≥8/10 total; ten-slot missing-as-incorrect sensitivity and condition/sequence missingness are mandatory, with no performance-based exclusion.
+- Replaced A–D-only allocation with 20 exact orthogonal sequence codes `A1..D5`, combining A–D condition/set/block mapping with five balanced pattern-position rotations.
+- Replaced forced ten-minute pacing with a no-timeout owner-pilot gate (median ≤10 minutes, P90 ≤12), strengthened accessibility/privacy requirements, closed provenance enums, and added export-only analysis/MDE implementation and end-to-end test plans.
+- Interpretation is estimation-first: one primary sign-flip test plus bootstrap CI; descriptive categories are not pass/fail gates. This revision changes no paper, authorizes no participant activity, and leaves the preregistration DRAFT/materials-only pending fresh hostile re-audit.
+
 ## 2026-08-10 · D-0100 · Owner authorizes materials/local-web phase only for exploratory contract-application micro-study
 - Owner authorized only protocol, stimulus/material, and local web engineering for an exploratory formative `contract legibility/application micro-study` (`N≈20`, desktop-only, approximately 10 minutes, technical GenAI users).
 - Recruitment, ethics administration, public deployment, human pilot, and human data collection remain outside scope and owner-managed. This decision does not authorize a study run.

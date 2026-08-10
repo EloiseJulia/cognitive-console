@@ -1415,7 +1415,11 @@ experiments:
   failure_reason: null
   valid_for_paper: false
   validation_notes: >-
-    D-0100 authorizes protocol, simulated materials, and loopback-only web engineering.
-    Recruitment, ethics administration, public deployment, human pilot, and human data
-    collection are not authorized. The preregistration is DRAFT and not frozen. This
-    registry row records materials preparation only and must not be represented as a run.
+    D-0100 authorizes protocol, simulated materials, and loopback-only web engineering;
+    D-0101 records closure of the first hostile-audit protocol findings. The revision
+    removes transfer/held-out claims, freezes ten-slot export and A1..D5 balancing,
+    strengthens leakage/parity/privacy/accessibility/analysis acceptance tests, and keeps
+    all values as teaching material rather than paper evidence. Recruitment, ethics
+    administration, public deployment, owner pilot, and human data collection are not
+    authorized. The preregistration is DRAFT and not frozen. This registry row records
+    materials preparation only and must not be represented as a run.

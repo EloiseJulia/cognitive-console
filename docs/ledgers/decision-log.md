@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-08-12 · D-0102 · Llama extraction-layer vacuity is unresolved pending safe relative-scale diagnostics
+- Llama preflight reached the source-layer-8 non-vacuity guard and reported `max_abs_before=0.4189` against the current absolute floor `1.25`; no DEV baseline, refusal-reduction, random-control, or TEST outcome was observed.
+- Code inspection confirms the floor is absolute: for fp16 and hidden size `4096`, `dtype_abs_tol=2*eps(fp16)*sqrt(4096)=0.125`, then the guard multiplies by `10` to obtain `1.25`. It is dimension/dtype-derived rather than literally fitted to Qwen, but it is not normalized by the model's residual-stream activation norm, so `0.4189` alone cannot distinguish a measurable projection from genuine near-orthogonality.
+- No candidate layer is selected by harmful-minus-harmless separation. Separate directions are derived at `(8,12,16,20)`, each must clear the separation floor, and the current preflight checks them in order. Only after an eligible DEV baseline would the frozen selector choose the maximum coherent DEV refusal reduction (lower-layer tie-break). Layer 8 failing first therefore prevents evidence about layers 12/16/20.
+- The owner-authorized next action is diagnostic only: `--emit-layer-diagnostics` performs the same forward-pass-only direction extraction and hooks, records per-candidate separation, mean/max absolute projection, mean/max activation norm, projection/norm fractions, dtype-epsilon references, and guard errors, then exits before any generation or DEV.
+- No non-vacuity threshold or layer-selection rule changes in this commit. Relative-threshold or candidate-eligibility correction requires the diagnostic evidence and a subsequent pre-outcome decision. Outcome gates, removal coverage, random control, coherence, model eligibility, compute cap, and safety remain frozen.
+
 ## 2026-08-12 · D-0101 · E-0016 exact chat-template identity becomes a fail-closed model-profile gate
 - Ordinary audit rejected the D-0100 implementation because unordered marker presence could accept reversed role headers or altered special-token ordering.
 - Each allowlisted model profile now freezes three exact SHA-256 identities from its pinned tokenizer revision: the canonical `tokenizer.chat_template` string, a rendered fixed `system -> user -> assistant` probe, and the actual single-user `add_generation_prompt=true` rendering used by activation extraction and generation.

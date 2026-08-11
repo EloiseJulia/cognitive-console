@@ -2536,6 +2536,71 @@ def assert_ablation_hook_bites(
     return payload
 
 
+def summarize_hook_bites_layer_diagnostics(
+    stats: Dict[int, Dict[str, float]], *, extraction_layer: int
+) -> Dict[str, object]:
+    extraction_layer = int(extraction_layer)
+    if extraction_layer not in stats:
+        raise ValueError(
+            f"hook diagnostics lack extraction decoder layer {extraction_layer}"
+        )
+    total_abs_projection = 0.0
+    total_activation_norm = 0.0
+    total_values = 0
+    for layer, row in sorted(stats.items()):
+        n_values = int(row.get("n_values", 0))
+        mean_projection = float(row.get("mean_abs_before", math.nan))
+        mean_norm = float(row.get("mean_hidden_norm", math.nan))
+        if (
+            n_values <= 0
+            or not math.isfinite(mean_projection)
+            or mean_projection < 0.0
+            or not math.isfinite(mean_norm)
+            or mean_norm <= 0.0
+        ):
+            raise ValueError(
+                f"hook diagnostics layer {layer} has invalid projection/norm statistics"
+            )
+        total_abs_projection += mean_projection * n_values
+        total_activation_norm += mean_norm * n_values
+        total_values += n_values
+    extraction = stats[extraction_layer]
+    dtype_epsilon = float(extraction["dtype_epsilon"])
+    return {
+        "extraction_layer": extraction_layer,
+        "extraction_max_abs_projection": float(
+            extraction["max_abs_before"]
+        ),
+        "extraction_mean_abs_projection": float(
+            extraction["mean_abs_before"]
+        ),
+        "extraction_max_activation_l2_norm": float(
+            extraction["max_hidden_norm"]
+        ),
+        "extraction_mean_activation_l2_norm": float(
+            extraction["mean_hidden_norm"]
+        ),
+        "extraction_max_projection_fraction": float(
+            extraction["max_projection_fraction"]
+        ),
+        "extraction_mean_projection_fraction": float(
+            extraction["mean_projection_fraction"]
+        ),
+        "aggregate_sum_abs_projection": total_abs_projection,
+        "aggregate_sum_activation_l2_norm": total_activation_norm,
+        "aggregate_projection_fraction": (
+            total_abs_projection / total_activation_norm
+        ),
+        "dtype_epsilon": dtype_epsilon,
+        "two_epsilon_relative_reference": 2.0 * dtype_epsilon,
+        "ten_epsilon_relative_reference": 10.0 * dtype_epsilon,
+        "n_decoder_layers": len(stats),
+        "n_layer_token_observations": total_values,
+        "raw_prompts_stored": False,
+        "harmful_generation_performed": False,
+    }
+
+
 class SyntheticRegimeBBackend:
     """Offline smoke backend: refusal direction suppresses false refusals; random does not."""
 
@@ -3670,8 +3735,12 @@ def synthetic_provider_and_direction(harmful: Sequence[str], harmless: Sequence[
 
 def run(args: argparse.Namespace) -> Dict[str, object]:
     assert_hf_frozen_config(args)
-    if args.backend != "hf" and (args.preflight_only or args.stop_after_dev):
-        raise ValueError("operational preflight/DEV-only stages require --backend hf")
+    if args.backend != "hf" and (
+        args.preflight_only
+        or args.stop_after_dev
+        or args.emit_layer_diagnostics
+    ):
+        raise ValueError("operational preflight/diagnostic/DEV stages require --backend hf")
     out_dir = resolve_output_directory(args.out_dir)
     assert_dedicated_output_directory(out_dir, backend=args.backend)
     run_start_source_state = initialize_run_source_state(out_dir)
@@ -3834,18 +3903,25 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
     hook_bites_payload = {"synthetic_noop": True}
     guard_path = out_dir / "e0016_pre_generation_guards.json"
     candidate_hook_bites: Dict[str, object] = {}
+    candidate_layer_diagnostics: Dict[str, object] = {}
     if backend == "hf":
         try:
             for bundle in bundles:
-                assert_real_not_smoke(
-                    bundle,
-                    backend=backend,
-                    provider_hidden_dim=provider.hidden_dim,
-                    xstest_prov=xstest_prov,
-                    contrast_prov=contrast_prov,
-                    dev=dev,
-                    test=test,
-                )
+                real_guard_error = None
+                try:
+                    assert_real_not_smoke(
+                        bundle,
+                        backend=backend,
+                        provider_hidden_dim=provider.hidden_dim,
+                        xstest_prov=xstest_prov,
+                        contrast_prov=contrast_prov,
+                        dev=dev,
+                        test=test,
+                    )
+                except Exception as exc:
+                    if not args.emit_layer_diagnostics:
+                        raise
+                    real_guard_error = str(exc)
                 abs_tol = dtype_abs_tol(dtype, provider.hidden_dim)
                 stats = hook_backend.capture_ablation_hook_bites(
                     HOOK_BITE_PROBES,
@@ -3855,28 +3931,67 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                     norm_eps_multiplier=HOOK_BITES_NORM_EPS_MULTIPLIER,
                     numerical_zero_floor=HOOK_BITES_NUMERICAL_ZERO_FLOOR,
                 )
-                guard = assert_ablation_hook_bites(
-                    stats,
-                    expected_layers=hook_backend.decoder_layer_indices,
-                    extraction_layer=bundle.source_layer,
-                    abs_tol=abs_tol,
-                    max_residual_fraction=HOOK_BITES_MAX_RESIDUAL_FRACTION,
-                    norm_eps_multiplier=HOOK_BITES_NORM_EPS_MULTIPLIER,
-                    numerical_zero_floor=HOOK_BITES_NUMERICAL_ZERO_FLOOR,
-                )
-                guard["direction_sha256"] = assert_direction_hash(
+                direction_sha256 = assert_direction_hash(
                     bundle.direction,
                     bundle.provenance.get("direction_sha256"),
                     context=f"hook-bites source layer {bundle.source_layer}",
                 )
-                candidate_hook_bites[str(bundle.source_layer)] = guard
-            hook_bites_payload = {
-                "status": "PASSED_BEFORE_ANY_GENERATION",
-                "candidate_source_layers": sorted(
-                    int(x) for x in candidate_hook_bites
-                ),
-                "candidates": candidate_hook_bites,
-            }
+                guard = None
+                hook_guard_error = None
+                try:
+                    guard = assert_ablation_hook_bites(
+                        stats,
+                        expected_layers=hook_backend.decoder_layer_indices,
+                        extraction_layer=bundle.source_layer,
+                        abs_tol=abs_tol,
+                        max_residual_fraction=HOOK_BITES_MAX_RESIDUAL_FRACTION,
+                        norm_eps_multiplier=HOOK_BITES_NORM_EPS_MULTIPLIER,
+                        numerical_zero_floor=HOOK_BITES_NUMERICAL_ZERO_FLOOR,
+                    )
+                except Exception as exc:
+                    if not args.emit_layer_diagnostics:
+                        raise
+                    hook_guard_error = str(exc)
+                if guard is not None:
+                    guard["direction_sha256"] = direction_sha256
+                    candidate_hook_bites[str(bundle.source_layer)] = guard
+                if args.emit_layer_diagnostics:
+                    candidate_layer_diagnostics[str(bundle.source_layer)] = {
+                        "source_layer": int(bundle.source_layer),
+                        "position": bundle.position,
+                        "direction_sha256": direction_sha256,
+                        "selected_layer_separation": float(
+                            bundle.provenance["selected_layer_separation"]
+                        ),
+                        "activation_separation_floor": SEPARATION_FLOOR,
+                        "real_not_smoke_guard_error": real_guard_error,
+                        "hook_guard_passed": guard is not None,
+                        "hook_guard_error": hook_guard_error,
+                        "projection_norm_diagnostics": (
+                            summarize_hook_bites_layer_diagnostics(
+                                stats, extraction_layer=bundle.source_layer
+                            )
+                        ),
+                    }
+            if args.emit_layer_diagnostics:
+                hook_bites_payload = {
+                    "status": "LAYER_DIAGNOSTICS_ONLY_NO_GENERATION",
+                    "candidate_source_layers": sorted(
+                        int(x) for x in candidate_layer_diagnostics
+                    ),
+                    "candidates": candidate_layer_diagnostics,
+                    "scientific_guard_results_recorded_not_enforced": True,
+                    "eligible_for_generation": False,
+                    "diagnostic_only_no_outcome": True,
+                }
+            else:
+                hook_bites_payload = {
+                    "status": "PASSED_BEFORE_ANY_GENERATION",
+                    "candidate_source_layers": sorted(
+                        int(x) for x in candidate_hook_bites
+                    ),
+                    "candidates": candidate_hook_bites,
+                }
             atomic_write_json(
                 guard_path,
                 {
@@ -3896,6 +4011,9 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                         "xstest_provenance": xstest_prov,
                         "contrast_provenance": contrast_prov,
                         "hook_bites": hook_bites_payload,
+                        "layer_diagnostics_only": bool(
+                            args.emit_layer_diagnostics
+                        ),
                         "generation_started": False,
                         "valid_for_paper": False,
                 },
@@ -3940,7 +4058,11 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
             out_dir / "e0016_hardware_preflight.json",
             {
                 "experiment_id": EXPERIMENT_ID,
-                "status": "PREFLIGHT_PASSED_NO_GENERATION",
+                "status": (
+                    "LAYER_DIAGNOSTICS_COMPLETE_NO_GENERATION"
+                    if args.emit_layer_diagnostics
+                    else "PREFLIGHT_PASSED_NO_GENERATION"
+                ),
                 "created_at": utcnow(),
                 "code_commit": current_code_commit,
                 "run_start_source_state": run_start_source_state,
@@ -3956,10 +4078,15 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
             },
         )
 
-    if args.preflight_only:
+    if args.preflight_only or args.emit_layer_diagnostics:
+        status = (
+            "LAYER_DIAGNOSTICS_COMPLETE_NO_GENERATION"
+            if args.emit_layer_diagnostics
+            else "PREFLIGHT_PASSED_NO_GENERATION"
+        )
         payload = {
             "experiment_id": EXPERIMENT_ID,
-            "status": "PREFLIGHT_PASSED_NO_GENERATION",
+            "status": status,
             "primary_regime": PRIMARY_REGIME,
             "created_at": utcnow(),
             "code_commit": current_code_commit,
@@ -3987,11 +4114,31 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
             "xstest_provenance": xstest_prov,
             "contrast_provenance": contrast_prov,
             "hook_bites": hook_bites_payload,
+            "layer_diagnostics_only": bool(args.emit_layer_diagnostics),
             "raw_harmful_prompts_committed": False,
             "harmful_generation_performed": False,
             "generation_started": False,
             "generation_prompt_scope": "benign XSTest-safe prompts only",
         }
+        if args.emit_layer_diagnostics:
+            atomic_write_json(
+                out_dir / "e0016_layer_diagnostics.json",
+                {
+                    "experiment_id": EXPERIMENT_ID,
+                    "status": status,
+                    "created_at": utcnow(),
+                    "code_commit": current_code_commit,
+                    "model_id": args.model_id,
+                    "model_revision": resolved_model_revision,
+                    "candidate_layers": layers,
+                    "candidates": candidate_layer_diagnostics,
+                    "generation_started": False,
+                    "harmful_generation_performed": False,
+                    "raw_prompts_stored": False,
+                    "raw_harmful_text_committed": False,
+                    "valid_for_paper": False,
+                },
+            )
         atomic_write_json(manifest_path, payload)
         return payload
 
@@ -4446,6 +4593,14 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
             "finalized TEST identity, but never start TEST generation."
         ),
     )
+    stage.add_argument(
+        "--emit-layer-diagnostics",
+        action="store_true",
+        help=(
+            "Forward-pass-only per-candidate projection/norm diagnostics. "
+            "Never generates, stores prompts, runs DEV, or changes scientific gates."
+        ),
+    )
     p.add_argument("--synthetic-baseline-refusal-rate", type=float, default=0.75)
     return p.parse_args(argv)
 
@@ -4453,7 +4608,17 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
 def main(argv: Optional[Sequence[str]] = None) -> int:
     args = parse_args(argv)
     payload = run(args)
-    print(json.dumps({"status": payload["status"], "out_dir": str(args.out_dir), "valid_for_paper": False, "harmful_generation_performed": False}, indent=2), flush=True)
+    summary = {
+        "status": payload["status"],
+        "out_dir": str(args.out_dir),
+        "valid_for_paper": False,
+        "harmful_generation_performed": False,
+    }
+    if args.emit_layer_diagnostics:
+        summary["candidate_layer_diagnostics"] = payload["hook_bites"][
+            "candidates"
+        ]
+    print(json.dumps(summary, indent=2), flush=True)
     return 0
 
 

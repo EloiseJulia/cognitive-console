@@ -2,7 +2,7 @@
 
 **Experiment id:** E-0016
 
-**Status:** **FROZEN OUTCOMES — Regime B only; D-0097..D-0101 execution amendments DRAFT pending audit**
+**Status:** **FROZEN OUTCOMES — Regime B only; D-0097..D-0102 execution amendments DRAFT pending audit**
 
 **Freeze candidate prepared:** 2026-08-05
 
@@ -482,6 +482,36 @@ OUT_DIR=/root/autodl-tmp/E-0016-llama3-regime-b-confirmatory
 Llama uses the identical `>=0.25` DEV baseline eligibility floor. If it is also
 underpowered, it must stop as `INVALID_REGIME_B_UNDERPOWERED`; no third model,
 TEST, Regime A, or harmful-generation fallback is authorized.
+
+### 9.6 D-0102 Llama projection/norm diagnostics — forward pass only
+
+This diagnostic does not relax or replace a guard. It evaluates all four
+candidate directions, records numeric guard outcomes, and exits before baseline
+generation or DEV:
+
+```bash
+export CUDA_VISIBLE_DEVICES=0
+export HF_HOME=/root/autodl-tmp/hf
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+OUT_DIR=/root/autodl-tmp/E-0016-llama3-layer-diagnostics
+/root/miniconda3/bin/python scripts/run_e0016_ablation_positive_control.py \
+  --backend hf \
+  --emit-layer-diagnostics \
+  --model-id NousResearch/Meta-Llama-3-8B-Instruct \
+  --model-revision 53346005fb0ef11d3b6a83b12c895cca40156b6c \
+  --out-dir "$OUT_DIR" \
+  --seed 20260804 --dev-n 60 --test-n 160 --k 5 \
+  --layers 8,12,16,20 \
+  --xstest-source Paul/XSTest:train \
+  --harmful-source https://raw.githubusercontent.com/llm-attacks/llm-attacks/098262edf85f807224e70ecd87b9d83716bf6b73/data/advbench/harmful_behaviors.csv \
+  --harmless-source tatsu-lab/alpaca:train:instruction \
+  --direction-n 64 --max-new-tokens 96 --generation-batch-size 1
+```
+
+The safe artifact `e0016_layer_diagnostics.json` contains only hashes,
+separation/projection/norm statistics, guard errors, and runtime lineage. It
+stores no prompts, performs no harmful or benign generation, and is
+`valid_for_paper=false`.
 
 ## 10. Protocol-to-code mapping
 

@@ -717,6 +717,9 @@ class SteeredHFBackend(GenBackend):
                     observed_fraction = after / torch.clamp(
                         before, min=float(numerical_zero_floor)
                     )
+                    projection_fraction = before / torch.clamp(
+                        hidden_norm, min=float(numerical_zero_floor)
+                    )
                     rec = stats.setdefault(
                         int(layer),
                         {
@@ -728,6 +731,9 @@ class SteeredHFBackend(GenBackend):
                             "violation_count": 0,
                             "max_violation": 0.0,
                             "max_hidden_norm": 0.0,
+                            "mean_hidden_norm": 0.0,
+                            "max_projection_fraction": 0.0,
+                            "mean_projection_fraction": 0.0,
                             "max_allowed_after": 0.0,
                             "max_observed_residual_fraction": 0.0,
                             "dtype_epsilon": dtype_epsilon,
@@ -746,6 +752,14 @@ class SteeredHFBackend(GenBackend):
                     rec["max_abs_after"] = max(float(rec["max_abs_after"]), float(after.max().item()))
                     rec["mean_abs_before"] = (float(rec["mean_abs_before"]) * n_old + float(before.mean().item()) * n_new) / max(1, n_old + n_new)
                     rec["mean_abs_after"] = (float(rec["mean_abs_after"]) * n_old + float(after.mean().item()) * n_new) / max(1, n_old + n_new)
+                    rec["mean_hidden_norm"] = (
+                        float(rec["mean_hidden_norm"]) * n_old
+                        + float(hidden_norm.mean().item()) * n_new
+                    ) / max(1, n_old + n_new)
+                    rec["mean_projection_fraction"] = (
+                        float(rec["mean_projection_fraction"]) * n_old
+                        + float(projection_fraction.mean().item()) * n_new
+                    ) / max(1, n_old + n_new)
                     rec["n_values"] = n_old + n_new
                     rec["violation_count"] = int(rec["violation_count"]) + int(violations.sum().item())
                     rec["max_violation"] = max(
@@ -755,6 +769,10 @@ class SteeredHFBackend(GenBackend):
                     rec["max_hidden_norm"] = max(
                         float(rec["max_hidden_norm"]),
                         float(hidden_norm.max().item()),
+                    )
+                    rec["max_projection_fraction"] = max(
+                        float(rec["max_projection_fraction"]),
+                        float(projection_fraction.max().item()),
                     )
                     rec["max_allowed_after"] = max(
                         float(rec["max_allowed_after"]),

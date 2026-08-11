@@ -770,9 +770,13 @@ def test_preflight_and_dev_only_flags_do_not_change_frozen_science_identity(
 ):
     preflight = _frozen_hf_args(tmp_path, "--preflight-only")
     dev_only = _frozen_hf_args(tmp_path, "--stop-after-dev")
+    diagnostics = _frozen_hf_args(tmp_path, "--emit-layer-diagnostics")
     assert e0016.pre_load_eligibility_config(
         preflight
     ) == e0016.pre_load_eligibility_config(dev_only)
+    assert e0016.pre_load_eligibility_config(
+        preflight
+    ) == e0016.pre_load_eligibility_config(diagnostics)
 
 
 def _frozen_hf_args(tmp_path, *extra):
@@ -1139,6 +1143,15 @@ def test_actual_hook_bites_passes_per_element_and_cleans_hooks():
     )
     assert payload["observed_decoder_layers"] == [1, 2, 3]
     assert payload["violation_count"] == 0
+    diagnostics = e0016.summarize_hook_bites_layer_diagnostics(
+        stats, extraction_layer=2
+    )
+    assert diagnostics["extraction_max_abs_projection"] > 0.0
+    assert diagnostics["extraction_mean_activation_l2_norm"] > 0.0
+    assert diagnostics["extraction_max_projection_fraction"] > 0.0
+    assert diagnostics["aggregate_projection_fraction"] > 0.0
+    assert diagnostics["raw_prompts_stored"] is False
+    assert diagnostics["harmful_generation_performed"] is False
     assert all(not block._forward_hooks for block in blocks)
 
 

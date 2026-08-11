@@ -731,32 +731,13 @@
       "onboarding": {
         "heading": "How the task works",
         "intro": "Each record has five facts. Combine all five to choose one status, lock it, and then answer one follow-up question about the same record.",
-        "glossary": [
-          {
-            "id": "initial_check",
-            "term": "Initial check",
-            "description": "Whether the first check was completed and what it found."
-          },
-          {
-            "id": "paired_comparison",
-            "term": "Paired comparison",
-            "description": "Whether a comparison was completed and what its result was."
-          },
-          {
-            "id": "reference_setup",
-            "term": "Reference setup",
-            "description": "How the reference for the comparison was set up."
-          },
-          {
-            "id": "consistency_check",
-            "term": "Consistency check",
-            "description": "Whether the required consistency check passed."
-          },
-          {
-            "id": "applicability",
-            "term": "Applicable setting",
-            "description": "The exact setting where the record applies."
-          }
+        "fact_guidance_intro": "The five facts answer different questions. Cards may order them differently; labels and positions are not clues.",
+        "fact_guidance": [
+          "One reports whether the output stayed consistent enough to interpret.",
+          "One explains the reference used for comparison.",
+          "One fact says whether an early check has a usable result.",
+          "One states exactly where the record applies.",
+          "One describes what happened in a matched comparison."
         ],
         "states_heading": "Four states",
         "states": [
@@ -768,7 +749,7 @@
           {
             "id": "Q1_DIAGNOSTIC",
             "label": "Diagnostic only",
-            "description": "The initial check is usable, but the paired comparison has not been completed."
+            "description": "One fact has a usable early result, but the matched comparison has not been completed."
           },
           {
             "id": "Q1_WITHHELD",
@@ -1242,32 +1223,13 @@
       "onboarding": {
         "heading": "任务流程",
         "intro": "每条记录包含五条事实。请结合全部五条事实选择一个状态并锁定，再根据同一条记录回答一个跟进问题。",
-        "glossary": [
-          {
-            "id": "initial_check",
-            "term": "初始检查",
-            "description": "说明第一项检查是否已完成及其结果。"
-          },
-          {
-            "id": "paired_comparison",
-            "term": "配对比较",
-            "description": "说明配对比较是否已完成及其结果。"
-          },
-          {
-            "id": "reference_setup",
-            "term": "参照设置",
-            "description": "说明比较所用的参照如何设置。"
-          },
-          {
-            "id": "consistency_check",
-            "term": "一致性检查",
-            "description": "说明要求的一致性检查是否通过。"
-          },
-          {
-            "id": "applicability",
-            "term": "适用情境",
-            "description": "说明记录适用于哪个明确设置。"
-          }
+        "fact_guidance_intro": "五条事实回答不同的问题。卡片可能以不同顺序呈现；标签和位置都不是线索。",
+        "fact_guidance": [
+          "一条事实说明输出是否保持足够一致，因而可以解释。",
+          "一条事实说明比较时采用了什么参照。",
+          "一条事实说明较早的一项检查是否已有可用结果。",
+          "一条事实明确这条记录适用于何处。",
+          "一条事实说明一次相匹配的比较中发生了什么。"
         ],
         "states_heading": "四种状态",
         "states": [
@@ -1279,7 +1241,7 @@
           {
             "id": "Q1_DIAGNOSTIC",
             "label": "仅供诊断",
-            "description": "初始检查已有可用结果，但配对比较尚未完成。"
+            "description": "一条事实已有可用的早期结果，但相匹配的比较尚未完成。"
           },
           {
             "id": "Q1_WITHHELD",

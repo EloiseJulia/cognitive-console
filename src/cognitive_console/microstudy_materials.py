@@ -277,7 +277,7 @@ def _validate_locales(stimuli: dict[str, Any]) -> None:
     for locale, bundle in locales.items():
         assert bundle["language_name"]
         assert bundle["position_guard"]
-        assert len(bundle["onboarding"]["glossary"]) == 5
+        assert len(bundle["onboarding"]["fact_guidance"]) == 5
         assert len(bundle["onboarding"]["states"]) == 4
         assert {
             row["id"] for row in bundle["onboarding"]["states"]
@@ -344,6 +344,14 @@ def _validate_locales(stimuli: dict[str, Any]) -> None:
         visible_text = "\n".join(visible_strings)
         assert not any(label in visible_text for label in academic_labels[locale])
         assert not set(nonlocalized["primitive_ids"]).intersection(visible_strings)
+        common = json.loads(json.dumps(bundle))
+        formal = common.pop("formal")
+        common_text = "\n".join(_participant_visible_strings(common)).casefold()
+        assert not any(
+            label.casefold() in common_text
+            for label in formal["contract_labels"].values()
+        )
+        assert not _contains_identifier(common, set(nonlocalized["primitive_ids"]))
 
     english = locales["en"]
     practice = english["practice"]
@@ -431,6 +439,17 @@ def _participant_visible_strings(value: Any) -> list[str]:
             for text in _participant_visible_strings(child)
         ]
     return [value] if isinstance(value, str) else []
+
+
+def _contains_identifier(value: Any, identifiers: set[str]) -> bool:
+    if isinstance(value, dict):
+        return any(
+            key in identifiers or _contains_identifier(child, identifiers)
+            for key, child in value.items()
+        )
+    if isinstance(value, list):
+        return any(_contains_identifier(child, identifiers) for child in value)
+    return isinstance(value, str) and value in identifiers
 
 
 def _numeric_literals(text: str) -> list[str]:
@@ -659,7 +678,7 @@ def _validate_render_contract(stimuli: dict[str, Any]) -> None:
 def _validate_tutorial_and_post_task(stimuli: dict[str, Any]) -> None:
     for locale in LOCALES:
         materials = stimuli["locales"][locale]
-        assert len(materials["onboarding"]["glossary"]) == 5
+        assert len(materials["onboarding"]["fact_guidance"]) == 5
         assert len(materials["onboarding"]["steps"]) == 3
         assert len(materials["practice"]["facts"]) == 5
         assert materials["practice"]["feedback"]

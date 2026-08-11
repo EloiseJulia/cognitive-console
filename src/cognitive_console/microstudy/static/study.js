@@ -4,6 +4,8 @@ const app = {
   csrf: null, locale: null, common: null, sequenceCodes: [], capability: null,
   attemptId: null, current: null, hiddenStarted: null, hiddenMs: 0,
   formal: false, ended: false, pendingRequests: {}, saveExitTrigger: null,
+  languages: [], bootstrapReady: false, welcomeReady: false,
+  languagePending: false, startPending: false,
 };
 const gate = document.getElementById("language-gate");
 const startPanel = document.getElementById("start");
@@ -60,6 +62,27 @@ function showError(error) {
 function setFormal(value) {
   app.formal = value;
   saveExitButton.hidden = !value || app.ended;
+}
+
+function startReady() {
+  return app.bootstrapReady
+    && typeof app.csrf === "string" && app.csrf.length > 0
+    && app.welcomeReady
+    && typeof app.locale === "string"
+    && app.common !== null
+    && app.sequenceCodes.length > 0
+    && !app.languagePending
+    && !app.startPending;
+}
+
+function updateReadyControls() {
+  document.querySelectorAll('[data-action="choose-language"]').forEach(node => {
+    node.disabled = !app.bootstrapReady || app.languagePending;
+  });
+  const switchButton = document.querySelector('[data-action="switch-language"]');
+  if (switchButton) switchButton.disabled = app.languagePending || app.startPending;
+  const startButton = document.getElementById("start-button");
+  if (startButton) startButton.disabled = !startReady();
 }
 
 function requestId() {
@@ -230,34 +253,56 @@ function showWelcome() {
     el("p", {id: "start-error", class: "error", role: "alert", tabindex: "-1"}),
   );
   startPanel.querySelector(".actions").append(
-    el("button", {id: "start-button", type: "button", "data-action": "start"}, welcome.start),
+    el("button", {
+      id: "start-button", type: "button", "data-action": "start", disabled: "",
+    }, welcome.start),
     switchButton,
   );
   startPanel.hidden = false;
   stage.hidden = true;
+  updateReadyControls();
   focusHeading(startPanel);
 }
 
 async function chooseLanguage(locale) {
-  const response = await fetch(
-    `/api/welcome?ui_language=${encodeURIComponent(locale)}`,
-    {cache: "no-store", credentials: "same-origin"},
-  );
-  if (!response.ok) throw new Error("locale");
-  const selectedBundle = await response.json();
-  if (selectedBundle.ui_language !== locale) throw new Error("locale mismatch");
-  app.locale = locale;
-  app.common = selectedBundle.common;
-  app.sequenceCodes = selectedBundle.sequence_codes;
-  if (gate.isConnected) gate.remove();
-  showWelcome();
+  if (!app.bootstrapReady || app.languagePending || !app.languages.includes(locale)) {
+    throw new Error("load");
+  }
+  app.languagePending = true;
+  app.welcomeReady = false;
+  updateReadyControls();
+  try {
+    const response = await fetch(
+      `/api/welcome?ui_language=${encodeURIComponent(locale)}`,
+      {cache: "no-store", credentials: "same-origin"},
+    );
+    if (!response.ok) throw new Error("load");
+    const selectedBundle = await response.json();
+    if (
+      selectedBundle.ui_language !== locale
+      || !selectedBundle.common
+      || !Array.isArray(selectedBundle.sequence_codes)
+      || selectedBundle.sequence_codes.length === 0
+    ) {
+      throw new Error("load");
+    }
+    app.locale = locale;
+    app.common = selectedBundle.common;
+    app.sequenceCodes = [...selectedBundle.sequence_codes];
+    app.welcomeReady = true;
+    if (gate.isConnected) gate.remove();
+    showWelcome();
+  } finally {
+    app.languagePending = false;
+    updateReadyControls();
+  }
 }
 
 function showTutorial() {
   const onboarding = app.common.onboarding;
-  const glossary = el("dl", {class: "glossary"});
-  for (const row of onboarding.glossary) {
-    glossary.append(el("dt", {}, row.term), el("dd", {}, row.description));
+  const factGuidance = el("ul", {class: "fact-guidance"});
+  for (const sentence of onboarding.fact_guidance) {
+    factGuidance.append(el("li", {}, sentence));
   }
   const states = el("dl", {class: "glossary"});
   for (const row of onboarding.states) {
@@ -268,7 +313,8 @@ function showTutorial() {
   replaceStage(
     el("h1", {}, onboarding.heading),
     el("p", {}, onboarding.intro),
-    glossary,
+    el("p", {class: "fact-guidance-intro"}, onboarding.fact_guidance_intro),
+    factGuidance,
     el("h2", {}, onboarding.states_heading),
     states,
     el("p", {class: "state-distinction"}, onboarding.state_distinction),
@@ -576,18 +622,31 @@ function finish() {
 }
 
 async function startStudy(button) {
-  button.disabled = true;
-  const response = await api("/api/start", {
-    participant_code: document.getElementById("participant-code").value.trim(),
-    sequence: document.getElementById("sequence").value,
-    ui_language: app.locale,
-  });
-  if (response.ui_language !== app.locale) throw new Error("locale lock");
-  app.attemptId = response.attempt_id;
-  app.capability = response.capability;
-  startPanel.replaceChildren();
-  startPanel.hidden = true;
-  showTutorial();
+  if (!startReady()) return;
+  app.startPending = true;
+  updateReadyControls();
+  try {
+    const response = await api("/api/start", {
+      participant_code: document.getElementById("participant-code").value.trim(),
+      sequence: document.getElementById("sequence").value,
+      ui_language: app.locale,
+    });
+    if (
+      response.ui_language !== app.locale
+      || typeof response.attempt_id !== "string" || response.attempt_id.length === 0
+      || typeof response.capability !== "string" || response.capability.length === 0
+    ) {
+      throw new Error("state");
+    }
+    app.attemptId = response.attempt_id;
+    app.capability = response.capability;
+    startPanel.replaceChildren();
+    startPanel.hidden = true;
+    showTutorial();
+  } finally {
+    app.startPending = false;
+    updateReadyControls();
+  }
 }
 
 document.addEventListener("click", event => {
@@ -636,8 +695,19 @@ document.addEventListener("change", event => {
 fetch("/api/bootstrap", {cache: "no-store", credentials: "same-origin"})
   .then(response => response.ok ? response.json() : Promise.reject(new Error("bootstrap")))
   .then(bootstrap => {
-    if (bootstrap.fallback !== null || bootstrap.auto_detect !== false) throw new Error("locale contract");
+    if (
+      bootstrap.fallback !== null
+      || bootstrap.auto_detect !== false
+      || typeof bootstrap.csrf_token !== "string"
+      || bootstrap.csrf_token.length === 0
+      || !Array.isArray(bootstrap.languages)
+    ) {
+      throw new Error("locale contract");
+    }
     app.csrf = bootstrap.csrf_token;
+    app.languages = bootstrap.languages.map(row => row.id);
+    app.bootstrapReady = true;
+    updateReadyControls();
   })
   .catch(showError);
 

@@ -216,6 +216,27 @@ def test_novice_welcome_guard_state_distinction_and_q2_coverage_copy():
     assert "not an answer hint" in en["welcome"]["sequence_help"]
     assert "不能恢复" in zh["welcome"]["no_resume"]
     assert len(en["onboarding"]["steps"]) == len(zh["onboarding"]["steps"]) == 3
+    assert en["onboarding"]["fact_guidance_intro"] == (
+        "The five facts answer different questions. Cards may order them "
+        "differently; labels and positions are not clues."
+    )
+    assert en["onboarding"]["fact_guidance"] == [
+        "One reports whether the output stayed consistent enough to interpret.",
+        "One explains the reference used for comparison.",
+        "One fact says whether an early check has a usable result.",
+        "One states exactly where the record applies.",
+        "One describes what happened in a matched comparison.",
+    ]
+    assert zh["onboarding"]["fact_guidance_intro"] == (
+        "五条事实回答不同的问题。卡片可能以不同顺序呈现；标签和位置都不是线索。"
+    )
+    assert zh["onboarding"]["fact_guidance"] == [
+        "一条事实说明输出是否保持足够一致，因而可以解释。",
+        "一条事实说明比较时采用了什么参照。",
+        "一条事实说明较早的一项检查是否已有可用结果。",
+        "一条事实明确这条记录适用于何处。",
+        "一条事实说明一次相匹配的比较中发生了什么。",
+    ]
     assert "cannot yet tell" in en["onboarding"]["state_distinction"]
     assert "decision is not to support" in en["onboarding"]["state_distinction"]
     assert en["position_guard"] == (
@@ -234,6 +255,23 @@ def test_novice_welcome_guard_state_distinction_and_q2_coverage_copy():
     assert coverage_zh["text"] == "这条记录中，哪些检查已有完成且可用的结果？"
     assert coverage_en["helper"] == "Usable does not mean positive."
     assert coverage_zh["helper"] == "“可用”不等于“结果为正”。"
+
+
+def test_common_copy_has_no_contract_labels_or_role_identifiers():
+    stimuli, _ = load_sources()
+    primitive_ids = set(stimuli["nonlocalized"]["primitive_ids"])
+    for locale in ("en", "zh-Hans"):
+        bundle = json.loads(json.dumps(stimuli["locales"][locale]))
+        formal = bundle.pop("formal")
+        encoded = json.dumps(bundle, ensure_ascii=False).casefold()
+        assert not any(
+            label.casefold() in encoded
+            for label in formal["contract_labels"].values()
+        )
+        onboarding = bundle["onboarding"]
+        assert "glossary" not in onboarding
+        assert all(not isinstance(row, dict) for row in onboarding["fact_guidance"])
+        assert primitive_ids.isdisjoint(onboarding)
 
 
 def test_q1_q2_keys_and_noncoverage_templates_are_unchanged():

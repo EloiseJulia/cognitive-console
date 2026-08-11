@@ -31,6 +31,7 @@ from cognitive_console.microstudy.materials import material_hashes, planned_tria
 from cognitive_console.microstudy.server import (
     CSP,
     STATIC_DIR,
+    StudyHandler,
     create_server,
     sign_export,
 )
@@ -188,6 +189,7 @@ def test_server_material_privacy_headers_and_no_logging(live_server):
             assert response.headers.get("Access-Control-Allow-Origin") is None
         bootstrap = request_json(base, "/api/bootstrap")
         materials = locale_materials(base, "zh-Hans")
+        english_materials = locale_materials(base, "en")
     bootstrap_encoded = json.dumps(bootstrap, ensure_ascii=False).lower()
     assert "formal" not in bootstrap_encoded and "materials" not in bootstrap
     assert bootstrap["fallback"] is None and bootstrap["auto_detect"] is False
@@ -206,6 +208,19 @@ def test_server_material_privacy_headers_and_no_logging(live_server):
     assert materials["materials_version"].endswith("v8-novice-ux-draft")
     for academic in ("初始读取", "迁移比较", "有界提示比较器", "校准警示", "证据层级"):
         assert academic not in json.dumps(materials, ensure_ascii=False)
+    for projected, labels in (
+        (english_materials, (
+            "Initial check", "Paired comparison", "Reference setup",
+            "Consistency check", "Applicable setting",
+        )),
+        (materials, ("初始检查", "配对比较", "参照设置", "一致性检查", "适用情境")),
+    ):
+        common_encoded = json.dumps(projected, ensure_ascii=False).casefold()
+        assert not any(label.casefold() in common_encoded for label in labels)
+        assert not {
+            "representation", "comparison", "comparator", "coherence", "scope",
+        }.intersection(projected["common"]["onboarding"])
+        assert "glossary" not in projected["common"]["onboarding"]
     with pytest.raises(urllib.error.HTTPError):
         request_json(base, "/api/materials")
     assert output.getvalue() == ""
@@ -471,9 +486,15 @@ def test_request_protection_idempotency_capacity_and_expiry():
             )
             with pytest.raises(urllib.error.HTTPError):
                 urllib.request.urlopen(request)
-        start = request_json(base, "/api/start", {
+        start_body = {
             "participant_code": "SEC", "sequence": "A1", "ui_language": "en",
-        })
+            "request_id": uuid.uuid4().hex,
+        }
+        start = request_json(base, "/api/start", start_body)
+        retry = request_json(base, "/api/start", start_body)
+        assert retry == start
+        assert server.attempt_serial == 1
+        assert len(server.sessions) == 1
         attempt = start["attempt_id"]
         oversized = urllib.request.Request(
             f"{base}/api/practice", data=b"{" + b" " * 20_000 + b"}",
@@ -789,6 +810,9 @@ def test_static_dom_accessibility_and_no_semantic_attributes():
     assert '<html lang="und">' in html
     assert "请选择语言 / Choose a language" in html
     assert 'id="language-gate"' in html
+    assert html.count('data-action="choose-language"') == 2
+    assert html.count('data-action="choose-language" data-locale=') == 2
+    assert html.count(" disabled>") >= 2
     assert 'id="participant-code"' not in html
     assert "cardData.aria_label" in js
     assert "document.documentElement.lang = app.locale" in js
@@ -800,6 +824,9 @@ def test_static_dom_accessibility_and_no_semantic_attributes():
     assert '"aria-invalid", "true"' in js
     assert "showModal()" in js and 'addEventListener("cancel"' in js
     assert "app.common.position_guard" in js
+    assert "bootstrapReady" in js and "welcomeReady" in js
+    assert "app.sequenceCodes.length > 0" in js
+    assert 'typeof response.capability !== "string"' in js
     assert "Microsoft YaHei" in css and "overflow-wrap:anywhere" in css
     assert "focus-visible" in css and "prefers-reduced-motion" in css
     assert "dialog::backdrop" in css and ".locked-summary" in css
@@ -864,6 +891,35 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
             CLIENTS.pop(base, None)
 
     @contextlib.contextmanager
+    def delayed_bootstrap_server(label):
+        release = threading.Event()
+
+        class DelayedBootstrapHandler(StudyHandler):
+            def do_GET(self):
+                if self.path == "/api/bootstrap":
+                    if not release.wait(timeout=10):
+                        self._error(503, "bootstrap test gate timed out")
+                        return
+                super().do_GET()
+
+        key_path = RUNTIME / f"{label}-{uuid.uuid4().hex}.key"
+        key_path.write_bytes(TEST_KEY)
+        server = create_server("127.0.0.1", 0, key_path)
+        server.RequestHandlerClass = DelayedBootstrapHandler
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        base = f"http://127.0.0.1:{server.server_port}"
+        try:
+            yield base, server, release
+        finally:
+            release.set()
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=10)
+            assert not thread.is_alive()
+            CLIENTS.pop(base, None)
+
+    @contextlib.contextmanager
     def browser_process(name, executable):
         port = _free_port()
         profile = RUNTIME / f"{name}-profile-{uuid.uuid4().hex}"
@@ -918,6 +974,7 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
         cdp.wait(
             "window.MicrostudyTest"
             " && document.querySelector('[data-action=\"choose-language\"]')"
+            " && !document.querySelector('[data-locale=\"" + locale + "\"]').disabled"
         )
         if keyboard:
             cdp.eval(
@@ -929,6 +986,7 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
                 f"document.querySelector('[data-locale=\"{locale}\"]').click()"
             )
         cdp.wait("document.querySelector('#sequence option')")
+        assert cdp.eval("document.querySelector('#start-button').disabled === false")
         assert cdp.eval("document.documentElement.lang") == locale
         assert cdp.eval("!document.querySelector('#language-gate')")
         hierarchy = cdp.eval("""(() => ({
@@ -964,10 +1022,26 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
             press(cdp, "Tab", "Tab", 9)
             assert cdp.eval("document.activeElement.id") == "start-button"
             press(cdp, "Enter", "Enter", 13)
+            press(cdp, "Enter", "Enter", 13)
         else:
-            cdp.eval("document.querySelector('#start-button').click()")
+            cdp.eval(
+                "document.querySelector('#start-button').click();"
+                "document.querySelector('#start-button').click()"
+            )
         cdp.wait("document.querySelector('[data-action=\"show-practice\"]')")
+        if server is not None:
+            assert server.attempt_serial == 1
+            assert len(server.sessions) == 1
         assert cdp.eval("document.querySelectorAll('#stage h1').length") == 1
+        tutorial_text = cdp.eval("document.querySelector('#stage').innerText")
+        formal_labels = (
+            ["Initial check", "Paired comparison", "Reference setup",
+             "Consistency check", "Applicable setting"]
+            if locale == "en"
+            else ["初始检查", "配对比较", "参照设置", "一致性检查", "适用情境"]
+        )
+        assert not any(label.casefold() in tutorial_text.casefold() for label in formal_labels)
+        assert cdp.eval("document.querySelectorAll('.fact-guidance li').length") == 5
         assert cdp.eval("document.querySelector('#stage .guard').innerText") in {
             "Use all five facts; row order and Fact/Evidence labels are not clues.",
             "请结合全部五条事实；行顺序和事实/证据编号不是线索。",
@@ -1188,6 +1262,42 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
     try:
         for browser_name, executable in browsers.items():
             with browser_process(browser_name, executable) as port:
+                label = f"{browser_name}-bootstrap-readiness"
+                with delayed_bootstrap_server(label) as (base, _, release):
+                    cdp = CDP.new_page(port, f"{base}/")
+                    try:
+                        cdp.wait(
+                            "window.MicrostudyTest"
+                            " && document.querySelector('[data-locale=\"zh-Hans\"]')"
+                        )
+                        assert cdp.eval(
+                            "document.querySelector('[data-locale=\"zh-Hans\"]').disabled"
+                        )
+                        cdp.eval(
+                            "document.querySelector('[data-locale=\"zh-Hans\"]').click()"
+                        )
+                        assert cdp.eval(
+                            "document.querySelector('#language-gate') !== null"
+                            " && document.querySelector('#start').hidden"
+                        )
+                        release.set()
+                        cdp.wait(
+                            "!document.querySelector('[data-locale=\"zh-Hans\"]').disabled"
+                        )
+                        cdp.eval(
+                            "document.querySelector('[data-locale=\"zh-Hans\"]').click()"
+                        )
+                        cdp.wait(
+                            "document.documentElement.lang === 'zh-Hans'"
+                            " && document.querySelector('#start-button')"
+                            " && !document.querySelector('#start-button').disabled"
+                        )
+                        assert cdp.eval(
+                            "document.querySelector('#start-error').textContent === ''"
+                        )
+                    finally:
+                        release.set()
+                        cdp.close()
                 for case_index, (sequence, locale, width, height, zoom) in enumerate(geometry_cases):
                     label = f"{browser_name}-{locale}-{sequence}-{width}-z{zoom}"
                     with isolated_server(label) as (base, server):
@@ -1216,6 +1326,7 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
                         cdp.wait(
                             "window.MicrostudyTest"
                             " && document.querySelector('[data-locale=\"en\"]')"
+                            " && !document.querySelector('[data-locale=\"zh-Hans\"]').disabled"
                         )
                         cdp.click("choose-language")
                         cdp.wait("document.documentElement.lang === 'zh-Hans'")

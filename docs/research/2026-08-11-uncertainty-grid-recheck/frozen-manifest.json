@@ -24,6 +24,41 @@
     "frozen_results_replaced": false,
     "new_scorer_result_created": false
   },
+  "execution": {
+    "authorization_id": "owner-2026-08-11-e0013-grid-recheck-after-hostile-audit",
+    "authorization_scope": "Generate only manifest-required missing E-0013 uncertainty-grid transcripts after an independent hostile audit approves the exact committed code SHA and command; do not alter E-0013/E-0006 artifacts or create a replacement scorer result.",
+    "requires_protocol_manifest": true,
+    "requires_expected_audited_commit": true,
+    "requires_clean_tree": true,
+    "requires_exact_argv_on_resume": true,
+    "scratch_policy": {
+      "explicit_external_directory_required": true,
+      "activation_cache_must_remain_outside_repository": true
+    },
+    "model_identity": {
+      "qwen2.5-7b": {
+        "hf_repo_id": "Qwen/Qwen2.5-7B-Instruct",
+        "revision": "a09a35458c702b33eeacc393d103063234e8bc28",
+        "revision_source": "Hugging Face model API resolved SHA, verified 2026-08-11",
+        "local_alternative": "Allowed only with an auditor-approved SHA-256 aggregate over weights, config.json, tokenizer artifacts, and generation_config.json."
+      },
+      "llama3-8b": {
+        "hf_repo_id": "meta-llama/Meta-Llama-3-8B-Instruct",
+        "revision": "8afb486c1db24fe5011ec46dfbe5b5dccdb575c2",
+        "revision_source": "Hugging Face model API resolved SHA, verified 2026-08-11",
+        "local_alternative": "Allowed only with an auditor-approved SHA-256 aggregate over weights, config.json, tokenizer artifacts, and generation_config.json."
+      }
+    },
+    "resource_guards": {
+      "device": "cuda",
+      "dtype": "float16",
+      "gpu_name_contains": "A800",
+      "min_free_disk_bytes": 53687091200,
+      "max_scratch_bytes": 21474836480,
+      "max_activation_cache_bytes": 8589934592,
+      "max_hf_cache_bytes": 107374182400
+    }
+  },
   "analysis": {
     "axis": "uncertainty_awareness",
     "split": "test",
@@ -68,6 +103,11 @@
     "checkpoint_policy": {
       "unit": "fixed-composition generation batch",
       "identity_binds": [
+        "audited code SHA and clean-tree state",
+        "protocol manifest Git blob and SHA-256",
+        "exact argv and explicit authorization",
+        "resolved model snapshot revision or verified local content hashes",
+        "CUDA/A800/float16 software and GPU identity",
         "protocol hash",
         "cell/method/model identity",
         "selected prompt hashes",
@@ -116,7 +156,7 @@
       "expected": {
         "method": "caa",
         "model_label": "llama3-8b",
-        "model_identity_key": "meta-llama-3-8b-instruct",
+        "legacy_model_label_key": "meta-llama-3-8b-instruct",
         "layer": 10,
         "frozen_alpha": 8.0,
         "best_prompt_id": "unc-strong-09",
@@ -148,7 +188,7 @@
       "expected": {
         "method": "caa",
         "model_label": "qwen2.5-7b",
-        "model_identity_key": "qwen2.5-7b-instruct",
+        "legacy_model_label_key": "qwen2.5-7b-instruct",
         "layer": 20,
         "frozen_alpha": 8.0,
         "best_prompt_id": "unc-strong-01",
@@ -181,7 +221,7 @@
       "expected": {
         "method": "iti",
         "model_label": "llama3-8b",
-        "model_identity_key": "meta-llama-3-8b-instruct",
+        "legacy_model_label_key": "meta-llama-3-8b-instruct",
         "layer": 11,
         "frozen_alpha": 6.0,
         "best_prompt_id": "unc-strong-09",
@@ -213,7 +253,7 @@
       "expected": {
         "method": "iti",
         "model_label": "qwen2.5-7b",
-        "model_identity_key": "qwen2.5-7b-instruct",
+        "legacy_model_label_key": "qwen2.5-7b-instruct",
         "layer": 17,
         "frozen_alpha": 12.0,
         "best_prompt_id": "unc-strong-01",

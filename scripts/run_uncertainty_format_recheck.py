@@ -14,13 +14,16 @@ import hashlib
 import json
 import math
 import os
+import platform
+import re
+import shutil
 import subprocess
 import sys
 import time
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -53,8 +56,15 @@ DEFAULT_SEED = 20260723
 DEFAULT_N_EXTRACTION = 28
 ITI_SIGMA_IDENTITY_REL_TOL = 5e-4
 ITI_SIGMA_IDENTITY_ABS_TOL = 5e-3
-CHECKPOINT_SCHEMA_VERSION = "e0013-format-replay-checkpoint-v1"
+CHECKPOINT_SCHEMA_VERSION = "e0013-format-replay-checkpoint-v2"
+EXECUTION_IDENTITY_SCHEMA_VERSION = "e0013-hf-execution-identity-v1"
 TEST_USE_POLICY = "FROZEN_TEST_ITEMS_EVALUATED_ONCE_WITH_NO_SELECTION_OR_TUNING"
+_HF_REVISION_RE = re.compile(r"^[0-9a-f]{40}$")
+_SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
+_MODEL_TYPE_BY_LABEL = {
+    "qwen2.5-7b": "qwen2",
+    "llama3-8b": "llama",
+}
 
 
 @dataclass(frozen=True)
@@ -143,7 +153,7 @@ def _write_once_or_verify_jsonl(path: Path, records: Iterable[Dict]) -> None:
     os.replace(pending, path)
 
 
-def _git_dirty() -> bool:
+def _git_status_rows() -> List[str]:
     proc = subprocess.run(
         [
             "git",
@@ -157,14 +167,388 @@ def _git_dirty() -> bool:
         capture_output=True,
         text=True,
     )
-    ignored_prefix = "results/E-0013-uncertainty-grid-recheck/"
-    for line in proc.stdout.splitlines():
-        path = line[3:].replace("\\", "/")
-        if " -> " in path:
-            path = path.split(" -> ", 1)[1]
-        if not path.startswith(ignored_prefix):
-            return True
-    return False
+    return [line for line in proc.stdout.splitlines() if line.strip()]
+
+
+def _git_dirty() -> bool:
+    return bool(_git_status_rows())
+
+
+def _git_blob_oid(path: Path, commit: str) -> str:
+    resolved = Path(path).resolve()
+    try:
+        rel = resolved.relative_to(_REPO).as_posix()
+    except ValueError as exc:
+        raise RuntimeError(
+            f"protocol manifest must be tracked inside the repository: {resolved}"
+        ) from exc
+    proc = subprocess.run(
+        ["git", "-C", str(_REPO), "rev-parse", f"{commit}:{rel}"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        raise RuntimeError(
+            f"protocol manifest is not present in audited commit {commit}: {rel}"
+        )
+    return proc.stdout.strip()
+
+
+def _is_within(path: Path, root: Path) -> bool:
+    try:
+        Path(path).resolve().relative_to(Path(root).resolve())
+        return True
+    except ValueError:
+        return False
+
+
+def _require_external_directory(path: Path, label: str) -> Path:
+    resolved = Path(path).expanduser().resolve()
+    if _is_within(resolved, _REPO):
+        raise RuntimeError(f"{label} must be outside the repository: {resolved}")
+    resolved.mkdir(parents=True, exist_ok=True)
+    return resolved
+
+
+def _directory_size_bytes(path: Path) -> int:
+    root = Path(path)
+    if not root.exists():
+        return 0
+    total = 0
+    seen: set[Tuple[int, int]] = set()
+    for candidate in root.rglob("*"):
+        if not candidate.is_file():
+            continue
+        stat = candidate.stat()
+        key = (int(stat.st_dev), int(stat.st_ino))
+        if key in seen:
+            continue
+        seen.add(key)
+        total += int(stat.st_size)
+    return total
+
+
+def _disk_free_bytes(path: Path) -> int:
+    candidate = Path(path).resolve()
+    while not candidate.exists() and candidate.parent != candidate:
+        candidate = candidate.parent
+    return int(shutil.disk_usage(candidate).free)
+
+
+def _probe_cuda_environment() -> Dict[str, object]:
+    try:
+        import torch
+        import transformers
+    except ImportError as exc:
+        raise RuntimeError("HF replay requires torch and transformers") from exc
+    if not torch.cuda.is_available():
+        raise RuntimeError("HF replay requires CUDA; torch.cuda.is_available() is false")
+    properties = torch.cuda.get_device_properties(0)
+    driver_probe = getattr(torch._C, "_cuda_getDriverVersion", None)
+    return {
+        "platform": platform.platform(),
+        "python": platform.python_version(),
+        "torch": torch.__version__,
+        "transformers": transformers.__version__,
+        "torch_cuda_runtime": torch.version.cuda,
+        "cuda_driver_version": (
+            int(driver_probe()) if callable(driver_probe) else None
+        ),
+        "cudnn_version": (
+            int(torch.backends.cudnn.version())
+            if torch.backends.cudnn.is_available()
+            else None
+        ),
+        "cuda_device_count": int(torch.cuda.device_count()),
+        "cuda_device_index": 0,
+        "cuda_device_name": str(torch.cuda.get_device_name(0)),
+        "cuda_total_memory_bytes": int(properties.total_memory),
+        "cuda_capability": [
+            int(properties.major),
+            int(properties.minor),
+        ],
+        "selected_device": p0._pick_device(),
+        "selected_dtype": p0._pick_dtype(),
+    }
+
+
+def _assert_resource_guards(
+    policy: Dict[str, object],
+    *,
+    out_dir: Path,
+    scratch_dir: Path,
+    activation_cache_dir: Path,
+    hf_cache_dir: Optional[Path],
+    stage: str,
+) -> Dict[str, object]:
+    env = _probe_cuda_environment()
+    expected_device = str(policy["device"])
+    expected_dtype = str(policy["dtype"])
+    expected_gpu = str(policy["gpu_name_contains"])
+    if env["selected_device"] != expected_device:
+        raise RuntimeError(
+            f"{stage}: expected device {expected_device!r}, got "
+            f"{env['selected_device']!r}"
+        )
+    if env["selected_dtype"] != expected_dtype:
+        raise RuntimeError(
+            f"{stage}: expected dtype {expected_dtype!r}, got "
+            f"{env['selected_dtype']!r}"
+        )
+    if expected_gpu.lower() not in str(env["cuda_device_name"]).lower():
+        raise RuntimeError(
+            f"{stage}: expected A800 GPU identity containing {expected_gpu!r}, "
+            f"got {env['cuda_device_name']!r}"
+        )
+
+    min_free = int(policy["min_free_disk_bytes"])
+    max_scratch = int(policy["max_scratch_bytes"])
+    max_activation = int(policy["max_activation_cache_bytes"])
+    max_hf_cache = int(policy["max_hf_cache_bytes"])
+    disk = {
+        "out_dir_free_bytes": _disk_free_bytes(out_dir),
+        "scratch_free_bytes": _disk_free_bytes(scratch_dir),
+        "scratch_size_bytes": _directory_size_bytes(scratch_dir),
+        "activation_cache_size_bytes": _directory_size_bytes(activation_cache_dir),
+        "hf_cache_size_bytes": (
+            _directory_size_bytes(hf_cache_dir) if hf_cache_dir is not None else 0
+        ),
+    }
+    for label in ("out_dir_free_bytes", "scratch_free_bytes"):
+        if disk[label] < min_free:
+            raise RuntimeError(
+                f"{stage}: {label}={disk[label]} below frozen minimum {min_free}"
+            )
+    if disk["scratch_size_bytes"] > max_scratch:
+        raise RuntimeError(
+            f"{stage}: scratch budget exceeded: {disk['scratch_size_bytes']} > "
+            f"{max_scratch}"
+        )
+    if disk["activation_cache_size_bytes"] > max_activation:
+        raise RuntimeError(
+            f"{stage}: activation-cache budget exceeded: "
+            f"{disk['activation_cache_size_bytes']} > {max_activation}"
+        )
+    if disk["hf_cache_size_bytes"] > max_hf_cache:
+        raise RuntimeError(
+            f"{stage}: HF-cache budget exceeded: {disk['hf_cache_size_bytes']} > "
+            f"{max_hf_cache}"
+        )
+    return {
+        **env,
+        "stage": stage,
+        "resource_policy": dict(policy),
+        "disk_and_cache": disk,
+    }
+
+
+def _stable_environment_identity(snapshot: Dict[str, object]) -> Dict[str, object]:
+    return {
+        key: value
+        for key, value in snapshot.items()
+        if key not in {"stage", "resource_policy", "disk_and_cache"}
+    }
+
+
+def _model_files_by_category(root: Path) -> Dict[str, List[Path]]:
+    files = [path for path in Path(root).rglob("*") if path.is_file()]
+    by_name = {path.name: path for path in files}
+    weights = sorted(
+        [
+            path
+            for path in files
+            if path.name.endswith(".safetensors")
+            or (
+                path.name.endswith(".bin")
+                and (
+                    path.name.startswith("pytorch_model")
+                    or path.name.startswith("model")
+                )
+            )
+            or path.name.endswith(".safetensors.index.json")
+            or path.name.endswith(".bin.index.json")
+        ],
+        key=lambda path: path.relative_to(root).as_posix(),
+    )
+    tokenizer_names = {
+        "tokenizer.json",
+        "tokenizer.model",
+        "tokenizer_config.json",
+        "special_tokens_map.json",
+        "added_tokens.json",
+        "vocab.json",
+        "merges.txt",
+    }
+    tokenizer = sorted(
+        [path for path in files if path.name in tokenizer_names],
+        key=lambda path: path.relative_to(root).as_posix(),
+    )
+    return {
+        "weights": weights,
+        "config": [by_name["config.json"]] if "config.json" in by_name else [],
+        "tokenizer": tokenizer,
+        "generation_config": (
+            [by_name["generation_config.json"]]
+            if "generation_config.json" in by_name
+            else []
+        ),
+    }
+
+
+def _hash_model_snapshot(root: Path, *, model_label: str) -> Dict[str, object]:
+    root = Path(root).resolve()
+    categories = _model_files_by_category(root)
+    missing = [
+        category
+        for category in ("weights", "config", "tokenizer", "generation_config")
+        if not categories[category]
+    ]
+    if missing:
+        raise RuntimeError(
+            f"{root}: model snapshot lacks required identity categories: {missing}"
+        )
+    config = json.loads(categories["config"][0].read_text(encoding="utf-8"))
+    expected_model_type = _MODEL_TYPE_BY_LABEL[model_label]
+    if str(config.get("model_type")) != expected_model_type:
+        raise RuntimeError(
+            f"{root}: config model_type={config.get('model_type')!r}, expected "
+            f"{expected_model_type!r} for {model_label}"
+        )
+    category_rows: Dict[str, List[Dict[str, object]]] = {}
+    for category, paths in categories.items():
+        category_rows[category] = [
+            {
+                "path": path.relative_to(root).as_posix(),
+                "size_bytes": int(path.stat().st_size),
+                "sha256": _sha256_file(path),
+            }
+            for path in paths
+        ]
+    return {
+        "root": str(root),
+        "model_label": model_label,
+        "model_type": expected_model_type,
+        "categories": category_rows,
+        "content_sha256": _canonical_hash(category_rows),
+    }
+
+
+def _resolve_model_identity(
+    *,
+    model_ref: str,
+    model_label: str,
+    revision: Optional[str],
+    expected_content_sha256: Optional[str],
+    model_policy: Dict[str, object],
+    hf_cache_dir: Optional[Path],
+) -> Tuple[str, Dict[str, object]]:
+    ref = str(model_ref).strip()
+    local = _looks_like_local_path(ref) or Path(ref).expanduser().exists()
+    if local:
+        if revision:
+            raise RuntimeError(
+                f"{model_label}: --revision is incompatible with a local snapshot"
+            )
+        if not expected_content_sha256 or not _SHA256_RE.fullmatch(
+            expected_content_sha256
+        ):
+            raise RuntimeError(
+                f"{model_label}: local model snapshots require an audited "
+                "64-hex --model-content-sha256"
+            )
+        root = Path(ref).expanduser().resolve()
+        if not root.is_dir():
+            raise RuntimeError(f"{model_label}: local model snapshot missing: {root}")
+        content = _hash_model_snapshot(root, model_label=model_label)
+        if content["content_sha256"] != expected_content_sha256:
+            raise RuntimeError(
+                f"{model_label}: local model content hash mismatch; expected "
+                f"{expected_content_sha256}, got {content['content_sha256']}"
+            )
+        identity = {
+            "kind": "verified_local_snapshot",
+            "configured_ref": ref,
+            "resolved_path": str(root),
+            "expected_content_sha256": expected_content_sha256,
+            **content,
+        }
+        return str(root), identity
+
+    expected_repo = str(model_policy["hf_repo_id"])
+    expected_revision = str(model_policy["revision"])
+    if ref != expected_repo:
+        raise RuntimeError(
+            f"{model_label}: HF repo must be exactly {expected_repo!r}, got {ref!r}"
+        )
+    if revision != expected_revision or not _HF_REVISION_RE.fullmatch(str(revision)):
+        raise RuntimeError(
+            f"{model_label}: HF revision must equal frozen 40-hex revision "
+            f"{expected_revision}"
+        )
+    if hf_cache_dir is None:
+        raise RuntimeError(
+            f"{model_label}: --hf-cache-dir is mandatory for pinned HF snapshots"
+        )
+    try:
+        from huggingface_hub import snapshot_download
+    except ImportError as exc:
+        raise RuntimeError("pinned HF replay requires huggingface_hub") from exc
+    snapshot = Path(
+        snapshot_download(
+            repo_id=ref,
+            revision=revision,
+            cache_dir=str(hf_cache_dir),
+            local_files_only=True,
+            allow_patterns=[
+                "*.safetensors",
+                "*.safetensors.index.json",
+                "pytorch_model*.bin",
+                "pytorch_model*.bin.index.json",
+                "config.json",
+                "generation_config.json",
+                "tokenizer*",
+                "special_tokens_map.json",
+                "added_tokens.json",
+                "vocab.json",
+                "merges.txt",
+            ],
+        )
+    ).resolve()
+    if snapshot.name != revision:
+        raise RuntimeError(
+            f"{model_label}: resolved HF snapshot {snapshot} does not end in "
+            f"the pinned revision {revision}"
+        )
+    content = _hash_model_snapshot(snapshot, model_label=model_label)
+    if expected_content_sha256:
+        if not _SHA256_RE.fullmatch(expected_content_sha256):
+            raise RuntimeError(f"{model_label}: invalid expected model content hash")
+        if content["content_sha256"] != expected_content_sha256:
+            raise RuntimeError(
+                f"{model_label}: pinned snapshot content hash mismatch"
+            )
+    identity = {
+        "kind": "pinned_hf_snapshot",
+        "configured_ref": ref,
+        "hf_repo_id": ref,
+        "requested_revision": revision,
+        "resolved_revision": snapshot.name,
+        "resolved_path": str(snapshot),
+        **content,
+    }
+    return str(snapshot), identity
+
+
+def _verify_model_identity(identity: Dict[str, object]) -> None:
+    current = _hash_model_snapshot(
+        Path(str(identity["resolved_path"])),
+        model_label=str(identity["model_label"]),
+    )
+    if current["content_sha256"] != identity["content_sha256"]:
+        raise RuntimeError(
+            f"resolved model content changed: {identity['resolved_path']}"
+        )
 
 
 def _rel(path: Path) -> str:
@@ -173,6 +557,181 @@ def _rel(path: Path) -> str:
         return str(p.relative_to(_REPO)).replace("\\", "/")
     except ValueError:
         return str(p).replace("\\", "/")
+
+
+def _execution_policy(protocol: Dict) -> Dict[str, object]:
+    execution = dict(protocol.get("execution") or {})
+    required = {
+        "authorization_id",
+        "authorization_scope",
+        "model_identity",
+        "resource_guards",
+    }
+    missing = sorted(required - set(execution))
+    if missing:
+        raise RuntimeError(f"protocol execution policy missing fields: {missing}")
+    return execution
+
+
+def _protected_protocol_snapshot(protocol: Dict) -> Dict[str, str]:
+    protected: Dict[str, str] = {}
+    legacy = dict(protocol["legacy_e0013"])
+    for path_key, hash_key in (
+        ("samples_path", "samples_sha256"),
+        ("reanalysis_path", "reanalysis_sha256"),
+        ("run_manifest_path", "run_manifest_sha256"),
+    ):
+        path = Path(legacy[path_key])
+        if not path.is_absolute():
+            path = (_REPO / path).resolve()
+        actual = _sha256_file(path)
+        if actual != legacy[hash_key]:
+            raise RuntimeError(f"protected legacy artifact hash mismatch: {path}")
+        protected[_rel(path)] = actual
+    for cell_key, cell_spec in sorted(dict(protocol["cells"]).items()):
+        frozen = dict(cell_spec["frozen_result"])
+        path = Path(frozen["path"])
+        if not path.is_absolute():
+            path = (_REPO / path).resolve()
+        actual = _sha256_file(path)
+        if actual != frozen["sha256"]:
+            raise RuntimeError(f"protected frozen result hash mismatch: {cell_key}")
+        protected[_rel(path)] = actual
+    return protected
+
+
+def _assert_protected_protocol_snapshot(expected: Dict[str, str]) -> None:
+    actual = {
+        rel: _sha256_file((_REPO / rel).resolve())
+        for rel in sorted(expected)
+    }
+    if actual != expected:
+        changed = sorted(
+            rel
+            for rel in set(actual) | set(expected)
+            if actual.get(rel) != expected.get(rel)
+        )
+        raise RuntimeError(
+            "protected E-0013/E-0006 artifacts changed: " + ", ".join(changed)
+        )
+
+
+def _prepare_hf_execution_guard(
+    args,
+    *,
+    raw_argv: Sequence[str],
+) -> Tuple[Path, Dict, Dict[str, object], Path, Optional[Path]]:
+    if not args.protocol_manifest:
+        raise RuntimeError("--protocol-manifest is mandatory for direct HF replay")
+    if not args.expected_code_commit:
+        raise RuntimeError("--expected-code-commit is mandatory for direct HF replay")
+    if not args.authorization:
+        raise RuntimeError("--authorization is mandatory for direct HF replay")
+    if not args.scratch_dir:
+        raise RuntimeError("--scratch-dir is mandatory for direct HF replay")
+
+    protocol_path = Path(args.protocol_manifest).resolve()
+    protocol = json.loads(protocol_path.read_text(encoding="utf-8"))
+    execution = _execution_policy(protocol)
+    if args.authorization != execution["authorization_id"]:
+        raise RuntimeError("HF replay authorization does not match the frozen protocol")
+    current_commit = git_commit(str(_REPO))
+    if current_commit != args.expected_code_commit:
+        raise RuntimeError(
+            f"HEAD {current_commit} != expected audited commit "
+            f"{args.expected_code_commit}"
+        )
+    dirty = _git_status_rows()
+    if dirty:
+        raise RuntimeError(
+            "direct HF replay requires a clean tree: " + "; ".join(dirty)
+        )
+    manifest_blob = _git_blob_oid(protocol_path, current_commit)
+    scratch_dir = _require_external_directory(Path(args.scratch_dir), "--scratch-dir")
+    hf_cache_dir = (
+        _require_external_directory(Path(args.hf_cache_dir), "--hf-cache-dir")
+        if args.hf_cache_dir
+        else None
+    )
+    base_binding = {
+        "schema_version": EXECUTION_IDENTITY_SCHEMA_VERSION,
+        "code_commit": current_commit,
+        "expected_audited_commit": args.expected_code_commit,
+        "dirty_tree": False,
+        "git_status": [],
+        "protocol_manifest": {
+            "path": _rel(protocol_path),
+            "sha256": _sha256_file(protocol_path),
+            "git_blob_oid": manifest_blob,
+        },
+        "argv": [
+            "python",
+            "scripts/run_uncertainty_format_recheck.py",
+            *list(raw_argv),
+        ],
+        "authorization": {
+            "id": args.authorization,
+            "scope": execution["authorization_scope"],
+        },
+        "scratch_dir": str(scratch_dir),
+        "hf_cache_dir": str(hf_cache_dir) if hf_cache_dir is not None else None,
+        "resource_guards": dict(execution["resource_guards"]),
+    }
+    base_binding["argv_sha256"] = _canonical_hash(base_binding["argv"])
+    return protocol_path, protocol, base_binding, scratch_dir, hf_cache_dir
+
+
+def _assert_execution_binding_current(
+    binding: Dict[str, object],
+    *,
+    protocol_path: Path,
+    raw_argv: Sequence[str],
+    model_identities: Dict[str, Dict[str, object]],
+    out_dir: Path,
+    scratch_dir: Path,
+    activation_cache_dir: Path,
+    hf_cache_dir: Optional[Path],
+    stage: str,
+) -> Dict[str, object]:
+    current_commit = git_commit(str(_REPO))
+    if current_commit != binding["code_commit"]:
+        raise RuntimeError(
+            f"{stage}: code commit changed from {binding['code_commit']} "
+            f"to {current_commit}"
+        )
+    dirty = _git_status_rows()
+    if dirty:
+        raise RuntimeError(f"{stage}: repository became dirty: {'; '.join(dirty)}")
+    manifest = dict(binding["protocol_manifest"])
+    if _sha256_file(protocol_path) != manifest["sha256"]:
+        raise RuntimeError(f"{stage}: protocol manifest hash changed")
+    if _git_blob_oid(protocol_path, current_commit) != manifest["git_blob_oid"]:
+        raise RuntimeError(f"{stage}: protocol manifest git blob changed")
+    protocol = json.loads(protocol_path.read_text(encoding="utf-8"))
+    execution = _execution_policy(protocol)
+    authorization = dict(binding["authorization"])
+    if execution["authorization_id"] != authorization["id"]:
+        raise RuntimeError(f"{stage}: protocol authorization changed")
+    current_argv = [
+        "python",
+        "scripts/run_uncertainty_format_recheck.py",
+        *list(raw_argv),
+    ]
+    if current_argv != binding["argv"]:
+        raise RuntimeError(f"{stage}: direct-run argv changed")
+    for identity in model_identities.values():
+        _verify_model_identity(identity)
+    environment = _assert_resource_guards(
+        dict(binding["resource_guards"]),
+        out_dir=out_dir,
+        scratch_dir=scratch_dir,
+        activation_cache_dir=activation_cache_dir,
+        hf_cache_dir=hf_cache_dir,
+        stage=stage,
+    )
+    if _stable_environment_identity(environment) != binding["environment_identity"]:
+        raise RuntimeError(f"{stage}: CUDA/software environment identity changed")
+    return environment
 
 
 def _cell_key(method: str, model_label: str) -> str:
@@ -264,11 +823,23 @@ def load_uncertainty_items(
 
 
 def split_items(items: Sequence[Dict], seed: int) -> Dict[str, List[Dict]]:
+    ids = [str(it["id"]) for it in items]
+    if len(ids) != len(set(ids)):
+        duplicates = sorted({item_id for item_id in ids if ids.count(item_id) > 1})
+        raise ValueError(f"duplicate uncertainty item ids: {duplicates}")
     by_id = {str(it["id"]): it for it in items}
     split = adj.split_dev_test(list(by_id.keys()), dev_fraction=adj.DEV_FRACTION, seed=seed)
+    dev_ids = list(split.dev_ids)
+    test_ids = list(split.test_ids)
+    if len(dev_ids) != len(set(dev_ids)) or len(test_ids) != len(set(test_ids)):
+        raise ValueError("DEV/TEST splitter returned duplicate ids")
+    if set(dev_ids) & set(test_ids):
+        raise ValueError("DEV/TEST splitter returned overlapping ids")
+    if set(dev_ids) | set(test_ids) != set(ids):
+        raise ValueError("DEV/TEST splitter returned missing or extra ids")
     return {
-        "dev": [by_id[i] for i in split.dev_ids],
-        "test": [by_id[i] for i in split.test_ids],
+        "dev": [by_id[i] for i in dev_ids],
+        "test": [by_id[i] for i in test_ids],
     }
 
 
@@ -310,7 +881,7 @@ def _truncate_raw(text: str, max_chars: int) -> Tuple[str, bool]:
     return text[: max(0, max_chars - len(suffix))] + suffix, True
 
 
-def _derive_hf_direction(cfg: FrozenCellConfig, model_id: str, out_dir: Path,
+def _derive_hf_direction(cfg: FrozenCellConfig, model_id: str, activation_cache_dir: Path,
                          n_extraction: int, seed: int) -> Tuple[np.ndarray, Dict[str, object]]:
     from cognitive_console.activations.provider import HFActivationProvider
 
@@ -319,7 +890,7 @@ def _derive_hf_direction(cfg: FrozenCellConfig, model_id: str, out_dir: Path,
         model_id,
         device=device,
         dtype=dtype,
-        cache_dir=str(out_dir / "activations" / "cache"),
+        cache_dir=str(activation_cache_dir),
     )
     if cfg.method == "caa":
         direction = p0._extract_direction(provider, AXIS, cfg.layer, n_extraction, seed)
@@ -428,6 +999,8 @@ def _validate_checkpoint_record(
     requested_alpha: float,
     effective_alpha: float,
     backend_name: str,
+    model_identity_sha256: str,
+    execution_identity_sha256: str,
 ) -> None:
     exact = {
         "experiment_id": experiment_id,
@@ -436,6 +1009,8 @@ def _validate_checkpoint_record(
         "method": cfg.method,
         "model_label": cfg.model_label,
         "model_id": model_id,
+        "model_identity_sha256": model_identity_sha256,
+        "execution_identity_sha256": execution_identity_sha256,
         "split": expected["split"],
         "condition": expected["condition"],
         "item_id": expected["item_id"],
@@ -505,6 +1080,8 @@ def _load_checkpoint_batch(
     requested_alpha: float,
     effective_alpha: float,
     backend_name: str,
+    execution_binding: Dict[str, object],
+    model_identity_sha256: str,
 ) -> Optional[List[Dict]]:
     if not path.exists():
         return None
@@ -513,6 +1090,8 @@ def _load_checkpoint_batch(
         raise RuntimeError(f"{path}: unsupported checkpoint schema")
     if payload.get("checkpoint_identity_sha256") != identity_sha256:
         raise RuntimeError(f"{path}: checkpoint identity mismatch")
+    if payload.get("execution_binding") != execution_binding:
+        raise RuntimeError(f"{path}: checkpoint execution identity mismatch")
     if payload.get("jobs_sha256") != _canonical_hash(list(jobs)):
         raise RuntimeError(f"{path}: checkpoint job-plan mismatch")
     records = payload.get("records")
@@ -532,6 +1111,8 @@ def _load_checkpoint_batch(
             requested_alpha=requested_alpha,
             effective_alpha=effective_alpha,
             backend_name=backend_name,
+            model_identity_sha256=model_identity_sha256,
+            execution_identity_sha256=_canonical_hash(execution_binding),
         )
     return [dict(record) for record in records]
 
@@ -542,10 +1123,12 @@ def _write_checkpoint_batch(
     identity_sha256: str,
     jobs: Sequence[Dict],
     records: Sequence[Dict],
+    execution_binding: Dict[str, object],
 ) -> None:
     payload = {
         "schema_version": CHECKPOINT_SCHEMA_VERSION,
         "checkpoint_identity_sha256": identity_sha256,
+        "execution_binding": execution_binding,
         "jobs_sha256": _canonical_hash(list(jobs)),
         "records_sha256": _canonical_hash(list(records)),
         "records": list(records),
@@ -569,22 +1152,94 @@ def _write_or_verify_seal(path: Path, payload: Dict) -> None:
     _atomic_write_json(path, payload)
 
 
+def _prepare_activation_cache(
+    cache_dir: Path,
+    *,
+    model_identity: Dict[str, object],
+    execution_binding: Dict[str, object],
+) -> Dict[str, object]:
+    cache_dir = Path(cache_dir).resolve()
+    seal_path = cache_dir.parent / "activation_cache_identity.json"
+    existing_files = (
+        [path for path in cache_dir.rglob("*") if path.is_file()]
+        if cache_dir.exists()
+        else []
+    )
+    incomplete = [path for path in existing_files if path.name.endswith(".tmp")]
+    for path in incomplete:
+        path.unlink()
+    existing_files = [path for path in existing_files if path not in incomplete]
+    if existing_files and not seal_path.is_file():
+        raise RuntimeError(
+            f"{cache_dir}: activation cache has data without an identity seal"
+        )
+    identity = {
+        "schema_version": "e0013-activation-cache-v1",
+        "cache_dir": str(cache_dir),
+        "model_identity_sha256": _canonical_hash(model_identity),
+        "execution_identity_sha256": _canonical_hash(execution_binding),
+        "device": p0._pick_device(),
+        "dtype": p0._pick_dtype(),
+    }
+    _write_or_verify_seal(seal_path, identity)
+    for path in existing_files:
+        if path.suffix != ".npy":
+            raise RuntimeError(f"{cache_dir}: unexpected activation-cache file {path}")
+        try:
+            array = np.load(path, mmap_mode="r", allow_pickle=False)
+        except Exception as exc:
+            raise RuntimeError(f"{path}: invalid activation cache entry") from exc
+        if (
+            array.ndim != 1
+            or array.size == 0
+            or array.dtype.kind != "f"
+            or not np.isfinite(array).all()
+        ):
+            raise RuntimeError(f"{path}: invalid activation vector shape/content")
+    return {
+        **identity,
+        "seal_path": _rel(seal_path),
+        "seal_sha256": _sha256_file(seal_path),
+    }
+
+
 def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id: str,
                           items_by_split: Dict[str, List[Dict]], splits: Sequence[str],
                           out_dir: Path, max_new_tokens: int, temperature: float,
                           seed: int, batch_size: int, raw_text_max_chars: int,
                           n_extraction: int, experiment_id: str,
                           protocol_identity: Optional[Dict[str, object]],
-                          item_identity: Dict[str, object]) -> Tuple[List[Dict], Dict[str, object]]:
+                          item_identity: Dict[str, object],
+                          model_identity: Dict[str, object],
+                          execution_binding: Dict[str, object],
+                          activation_cache_dir: Optional[Path] = None,
+                          resource_guard: Optional[Callable[[str], Dict[str, object]]] = None,
+                          ) -> Tuple[List[Dict], Dict[str, object]]:
+    if resource_guard is not None:
+        resource_guard("before_cell")
+    activation_cache_identity: Optional[Dict[str, object]] = None
+    if backend_name == "hf":
+        if activation_cache_dir is None:
+            raise RuntimeError("HF replay requires an explicit activation cache directory")
+        activation_cache_identity = _prepare_activation_cache(
+            activation_cache_dir,
+            model_identity=model_identity,
+            execution_binding=execution_binding,
+        )
     all_items = [it for sp in splits for it in items_by_split[sp]]
     backend = _make_backend(backend_name, model_id, all_items, seed)
     if backend_name == "synthetic":
         direction = np.ones(8, dtype=np.float64)
         direction_meta = {"direction_source": "synthetic_offline_placeholder"}
     else:
-        direction, direction_meta = _derive_hf_direction(cfg, model_id, out_dir, n_extraction, seed)
+        assert activation_cache_dir is not None
+        direction, direction_meta = _derive_hf_direction(
+            cfg, model_id, activation_cache_dir, n_extraction, seed
+        )
 
     direction_sha256 = _array_sha256(direction)
+    execution_identity_sha256 = _canonical_hash(execution_binding)
+    model_identity_sha256 = _canonical_hash(model_identity)
     checkpoint_dir = out_dir / "checkpoints"
     checkpoint_identity = {
         "schema_version": CHECKPOINT_SCHEMA_VERSION,
@@ -597,7 +1252,11 @@ def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id:
         "method": cfg.method,
         "model_label": cfg.model_label,
         "model_id": model_id,
-        "model_identity_key": _model_identity_key(model_id),
+        "resolved_model_identity": model_identity,
+        "model_identity_sha256": model_identity_sha256,
+        "execution_binding": execution_binding,
+        "execution_identity_sha256": execution_identity_sha256,
+        "activation_cache_identity": activation_cache_identity,
         "frozen_source_result": cfg.source_result_file,
         "frozen_source_config_fingerprint": cfg.source_config_fingerprint,
         "layer": cfg.layer,
@@ -662,6 +1321,8 @@ def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id:
                 checkpoint_dir / "test_started.json",
                 {
                     "checkpoint_identity_sha256": identity_sha256,
+                    "execution_binding": execution_binding,
+                    "execution_identity_sha256": execution_identity_sha256,
                     "test_use_policy": TEST_USE_POLICY,
                     "test_jobs": len(split_plan),
                     "test_plan_sha256": _canonical_hash(split_plan),
@@ -678,6 +1339,10 @@ def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id:
             )
             steer = SteerConfig(direction=direction, alpha=effective_alpha, layer=cfg.layer)
             for start in range(0, len(jobs), max(1, int(batch_size))):
+                if resource_guard is not None:
+                    resource_guard(
+                        f"before_batch:{cfg.cell_key}:{split_name}:{condition}:{start}"
+                    )
                 chunk_jobs = jobs[start:start + max(1, int(batch_size))]
                 checkpoint_path = _checkpoint_batch_path(
                     checkpoint_dir, split_name, condition, start
@@ -695,6 +1360,8 @@ def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id:
                     requested_alpha=requested_alpha,
                     effective_alpha=effective_alpha,
                     backend_name=backend_name,
+                    execution_binding=execution_binding,
+                    model_identity_sha256=model_identity_sha256,
                 )
                 if cached is not None:
                     records.extend(cached)
@@ -762,6 +1429,8 @@ def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id:
                         "method": cfg.method,
                         "model_label": cfg.model_label,
                         "model_id": model_id,
+                        "model_identity_sha256": model_identity_sha256,
+                        "execution_identity_sha256": execution_identity_sha256,
                         "split": split_name,
                         "condition": condition,
                         "item_id": str(item.get("id")),
@@ -784,13 +1453,20 @@ def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id:
                     identity_sha256=identity_sha256,
                     jobs=chunk_jobs,
                     records=batch_records,
+                    execution_binding=execution_binding,
                 )
                 records.extend(batch_records)
                 checkpoint_generated += len(batch_records)
                 checkpoint_generated_by_split[split_name] += len(batch_records)
+                if resource_guard is not None:
+                    resource_guard(
+                        f"after_batch:{cfg.cell_key}:{split_name}:{condition}:{start}"
+                    )
         split_paths = batch_paths_by_split[split_name]
         split_seal = {
             "checkpoint_identity_sha256": identity_sha256,
+            "execution_binding": execution_binding,
+            "execution_identity_sha256": execution_identity_sha256,
             "split": split_name,
             "jobs": len(split_plan),
             "plan_sha256": _canonical_hash(split_plan),
@@ -814,12 +1490,15 @@ def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id:
         checkpoint_paths.append(checkpoint_dir / "test_started.json")
     meta = {
         "direction": {**direction_meta, "direction_sha256": direction_sha256},
+        "activation_cache": activation_cache_identity,
         "n_records": len(records),
         "splits": list(splits),
         "checkpoint": {
             "schema_version": CHECKPOINT_SCHEMA_VERSION,
             "identity_path": _rel(identity_path),
             "identity_sha256": identity_sha256,
+            "execution_identity_sha256": execution_identity_sha256,
+            "model_identity_sha256": model_identity_sha256,
             "records_reused": checkpoint_reused,
             "records_generated": checkpoint_generated,
             "files": _checkpoint_inventory(checkpoint_paths),
@@ -827,6 +1506,8 @@ def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id:
             "test_resumed_without_regenerating_completed_batches": True,
         },
     }
+    if resource_guard is not None:
+        resource_guard("after_cell")
     return records, meta
 
 
@@ -966,7 +1647,8 @@ def reanalyse(records: Sequence[Dict], *, bootstrap_b: int, seed: int) -> Dict[s
     }
 
 
-def _model_identity_key(model_ref: str) -> str:
+def _legacy_model_label_key(model_ref: str) -> str:
+    """Compatibility label for immutable legacy artifacts, never run identity."""
     parts = [p for p in str(model_ref).strip().replace(os.sep, "/").replace("\\", "/").split("/") if p]
     return (parts[-1] if parts else str(model_ref)).strip().lower()
 
@@ -989,6 +1671,22 @@ def build_parser() -> argparse.ArgumentParser:
                     help="override Qwen model path/id; default reuses frozen cell artifact model")
     ap.add_argument("--llama-model", default=None,
                     help="override Llama model path/id; default reuses frozen cell artifact model")
+    ap.add_argument("--qwen-revision", default=None)
+    ap.add_argument("--llama-revision", default=None)
+    ap.add_argument("--qwen-model-content-sha256", default=None)
+    ap.add_argument("--llama-model-content-sha256", default=None)
+    ap.add_argument("--expected-code-commit", default=None)
+    ap.add_argument("--authorization", default=None)
+    ap.add_argument(
+        "--scratch-dir",
+        default=None,
+        help="explicit external scratch directory; mandatory for HF replay",
+    )
+    ap.add_argument(
+        "--hf-cache-dir",
+        default=None,
+        help="explicit external Hugging Face cache; mandatory for HF repo ids",
+    )
     ap.add_argument("--cells", nargs="*", default=sorted(arm.FROZEN_CELL_KEYS))
     ap.add_argument("--splits", nargs="*", choices=["dev", "test"], default=["dev", "test"])
     ap.add_argument("--n-items", type=int, default=None, help="synthetic/debug cap only")
@@ -1031,32 +1729,10 @@ def _validate_generation_identity(
     }
     effective_model = requested_model or (frozen_cell.model_id if frozen_cell is not None else None)
     mismatches = [f"{k}={got!r} (expected {want!r})" for k, (got, want) in expected.items() if got != want]
-    if frozen_cell is not None and effective_model is not None:
-        effective_key = _model_identity_key(effective_model)
-        frozen_key = _model_identity_key(frozen_cell.model_id)
-        if effective_key != frozen_key:
-            mismatches.append(
-                f"--model identity={effective_key!r} from {effective_model!r} "
-                f"(expected {frozen_key!r} from frozen {frozen_cell.model_id!r})"
-            )
     if mismatches:
         raise SystemExit(
             "E-0013 must use the E-0006 generation identity; mismatches: "
             + ", ".join(mismatches)
-        )
-    if (
-        frozen_cell is not None
-        and requested_model is None
-        and args.backend == "hf"
-        and _looks_like_local_path(frozen_cell.model_id)
-        and not Path(frozen_cell.model_id).exists()
-    ):
-        flag = "--qwen-model" if frozen_cell.model_label == "qwen2.5-7b" else "--llama-model"
-        raise SystemExit(
-            f"{frozen_cell.cell_key}: frozen E-0006 model_id {frozen_cell.model_id!r} "
-            "is a local path that does not exist on this machine. "
-            f"Pass {flag} with this machine's reference to the same model "
-            f"(identity key {_model_identity_key(frozen_cell.model_id)!r})."
         )
     if args.bootstrap_b < adj.BOOTSTRAP_B and not args.allow_underpowered:
         raise SystemExit(
@@ -1166,7 +1842,7 @@ def _validate_protocol_manifest(
         actuals = {
             "method": cfg.method,
             "model_label": cfg.model_label,
-            "model_identity_key": _model_identity_key(cfg.model_id),
+            "legacy_model_label_key": _legacy_model_label_key(cfg.model_id),
             "layer": cfg.layer,
             "frozen_alpha": cfg.frozen_alpha,
             "best_prompt_id": cfg.best_prompt_id,
@@ -1206,8 +1882,22 @@ def _validate_protocol_manifest(
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    args = build_parser().parse_args(argv)
+    raw_argv = list(argv) if argv is not None else list(sys.argv[1:])
+    args = build_parser().parse_args(raw_argv)
     _validate_generation_identity(args)
+    guarded_protocol_path: Optional[Path] = None
+    guarded_protocol: Optional[Dict] = None
+    base_execution_binding: Optional[Dict[str, object]] = None
+    scratch_dir: Optional[Path] = None
+    hf_cache_dir: Optional[Path] = None
+    if args.backend == "hf":
+        (
+            guarded_protocol_path,
+            guarded_protocol,
+            base_execution_binding,
+            scratch_dir,
+            hf_cache_dir,
+        ) = _prepare_hf_execution_guard(args, raw_argv=raw_argv)
     out_dir = Path(args.out_dir).resolve()
     if out_dir == DEFAULT_OUT_DIR.resolve() and args.resume_incomplete:
         raise SystemExit(
@@ -1227,10 +1917,22 @@ def main(argv: Optional[List[str]] = None) -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     frozen_configs: Dict[str, FrozenCellConfig] = {}
     model_ids: Dict[str, str] = {}
+    model_identities: Dict[str, Dict[str, object]] = {}
+    model_identity_by_label: Dict[str, Dict[str, object]] = {}
+    model_load_path_by_label: Dict[str, str] = {}
     for cell_key in args.cells:
         method, model_label = _parse_cell(cell_key)
         cfg = load_frozen_cell_config(Path(args.frozen_root), method, model_label)
-        override_model = args.qwen_model if model_label == "qwen2.5-7b" else args.llama_model
+        override_model = (
+            args.qwen_model if model_label == "qwen2.5-7b" else args.llama_model
+        )
+        if args.backend == "hf" and override_model is None:
+            assert guarded_protocol is not None
+            override_model = str(
+                _execution_policy(guarded_protocol)["model_identity"][model_label][
+                    "hf_repo_id"
+                ]
+            )
         model_ids[cell_key] = _validate_generation_identity(
             args, frozen_cell=cfg, requested_model=override_model
         )
@@ -1249,6 +1951,76 @@ def main(argv: Optional[List[str]] = None) -> int:
         items=items,
         items_by_split=items_by_split,
     )
+    protected_snapshot = (
+        _protected_protocol_snapshot(guarded_protocol)
+        if args.backend == "hf" and guarded_protocol is not None
+        else {}
+    )
+    execution_binding: Dict[str, object]
+    environment_at_start: Optional[Dict[str, object]] = None
+    if args.backend == "hf":
+        assert guarded_protocol_path is not None
+        assert guarded_protocol is not None
+        assert base_execution_binding is not None
+        assert scratch_dir is not None
+        execution = _execution_policy(guarded_protocol)
+        resource_policy = dict(execution["resource_guards"])
+        pre_activation_cache = scratch_dir / "activation-cache-preflight"
+        environment_at_start = _assert_resource_guards(
+            resource_policy,
+            out_dir=out_dir,
+            scratch_dir=scratch_dir,
+            activation_cache_dir=pre_activation_cache,
+            hf_cache_dir=hf_cache_dir,
+            stage="before_model_resolution",
+        )
+        labels = sorted({cfg.model_label for cfg in frozen_configs.values()})
+        for model_label in labels:
+            if model_label == "qwen2.5-7b":
+                model_ref = args.qwen_model or str(
+                    execution["model_identity"][model_label]["hf_repo_id"]
+                )
+                revision = args.qwen_revision
+                expected_content = args.qwen_model_content_sha256
+            else:
+                model_ref = args.llama_model or str(
+                    execution["model_identity"][model_label]["hf_repo_id"]
+                )
+                revision = args.llama_revision
+                expected_content = args.llama_model_content_sha256
+            load_path, resolved_identity = _resolve_model_identity(
+                model_ref=model_ref,
+                model_label=model_label,
+                revision=revision,
+                expected_content_sha256=expected_content,
+                model_policy=dict(execution["model_identity"][model_label]),
+                hf_cache_dir=hf_cache_dir,
+            )
+            model_load_path_by_label[model_label] = load_path
+            model_identity_by_label[model_label] = resolved_identity
+        for cell_key, cfg in frozen_configs.items():
+            model_ids[cell_key] = model_load_path_by_label[cfg.model_label]
+            model_identities[cell_key] = model_identity_by_label[cfg.model_label]
+        execution_binding = {
+            **base_execution_binding,
+            "resolved_model_identities": model_identity_by_label,
+            "environment_identity": _stable_environment_identity(
+                environment_at_start
+            ),
+        }
+    else:
+        for cell_key, cfg in frozen_configs.items():
+            model_identities[cell_key] = {
+                "kind": "synthetic_offline",
+                "model_label": cfg.model_label,
+                "configured_ref": model_ids[cell_key],
+                "content_sha256": "synthetic-offline",
+            }
+        execution_binding = {
+            "schema_version": "e0013-synthetic-execution-identity-v1",
+            "experiment_id": args.experiment_id,
+            "backend": "synthetic",
+        }
     splits = list(dict.fromkeys(args.splits))
     item_identity = {
         "source": (
@@ -1293,6 +2065,39 @@ def main(argv: Optional[List[str]] = None) -> int:
         cell_runtime_dir = (
             out_dir if len(args.cells) == 1 else out_dir / f"cell_{cell_key}"
         )
+        activation_cache_dir: Optional[Path] = None
+        resource_guard: Optional[Callable[[str], Dict[str, object]]] = None
+        environment_before_cell: Optional[Dict[str, object]] = None
+        if args.backend == "hf":
+            assert scratch_dir is not None
+            assert guarded_protocol_path is not None
+            _assert_protected_protocol_snapshot(protected_snapshot)
+            activation_cache_dir = (
+                scratch_dir / f"cell_{cell_key}" / "activations" / "cache"
+            )
+            activation_cache_dir.parent.mkdir(parents=True, exist_ok=True)
+            environment_before_cell = _assert_execution_binding_current(
+                execution_binding,
+                protocol_path=guarded_protocol_path,
+                raw_argv=raw_argv,
+                model_identities=model_identity_by_label,
+                out_dir=cell_runtime_dir,
+                scratch_dir=scratch_dir,
+                activation_cache_dir=activation_cache_dir,
+                hf_cache_dir=hf_cache_dir,
+                stage=f"before_cell:{cell_key}",
+            )
+
+            def resource_guard(stage: str, *, _cache=activation_cache_dir):
+                return _assert_resource_guards(
+                    dict(execution_binding["resource_guards"]),
+                    out_dir=cell_runtime_dir,
+                    scratch_dir=scratch_dir,
+                    activation_cache_dir=_cache,
+                    hf_cache_dir=hf_cache_dir,
+                    stage=stage,
+                )
+
         recs, meta = generate_cell_samples(
             cfg,
             backend_name=args.backend,
@@ -1309,7 +2114,28 @@ def main(argv: Optional[List[str]] = None) -> int:
             experiment_id=args.experiment_id,
             protocol_identity=protocol_identity,
             item_identity=item_identity,
+            model_identity=model_identities[cell_key],
+            execution_binding=execution_binding,
+            activation_cache_dir=activation_cache_dir,
+            resource_guard=resource_guard,
         )
+        environment_after_cell: Optional[Dict[str, object]] = None
+        if args.backend == "hf":
+            assert scratch_dir is not None
+            assert guarded_protocol_path is not None
+            assert activation_cache_dir is not None
+            environment_after_cell = _assert_execution_binding_current(
+                execution_binding,
+                protocol_path=guarded_protocol_path,
+                raw_argv=raw_argv,
+                model_identities=model_identity_by_label,
+                out_dir=cell_runtime_dir,
+                scratch_dir=scratch_dir,
+                activation_cache_dir=activation_cache_dir,
+                hf_cache_dir=hf_cache_dir,
+                stage=f"after_cell:{cell_key}",
+            )
+            _assert_protected_protocol_snapshot(protected_snapshot)
         for rec in recs:
             rec["experiment_id"] = args.experiment_id
         cell_records.extend(recs)
@@ -1317,8 +2143,10 @@ def main(argv: Optional[List[str]] = None) -> int:
             "frozen_config": cfg.__dict__,
             "frozen_model_id": cfg.model_id,
             "effective_model_ref": effective_model_ref,
-            "model_identity_key": _model_identity_key(effective_model_ref),
+            "resolved_model_identity": model_identities[cell_key],
             "run_model_id": model_id,
+            "environment_before_cell": environment_before_cell,
+            "environment_after_cell": environment_after_cell,
             **meta,
         }
 
@@ -1365,11 +2193,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         "wall_clock_seconds": time.time() - t0,
         "code_commit": git_commit(str(_REPO)),
         "dirty_tree_at_start": dirty_at_start,
+        "execution_binding": execution_binding,
+        "execution_identity_sha256": _canonical_hash(execution_binding),
+        "environment_at_start": environment_at_start,
         "generation_identity": {
             "model_by_cell": {k: v.model_id for k, v in frozen_configs.items()},
             "frozen_model_by_cell": {k: v.model_id for k, v in frozen_configs.items()},
             "effective_model_by_cell": model_ids,
-            "model_identity_key_by_cell": {k: _model_identity_key(v) for k, v in model_ids.items()},
+            "resolved_model_identity_by_cell": model_identities,
             "max_new_tokens": args.max_new_tokens,
             "temperature": args.temperature,
             "seed": args.seed,
@@ -1406,6 +2237,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             "protocol_manifest": protocol_identity,
             "item_identity": item_identity,
             "frozen_root": _rel(Path(args.frozen_root)),
+            "execution_binding": execution_binding,
+            "execution_identity_sha256": _canonical_hash(execution_binding),
         }
         for key, expected in checks.items():
             if existing_manifest.get(key) != expected:
@@ -1447,6 +2280,28 @@ def main(argv: Optional[List[str]] = None) -> int:
             raise RuntimeError("existing run manifest artifact hashes do not match")
     else:
         _write_once_or_verify_json(manifest_path, manifest)
+    if args.backend == "hf":
+        assert scratch_dir is not None
+        assert guarded_protocol_path is not None
+        for cell_key in args.cells:
+            cell_runtime_dir = (
+                out_dir if len(args.cells) == 1 else out_dir / f"cell_{cell_key}"
+            )
+            activation_cache_dir = (
+                scratch_dir / f"cell_{cell_key}" / "activations" / "cache"
+            )
+            _assert_execution_binding_current(
+                execution_binding,
+                protocol_path=guarded_protocol_path,
+                raw_argv=raw_argv,
+                model_identities=model_identity_by_label,
+                out_dir=cell_runtime_dir,
+                scratch_dir=scratch_dir,
+                activation_cache_dir=activation_cache_dir,
+                hf_cache_dir=hf_cache_dir,
+                stage=f"after_artifact_seal:{cell_key}",
+            )
+            _assert_protected_protocol_snapshot(protected_snapshot)
     print(f"[E-0013] wrote {_rel(samples_path)}")
     print(f"[E-0013] wrote {_rel(reanalysis_path)}")
     return 0

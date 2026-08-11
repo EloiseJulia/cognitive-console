@@ -22,7 +22,12 @@ the frozen E-0006 scorer results.
    isolated output directories; it must never overwrite the original E-0013
    or E-0006 artifacts. Seal a fixed TEST job plan, checkpoint complete
    fixed-composition batches, resume only exact identity matches, and forbid a
-   second TEST generation after the TEST-complete seal.
+   second TEST generation after the TEST-complete seal. Before planning replay,
+   validate any present recovered transcript source; valid recovery skips
+   generation and invalid recovery fails closed even when gitignored. Direct HF
+   execution binds the audited commit, clean tree, protocol blob/hash, exact
+   argv, authorization, resolved model identity, external scratch cache, and
+   A800/CUDA/float16 resource guards into the checkpoint identity.
 5. Run CPU-only validation against available immutable data. If fewer than four
    cells are present, emit an explicitly incomplete artifact and no grid-level
    scientific claim.

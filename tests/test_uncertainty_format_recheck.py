@@ -63,18 +63,22 @@ def test_synthetic_smoke_writes_compliance_and_delta_fields(tmp_path):
     assert manifest["synthetic_proxy"] is True
     assert manifest["generation_identity"]["model_by_cell"]["caa__qwen2.5-7b"] == "frozen-qwen"
     assert manifest["generation_identity"]["effective_model_by_cell"]["caa__qwen2.5-7b"] == "frozen-qwen"
-    assert manifest["generation_identity"]["model_identity_key_by_cell"]["caa__qwen2.5-7b"] == "frozen-qwen"
+    assert (
+        manifest["generation_identity"]["resolved_model_identity_by_cell"]
+        ["caa__qwen2.5-7b"]["kind"]
+        == "synthetic_offline"
+    )
 
 
-def test_model_identity_key_normalizes_paths_and_hf_ids():
+def test_legacy_model_label_key_normalizes_historical_references_only():
     qwen_autodl = "/root/autodl-tmp/models/Qwen2.5-7B-Instruct"
     qwen_hf = "Qwen/Qwen2.5-7B-Instruct"
     llama_autodl = "/root/autodl-tmp/models/Meta-Llama-3-8B-Instruct"
     llama_hf = "meta-llama/Meta-Llama-3-8B-Instruct"
 
-    assert R._model_identity_key(qwen_autodl) == R._model_identity_key(qwen_hf)
-    assert R._model_identity_key(llama_autodl) == R._model_identity_key(llama_hf)
-    assert R._model_identity_key(qwen_hf) != R._model_identity_key(llama_hf)
+    assert R._legacy_model_label_key(qwen_autodl) == R._legacy_model_label_key(qwen_hf)
+    assert R._legacy_model_label_key(llama_autodl) == R._legacy_model_label_key(llama_hf)
+    assert R._legacy_model_label_key(qwen_hf) != R._legacy_model_label_key(llama_hf)
 
 
 def test_validate_generation_identity_allows_same_model_different_reference():
@@ -93,30 +97,89 @@ def test_validate_generation_identity_allows_same_model_different_reference():
     assert effective == "Qwen/Qwen2.5-7B-Instruct"
 
 
-def test_validate_generation_identity_rejects_different_model_family():
-    cfg = _frozen_cell(
-        model_id="/root/autodl-tmp/models/Qwen2.5-7B-Instruct",
-        model_label="qwen2.5-7b",
+def test_local_model_identity_rejects_same_basename_different_content(tmp_path):
+    approved = _write_model_snapshot(tmp_path / "approved" / "same-name", "qwen2")
+    attacker = _write_model_snapshot(
+        tmp_path / "attacker" / "same-name", "qwen2", weight=b"attacker"
     )
-    args = R.build_parser().parse_args(["--backend", "synthetic"])
+    approved_identity = R._hash_model_snapshot(
+        approved, model_label="qwen2.5-7b"
+    )
 
-    with pytest.raises(SystemExit, match="--model identity"):
-        R._validate_generation_identity(
-            args,
-            frozen_cell=cfg,
-            requested_model="meta-llama/Meta-Llama-3-8B-Instruct",
+    with pytest.raises(RuntimeError, match="content hash mismatch"):
+        R._resolve_model_identity(
+            model_ref=str(attacker),
+            model_label="qwen2.5-7b",
+            revision=None,
+            expected_content_sha256=approved_identity["content_sha256"],
+            model_policy={
+                "hf_repo_id": "Qwen/Qwen2.5-7B-Instruct",
+                "revision": "a" * 40,
+            },
+            hf_cache_dir=None,
         )
 
 
-def test_hf_missing_frozen_local_path_without_override_has_actionable_error():
-    cfg = _frozen_cell(
-        model_id="/root/autodl-tmp/models/Qwen2.5-7B-Instruct",
-        model_label="qwen2.5-7b",
+def test_hf_direct_runner_requires_manifest_audit_sha_and_authorization(
+    tmp_path, monkeypatch
+):
+    out_dir = tmp_path / "out"
+    with pytest.raises(RuntimeError, match="protocol-manifest is mandatory"):
+        R.main(["--backend", "hf", "--out-dir", str(out_dir)])
+    assert not out_dir.exists()
+    protocol = tmp_path / "protocol.json"
+    protocol.write_text(
+        json.dumps(
+            {
+                "execution": {
+                    "authorization_id": "approved",
+                    "authorization_scope": "test",
+                    "model_identity": {},
+                    "resource_guards": {},
+                }
+            }
+        ),
+        encoding="utf-8",
     )
-    args = R.build_parser().parse_args(["--backend", "hf"])
-
-    with pytest.raises(SystemExit, match="Pass --qwen-model"):
-        R._validate_generation_identity(args, frozen_cell=cfg)
+    with pytest.raises(RuntimeError, match="authorization is mandatory"):
+        R.main(
+            [
+                "--backend",
+                "hf",
+                "--out-dir",
+                str(out_dir),
+                "--protocol-manifest",
+                str(protocol),
+                "--expected-code-commit",
+                "a" * 40,
+                "--scratch-dir",
+                str(tmp_path / "scratch"),
+            ]
+        )
+    committed_protocol = (
+        R._REPO
+        / "docs"
+        / "research"
+        / "2026-08-11-uncertainty-grid-recheck"
+        / "frozen-manifest.json"
+    )
+    args = R.build_parser().parse_args(
+        [
+            "--backend",
+            "hf",
+            "--protocol-manifest",
+            str(committed_protocol),
+            "--expected-code-commit",
+            R.git_commit(str(R._REPO)),
+            "--authorization",
+            "owner-2026-08-11-e0013-grid-recheck-after-hostile-audit",
+            "--scratch-dir",
+            str(tmp_path / "scratch"),
+        ]
+    )
+    monkeypatch.setattr(R, "_git_status_rows", lambda: [" M scripts/runner.py"])
+    with pytest.raises(RuntimeError, match="clean tree"):
+        R._prepare_hf_execution_guard(args, raw_argv=[])
 
 
 def test_manifest_records_frozen_effective_and_identity_key_for_override(tmp_path):
@@ -142,11 +205,15 @@ def test_manifest_records_frozen_effective_and_identity_key_for_override(tmp_pat
     identity = manifest["generation_identity"]
     assert identity["frozen_model_by_cell"]["caa__qwen2.5-7b"] == frozen_model
     assert identity["effective_model_by_cell"]["caa__qwen2.5-7b"] == effective_model
-    assert identity["model_identity_key_by_cell"]["caa__qwen2.5-7b"] == "qwen2.5-7b-instruct"
+    assert (
+        identity["resolved_model_identity_by_cell"]["caa__qwen2.5-7b"]
+        ["configured_ref"]
+        == effective_model
+    )
     cell = manifest["cells"]["caa__qwen2.5-7b"]
     assert cell["frozen_model_id"] == frozen_model
     assert cell["effective_model_ref"] == effective_model
-    assert cell["model_identity_key"] == "qwen2.5-7b-instruct"
+    assert cell["resolved_model_identity"]["kind"] == "synthetic_offline"
 
 
 def test_checkpoint_resume_reuses_completed_test_without_generation(
@@ -227,21 +294,201 @@ def test_test_complete_seal_refuses_missing_test_checkpoint(tmp_path):
         R.main([*argv, "--resume-incomplete"])
 
 
-def test_model_identity_mismatch_raises_before_generation(tmp_path):
-    frozen_root = _write_minimal_frozen_root(tmp_path / "frozen")
-    out_dir = tmp_path / "e0013"
-    with pytest.raises(SystemExit, match="--model"):
-        R.main([
-            "--backend", "synthetic",
-            "--frozen-root", str(frozen_root),
-            "--out-dir", str(out_dir),
-            "--cells", "caa__qwen2.5-7b",
-            "--qwen-model", "wrong-qwen",
-            "--n-items", "4",
-            "--bootstrap-b", "200",
-            "--allow-underpowered",
-        ])
-    assert not (out_dir / "samples.jsonl").exists()
+def test_old_or_dirty_execution_checkpoint_is_rejected(tmp_path):
+    path = tmp_path / "batch.json"
+    clean_binding = {"dirty_tree": False, "code_commit": "a" * 40}
+    dirty_binding = {"dirty_tree": True, "code_commit": "a" * 40}
+    R._atomic_write_json(
+        path,
+        {
+            "schema_version": R.CHECKPOINT_SCHEMA_VERSION,
+            "checkpoint_identity_sha256": "identity",
+            "execution_binding": dirty_binding,
+            "jobs_sha256": R._canonical_hash([]),
+            "records_sha256": R._canonical_hash([]),
+            "records": [],
+        },
+    )
+    with pytest.raises(RuntimeError, match="execution identity mismatch"):
+        R._load_checkpoint_batch(
+            path,
+            identity_sha256="identity",
+            jobs=[],
+            cfg=_frozen_cell("frozen-qwen", "qwen2.5-7b"),
+            items_by_id={},
+            model_id="synthetic-offline",
+            experiment_id="E-0013-test",
+            instruction="",
+            requested_alpha=0.0,
+            effective_alpha=0.0,
+            backend_name="synthetic",
+            execution_binding=clean_binding,
+            model_identity_sha256="model",
+        )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["schema_version"] = "e0013-format-replay-checkpoint-v1"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(RuntimeError, match="unsupported checkpoint schema"):
+        R._load_checkpoint_batch(
+            path,
+            identity_sha256="identity",
+            jobs=[],
+            cfg=_frozen_cell("frozen-qwen", "qwen2.5-7b"),
+            items_by_id={},
+            model_id="synthetic-offline",
+            experiment_id="E-0013-test",
+            instruction="",
+            requested_alpha=0.0,
+            effective_alpha=0.0,
+            backend_name="synthetic",
+            execution_binding=clean_binding,
+            model_identity_sha256="model",
+        )
+
+
+def test_resume_reuses_checkpoints_with_external_activation_cache(
+    tmp_path, monkeypatch
+):
+    cfg = _frozen_cell("approved-model", "qwen2.5-7b")
+    item = {
+        "id": "u1",
+        "prompt": "Capital of France?",
+        "answer": "Paris",
+        "aliases": [],
+    }
+    out_dir = tmp_path / "out"
+    activation_cache = tmp_path / "external-scratch" / "activations"
+    calls = {"generated": 0, "cache_seen": 0}
+
+    class Backend:
+        def generate_batch(self, prompts, steer, **kwargs):
+            calls["generated"] += len(prompts)
+            return ["Answer: Paris. Confidence: 80%."] * len(prompts)
+
+    def derive(cfg, model_id, cache_dir, n_extraction, seed):
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        marker = cache_dir.parent / "resume.marker"
+        if marker.exists():
+            calls["cache_seen"] += 1
+        marker.write_text("stable", encoding="utf-8")
+        return R.np.ones(8), {"direction_source": "test"}
+
+    monkeypatch.setattr(R, "_make_backend", lambda *args, **kwargs: Backend())
+    monkeypatch.setattr(R, "_derive_hf_direction", derive)
+    kwargs = {
+        "backend_name": "hf",
+        "model_id": "approved-model",
+        "items_by_split": {"test": [item]},
+        "splits": ["test"],
+        "out_dir": out_dir,
+        "max_new_tokens": 64,
+        "temperature": 0.7,
+        "seed": R.DEFAULT_SEED,
+        "batch_size": 16,
+        "raw_text_max_chars": 8000,
+        "n_extraction": R.DEFAULT_N_EXTRACTION,
+        "experiment_id": "E-0013-test",
+        "protocol_identity": {"sha256": "manifest"},
+        "item_identity": {"sha256": "items"},
+        "model_identity": {
+            "kind": "test",
+            "model_label": "qwen2.5-7b",
+            "resolved_path": "approved-model",
+            "content_sha256": "model",
+        },
+        "execution_binding": {"dirty_tree": False, "argv": ["same"]},
+        "activation_cache_dir": activation_cache,
+        "resource_guard": lambda stage: {"stage": stage},
+    }
+    first, _ = R.generate_cell_samples(cfg, **kwargs)
+    assert len(first) == 15
+    generated = calls["generated"]
+    activation_cache.mkdir(parents=True, exist_ok=True)
+    (activation_cache / "orphan.npy.tmp").write_bytes(b"incomplete")
+
+    class PoisonBackend:
+        def generate_batch(self, *args, **kwargs):
+            raise AssertionError("resume regenerated a completed batch")
+
+    monkeypatch.setattr(
+        R, "_make_backend", lambda *args, **kwargs: PoisonBackend()
+    )
+    second, meta = R.generate_cell_samples(cfg, **kwargs)
+    assert len(second) == 15
+    assert calls["generated"] == generated
+    assert calls["cache_seen"] == 1
+    assert not (activation_cache / "orphan.npy.tmp").exists()
+    assert meta["checkpoint"]["records_reused"] == 15
+    assert activation_cache.is_dir()
+    assert not (out_dir / "activations").exists()
+
+
+def test_cuda_and_disk_cache_guards_fail_closed(tmp_path, monkeypatch):
+    good_probe = {
+        "platform": "test",
+        "python": "3.12",
+        "torch": "test",
+        "transformers": "test",
+        "torch_cuda_runtime": "12.1",
+        "cuda_device_count": 1,
+        "cuda_device_index": 0,
+        "cuda_device_name": "NVIDIA A800 80GB PCIe",
+        "cuda_total_memory_bytes": 80 * 1024**3,
+        "cuda_capability": [8, 0],
+        "selected_device": "cuda",
+        "selected_dtype": "float16",
+    }
+    monkeypatch.setattr(R, "_probe_cuda_environment", lambda: dict(good_probe))
+    out_dir = tmp_path / "out"
+    scratch = tmp_path / "scratch"
+    activation = scratch / "activations"
+    hf_cache = tmp_path / "hf"
+    for path in (out_dir, activation, hf_cache):
+        path.mkdir(parents=True)
+    policy = {
+        "device": "cuda",
+        "dtype": "float16",
+        "gpu_name_contains": "A800",
+        "min_free_disk_bytes": 0,
+        "max_scratch_bytes": 1024,
+        "max_activation_cache_bytes": 1024,
+        "max_hf_cache_bytes": 1024,
+    }
+    assert R._assert_resource_guards(
+        policy,
+        out_dir=out_dir,
+        scratch_dir=scratch,
+        activation_cache_dir=activation,
+        hf_cache_dir=hf_cache,
+        stage="test",
+    )["selected_dtype"] == "float16"
+
+    monkeypatch.setattr(
+        R,
+        "_probe_cuda_environment",
+        lambda: {**good_probe, "cuda_device_name": "NVIDIA H100"},
+    )
+    with pytest.raises(RuntimeError, match="expected A800"):
+        R._assert_resource_guards(
+            policy,
+            out_dir=out_dir,
+            scratch_dir=scratch,
+            activation_cache_dir=activation,
+            hf_cache_dir=hf_cache,
+            stage="wrong-gpu",
+        )
+
+    monkeypatch.setattr(R, "_probe_cuda_environment", lambda: dict(good_probe))
+    (activation / "too-large.bin").write_bytes(b"x" * 32)
+    with pytest.raises(RuntimeError, match="activation-cache budget exceeded"):
+        R._assert_resource_guards(
+            {**policy, "max_activation_cache_bytes": 8},
+            out_dir=out_dir,
+            scratch_dir=scratch,
+            activation_cache_dir=activation,
+            hf_cache_dir=hf_cache,
+            stage="cache-budget",
+        )
 
 
 def _row(item_id, sample_index, condition, compliant, score):
@@ -296,4 +543,16 @@ def _write_minimal_frozen_root(root, model="frozen-qwen"):
         }],
     }
     (path / "c2b_adjudication_results.json").write_text(json.dumps(payload), encoding="utf-8")
+    return root
+
+
+def _write_model_snapshot(root, model_type, weight=b"approved"):
+    root.mkdir(parents=True)
+    (root / "model.safetensors").write_bytes(weight)
+    (root / "config.json").write_text(
+        json.dumps({"model_type": model_type}), encoding="utf-8"
+    )
+    (root / "tokenizer.json").write_text("{}", encoding="utf-8")
+    (root / "tokenizer_config.json").write_text("{}", encoding="utf-8")
+    (root / "generation_config.json").write_text("{}", encoding="utf-8")
     return root

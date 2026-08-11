@@ -64,12 +64,24 @@ complete-case sign alone is not an all-generation sign.
 
 ## Missing-cell replay
 
-Replay only cells without recoverable transcripts. Each cell runs in its own
-new directory and must use the manifest-pinned items, split, prompt, layer,
-alpha, seed, model-family identity, and generation settings. CAA/ITI directions
-are re-derived through the frozen C2 path. ITI uses the frozen sigma for the
-effective intervention; a small cross-environment re-derivation tolerance is
-an identity check only and cannot change alpha, selection, or scoring.
+The plan stage validates every present recovered-transcript candidate before
+planning generation, including gitignored directories. A valid recovered
+source skips replay; a present but invalid candidate is a hard failure. Replay
+is allowed only when no recovered source is present. Each cell runs in its own
+new directory and must use the manifest-pinned items, exact DEV/TEST key sets,
+split, prompt, layer, alpha, seed, model identity, and generation settings.
+CAA/ITI directions are re-derived through the frozen C2 path. ITI uses the
+frozen sigma for the effective intervention; a small cross-environment
+re-derivation tolerance is an identity check only and cannot change alpha,
+selection, or scoring.
+
+The Qwen and Llama Hugging Face repositories are pinned to the exact revisions
+in `frozen-manifest.json`. A local snapshot is eligible only when the command
+contains an auditor-approved aggregate SHA-256 and the runner verifies all
+weight shards, `config.json`, tokenizer artifacts, and
+`generation_config.json`. Pinned HF snapshots must be pre-staged in the
+explicit cache; the replay runner is local-files-only and never downloads
+weights. A matching basename is never model identity.
 
 The replay produces raw generation text solely to measure confidence-format
 presence/missingness and the pre-specified sensitivities. It does not reselect
@@ -88,6 +100,17 @@ retained and no completed TEST batch is regenerated.
 ## Failure and lineage rules
 
 - Existing complete outputs are never overwritten.
+- Direct HF execution requires the tracked protocol manifest, the exact audited
+  code SHA, a clean tree, and the manifest authorization ID. Checkpoints and
+  seals bind those values, the manifest Git blob/SHA-256, exact argv, resolved
+  model identity, scratch/cache paths, and CUDA/software/GPU identity. Older
+  checkpoint schemas are rejected.
+- Activation cache is stored only in an explicit scratch directory outside the
+  repository. Resume uses that same command-bound cache; validation failures
+  are retained by the failure wrapper.
+- Before and between cells/batches, execution hard-checks CUDA, float16, an
+  A800 device name, free disk, scratch size, activation-cache size, and the
+  explicit HF-cache budget. GPU/software/disk lineage is recorded.
 - A failed replay writes immutable failure history plus a latest failure marker
   and leaves checkpoints for exact-command resume; it is never treated as a
   source unless a separately hashed completion marker is later written.
@@ -100,8 +123,8 @@ retained and no completed TEST batch is regenerated.
 - Every input and output file is SHA-256 hashed. The report records source
   schema, source path, frozen-result path/hash, manifest hash, code commit, row
   counts, and source model/method identities.
-- GPU execution requires an explicit audited commit SHA, a clean code/protocol
-  tree, and the exact same command on resume.
+- GPU execution rechecks the audited commit, clean tree, manifest, authorization,
+  model content, and protected artifacts before and after every cell.
 - GPU execution remains blocked until an independent hostile audit approves
   the protocol and runner.
 
@@ -110,7 +133,7 @@ retained and no completed TEST batch is regenerated.
 From the audited commit at repository root:
 
 ```text
-python scripts/run_uncertainty_grid_replay.py --execute --expected-code-commit <AUDITED_SHA> --qwen-model Qwen/Qwen2.5-7B-Instruct --llama-model meta-llama/Meta-Llama-3-8B-Instruct
+python scripts/run_uncertainty_grid_replay.py --execute --expected-code-commit <AUDITED_REPAIR_SHA> --authorization owner-2026-08-11-e0013-grid-recheck-after-hostile-audit --scratch-root <EXTERNAL_SCRATCH_ROOT> --hf-cache-dir <EXTERNAL_HF_CACHE> --qwen-model Qwen/Qwen2.5-7B-Instruct --qwen-revision a09a35458c702b33eeacc393d103063234e8bc28 --llama-model meta-llama/Meta-Llama-3-8B-Instruct --llama-revision 8afb486c1db24fe5011ec46dfbe5b5dccdb575c2
 ```
 
 The default plan generates only the three absent cells; CAA×Qwen remains the

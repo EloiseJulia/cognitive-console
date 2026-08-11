@@ -172,6 +172,47 @@ def load_protocol(path: Path) -> Dict:
         base.TEST_USE_POLICY,
         "manifest generation.test_use_policy",
     )
+    execution = dict(payload.get("execution") or {})
+    _assert_equal(
+        execution.get("authorization_id"),
+        "owner-2026-08-11-e0013-grid-recheck-after-hostile-audit",
+        "manifest execution.authorization_id",
+    )
+    model_identity = dict(execution.get("model_identity") or {})
+    for label, repo_id, revision in (
+        (
+            "qwen2.5-7b",
+            "Qwen/Qwen2.5-7B-Instruct",
+            "a09a35458c702b33eeacc393d103063234e8bc28",
+        ),
+        (
+            "llama3-8b",
+            "meta-llama/Meta-Llama-3-8B-Instruct",
+            "8afb486c1db24fe5011ec46dfbe5b5dccdb575c2",
+        ),
+    ):
+        spec = dict(model_identity.get(label) or {})
+        _assert_equal(
+            spec.get("hf_repo_id"), repo_id, f"manifest execution model repo {label}"
+        )
+        _assert_equal(
+            spec.get("revision"), revision, f"manifest execution model revision {label}"
+        )
+    resource_guards = dict(execution.get("resource_guards") or {})
+    for key, expected in {
+        "device": "cuda",
+        "dtype": "float16",
+        "gpu_name_contains": "A800",
+        "min_free_disk_bytes": 53687091200,
+        "max_scratch_bytes": 21474836480,
+        "max_activation_cache_bytes": 8589934592,
+        "max_hf_cache_bytes": 107374182400,
+    }.items():
+        _assert_equal(
+            resource_guards.get(key),
+            expected,
+            f"manifest execution.resource_guards.{key}",
+        )
     evidence_scope = dict(payload.get("evidence_scope") or {})
     _assert_equal(
         evidence_scope.get("frozen_results_replaced"),
@@ -219,10 +260,21 @@ def load_frozen_items(protocol: Dict) -> Tuple[List[Dict], Dict[str, List[Dict]]
             raise RecheckError(f"{path}: item row missing {exc.args[0]!r}") from exc
         items.append(item)
     _assert_equal(len(items), spec["item_count"], "frozen item count")
+    item_ids = [str(item["id"]) for item in items]
+    if len(item_ids) != len(set(item_ids)):
+        raise RecheckError("frozen item artifact contains duplicate item ids")
     _assert_equal(
         _canonical_hash(items), spec["canonical_items_sha256"], "canonical item hash"
     )
     split = base.split_items(items, int(generation["seed"]))
+    dev_ids = [str(row["id"]) for row in split["dev"]]
+    test_ids = [str(row["id"]) for row in split["test"]]
+    if len(dev_ids) != len(set(dev_ids)) or len(test_ids) != len(set(test_ids)):
+        raise RecheckError("frozen DEV/TEST split contains duplicate ids")
+    if set(dev_ids) & set(test_ids):
+        raise RecheckError("frozen DEV/TEST split overlaps")
+    if set(dev_ids) | set(test_ids) != set(item_ids):
+        raise RecheckError("frozen DEV/TEST split has missing or extra ids")
     split_identity: Dict[str, Dict] = {}
     for name in ("dev", "test"):
         ids = [str(row["id"]) for row in split[name]]
@@ -274,7 +326,7 @@ def validate_cell_manifest(
     checks = {
         "method": cfg.method,
         "model_label": cfg.model_label,
-        "model_identity_key": base._model_identity_key(cfg.model_id),
+        "legacy_model_label_key": base._legacy_model_label_key(cfg.model_id),
         "layer": cfg.layer,
         "frozen_alpha": cfg.frozen_alpha,
         "best_prompt_id": cfg.best_prompt_id,
@@ -347,6 +399,7 @@ def _load_e0013_samples(
     items_by_id: Dict[str, Dict],
     split_by_id: Dict[str, str],
     generation: Dict,
+    replay_identity: Optional[Dict[str, object]] = None,
 ) -> Tuple[List[Dict], Dict]:
     rows = _read_jsonl(path)
     standardized: List[Dict] = []
@@ -359,11 +412,28 @@ def _load_e0013_samples(
         _assert_equal(
             str(row.get("model_label")), cfg.model_label, f"{label} model label"
         )
-        _assert_equal(
-            base._model_identity_key(str(row.get("model_id"))),
-            base._model_identity_key(cfg.model_id),
-            f"{label} model identity",
-        )
+        if replay_identity is None:
+            _assert_equal(
+                base._legacy_model_label_key(str(row.get("model_id"))),
+                base._legacy_model_label_key(cfg.model_id),
+                f"{label} legacy model identity",
+            )
+        else:
+            _assert_equal(
+                row.get("model_identity_sha256"),
+                replay_identity["model_identity_sha256"],
+                f"{label} resolved model identity hash",
+            )
+            _assert_equal(
+                row.get("execution_identity_sha256"),
+                replay_identity["execution_identity_sha256"],
+                f"{label} execution identity hash",
+            )
+            _assert_equal(
+                str(row.get("model_id")),
+                str(replay_identity["resolved_model_identity"]["resolved_path"]),
+                f"{label} resolved model path",
+            )
         item_id = str(row.get("item_id"))
         if item_id not in items_by_id:
             raise RecheckError(f"{label}: unexpected item_id {item_id!r}")
@@ -526,8 +596,8 @@ def _load_c2b_transcript_dir(
             _assert_equal(meta.get("method"), cfg.method, f"{label} method")
             _assert_equal(meta.get("backend"), "hf", f"{label} backend")
             _assert_equal(
-                base._model_identity_key(str(meta.get("model"))),
-                base._model_identity_key(cfg.model_id),
+                base._legacy_model_label_key(str(meta.get("model"))),
+                base._legacy_model_label_key(cfg.model_id),
                 f"{label} model identity",
             )
             if bool(row.get("generation_truncated")):
@@ -584,7 +654,12 @@ def _load_c2b_transcript_dir(
 
 
 def _validate_coverage(
-    records: Sequence[Dict], *, cell_key: str, test_ids: Sequence[str], k: int
+    records: Sequence[Dict],
+    *,
+    cell_key: str,
+    test_ids: Sequence[str],
+    k: int,
+    dev_ids: Optional[Sequence[str]] = None,
 ) -> Dict:
     test_records = [row for row in records if row["split"] == "test"]
     dev_records = [row for row in records if row["split"] == "dev"]
@@ -593,30 +668,45 @@ def _validate_coverage(
     ]
     if unexpected_split:
         raise RecheckError(f"{cell_key}: unexpected split rows present")
-    expected_keys = {
-        (condition, item_id, sample_index)
-        for condition in EXPECTED_CONDITIONS
-        for item_id in test_ids
-        for sample_index in range(k)
-    }
-    actual_keys: List[Tuple[str, str, int]] = [
-        (str(row["condition"]), str(row["item_id"]), int(row["sample_index"]))
-        for row in test_records
-    ]
-    if len(actual_keys) != len(set(actual_keys)):
-        raise RecheckError(f"{cell_key}: duplicate TEST condition/item/sample rows")
-    missing = sorted(expected_keys - set(actual_keys))
-    extra = sorted(set(actual_keys) - expected_keys)
-    if missing or extra:
-        raise RecheckError(
-            f"{cell_key}: incomplete TEST grid; missing={len(missing)} extra={len(extra)}"
-        )
+    def validate_split(
+        split_name: str, rows: Sequence[Dict], expected_ids: Sequence[str]
+    ) -> int:
+        expected_keys = {
+            (condition, item_id, sample_index)
+            for condition in EXPECTED_CONDITIONS
+            for item_id in expected_ids
+            for sample_index in range(k)
+        }
+        actual_keys: List[Tuple[str, str, int]] = [
+            (str(row["condition"]), str(row["item_id"]), int(row["sample_index"]))
+            for row in rows
+        ]
+        if len(actual_keys) != len(set(actual_keys)):
+            raise RecheckError(
+                f"{cell_key}: duplicate {split_name.upper()} "
+                "condition/item/sample rows"
+            )
+        missing = sorted(expected_keys - set(actual_keys))
+        extra = sorted(set(actual_keys) - expected_keys)
+        if missing or extra:
+            raise RecheckError(
+                f"{cell_key}: incomplete {split_name.upper()} grid; "
+                f"missing={len(missing)} extra={len(extra)}"
+            )
+        return len(expected_keys)
+
+    expected_test_rows = validate_split("test", test_records, test_ids)
+    expected_dev_rows: Optional[int] = None
+    if dev_ids is not None:
+        expected_dev_rows = validate_split("dev", dev_records, dev_ids)
     return {
         "source_rows_total": len(records),
         "test_rows_used": len(test_records),
         "dev_rows_explicitly_not_in_headline": len(dev_records),
         "other_rows_rejected": 0,
-        "expected_test_rows": len(expected_keys),
+        "expected_test_rows": expected_test_rows,
+        "expected_dev_rows": expected_dev_rows,
+        "dev_grid_complete": dev_ids is not None,
         "test_grid_complete": True,
         "test_items": len(test_ids),
         "samples_per_item_condition": k,
@@ -791,6 +881,73 @@ def _select_source(cell_spec: Dict) -> Tuple[Optional[Dict], List[Dict]]:
                     False,
                     f"{run_manifest_path} scorer-result guard",
                 )
+                execution_binding = dict(
+                    run_manifest.get("execution_binding") or {}
+                )
+                _assert_equal(
+                    run_manifest.get("execution_identity_sha256"),
+                    base._canonical_hash(execution_binding),
+                    f"{run_manifest_path} execution identity hash",
+                )
+                _assert_equal(
+                    completion.get("execution_identity_sha256"),
+                    run_manifest.get("execution_identity_sha256"),
+                    f"{completion_path} execution identity",
+                )
+                _assert_equal(
+                    execution_binding.get("dirty_tree"),
+                    False,
+                    f"{run_manifest_path} clean-tree identity",
+                )
+                _assert_equal(
+                    run_manifest.get("dirty_tree_at_start"),
+                    False,
+                    f"{run_manifest_path} clean-tree lineage",
+                )
+                _assert_equal(
+                    run_manifest.get("code_commit"),
+                    execution_binding.get("code_commit"),
+                    f"{run_manifest_path} code commit identity",
+                )
+                authorization_id = dict(
+                    execution_binding.get("authorization") or {}
+                ).get("id")
+                _assert_equal(
+                    completion.get("authorization_id"),
+                    authorization_id,
+                    f"{completion_path} authorization identity",
+                )
+                _assert_equal(
+                    completion.get("argv"),
+                    list(execution_binding.get("argv") or [])[2:],
+                    f"{completion_path} argv identity",
+                )
+                run_cells = dict(run_manifest.get("cells") or {})
+                if len(run_cells) != 1:
+                    raise RecheckError(
+                        f"{run_manifest_path}: expected exactly one replay cell"
+                    )
+                run_cell = dict(next(iter(run_cells.values())))
+                resolved_model_identity = dict(
+                    run_cell.get("resolved_model_identity") or {}
+                )
+                model_identity_sha256 = base._canonical_hash(
+                    resolved_model_identity
+                )
+                checkpoint = dict(run_cell.get("checkpoint") or {})
+                execution_identity_sha256 = run_manifest.get(
+                    "execution_identity_sha256"
+                )
+                _assert_equal(
+                    checkpoint.get("model_identity_sha256"),
+                    model_identity_sha256,
+                    f"{run_manifest_path} checkpoint model identity",
+                )
+                _assert_equal(
+                    checkpoint.get("execution_identity_sha256"),
+                    execution_identity_sha256,
+                    f"{run_manifest_path} checkpoint execution identity",
+                )
                 completion_identity = {
                     "completion_path": _rel(completion_path),
                     "completion_sha256": sha256_file(completion_path),
@@ -799,6 +956,11 @@ def _select_source(cell_spec: Dict) -> Tuple[Optional[Dict], List[Dict]]:
                     "protocol_manifest_sha256": completion.get(
                         "protocol_manifest_sha256"
                     ),
+                    "resolved_model_identity": resolved_model_identity,
+                    "model_identity_sha256": model_identity_sha256,
+                    "execution_identity_sha256": execution_identity_sha256,
+                    "code_commit": execution_binding.get("code_commit"),
+                    "authorization_id": authorization_id,
                 }
         if exists and kind != "c2b_transcript_dir_v1":
             actual_sha = sha256_file(path)
@@ -877,6 +1039,7 @@ def run_analysis(protocol_path: Path, *, allow_incomplete: bool) -> Tuple[Dict, 
     split_by_id = {
         str(item["id"]): name for name, rows in split.items() for item in rows
     }
+    dev_ids = [str(item["id"]) for item in split["dev"]]
     test_ids = [str(item["id"]) for item in split["test"]]
     frozen_root = _resolve(protocol["generation"]["frozen_root"])
     generation = dict(protocol["generation"])
@@ -940,6 +1103,7 @@ def run_analysis(protocol_path: Path, *, allow_incomplete: bool) -> Tuple[Dict, 
                 items_by_id=items_by_id,
                 split_by_id=split_by_id,
                 generation=generation,
+                replay_identity=selected.get("completion_identity"),
             )
         elif selected["kind"] == "c2b_transcript_dir_v1":
             records, source_meta = _load_c2b_transcript_dir(
@@ -964,6 +1128,11 @@ def run_analysis(protocol_path: Path, *, allow_incomplete: bool) -> Tuple[Dict, 
                 sha256_file(protocol_path),
                 f"{cell_key} completion protocol hash",
             )
+            _assert_equal(
+                completion_identity["authorization_id"],
+                protocol["execution"]["authorization_id"],
+                f"{cell_key} completion authorization",
+            )
             source_meta["completion"] = completion_identity
             source_meta["files"].extend(
                 [
@@ -981,7 +1150,7 @@ def run_analysis(protocol_path: Path, *, allow_incomplete: bool) -> Tuple[Dict, 
             "cell": cell_key,
             "method": cfg.method,
             "model_label": cfg.model_label,
-            "model_identity_key": base._model_identity_key(cfg.model_id),
+            "legacy_model_label_key": base._legacy_model_label_key(cfg.model_id),
             "layer": cfg.layer,
             "frozen_alpha": cfg.frozen_alpha,
             "best_prompt_id": cfg.best_prompt_id,
@@ -993,6 +1162,9 @@ def run_analysis(protocol_path: Path, *, allow_incomplete: bool) -> Tuple[Dict, 
             cell_key=cell_key,
             test_ids=test_ids,
             k=int(generation["k_samples"]),
+            dev_ids=(
+                dev_ids if selected["kind"] == "e0013_samples_v1" else []
+            ),
         )
         cells[cell_key] = analyse_cell(
             records,

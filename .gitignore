@@ -47,6 +47,10 @@ results/E-0012/**/transcripts/
 results/E-0012/**/checkpoints/
 results/E-0012/**/activations/
 
+# E-0013 uncertainty-grid replay: generated checkpoints and samples are
+# resumable run products, never source-controlled evidence.
+results/E-0013-uncertainty-grid-recheck/generated/
+
 # LaTeX paper build artifacts
 docs/paper/build/
 docs/paper/*.aux

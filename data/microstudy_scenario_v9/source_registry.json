@@ -1,0 +1,97 @@
+{
+  "schema_version": "microstudy-v9-source-registry-v1",
+  "hash_basis": "git_blob_bytes",
+  "sources": [
+    {
+      "source_id": "C1_QWEN",
+      "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+      "path": "results/gpu_7b_2026-07-23/c1/c1_facade_results.json",
+      "canonical_sha256": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e",
+      "format": "json"
+    },
+    {
+      "source_id": "C1_LLAMA",
+      "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+      "path": "results/llama_c1_facade_2026-07-24/c1_facade_results.json",
+      "canonical_sha256": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46",
+      "format": "json"
+    },
+    {
+      "source_id": "E0006_ARM",
+      "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+      "path": "results/arm_full/arm_matrix_summary.json",
+      "canonical_sha256": "4614ff8277f3f6eed485169b0b4a00d4bf3978d487976318416692689cc32d19",
+      "format": "json"
+    },
+    {
+      "source_id": "E0006_CAA_QWEN",
+      "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+      "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+      "canonical_sha256": "bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243",
+      "format": "json"
+    },
+    {
+      "source_id": "E0006_CAA_LLAMA",
+      "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+      "path": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
+      "canonical_sha256": "7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6",
+      "format": "json"
+    },
+    {
+      "source_id": "E0006_ITI_QWEN",
+      "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+      "path": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
+      "canonical_sha256": "8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026",
+      "format": "json"
+    },
+    {
+      "source_id": "E0006_ITI_LLAMA",
+      "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+      "path": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
+      "canonical_sha256": "46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43",
+      "format": "json"
+    },
+    {
+      "source_id": "E0006_PREREG",
+      "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+      "path": "docs/ledgers/prereg-c2b-adjudication.md",
+      "canonical_sha256": "6fc28d3e9eb6516c201d088e7ed850a95bd9e1bef0c4fda21d312f3db2209755",
+      "format": "markdown"
+    },
+    {
+      "source_id": "E0011_MULTI",
+      "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+      "path": "results/E-0011/multiseed_c2_aggregate.json",
+      "canonical_sha256": "edcc3f4ce770bb10264e670b04afde9f84a2068e94a31c49a4c16bf382cc0927",
+      "format": "json"
+    },
+    {
+      "source_id": "E0013_FORMAT",
+      "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+      "path": "results/E-0013-uncertainty-recheck/reanalysis.json",
+      "canonical_sha256": "6554565952f1b5f0334b37f1e78f9c2af66d951c380dc9f3c86f312f0f028884",
+      "format": "json"
+    },
+    {
+      "source_id": "E0014_ENDPOINT",
+      "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+      "path": "results/E-0014-positive-control/positive_control_results.json",
+      "canonical_sha256": "8c0b9b65e872a888bcb8c62cac39515a8741a25634e7cec58f5d3dce901f445f",
+      "format": "json"
+    },
+    {
+      "source_id": "E0015_SCALE",
+      "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+      "path": "results/E-0015-scale-corrected-positive-control/positive_control_scale_corrected_results.json",
+      "canonical_sha256": "9bc450a4184aa9bdc617953dba8acdd3c9e0ef25883f706d31142d9665fb89ec",
+      "format": "json"
+    },
+    {
+      "source_id": "POSTHOC_E0006",
+      "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+      "path": "results/posthoc_equivalence/posthoc_equivalence_e0006.json",
+      "canonical_sha256": "c350701885626854889416a0ba0f8a2f07e25287b40ee6821fb1fdf0eaa47e4f",
+      "format": "json"
+    }
+  ]
+}

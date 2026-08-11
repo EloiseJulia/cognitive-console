@@ -243,11 +243,16 @@ or authorized on any other machine and must sign only the fingerprint emitted
 by the designated A800 host.
 
 Before consumption or TEST execution-identity hashing, TEST re-verifies the
-complete DEV artifact-hash manifest and requires exact equality to audited DEV
-for the generator snapshot/config/tokenizer/multi-EOS mapping/effective
-generation config, GPU identity, eager-attention implementation and source
-hashes, Python/dependency environment, and both judge snapshot/runtime
-fingerprints. Any mismatch stops before authorization consumption.
+complete DEV artifact-hash manifest and constructs execution-fingerprint
+**schema v2**. TEST forcibly loads both current judges sequentially even when
+their pre-consumption checkpoints are complete; snapshot/runtime provenance
+restored from checkpoint metadata cannot satisfy this gate. The freshly loaded
+truth and information judge snapshots and runtime fingerprints, plus the
+current generator snapshot/config/tokenizer/multi-EOS mapping/effective
+generation config, selected physical GPU identity, eager-attention
+implementation/source hashes, and Python/dependency environment must equal the
+audited DEV schema-v2 fingerprint exactly. Any mismatch stops before
+authorization consumption.
 
 For outer TEST item `i`:
 
@@ -342,15 +347,22 @@ All outcomes are reportable. No outcome authorizes parameter tuning or rerun.
   pending final rows), question/answer hashes, pinned snapshot identity, runtime
   attention/o-projection/effective-decoding fingerprint, and completion count.
   An interrupted judge or final-checkpoint append resumes without regenerating
-  answers or rejudging completed rows; a complete resume restores the persisted
-  judge provenance into the result.
+  answers or rejudging completed rows. Ordinary scoring resume may restore
+  persisted judge provenance, but the TEST pre-authorization gate always
+  reloads both current judges and overwrites that in-memory provenance before
+  constructing the audited execution fingerprint.
 - Every output stores item/sample/condition identity, output hash, token count,
   truncation, strict judge outputs, missingness, outcome, and degeneracy.
 - Runtime fingerprints include Python, PyTorch/CUDA/cuDNN, Transformers,
-  datasets, accelerate, NumPy, **scikit-learn**, GPU identity/memory/capability
-  and UUID/driver, model config, tokenizer class/vocabulary, exact two-EOS
-  mapping, eager-attention and o-projection implementation classes, and
-  forward-source hashes.
+  datasets, accelerate, NumPy, **scikit-learn**, model config, tokenizer
+  class/vocabulary, exact two-EOS mapping, eager-attention and o-projection
+  implementation classes, and forward-source hashes. GPU schema v2 records the
+  current CUDA logical index, raw `CUDA_DEVICE_ORDER`, raw
+  `CUDA_VISIBLE_DEVICES`, its ordered logical-to-visible-token mapping, and the
+  selected physical GPU's UUID and canonical PCI bus ID resolved by a
+  single-device `nvidia-smi` query targeted with CUDA's PCI identity (or CUDA
+  UUID if PCI is unavailable), plus driver/name/memory/capability. DEV and TEST
+  compare the selected physical UUID and PCI identity exactly.
 - Raw generation, checkpoint metadata, both judge checkpoints, scored records,
   resolved identities, and DEV/TEST result files receive artifact SHA-256
   manifests. TEST requires the exact complete DEV artifact inventory and
@@ -379,15 +391,18 @@ All outcomes are reportable. No outcome authorizes parameter tuning or rerun.
 ### 12.1 Exact GPU preflight assertions
 
 Before real DEV, code must assert: CUDA available; device name contains
-`A800`; total memory at least 75 GiB; 32 decoder layers; hidden size 4096; 32
-query heads; head dimension 128; eager attention; all pinned snapshot hashes;
-the complete effective generator and judge decoding configs including
-generator `top_p=1.0/top_k=0` and exact EOS list `[128001,128009]`; pinned
-tokenizer mappings for both EOS IDs; model, tokenizer, environment, GPU, attention,
-and o-projection fingerprints with required non-null source hashes; a
-two-layer/two-head synthetic real-model hook-bite; and strict yes/no output from
-both sequential pinned judges on fixed non-DEV/TEST self-test strings. The
-preflight phase performs no real DEV/TEST generation and supports no claim.
+`A800`; total memory at least 75 GiB; current CUDA logical device resolves
+through CUDA-reported PCI/UUID identity to exactly one targeted physical
+`nvidia-smi` row; the physical UUID and PCI bus ID are non-ambiguous; 32 decoder
+layers; hidden size 4096; 32 query heads; head dimension 128; eager attention;
+all pinned snapshot hashes; the complete effective generator and judge decoding
+configs including generator `top_p=1.0/top_k=0` and exact EOS list
+`[128001,128009]`; pinned tokenizer mappings for both EOS IDs; model,
+tokenizer, environment, GPU, attention, and o-projection fingerprints with
+required non-null source hashes; a two-layer/two-head synthetic real-model
+hook-bite; and strict yes/no output from both sequential pinned judges on fixed
+non-DEV/TEST self-test strings. The preflight phase performs no real DEV/TEST
+generation and supports no claim.
 
 ## 13. Commands after independent audit
 
@@ -405,6 +420,7 @@ test "$(stat -c '%U:%G:%a' \
 GPU preflight only (no real DEV/TEST generation):
 
 ```bash
+export CUDA_DEVICE_ORDER=PCI_BUS_ID
 export CUDA_VISIBLE_DEVICES=1
 export OUT_DIR=/home/elzhang/cognitive-console-runs/iti-truthfulqa-positive-control-20260811
 python scripts/run_iti_truthfulqa_positive_control.py \
@@ -421,6 +437,7 @@ DEV only; it repeats the pinned snapshot, CUDA/A800, eager-attention,
 effective-generation, tokenizer, and hook assertions:
 
 ```bash
+export CUDA_DEVICE_ORDER=PCI_BUS_ID
 export CUDA_VISIBLE_DEVICES=1
 export OUT_DIR=/home/elzhang/cognitive-console-runs/iti-truthfulqa-positive-control-20260811
 python scripts/run_iti_truthfulqa_positive_control.py \
@@ -437,6 +454,7 @@ Only if DEV returns `ELIGIBLE`, and after the independent audit authorizes the
 same commit and manifest, TEST once:
 
 ```bash
+export CUDA_DEVICE_ORDER=PCI_BUS_ID
 export CUDA_VISIBLE_DEVICES=1
 export OUT_DIR=/home/elzhang/cognitive-console-runs/iti-truthfulqa-positive-control-20260811
 python scripts/run_iti_truthfulqa_positive_control.py \
@@ -455,7 +473,7 @@ python scripts/run_iti_truthfulqa_positive_control.py \
 Protocol/implementation parity was checked on 2026-08-11 without downloading
 large weights or touching a GPU:
 
-- 74 targeted CPU tests passed across
+- 78 targeted CPU tests passed across
   `test_iti_truthfulqa_positive_control.py`, `test_iti.py`, and
   `test_adjudicate_c2b.py`;
 - the separate synthetic schema and every run/final/checkpoint manifest are
@@ -468,16 +486,21 @@ large weights or touching a GPU:
   `git diff --check` passed;
 - adversarial probes covered generator and judge model-default overrides, exact
   PCG64 split/bootstrap/random algorithms, full fold-config resume mismatch,
-  partial-final-checkpoint judge identity stability, both frozen EOS stop IDs,
-  cross-HOME/cross-output/concurrent authorization replay, registry hash-chain
-  tampering, all five TEST execution-fingerprint dimensions, fixed disk limits,
-  pinned file/LFS hashes, row-level judge failure, model-load failure records,
-  explicit CLI backend/phase, and no-CUDA preflight rejection;
+  partial-final-checkpoint judge identity stability, forced current-judge loads
+  over stale complete checkpoints, current-judge drift rejection before TEST
+  authorization, both frozen EOS stop IDs, cross-HOME/cross-output/concurrent
+  authorization replay, registry hash-chain tampering, all five TEST
+  execution-fingerprint dimensions, mocked multi-GPU logical-to-physical
+  UUID/PCI mapping, fixed disk limits, pinned file/LFS hashes, row-level judge
+  failure, model-load failure records, explicit CLI backend/phase, and no-CUDA
+  preflight rejection;
 - one earlier transient local NumPy 22.9 MiB allocation failure was rerun alone
   and the complete selection subsequently passed. It produced no experiment
   artifact or protocol change.
 
-Commit `68bd1cf3595f7a53061a8acb45a8c6baadf7e580` was rejected on re-audit
-before GPU/preflight/DEV/TEST. This third repair contains no scientific result.
-The protocol remains FROZEN, does not authorize real DEV before a fresh
-independent hostile re-audit, and never authorizes TEST except through §§7–8.
+Commit `380c235473d47e7281474c9476042cd7ab103b43` was rejected by the follow-up
+narrow audit before GPU/preflight/DEV/TEST. This fourth repair contains no
+scientific result, preserves the frozen 0/12 grid, and changes only current
+judge pre-consumption provenance and physical-GPU identity binding. The
+protocol remains FROZEN, does not authorize real DEV before a fresh independent
+hostile re-audit, and never authorizes TEST except through §§7–8.

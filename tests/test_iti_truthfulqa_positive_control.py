@@ -159,6 +159,7 @@ def test_judges_load_sequentially_and_purge_dedicated_caches(tmp_path, monkeypat
         cache_root=tmp_path / "judges",
     )
     events = []
+    runtime_marker = {"value": "audited"}
 
     def fake_load(kind, model_id, revision, cache_dir):
         assert not any(
@@ -176,6 +177,7 @@ def test_judges_load_sequentially_and_purge_dedicated_caches(tmp_path, monkeypat
             "model_id": model_id,
             "revision": revision,
             "attention_implementation": "eager",
+            "implementation_marker": runtime_marker["value"],
         }
         events.append(("load", kind, model_id, revision, cache_dir.name))
         return object(), object()
@@ -202,6 +204,53 @@ def test_judges_load_sequentially_and_purge_dedicated_caches(tmp_path, monkeypat
     )
     assert resumed == scores
     assert [row[4] for row in events] == ["truth", "info"]
+    audited_snapshots = copy.deepcopy(judge.snapshot_identities)
+    audited_runtimes = copy.deepcopy(judge.runtime_fingerprints)
+    runtime_marker["value"] = "current-judge-drift"
+    forced = judge.score_many(
+        [("Question?", "Answer.")],
+        identities=["job-1"],
+        checkpoint_root=tmp_path / "judge-checkpoints",
+        force_runtime_refresh=True,
+    )
+    assert forced == scores
+    assert [row[4] for row in events] == ["truth", "info", "truth", "info"]
+    assert {
+        row["implementation_marker"]
+        for row in judge.runtime_fingerprints.values()
+    } == {"current-judge-drift"}
+    preflight = {
+        "generator_snapshot_identity": {"snapshot_hash": "a" * 64},
+        "model_config_hash": "b" * 64,
+        "tokenizer_class": "PinnedTokenizer",
+        "tokenizer_vocab_size": 128256,
+        "eos_token_mapping": {"eos_token_ids": [128001, 128009]},
+        "effective_generation_config": {"eos_token_id": [128001, 128009]},
+        "gpu": {
+            "physical_identity": {
+                "uuid": "GPU-current",
+                "pci_bus_id": "00000000:65:00.0",
+            }
+        },
+        "attention_implementation": "eager",
+        "attention_layers": [{"layer": 0, "source_sha256": "c" * 64}],
+        "environment": {"packages": {"transformers": "x"}},
+    }
+    audited_fingerprint = runner._execution_fingerprint(
+        preflight=preflight,
+        judge_snapshot_identities=audited_snapshots,
+        judge_runtime_fingerprints=audited_runtimes,
+    )
+    current_fingerprint = runner._execution_fingerprint(
+        preflight=preflight,
+        judge_snapshot_identities=judge.snapshot_identities,
+        judge_runtime_fingerprints=judge.runtime_fingerprints,
+    )
+    with pytest.raises(ValueError, match="fingerprint mismatch"):
+        runner._assert_execution_fingerprint_matches_dev(
+            {"execution_fingerprint": audited_fingerprint},
+            current_fingerprint,
+        )
     truth_manifest = json.loads(
         (
             tmp_path
@@ -211,6 +260,10 @@ def test_judges_load_sequentially_and_purge_dedicated_caches(tmp_path, monkeypat
     )
     assert truth_manifest["complete"] is True
     assert truth_manifest["snapshot_identity"]["revision"] == runner.TRUTH_JUDGE_REVISION
+    assert (
+        truth_manifest["runtime_fingerprint"]["implementation_marker"]
+        == "current-judge-drift"
+    )
     with pytest.raises(ValueError, match="ordered_inputs_hash"):
         judge.score_many(
             [("Question?", "Changed answer.")],
@@ -846,16 +899,32 @@ def test_test_execution_fingerprint_rejects_every_audited_dimension(section):
             "primary_eos_token_id": 128009,
         },
         "effective_generation_config": {"eos_token_id": [128001, 128009]},
-        "gpu": {"uuid": "GPU-A800"},
+        "gpu": {
+            "cuda_device_order": "PCI_BUS_ID",
+            "cuda_visible_devices": "1",
+            "logical_index": 0,
+            "selected_visible_token": "1",
+            "physical_identity": {
+                "uuid": "GPU-A800",
+                "pci_bus_id": "00000000:65:00.0",
+            },
+        },
         "attention_implementation": "eager",
         "attention_layers": [{"layer": 0, "source_sha256": "c" * 64}],
         "environment": {"packages": {"transformers": "x"}},
     }
     current = runner._execution_fingerprint(
         preflight=preflight,
-        judge_snapshot_identities={"truth": {"snapshot_hash": "d" * 64}},
-        judge_runtime_fingerprints={"truth": {"source_sha256": "e" * 64}},
+        judge_snapshot_identities={
+            "truth": {"snapshot_hash": "d" * 64},
+            "info": {"snapshot_hash": "f" * 64},
+        },
+        judge_runtime_fingerprints={
+            "truth": {"source_sha256": "e" * 64},
+            "info": {"source_sha256": "0" * 64},
+        },
     )
+    assert current["schema_version"] == runner.EXECUTION_FINGERPRINT_SCHEMA_VERSION
     runner._assert_execution_fingerprint_matches_dev(
         {"execution_fingerprint": current}, current
     )
@@ -868,6 +937,122 @@ def test_test_execution_fingerprint_rejects_every_audited_dimension(section):
         runner._assert_execution_fingerprint_matches_dev(
             {"execution_fingerprint": current}, drifted
         )
+
+
+@pytest.mark.parametrize(
+    "field, changed",
+    [
+        ("uuid", "GPU-OTHER"),
+        ("pci_bus_id", "00000000:B2:00.0"),
+    ],
+)
+def test_execution_fingerprint_exactly_binds_physical_gpu(field, changed):
+    preflight = {
+        "generator_snapshot_identity": {"snapshot_hash": "a" * 64},
+        "model_config_hash": "b" * 64,
+        "tokenizer_class": "PinnedTokenizer",
+        "tokenizer_vocab_size": 128256,
+        "eos_token_mapping": {"eos_token_ids": [128001, 128009]},
+        "effective_generation_config": {"eos_token_id": [128001, 128009]},
+        "gpu": {
+            "physical_identity": {
+                "uuid": "GPU-A800",
+                "pci_bus_id": "00000000:65:00.0",
+            },
+        },
+        "attention_implementation": "eager",
+        "attention_layers": [{"layer": 0, "source_sha256": "c" * 64}],
+        "environment": {"packages": {"transformers": "x"}},
+    }
+    audited = runner._execution_fingerprint(
+        preflight=preflight,
+        judge_snapshot_identities={"truth": {}, "info": {}},
+        judge_runtime_fingerprints={"truth": {}, "info": {}},
+    )
+    current = copy.deepcopy(audited)
+    current["gpu"]["physical_identity"][field] = changed
+    unhashed = dict(current)
+    unhashed.pop("fingerprint_hash")
+    current["fingerprint_hash"] = config_hash(unhashed)
+    with pytest.raises(ValueError, match="physical GPU UUID/PCI"):
+        runner._assert_execution_fingerprint_matches_dev(
+            {"execution_fingerprint": audited},
+            current,
+        )
+
+
+def test_gpu_identity_maps_cuda_logical_index_to_physical_uuid_and_pci(
+    monkeypatch,
+):
+    monkeypatch.setenv("CUDA_DEVICE_ORDER", "PCI_BUS_ID")
+    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "GPU-A,GPU-B")
+    properties = SimpleNamespace(
+        pci_bus_id="0000:65:00.0",
+        uuid="GPU-B",
+    )
+
+    def fake_run(command, **kwargs):
+        assert kwargs == {
+            "capture_output": True,
+            "text": True,
+            "check": False,
+        }
+        assert command[1] == "--id=00000000:65:00.0"
+        return SimpleNamespace(
+            returncode=0,
+            stdout=(
+                "3, GPU-B, 00000000:65:00.0, 570.1, "
+                "NVIDIA A800 80GB PCIe, 81920, 8.0\n"
+            ),
+            stderr="",
+        )
+
+    monkeypatch.setattr(runner.subprocess, "run", fake_run)
+    identity = runner._selected_physical_gpu_identity(
+        device_index=1,
+        properties=properties,
+    )
+    assert identity["logical_index"] == 1
+    assert identity["selected_visible_token"] == "GPU-B"
+    assert identity["visible_device_tokens"] == ["GPU-A", "GPU-B"]
+    assert identity["physical_identity"] == {
+        "nvidia_smi_index": 3,
+        "uuid": "GPU-B",
+        "pci_bus_id": "00000000:65:00.0",
+    }
+
+
+def test_gpu_identity_uses_cuda_pci_not_numeric_visible_index(monkeypatch):
+    monkeypatch.delenv("CUDA_DEVICE_ORDER", raising=False)
+    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "1,0")
+    properties = SimpleNamespace(
+        pci_domain_id=0,
+        pci_bus_id=0xB2,
+        pci_device_id=0,
+        uuid="GPU-PHYSICAL-ONE",
+    )
+
+    def fake_run(command, **kwargs):
+        del kwargs
+        assert command[1] == "--id=00000000:B2:00.0"
+        assert "--id=1" not in command
+        return SimpleNamespace(
+            returncode=0,
+            stdout=(
+                "1, GPU-PHYSICAL-ONE, 00000000:B2:00.0, 570.1, "
+                "NVIDIA A800 80GB PCIe, 81920, 8.0\n"
+            ),
+            stderr="",
+        )
+
+    monkeypatch.setattr(runner.subprocess, "run", fake_run)
+    identity = runner._selected_physical_gpu_identity(
+        device_index=0,
+        properties=properties,
+    )
+    assert identity["selected_visible_token"] == "1"
+    assert identity["physical_identity"]["nvidia_smi_index"] == 1
+    assert identity["physical_identity"]["uuid"] == "GPU-PHYSICAL-ONE"
 
 
 def _record(

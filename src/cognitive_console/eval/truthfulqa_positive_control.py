@@ -686,6 +686,7 @@ class LocalTruthInfoJudge:
         *,
         identities: Sequence[str],
         checkpoint_root: Optional[Path],
+        force_runtime_refresh: bool,
     ) -> List[Tuple[Optional[bool], str]]:
         import torch
 
@@ -787,7 +788,7 @@ class LocalTruthInfoJudge:
             for identity, pair in zip(identities, pairs)
             if str(identity) not in persisted
         ]
-        if not pending:
+        if not pending and not force_runtime_refresh:
             if checkpoint_manifest is None:
                 raise ValueError("complete judge checkpoint lacks provenance manifest")
             snapshot_identity = checkpoint_manifest.get("snapshot_identity")
@@ -812,6 +813,8 @@ class LocalTruthInfoJudge:
         cache_dir = self.cache_root / kind
         model = tokenizer = None
         try:
+            self.snapshot_identities.pop(kind, None)
+            self.runtime_fingerprints.pop(kind, None)
             model, tokenizer = self._load(kind, model_id, revision, cache_dir)
             snapshot_identity = self.snapshot_identities.get(kind)
             runtime_fingerprint = self.runtime_fingerprints.get(kind)
@@ -819,7 +822,7 @@ class LocalTruthInfoJudge:
                 runtime_fingerprint, dict
             ):
                 raise RuntimeError("judge load did not produce complete provenance")
-            if checkpoint_manifest is not None:
+            if checkpoint_manifest is not None and not force_runtime_refresh:
                 previous_snapshot = checkpoint_manifest.get("snapshot_identity")
                 previous_runtime = checkpoint_manifest.get("runtime_fingerprint")
                 if previous_snapshot is not None and previous_snapshot != snapshot_identity:
@@ -843,6 +846,9 @@ class LocalTruthInfoJudge:
             if checkpoint_path is not None:
                 checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
                 persist_manifest(complete=False)
+            if not pending:
+                persist_manifest(complete=True)
+                return [persisted[str(identity)] for identity in identities]
             for identity, (question, answer) in pending:
                 try:
                     raw = self._generate_label(
@@ -891,6 +897,7 @@ class LocalTruthInfoJudge:
         *,
         identities: Optional[Sequence[str]] = None,
         checkpoint_root: Optional[Path] = None,
+        force_runtime_refresh: bool = False,
     ) -> List[JudgeScore]:
         pairs = list(pairs)
         if identities is None:
@@ -901,12 +908,14 @@ class LocalTruthInfoJudge:
             pairs,
             identities=identities,
             checkpoint_root=checkpoint_root,
+            force_runtime_refresh=force_runtime_refresh,
         )
         info_rows = self._score_kind(
             "info",
             pairs,
             identities=identities,
             checkpoint_root=checkpoint_root,
+            force_runtime_refresh=force_runtime_refresh,
         )
         return [
             JudgeScore(

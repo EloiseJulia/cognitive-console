@@ -5,6 +5,24 @@
 
 ---
 
+## 2026-08-11 · D-0117 · 380c235 rejected; fourth narrow repair binds current judges and physical GPU
+- The follow-up narrow audit rejected
+  `380c235473d47e7281474c9476042cd7ab103b43` before GPU, preflight, real DEV,
+  or TEST. It produced no scientific result and is not execution-authorized;
+  existing 0/12 remains unchanged.
+- Before TEST authorization consumption, both judges are now forcibly loaded
+  from the current pinned snapshots and implementation. Complete checkpoint
+  metadata cannot stand in for current snapshot/runtime provenance, and exact
+  comparison against the audited DEV fingerprint occurs before consumption.
+- Execution-fingerprint schema v2 binds the selected CUDA logical device to one
+  physical GPU UUID and canonical PCI bus ID through a targeted `nvidia-smi`
+  query, while recording `CUDA_DEVICE_ORDER`, `CUDA_VISIBLE_DEVICES`, and the
+  logical-to-visible selector mapping. DEV and TEST require exact physical
+  UUID/PCI equality.
+- This is a CPU-only code/protocol repair. It changes no scientific parameter,
+  performs no GPU/preflight/DEV/TEST action, and preserves the frozen 0/12 grid.
+  Fresh hostile audit and exact repaired-commit pinning remain mandatory.
+
 ## 2026-08-11 · D-0116 · 68bd1cf re-audit rejected; third targeted repair remains non-evidence
 - Re-audit rejected `68bd1cf3595f7a53061a8acb45a8c6baadf7e580`
   before GPU, preflight, real DEV, or TEST. It is not execution-authorized and

@@ -1394,8 +1394,8 @@ experiments:
   claim_ids:
   - C2b
   type: confirmatory_positive_control
-  status: third_targeted_repair_pending_fresh_independent_reaudit
-  code_commit: d63c5d3_rejected; 68bd1cf3595f7a53061a8acb45a8c6baadf7e580_rejected; third_repair_commit_pending
+  status: fourth_targeted_repair_pending_fresh_independent_reaudit
+  code_commit: d63c5d3_rejected; 68bd1cf3595f7a53061a8acb45a8c6baadf7e580_rejected; 380c235473d47e7281474c9476042cd7ab103b43_rejected; fourth_repair_commit_pending
   dirty_tree: null
   data_hash: truthfulqa_revision=741b8276f2d1982aa3d5b832d3ee81ed3b896490;prompt_bank_sha256=597d5ea1dc07d1169912978ca3ef35a2d4f6cf185270eb0994ebf76c872b122c
   env_hash: null
@@ -1441,8 +1441,13 @@ experiments:
     TEST threat model is accidental/concurrent/repeated execution on the
     designated A800 host; malicious root/owner deletion is out of scope, and
     cross-machine uniqueness is a human operational gate without an external
-    service. Fresh hostile re-audit and repaired-commit pinning remain required
-    before preflight or real DEV. Existing 0/12 is immutable.
+    service. D-0117's fourth repair makes the pre-consumption TEST gate forcibly
+    load both current judges rather than trust completed checkpoint provenance,
+    and execution-fingerprint schema v2 records CUDA visibility/order mapping
+    while binding the selected physical GPU UUID and PCI bus ID through a
+    targeted nvidia-smi query. Fresh hostile re-audit and repaired-commit
+    pinning remain required before preflight or real DEV. Existing 0/12 is
+    immutable.
 
 - experiment_id: microstudy-contract-application-20260810
   parent: null

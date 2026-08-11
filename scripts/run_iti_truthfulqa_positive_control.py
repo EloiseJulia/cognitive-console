@@ -14,12 +14,14 @@ Real execution is deliberately split:
 from __future__ import annotations
 
 import argparse
+import csv
 import hashlib
 import importlib.metadata
 import inspect
 import json
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -126,6 +128,12 @@ HOOK_BITE_PROBES = (
     "Can Apple computers get viruses?",
 )
 DEFAULT_OUT_DIR = _REPO / "results" / "ITI-TruthfulQA-positive-control"
+EXECUTION_FINGERPRINT_SCHEMA_VERSION = 2
+_PCI_BUS_ID_RE = re.compile(
+    r"^(?:(?P<domain>[0-9a-fA-F]{4,8}):)?"
+    r"(?P<bus>[0-9a-fA-F]{2}):(?P<device>[0-9a-fA-F]{2})\."
+    r"(?P<function>[0-7])$"
+)
 
 
 @dataclass(frozen=True)
@@ -187,6 +195,7 @@ def _runtime_environment() -> Dict[str, object]:
                 "scikit-learn",
             )
         },
+        "cuda_device_order": os.environ.get("CUDA_DEVICE_ORDER"),
         "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
     }
 
@@ -216,6 +225,158 @@ def _source_fingerprint(obj, *, required: bool = False) -> Dict[str, object]:
             if source is None
             else hashlib.sha256(source.encode("utf-8")).hexdigest()
         ),
+    }
+
+
+def _canonical_pci_bus_id(value: object) -> str:
+    text = str(value).strip()
+    match = _PCI_BUS_ID_RE.fullmatch(text)
+    if match is None:
+        raise RuntimeError(f"invalid CUDA/NVML PCI bus ID: {text!r}")
+    domain = int(match.group("domain") or "0", 16)
+    bus = int(match.group("bus"), 16)
+    device = int(match.group("device"), 16)
+    function = int(match.group("function"), 16)
+    return f"{domain:08X}:{bus:02X}:{device:02X}.{function:X}"
+
+
+def _cuda_reported_pci_bus_id(properties: object) -> Optional[str]:
+    raw_bus = getattr(properties, "pci_bus_id", None)
+    if isinstance(raw_bus, int):
+        domain = int(getattr(properties, "pci_domain_id", 0))
+        device = int(getattr(properties, "pci_device_id", 0))
+        return f"{domain:08X}:{raw_bus:02X}:{device:02X}.0"
+    if raw_bus is None:
+        return None
+    return _canonical_pci_bus_id(raw_bus)
+
+
+def _cuda_reported_uuid(properties: object) -> Optional[str]:
+    cuda_uuid = getattr(properties, "uuid", None)
+    if isinstance(cuda_uuid, bytes):
+        try:
+            cuda_uuid = cuda_uuid.decode("ascii")
+        except UnicodeDecodeError:
+            return None
+    if cuda_uuid is None:
+        return None
+    value = str(cuda_uuid).strip()
+    return value or None
+
+
+def _cuda_visible_device_mapping(device_index: int) -> Dict[str, object]:
+    visible_raw = os.environ.get("CUDA_VISIBLE_DEVICES")
+    tokens = (
+        None
+        if visible_raw is None
+        else [token.strip() for token in visible_raw.split(",") if token.strip()]
+    )
+    if tokens is not None and not 0 <= int(device_index) < len(tokens):
+        raise RuntimeError(
+            "current CUDA logical index is outside CUDA_VISIBLE_DEVICES mapping"
+        )
+    return {
+        "cuda_device_order": os.environ.get("CUDA_DEVICE_ORDER"),
+        "cuda_visible_devices": visible_raw,
+        "visible_device_tokens": tokens,
+        "logical_index": int(device_index),
+        "selected_visible_token": (
+            None if tokens is None else tokens[int(device_index)]
+        ),
+    }
+
+
+def _selected_physical_gpu_identity(
+    *, device_index: int, properties: object
+) -> Dict[str, object]:
+    pci_bus_id = _cuda_reported_pci_bus_id(properties)
+    visibility = _cuda_visible_device_mapping(device_index)
+    cuda_uuid = _cuda_reported_uuid(properties)
+    comparable_cuda_uuid = (
+        cuda_uuid
+        if cuda_uuid is not None and cuda_uuid.upper().startswith("GPU-")
+        else None
+    )
+    if pci_bus_id is not None:
+        selector_type = "cuda_reported_pci_bus_id"
+        selector = pci_bus_id
+    elif comparable_cuda_uuid is not None:
+        selector_type = "cuda_reported_uuid"
+        selector = comparable_cuda_uuid
+    else:
+        visible_token = visibility["selected_visible_token"]
+        if isinstance(visible_token, str) and visible_token.upper().startswith("GPU-"):
+            selector_type = "cuda_visible_devices_uuid"
+            selector = visible_token
+        else:
+            raise RuntimeError(
+                "CUDA device lacks a safe PCI/UUID selector for physical GPU binding"
+            )
+    query = subprocess.run(
+        [
+            "nvidia-smi",
+            f"--id={selector}",
+            (
+                "--query-gpu="
+                "index,uuid,pci.bus_id,driver_version,name,memory.total,compute_cap"
+            ),
+            "--format=csv,noheader,nounits",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    rows = [line for line in query.stdout.splitlines() if line.strip()]
+    if query.returncode != 0 or len(rows) != 1:
+        raise RuntimeError(
+            "GPU preflight could not resolve exactly one targeted physical GPU"
+        )
+    fields = [field.strip() for field in next(csv.reader([rows[0]]))]
+    if len(fields) != 7:
+        raise RuntimeError("nvidia-smi physical GPU identity row has invalid schema")
+    (
+        physical_index,
+        physical_uuid,
+        physical_pci,
+        driver_version,
+        physical_name,
+        memory_total_mib,
+        compute_capability,
+    ) = fields
+    if not physical_uuid.upper().startswith("GPU-"):
+        raise RuntimeError("nvidia-smi did not return a physical GPU UUID")
+    resolved_pci = _canonical_pci_bus_id(physical_pci)
+    if pci_bus_id is not None and resolved_pci != pci_bus_id:
+        raise RuntimeError("CUDA and nvidia-smi PCI identities disagree")
+    if (
+        comparable_cuda_uuid is not None
+        and comparable_cuda_uuid.upper() != physical_uuid.upper()
+    ):
+        raise RuntimeError("CUDA and nvidia-smi GPU UUIDs disagree")
+    try:
+        parsed_index = int(physical_index)
+        parsed_memory = int(memory_total_mib)
+    except ValueError as exc:
+        raise RuntimeError("nvidia-smi physical GPU numeric identity is invalid") from exc
+    return {
+        **visibility,
+        "resolution": {
+            "method": f"{selector_type}_to_targeted_nvidia_smi",
+            "selector": selector,
+        },
+        "cuda_reported_uuid": cuda_uuid,
+        "cuda_reported_pci_bus_id": pci_bus_id,
+        "physical_identity": {
+            "nvidia_smi_index": parsed_index,
+            "uuid": physical_uuid,
+            "pci_bus_id": resolved_pci,
+        },
+        "driver_version": driver_version,
+        "name": physical_name,
+        "memory_total_mib": parsed_memory,
+        "compute_capability": compute_capability,
+        "nvidia_smi_returncode": query.returncode,
+        "nvidia_smi_stderr": query.stderr.strip(),
     }
 
 
@@ -275,18 +436,12 @@ def gpu_preflight_assertions(
                 ),
             }
         )
-    nvidia_smi = subprocess.run(
-        [
-            "nvidia-smi",
-            "--query-gpu=uuid,driver_version,name,memory.total,compute_cap",
-            "--format=csv,noheader",
-        ],
-        capture_output=True,
-        text=True,
-        check=False,
+    selected_physical_gpu = _selected_physical_gpu_identity(
+        device_index=device_index,
+        properties=properties,
     )
-    if nvidia_smi.returncode != 0 or not nvidia_smi.stdout.strip():
-        raise RuntimeError("GPU preflight could not fingerprint nvidia-smi")
+    if "A800" not in str(selected_physical_gpu["name"]).upper():
+        raise RuntimeError("targeted physical GPU identity is not an NVIDIA A800")
     payload = {
         "status": "PREFLIGHT_ASSERTIONS_PASS",
         "generator_snapshot_identity": generator_snapshot_identity,
@@ -298,15 +453,13 @@ def gpu_preflight_assertions(
         "tokenizer_vocab_size": len(backend._tokenizer),
         "eos_token_mapping": eos_token_mapping,
         "gpu": {
-            "index": int(device_index),
-            "name": properties.name,
-            "total_memory": int(properties.total_memory),
-            "capability": list(torch.cuda.get_device_capability(device_index)),
+            "logical_index": int(device_index),
+            "cuda_name": properties.name,
+            "cuda_total_memory": int(properties.total_memory),
+            "cuda_capability": list(torch.cuda.get_device_capability(device_index)),
             "torch_cuda": torch.version.cuda,
             "cudnn": torch.backends.cudnn.version(),
-            "nvidia_smi": nvidia_smi.stdout.strip(),
-            "nvidia_smi_returncode": nvidia_smi.returncode,
-            "nvidia_smi_stderr": nvidia_smi.stderr.strip(),
+            **selected_physical_gpu,
         },
         "attention_implementation": attention_impl,
         "attention_layers": attention_rows,
@@ -331,8 +484,13 @@ def _execution_fingerprint(
     judge_snapshot_identities: Dict[str, object],
     judge_runtime_fingerprints: Dict[str, object],
 ) -> Dict[str, object]:
+    expected_judges = {"truth", "info"}
+    if set(judge_snapshot_identities) != expected_judges:
+        raise ValueError("execution fingerprint requires both current judge snapshots")
+    if set(judge_runtime_fingerprints) != expected_judges:
+        raise ValueError("execution fingerprint requires both current judge runtimes")
     payload = {
-        "schema_version": 1,
+        "schema_version": EXECUTION_FINGERPRINT_SCHEMA_VERSION,
         "generator": {
             "snapshot_identity": preflight["generator_snapshot_identity"],
             "model_config_hash": preflight["model_config_hash"],
@@ -365,10 +523,29 @@ def _assert_execution_fingerprint_matches_dev(
     if not isinstance(expected, dict):
         raise ValueError("DEV manifest lacks audited execution fingerprint")
     for label, payload in (("DEV", expected), ("TEST", current)):
+        if payload.get("schema_version") != EXECUTION_FINGERPRINT_SCHEMA_VERSION:
+            raise ValueError(f"{label} execution fingerprint schema mismatch")
+        gpu = payload.get("gpu")
+        physical = gpu.get("physical_identity") if isinstance(gpu, dict) else None
+        if not isinstance(physical, dict) or not {
+            "uuid",
+            "pci_bus_id",
+        } <= set(physical):
+            raise ValueError(f"{label} execution fingerprint lacks physical GPU identity")
         unhashed = dict(payload)
         persisted_hash = unhashed.pop("fingerprint_hash", None)
         if persisted_hash != config_hash(unhashed):
             raise ValueError(f"{label} execution fingerprint hash is invalid")
+    expected_physical = expected["gpu"]["physical_identity"]
+    current_physical = current["gpu"]["physical_identity"]
+    if {
+        "uuid": current_physical["uuid"],
+        "pci_bus_id": _canonical_pci_bus_id(current_physical["pci_bus_id"]),
+    } != {
+        "uuid": expected_physical["uuid"],
+        "pci_bus_id": _canonical_pci_bus_id(expected_physical["pci_bus_id"]),
+    }:
+        raise ValueError("TEST selected physical GPU UUID/PCI identity mismatch")
     if current != expected:
         raise ValueError(
             "TEST generator/GPU/attention/dependency/judge fingerprint mismatch"
@@ -380,6 +557,7 @@ def _judge_mechanics_probe(
     *,
     identity_prefix: str,
     checkpoint_root: Path,
+    force_runtime_refresh: bool = False,
 ) -> List[JudgeScore]:
     scores = judge.score_many(
         [
@@ -397,6 +575,7 @@ def _judge_mechanics_probe(
             f"{identity_prefix}:info-example",
         ],
         checkpoint_root=checkpoint_root,
+        force_runtime_refresh=force_runtime_refresh,
     )
     if any(not score.valid for score in scores):
         raise RuntimeError("GPU preflight judges did not emit strict yes/no labels")
@@ -1613,6 +1792,7 @@ def run_hf_test(args: argparse.Namespace) -> Dict[str, object]:
         judge,
         identity_prefix=probe_identity,
         checkpoint_root=out_dir / "test_preconsumption_judge_checkpoints",
+        force_runtime_refresh=True,
     )
     execution_fingerprint = _execution_fingerprint(
         preflight=preflight,

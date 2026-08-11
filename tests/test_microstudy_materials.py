@@ -1,345 +1,328 @@
+import copy
 import hashlib
 import json
 import subprocess
 import sys
+from collections import Counter
 from pathlib import Path
 
 from cognitive_console.microstudy_materials import (
+    EXPORT_SCHEMA_VERSION,
+    MATERIALS_PATH,
+    MATERIALS_VERSION,
+    MATERIAL_SCHEMA_VERSION,
     SEQUENCES_PATH,
-    STIMULI_PATH,
+    SEQUENCE_SCHEMA_VERSION,
+    SOURCE_REGISTRY_PATH,
+    TICKET_CODES,
+    TICKET_STATE_BY_CODE,
+    _ticket_definitions,
     canonical_locale_bytes,
-    exact_binomial_upper_tail,
+    derive_policy_state,
+    derive_ticket_keys,
+    extract_real_evidence,
+    generate_materials,
+    generate_sequences,
     load_sources,
     locale_manifest,
-    route_state,
+    private_answer_keys,
     validate_materials,
+    verified_source_payloads,
 )
 
 
-REPO = Path(__file__).resolve().parent.parent
+REPO = Path(__file__).resolve().parents[1]
+REQUIRED_SOURCE_HASHES = {
+    "C1_QWEN": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e",
+    "C1_LLAMA": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46",
+    "E0006_ARM": "4614ff8277f3f6eed485169b0b4a00d4bf3978d487976318416692689cc32d19",
+    "E0006_CAA_QWEN": "bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243",
+    "E0006_CAA_LLAMA": "7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6",
+    "E0006_ITI_QWEN": "8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026",
+    "E0006_ITI_LLAMA": "46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43",
+    "E0011_MULTI": "edcc3f4ce770bb10264e670b04afde9f84a2068e94a31c49a4c16bf382cc0927",
+    "E0013_FORMAT": "6554565952f1b5f0334b37f1e78f9c2af66d951c380dc9f3c86f312f0f028884",
+    "E0014_ENDPOINT": "8c0b9b65e872a888bcb8c62cac39515a8741a25634e7cec58f5d3dce901f445f",
+    "E0015_SCALE": "9bc450a4184aa9bdc617953dba8acdd3c9e0ef25883f706d31142d9665fb89ec",
+}
 
 
-def test_authoritative_sources_validate_with_bilingual_manifest():
+def test_authoritative_v9_sources_validate_with_exact_balance_report():
     report = validate_materials()
-    assert report["status"] == "PASS"
-    assert report["schema_version"] == "microstudy-stimuli-v8-bilingual-novice-ux"
-    assert report["template_reuse"] == {
-        "Q2-NEXT": 4,
-        "Q2-BASELINE": 4,
-        "Q2-COVERAGE": 2,
+    assert report == {
+        "status": "PASS",
+        "schema_version": MATERIAL_SCHEMA_VERSION,
+        "materials_version": MATERIALS_VERSION,
+        "export_schema_version": EXPORT_SCHEMA_VERSION,
+        "locale_manifest": locale_manifest(load_sources()[0]),
+        "source_count": 13,
+        "ticket_count": 6,
+        "state_distribution": {"W": 2, "S": 1, "U": 2, "D": 1},
+        "q2_unique": True,
+        "mde_status": "UNVERIFIED_NOT_ESTIMATED",
+        "sequence_count": 12,
+        "valid_order_count": 48,
+        "exact_cover_cells": 72,
+        "first_six_balanced": True,
+        "last_six_balanced": True,
+        "source_balanced": True,
+        "state_balanced": True,
+        "period_balanced": True,
     }
-    assert report["key_distribution"] == {"A": 2, "B": 2, "C": 3, "D": 3}
-    assert report["sequence_count"] == 20
-    assert report["trial_row_count"] == 200
-    assert report["locale_leakage_counts"] == {
-        locale: {
-            "equal_length": 2,
-            "negation_marker": 3,
-            "modal_marker": 2,
-            "initial_lexical": 2,
-        }
-        for locale in ("en", "zh-Hans")
-    }
 
 
-def test_locale_tree_is_complete_no_fallback_and_canonical_hashes():
-    stimuli, _ = load_sources()
-    contract = stimuli["locale_contract"]
-    assert contract["supported"] == ["en", "zh-Hans"]
-    assert contract["fallback"] is None
-    assert contract["auto_detect"] is False
-    assert contract["stable_id_parity"] is True
-    manifest = locale_manifest(stimuli)
-    for locale in contract["supported"]:
-        assert manifest[locale]["locale_bundle_hash"] == hashlib.sha256(
-            canonical_locale_bytes(stimuli["locales"][locale])
-        ).hexdigest()
-        assert manifest[locale]["locale_bundle_version"].endswith(locale)
-    assert manifest["en"]["locale_bundle_hash"] != manifest["zh-Hans"]["locale_bundle_hash"]
-
-
-def test_frozen_leakage_and_router_metrics():
-    metrics = validate_materials()["metrics"]
-    expected = {
-        "oracle_template": 3,
-        "loo_template": 0,
-        "global_position": 3,
-        "equal_length": 2,
-        "negation_marker": 3,
-        "modal_marker": 2,
-        "read_lexical": 2,
-        "single_row_q1": 8,
-        "combined_oracle_cca": 2,
-        "combined_loo_cca": 0,
-        "router": 10,
-    }
-    assert {name: row["correct"] for name, row in metrics.items()} == expected
-    for name, row in metrics.items():
-        if name not in {"single_row_q1", "router"}:
-            assert row["binomial_p_upper_vs_0_25"] >= 0.05
-
-
-def test_exact_binomial_values():
-    assert exact_binomial_upper_tail(3, 10) == 0.4744071960449219
-    assert exact_binomial_upper_tail(2, 10) == 0.7559747695922852
-    assert exact_binomial_upper_tail(0, 10) == 1.0
-
-
-def test_p3_y_q2_requests_missing_scope_without_changing_q1():
-    stimuli, _ = load_sources()
-    item = next(
-        item
-        for item in stimuli["nonlocalized"]["items"]
-        if item["stimulus_id"] == "MS-P3-Y"
+def test_source_registry_verifies_exact_canonical_git_blobs():
+    registry = json.loads(SOURCE_REGISTRY_PATH.read_text(encoding="utf-8"))
+    rows = {row["source_id"]: row for row in registry["sources"]}
+    assert registry["hash_basis"] == "git_blob_bytes"
+    assert len(rows) == 13
+    for source_id, expected_hash in REQUIRED_SOURCE_HASHES.items():
+        assert rows[source_id]["canonical_sha256"] == expected_hash
+        blob = subprocess.run(
+            ["git", "show", f"{rows[source_id]['commit']}:{rows[source_id]['path']}"],
+            cwd=REPO,
+            check=True,
+            capture_output=True,
+        ).stdout
+        assert hashlib.sha256(blob).hexdigest() == expected_hash
+    assert "EVIDENCE_LEDGER" not in rows
+    assert "64171bfa860495b5be3151848c808af1deb70edab4afed1bdd93c9294677f669" not in (
+        SOURCE_REGISTRY_PATH.read_text(encoding="utf-8")
     )
-    template = next(
-        template
-        for template in stimuli["locales"]["en"]["formal"]["q2_templates"]
-        if template["id"] == item["q2"]["template_id"]
+    payloads, lineage = verified_source_payloads()
+    assert set(payloads) == set(rows)
+    assert {row["source_id"] for row in lineage} == set(rows)
+
+
+def test_generator_is_the_only_export_and_is_idempotent():
+    generated_materials, _ = generate_materials()
+    generated_sequences = generate_sequences()
+    actual_materials, actual_sequences = load_sources()
+    assert actual_materials == generated_materials
+    assert actual_sequences == generated_sequences
+    before = (MATERIALS_PATH.read_bytes(), SEQUENCES_PATH.read_bytes())
+    subprocess.run(
+        [sys.executable, "scripts/generate_microstudy_v9.py"],
+        cwd=REPO,
+        check=True,
     )
-    localized_item = next(
-        row
-        for row in stimuli["locales"]["en"]["formal"]["items"]
-        if row["id"] == "MS-P3-Y"
+    assert before == (MATERIALS_PATH.read_bytes(), SEQUENCES_PATH.read_bytes())
+    checked = subprocess.run(
+        [sys.executable, "scripts/generate_microstudy_v9.py", "--check"],
+        cwd=REPO,
+        check=True,
+        capture_output=True,
+        text=True,
     )
-    assert item["q2"] == {"template_id": "Q2-NEXT", "correct_key": "C"}
-    assert "applicability boundary" in template["options"][2]["text"]
-    assert "unavailable" in localized_item["primitive_evidence"]["scope"]
-    assert route_state(item["state_routing_inputs"]) == "Q1_WITHHELD"
-
-
-def test_transfer_pass_uses_positive_ci_and_point_estimate_margin():
-    base = {
-        "tier": "S1",
-        "evaluation_tier": "S1",
-        "read_status": "supported",
-        "comparison": {
-            "tested": True,
-            "estimate": 0.1,
-            "ci_low": 0.001,
-            "ci_high": 0.2,
-            "registered_margin": 0.1,
-        },
-        "coherence_status": "pass",
-    }
-    assert route_state(base) == "Q1_SUPPORTED"
-    touches_zero = json.loads(json.dumps(base))
-    touches_zero["comparison"]["ci_low"] = 0.0
-    assert route_state(touches_zero) == "Q1_UNRESOLVED"
-    below_margin = json.loads(json.dumps(base))
-    below_margin["comparison"]["estimate"] = 0.1 - 1e-12
-    assert route_state(below_margin) == "Q1_WITHHELD"
-
-
-def test_contract_labels_are_plain_semantic_and_academic_labels_are_absent():
-    stimuli, _ = load_sources()
-    en = stimuli["locales"]["en"]
-    zh = stimuli["locales"]["zh-Hans"]
-    assert en["formal"]["contract_labels"] == {
-        "representation": "Initial check",
-        "comparison": "Paired comparison",
-        "comparator": "Reference setup",
-        "coherence": "Consistency check",
-        "scope": "Applicable setting",
-    }
-    assert zh["formal"]["contract_labels"] == {
-        "representation": "初始检查",
-        "comparison": "配对比较",
-        "comparator": "参照设置",
-        "coherence": "一致性检查",
-        "scope": "适用情境",
-    }
-    assert en["formal"]["flat_labels"] == [f"Evidence {letter}" for letter in "ABCDE"]
-    assert zh["formal"]["flat_labels"] == [f"证据 {letter}" for letter in "ABCDE"]
-    for bundle, forbidden in (
-        (en, (
-            "READ", "TRANSFER", "BOUNDED PROMPT COMPARATOR",
-            "CALIBRATION WARNING", "EVIDENCE TIER",
-        )),
-        (zh, ("初始读取", "迁移比较", "有界提示比较器", "校准警示", "证据层级")),
-    ):
-        participant_copy = json.dumps(bundle, ensure_ascii=False)
-        assert not any(term in participant_copy for term in forbidden)
-
-
-def test_single_safety_practice_is_five_rows_with_no_formal_pattern_mapping():
-    stimuli, _ = load_sources()
-    answers = stimuli["nonlocalized"]["answer_keys"]["practice"]
-    assert answers == {"q1": "Q1_WITHHELD", "q2": "D"}
-    practice_ids = stimuli["nonlocalized"]["practice_fact_ids"]
-    assert set(practice_ids).isdisjoint(stimuli["nonlocalized"]["primitive_ids"])
-    assert stimuli["nonlocalized"]["render_contract"]["practice_independence"][
-        "formal_role_mapping"
-    ] == "none"
-    for locale in ("en", "zh-Hans"):
-        practice = stimuli["locales"][locale]["practice"]
-        encoded = json.dumps(practice, ensure_ascii=False).lower()
-        assert [row["id"] for row in practice["facts"]] == practice_ids
-        assert len(practice["facts"]) == 5
-        assert len(practice["q1"]["options"]) == 4
-        assert len(practice["q2"]["options"]) == 4
-        assert "primitive_evidence" not in encoded
-        for forbidden in (
-            "interval", "margin", "tier", "model", "method", "evidence a",
-            "transfer", "bounded prompt comparator", "calibration warning",
-        ):
-            assert forbidden not in encoded
-    assert [row["body"] for row in stimuli["locales"]["en"]["practice"]["facts"]] == [
-        "The room is requested for Saturday afternoon.",
-        "The safety check is complete.",
-        "A blocked emergency exit was found.",
-        "Policy requires exits to remain clear while the room is in use.",
-        "The result applies to this room and time: the room cannot be opened.",
-    ]
-    assert [row["body"] for row in stimuli["locales"]["zh-Hans"]["practice"]["facts"]] == [
-        "有人申请周六下午使用该房间。",
-        "安全检查已完成。",
-        "检查发现紧急出口受阻。",
-        "政策要求房间使用期间紧急出口保持畅通。",
-        "结论适用于该房间和时段：房间不能开放。",
-    ]
-
-
-def test_novice_welcome_guard_state_distinction_and_q2_coverage_copy():
-    stimuli, _ = load_sources()
-    en = stimuli["locales"]["en"]
-    zh = stimuli["locales"]["zh-Hans"]
-    assert en["welcome"]["heading"] == "Five-fact decision task"
-    assert zh["welcome"]["heading"] == "五条事实判断任务"
-    assert en["welcome"]["subtitle"] == (
-        "Read five facts, choose one status, then answer one follow-up question."
-    )
-    assert zh["welcome"]["subtitle"] == "阅读五条事实，选择一个状态，再回答一个跟进问题。"
-    assert "1 practice record and 10 formal records" in en["welcome"]["task_size"]
-    assert "not been timing-validated" in en["welcome"]["estimate"]
-    assert "请勿填写姓名" in zh["welcome"]["participant_code_help"]
-    assert "not an answer hint" in en["welcome"]["sequence_help"]
-    assert "不能恢复" in zh["welcome"]["no_resume"]
-    assert len(en["onboarding"]["steps"]) == len(zh["onboarding"]["steps"]) == 3
-    assert en["onboarding"]["fact_guidance_intro"] == (
-        "The five facts answer different questions. Cards may order them "
-        "differently; labels and positions are not clues."
-    )
-    assert en["onboarding"]["fact_guidance"] == [
-        "One reports whether the output stayed consistent enough to interpret.",
-        "One explains the reference used for comparison.",
-        "One fact says whether an early check has a usable result.",
-        "One states exactly where the record applies.",
-        "One describes what happened in a matched comparison.",
-    ]
-    assert zh["onboarding"]["fact_guidance_intro"] == (
-        "五条事实回答不同的问题。卡片可能以不同顺序呈现；标签和位置都不是线索。"
-    )
-    assert zh["onboarding"]["fact_guidance"] == [
-        "一条事实说明输出是否保持足够一致，因而可以解释。",
-        "一条事实说明比较时采用了什么参照。",
-        "一条事实说明较早的一项检查是否已有可用结果。",
-        "一条事实明确这条记录适用于何处。",
-        "一条事实说明一次相匹配的比较中发生了什么。",
-    ]
-    assert "cannot yet tell" in en["onboarding"]["state_distinction"]
-    assert "decision is not to support" in en["onboarding"]["state_distinction"]
-    assert en["position_guard"] == (
-        "Use all five facts; row order and Fact/Evidence labels are not clues."
-    )
-    assert zh["position_guard"] == "请结合全部五条事实；行顺序和事实/证据编号不是线索。"
-    coverage_en = next(
-        row for row in en["formal"]["q2_templates"] if row["id"] == "Q2-COVERAGE"
-    )
-    coverage_zh = next(
-        row for row in zh["formal"]["q2_templates"] if row["id"] == "Q2-COVERAGE"
-    )
-    assert coverage_en["text"] == (
-        "Which checks have completed, usable results in this record?"
-    )
-    assert coverage_zh["text"] == "这条记录中，哪些检查已有完成且可用的结果？"
-    assert coverage_en["helper"] == "Usable does not mean positive."
-    assert coverage_zh["helper"] == "“可用”不等于“结果为正”。"
-
-
-def test_common_copy_has_no_contract_labels_or_role_identifiers():
-    stimuli, _ = load_sources()
-    primitive_ids = set(stimuli["nonlocalized"]["primitive_ids"])
-    for locale in ("en", "zh-Hans"):
-        bundle = json.loads(json.dumps(stimuli["locales"][locale]))
-        formal = bundle.pop("formal")
-        encoded = json.dumps(bundle, ensure_ascii=False).casefold()
-        assert not any(
-            label.casefold() in encoded
-            for label in formal["contract_labels"].values()
-        )
-        onboarding = bundle["onboarding"]
-        assert "glossary" not in onboarding
-        assert all(not isinstance(row, dict) for row in onboarding["fact_guidance"])
-        assert primitive_ids.isdisjoint(onboarding)
-
-
-def test_q1_q2_keys_and_noncoverage_templates_are_unchanged():
-    stimuli, _ = load_sources()
-    expected_q1 = {
-        "MS-P1-X": "Q1_UNRESOLVED", "MS-P1-Y": "Q1_UNRESOLVED",
-        "MS-P2-X": "Q1_DIAGNOSTIC", "MS-P2-Y": "Q1_DIAGNOSTIC",
-        "MS-P3-X": "Q1_WITHHELD", "MS-P3-Y": "Q1_WITHHELD",
-        "MS-P4-X": "Q1_UNRESOLVED", "MS-P4-Y": "Q1_UNRESOLVED",
-        "MS-P5-X": "Q1_SUPPORTED", "MS-P5-Y": "Q1_SUPPORTED",
-    }
-    expected_q2 = {
-        "MS-P1-X": "D", "MS-P1-Y": "A", "MS-P2-X": "B", "MS-P2-Y": "C",
-        "MS-P3-X": "C", "MS-P3-Y": "C", "MS-P4-X": "A", "MS-P4-Y": "B",
-        "MS-P5-X": "D", "MS-P5-Y": "D",
-    }
-    assert {
-        item["stimulus_id"]: route_state(item["state_routing_inputs"])
-        for item in stimuli["nonlocalized"]["items"]
-    } == expected_q1
-    assert {
-        item["stimulus_id"]: item["q2"]["correct_key"]
-        for item in stimuli["nonlocalized"]["items"]
-    } == expected_q2
-    templates = {
-        row["id"]: row for row in stimuli["locales"]["en"]["formal"]["q2_templates"]
-    }
-    assert templates["Q2-NEXT"]["text"] == "What needs to be checked next?"
-    assert templates["Q2-BASELINE"]["text"] == (
-        "What does this record say about the reference?"
-    )
-
-
-def test_render_contract_is_selected_locale_and_semantic_attribute_safe():
-    stimuli, _ = load_sources()
-    render = stimuli["nonlocalized"]["render_contract"]
-    assert render["conditions"]["contract"]["labels"] == (
-        "selected locale formal.contract_labels"
-    )
-    assert render["conditions"]["flat"]["labels_by_position"] == (
-        "selected locale formal.flat_labels"
-    )
-    assert render["dom"]["card"]["data_attributes"] == []
-    assert render["dom"]["row"]["data_attributes"] == [
-        "data-row-id", "data-position"
-    ]
-    assert render["parity_audit"]["geometry_tolerance_px"] == 1
-
-
-def test_sources_are_json_and_cli_emits_report():
-    assert STIMULI_PATH.suffix == ".json"
-    assert SEQUENCES_PATH.suffix == ".json"
-    completed = subprocess.run(
+    assert "current" in checked.stdout
+    report = subprocess.run(
         [sys.executable, "scripts/validate_microstudy_materials.py"],
         cwd=REPO,
         check=True,
         capture_output=True,
         text=True,
     )
-    assert json.loads(completed.stdout)["status"] == "PASS"
+    assert json.loads(report.stdout)["schema_version"] == MATERIAL_SCHEMA_VERSION
 
 
-def test_no_attention_check_or_free_text_export_fields():
-    stimuli, _ = load_sources()
-    export = stimuli["nonlocalized"]["export_schema"]
-    assert not any("attention" in field for field in export["session_fields"])
-    assert export["free_text_fields"] == []
-    assert {
-        "ui_language", "locale_bundle_version", "locale_bundle_hash",
-        "block_1_ease", "block_2_ease",
-    } <= set(export["session_fields"])
+def test_real_evidence_is_extracted_from_verified_payloads_with_required_caveats():
+    payloads, _ = verified_source_payloads()
+    evidence = extract_real_evidence(payloads)
+    assert evidence["arm"] == {"n_cells": 4, "zero_pass_cells": 4}
+    assert evidence["multiseed"] == {"n_seeds": 5, "same_pool": True}
+    assert evidence["format"]["other_cells_unrechecked"] == 3
+    assert evidence["format"]["complete_case_ci_high"] < 0
+    assert evidence["format"]["missingness_low"] < 0 < evidence["format"]["missingness_high"]
+    assert abs(evidence["format"]["compliance_delta_vs_baseline"]) < 0.02
+    assert abs(evidence["format"]["brier_delta_vs_baseline"]) < 0.01
+    assert evidence["scale"]["any_latent_pass"] is False
+    assert evidence["deliberation"]["token_cap"] == 64
+    assert all(
+        value > evidence["skepticism"]["sesoi"]
+        for value in evidence["skepticism"]["mdes"]
+    )
+
+
+def test_private_keys_have_exact_state_and_q2_distribution_without_public_leakage():
+    keys = private_answer_keys()
+    assert {ticket: row["state"] for ticket, row in keys.items()} == TICKET_STATE_BY_CODE
+    assert {ticket: row["q1_code"] for ticket, row in keys.items()} == {
+        "UNC-R": "C",
+        "UNC-S": "D",
+        "SKEP-R": "A",
+        "SKEP-S": "B",
+        "DELIB-R": "A",
+        "DELIB-S": "C",
+    }
+    assert {ticket: row["q2_code"] for ticket, row in keys.items()} == dict(
+        zip(TICKET_CODES, "ABCDEF")
+    )
+    assert Counter(row["state"] for row in keys.values()) == {
+        "U": 2,
+        "D": 1,
+        "W": 2,
+        "S": 1,
+    }
+    public = MATERIALS_PATH.read_text(encoding="utf-8")
+    for forbidden in (
+        "expected_q1", "expected_q2", "correct_key", "q1_key", "q2_key",
+        "Q2_COMPARATOR_MISSINGNESS", "Q2_SCOPE_BOUNDARY",
+        "Q2_UNDERPOWERED_COMPARISON", "Q2_MISSING_PAIRED_COMPARISON",
+        "Q2_DECISIVE_PAIRED_TEST", "Q2_QUALITY_COHERENCE_FAIL",
+    ):
+        assert forbidden not in public
+
+
+def test_answer_derivation_is_invariant_to_every_nonkey_field():
+    payloads, lineage = verified_source_payloads()
+    definitions = _ticket_definitions(extract_real_evidence(payloads), lineage)
+    for ticket in definitions:
+        expected = derive_ticket_keys(ticket)
+        assert derive_ticket_keys({
+            "policy_inputs": copy.deepcopy(ticket["policy_inputs"]),
+            "decisive_issue": ticket["decisive_issue"],
+        }) == expected
+        for field in set(ticket) - {"policy_inputs", "decisive_issue"}:
+            changed = copy.deepcopy(ticket)
+            del changed[field]
+            assert derive_ticket_keys(changed) == expected
+    assert derive_policy_state({
+        "read_status": "usable",
+        "paired_comparison": "decisive_positive",
+        "quality_status": "pass",
+        "scope_status": "exact",
+    }) == "S"
+    assert derive_policy_state({
+        "read_status": "usable",
+        "paired_comparison": "missing",
+        "quality_status": "unverified",
+        "scope_status": "bounded",
+    }) == "D"
+
+
+def test_bilingual_contract_flat_parity_and_visible_policy():
+    materials, _ = load_sources()
+    assert materials["locale_contract"] == {
+        "version": "microstudy-v9-locale-contract-v1",
+        "supported": ["en", "zh-Hans"],
+        "fallback": None,
+        "auto_detect": False,
+        "stable_id_parity": True,
+        "human_semantic_review": "UNVERIFIED_PRE_RECRUITMENT",
+    }
+    manifest = locale_manifest(materials)
+    for locale in ("en", "zh-Hans"):
+        assert manifest[locale]["locale_bundle_hash"] == hashlib.sha256(
+            canonical_locale_bytes(materials["locales"][locale])
+        ).hexdigest()
+        bundle = materials["locales"][locale]
+        assert len(bundle["contract_headings"]) == 4
+        assert [row["id"] for row in bundle["q1"]["options"]] == list("ABCD")
+        assert [row["id"] for row in bundle["q2"]["options"]] == list("ABCDEF")
+        assert len(bundle["tickets"]) == 6
+        for ticket in bundle["tickets"]:
+            assert len(ticket["facts"]) == 6
+            assert len(ticket["outputs"]) == 2
+            assert sorted(ticket["flat_order"]) == list(range(6))
+            assert ticket["source_badge"] in {"SOURCE-BACKED", "SIMULATED"}
+    assert manifest["en"]["locale_bundle_hash"] != manifest["zh-Hans"]["locale_bundle_hash"]
+    render = materials["nonlocalized"]["render_contract"]
+    assert render["contract_group_sizes"] == [1, 2, 2, 1]
+    assert render["only_badges"] == [
+        "SOURCE-BACKED", "SIMULATED", "ILLUSTRATIVE OUTPUT"
+    ]
+
+
+def test_required_ticket_caveats_and_audio_practice_are_visible():
+    materials, _ = load_sources()
+    for locale in ("en", "zh-Hans"):
+        tickets = {
+            row["ticket_code"]: "\n".join(row["facts"])
+            for row in materials["locales"][locale]["tickets"]
+        }
+        if locale == "en":
+            assert all(marker in tickets["UNC-R"] for marker in (
+                "4 had no passing axis", "approximately baseline", "complete-case",
+                "bounds cross zero", "other 3 cells are unrechecked",
+                "latent arms still had no pass",
+            ))
+            assert all(marker in tickets["SKEP-R"] for marker in (
+                "underpowered", "MDEs", "target effect",
+            ))
+            assert all(marker in tickets["DELIB-R"] for marker in (
+                "mixed near zero", "64-token cap", "decisive paired test",
+            ))
+        else:
+            assert all(marker in tickets["UNC-R"] for marker in (
+                "没有任何轴通过", "基本相当", "完整案例", "边界跨过零",
+                "其余 3 个单元尚未复查", "仍没有潜在干预通过",
+            ))
+            assert all(marker in tickets["SKEP-R"] for marker in (
+                "检验力不足", "MDE", "目标效应",
+            ))
+            assert all(marker in tickets["DELIB-R"] for marker in (
+                "零附近呈混合结果", "64 个 token", "有判定力的配对检验",
+            ))
+        practice = materials["locales"][locale]["practice"]
+        assert len(practice["facts"]) == 6
+        assert [row["id"] for row in practice["q2_options"]] == list("ABCD")
+        assert "router" not in json.dumps(practice, ensure_ascii=False).lower()
+        feedback = practice["feedback"]
+        assert "Q1" in feedback or "问题 1" in feedback
+        assert not any(
+            marker in feedback
+            for marker in (
+                "use W", "选择 W", "Pending", "Read-only", "Hide", "Adjustable",
+                "待定", "只读诊断", "隐藏", "仅在明确写出的范围内可调",
+            )
+        )
+    english = materials["locales"]["en"]["practice"]
+    assert "locked" in english["facts"][-1]
+    assert "changed preview" in english["feedback"]
+    assert "beats the existing preset" in english["feedback"]
+    assert "speech-quality check failed" in english["feedback"]
+
+
+def test_twelve_sequences_are_deterministic_exact_cover_and_complemented():
+    sequences = generate_sequences()["sequences"]
+    assert [row["code"] for row in sequences] == [
+        f"V9-{index:02d}" for index in range(1, 13)
+    ]
+    cells = Counter()
+    for sequence in sequences:
+        slots = sequence["slots"]
+        assert len(slots) == 6
+        assert {row["ticket_code"] for row in slots} == set(TICKET_CODES)
+        assert Counter(row["condition"] for row in slots) == {"C": 3, "F": 3}
+        for scenario in ("UNC", "SKEP", "DELIB"):
+            assert {
+                row["condition"]
+                for row in slots
+                if row["ticket_code"].startswith(scenario)
+            } == {"C", "F"}
+            positions = [
+                row["position"]
+                for row in slots
+                if row["ticket_code"].startswith(scenario)
+            ]
+            assert abs(positions[0] - positions[1]) >= 3
+        for row in slots:
+            cells[row["ticket_code"], row["condition"], row["position"]] += 1
+    assert len(cells) == 72 and set(cells.values()) == {1}
+    for first, second in zip(sequences[:6], sequences[6:]):
+        assert [row["ticket_code"] for row in first["slots"]] == [
+            row["ticket_code"] for row in second["slots"]
+        ]
+        assert all(
+            left["condition"] != right["condition"]
+            for left, right in zip(first["slots"], second["slots"])
+        )
+
+
+def test_v8_artifacts_remain_historical_and_separate():
+    historical = REPO / "data" / "microstudy_contract_application" / "stimuli.json"
+    old = json.loads(historical.read_text(encoding="utf-8"))
+    assert old["schema_version"] == "microstudy-stimuli-v8-bilingual-novice-ux"
+    assert MATERIALS_PATH != historical
+    assert SEQUENCES_PATH.name == "sequences.json"
+    assert SOURCE_REGISTRY_PATH.parent.name == "microstudy_scenario_v9"

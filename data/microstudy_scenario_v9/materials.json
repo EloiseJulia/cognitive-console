@@ -1,0 +1,1488 @@
+{
+  "schema_version": "microstudy-scenario-v9-bilingual",
+  "materials_version": "microstudy-scenario-release-20260811-v9-draft",
+  "status": "DRAFT_NOT_FROZEN_OWNER_LOCAL_PREVIEW_NO_HUMAN_DATA",
+  "locale_contract": {
+    "version": "microstudy-v9-locale-contract-v1",
+    "supported": [
+      "en",
+      "zh-Hans"
+    ],
+    "fallback": null,
+    "auto_detect": false,
+    "stable_id_parity": true,
+    "human_semantic_review": "UNVERIFIED_PRE_RECRUITMENT"
+  },
+  "nonlocalized": {
+    "ticket_codes": [
+      "UNC-R",
+      "UNC-S",
+      "SKEP-R",
+      "SKEP-S",
+      "DELIB-R",
+      "DELIB-S"
+    ],
+    "q1_option_ids": [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    "q2_option_ids": [
+      "A",
+      "B",
+      "C",
+      "D",
+      "E",
+      "F"
+    ],
+    "source_registry": [
+      {
+        "source_id": "C1_QWEN",
+        "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+        "path": "results/gpu_7b_2026-07-23/c1/c1_facade_results.json",
+        "canonical_sha256": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e",
+        "hash_basis": "git_blob_bytes"
+      },
+      {
+        "source_id": "C1_LLAMA",
+        "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+        "path": "results/llama_c1_facade_2026-07-24/c1_facade_results.json",
+        "canonical_sha256": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46",
+        "hash_basis": "git_blob_bytes"
+      },
+      {
+        "source_id": "E0006_ARM",
+        "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+        "path": "results/arm_full/arm_matrix_summary.json",
+        "canonical_sha256": "4614ff8277f3f6eed485169b0b4a00d4bf3978d487976318416692689cc32d19",
+        "hash_basis": "git_blob_bytes"
+      },
+      {
+        "source_id": "E0006_CAA_QWEN",
+        "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+        "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+        "canonical_sha256": "bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243",
+        "hash_basis": "git_blob_bytes"
+      },
+      {
+        "source_id": "E0006_CAA_LLAMA",
+        "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+        "path": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
+        "canonical_sha256": "7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6",
+        "hash_basis": "git_blob_bytes"
+      },
+      {
+        "source_id": "E0006_ITI_QWEN",
+        "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+        "path": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
+        "canonical_sha256": "8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026",
+        "hash_basis": "git_blob_bytes"
+      },
+      {
+        "source_id": "E0006_ITI_LLAMA",
+        "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+        "path": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
+        "canonical_sha256": "46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43",
+        "hash_basis": "git_blob_bytes"
+      },
+      {
+        "source_id": "E0006_PREREG",
+        "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+        "path": "docs/ledgers/prereg-c2b-adjudication.md",
+        "canonical_sha256": "6fc28d3e9eb6516c201d088e7ed850a95bd9e1bef0c4fda21d312f3db2209755",
+        "hash_basis": "git_blob_bytes"
+      },
+      {
+        "source_id": "E0011_MULTI",
+        "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+        "path": "results/E-0011/multiseed_c2_aggregate.json",
+        "canonical_sha256": "edcc3f4ce770bb10264e670b04afde9f84a2068e94a31c49a4c16bf382cc0927",
+        "hash_basis": "git_blob_bytes"
+      },
+      {
+        "source_id": "E0013_FORMAT",
+        "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+        "path": "results/E-0013-uncertainty-recheck/reanalysis.json",
+        "canonical_sha256": "6554565952f1b5f0334b37f1e78f9c2af66d951c380dc9f3c86f312f0f028884",
+        "hash_basis": "git_blob_bytes"
+      },
+      {
+        "source_id": "E0014_ENDPOINT",
+        "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+        "path": "results/E-0014-positive-control/positive_control_results.json",
+        "canonical_sha256": "8c0b9b65e872a888bcb8c62cac39515a8741a25634e7cec58f5d3dce901f445f",
+        "hash_basis": "git_blob_bytes"
+      },
+      {
+        "source_id": "E0015_SCALE",
+        "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+        "path": "results/E-0015-scale-corrected-positive-control/positive_control_scale_corrected_results.json",
+        "canonical_sha256": "9bc450a4184aa9bdc617953dba8acdd3c9e0ef25883f706d31142d9665fb89ec",
+        "hash_basis": "git_blob_bytes"
+      },
+      {
+        "source_id": "POSTHOC_E0006",
+        "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+        "path": "results/posthoc_equivalence/posthoc_equivalence_e0006.json",
+        "canonical_sha256": "c350701885626854889416a0ba0f8a2f07e25287b40ee6821fb1fdf0eaa47e4f",
+        "hash_basis": "git_blob_bytes"
+      }
+    ],
+    "render_contract": {
+      "version": "microstudy-v9-render-contract-v1",
+      "contract_group_sizes": [
+        1,
+        2,
+        2,
+        1
+      ],
+      "flat_labels": "neutral Latin Evidence A-F permutation",
+      "body_parity": "same six localized fact strings in both conditions",
+      "only_badges": [
+        "SOURCE-BACKED",
+        "SIMULATED",
+        "ILLUSTRATIVE OUTPUT"
+      ],
+      "forbidden_semantic_carriers": [
+        "condition IDs",
+        "group IDs",
+        "role IDs",
+        "answer keys",
+        "correctness classes",
+        "state colors",
+        "recommendation icons"
+      ],
+      "desktop_minimum_width_px": 1280,
+      "responsive_human_gate": "PENDING"
+    },
+    "export_schema": {
+      "version": "microstudy-export-v5-scenario-bilingual-signed",
+      "session_fields": [
+        "attempt_id",
+        "run_id",
+        "attempt_serial",
+        "participant_code",
+        "sequence",
+        "ui_language",
+        "locale_bundle_version",
+        "locale_bundle_hash",
+        "completion_status",
+        "complete",
+        "practice_presented",
+        "practice_q1_submitted",
+        "practice_q2_submitted",
+        "practice_complete",
+        "mechanical_exclusion",
+        "mechanical_exclusion_reason"
+      ],
+      "trial_fields": [
+        "slot_index",
+        "ticket_code",
+        "position",
+        "planned",
+        "presented",
+        "q1_submitted",
+        "q2_submitted",
+        "complete",
+        "submitted",
+        "q1",
+        "q2",
+        "q1_correct",
+        "q2_correct",
+        "cca_correct",
+        "rt_q1_ms",
+        "rt_q2_ms",
+        "rt_total_ms",
+        "hidden_ms",
+        "q1_missing",
+        "q2_missing",
+        "q1_correct_missing",
+        "q2_correct_missing",
+        "cca_correct_missing",
+        "rt_q1_missing",
+        "rt_q2_missing",
+        "rt_total_missing",
+        "hidden_ms_missing",
+        "materials_version"
+      ],
+      "mechanical_exclusion_reasons": [
+        "none",
+        "duplicate_attempt",
+        "technical_corrupt",
+        "assignment_mismatch"
+      ],
+      "free_text_fields": []
+    },
+    "analysis_contract": {
+      "primary": "all six complete; paired mean C-minus-F CCA",
+      "available": "at least two complete per condition and at least four total",
+      "missing_as_incorrect": "all six planned slots",
+      "mde_status": "UNVERIFIED_NOT_ESTIMATED",
+      "sequence_consumption": "each valid six-complete export consumes its sequence slot, including mechanically excluded complete exports; partial and fewer-than-six-complete exports reuse the slot"
+    },
+    "tickets": [
+      {
+        "ticket_code": "UNC-R",
+        "source_kind": "SOURCE-BACKED",
+        "flat_order": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      {
+        "ticket_code": "UNC-S",
+        "source_kind": "SIMULATED",
+        "flat_order": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          0
+        ]
+      },
+      {
+        "ticket_code": "SKEP-R",
+        "source_kind": "SOURCE-BACKED",
+        "flat_order": [
+          2,
+          3,
+          4,
+          5,
+          0,
+          1
+        ]
+      },
+      {
+        "ticket_code": "SKEP-S",
+        "source_kind": "SIMULATED",
+        "flat_order": [
+          3,
+          4,
+          5,
+          0,
+          1,
+          2
+        ]
+      },
+      {
+        "ticket_code": "DELIB-R",
+        "source_kind": "SOURCE-BACKED",
+        "flat_order": [
+          4,
+          5,
+          0,
+          1,
+          2,
+          3
+        ]
+      },
+      {
+        "ticket_code": "DELIB-S",
+        "source_kind": "SIMULATED",
+        "flat_order": [
+          5,
+          0,
+          1,
+          2,
+          3,
+          4
+        ]
+      }
+    ],
+    "practice": {
+      "source_kind": "SIMULATED",
+      "q1_option_ids": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "q2_option_ids": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ]
+    }
+  },
+  "locales": {
+    "en": {
+      "language_name": "English",
+      "document_title": "AI knob release review — local preview",
+      "badges": {
+        "source_backed": "SOURCE-BACKED",
+        "simulated": "SIMULATED",
+        "illustrative_output": "ILLUSTRATIVE OUTPUT"
+      },
+      "chrome": {
+        "header_title": "AI knob release review · local preview",
+        "privacy_note": "Volatile loopback session; no participant data is persisted.",
+        "save_exit": "End & prepare partial export",
+        "footer": "DRAFT · owner-local · no human data"
+      },
+      "welcome": {
+        "heading": "AI product release review",
+        "subtitle": "Act as the release reviewer for six AI knob tickets.",
+        "task_size": "You will complete 1 audio practice and 6 formal tickets.",
+        "warning": "DRAFT owner-local preview only · no recruitment · no ethics approval.",
+        "no_resume": "There is no resume function. Refreshing or closing returns to the language gate.",
+        "participant_code": "Anonymous participant code",
+        "participant_code_help": "Use the owner-assigned code; do not enter a name.",
+        "sequence": "Presentation sequence",
+        "sequence_help": "The code controls balance only and is not an answer hint.",
+        "details_summary": "Privacy and local-server details",
+        "details": [
+          "The server holds the attempt only in volatile memory.",
+          "Exports are prepared only after completion or confirmed early ending.",
+          "No account, cookie, browser storage, or recovery token is used."
+        ],
+        "start": "Start preview",
+        "switch_language": "简体中文"
+      },
+      "briefing": {
+        "heading": "Release-review briefing",
+        "role": "Role: AI product release reviewer. You do not need to know latent mechanisms.",
+        "policy_heading": "Visible release policy",
+        "policy": [
+          {
+            "id": "A",
+            "text": "U — Pending; do not offer a user knob yet."
+          },
+          {
+            "id": "B",
+            "text": "D — Read-only diagnostic; no user adjustment."
+          },
+          {
+            "id": "C",
+            "text": "W — Hide; do not offer the knob."
+          },
+          {
+            "id": "D",
+            "text": "S — Adjustable only in the exact stated scope."
+          }
+        ],
+        "flow": [
+          "Read the product context, neutral prototype, illustrative outputs, and six evidence facts.",
+          "Q1 decides how the next release should present the knob under the visible policy.",
+          "After Q1 locks, Q2 asks which evidence most directly decides the ticket."
+        ],
+        "cca": "CCA means policy-consistent joint application of Q1 and Q2; it is not objective truth.",
+        "continue_practice": "Continue to audio practice"
+      },
+      "contract_headings": [
+        "What evidence is named?",
+        "How relative to prompt?",
+        "What risk or measurement limit?",
+        "Where applies?"
+      ],
+      "flat_labels": [
+        "Evidence A",
+        "Evidence B",
+        "Evidence C",
+        "Evidence D",
+        "Evidence E",
+        "Evidence F"
+      ],
+      "source_details": "Method and source hash details",
+      "q1": {
+        "text": "Q1. Under the visible policy, how should the next release present this knob?",
+        "options": [
+          {
+            "id": "A",
+            "text": "U — Pending; do not offer a user knob yet."
+          },
+          {
+            "id": "B",
+            "text": "D — Read-only diagnostic; no user adjustment."
+          },
+          {
+            "id": "C",
+            "text": "W — Hide; do not offer the knob."
+          },
+          {
+            "id": "D",
+            "text": "S — Adjustable only in the exact stated scope."
+          }
+        ]
+      },
+      "q2": {
+        "text": "Q2. Which evidence most directly decides this release ticket?",
+        "options": [
+          {
+            "id": "A",
+            "text": "Comparator and missingness evidence."
+          },
+          {
+            "id": "B",
+            "text": "The exact applicability boundary."
+          },
+          {
+            "id": "C",
+            "text": "Whether the comparison is underpowered."
+          },
+          {
+            "id": "D",
+            "text": "A missing matched comparison."
+          },
+          {
+            "id": "E",
+            "text": "A decisive paired release test."
+          },
+          {
+            "id": "F",
+            "text": "The failed quality or coherence gate."
+          }
+        ]
+      },
+      "knob_unavailable": "Unavailable prototype; the neutral position is not a recommendation.",
+      "locked": "Q1 locked: {choice}. This choice cannot be changed.",
+      "preview": {
+        "heading": "Decision preview",
+        "body": "Your release choice: {choice}. This is only a neutral echo of your answer, not correctness feedback.",
+        "continue": "Continue"
+      },
+      "practice": {
+        "heading": "Audio practice ticket",
+        "context": "Review a noise-reduction knob against the existing preset.",
+        "knob": "Noise-reduction candidate",
+        "preset": "Play existing preset",
+        "candidate": "Play candidate",
+        "facts": [
+          "The existing preset is the release comparator.",
+          "The candidate changes the listening preview.",
+          "The candidate has not beaten the existing preset.",
+          "The speech-quality check fails.",
+          "The comparison and quality result apply to this audio workflow.",
+          "After practice Q1 is locked, it cannot be changed before Q2."
+        ],
+        "q1": "How should the candidate knob be presented?",
+        "q2": "Which evidence is decisive?",
+        "q2_options": [
+          {
+            "id": "A",
+            "text": "The candidate changes the preview."
+          },
+          {
+            "id": "B",
+            "text": "It does not beat the preset and fails speech quality."
+          },
+          {
+            "id": "C",
+            "text": "The knob has a neutral midpoint."
+          },
+          {
+            "id": "D",
+            "text": "The preview uses audio."
+          }
+        ],
+        "feedback": "Practice result: Q1 is locked. A changed preview does not show that the candidate beats the existing preset, and the speech-quality check failed.",
+        "submit_q1": "Lock practice Q1",
+        "submit_q2": "Submit practice Q2",
+        "begin_formal": "Begin 6 formal tickets"
+      },
+      "buttons": {
+        "submit_q1": "Lock Q1",
+        "submit_q2": "Submit Q2",
+        "download_json": "Download signed JSON",
+        "download_csv": "Download signed CSV",
+        "finish": "Finish"
+      },
+      "progress": {
+        "ticket": "Ticket {current} of 6"
+      },
+      "save_exit": {
+        "heading": "End this session and prepare a partial export?",
+        "intro": "Confirm only if you want to end now.",
+        "consequences": [
+          "This session cannot be resumed.",
+          "Submitted answers will be frozen; unfinished answers remain null and missing.",
+          "All six planned slots remain in the signed partial export.",
+          "No correctness feedback or automatic download is provided."
+        ],
+        "cancel": "Cancel",
+        "confirm": "End & prepare partial export"
+      },
+      "export": {
+        "complete_heading": "Preview complete",
+        "partial_heading": "Session ended — partial export prepared",
+        "complete_count": "Completed formal tickets: 6 of 6.",
+        "partial_ready": "The signed partial contains all six planned slots; unfinished fields remain null and marked missing.",
+        "ready": "Export ready. Choose a format; files do not download automatically.",
+        "retry": "If a download fails, both buttons remain available while the volatile session is retained.",
+        "download_started": "{format} download started.",
+        "finished_heading": "Finished",
+        "finished": "The client view is cleared; the volatile signed export remains until TTL expiry."
+      },
+      "debrief": "This DRAFT uses source-backed and simulated release tickets. Illustrative outputs are not experiment results. CCA is policy-consistent joint application, not objective truth. No response changes paper evidence.",
+      "errors": {
+        "load": "Could not load materials.",
+        "state": "Study state error.",
+        "download": "Signed export download failed.",
+        "export_not_ready": "Signed export is not ready.",
+        "required_q1": "Choose a Q1 release action.",
+        "required_q2": "Choose the decisive evidence."
+      },
+      "tickets": [
+        {
+          "ticket_code": "UNC-R",
+          "source_badge": "SOURCE-BACKED",
+          "title": "Uncertainty-awareness knob release",
+          "context": "Review whether the next product release should expose an uncertainty-awareness knob.",
+          "knob": "Uncertainty-awareness prototype",
+          "outputs": [
+            "Candidate: “I may be missing context; confidence is moderate.”",
+            "Reference: “The available record supports the following answer.”"
+          ],
+          "facts": [
+            "READ is heterogeneous across models: Qwen/Llama facade ratios are 0.713/1.000 for uncertainty and 2.844/0.471 for focus; deliberation and skepticism show the gap in both.",
+            "Across 4 CAA/ITI × Qwen/Llama cells, 4 had no passing axis against the bounded best-prompt comparison.",
+            "For Qwen CAA uncertainty, steering was approximately baseline: +0.011 format compliance and +0.0008 in 1−Brier.",
+            "The E-0013 format-compliant complete-case paired estimate was -0.337 with 95% CI [-0.508, -0.165], but adversarial missingness bounds cross zero and span [-0.478, +0.250].",
+            "Prompt refusal was 0.955, while unit-direction CAA refusal was 0.000; scale-corrected latent arms still had no pass. Coherent perturbations reached about 0.53–0.66× residual norm; about 1.05× was degenerate and MDE was about 0.19.",
+            "The E-0013 recheck covers only Qwen CAA; the other 3 cells are unrechecked. Illustrative outputs and missingness do not make this knob adjustable."
+          ],
+          "flat_order": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "source_details": [
+            {
+              "source_id": "C1_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/gpu_7b_2026-07-23/c1/c1_facade_results.json",
+              "canonical_sha256": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "C1_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/llama_c1_facade_2026-07-24/c1_facade_results.json",
+              "canonical_sha256": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ARM",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/arm_matrix_summary.json",
+              "canonical_sha256": "4614ff8277f3f6eed485169b0b4a00d4bf3978d487976318416692689cc32d19",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_CAA_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+              "canonical_sha256": "bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_CAA_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
+              "canonical_sha256": "7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ITI_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
+              "canonical_sha256": "8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ITI_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
+              "canonical_sha256": "46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0013_FORMAT",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/E-0013-uncertainty-recheck/reanalysis.json",
+              "canonical_sha256": "6554565952f1b5f0334b37f1e78f9c2af66d951c380dc9f3c86f312f0f028884",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0014_ENDPOINT",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/E-0014-positive-control/positive_control_results.json",
+              "canonical_sha256": "8c0b9b65e872a888bcb8c62cac39515a8741a25634e7cec58f5d3dce901f445f",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0015_SCALE",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/E-0015-scale-corrected-positive-control/positive_control_scale_corrected_results.json",
+              "canonical_sha256": "9bc450a4184aa9bdc617953dba8acdd3c9e0ef25883f706d31142d9665fb89ec",
+              "hash_basis": "git_blob_bytes"
+            }
+          ]
+        },
+        {
+          "ticket_code": "UNC-S",
+          "source_badge": "SIMULATED",
+          "title": "Simulated scoped uncertainty knob",
+          "context": "A synthetic release case with support limited to one named workflow.",
+          "knob": "Uncertainty-awareness prototype",
+          "outputs": [
+            "Candidate: “Confidence is limited because one record is missing.”",
+            "Reference: “The answer is provided without a confidence note.”"
+          ],
+          "facts": [
+            "A completed readout names the uncertainty-awareness behavior.",
+            "A matched comparison beats the existing preset in the stated workflow.",
+            "The comparator uses the same task, response budget, and scoring rule.",
+            "Speech/text quality and coherence checks pass.",
+            "The evidence does not cover other models, tasks, or response budgets.",
+            "Adjustment is supported only for the named support-triage workflow and preset range."
+          ],
+          "flat_order": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            0
+          ],
+          "source_details": []
+        },
+        {
+          "ticket_code": "SKEP-R",
+          "source_badge": "SOURCE-BACKED",
+          "title": "Skepticism knob release",
+          "context": "Review whether the next product release should expose a skepticism knob.",
+          "knob": "Skepticism prototype",
+          "outputs": [
+            "Candidate: “This claim needs a source check before acceptance.”",
+            "Reference: “The claim is accepted as written.”"
+          ],
+          "facts": [
+            "READ is available for skepticism in both models: facade ratios are 0.548 for Qwen and 0.628 for Llama.",
+            "All 4 steering cells failed the preregistered superiority rule against the bounded prompt.",
+            "The four skepticism comparisons are underpowered: their MDEs are 0.188/0.268/0.225/0.279, all above the 0.05 target effect.",
+            "The uncertainty negative is robust across split seeds, but those 5 seeds reuse the same item pool.",
+            "A non-detection with these MDEs is not evidence that meaningful skepticism effects are absent.",
+            "This release judgment is limited to the tested Qwen/Llama, CAA/ITI, bounded-prompt setup."
+          ],
+          "flat_order": [
+            2,
+            3,
+            4,
+            5,
+            0,
+            1
+          ],
+          "source_details": [
+            {
+              "source_id": "C1_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/gpu_7b_2026-07-23/c1/c1_facade_results.json",
+              "canonical_sha256": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "C1_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/llama_c1_facade_2026-07-24/c1_facade_results.json",
+              "canonical_sha256": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ARM",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/arm_matrix_summary.json",
+              "canonical_sha256": "4614ff8277f3f6eed485169b0b4a00d4bf3978d487976318416692689cc32d19",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_CAA_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+              "canonical_sha256": "bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_CAA_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
+              "canonical_sha256": "7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ITI_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
+              "canonical_sha256": "8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ITI_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
+              "canonical_sha256": "46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0011_MULTI",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/E-0011/multiseed_c2_aggregate.json",
+              "canonical_sha256": "edcc3f4ce770bb10264e670b04afde9f84a2068e94a31c49a4c16bf382cc0927",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "POSTHOC_E0006",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/posthoc_equivalence/posthoc_equivalence_e0006.json",
+              "canonical_sha256": "c350701885626854889416a0ba0f8a2f07e25287b40ee6821fb1fdf0eaa47e4f",
+              "hash_basis": "git_blob_bytes"
+            }
+          ]
+        },
+        {
+          "ticket_code": "SKEP-S",
+          "source_badge": "SIMULATED",
+          "title": "Simulated diagnostic skepticism knob",
+          "context": "A synthetic case with a usable diagnostic but no paired release comparison.",
+          "knob": "Skepticism prototype",
+          "outputs": [
+            "Candidate: “The cited evidence should be checked.”",
+            "Reference: “The cited evidence is accepted.”"
+          ],
+          "facts": [
+            "A completed readout names a skepticism-related behavior.",
+            "The prototype changes diagnostic examples.",
+            "No matched comparison against the existing preset has been run.",
+            "A quality failure has not been observed, but quality is not release evidence here.",
+            "The diagnostic uses one fixed support workflow.",
+            "The record supports read-only diagnosis, not a user adjustment."
+          ],
+          "flat_order": [
+            3,
+            4,
+            5,
+            0,
+            1,
+            2
+          ],
+          "source_details": []
+        },
+        {
+          "ticket_code": "DELIB-R",
+          "source_badge": "SOURCE-BACKED",
+          "title": "Deliberation knob release",
+          "context": "Review whether the next product release should expose a deliberation knob.",
+          "knob": "Deliberation prototype",
+          "outputs": [
+            "Candidate: “First, map the constraints; then compare two solutions.”",
+            "Reference: “Use the first feasible solution.”"
+          ],
+          "facts": [
+            "READ is available for deliberation in both models: facade ratios are 0.583 for Qwen and 0.872 for Llama.",
+            "The four deliberation cells are mixed near zero: CAA qwen2.5-7b +0.015 [-0.040, +0.070]; CAA meta-llama-3-8b +0.025 [-0.030, +0.075]; ITI qwen2.5-7b +0.020 [+0.000, +0.055]; ITI meta-llama-3-8b +0.015 [-0.040, +0.060].",
+            "Both CAA deliberation comparisons are underpowered in the post-hoc characterization.",
+            "ITI equivalence labels are post-hoc only; they were not the preregistered superiority decision.",
+            "Generation used a 64-token cap, so longer deliberative behavior was not tested.",
+            "A decisive paired test under a release-relevant response budget is still required for this knob."
+          ],
+          "flat_order": [
+            4,
+            5,
+            0,
+            1,
+            2,
+            3
+          ],
+          "source_details": [
+            {
+              "source_id": "C1_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/gpu_7b_2026-07-23/c1/c1_facade_results.json",
+              "canonical_sha256": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "C1_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/llama_c1_facade_2026-07-24/c1_facade_results.json",
+              "canonical_sha256": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ARM",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/arm_matrix_summary.json",
+              "canonical_sha256": "4614ff8277f3f6eed485169b0b4a00d4bf3978d487976318416692689cc32d19",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_CAA_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+              "canonical_sha256": "bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_CAA_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
+              "canonical_sha256": "7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ITI_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
+              "canonical_sha256": "8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ITI_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
+              "canonical_sha256": "46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_PREREG",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "docs/ledgers/prereg-c2b-adjudication.md",
+              "canonical_sha256": "6fc28d3e9eb6516c201d088e7ed850a95bd9e1bef0c4fda21d312f3db2209755",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "POSTHOC_E0006",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/posthoc_equivalence/posthoc_equivalence_e0006.json",
+              "canonical_sha256": "c350701885626854889416a0ba0f8a2f07e25287b40ee6821fb1fdf0eaa47e4f",
+              "hash_basis": "git_blob_bytes"
+            }
+          ]
+        },
+        {
+          "ticket_code": "DELIB-S",
+          "source_badge": "SIMULATED",
+          "title": "Simulated incoherent deliberation knob",
+          "context": "A synthetic case with a task gain but a failed quality/coherence gate.",
+          "knob": "Deliberation prototype",
+          "outputs": [
+            "Candidate: “Compare, compare the options, then then decide.”",
+            "Reference: “Compare the two options, then decide.”"
+          ],
+          "facts": [
+            "A completed readout names a deliberation-related behavior.",
+            "A matched comparison improves the task score over the existing preset.",
+            "The comparator uses the same workflow and response budget.",
+            "The candidate repeats phrases and loses speech/text coherence.",
+            "The registered quality gate fails.",
+            "The result applies only to the named planning workflow, where the failed quality gate blocks release."
+          ],
+          "flat_order": [
+            5,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "source_details": []
+        }
+      ]
+    },
+    "zh-Hans": {
+      "language_name": "简体中文",
+      "document_title": "AI 旋钮发布审核 — 本地预览",
+      "badges": {
+        "source_backed": "SOURCE-BACKED",
+        "simulated": "SIMULATED",
+        "illustrative_output": "ILLUSTRATIVE OUTPUT"
+      },
+      "chrome": {
+        "header_title": "AI 旋钮发布审核 · 本地预览",
+        "privacy_note": "易失回环会话；不持久保存参与者数据。",
+        "save_exit": "结束并生成部分导出",
+        "footer": "DRAFT · 负责人本地 · 无人类数据"
+      },
+      "welcome": {
+        "heading": "AI 产品发布审核",
+        "subtitle": "请作为发布审核员处理六张 AI 旋钮工单。",
+        "task_size": "你将完成 1 个音频练习和 6 张正式工单。",
+        "warning": "仅限负责人本地预览的 DRAFT · 不招募 · 未获伦理批准。",
+        "no_resume": "本任务不能恢复。刷新或关闭后将返回语言选择页。",
+        "participant_code": "匿名参与者代码",
+        "participant_code_help": "请输入负责人分配的代码；请勿填写姓名。",
+        "sequence": "呈现序列",
+        "sequence_help": "该代码仅用于平衡，不提供答案提示。",
+        "details_summary": "隐私与本地服务器详情",
+        "details": [
+          "服务器只在易失内存中保留本次尝试。",
+          "仅在完成任务或确认提前结束后生成导出。",
+          "不使用账户、Cookie、浏览器存储或恢复令牌。"
+        ],
+        "start": "开始预览",
+        "switch_language": "English"
+      },
+      "briefing": {
+        "heading": "发布审核说明",
+        "role": "角色：AI 产品发布审核员。你不需要了解潜在机制。",
+        "policy_heading": "可见发布政策",
+        "policy": [
+          {
+            "id": "A",
+            "text": "U — 待定；暂不向用户提供旋钮。"
+          },
+          {
+            "id": "B",
+            "text": "D — 只读诊断；用户不可调节。"
+          },
+          {
+            "id": "C",
+            "text": "W — 隐藏；不提供该旋钮。"
+          },
+          {
+            "id": "D",
+            "text": "S — 仅在明确写出的范围内可调。"
+          }
+        ],
+        "flow": [
+          "阅读产品背景、中性原型、示意输出和六条证据事实。",
+          "问题 1 按可见政策决定下一版如何呈现旋钮。",
+          "问题 1 锁定后，问题 2 询问哪项证据最直接决定该工单。"
+        ],
+        "cca": "CCA 表示问题 1 与问题 2 的政策一致联合应用；它不是客观真理。",
+        "continue_practice": "继续音频练习"
+      },
+      "contract_headings": [
+        "证据是什么？",
+        "与提示相比如何？",
+        "有哪些风险或测量限制？",
+        "适用于哪里？"
+      ],
+      "flat_labels": [
+        "证据 A",
+        "证据 B",
+        "证据 C",
+        "证据 D",
+        "证据 E",
+        "证据 F"
+      ],
+      "source_details": "方法与来源哈希详情",
+      "q1": {
+        "text": "问题 1：按可见政策，下一版应如何呈现该旋钮？",
+        "options": [
+          {
+            "id": "A",
+            "text": "U — 待定；暂不向用户提供旋钮。"
+          },
+          {
+            "id": "B",
+            "text": "D — 只读诊断；用户不可调节。"
+          },
+          {
+            "id": "C",
+            "text": "W — 隐藏；不提供该旋钮。"
+          },
+          {
+            "id": "D",
+            "text": "S — 仅在明确写出的范围内可调。"
+          }
+        ]
+      },
+      "q2": {
+        "text": "问题 2：哪项证据最直接决定这张发布工单？",
+        "options": [
+          {
+            "id": "A",
+            "text": "比较器与缺失值证据。"
+          },
+          {
+            "id": "B",
+            "text": "明确的适用边界。"
+          },
+          {
+            "id": "C",
+            "text": "比较是否检验力不足。"
+          },
+          {
+            "id": "D",
+            "text": "缺失的匹配比较。"
+          },
+          {
+            "id": "E",
+            "text": "有判定力的配对发布检验。"
+          },
+          {
+            "id": "F",
+            "text": "失败的质量或连贯性门。"
+          }
+        ]
+      },
+      "knob_unavailable": "不可用的原型；中性位置不表示推荐。",
+      "locked": "问题 1 已锁定：{choice}。该选择不能更改。",
+      "preview": {
+        "heading": "决策预览",
+        "body": "你的发布选择：{choice}。这里只中性回显你的答案，不提供正误反馈。",
+        "continue": "继续"
+      },
+      "practice": {
+        "heading": "音频练习工单",
+        "context": "审核一个相对现有预设的降噪旋钮。",
+        "knob": "降噪候选",
+        "preset": "播放现有预设",
+        "candidate": "播放候选",
+        "facts": [
+          "现有预设是发布比较器。",
+          "候选设置会改变试听结果。",
+          "候选设置尚未优于现有预设。",
+          "语音质量检查未通过。",
+          "比较与质量结果适用于该音频工作流。",
+          "练习问题 1 锁定后，在问题 2 前不能更改。"
+        ],
+        "q1": "应如何呈现该候选旋钮？",
+        "q2": "哪项证据具有决定性？",
+        "q2_options": [
+          {
+            "id": "A",
+            "text": "候选设置改变了试听结果。"
+          },
+          {
+            "id": "B",
+            "text": "候选未优于预设，且语音质量失败。"
+          },
+          {
+            "id": "C",
+            "text": "旋钮有一个中性中点。"
+          },
+          {
+            "id": "D",
+            "text": "预览使用音频。"
+          }
+        ],
+        "feedback": "练习结论：问题 1 已锁定。试听发生变化并不表示候选优于现有预设，且语音质量检查未通过。",
+        "submit_q1": "锁定练习问题 1",
+        "submit_q2": "提交练习问题 2",
+        "begin_formal": "开始 6 张正式工单"
+      },
+      "buttons": {
+        "submit_q1": "锁定问题 1",
+        "submit_q2": "提交问题 2",
+        "download_json": "下载签名 JSON",
+        "download_csv": "下载签名 CSV",
+        "finish": "完成"
+      },
+      "progress": {
+        "ticket": "第 {current}/6 张工单"
+      },
+      "save_exit": {
+        "heading": "结束本次会话并生成部分导出？",
+        "intro": "仅在确定现在结束时确认。",
+        "consequences": [
+          "本次会话无法恢复。",
+          "已提交答案将冻结；未完成答案保持 null 与缺失。",
+          "签名的部分导出始终保留全部六个计划槽位。",
+          "不提供正误反馈，也不会自动下载。"
+        ],
+        "cancel": "取消",
+        "confirm": "结束并生成部分导出"
+      },
+      "export": {
+        "complete_heading": "预览完成",
+        "partial_heading": "会话已结束 — 已生成部分导出",
+        "complete_count": "已完成正式工单：6/6。",
+        "partial_ready": "签名部分导出包含全部六个计划槽位；未完成字段保持 null 并标记缺失。",
+        "ready": "导出已准备好。请选择格式；文件不会自动下载。",
+        "retry": "下载失败时，只要易失会话仍保留，两种下载按钮都会继续可用。",
+        "download_started": "{format} 下载已开始。",
+        "finished_heading": "已完成",
+        "finished": "客户端视图已清空；易失签名导出保留至 TTL 到期。"
+      },
+      "debrief": "本 DRAFT 使用来源有据和模拟发布工单。示意输出不是实验结果。CCA 是政策一致联合应用，不是客观真理。任何回答都不会改变论文证据。",
+      "errors": {
+        "load": "无法加载材料。",
+        "state": "任务状态错误。",
+        "download": "签名导出下载失败。",
+        "export_not_ready": "签名导出尚未准备好。",
+        "required_q1": "请选择问题 1 的发布动作。",
+        "required_q2": "请选择决定性证据。"
+      },
+      "tickets": [
+        {
+          "ticket_code": "UNC-R",
+          "source_badge": "SOURCE-BACKED",
+          "title": "不确定性感知旋钮发布单",
+          "context": "审核下一版产品是否应向用户提供不确定性感知旋钮。",
+          "knob": "不确定性感知原型",
+          "outputs": [
+            "候选输出：“我可能缺少部分背景；置信度中等。”",
+            "参照输出：“现有记录支持以下回答。”"
+          ],
+          "facts": [
+            "不同模型的 READ 结果存在异质性：Qwen/Llama 在不确定性上的表征比为 0.713/1.000，在聚焦上的表征比为 2.844/0.471；审慎思考和怀疑性在两个模型中都显示出差距。",
+            "在 4 个 CAA/ITI × Qwen/Llama 单元中，4 个单元相对有界最优提示都没有任何轴通过。",
+            "对于 Qwen CAA 不确定性，steering 与 baseline 基本相当：格式合规率差 +0.011，1−Brier 差 +0.0008。",
+            "E-0013 仅看格式合规完整案例配对时，估计值为 -0.337，95% CI 为 [-0.508, -0.165]；但对缺失值作对抗性处理后边界跨过零，范围为 [-0.478, +0.250]。",
+            "直接提示的拒答率为 0.955，单位方向 CAA 的拒答率为 0.000；按原始幅度校正后仍没有潜在干预通过。保持连贯的扰动约为残差范数的 0.53–0.66 倍；约 1.05 倍时退化，MDE 约为 0.19。",
+            "E-0013 只复查了 Qwen CAA；其余 3 个单元尚未复查。示意输出和缺失值分析都不能让该旋钮变成可调。"
+          ],
+          "flat_order": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "source_details": [
+            {
+              "source_id": "C1_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/gpu_7b_2026-07-23/c1/c1_facade_results.json",
+              "canonical_sha256": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "C1_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/llama_c1_facade_2026-07-24/c1_facade_results.json",
+              "canonical_sha256": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ARM",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/arm_matrix_summary.json",
+              "canonical_sha256": "4614ff8277f3f6eed485169b0b4a00d4bf3978d487976318416692689cc32d19",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_CAA_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+              "canonical_sha256": "bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_CAA_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
+              "canonical_sha256": "7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ITI_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
+              "canonical_sha256": "8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ITI_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
+              "canonical_sha256": "46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0013_FORMAT",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/E-0013-uncertainty-recheck/reanalysis.json",
+              "canonical_sha256": "6554565952f1b5f0334b37f1e78f9c2af66d951c380dc9f3c86f312f0f028884",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0014_ENDPOINT",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/E-0014-positive-control/positive_control_results.json",
+              "canonical_sha256": "8c0b9b65e872a888bcb8c62cac39515a8741a25634e7cec58f5d3dce901f445f",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0015_SCALE",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/E-0015-scale-corrected-positive-control/positive_control_scale_corrected_results.json",
+              "canonical_sha256": "9bc450a4184aa9bdc617953dba8acdd3c9e0ef25883f706d31142d9665fb89ec",
+              "hash_basis": "git_blob_bytes"
+            }
+          ]
+        },
+        {
+          "ticket_code": "UNC-S",
+          "source_badge": "SIMULATED",
+          "title": "模拟的限定范围不确定性旋钮",
+          "context": "一个仅在单一命名工作流中获得支持的合成发布案例。",
+          "knob": "不确定性感知原型",
+          "outputs": [
+            "候选输出：“由于缺少一条记录，置信度有限。”",
+            "参照输出：“给出答案，但不附置信度说明。”"
+          ],
+          "facts": [
+            "已完成的读出明确对应不确定性感知行为。",
+            "在所述工作流中，匹配比较优于现有预设。",
+            "比较器使用相同任务、响应预算和评分规则。",
+            "语音/文本质量与连贯性检查均通过。",
+            "证据不覆盖其他模型、任务或响应预算。",
+            "仅支持在已命名的支持分诊工作流和预设范围内调节。"
+          ],
+          "flat_order": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            0
+          ],
+          "source_details": []
+        },
+        {
+          "ticket_code": "SKEP-R",
+          "source_badge": "SOURCE-BACKED",
+          "title": "怀疑性旋钮发布单",
+          "context": "审核下一版产品是否应向用户提供怀疑性旋钮。",
+          "knob": "怀疑性原型",
+          "outputs": [
+            "候选输出：“接受该主张前需要核查来源。”",
+            "参照输出：“按原文接受该主张。”"
+          ],
+          "facts": [
+            "两个模型的怀疑性 READ 都可用：Qwen 的表征比为 0.548，Llama 为 0.628。",
+            "全部 4 个 steering 单元相对有界提示都未通过预先登记的优越性规则。",
+            "四个怀疑性比较检验力不足：其 MDE 为 0.188/0.268/0.225/0.279，均高于 0.05 的目标效应。",
+            "不确定性负结果跨 5 个划分种子保持一致，但这些种子复用了同一项目池。",
+            "在这些 MDE 下未检出差异，不能证明有意义的怀疑性效应不存在。",
+            "该发布判断仅适用于已测试的 Qwen/Llama、CAA/ITI 与有界提示设置。"
+          ],
+          "flat_order": [
+            2,
+            3,
+            4,
+            5,
+            0,
+            1
+          ],
+          "source_details": [
+            {
+              "source_id": "C1_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/gpu_7b_2026-07-23/c1/c1_facade_results.json",
+              "canonical_sha256": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "C1_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/llama_c1_facade_2026-07-24/c1_facade_results.json",
+              "canonical_sha256": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ARM",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/arm_matrix_summary.json",
+              "canonical_sha256": "4614ff8277f3f6eed485169b0b4a00d4bf3978d487976318416692689cc32d19",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_CAA_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+              "canonical_sha256": "bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_CAA_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
+              "canonical_sha256": "7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ITI_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
+              "canonical_sha256": "8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ITI_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
+              "canonical_sha256": "46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0011_MULTI",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/E-0011/multiseed_c2_aggregate.json",
+              "canonical_sha256": "edcc3f4ce770bb10264e670b04afde9f84a2068e94a31c49a4c16bf382cc0927",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "POSTHOC_E0006",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/posthoc_equivalence/posthoc_equivalence_e0006.json",
+              "canonical_sha256": "c350701885626854889416a0ba0f8a2f07e25287b40ee6821fb1fdf0eaa47e4f",
+              "hash_basis": "git_blob_bytes"
+            }
+          ]
+        },
+        {
+          "ticket_code": "SKEP-S",
+          "source_badge": "SIMULATED",
+          "title": "模拟的诊断型怀疑性旋钮",
+          "context": "一个已有可用诊断但缺少发布配对比较的合成案例。",
+          "knob": "怀疑性原型",
+          "outputs": [
+            "候选输出：“应核查所引用的证据。”",
+            "参照输出：“接受所引用的证据。”"
+          ],
+          "facts": [
+            "已完成的读出明确对应一种怀疑性相关行为。",
+            "原型会改变诊断示例。",
+            "尚未完成与现有预设的匹配比较。",
+            "目前未观察到质量失败，但质量本身不能构成这里的发布证据。",
+            "诊断仅使用一个固定的支持工作流。",
+            "该记录支持只读诊断，不支持用户调节。"
+          ],
+          "flat_order": [
+            3,
+            4,
+            5,
+            0,
+            1,
+            2
+          ],
+          "source_details": []
+        },
+        {
+          "ticket_code": "DELIB-R",
+          "source_badge": "SOURCE-BACKED",
+          "title": "审慎思考旋钮发布单",
+          "context": "审核下一版产品是否应向用户提供审慎思考旋钮。",
+          "knob": "审慎思考原型",
+          "outputs": [
+            "候选输出：“先梳理约束，再比较两个方案。”",
+            "参照输出：“采用第一个可行方案。”"
+          ],
+          "facts": [
+            "两个模型的审慎思考 READ 都可用：Qwen 的表征比为 0.583，Llama 为 0.872。",
+            "四个审慎思考单元在零附近呈混合结果：CAA qwen2.5-7b +0.015 [-0.040, +0.070]；CAA meta-llama-3-8b +0.025 [-0.030, +0.075]；ITI qwen2.5-7b +0.020 [+0.000, +0.055]；ITI meta-llama-3-8b +0.015 [-0.040, +0.060]。",
+            "事后刻画显示，两个 CAA 审慎思考比较都检验力不足。",
+            "ITI 的等效标签仅来自事后分析，并不是预先登记的优越性判定。",
+            "生成上限为 64 个 token，因此没有测试更长的审慎思考行为。",
+            "该旋钮仍需要在符合发布场景的响应预算下完成有判定力的配对检验。"
+          ],
+          "flat_order": [
+            4,
+            5,
+            0,
+            1,
+            2,
+            3
+          ],
+          "source_details": [
+            {
+              "source_id": "C1_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/gpu_7b_2026-07-23/c1/c1_facade_results.json",
+              "canonical_sha256": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "C1_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/llama_c1_facade_2026-07-24/c1_facade_results.json",
+              "canonical_sha256": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ARM",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/arm_matrix_summary.json",
+              "canonical_sha256": "4614ff8277f3f6eed485169b0b4a00d4bf3978d487976318416692689cc32d19",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_CAA_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+              "canonical_sha256": "bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_CAA_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
+              "canonical_sha256": "7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ITI_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
+              "canonical_sha256": "8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ITI_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
+              "canonical_sha256": "46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_PREREG",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "docs/ledgers/prereg-c2b-adjudication.md",
+              "canonical_sha256": "6fc28d3e9eb6516c201d088e7ed850a95bd9e1bef0c4fda21d312f3db2209755",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "POSTHOC_E0006",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/posthoc_equivalence/posthoc_equivalence_e0006.json",
+              "canonical_sha256": "c350701885626854889416a0ba0f8a2f07e25287b40ee6821fb1fdf0eaa47e4f",
+              "hash_basis": "git_blob_bytes"
+            }
+          ]
+        },
+        {
+          "ticket_code": "DELIB-S",
+          "source_badge": "SIMULATED",
+          "title": "模拟的失去连贯性的审慎思考旋钮",
+          "context": "一个任务得分提高但质量/连贯性门失败的合成案例。",
+          "knob": "审慎思考原型",
+          "outputs": [
+            "候选输出：“比较、比较方案，然后然后决定。”",
+            "参照输出：“比较两个方案，然后决定。”"
+          ],
+          "facts": [
+            "已完成的读出明确对应一种审慎思考相关行为。",
+            "匹配比较中的任务得分优于现有预设。",
+            "比较器使用相同工作流和响应预算。",
+            "候选输出出现重复措辞，并失去语音/文本连贯性。",
+            "预先登记的质量门未通过。",
+            "结果仅适用于已命名的规划工作流；失败的质量门阻止发布。"
+          ],
+          "flat_order": [
+            5,
+            0,
+            1,
+            2,
+            3,
+            4
+          ],
+          "source_details": []
+        }
+      ]
+    }
+  }
+}

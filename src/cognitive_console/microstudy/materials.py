@@ -1,4 +1,4 @@
-"""Validated access to the authoritative micro-study JSON."""
+"""Validated access to the authoritative V9 scenario materials."""
 
 from __future__ import annotations
 
@@ -7,19 +7,23 @@ from functools import lru_cache
 from typing import Any
 
 from cognitive_console.microstudy_materials import (
+    MATERIALS_PATH,
     SEQUENCES_PATH,
-    STIMULI_PATH,
+    SOURCE_REGISTRY_PATH,
     load_sources,
     locale_manifest,
-    route_state,
+    private_answer_keys,
     validate_materials,
 )
 
 
 def material_hashes() -> dict[str, str]:
     return {
-        "stimuli_sha256": hashlib.sha256(STIMULI_PATH.read_bytes()).hexdigest(),
+        "materials_sha256": hashlib.sha256(MATERIALS_PATH.read_bytes()).hexdigest(),
         "sequences_sha256": hashlib.sha256(SEQUENCES_PATH.read_bytes()).hexdigest(),
+        "source_registry_sha256": hashlib.sha256(
+            SOURCE_REGISTRY_PATH.read_bytes()
+        ).hexdigest(),
     }
 
 
@@ -38,37 +42,27 @@ def validated_sources() -> tuple[dict[str, Any], dict[str, Any]]:
 
 
 def planned_trials(sequence_code: str) -> list[dict[str, Any]]:
-    stimuli, sequences = validated_sources()
+    materials, sequences = validated_sources()
     sequence = next(
         (row for row in sequences["sequences"] if row["code"] == sequence_code), None
     )
     if sequence is None:
         raise ValueError(f"unknown sequence: {sequence_code}")
-    mapping = sequences["letter_mapping"][sequence_code[0]]
-    items = {
-        (item["pattern_id"], item["content_set"]): item
-        for item in stimuli["nonlocalized"]["items"]
-    }
-    slots: list[dict[str, Any]] = []
-    for block in (1, 2):
-        cell = mapping[f"block_{block}"]
-        for position, pattern in enumerate(sequence[f"block_{block}"], 1):
-            item = items[(pattern, cell["content_set"])]
-            derived_q1 = route_state(item["state_routing_inputs"])
-            if derived_q1 != item["expected_q1_key"]:
-                raise ValueError(f"router/key mismatch for {item['stimulus_id']}")
-            slots.append(
-                {
-                    "slot_index": len(slots) + 1,
-                    "condition": cell["condition"],
-                    "item": item["stimulus_id"],
-                    "pattern": pattern,
-                    "content_set": cell["content_set"],
-                    "block": block,
-                    "position": position,
-                    "q1_key": derived_q1,
-                    "q2_key": item["q2"]["correct_key"],
-                    "q2_template_id": item["q2"]["template_id"],
-                }
-            )
+    keys = private_answer_keys()
+    ticket_codes = set(materials["nonlocalized"]["ticket_codes"])
+    slots = []
+    for index, row in enumerate(sequence["slots"], 1):
+        ticket_code = row["ticket_code"]
+        if ticket_code not in ticket_codes or ticket_code not in keys:
+            raise ValueError(f"unknown ticket: {ticket_code}")
+        slots.append(
+            {
+                "slot_index": index,
+                "ticket_code": ticket_code,
+                "position": row["position"],
+                "condition": row["condition"],
+                "q1_key": keys[ticket_code]["q1_code"],
+                "q2_key": keys[ticket_code]["q2_code"],
+            }
+        )
     return slots

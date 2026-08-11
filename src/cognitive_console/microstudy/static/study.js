@@ -1,12 +1,28 @@
 "use strict";
 
 const app = {
-  csrf: null, locale: null, common: null, sequenceCodes: [], capability: null,
-  attemptId: null, current: null, hiddenStarted: null, hiddenMs: 0,
-  formal: false, ended: false, pendingRequests: {}, saveExitTrigger: null,
-  languages: [], bootstrapReady: false, welcomeReady: false,
-  languagePending: false, startPending: false,
+  csrf: null,
+  locale: null,
+  common: null,
+  sequenceCodes: [],
+  capability: null,
+  attemptId: null,
+  current: null,
+  hiddenStarted: null,
+  hiddenMs: 0,
+  lockedChoice: null,
+  formal: false,
+  ended: false,
+  pendingRequests: {},
+  saveExitTrigger: null,
+  languages: [],
+  bootstrapReady: false,
+  welcomeReady: false,
+  languagePending: false,
+  startPending: false,
+  practiceLevel: 50,
 };
+
 const gate = document.getElementById("language-gate");
 const startPanel = document.getElementById("start");
 const stage = document.getElementById("stage");
@@ -26,7 +42,8 @@ function el(tag, attrs = {}, text = null) {
 
 function format(text, values) {
   return Object.entries(values).reduce(
-    (result, [key, value]) => result.replaceAll(`{${key}}`, String(value)), text,
+    (result, [key, value]) => result.replaceAll(`{${key}}`, String(value)),
+    text,
   );
 }
 
@@ -40,23 +57,26 @@ function focusHeading(container) {
 }
 
 function replaceStage(...nodes) {
-  const error = el("p", {id: "stage-error", class: "error", role: "alert", tabindex: "-1"});
+  const error = el("p", {
+    id: "stage-error", class: "error", role: "alert", tabindex: "-1",
+  });
   stage.replaceChildren(error, ...nodes);
   stage.hidden = false;
   focusHeading(stage);
 }
 
 function showError(error) {
-  const errorKey = error?.message;
-  const message = app.common?.errors?.[errorKey]
-    || app.common?.errors?.state || "错误 / Error";
-  const target = !gate.isConnected
-    ? (startPanel.hidden ? document.getElementById("stage-error") : document.getElementById("start-error"))
-    : document.getElementById("gate-error");
+  const message = app.common?.errors?.[error?.message]
+    || app.common?.errors?.state
+    || "错误 / Error";
+  const target = gate.isConnected
+    ? document.getElementById("gate-error")
+    : (startPanel.hidden
+      ? document.getElementById("stage-error")
+      : document.getElementById("start-error"));
   if (!target) return;
   target.textContent = message;
   target.focus();
-  console.error(error);
 }
 
 function setFormal(value) {
@@ -90,26 +110,49 @@ function requestId() {
   return Array.from(bytes, value => value.toString(16).padStart(2, "0")).join("");
 }
 
-function optionFieldset(name, question, options, config = {}) {
-  const fieldset = el("fieldset", {id: `${name}-group`});
-  if (config.labelledby) fieldset.setAttribute("aria-labelledby", config.labelledby);
-  else fieldset.append(el("legend", {}, question));
-  const describedBy = [];
-  if (config.helper) {
-    const helperId = `${name}-helper`;
-    fieldset.append(el("p", {id: helperId, class: "choice-helper"}, config.helper));
-    describedBy.push(helperId);
+async function api(path, data) {
+  const nonce = app.pendingRequests[path] || requestId();
+  app.pendingRequests[path] = nonce;
+  let response;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      response = await fetch(path, {
+        method: "POST",
+        cache: "no-store",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": app.csrf,
+          ...(app.capability
+            ? {"X-Study-Capability": app.capability}
+            : {}),
+        },
+        body: JSON.stringify({...data, request_id: nonce}),
+      });
+      break;
+    } catch (error) {
+      if (attempt === 2) throw error;
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
   }
+  const value = await response.json();
+  if (!response.ok) throw new Error("state");
+  delete app.pendingRequests[path];
+  return value;
+}
+
+function optionFieldset(name, question, options, labelledby = null) {
+  const fieldset = el("fieldset", {id: `${name}-group`});
+  if (labelledby) fieldset.setAttribute("aria-labelledby", labelledby);
+  else fieldset.append(el("legend", {}, question));
   const errorId = `${name}-error`;
-  describedBy.push(errorId);
   fieldset.append(el("p", {
     id: errorId, class: "error choice-error", role: "alert",
   }));
   for (const option of options) {
     const label = el("label", {class: "choice"});
     const input = el("input", {
-      type: "radio", name, value: option.id,
-      "aria-describedby": describedBy.join(" "),
+      type: "radio", name, value: option.id, "aria-describedby": errorId,
     });
     label.append(input, document.createTextNode(` ${option.text}`));
     fieldset.append(label);
@@ -119,6 +162,11 @@ function optionFieldset(name, question, options, config = {}) {
 
 function selected(name) {
   return document.querySelector(`input[name="${name}"]:checked`)?.value ?? null;
+}
+
+function selectedText(name) {
+  return document.querySelector(`input[name="${name}"]:checked`)
+    ?.closest("label")?.textContent.trim() ?? "";
 }
 
 function showChoiceError(name, message) {
@@ -137,66 +185,86 @@ function clearChoiceError(name) {
   });
 }
 
-function selectedText(name) {
-  return document.querySelector(`input[name="${name}"]:checked`)
-    ?.closest("label")?.textContent.trim() ?? "";
+function badge(text) {
+  return el("span", {class: "badge"}, text);
 }
 
-function lockedSummary(state) {
-  return el("div", {
-    class: "locked-summary", role: "status", "aria-live": "polite",
-  }, format(app.common.locked.summary, {state}));
-}
-
-function detailsBlock(summary, paragraphs, className = "") {
-  const details = el("details", {class: className});
-  details.append(el("summary", {}, summary));
-  for (const paragraph of paragraphs) details.append(el("p", {}, paragraph));
-  return details;
-}
-
-async function api(path, data) {
-  const nonce = app.pendingRequests[path] || requestId();
-  app.pendingRequests[path] = nonce;
-  let response;
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    try {
-      response = await fetch(path, {
-        method: "POST", cache: "no-store", credentials: "same-origin",
-        headers: {
-          "Content-Type": "application/json", "X-CSRF-Token": app.csrf,
-          ...(app.capability ? {"X-Study-Capability": app.capability} : {}),
-        },
-        body: JSON.stringify({...data, request_id: nonce}),
-      });
-      break;
-    } catch (error) {
-      if (attempt === 2) throw error;
-      await new Promise(resolve => setTimeout(resolve, 50));
-    }
+function productCard(product, sourceBadge, enabled = false) {
+  const card = el("section", {class: "product-card"});
+  card.append(
+    badge(sourceBadge),
+    el("h2", {}, product.title),
+    el("p", {}, product.context),
+  );
+  const knobLine = el("div", {class: "knob-line"});
+  const label = el("label", {for: enabled ? "practice-knob" : "ticket-knob"}, product.knob);
+  const knob = el("input", {
+    id: enabled ? "practice-knob" : "ticket-knob",
+    type: "range", min: "0", max: "100", value: enabled ? String(app.practiceLevel) : "50",
+    "aria-label": product.knob,
+  });
+  if (!enabled) {
+    knob.disabled = true;
+    knob.setAttribute("aria-disabled", "true");
   }
-  const value = await response.json();
-  delete app.pendingRequests[path];
-  if (!response.ok) throw new Error("state");
-  return value;
+  knobLine.append(label, knob);
+  card.append(knobLine);
+  if (product.knob_note) card.append(el("p", {class: "muted"}, product.knob_note));
+  return card;
 }
 
-function renderEvidence(cardData) {
-  const card = el("article", {class: "evidence-card", "aria-label": cardData.aria_label});
+function renderOutputs(outputs) {
+  const container = el("div", {class: "outputs"});
+  for (const output of outputs.slice(0, 2)) {
+    const card = el("article", {class: "output-card"});
+    card.append(badge(output.badge), el("p", {}, output.text));
+    container.append(card);
+  }
+  return container;
+}
+
+function renderCard(cardData) {
+  const card = el("article", {
+    class: "evidence-card", "aria-label": cardData.aria_label,
+  });
+  if (Array.isArray(cardData.groups)) {
+    const groups = el("div", {class: "evidence-groups"});
+    for (const groupData of cardData.groups) {
+      const group = el("section", {class: "evidence-group"});
+      const list = el("ul");
+      for (const fact of groupData.facts) list.append(el("li", {}, fact));
+      group.append(el("h3", {}, groupData.heading), list);
+      groups.append(group);
+    }
+    card.append(groups);
+    return card;
+  }
   const rows = el("dl", {class: "evidence-rows"});
-  cardData.rows.forEach((rowData, index) => {
-    const row = el("div", {
-      class: "evidence-row", "data-row-id": `row-${index + 1}`,
-      "data-position": String(index + 1),
-    });
+  for (const rowData of cardData.rows) {
+    const row = el("div", {class: "evidence-row"});
     row.append(
       el("dt", {class: "evidence-label"}, rowData.label),
       el("dd", {class: "evidence-body"}, rowData.body),
     );
     rows.append(row);
-  });
+  }
   card.append(rows);
   return card;
+}
+
+function sourceDetails(label, rows) {
+  if (!rows.length) return null;
+  const details = el("details", {class: "source-details"});
+  details.append(el("summary", {}, label));
+  for (const row of rows) {
+    const paragraph = el("p");
+    paragraph.append(
+      document.createTextNode(`${row.source_id} · ${row.commit} · ${row.path} · `),
+      el("code", {}, `${row.hash_basis}:${row.canonical_sha256}`),
+    );
+    details.append(paragraph);
+  }
+  return details;
 }
 
 function applyChrome() {
@@ -215,48 +283,44 @@ function showWelcome() {
   applyChrome();
   const welcome = app.common.welcome;
   const sequence = el("select", {id: "sequence", required: ""});
-  for (const code of app.sequenceCodes) sequence.append(el("option", {value: code}, code));
-  const participantLabel = el("label", {for: "participant-code"}, welcome.participant_code);
-  const participantHelp = el(
-    "p", {id: "participant-code-help", class: "help"}, welcome.participant_code_help,
-  );
-  const participantInput = el("input", {
-    id: "participant-code", autocomplete: "off", maxlength: "64", required: "",
+  for (const code of app.sequenceCodes) {
+    sequence.append(el("option", {value: code}, code));
+  }
+  const participant = el("input", {
+    id: "participant-code",
+    autocomplete: "off",
+    maxlength: "64",
+    required: "",
     "aria-describedby": "participant-code-help",
   });
-  const sequenceLabel = el("label", {for: "sequence"}, welcome.sequence);
-  const sequenceHelp = el("p", {id: "sequence-help", class: "help"}, welcome.sequence_help);
   sequence.setAttribute("aria-describedby", "sequence-help");
-  const privacyDetails = detailsBlock(
-    welcome.details_summary, welcome.details.map(row => row.text), "welcome-details",
-  );
-  const switchButton = el(
-    "button", {type: "button", "data-action": "switch-language"},
-    welcome.switch_language,
+  const details = el("details");
+  details.append(el("summary", {}, welcome.details_summary));
+  for (const text of welcome.details) details.append(el("p", {}, text));
+  const actions = el("div", {class: "actions"});
+  actions.append(
+    el("button", {
+      id: "start-button", type: "button", "data-action": "start", disabled: "",
+    }, welcome.start),
+    el("button", {
+      type: "button", class: "secondary", "data-action": "switch-language",
+    }, welcome.switch_language),
   );
   startPanel.replaceChildren(
     el("h1", {}, welcome.heading),
     el("p", {class: "subtitle"}, welcome.subtitle),
-    el("p", {class: "task-size"}, welcome.task_size),
-    el("p", {class: "estimate"}, welcome.estimate),
+    el("p", {}, welcome.task_size),
     el("p", {class: "warning"}, welcome.warning),
     el("p", {class: "no-resume"}, welcome.no_resume),
-    el("p", {}, welcome.setup_placeholder),
-    privacyDetails,
-    participantLabel,
-    participantHelp,
-    participantInput,
-    sequenceLabel,
-    sequenceHelp,
+    details,
+    el("label", {for: "participant-code"}, welcome.participant_code),
+    el("p", {id: "participant-code-help", class: "help"}, welcome.participant_code_help),
+    participant,
+    el("label", {for: "sequence"}, welcome.sequence),
+    el("p", {id: "sequence-help", class: "help"}, welcome.sequence_help),
     sequence,
-    el("div", {class: "actions"}),
+    actions,
     el("p", {id: "start-error", class: "error", role: "alert", tabindex: "-1"}),
-  );
-  startPanel.querySelector(".actions").append(
-    el("button", {
-      id: "start-button", type: "button", "data-action": "start", disabled: "",
-    }, welcome.start),
-    switchButton,
   );
   startPanel.hidden = false;
   stage.hidden = true;
@@ -282,10 +346,8 @@ async function chooseLanguage(locale) {
       selectedBundle.ui_language !== locale
       || !selectedBundle.common
       || !Array.isArray(selectedBundle.sequence_codes)
-      || selectedBundle.sequence_codes.length === 0
-    ) {
-      throw new Error("load");
-    }
+      || selectedBundle.sequence_codes.length !== 12
+    ) throw new Error("load");
     app.locale = locale;
     app.common = selectedBundle.common;
     app.sequenceCodes = [...selectedBundle.sequence_codes];
@@ -298,50 +360,95 @@ async function chooseLanguage(locale) {
   }
 }
 
-function showTutorial() {
-  const onboarding = app.common.onboarding;
-  const factGuidance = el("ul", {class: "fact-guidance"});
-  for (const sentence of onboarding.fact_guidance) {
-    factGuidance.append(el("li", {}, sentence));
-  }
-  const states = el("dl", {class: "glossary"});
-  for (const row of onboarding.states) {
-    states.append(el("dt", {}, row.label), el("dd", {}, row.description));
-  }
-  const steps = el("ol");
-  for (const step of onboarding.steps) steps.append(el("li", {}, step));
+function showBriefing() {
+  const briefing = app.common.briefing;
+  const policy = el("ul", {class: "policy-list"});
+  for (const option of briefing.policy) policy.append(el("li", {}, option.text));
+  const flow = el("ol", {class: "briefing-flow"});
+  for (const step of briefing.flow) flow.append(el("li", {}, step));
   replaceStage(
-    el("h1", {}, onboarding.heading),
-    el("p", {}, onboarding.intro),
-    el("p", {class: "fact-guidance-intro"}, onboarding.fact_guidance_intro),
-    factGuidance,
-    el("h2", {}, onboarding.states_heading),
-    states,
-    el("p", {class: "state-distinction"}, onboarding.state_distinction),
-    el("h2", {}, onboarding.steps_heading),
-    steps,
-    el("p", {class: "guard"}, app.common.position_guard),
-    el("button", {type: "button", "data-action": "show-practice"}, onboarding.continue_practice),
+    el("h1", {}, briefing.heading),
+    el("p", {}, briefing.role),
+    el("h2", {}, briefing.policy_heading),
+    policy,
+    flow,
+    el("p", {class: "cca-note"}, briefing.cca),
+    el("button", {
+      type: "button", "data-action": "show-practice",
+    }, briefing.continue_practice),
   );
+}
+
+function practicePreviewParameters(kind) {
+  const level = app.practiceLevel / 100;
+  return kind === "candidate"
+    ? {toneHz: 215 + 50 * level, noise: 0.12 - 0.08 * level}
+    : {toneHz: 220, noise: 0.055};
+}
+
+function playPractice(kind) {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return;
+  const context = new AudioContextClass();
+  const params = practicePreviewParameters(kind);
+  const oscillator = context.createOscillator();
+  const gain = context.createGain();
+  const buffer = context.createBuffer(1, Math.round(context.sampleRate * 0.55), context.sampleRate);
+  const noise = buffer.getChannelData(0);
+  for (let index = 0; index < noise.length; index += 1) {
+    noise[index] = (Math.random() * 2 - 1) * params.noise;
+  }
+  const noiseSource = context.createBufferSource();
+  noiseSource.buffer = buffer;
+  oscillator.frequency.value = params.toneHz;
+  gain.gain.setValueAtTime(0.0001, context.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.10, context.currentTime + 0.03);
+  gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.52);
+  oscillator.connect(gain).connect(context.destination);
+  noiseSource.connect(gain);
+  oscillator.start();
+  noiseSource.start();
+  oscillator.stop(context.currentTime + 0.55);
+  noiseSource.stop(context.currentTime + 0.55);
+  setTimeout(() => context.close(), 650);
 }
 
 function showPractice() {
   const practice = app.common.practice;
-  const card = {
-    aria_label: practice.card_aria,
-    rows: practice.facts.map(row => ({label: row.label, body: row.body})),
+  const product = {
+    title: practice.heading,
+    context: practice.context,
+    knob: practice.knob,
   };
+  const rows = practice.facts.map((body, index) => ({
+    label: app.locale === "en" ? `Fact ${index + 1}` : `事实 ${index + 1}`,
+    body,
+  }));
+  const audioActions = el("div", {class: "audio-actions"});
+  audioActions.append(
+    el("button", {
+      type: "button", class: "secondary", "data-action": "play-preset",
+    }, practice.preset),
+    el("button", {
+      type: "button", class: "secondary", "data-action": "play-candidate",
+    }, practice.candidate),
+  );
   replaceStage(
     el("h1", {}, practice.heading),
-    el("p", {class: "context-label"}, practice.notice),
-    el("p", {class: "guard"}, app.common.position_guard),
-    renderEvidence(card),
+    productCard(product, app.common.badges.simulated, true),
+    audioActions,
+    renderCard({aria_label: practice.heading, rows}),
     el("div", {id: "practice-q1-area"}),
-    el("div", {id: "practice-next"}),
+    el("div", {id: "practice-q2-area"}),
   );
+  document.getElementById("practice-knob").addEventListener("input", event => {
+    app.practiceLevel = Number(event.target.value);
+  });
   document.getElementById("practice-q1-area").append(
-    optionFieldset("practice-q1", practice.q1.text, practice.q1.options),
-    el("button", {type: "button", "data-action": "practice-q1"}, practice.submit_q1),
+    optionFieldset("practice-q1", practice.q1, app.common.q1.options),
+    el("button", {
+      type: "button", "data-action": "practice-q1",
+    }, practice.submit_q1),
   );
 }
 
@@ -352,17 +459,21 @@ async function practiceQ1(button) {
     return;
   }
   clearChoiceError("practice-q1");
-  const state = selectedText("practice-q1");
   button.disabled = true;
-  await api("/api/practice", {attempt_id: app.attemptId, step: "q1", answer});
-  document.getElementById("practice-q1-area").replaceChildren(lockedSummary(state));
+  await api("/api/practice", {
+    attempt_id: app.attemptId, step: "q1", answer,
+  });
+  const choice = selectedText("practice-q1");
+  document.getElementById("practice-q1-area").replaceChildren(
+    el("p", {class: "locked-summary", role: "status"}, format(app.common.locked, {choice})),
+  );
   const practice = app.common.practice;
-  document.getElementById("practice-next").append(
-    el("h2", {id: "practice-q2-heading", tabindex: "-1"}, practice.q2.text),
-    optionFieldset("practice-q2", practice.q2.text, practice.q2.options, {
-      labelledby: "practice-q2-heading",
-    }),
-    el("button", {type: "button", "data-action": "practice-q2"}, practice.submit_q2),
+  document.getElementById("practice-q2-area").append(
+    el("h2", {id: "practice-q2-heading", tabindex: "-1"}, practice.q2),
+    optionFieldset("practice-q2", practice.q2, practice.q2_options, "practice-q2-heading"),
+    el("button", {
+      type: "button", "data-action": "practice-q2",
+    }, practice.submit_q2),
   );
   document.getElementById("practice-q2-heading").focus();
 }
@@ -375,46 +486,46 @@ async function practiceQ2(button) {
   }
   clearChoiceError("practice-q2");
   button.disabled = true;
-  const response = await api("/api/practice", {
+  app.current = await api("/api/practice", {
     attempt_id: app.attemptId, step: "q2", answer,
   });
-  app.current = response;
-  const transition = app.common.transition;
-  const steps = el("ol");
-  for (const step of transition.steps) steps.append(el("li", {}, step));
   replaceStage(
-    el("h1", {}, transition.heading),
-    el("p", {class: "feedback"}, response.feedback),
-    el("p", {}, transition.intro),
-    steps,
-    el("p", {class: "guard"}, app.common.position_guard),
-    el("button", {type: "button", "data-action": "begin-formal"}, app.common.practice.begin_formal),
+    el("h1", {}, app.common.practice.heading),
+    el("p", {class: "practice-note"}, app.current.feedback),
+    el("button", {
+      type: "button", "data-action": "begin-formal",
+    }, app.common.practice.begin_formal),
   );
 }
 
 function showTrial() {
   setFormal(true);
-  const trial = app.current;
   app.hiddenMs = 0;
   app.hiddenStarted = document.hidden ? performance.now() : null;
-  const heading = format(app.common.progress.record_heading, {
-    current: trial.trial_index + 1,
-  });
-  const progress = format(app.common.progress.question_progress, {
-    question: 1, block: trial.block,
-  });
+  app.lockedChoice = null;
+  const trial = app.current;
+  const shell = el("div", {class: "ticket-shell"});
+  shell.append(
+    el("p", {class: "ticket-code"}, trial.ticket_code),
+    productCard(trial.product, trial.source_badge),
+    renderOutputs(trial.outputs),
+    renderCard(trial.card),
+  );
+  const details = sourceDetails(trial.source_details_label, trial.source_details);
+  if (details) shell.append(details);
+  shell.append(el("div", {id: "q1-area"}), el("div", {id: "q2-area"}));
   replaceStage(
-    el("h1", {}, heading),
-    el("p", {id: "question-progress", class: "progress"}, progress),
-    detailsBlock(trial.context.summary, [trial.context.body], "record-context"),
-    el("p", {class: "guard"}, app.common.position_guard),
-    renderEvidence(trial.card),
-    el("div", {id: "q1-area"}),
-    el("div", {id: "q2-area"}),
+    el("h1", {}, format(app.common.progress.ticket, {
+      current: trial.trial_index + 1,
+    })),
+    el("p", {class: "progress"}, trial.product.title),
+    shell,
   );
   document.getElementById("q1-area").append(
     optionFieldset("formal-q1", trial.q1.text, trial.q1.options),
-    el("button", {type: "button", "data-action": "formal-q1"}, app.common.buttons.submit_q1),
+    el("button", {
+      type: "button", "data-action": "formal-q1",
+    }, app.common.buttons.submit_q1),
   );
 }
 
@@ -425,23 +536,25 @@ async function formalQ1(button) {
     return;
   }
   clearChoiceError("formal-q1");
-  const state = selectedText("formal-q1");
+  app.lockedChoice = selectedText("formal-q1");
   button.disabled = true;
-  const response = await api("/api/q1", {attempt_id: app.attemptId, answer});
-  document.getElementById("q1-area").replaceChildren(lockedSummary(state));
-  document.getElementById("question-progress").textContent = format(
-    app.common.progress.question_progress, {question: 2, block: app.current.block},
+  const response = await api("/api/q1", {
+    attempt_id: app.attemptId, answer,
+  });
+  document.getElementById("q1-area").replaceChildren(
+    el("p", {class: "locked-summary", role: "status"}, format(
+      app.common.locked, {choice: app.lockedChoice},
+    )),
   );
-  const q2Area = document.getElementById("q2-area");
-  const q2Heading = el("h2", {id: "q2-heading", tabindex: "-1"}, response.q2.text);
-  q2Area.append(
-    q2Heading,
-    optionFieldset("formal-q2", response.q2.text, response.q2.options, {
-      labelledby: "q2-heading", helper: response.q2.helper,
-    }),
-    el("button", {type: "button", "data-action": "formal-q2"}, app.common.buttons.submit_q2),
+  const heading = el("h2", {id: "q2-heading", tabindex: "-1"}, response.q2.text);
+  document.getElementById("q2-area").append(
+    heading,
+    optionFieldset("formal-q2", response.q2.text, response.q2.options, "q2-heading"),
+    el("button", {
+      type: "button", "data-action": "formal-q2",
+    }, app.common.buttons.submit_q2),
   );
-  q2Heading.focus();
+  heading.focus();
 }
 
 async function formalQ2(button) {
@@ -452,66 +565,41 @@ async function formalQ2(button) {
   }
   clearChoiceError("formal-q2");
   button.disabled = true;
-  const hidden = Math.round(app.hiddenMs + (
+  const hiddenMs = Math.round(app.hiddenMs + (
     app.hiddenStarted === null ? 0 : performance.now() - app.hiddenStarted
   ));
-  app.current = await api("/api/q2", {
-    attempt_id: app.attemptId, answer, hidden_ms: hidden,
+  const response = await api("/api/q2", {
+    attempt_id: app.attemptId, answer, hidden_ms: hiddenMs,
   });
-  if (app.current.phase === "ease") showEase(app.current.block);
-  else showTrial();
+  if (response.phase !== "preview") throw new Error("state");
+  showPreview();
 }
 
-function showEase(block) {
+function showPreview() {
+  const preview = app.common.preview;
+  const section = el("section", {class: "decision-preview"});
+  section.append(el("h2", {}, preview.heading));
   replaceStage(
-    el("h1", {}, format(app.common.progress.block_complete, {block})),
-    optionFieldset("ease", app.common.ease.question, app.common.ease.options),
-    el("div", {class: "actions"}),
+    el("h1", {}, preview.heading),
+    section,
   );
-  stage.lastChild.append(
-    el("button", {type: "button", "data-action": "ease", "data-block": String(block)}, app.common.buttons.continue),
-    el("button", {type: "button", "data-action": "ease-skip", "data-block": String(block)}, app.common.buttons.prefer_not),
+  section.append(
+    el("p", {}, format(preview.body, {choice: app.lockedChoice})),
+    el("button", {
+      type: "button", "data-action": "continue-preview",
+    }, preview.continue),
   );
 }
 
-async function submitEase(button, skip) {
-  const block = Number(button.dataset.block);
-  const answer = skip ? null : selected("ease");
-  if (!skip && !answer) {
-    showChoiceError("ease", app.common.errors.required_choice);
-    return;
-  }
-  clearChoiceError("ease");
+async function continuePreview(button) {
   button.disabled = true;
-  app.current = await api("/api/ease", {attempt_id: app.attemptId, block, answer});
-  if (app.current.phase === "diagnostic") showDiagnostic();
-  else showTrial();
-}
-
-function showDiagnostic() {
-  const diagnostic = app.common.diagnostic;
-  replaceStage(
-    el("h1", {}, diagnostic.heading),
-    optionFieldset("diagnostic", diagnostic.question, diagnostic.options),
-    el("div", {class: "actions"}),
-  );
-  stage.lastChild.append(
-    el("button", {type: "button", "data-action": "diagnostic"}, app.common.buttons.submit),
-    el("button", {type: "button", "data-action": "diagnostic-skip"}, app.common.buttons.prefer_not),
-  );
-}
-
-async function submitDiagnostic(skip) {
-  const answer = skip ? null : selected("diagnostic");
-  if (!skip && !answer) {
-    showChoiceError("diagnostic", app.common.errors.required_choice);
+  app.current = await api("/api/continue", {attempt_id: app.attemptId});
+  if (app.current.phase === "ready_complete") {
+    await api("/api/complete", {attempt_id: app.attemptId});
+    showExportScreen(true);
     return;
   }
-  clearChoiceError("diagnostic");
-  document.querySelectorAll('[data-action^="diagnostic"]').forEach(node => { node.disabled = true; });
-  await api("/api/diagnostic", {attempt_id: app.attemptId, answer});
-  await api("/api/complete", {attempt_id: app.attemptId});
-  showExportScreen(true);
+  showTrial();
 }
 
 function showExportScreen(complete) {
@@ -520,38 +608,49 @@ function showExportScreen(complete) {
   const copy = app.common.export;
   replaceStage(
     el("h1", {}, complete ? copy.complete_heading : copy.partial_heading),
-    ...(complete ? [
-      el("p", {}, app.common.debrief),
-      el("p", {}, copy.completed_trials),
-    ] : [el("p", {}, copy.partial_ready)]),
+    ...(complete
+      ? [el("p", {}, app.common.debrief), el("p", {}, copy.complete_count)]
+      : [el("p", {}, copy.partial_ready)]),
     el("p", {id: "export-status"}, copy.ready),
     el("p", {}, copy.retry),
     el("div", {class: "actions"}),
   );
   stage.lastChild.append(
-    el("button", {type: "button", "data-action": "download-json"}, app.common.buttons.download_json),
-    el("button", {type: "button", "data-action": "download-csv"}, app.common.buttons.download_csv),
-    el("button", {type: "button", "data-action": "finish"}, app.common.buttons.finish),
+    el("button", {
+      type: "button", "data-action": "download-json",
+    }, app.common.buttons.download_json),
+    el("button", {
+      type: "button", "data-action": "download-csv",
+    }, app.common.buttons.download_csv),
+    el("button", {
+      type: "button", "data-action": "finish",
+    }, app.common.buttons.finish),
   );
 }
 
 async function downloadExport(outputFormat) {
   const response = await fetch(
     `/api/export?attempt_id=${encodeURIComponent(app.attemptId)}&format=${outputFormat}`,
-    {cache: "no-store", credentials: "same-origin", headers: {"X-Study-Capability": app.capability}},
+    {
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: {"X-Study-Capability": app.capability},
+    },
   );
   if (!response.ok) throw new Error("download");
   const blob = await response.blob();
   const link = document.createElement("a");
-  link.download = `microstudy-${app.attemptId}.${outputFormat}`;
+  link.download = `microstudy-v9-${app.attemptId}.${outputFormat}`;
   link.href = URL.createObjectURL(blob);
   document.body.append(link);
   link.click();
   const url = link.href;
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-  document.getElementById("export-status").textContent =
-    format(app.common.export.download_started, {format: outputFormat.toUpperCase()});
+  document.getElementById("export-status").textContent = format(
+    app.common.export.download_started,
+    {format: outputFormat.toUpperCase()},
+  );
 }
 
 function saveExitDialog() {
@@ -559,13 +658,12 @@ function saveExitDialog() {
   if (dialog) return dialog;
   const copy = app.common.save_exit;
   dialog = el("dialog", {
-    id: "save-exit-dialog", "aria-labelledby": "save-exit-heading",
+    id: "save-exit-dialog",
+    "aria-labelledby": "save-exit-heading",
     "aria-describedby": "save-exit-description",
   });
   const consequences = el("ul");
-  for (const consequence of copy.consequences) {
-    consequences.append(el("li", {}, consequence));
-  }
+  for (const text of copy.consequences) consequences.append(el("li", {}, text));
   dialog.append(
     el("h2", {id: "save-exit-heading"}, copy.heading),
     el("p", {id: "save-exit-description"}, copy.intro),
@@ -625,6 +723,7 @@ async function startStudy(button) {
   if (!startReady()) return;
   app.startPending = true;
   updateReadyControls();
+  button.disabled = true;
   try {
     const response = await api("/api/start", {
       participant_code: document.getElementById("participant-code").value.trim(),
@@ -633,16 +732,14 @@ async function startStudy(button) {
     });
     if (
       response.ui_language !== app.locale
-      || typeof response.attempt_id !== "string" || response.attempt_id.length === 0
-      || typeof response.capability !== "string" || response.capability.length === 0
-    ) {
-      throw new Error("state");
-    }
+      || typeof response.attempt_id !== "string"
+      || typeof response.capability !== "string"
+    ) throw new Error("state");
     app.attemptId = response.attempt_id;
     app.capability = response.capability;
     startPanel.replaceChildren();
     startPanel.hidden = true;
-    showTutorial();
+    showBriefing();
   } finally {
     app.startPending = false;
     updateReadyControls();
@@ -657,15 +754,14 @@ document.addEventListener("click", event => {
     "switch-language": () => chooseLanguage(app.locale === "en" ? "zh-Hans" : "en"),
     "start": () => startStudy(button),
     "show-practice": () => showPractice(),
+    "play-preset": () => playPractice("preset"),
+    "play-candidate": () => playPractice("candidate"),
     "practice-q1": () => practiceQ1(button),
     "practice-q2": () => practiceQ2(button),
     "begin-formal": () => showTrial(),
     "formal-q1": () => formalQ1(button),
     "formal-q2": () => formalQ2(button),
-    "ease": () => submitEase(button, false),
-    "ease-skip": () => submitEase(button, true),
-    "diagnostic": () => submitDiagnostic(false),
-    "diagnostic-skip": () => submitDiagnostic(true),
+    "continue-preview": () => continuePreview(button),
     "save-exit": () => showSaveExitDialog(button),
     "cancel-save-exit": () => closeSaveExitDialog(),
     "confirm-save-exit": () => saveAndExit(button),
@@ -681,7 +777,9 @@ document.addEventListener("click", event => {
 
 document.addEventListener("visibilitychange", () => {
   if (!app.attemptId) return;
-  if (document.hidden && app.hiddenStarted === null) app.hiddenStarted = performance.now();
+  if (document.hidden && app.hiddenStarted === null) {
+    app.hiddenStarted = performance.now();
+  }
   if (!document.hidden && app.hiddenStarted !== null) {
     app.hiddenMs += performance.now() - app.hiddenStarted;
     app.hiddenStarted = null;
@@ -689,21 +787,23 @@ document.addEventListener("visibilitychange", () => {
 });
 
 document.addEventListener("change", event => {
-  if (event.target.matches('input[type="radio"]')) clearChoiceError(event.target.name);
+  if (event.target.matches('input[type="radio"]')) {
+    clearChoiceError(event.target.name);
+  }
 });
 
 fetch("/api/bootstrap", {cache: "no-store", credentials: "same-origin"})
-  .then(response => response.ok ? response.json() : Promise.reject(new Error("bootstrap")))
+  .then(response => (
+    response.ok ? response.json() : Promise.reject(new Error("load"))
+  ))
   .then(bootstrap => {
     if (
       bootstrap.fallback !== null
       || bootstrap.auto_detect !== false
+      || bootstrap.minimum_width_px !== 1280
       || typeof bootstrap.csrf_token !== "string"
-      || bootstrap.csrf_token.length === 0
       || !Array.isArray(bootstrap.languages)
-    ) {
-      throw new Error("locale contract");
-    }
+    ) throw new Error("load");
     app.csrf = bootstrap.csrf_token;
     app.languages = bootstrap.languages.map(row => row.id);
     app.bootstrapReady = true;
@@ -711,4 +811,7 @@ fetch("/api/bootstrap", {cache: "no-store", credentials: "same-origin"})
   })
   .catch(showError);
 
-window.MicrostudyTest = {renderEvidence};
+window.MicrostudyTest = {
+  renderCard,
+  practicePreviewParameters,
+};

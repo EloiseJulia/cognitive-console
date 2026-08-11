@@ -53,7 +53,9 @@ class CDP:
         diagnostic = self.eval("""({
           url:location.href, state:document.readyState,
           text:document.body ? document.body.innerText : null,
-          error:document.querySelector('#start-error')?.textContent
+          gateError:document.querySelector('#gate-error')?.textContent,
+          error:document.querySelector('#start-error')?.textContent,
+          stageError:document.querySelector('#stage-error')?.textContent
         })""")
         raise AssertionError(f"browser condition timed out: {expression}; {diagnostic}")
 

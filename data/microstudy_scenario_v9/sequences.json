@@ -1,0 +1,431 @@
+{
+  "schema_version": "microstudy-scenario-sequences-v2-exact-cover",
+  "generator": {
+    "version": "stdlib-exact-cover-v1",
+    "valid_order_count": 48,
+    "pair_separation_minimum": 3,
+    "selection": "exact cover over ticket×position, then complementary condition rows"
+  },
+  "sequences": [
+    {
+      "code": "V9-01",
+      "slots": [
+        {
+          "position": 1,
+          "ticket_code": "DELIB-R",
+          "condition": "C"
+        },
+        {
+          "position": 2,
+          "ticket_code": "UNC-R",
+          "condition": "F"
+        },
+        {
+          "position": 3,
+          "ticket_code": "SKEP-R",
+          "condition": "F"
+        },
+        {
+          "position": 4,
+          "ticket_code": "DELIB-S",
+          "condition": "F"
+        },
+        {
+          "position": 5,
+          "ticket_code": "UNC-S",
+          "condition": "C"
+        },
+        {
+          "position": 6,
+          "ticket_code": "SKEP-S",
+          "condition": "C"
+        }
+      ]
+    },
+    {
+      "code": "V9-02",
+      "slots": [
+        {
+          "position": 1,
+          "ticket_code": "DELIB-S",
+          "condition": "C"
+        },
+        {
+          "position": 2,
+          "ticket_code": "UNC-S",
+          "condition": "C"
+        },
+        {
+          "position": 3,
+          "ticket_code": "SKEP-S",
+          "condition": "F"
+        },
+        {
+          "position": 4,
+          "ticket_code": "DELIB-R",
+          "condition": "F"
+        },
+        {
+          "position": 5,
+          "ticket_code": "UNC-R",
+          "condition": "F"
+        },
+        {
+          "position": 6,
+          "ticket_code": "SKEP-R",
+          "condition": "C"
+        }
+      ]
+    },
+    {
+      "code": "V9-03",
+      "slots": [
+        {
+          "position": 1,
+          "ticket_code": "SKEP-R",
+          "condition": "C"
+        },
+        {
+          "position": 2,
+          "ticket_code": "DELIB-R",
+          "condition": "C"
+        },
+        {
+          "position": 3,
+          "ticket_code": "UNC-R",
+          "condition": "F"
+        },
+        {
+          "position": 4,
+          "ticket_code": "SKEP-S",
+          "condition": "F"
+        },
+        {
+          "position": 5,
+          "ticket_code": "DELIB-S",
+          "condition": "F"
+        },
+        {
+          "position": 6,
+          "ticket_code": "UNC-S",
+          "condition": "C"
+        }
+      ]
+    },
+    {
+      "code": "V9-04",
+      "slots": [
+        {
+          "position": 1,
+          "ticket_code": "SKEP-S",
+          "condition": "C"
+        },
+        {
+          "position": 2,
+          "ticket_code": "DELIB-S",
+          "condition": "C"
+        },
+        {
+          "position": 3,
+          "ticket_code": "UNC-S",
+          "condition": "F"
+        },
+        {
+          "position": 4,
+          "ticket_code": "SKEP-R",
+          "condition": "F"
+        },
+        {
+          "position": 5,
+          "ticket_code": "DELIB-R",
+          "condition": "F"
+        },
+        {
+          "position": 6,
+          "ticket_code": "UNC-R",
+          "condition": "C"
+        }
+      ]
+    },
+    {
+      "code": "V9-05",
+      "slots": [
+        {
+          "position": 1,
+          "ticket_code": "UNC-R",
+          "condition": "C"
+        },
+        {
+          "position": 2,
+          "ticket_code": "SKEP-R",
+          "condition": "F"
+        },
+        {
+          "position": 3,
+          "ticket_code": "DELIB-R",
+          "condition": "C"
+        },
+        {
+          "position": 4,
+          "ticket_code": "UNC-S",
+          "condition": "F"
+        },
+        {
+          "position": 5,
+          "ticket_code": "SKEP-S",
+          "condition": "C"
+        },
+        {
+          "position": 6,
+          "ticket_code": "DELIB-S",
+          "condition": "F"
+        }
+      ]
+    },
+    {
+      "code": "V9-06",
+      "slots": [
+        {
+          "position": 1,
+          "ticket_code": "UNC-S",
+          "condition": "F"
+        },
+        {
+          "position": 2,
+          "ticket_code": "SKEP-S",
+          "condition": "F"
+        },
+        {
+          "position": 3,
+          "ticket_code": "DELIB-S",
+          "condition": "C"
+        },
+        {
+          "position": 4,
+          "ticket_code": "UNC-R",
+          "condition": "C"
+        },
+        {
+          "position": 5,
+          "ticket_code": "SKEP-R",
+          "condition": "C"
+        },
+        {
+          "position": 6,
+          "ticket_code": "DELIB-R",
+          "condition": "F"
+        }
+      ]
+    },
+    {
+      "code": "V9-07",
+      "slots": [
+        {
+          "position": 1,
+          "ticket_code": "DELIB-R",
+          "condition": "F"
+        },
+        {
+          "position": 2,
+          "ticket_code": "UNC-R",
+          "condition": "C"
+        },
+        {
+          "position": 3,
+          "ticket_code": "SKEP-R",
+          "condition": "C"
+        },
+        {
+          "position": 4,
+          "ticket_code": "DELIB-S",
+          "condition": "C"
+        },
+        {
+          "position": 5,
+          "ticket_code": "UNC-S",
+          "condition": "F"
+        },
+        {
+          "position": 6,
+          "ticket_code": "SKEP-S",
+          "condition": "F"
+        }
+      ]
+    },
+    {
+      "code": "V9-08",
+      "slots": [
+        {
+          "position": 1,
+          "ticket_code": "DELIB-S",
+          "condition": "F"
+        },
+        {
+          "position": 2,
+          "ticket_code": "UNC-S",
+          "condition": "F"
+        },
+        {
+          "position": 3,
+          "ticket_code": "SKEP-S",
+          "condition": "C"
+        },
+        {
+          "position": 4,
+          "ticket_code": "DELIB-R",
+          "condition": "C"
+        },
+        {
+          "position": 5,
+          "ticket_code": "UNC-R",
+          "condition": "C"
+        },
+        {
+          "position": 6,
+          "ticket_code": "SKEP-R",
+          "condition": "F"
+        }
+      ]
+    },
+    {
+      "code": "V9-09",
+      "slots": [
+        {
+          "position": 1,
+          "ticket_code": "SKEP-R",
+          "condition": "F"
+        },
+        {
+          "position": 2,
+          "ticket_code": "DELIB-R",
+          "condition": "F"
+        },
+        {
+          "position": 3,
+          "ticket_code": "UNC-R",
+          "condition": "C"
+        },
+        {
+          "position": 4,
+          "ticket_code": "SKEP-S",
+          "condition": "C"
+        },
+        {
+          "position": 5,
+          "ticket_code": "DELIB-S",
+          "condition": "C"
+        },
+        {
+          "position": 6,
+          "ticket_code": "UNC-S",
+          "condition": "F"
+        }
+      ]
+    },
+    {
+      "code": "V9-10",
+      "slots": [
+        {
+          "position": 1,
+          "ticket_code": "SKEP-S",
+          "condition": "F"
+        },
+        {
+          "position": 2,
+          "ticket_code": "DELIB-S",
+          "condition": "F"
+        },
+        {
+          "position": 3,
+          "ticket_code": "UNC-S",
+          "condition": "C"
+        },
+        {
+          "position": 4,
+          "ticket_code": "SKEP-R",
+          "condition": "C"
+        },
+        {
+          "position": 5,
+          "ticket_code": "DELIB-R",
+          "condition": "C"
+        },
+        {
+          "position": 6,
+          "ticket_code": "UNC-R",
+          "condition": "F"
+        }
+      ]
+    },
+    {
+      "code": "V9-11",
+      "slots": [
+        {
+          "position": 1,
+          "ticket_code": "UNC-R",
+          "condition": "F"
+        },
+        {
+          "position": 2,
+          "ticket_code": "SKEP-R",
+          "condition": "C"
+        },
+        {
+          "position": 3,
+          "ticket_code": "DELIB-R",
+          "condition": "F"
+        },
+        {
+          "position": 4,
+          "ticket_code": "UNC-S",
+          "condition": "C"
+        },
+        {
+          "position": 5,
+          "ticket_code": "SKEP-S",
+          "condition": "F"
+        },
+        {
+          "position": 6,
+          "ticket_code": "DELIB-S",
+          "condition": "C"
+        }
+      ]
+    },
+    {
+      "code": "V9-12",
+      "slots": [
+        {
+          "position": 1,
+          "ticket_code": "UNC-S",
+          "condition": "C"
+        },
+        {
+          "position": 2,
+          "ticket_code": "SKEP-S",
+          "condition": "C"
+        },
+        {
+          "position": 3,
+          "ticket_code": "DELIB-S",
+          "condition": "F"
+        },
+        {
+          "position": 4,
+          "ticket_code": "UNC-R",
+          "condition": "F"
+        },
+        {
+          "position": 5,
+          "ticket_code": "SKEP-R",
+          "condition": "F"
+        },
+        {
+          "position": 6,
+          "ticket_code": "DELIB-R",
+          "condition": "C"
+        }
+      ]
+    }
+  ]
+}

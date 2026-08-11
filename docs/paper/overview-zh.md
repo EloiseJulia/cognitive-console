@@ -1,5 +1,15 @@
 # 论文总览（中文内部理解版）
 
+> **2026-08-11 当前状态（内部导航，不是论文证据）：** 当前 source 标题仍为
+> **When Does a Legible Latent Axis Earn a Control? A Comparator-Bound Evaluation Contract for Latent-Control Interfaces**。
+> 主 framing 是 comparator-bound actionability gate，而不是 latent steering 普遍失败。Bo et al.
+> （UIST 2026，SELECT/CALIBRATE/LEARN，探索性被试内 `n=14`，含 unscaffolded PROMPT baseline）
+> 是最近的用户界面邻居；Golden Gate Claude 仅作为公开内部特征放大的中性动机；Goodfire
+> 不进入当前论文叙事。Contract-application micro-study 网站已在 `b7043d2` 合并，但仅
+> **READY FOR OWNER PREVIEW**，prereg 仍 DRAFT，且无 recruitment、pilot 或 human data。
+> E-0016 仍无 DEV/TEST 或科学结果。任何旧 reviewer acceptance probability 均早于最新写作，
+> 不得当作当前评分；需对当前 `main` 重新独立评审。
+>
 > 当前标题：**When Does a Legible Latent Axis Earn a Control? A Comparator-Bound Evaluation Contract for Latent-Control Interfaces**
 > 目标 venue：IUI。本文档只同步当前论文 framing。数字以生成表、冻结 artifact、evidence ledger 和 `main.tex` 为准。
 

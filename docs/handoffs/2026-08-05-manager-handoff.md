@@ -1,5 +1,11 @@
 # Manager Handoff Bundle — cognitive-console — 2026-08-05
 
+> **SUPERSEDED (2026-08-11):** This historical handoff is no longer a valid
+> re-entry point. Use
+> [`2026-08-11-manager-handoff.md`](2026-08-11-manager-handoff.md) as the
+> single primary handoff. Do not resume this file's stale title, PDF, reviewer
+> probability, E-0016 gate state, worktree queue, or next-step list.
+
 > Supersedes `2026-07-28-manager-handoff.md`. This is the primary re-entry point for the next Manager.
 > Read this file first, then `AGENTS.md`, `AI-Instruction.md`, the opening report, `docs/ledgers/decision-log.md` D-0074..D-0090, and the current paper.
 > Conflict order: Part I research red-lines > AGENTS.md > Part II/III. If uncertain, stop and ask the owner.

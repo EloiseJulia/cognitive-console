@@ -5,6 +5,31 @@
 
 ---
 
+## 2026-08-11 · D-0107 · Manager rotation handoff prepared; incoming session must pass exam before unique takeover
+- Created `docs/handoffs/2026-08-11-manager-handoff.md` as the sole primary
+  re-entry point and marked the 2026-08-05 handoff superseded. The incoming
+  writing-focused Manager may dispatch other work, but must first perform the
+  read-only verification and pass the ten-question acceptance exam. Only after
+  it announces takeover does the current Manager retire read-only; dual Manager
+  scheduling is forbidden.
+- Audited scientific/content base HEAD was
+  `b7043d28481c30eaf8c84575f884fd63f970591f`, initially 62 commits ahead of
+  `origin/main`; this handoff commit is expected to make local `main` 63 ahead.
+  The owner-provided untracked DOCX remains preserved and must not be committed.
+  No `ACTIVE_MANAGER` file exists, so none was invented.
+- Current paper source rebuilds to 12 pages at
+  `docs/paper/build/main.pdf`. Substantial writing after the last independent
+  full-paper critic makes all older acceptance probabilities stale; the next
+  writing action is a fresh current-bundle review followed by one bounded
+  revision/audit cycle.
+- The contract-application website and final hostile-audit repairs are merged at
+  `b7043d2` and are ready for owner preview only. Recruitment, ethics activity,
+  pilot, human data, public deployment, protocol freeze, and paper evidence
+  remain unauthorized. E-0016 still has no scientific result.
+- This rotation records no new scientific result, Claim, venue, protocol,
+  evidence-validity, budget, recruitment, submission, or GPU decision. No push
+  is authorized by this entry.
+
 ## 2026-08-10 · D-0105 · Hostile-audit implementation repair completed; no human run
 - Moved formal planning, state transitions, scoring, canonical export, CSV
   hardening, and HMAC-SHA256 signing into the volatile loopback server. The

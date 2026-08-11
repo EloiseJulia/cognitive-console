@@ -165,6 +165,8 @@ def test_stale_taxonomy_pattern_catches_cross_surface_regression():
         "withheld-control",
         "evidence-supported control",
         "formal four-state taxonomy",
+        "Four states: Read-only, Unresolved, Unstable, Eligible",
+        "Interface labels: Eligible, Read-only, Unstable, and Unresolved",
     ):
         assert CHECKER.STALE_TAXONOMY.search(stale)
 

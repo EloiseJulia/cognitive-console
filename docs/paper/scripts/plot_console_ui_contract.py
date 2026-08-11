@@ -80,16 +80,17 @@ def _tier_summary(card: dict) -> str:
     tier = card["evidence_tier"]["transfer_identity"]
     model = str(tier.get("model")).replace("-instruct", "")
     axis = {
-        "deliberation": "deliberation",
-        "uncertainty_awareness": "uncertainty",
+        "deliberation": "delib",
+        "uncertainty_awareness": "uncert",
     }.get(card["axis"], card["axis"])
     task_outcome = {
-        "deliberation": "deliberation/binary",
+        "deliberation": "delib/binary",
         "uncertainty_awareness": "confidence/1-Brier",
     }.get(card["axis"], f"{tier.get('task')}/{tier.get('outcome')}")
+    direction_status = "dir/split OK" if tier.get("complete") else "dir/split MISSING"
     return (
         f"{model}; {str(tier.get('method')).upper()}:{axis}@L{tier.get('layer')}; "
-        f"{task_outcome}; C2b-v2026-07-23; DEV-selected prompt."
+        f"{task_outcome}; C2b-v2026-07-23; DEV-prompt; {direction_status}."
     )
 
 
@@ -136,7 +137,7 @@ def _card_lines(card: dict, e0013: dict, grid_size: int) -> list[tuple[str, str]
             _signal_line("TRANSFER STATUS", _transfer_summary(card)),
             _signal_line(
                 "BLOCKING REASON",
-                "Interval includes zero; incremental gain is not established.",
+                "Direction/split identity is missing; interval also includes zero.",
             ),
             _signal_line(
                 "GRID SCOPE NOTE",
@@ -174,7 +175,7 @@ def _card_lines(card: dict, e0013: dict, grid_size: int) -> list[tuple[str, str]
         _signal_line("TRANSFER STATUS", _transfer_summary(card)),
         _signal_line(
             "BLOCKING REASON",
-            "Missingness-limited: complete-case support in one cell; bounds cross zero.",
+            "Direction/split identity is missing; missingness bounds cross zero.",
         ),
         _signal_line(
             "GRID SCOPE NOTE",

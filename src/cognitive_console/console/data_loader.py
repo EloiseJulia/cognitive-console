@@ -35,7 +35,8 @@ AXIS_TASK_OUTCOMES = {
 _TIER_MATCH_FIELDS = (
     "model",
     "method",
-    "direction",
+    "file_hash",
+    "split_hash",
     "axis",
     "layer",
     "task",
@@ -107,15 +108,13 @@ def _tier_identity(
     identity = {
         "model": _model_identity_key(model),
         "method": str(method).lower() if method not in (None, "") else None,
-        "direction": (
-            str(direction)
-            if direction not in (None, "")
-            else (
-                f"{str(method).lower()}:{axis}"
-                if method not in (None, "")
-                else None
-            )
+        "direction_id": (
+            direction.get("direction_id")
+            if isinstance(direction, dict)
+            else (str(direction) if direction not in (None, "") else None)
         ),
+        "file_hash": direction.get("file_hash") if isinstance(direction, dict) else None,
+        "split_hash": direction.get("split_hash") if isinstance(direction, dict) else None,
         "axis": axis if axis else None,
         "layer": int(layer) if isinstance(layer, (int, float)) else None,
         "task": task,
@@ -128,7 +127,8 @@ def _tier_identity(
     required = [
         "model",
         "method",
-        "direction",
+        "file_hash",
+        "split_hash",
         "axis",
         "layer",
         "protocol",
@@ -153,7 +153,10 @@ def _tier_identity(
 def _compare_tier_identities(read_identity: Dict, transfer_identity: Dict) -> Dict:
     missing = []
     mismatches = []
-    for field in _TIER_MATCH_FIELDS:
+    match_fields = list(_TIER_MATCH_FIELDS)
+    if read_identity.get("direction_id") or transfer_identity.get("direction_id"):
+        match_fields.append("direction_id")
+    for field in match_fields:
         read_value = read_identity.get(field)
         transfer_value = transfer_identity.get(field)
         if read_value in (None, ""):
@@ -180,7 +183,10 @@ def _compare_tier_identities(read_identity: Dict, transfer_identity: Dict) -> Di
         reason = f"READ and TRANSFER belong to different evidence tiers: {details}."
     else:
         status = "MATCH"
-        reason = "READ and TRANSFER share the same model, method, direction, axis, layer, task, and outcome."
+        reason = (
+            "READ and TRANSFER share the same model, method, direction file/split "
+            "identity, axis, layer, task, and outcome."
+        )
     return {
         "status": status,
         "matched": status == "MATCH",
@@ -208,17 +214,25 @@ def _c2_method(data: Dict, source_mode: str) -> Optional[str]:
     return None
 
 
-def _direction_identity(data: Dict, row: Dict, method: object, axis: str) -> Optional[str]:
-    explicit = (
-        row.get("direction_id")
-        or row.get("direction_sha256")
-        or data.get("direction_by_axis", {}).get(axis)
-    )
-    if explicit:
-        return str(explicit)
-    if method not in (None, ""):
-        return f"{str(method).lower()}:{axis}"
-    return None
+def _direction_identity(data: Dict, row: Dict, method: object, axis: str) -> Dict:
+    del method
+    return {
+        "direction_id": (
+            row.get("direction_id")
+            or row.get("direction_sha256")
+            or data.get("direction_by_axis", {}).get(axis)
+        ),
+        "file_hash": (
+            row.get("direction_file_hash")
+            or row.get("file_hash")
+            or data.get("direction_file_hash_by_axis", {}).get(axis)
+        ),
+        "split_hash": (
+            row.get("direction_split_hash")
+            or row.get("split_hash")
+            or data.get("direction_split_hash_by_axis", {}).get(axis)
+        ),
+    }
 
 
 def _protocol_version(data: Dict, protocol: object, fallback: object) -> object:
@@ -659,10 +673,16 @@ def _interface_mapping(
 
     if not read_signal.get("tier_identity", {}).get("complete", False):
         code = "READ_TIER_INCOMPLETE"
-        reason = "READ evidence lacks a complete model, method, direction/axis/layer, task/outcome, or protocol/version identity."
+        reason = (
+            "READ evidence lacks a complete model, method, direction file/split, "
+            "axis/layer, task/outcome, or protocol/version identity."
+        )
     elif not transfer_signal.get("tier_identity", {}).get("complete", False):
         code = "TRANSFER_TIER_INCOMPLETE"
-        reason = "TRANSFER evidence lacks a complete task/outcome, protocol/version, or comparator identity."
+        reason = (
+            "TRANSFER evidence lacks a complete direction file/split, task/outcome, "
+            "protocol/version, or comparator identity."
+        )
     elif not tier_match["matched"]:
         code = f"TIER_{tier_match['status']}"
         reason = tier_match["reason"]
@@ -800,7 +820,7 @@ def _load_social_card(behavior_path: Path, read_path: Path) -> Dict:
             model=read.get("config", {}).get("model"),
             method="caa",
             axis="social_inference_novice_disclosure",
-            direction=read.get("direction_id") or "caa:social_inference_novice_disclosure",
+            direction=read.get("direction_id"),
             layer=read.get("selected_layer"),
             task="novice-disclosure representational probe",
             outcome="token-blind AUC",
@@ -1066,7 +1086,7 @@ def _load_arm_fallback_from_evidence(evidence_ledger_path: Path) -> Tuple[Dict, 
                             model=None,
                             method=method.lower(),
                             axis="uncertainty_awareness",
-                            direction=f"{method.lower()}:uncertainty_awareness",
+                            direction=None,
                             layer=None,
                             task=_axis_task_outcome("uncertainty_awareness")["task"],
                             outcome=_axis_task_outcome("uncertainty_awareness")["outcome"],

@@ -125,7 +125,7 @@ def _render_html() -> str:
             <div class="signal"><b>INTERFACE ACTION / ELIGIBILITY</b>: ${(action.read_only_diagnostic || {}).summary || ""} ${(action.active_control || {}).summary || ""}</div>
             <div class="signal"><b>BOUNDED PROMPT COMPARATOR</b>: ${card.prompt_ceiling.summary || "n/a"}</div>
             <div class="signal"><b>CALIBRATION WARNING</b>: ${card.calibration_harm.status} ${card.calibration_harm.summary || ""}</div>
-            <div class="signal"><b>EXACT EVIDENCE TIER</b>: ${tier.model || "n/a"}; ${tier.method || "n/a"}; ${tier.direction || "n/a"}; layer=${tier.layer ?? "n/a"}; ${tier.task || "n/a"}; ${tier.outcome || "n/a"}<div class="mini">${card.evidence_tier.match.reason}</div></div>
+            <div class="signal"><b>EXACT EVIDENCE TIER</b>: ${tier.model || "n/a"}; ${tier.method || "n/a"}; direction file=${tier.file_hash || "missing"}; split=${tier.split_hash || "missing"}; layer=${tier.layer ?? "n/a"}; ${tier.task || "n/a"}; ${tier.outcome || "n/a"}<div class="mini">${card.evidence_tier.match.reason}</div></div>
             <div class="mini">Evidence: ${(card.evidence_ids || []).join(", ")}</div>`;
           cardGrid.appendChild(div);
         });

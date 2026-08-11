@@ -57,9 +57,14 @@ STALE_TAXONOMY = re.compile(
     r"\bdiagnostic[- ]only\b|"
     r"\bevidence[- ]supported control\b|"
     r"\bwithheld-control\b|"
-    r"\bfour[- ]state\b|"
+    r"\bfour[\s-]+states?\b|"
     r"\bfour labels\b|"
-    r"\b(?:unresolved|unstable|eligible) state\b",
+    r"\b(?:unresolved|unstable|eligible) state\b|"
+    r"\b(?:states?|labels?|taxonomy)\b"
+    r"(?=[^.\n]{0,240}\b(?:read[- ]only|diagnostic[- ]only)\b)"
+    r"(?=[^.\n]{0,240}\bunresolved\b)"
+    r"(?=[^.\n]{0,240}\bunstable\b)"
+    r"(?=[^.\n]{0,240}\beligible\b)",
     re.I,
 )
 

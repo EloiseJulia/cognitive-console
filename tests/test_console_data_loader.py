@@ -66,9 +66,13 @@ def _write_json(path: Path, payload: dict) -> Path:
 
 def _passing_c2_payload() -> dict:
     payload = _read_json(C2B_JSON)
+    c1_by_axis = {row["axis"]: row for row in _read_json(C1_JSON)["axes"]}
     payload["steering_method"] = "caa"
     payload["axes"] = [dict(row) for row in payload["axes"]]
     for row in payload["axes"]:
+        c1_row = c1_by_axis[row["axis"]]
+        row["file_hash"] = c1_row["file_hash"]
+        row["split_hash"] = c1_row["split_hash"]
         if row["axis"] == "deliberation":
             row["passed"] = True
             row["coherence_ok"] = True
@@ -78,30 +82,58 @@ def _passing_c2_payload() -> dict:
     return payload
 
 
-def test_axis_card_requires_complete_matched_tier_before_active_control():
+def test_missing_direction_split_identity_withholds_active_control():
     payload = build_console_payload()
     card = next(row for row in payload["ui_contract"]["cards"] if row["axis"] == "deliberation")
 
-    assert card["evidence_tier"]["match"]["status"] == "MATCH"
+    assert card["evidence_tier"]["match"]["status"] == "INCOMPLETE"
     identity = card["evidence_tier"]["transfer_identity"]
-    for field in (
-        "model",
-        "method",
-        "direction",
-        "axis",
-        "layer",
-        "task",
-        "outcome",
-        "protocol",
-        "version",
-        "comparator",
-    ):
-        assert identity[field] not in (None, "", {})
+    assert identity["file_hash"] is None
+    assert identity["split_hash"] is None
     assert identity["version"] == "frozen-2026-07-23"
-    assert identity["complete"] is True
+    assert identity["complete"] is False
+    assert identity["missing_fields"] == ["file_hash", "split_hash"]
     assert card["interface_action"]["read_only_diagnostic"]["eligibility"] == "candidate"
     assert card["interface_action"]["active_control"]["eligibility"] == "withheld"
-    assert card["blocking_reason"]["code"] == "TRANSFER_NOT_PASSED"
+    assert card["blocking_reason"]["code"] == "TRANSFER_TIER_INCOMPLETE"
+
+
+def test_genuine_same_tier_direction_split_identity_matches(tmp_path: Path):
+    c2 = _passing_c2_payload()
+    c1 = _read_json(C1_JSON)
+    c1_row = next(row for row in c1["axes"] if row["axis"] == "deliberation")
+    c2_row = next(row for row in c2["axes"] if row["axis"] == "deliberation")
+
+    assert c2_row["file_hash"] == c1_row["file_hash"]
+    assert c2_row["split_hash"] == c1_row["split_hash"]
+    fake_c2 = _write_json(tmp_path / "same-tier-c2.json", c2)
+    payload = build_console_payload(
+        c2b_path=fake_c2,
+        c1_path=C1_JSON,
+        evidence_ledger_path=EVIDENCE_LEDGER,
+    )
+    card = next(row for row in payload["ui_contract"]["cards"] if row["axis"] == "deliberation")
+    assert card["evidence_tier"]["match"]["status"] == "MATCH"
+
+
+def test_missing_direction_split_identity_withholds_computational_pass(tmp_path: Path):
+    c2 = _passing_c2_payload()
+    row = next(row for row in c2["axes"] if row["axis"] == "deliberation")
+    row.pop("file_hash")
+    row.pop("split_hash")
+    fake_c2 = _write_json(tmp_path / "missing-direction-identity.json", c2)
+
+    payload = build_console_payload(
+        c2b_path=fake_c2,
+        c1_path=C1_JSON,
+        evidence_ledger_path=EVIDENCE_LEDGER,
+    )
+    card = next(row for row in payload["ui_contract"]["cards"] if row["axis"] == "deliberation")
+
+    assert card["transfer_verdict"]["verdict"] == "PASS"
+    assert card["evidence_tier"]["match"]["status"] == "INCOMPLETE"
+    assert card["interface_action"]["active_control"]["eligibility"] == "withheld"
+    assert card["blocking_reason"]["code"] == "TRANSFER_TIER_INCOMPLETE"
 
 
 @pytest.mark.parametrize(
@@ -109,7 +141,6 @@ def test_axis_card_requires_complete_matched_tier_before_active_control():
     [
         ("model", "model", "NousResearch/Meta-Llama-3-8B-Instruct"),
         ("method", "steering_method", "iti"),
-        ("direction", "direction_id", "alternate-direction"),
         ("layer", "layer", 18),
         ("task", "task", "alternate task"),
         ("outcome", "outcome", "alternate outcome"),
@@ -144,6 +175,30 @@ def test_cross_tier_pass_is_withheld_with_explicit_mismatch(
     assert "different evidence tiers" in card["blocking_reason"]["summary"]
 
 
+@pytest.mark.parametrize("identity_field", ["file_hash", "split_hash"])
+def test_direction_or_split_hash_mismatch_withholds_pass(
+    tmp_path: Path,
+    identity_field: str,
+):
+    c2 = _passing_c2_payload()
+    row = next(row for row in c2["axes"] if row["axis"] == "deliberation")
+    row[identity_field] = f"sha256:mismatched-{identity_field}"
+    fake_c2 = _write_json(tmp_path / f"mismatched-{identity_field}.json", c2)
+
+    payload = build_console_payload(
+        c2b_path=fake_c2,
+        c1_path=C1_JSON,
+        evidence_ledger_path=EVIDENCE_LEDGER,
+    )
+    card = next(row for row in payload["ui_contract"]["cards"] if row["axis"] == "deliberation")
+
+    assert card["transfer_verdict"]["verdict"] == "PASS"
+    assert card["evidence_tier"]["match"]["status"] == "MISMATCH"
+    assert card["evidence_tier"]["match"]["mismatches"][0]["field"] == identity_field
+    assert card["interface_action"]["active_control"]["eligibility"] == "withheld"
+    assert card["blocking_reason"]["code"] == "TIER_MISMATCH"
+
+
 def test_matched_tier_pass_maps_to_exact_tier_active_control(tmp_path: Path):
     fake_c2 = _write_json(tmp_path / "passing-c2.json", _passing_c2_payload())
 
@@ -155,6 +210,10 @@ def test_matched_tier_pass_maps_to_exact_tier_active_control(tmp_path: Path):
     card = next(row for row in payload["ui_contract"]["cards"] if row["axis"] == "deliberation")
 
     assert card["evidence_tier"]["match"]["status"] == "MATCH"
+    identity = card["evidence_tier"]["transfer_identity"]
+    assert identity["file_hash"]
+    assert identity["split_hash"]
+    assert identity["complete"] is True
     assert card["blocking_reason"]["code"] == "NONE"
     assert card["interface_action"]["active_control"]["eligibility"] == "passes_computational_gate"
     assert (
@@ -346,13 +405,13 @@ def test_console_ui_contract_figure_script_runs():
                 "Read-only diagnostic candidate within this evidence tier; active control withheld.",
                 "QWEN-CAA / DELIBERATION",
                 "QWEN-CAA / UNCERTAINTY-AWARENESS",
-                "qwen2.5-7b; CAA:deliberation@L20;",
-                "deliberation/binary; C2b-v2026-07-23; DEV-selected prompt.",
-                "qwen2.5-7b; CAA:uncertainty@L20;",
-                "confidence/1-Brier; C2b-v2026-07-23; DEV-selected prompt.",
-                "Interval includes zero; incremental gain is not established.",
+                "qwen2.5-7b; CAA:delib@L20;",
+                "delib/binary; C2b-v2026-07-23; DEV-prompt; dir/split MISSING.",
+                "qwen2.5-7b; CAA:uncert@L20;",
+                "confidence/1-Brier; C2b-v2026-07-23; DEV-prompt; dir/split MISSING.",
+                "Direction/split identity is missing; interval also includes zero.",
                 "ITI exploratory equivalence; CAA cells are underpowered.",
-                "Missingness-limited: complete-case support in one cell; bounds cross zero.",
+                "Direction/split identity is missing; missingness bounds cross zero.",
                 "4/4 comparator-negative; Qwen-CAA near baseline; 3 rechecks absent.",
             ):
                 assert expected in normalized_content

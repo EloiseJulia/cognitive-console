@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+from functools import lru_cache
 from typing import Any
 
 from cognitive_console.microstudy_materials import (
@@ -30,6 +31,7 @@ def locale_bundle_metadata(locale: str) -> dict[str, str]:
         raise ValueError(f"unsupported locale: {locale}") from None
 
 
+@lru_cache(maxsize=1)
 def validated_sources() -> tuple[dict[str, Any], dict[str, Any]]:
     validate_materials()
     return load_sources()

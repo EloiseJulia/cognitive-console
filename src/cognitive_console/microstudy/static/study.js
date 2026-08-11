@@ -45,7 +45,9 @@ function replaceStage(...nodes) {
 }
 
 function showError(error) {
-  const message = app.common?.errors?.state || "错误 / Error";
+  const errorKey = error?.message;
+  const message = app.common?.errors?.[errorKey]
+    || app.common?.errors?.state || "错误 / Error";
   const target = !gate.isConnected
     ? (startPanel.hidden ? document.getElementById("stage-error") : document.getElementById("start-error"))
     : document.getElementById("gate-error");
@@ -88,17 +90,26 @@ function lock(name) {
 async function api(path, data) {
   const nonce = app.pendingRequests[path] || requestId();
   app.pendingRequests[path] = nonce;
-  const response = await fetch(path, {
-    method: "POST", cache: "no-store", credentials: "same-origin",
-    headers: {
-      "Content-Type": "application/json", "X-CSRF-Token": app.csrf,
-      ...(app.capability ? {"X-Study-Capability": app.capability} : {}),
-    },
-    body: JSON.stringify({...data, request_id: nonce}),
-  });
+  let response;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      response = await fetch(path, {
+        method: "POST", cache: "no-store", credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json", "X-CSRF-Token": app.csrf,
+          ...(app.capability ? {"X-Study-Capability": app.capability} : {}),
+        },
+        body: JSON.stringify({...data, request_id: nonce}),
+      });
+      break;
+    } catch (error) {
+      if (attempt === 2) throw error;
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+  }
   const value = await response.json();
   delete app.pendingRequests[path];
-  if (!response.ok) throw new Error(value.error || "state");
+  if (!response.ok) throw new Error("state");
   return value;
 }
 
@@ -385,7 +396,7 @@ async function downloadExport(outputFormat) {
 async function saveAndExit(button) {
   button.disabled = true;
   const response = await api("/api/save-exit", {attempt_id: app.attemptId});
-  if (response.phase !== "export_ready") throw new Error("export");
+  if (response.phase !== "export_ready") throw new Error("export_not_ready");
   showExportScreen(false);
 }
 

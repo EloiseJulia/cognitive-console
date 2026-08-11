@@ -168,6 +168,21 @@ def pinned_snapshot_size_bytes(name: str) -> int:
     )
 
 
+def _expected_hub_snapshot_path(name: str, cache_root: Path) -> Path:
+    spec = PINNED_SNAPSHOTS[name]
+    repo_type = str(spec["repo_type"])
+    repo_folder = (
+        f"{repo_type}s--" + str(spec["repo_id"]).replace("/", "--")
+    )
+    return (
+        Path(cache_root)
+        / "hub"
+        / repo_folder
+        / "snapshots"
+        / str(spec["revision"])
+    )
+
+
 def _cached_pinned_file(
     name: str,
     relative: str,
@@ -186,6 +201,12 @@ def _cached_pinned_file(
     if not isinstance(cached, (str, os.PathLike)):
         return None
     path = Path(cached)
+    expected = _expected_hub_snapshot_path(name, cache_root) / relative
+    if Path(os.path.abspath(path)) != Path(os.path.abspath(expected)):
+        raise RuntimeError(
+            f"{name} cached file resolved outside pinned Hub revision "
+            f"{PINNED_SNAPSHOTS[name]['revision']}: {path}"
+        )
     return path if path.is_file() else None
 
 
@@ -199,6 +220,7 @@ def cached_pinned_snapshot_bytes(name: str, cache_root: Path) -> int:
 
 
 def resolve_pinned_snapshot_path(name: str, cache_root: Path) -> Path:
+    expected_root = _expected_hub_snapshot_path(name, cache_root)
     snapshot_root: Optional[Path] = None
     for relative in PINNED_SNAPSHOTS[name]["files"]:
         path = _cached_pinned_file(name, relative, cache_root)
@@ -213,6 +235,11 @@ def resolve_pinned_snapshot_path(name: str, cache_root: Path) -> Path:
             raise RuntimeError(f"{name} pinned files resolved to multiple snapshots")
     if snapshot_root is None:
         raise RuntimeError(f"{name} pinned snapshot has no files")
+    if Path(os.path.abspath(snapshot_root)) != Path(os.path.abspath(expected_root)):
+        raise RuntimeError(
+            f"{name} resolved snapshot revision mismatch: "
+            f"expected={expected_root}, actual={snapshot_root}"
+        )
     return snapshot_root
 
 
@@ -412,17 +439,20 @@ def load_prompt_bank(repo_root: Path) -> List[Tuple[str, str]]:
 
 
 def load_pinned_truthfulqa(
-    snapshot_dir: Path,
+    cache_root: Path,
     *,
     cache_dir: Optional[Path] = None,
 ) -> List[TruthfulQAItem]:
-    """Load and cross-check locally verified pinned generation and MC2 files."""
+    """Load the exact pinned generation and MC2 validation configurations."""
 
     try:
         import datasets
     except ImportError as exc:  # pragma: no cover - optional HF path
         raise NotImplementedError("TruthfulQA HF loading requires datasets") from exc
-    snapshot_dir = Path(snapshot_dir)
+    snapshot_dir = resolve_pinned_snapshot_path("truthfulqa", cache_root)
+    verify_pinned_snapshot("truthfulqa", snapshot_dir)
+    if cache_dir is not None:
+        Path(cache_dir).mkdir(parents=True, exist_ok=True)
     generation = datasets.load_dataset(
         "parquet",
         data_files={
@@ -446,10 +476,20 @@ def load_pinned_truthfulqa(
     )
     if len(generation) != TRUTHFULQA_N or len(multiple_choice) != TRUTHFULQA_N:
         raise ValueError("pinned TruthfulQA row count changed")
+    mc_by_question = {}
+    for mc in multiple_choice:
+        question_key = str(mc["question"]).strip()
+        if question_key in mc_by_question:
+            raise ValueError("TruthfulQA multiple_choice questions are not unique")
+        mc_by_question[question_key] = mc
+    generation_keys = [str(row["question"]).strip() for row in generation]
+    if len(set(generation_keys)) != len(generation_keys):
+        raise ValueError("TruthfulQA generation questions are not unique")
+    if set(generation_keys) != set(mc_by_question):
+        raise ValueError("TruthfulQA config question set mismatch")
     items: List[TruthfulQAItem] = []
-    for index, (gen, mc) in enumerate(zip(generation, multiple_choice)):
-        if str(gen["question"]) != str(mc["question"]):
-            raise ValueError(f"TruthfulQA config order mismatch at row {index}")
+    for index, gen in enumerate(generation):
+        mc = mc_by_question[generation_keys[index]]
         labels = tuple(int(x) for x in mc["mc2_targets"]["labels"])
         choices = tuple(str(x) for x in mc["mc2_targets"]["choices"])
         if len(labels) != len(choices) or not ({0, 1} <= set(labels)):

@@ -1766,7 +1766,7 @@ def run_hf_preflight(args: argparse.Namespace) -> Dict[str, object]:
         ),
     )
     items = load_pinned_truthfulqa(
-        resolve_pinned_snapshot_path("truthfulqa", cache_root),
+        cache_root,
         cache_dir=cache_root / "datasets-processed",
     )
     data_identity = _truthfulqa_identity(items)
@@ -1943,7 +1943,7 @@ def run_hf_dev(args: argparse.Namespace) -> Dict[str, object]:
         ),
     )
     items = load_pinned_truthfulqa(
-        resolve_pinned_snapshot_path("truthfulqa", cache_root),
+        cache_root,
         cache_dir=cache_root / "datasets-processed",
     )
     data_identity = _truthfulqa_identity(items)
@@ -2205,7 +2205,7 @@ def run_hf_test(args: argparse.Namespace) -> Dict[str, object]:
     if dataset_snapshot_identity != dev.get("dataset_snapshot_identity"):
         raise ValueError("dataset snapshot fingerprint changed between DEV and TEST")
     items = load_pinned_truthfulqa(
-        resolve_pinned_snapshot_path("truthfulqa", cache_root),
+        cache_root,
         cache_dir=cache_root / "datasets-processed",
     )
     data_identity = _truthfulqa_identity(items)

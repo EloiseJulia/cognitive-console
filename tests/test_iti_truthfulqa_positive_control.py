@@ -19,6 +19,7 @@ from cognitive_console.eval.truthfulqa_positive_control import (
     TruthfulQAItem,
     cached_pinned_snapshot_bytes,
     download_pinned_snapshot,
+    load_pinned_truthfulqa,
     load_prompt_bank,
     official_twofold_splits,
     parse_binary_judge,
@@ -959,6 +960,143 @@ def test_pinned_download_populates_only_the_standard_hub_cache(
         }
     ]
     assert not (tmp_path / "tiny-download").exists()
+
+
+@pytest.mark.parametrize(
+    "name, repo_type",
+    [
+        ("generator", "model"),
+        ("truth_judge", "model"),
+        ("info_judge", "model"),
+        ("truthfulqa", "dataset"),
+    ],
+)
+def test_pinned_resolver_rejects_same_files_from_different_revision(
+    name, repo_type, tmp_path, monkeypatch
+):
+    import huggingface_hub
+
+    pinned_revision = "c" * 40
+    wrong_revision = "d" * 40
+    repo_id = f"owner/{name}"
+    monkeypatch.setitem(
+        PINNED_SNAPSHOTS,
+        name,
+        {
+            "repo_id": repo_id,
+            "repo_type": repo_type,
+            "revision": pinned_revision,
+            "files": {"payload.bin": {"size": 6}},
+        },
+    )
+    wrong_file = (
+        tmp_path
+        / "hub"
+        / (f"{repo_type}s--" + repo_id.replace("/", "--"))
+        / "snapshots"
+        / wrong_revision
+        / "payload.bin"
+    )
+    wrong_file.parent.mkdir(parents=True)
+    wrong_file.write_bytes(b"pinned")
+    monkeypatch.setattr(
+        huggingface_hub,
+        "try_to_load_from_cache",
+        lambda **kwargs: str(wrong_file),
+    )
+
+    with pytest.raises(RuntimeError, match="outside pinned Hub revision"):
+        resolve_pinned_snapshot_path(name, tmp_path)
+
+
+def test_truthfulqa_loader_joins_exact_configs_and_rejects_question_set_drift(
+    tmp_path, monkeypatch
+):
+    generation_rows = [
+        {
+            "question": "Question one?",
+            "correct_answers": ["Correct one"],
+            "incorrect_answers": ["Incorrect one"],
+        },
+        {
+            "question": "Question two?",
+            "correct_answers": ["Correct two"],
+            "incorrect_answers": ["Incorrect two"],
+        },
+    ]
+    multiple_choice_rows = [
+        {
+            "question": "Question two? ",
+            "mc2_targets": {
+                "choices": ["Correct two", "Incorrect two"],
+                "labels": [1, 0],
+            },
+        },
+        {
+            "question": "Question one?",
+            "mc2_targets": {
+                "choices": ["Incorrect one", "Correct one"],
+                "labels": [0, 1],
+            },
+        },
+    ]
+    calls = []
+    datasets = ModuleType("datasets")
+
+    def fake_load_dataset(builder, *, data_files, split, cache_dir):
+        calls.append((builder, data_files, split, cache_dir))
+        path = next(iter(data_files.values()))
+        if "generation" in path:
+            return generation_rows
+        if "multiple_choice" in path:
+            return multiple_choice_rows
+        raise AssertionError(f"unexpected TruthfulQA config path: {path}")
+
+    datasets.load_dataset = fake_load_dataset
+    monkeypatch.setitem(sys.modules, "datasets", datasets)
+    monkeypatch.setattr(
+        "cognitive_console.eval.truthfulqa_positive_control.TRUTHFULQA_N", 2
+    )
+    pinned_snapshot = tmp_path / "hub" / "pinned-truthfulqa"
+    monkeypatch.setattr(
+        "cognitive_console.eval.truthfulqa_positive_control."
+        "resolve_pinned_snapshot_path",
+        lambda name, cache_root: pinned_snapshot,
+    )
+    monkeypatch.setattr(
+        "cognitive_console.eval.truthfulqa_positive_control."
+        "verify_pinned_snapshot",
+        lambda name, snapshot_dir: {"name": name},
+    )
+
+    items = load_pinned_truthfulqa(
+        tmp_path, cache_dir=tmp_path / "datasets-processed"
+    )
+    assert [item.question for item in items] == [
+        "Question one?",
+        "Question two?",
+    ]
+    assert items[0].mc2_choices == ("Incorrect one", "Correct one")
+    assert all(call[0] == "parquet" for call in calls)
+    assert all(call[2] == "validation" for call in calls)
+    assert "generation/validation-00000-of-00001.parquet" in next(
+        iter(calls[0][1].values())
+    ).replace("\\", "/")
+    assert "multiple_choice/validation-00000-of-00001.parquet" in next(
+        iter(calls[1][1].values())
+    ).replace("\\", "/")
+
+    multiple_choice_rows[0] = {
+        "question": "Wrong config question?",
+        "mc2_targets": {
+            "choices": ["Wrong", "Also wrong"],
+            "labels": [1, 0],
+        },
+    }
+    with pytest.raises(ValueError, match="config question set mismatch"):
+        load_pinned_truthfulqa(
+            tmp_path, cache_dir=tmp_path / "datasets-processed"
+        )
 
 
 def test_checkpoint_resume_rejects_unknown_and_preserves_order(tmp_path):

@@ -52,8 +52,10 @@
     understandable. Human bilingual stable-ID review is a PRE-RECRUITMENT gate;
     until then the implementation is owner-local preview only and not study
     evidence.
-15. **[MED-NEW] Prior micro-study hostile audit does not cover bilingual commits
-    through `d4ceafd`.** Automated material/API/export/browser/security gates pass, but
-    the prior final audit was for monolingual commit `d17df47`. A fresh
-    independent hostile audit is required before any readiness claim beyond
-    `READY_FOR_OWNER_LOCAL_PREVIEW_NO_HUMAN_DATA`.
+15. **[CLOSED 2026-08-11] Fresh hostile audit covers the final bilingual
+    implementation.** The audit reported a TTL-renewal MAJOR against intermediate
+    commit `d4ceafd`; implementation commit
+    `1702d7a4ae5132b09fd29d216502504c7afb493c` fixed it, and the final independent
+    rerun passed the validator, Node, HTTP TTL/idempotency/export, Chrome/Edge
+    bilingual-flow, and full-pytest gates with no residue. The maximum state
+    remains `READY_FOR_OWNER_LOCAL_PREVIEW_NO_HUMAN_DATA`.

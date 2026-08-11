@@ -1,7 +1,7 @@
 # Implementation Plan: Local Contract-Application Micro-Study
 
 - **Plan ID:** `microstudy-contract-application-web`
-- **Status:** `bilingual_implemented_pending_fresh_hostile_reaudit_nohuman`
+- **Status:** `ready_for_owner_local_preview_no_human_data`
 - **Current scope:** loopback website, deterministic export, analysis, MDE sensitivity, tests, and docs
 - **Spec:** [`../specs/microstudy-contract-application.md`](../specs/microstudy-contract-application.md)
 
@@ -32,6 +32,11 @@ CCA/leakage gates.
 
 The local web app is implemented without recruitment, pilot, public deployment,
 paper changes, or participant data.
+
+The final audited implementation identity is
+`1702d7a4ae5132b09fd29d216502504c7afb493c`. Any subsequent docs-only commit
+that persists audit or governance records is not the implementation code
+commit.
 
 ## 2. Implemented rule
 
@@ -124,6 +129,8 @@ git diff --check
 ```
 
 Required validator results are documented in the spec/prereg and enforced from
-JSON. Registry status is
-`bilingual_implemented_pending_fresh_hostile_reaudit_nohuman`; there is no human run,
-public deployment, paper evidence, or confirmatory MDE result.
+JSON. The final independent hostile audit closed the TTL-renewal MAJOR and
+verified the validator, Node checks, HTTP TTL/idempotency/export behavior,
+Chrome/Edge bilingual flows, and the full pytest suite without residue.
+Registry status is `ready_for_owner_local_preview_no_human_data`; there is no
+human run, public deployment, paper evidence, or confirmatory MDE result.

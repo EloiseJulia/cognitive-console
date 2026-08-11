@@ -124,9 +124,12 @@ primary paired sign-flip test. Primary-test MDE remains
 ## 6. No-upgrade and human-gate rule
 
 This remains `DRAFT / NOT FROZEN`. Bilingual owner-local-preview engineering
-through commit `d4ceafd` does not authorize recruitment, ethics activity, timing pilot,
-human data collection, public deployment, paper edit, or claim upgrade. Human
+is implemented and independently audited at
+`1702d7a4ae5132b09fd29d216502504c7afb493c`; a later docs-only
+audit-persistence commit is not the implementation code commit. This lineage
+closure does not authorize recruitment, ethics activity, timing pilot, human
+data collection, public deployment, paper edit, or claim upgrade. Human
 English/Chinese stable-ID semantic review, manual screen-reader evaluation,
-ethics/recruitment approval, timing/MDE gates, Protocol Freeze, and fresh
-independent hostile re-audit remain required. Automated QA cannot close a human
-gate or turn this micro-study into paper evidence.
+ethics/recruitment approval, timing/MDE gates, and Protocol Freeze remain
+required. Automated QA and the final hostile audit cannot close a human gate or
+turn this micro-study into paper evidence.

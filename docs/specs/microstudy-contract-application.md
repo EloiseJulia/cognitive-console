@@ -289,8 +289,10 @@ remain `PRE-RECRUITMENT` human gates.
 2. Validator metrics exactly match Section 4.
 3. P3-Y Q2 requests missing scope and Q1 remains withheld.
 4. No attention-check field, free text, duplicate materials source, or hardcoded website key exists.
-5. Registry and decision notes identify bilingual implementation through
-   `d4ceafd` pending fresh hostile audit; no prior audit is silently extended.
+5. Registry and decision notes pin the final audited bilingual implementation
+   to `1702d7a4ae5132b09fd29d216502504c7afb493c`. The final independent audit
+   closed the TTL-renewal MAJOR and permits owner-local preview only; any later
+   docs-only audit-persistence commit is not the implementation code commit.
 6. The website is loopback-only, memory-only, and consumes authoritative JSON.
 7. No recruitment, pilot, human data, public deployment, paper edit, or claim
    upgrade occurs in this revision.

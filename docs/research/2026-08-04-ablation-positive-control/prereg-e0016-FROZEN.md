@@ -218,10 +218,23 @@ frozen benign probes:
 The hook-bites batch size is `2`. For every observed element:
 
 ```text
-abs(after) <= max(abs_tol, 0.05 * abs(before))
+abs(after) <= max(
+  0.01 * abs(before),
+  2 * eps(runtime_activation_dtype) * ||h_before||_2,
+  1e-6
+)
 ```
 
-`abs_tol` is runtime dtype-calibrated:
+This requires at least 99% removal whenever the original directional component
+is measurable above dtype roundoff. The norm-scaled term covers first-order
+rounding in projection/subtraction and activation-dtype writeback. In
+particular, bf16 machine epsilon is `2^-7 ~= 7.8125e-3`; the tolerance therefore
+scales with the actual residual-stream norm rather than using a fixed absolute
+projection threshold. A no-op or 50%-removal hook remains far outside the bound
+and hard-fails.
+
+The separate extraction/aggregate non-vacuity `abs_tol` is runtime
+dtype-calibrated and unchanged:
 
 - bfloat16: `max(2e-3, 2 * 2^-7 * sqrt(hidden_dim))`;
 - float16: `max(2e-3, 2 * finfo(float16).eps * sqrt(hidden_dim))`;
@@ -249,6 +262,17 @@ to its passed pre-generation guard. This correction was decided after preflight
 but before any refusal-reduction outcome was observed. It makes the validity
 guard method-faithful rather than removing it. Outcome gates, random control,
 coherence, datasets, layers, seeds, and safety rules are unchanged.
+
+**D-0099 pre-outcome numerical-precision correction (2026-08-12):** The prior
+coverage implementation already mixed a relative term with a fixed absolute
+floor, but the fixed floor did not scale with residual-stream norm and produced
+false violations under fp16/bf16 projection/writeback. Before any refusal
+outcome was observed, the owner froze the formula above: maximum residual
+fraction `0.01`, norm-epsilon multiplier `2.0`, and numerical-zero floor `1e-6`.
+Exact all-layer coverage, extraction-layer non-vacuity, aggregate removed
+effect, selected-direction hash binding, and failure of partial/no-op hooks
+remain mandatory. This is a numerical validity correction, not an outcome-rule
+or scientific-endpoint change.
 
 ## 7. Frozen endpoints, statistics, and adjudication
 

@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-08-12 · D-0099 · Owner authorizes pre-outcome dtype-aware E-0016 removal-coverage tolerance
+- A clean real-GPU preflight passed hardware, disk, model, extraction-layer non-vacuity, and aggregate-effect guards, then failed only the all-layer numerical removal check with tiny fp16 residual projections (`0.00052..0.0769`). No refusal baseline, ablation, random-control, DEV, or TEST outcome was observed.
+- The owner authorizes a numerical-precision correction derived independently of those observed residuals: every token must retain at most `1%` of its measurable pre-ablation directional component, with a dtype/activation-norm floor `2 * eps(dtype) * ||h||_2` plus a `1e-6` numerical-zero floor. The factor `2` covers first-order rounding in projection/subtraction and activation-dtype writeback; bf16 epsilon is `2^-7 ~= 7.8125e-3`.
+- This remains fail-closed: exact decoder-layer coverage is mandatory, tolerance identity is recorded per layer, and partial (`50%`) or zero (`0%`) removal must fail. Extraction-layer non-vacuity, aggregate removed effect, and selected-direction hash binding remain unchanged.
+- Outcome adjudication is untouched: DEV baseline `>=0.25`, refusal reduction `>=0.25`, positive paired-bootstrap CI, coherence, random-direction veto, verdict ladder, compute cap, and harmful-text safety redlines remain frozen.
+
 ## 2026-08-12 · D-0098 · Owner authorizes pre-outcome method-faithful E-0016 hook-bites correction
 - Clean AutoDL preflight reached the mechanistic guard before any baseline, ablation, random-control, DEV, or TEST generation and reported decoder layer `2` as vacuous for a mid-layer-extracted refusal direction. No refusal-reduction outcome was observed.
 - Code/transformers inspection confirmed that `[2]` is literal one-based decoder-layer identity, not index `2` of candidate source layers `(8,12,16,20)`, and that the old non-vacuity loop incorrectly required every decoder layer `1..num_hidden_layers` to exceed the floor.

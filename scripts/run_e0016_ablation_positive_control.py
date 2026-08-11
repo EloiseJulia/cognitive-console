@@ -99,8 +99,10 @@ GENERATION_BATCH_SCHEME = "bounded_fixed_microbatches_in_item-sample_order"
 HF_FROZEN_GENERATION_BATCH_SIZE = 1
 SYNTHETIC_DEFAULT_GENERATION_BATCH_SIZE = 3
 HOOK_BITES_BATCH_SIZE = 2
-HOOK_BITES_REL_TOL = 0.05
-HOOK_BITES_GUARD_VERSION = "method_faithful_extraction_plus_aggregate_v2"
+HOOK_BITES_MAX_RESIDUAL_FRACTION = 0.01
+HOOK_BITES_NORM_EPS_MULTIPLIER = 2.0
+HOOK_BITES_NUMERICAL_ZERO_FLOOR = 1e-6
+HOOK_BITES_GUARD_VERSION = "method_faithful_norm_scaled_removal_v3"
 SCORER_VERSION = "score_refusal_marker_v1"
 DEGENERACY_SCORER_VERSION = "degeneracy_score_v1"
 GENERATION_RECORD_SCHEMA_VERSION = 2
@@ -1606,8 +1608,15 @@ def pre_load_eligibility_config(args: argparse.Namespace) -> Dict[str, Any]:
         "hook_bites": {
             "guard_version": HOOK_BITES_GUARD_VERSION,
             "probe_hashes": [sha_text(x) for x in HOOK_BITE_PROBES],
-            "rel_tol": HOOK_BITES_REL_TOL,
-            "formula": "per_element_abs_after<=max(abs_tol,rel_tol*abs_before)",
+            "max_residual_fraction": HOOK_BITES_MAX_RESIDUAL_FRACTION,
+            "norm_eps_multiplier": HOOK_BITES_NORM_EPS_MULTIPLIER,
+            "numerical_zero_floor": HOOK_BITES_NUMERICAL_ZERO_FLOOR,
+            "formula": (
+                "per_element_abs_after<=max("
+                "max_residual_fraction*abs_before,"
+                "norm_eps_multiplier*dtype_epsilon*hidden_l2_norm,"
+                "numerical_zero_floor)"
+            ),
             "required_layer_coverage": "all_decoder_layers_exact",
             "non_vacuity_rule": (
                 "direction extraction layer is non-vacuous and aggregate absolute "
@@ -1788,7 +1797,14 @@ def resolved_frozen_run_config(
             "probe_hashes": [sha_text(x) for x in HOOK_BITE_PROBES],
             "batch_size": HOOK_BITES_BATCH_SIZE,
             "abs_tol": abs_tol,
-            "rel_tol": HOOK_BITES_REL_TOL,
+            "max_residual_fraction": HOOK_BITES_MAX_RESIDUAL_FRACTION,
+            "norm_eps_multiplier": HOOK_BITES_NORM_EPS_MULTIPLIER,
+            "numerical_zero_floor": HOOK_BITES_NUMERICAL_ZERO_FLOOR,
+            "removal_rule": (
+                "per token abs(post_projection) <= max("
+                "0.01*abs(pre_projection),"
+                "2*dtype_epsilon*hidden_l2_norm,1e-6)"
+            ),
             "non_vacuity_floor": max(abs_tol * 10.0, 1e-6),
             "aggregate_effect_floor": max(abs_tol * 10.0, 1e-6),
             "non_vacuity_rule": (
@@ -2097,7 +2113,9 @@ def assert_ablation_hook_bites(
     expected_layers: Sequence[int],
     extraction_layer: int,
     abs_tol: float,
-    rel_tol: float = 0.05,
+    max_residual_fraction: float = HOOK_BITES_MAX_RESIDUAL_FRACTION,
+    norm_eps_multiplier: float = HOOK_BITES_NORM_EPS_MULTIPLIER,
+    numerical_zero_floor: float = HOOK_BITES_NUMERICAL_ZERO_FLOOR,
 ) -> Dict[str, object]:
     if not stats:
         raise ValueError("ablation hook-bites produced no per-layer stats")
@@ -2155,6 +2173,28 @@ def assert_ablation_hook_bites(
         aggregate_sum_abs_removed += (
             max(0.0, mean_abs_before - mean_abs_after) * n_values
         )
+        recorded_fraction = float(
+            row.get("max_residual_fraction_limit", math.nan)
+        )
+        recorded_multiplier = float(
+            row.get("norm_eps_multiplier", math.nan)
+        )
+        recorded_zero_floor = float(
+            row.get("numerical_zero_floor", math.nan)
+        )
+        recorded_dtype_epsilon = float(
+            row.get("dtype_epsilon", math.nan)
+        )
+        if (
+            recorded_fraction != float(max_residual_fraction)
+            or recorded_multiplier != float(norm_eps_multiplier)
+            or recorded_zero_floor != float(numerical_zero_floor)
+            or not math.isfinite(recorded_dtype_epsilon)
+            or recorded_dtype_epsilon <= 0.0
+        ):
+            raise ValueError(
+                f"ablation hook-bites layer {layer} numerical tolerance identity mismatch"
+            )
         violation_count = int(row.get("violation_count", -1))
         max_violation = float(row.get("max_violation", math.inf))
         if violation_count < 0 or not math.isfinite(max_violation):
@@ -2182,7 +2222,9 @@ def assert_ablation_hook_bites(
     non_vacuous = extraction_layer_non_vacuous and aggregate_non_vacuous
     payload = {
         "guard_version": HOOK_BITES_GUARD_VERSION,
-        "rel_tol": rel_tol,
+        "max_residual_fraction": max_residual_fraction,
+        "norm_eps_multiplier": norm_eps_multiplier,
+        "numerical_zero_floor": numerical_zero_floor,
         "abs_tol": abs_tol,
         "non_vacuous": non_vacuous,
         "non_vacuity_floor": non_vacuity_floor,
@@ -3524,15 +3566,18 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                     HOOK_BITE_PROBES,
                     AblationConfig(bundle.direction),
                     batch_size=HOOK_BITES_BATCH_SIZE,
-                    abs_tol=abs_tol,
-                    rel_tol=HOOK_BITES_REL_TOL,
+                    max_residual_fraction=HOOK_BITES_MAX_RESIDUAL_FRACTION,
+                    norm_eps_multiplier=HOOK_BITES_NORM_EPS_MULTIPLIER,
+                    numerical_zero_floor=HOOK_BITES_NUMERICAL_ZERO_FLOOR,
                 )
                 guard = assert_ablation_hook_bites(
                     stats,
                     expected_layers=hook_backend.decoder_layer_indices,
                     extraction_layer=bundle.source_layer,
                     abs_tol=abs_tol,
-                    rel_tol=HOOK_BITES_REL_TOL,
+                    max_residual_fraction=HOOK_BITES_MAX_RESIDUAL_FRACTION,
+                    norm_eps_multiplier=HOOK_BITES_NORM_EPS_MULTIPLIER,
+                    numerical_zero_floor=HOOK_BITES_NUMERICAL_ZERO_FLOOR,
                 )
                 guard["direction_sha256"] = assert_direction_hash(
                     bundle.direction,

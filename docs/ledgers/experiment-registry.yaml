@@ -1257,7 +1257,10 @@ experiments:
       qwen_revision: a09a35458c702b33eeacc393d103063234e8bc28
     remaining_gpu_hours_hard_cap: 2.99277778
     protocol_changed: D-0098 method-faithful hook-bites correction authorized before any refusal outcome
-    hook_bites_guard_version: method_faithful_extraction_plus_aggregate_v2
+    hook_bites_guard_version: method_faithful_norm_scaled_removal_v3
+    hook_bites_max_residual_fraction: 0.01
+    hook_bites_norm_eps_multiplier: 2.0
+    hook_bites_numerical_zero_floor: 0.000001
     pending_gates:
     - independent_operational_amendment_audit
     - exact_clean_run_commit_recorded
@@ -1304,7 +1307,10 @@ experiments:
     extraction layer and in aggregate, while preserving exact all-layer coverage
     and per-element removal. Early non-extraction-layer vacuity is diagnostic,
     not an automatic invalidation. No refusal outcome had been observed when
-    D-0098 was decided. DEV baseline
+    D-0098 was decided. D-0099 then replaced the fixed absolute removal floor
+    with the pre-outcome dtype-aware rule max(1% of the pre-projection,
+    2*eps(dtype)*hidden L2 norm, 1e-6); exact coverage and failure of 50%/0%
+    removal remain mandatory. DEV baseline
     false-refusal must be >=0.25 or the runner emits
     INVALID_REGIME_B_UNDERPOWERED and stops before TEST. Harmful prompts are
     forward-pass-only direction inputs. Regime A is excluded and requires a new

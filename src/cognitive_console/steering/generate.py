@@ -668,8 +668,9 @@ class SteeredHFBackend(GenBackend):
         *,
         stats: Optional[dict] = None,
         layer: Optional[int] = None,
-        abs_tol: Optional[float] = None,
-        rel_tol: Optional[float] = None,
+        max_residual_fraction: Optional[float] = None,
+        norm_eps_multiplier: Optional[float] = None,
+        numerical_zero_floor: Optional[float] = None,
     ):
         import torch
 
@@ -681,14 +682,41 @@ class SteeredHFBackend(GenBackend):
             new_hidden = self._apply_ablation(hidden, vec)
             if stats is not None and layer is not None:
                 with torch.no_grad():
-                    before = torch.sum(hidden.to(torch.float32) * vec.to(torch.float32), dim=-1).detach().abs()
-                    after = torch.sum(new_hidden.to(torch.float32) * vec.to(torch.float32), dim=-1).detach().abs()
+                    hidden_fp32 = hidden.to(torch.float32)
+                    vec_fp32 = vec.to(torch.float32)
+                    before = torch.sum(
+                        hidden_fp32 * vec_fp32, dim=-1
+                    ).detach().abs()
+                    after = torch.sum(
+                        new_hidden.to(torch.float32) * vec_fp32, dim=-1
+                    ).detach().abs()
+                    hidden_norm = torch.linalg.vector_norm(
+                        hidden_fp32, dim=-1
+                    ).detach()
+                    dtype_epsilon = float(torch.finfo(hidden.dtype).eps)
+                    # D-0099, decided before any refusal outcome: projection and
+                    # writeback each round once in the activation dtype. Bound
+                    # that first-order numerical residue by 2*eps*||h|| while
+                    # still requiring >=99% removal whenever the original
+                    # directional component is large enough to measure.
+                    norm_scaled_floor = (
+                        hidden_norm
+                        * dtype_epsilon
+                        * float(norm_eps_multiplier)
+                    )
                     allowed = torch.maximum(
-                        torch.full_like(before, float(abs_tol)),
-                        before * float(rel_tol),
+                        before * float(max_residual_fraction),
+                        norm_scaled_floor,
+                    )
+                    allowed = torch.maximum(
+                        allowed,
+                        torch.full_like(allowed, float(numerical_zero_floor)),
                     )
                     excess = after - allowed
                     violations = excess > 0
+                    observed_fraction = after / torch.clamp(
+                        before, min=float(numerical_zero_floor)
+                    )
                     rec = stats.setdefault(
                         int(layer),
                         {
@@ -699,6 +727,17 @@ class SteeredHFBackend(GenBackend):
                             "n_values": 0,
                             "violation_count": 0,
                             "max_violation": 0.0,
+                            "max_hidden_norm": 0.0,
+                            "max_allowed_after": 0.0,
+                            "max_observed_residual_fraction": 0.0,
+                            "dtype_epsilon": dtype_epsilon,
+                            "norm_eps_multiplier": float(norm_eps_multiplier),
+                            "max_residual_fraction_limit": float(
+                                max_residual_fraction
+                            ),
+                            "numerical_zero_floor": float(
+                                numerical_zero_floor
+                            ),
                         },
                     )
                     n_old = int(rec["n_values"])
@@ -713,6 +752,18 @@ class SteeredHFBackend(GenBackend):
                         float(rec["max_violation"]),
                         float(torch.clamp(excess, min=0).max().item()),
                     )
+                    rec["max_hidden_norm"] = max(
+                        float(rec["max_hidden_norm"]),
+                        float(hidden_norm.max().item()),
+                    )
+                    rec["max_allowed_after"] = max(
+                        float(rec["max_allowed_after"]),
+                        float(allowed.max().item()),
+                    )
+                    rec["max_observed_residual_fraction"] = max(
+                        float(rec["max_observed_residual_fraction"]),
+                        float(observed_fraction.max().item()),
+                    )
             if isinstance(output, tuple):
                 return (new_hidden,) + tuple(output[1:])
             return new_hidden
@@ -724,8 +775,9 @@ class SteeredHFBackend(GenBackend):
         ablation: AblationConfig,
         *,
         stats: Optional[dict] = None,
-        abs_tol: Optional[float] = None,
-        rel_tol: Optional[float] = None,
+        max_residual_fraction: Optional[float] = None,
+        norm_eps_multiplier: Optional[float] = None,
+        numerical_zero_floor: Optional[float] = None,
     ):
         """Register projection-ablation hooks on every decoder block."""
         self._ensure_loaded()
@@ -742,8 +794,9 @@ class SteeredHFBackend(GenBackend):
                             ablation,
                             stats=stats,
                             layer=idx,
-                            abs_tol=abs_tol,
-                            rel_tol=rel_tol,
+                            max_residual_fraction=max_residual_fraction,
+                            norm_eps_multiplier=norm_eps_multiplier,
+                            numerical_zero_floor=numerical_zero_floor,
                         )
                     )
                 )
@@ -764,8 +817,9 @@ class SteeredHFBackend(GenBackend):
         ablation: AblationConfig,
         *,
         batch_size: Optional[int] = 2,
-        abs_tol: float = 1e-5,
-        rel_tol: float = 0.05,
+        max_residual_fraction: float = 0.01,
+        norm_eps_multiplier: float = 2.0,
+        numerical_zero_floor: float = 1e-6,
     ) -> Dict[int, Dict[str, float]]:
         """Forward-pass-only guard proving all-layer ablation removes r_hat.
 
@@ -791,8 +845,9 @@ class SteeredHFBackend(GenBackend):
             handles = self._register_all_layer_ablation_hooks(
                 ablation,
                 stats=stats,
-                abs_tol=abs_tol,
-                rel_tol=rel_tol,
+                max_residual_fraction=max_residual_fraction,
+                norm_eps_multiplier=norm_eps_multiplier,
+                numerical_zero_floor=numerical_zero_floor,
             )
             try:
                 with torch.inference_mode():

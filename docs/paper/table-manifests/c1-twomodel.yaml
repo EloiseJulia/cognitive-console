@@ -27,9 +27,10 @@ generator_commit: "841965f641a10bf68659bfda04cd6f65f2c4643f"
 source_artifact_commits:
   "results/gpu_7b_2026-07-23/c1/c1_facade_results.json": "05b33ede9c4d9677d4a32c4d74766933d96d563d"
   "results/llama_c1_facade_2026-07-24/c1_facade_results.json": "31678173e83f01c2de2b8775b2f87f068fbc190e"
+source_artifact_hash_basis: "SHA-256 of canonical committed Git blob bytes at source_artifact_commits; checkout bytes may differ under core.autocrlf."
 source_artifact_hashes:
-  "results/gpu_7b_2026-07-23/c1/c1_facade_results.json": "c48dab0bc2debc369678d4e397d74c4157a98763c1feef3044cca2b6fdffd455"
-  "results/llama_c1_facade_2026-07-24/c1_facade_results.json": "10fd45ba439695aec0c3ed62d4d274eff2a5e15f8765ca9f0a51a7102d155aa9"
+  "results/gpu_7b_2026-07-23/c1/c1_facade_results.json": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e"
+  "results/llama_c1_facade_2026-07-24/c1_facade_results.json": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46"
 output_sha256: "32f3797b78ea50f964f41bff428fc16f4de9b3e7df2b5a4ec965cb894f446262"
-last_verified: "2026-08-06"
+last_verified: "2026-08-11"
 verdict: "verified exploratory main table; supports C1 only with two-model aggregate and axis-heterogeneity caveats"

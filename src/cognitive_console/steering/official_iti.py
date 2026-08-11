@@ -9,13 +9,84 @@ head outputs immediately before ``self_attn.o_proj``.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 
+from ..randomness import pcg64_rng
 from .generate import SteeredHFBackend, unit_vector
 
 _EPS = 1e-12
+FROZEN_SAMPLING_CONFIG = {
+    "max_length": None,
+    "min_length": 0,
+    "min_new_tokens": None,
+    "do_sample": True,
+    "temperature": 0.7,
+    "top_p": 1.0,
+    "top_k": 0,
+    "top_h": None,
+    "min_p": None,
+    "typical_p": 1.0,
+    "epsilon_cutoff": 0.0,
+    "eta_cutoff": 0.0,
+    "num_beams": 1,
+    "num_beam_groups": 1,
+    "num_return_sequences": 1,
+    "diversity_penalty": 0.0,
+    "repetition_penalty": 1.0,
+    "encoder_repetition_penalty": 1.0,
+    "no_repeat_ngram_size": 0,
+    "encoder_no_repeat_ngram_size": 0,
+    "length_penalty": 1.0,
+    "early_stopping": False,
+    "renormalize_logits": False,
+    "remove_invalid_values": False,
+    "penalty_alpha": None,
+    "token_healing": False,
+    "guidance_scale": None,
+    "watermarking_config": None,
+    "bad_words_ids": None,
+    "force_words_ids": None,
+    "constraints": None,
+    "suppress_tokens": None,
+    "begin_suppress_tokens": None,
+    "forced_bos_token_id": None,
+    "forced_eos_token_id": None,
+    "exponential_decay_length_penalty": None,
+    "sequence_bias": None,
+    "stop_strings": None,
+    "dola_layers": None,
+    "max_time": None,
+    "use_cache": True,
+    "cache_implementation": None,
+    "cache_config": None,
+    "max_cache_len": None,
+    "prefill_chunk_size": None,
+    "use_mtp": None,
+    "num_assistant_tokens": None,
+    "num_assistant_tokens_schedule": None,
+    "assistant_confidence_threshold": None,
+    "assistant_early_exit": None,
+    "assistant_lookbehind": None,
+    "assistant_ensemble_weight": None,
+    "target_lookbehind": None,
+    "is_assistant": None,
+    "prompt_lookup_num_tokens": None,
+    "max_matching_ngram_size": None,
+    "output_attentions": False,
+    "output_hidden_states": False,
+    "output_scores": False,
+    "output_logits": None,
+    "return_dict_in_generate": False,
+    "low_memory": None,
+    "disable_compile": None,
+    "compile_config": None,
+    "continuous_batching_config": None,
+    "decoder_start_token_id": None,
+}
+_GENERATION_CONFIG_METADATA_KEYS = {"_from_model_config", "transformers_version"}
 
 
 def _array_sha256(array: np.ndarray) -> str:
@@ -173,6 +244,8 @@ def fit_official_iti(
         for head in range(n_heads):
             x_train = train[:, layer, head, :]
             probe = LogisticRegression(
+                C=1.0,
+                solver="lbfgs",
                 random_state=42,
                 max_iter=1000,
             )
@@ -212,7 +285,7 @@ def fit_official_iti(
 def matched_random_config(config: OfficialITIConfig, seed: int) -> OfficialITIConfig:
     """Random unit directions on the same heads with the same sigma and alpha."""
 
-    rng = np.random.default_rng(int(seed))
+    rng = pcg64_rng(seed)
     specs = tuple(
         ITIHeadSpec(
             layer=spec.layer,
@@ -308,6 +381,7 @@ class OfficialITIHFBackend(SteeredHFBackend):
         model_name: str,
         *,
         revision: str,
+        snapshot_path: str | Path,
         device: str,
         dtype: str,
         max_length: int,
@@ -317,31 +391,31 @@ class OfficialITIHFBackend(SteeredHFBackend):
         from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 
         torch_dtype = getattr(torch, dtype)
-        config = AutoConfig.from_pretrained(model_name, revision=revision)
-        tokenizer = AutoTokenizer.from_pretrained(model_name, revision=revision)
+        snapshot_path = str(snapshot_path)
+        config = AutoConfig.from_pretrained(snapshot_path, local_files_only=True)
+        tokenizer = AutoTokenizer.from_pretrained(snapshot_path, local_files_only=True)
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
         try:
             model = AutoModelForCausalLM.from_pretrained(
-                model_name,
-                revision=revision,
+                snapshot_path,
+                local_files_only=True,
+                attn_implementation="eager",
                 dtype=torch_dtype,
                 low_cpu_mem_usage=True,
             )
         except TypeError:
             model = AutoModelForCausalLM.from_pretrained(
-                model_name,
-                revision=revision,
+                snapshot_path,
+                local_files_only=True,
+                attn_implementation="eager",
                 torch_dtype=torch_dtype,
                 low_cpu_mem_usage=True,
             )
         model.to(device)
         model.eval()
-        resolved = getattr(config, "_commit_hash", None)
-        if resolved is not None and resolved != revision:
-            raise ValueError(
-                f"resolved model revision mismatch: expected={revision}, actual={resolved}"
-            )
+        config = model.config
+        setattr(config, "_cognitive_console_pinned_revision", revision)
         return cls(
             model_name,
             device=device,
@@ -352,6 +426,88 @@ class OfficialITIHFBackend(SteeredHFBackend):
             tokenizer=tokenizer,
             config=config,
         )
+
+    def effective_generation_config(
+        self,
+        *,
+        max_new_tokens: int,
+        do_sample: bool,
+        temperature: float,
+    ):
+        """Build explicit kwargs and verify they override every model default."""
+
+        from transformers import GenerationConfig
+
+        requested = {
+            "do_sample": bool(do_sample),
+            "temperature": float(temperature),
+        }
+        expected_requested = {
+            "do_sample": FROZEN_SAMPLING_CONFIG["do_sample"],
+            "temperature": FROZEN_SAMPLING_CONFIG["temperature"],
+        }
+        if requested != expected_requested or int(max_new_tokens) != 64:
+            raise ValueError(
+                "generation request differs from frozen sampling configuration"
+            )
+        runtime_defaults = GenerationConfig().to_dict()
+        runtime_fields = set(runtime_defaults) - _GENERATION_CONFIG_METADATA_KEYS
+        unsupported = set(FROZEN_SAMPLING_CONFIG) - runtime_fields
+        if unsupported:
+            raise RuntimeError(
+                f"installed Transformers lacks frozen generation fields: "
+                f"{sorted(unsupported)}"
+            )
+        model_generation = getattr(self._model, "generation_config", None)
+        if model_generation is not None:
+            unknown_model_fields = (
+                set(model_generation.to_dict())
+                - set(runtime_defaults)
+                - _GENERATION_CONFIG_METADATA_KEYS
+            )
+            if unknown_model_fields:
+                raise RuntimeError(
+                    "model generation_config contains unsupported custom fields: "
+                    f"{sorted(unknown_model_fields)}"
+                )
+        material = {
+            key: value
+            for key, value in runtime_defaults.items()
+            if key not in _GENERATION_CONFIG_METADATA_KEYS
+        }
+        material.update(FROZEN_SAMPLING_CONFIG)
+        material.update(
+            {
+                "max_new_tokens": 64,
+                "pad_token_id": self._tokenizer.pad_token_id,
+                "eos_token_id": self._tokenizer.eos_token_id,
+                "bos_token_id": self._tokenizer.bos_token_id,
+            }
+        )
+        prepare = getattr(self._model, "_prepare_generation_config", None)
+        if callable(prepare):
+            prepared, model_kwargs = prepare(None, **material)
+            if model_kwargs:
+                raise RuntimeError(
+                    "frozen generation fields leaked into model kwargs: "
+                    f"{sorted(model_kwargs)}"
+                )
+            effective = {
+                key: value
+                for key, value in prepared.to_dict().items()
+                if key not in _GENERATION_CONFIG_METADATA_KEYS
+            }
+        else:
+            effective = {
+                key: value
+                for key, value in GenerationConfig.from_dict(material).to_dict().items()
+                if key not in _GENERATION_CONFIG_METADATA_KEYS
+            }
+        if effective != material:
+            raise ValueError(
+                f"effective generation config mismatch: {effective} != {material}"
+            )
+        return material, effective
 
     @property
     def num_attention_heads(self) -> int:
@@ -581,6 +737,13 @@ class OfficialITIHFBackend(SteeredHFBackend):
 
         self._ensure_loaded()
         self._seed_torch(seed)
+        generation_kwargs, effective = self.effective_generation_config(
+            max_new_tokens=max_new_tokens,
+            do_sample=do_sample,
+            temperature=temperature,
+        )
+        if effective["top_p"] != 1.0 or effective["top_k"] != 0:
+            raise AssertionError("effective top_p/top_k were not frozen")
         rendered = self._render_protocol_prompt(prompt)
         enc = self._tokenizer(
             rendered,
@@ -592,15 +755,11 @@ class OfficialITIHFBackend(SteeredHFBackend):
         input_len = int(enc["input_ids"].shape[1])
         handles = [] if config is None else self._register_iti_hooks(config)
         try:
-            kwargs = {
-                "max_new_tokens": int(max_new_tokens),
-                "do_sample": bool(do_sample),
-                "pad_token_id": self._tokenizer.pad_token_id,
-            }
-            if do_sample:
-                kwargs["temperature"] = float(temperature)
             with torch.no_grad():
-                output = self._model.generate(**enc, **kwargs)
+                output = self._model.generate(
+                    **enc,
+                    **generation_kwargs,
+                )
         finally:
             for handle in reversed(handles):
                 handle.remove()

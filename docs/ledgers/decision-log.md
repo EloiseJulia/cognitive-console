@@ -5,6 +5,34 @@
 
 ---
 
+## 2026-08-11 · D-0115 · d63c5d3 hostile audit rejected; all identity, authorization, disk, sampling, and provenance blockers repaired locally
+- Independent hostile audit rejected implementation commit `d63c5d3` before any
+  GPU, real DEV, or TEST access. Therefore `d63c5d3` is not execution-authorized
+  and produced no scientific result or evidence.
+- The repair freezes the complete effective generation configuration
+  (`top_p=1.0`, `top_k=0`, and all other sampling/decoding fields), atomically
+  persists and identity-binds full fold configs before generation, replaces the
+  output-directory phrase lock with an externally signed manifest plus fixed
+  global append-only TEST attempt registry, and makes 60/70 GiB disk limits
+  non-overridable with all caches forced under the external run directory.
+- Runtime lineage now verifies every pinned snapshot file using size plus Git
+  blob OID or LFS SHA-256 and records runtime SHA-256, environment/GPU/eager-
+  attention/tokenizer/scikit-learn fingerprints, raw/judge/final artifact hashes,
+  and atomic `INVALID_MECHANICS` failure records. TEST re-hashes the complete DEV
+  artifact manifest, and schema-v2 authorization signs both the DEV-manifest and
+  artifact-manifest hashes before global consumption. Row-level judge errors
+  become missing/zero without aborting later rows; load failures remain
+  fatal-invalid.
+- Synthetic execution now has its own experiment/schema and can emit only
+  `SMOKE_PASS_PATH_EXERCISED`; backend and phase are mandatory CLI choices.
+  Exact sample mapping plus PCG64 split, random-direction, and bootstrap
+  algorithms/seeds are frozen. Judge decoding also overrides every model
+  default, and a partial final-checkpoint resume retains the complete stable
+  judge identity rather than rebinding to only pending rows.
+- Local adversarial tests and synthetic/tiny-model probes contain no real
+  result. Fresh independent hostile re-audit and exact repaired-commit pinning
+  remain mandatory before GPU preflight or DEV. Existing 0/12 is unchanged.
+
 ## 2026-08-11 · D-0114 · Owner authorizes official-style ITI TruthfulQA positive-control implementation and future A800 execution
 - The owner explicitly authorized the official-style sparse multi-head ITI ×
   TruthfulQA positive-control experiment and A800 use on 2026-08-11. No GPU was

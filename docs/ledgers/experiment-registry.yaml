@@ -1394,8 +1394,8 @@ experiments:
   claim_ids:
   - C2b
   type: confirmatory_positive_control
-  status: protocol_and_implementation_frozen_pending_independent_audit
-  code_commit: pending_branch_commit_and_independent_audit_pin
+  status: audit_repair_frozen_pending_fresh_independent_reaudit
+  code_commit: d63c5d3_rejected; repaired_commit_pending
   dirty_tree: null
   data_hash: truthfulqa_revision=741b8276f2d1982aa3d5b832d3ee81ed3b896490;prompt_bank_sha256=597d5ea1dc07d1169912978ca3ef35a2d4f6cf185270eb0994ebf76c872b122c
   env_hash: null
@@ -1425,12 +1425,16 @@ experiments:
     matched random control, strict missingness/truncation/coherence gates, and a
     TEST-once lock. Local synthetic/tiny-model validation is not evidence. Model,
     judge, and dataset revisions are pinned, but large weight shards were not
-    downloaded during implementation. Fifty-five targeted tests, a synthetic
-    full-pipeline smoke, and a tiny in-memory hook smoke passed before protocol
-    freeze. Independent hostile audit and exact
-    audited commit pinning remain required before real DEV; TEST additionally
-    requires eligible DEV and the exact authorization phrase. Existing 0/12 is
-    immutable.
+    downloaded during implementation. Commit d63c5d3 was independently rejected
+    before GPU/DEV/TEST and is not executable. D-0115 repairs effective sampling,
+    fold-config/checkpoint binding, signed global TEST authorization, fixed
+    disk/cache controls, complete snapshot/environment/GPU/attention/artifact
+    fingerprints, row-level judge failure handling, stable judge-checkpoint
+    resume identity, synthetic isolation, and exact PCG64 seed algorithms.
+    Fresh hostile re-audit and repaired-commit pinning remain
+    required before preflight or real DEV; TEST additionally requires eligible
+    audited DEV plus a schema-v2 authorization signing both DEV-manifest roots,
+    consumed in the fixed global registry. Existing 0/12 is immutable.
 
 - experiment_id: microstudy-contract-application-20260810
   parent: null

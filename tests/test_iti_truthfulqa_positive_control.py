@@ -1,4 +1,7 @@
 import json
+import hashlib
+import hmac
+import os
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -9,23 +12,33 @@ from cognitive_console.eval.truthfulqa_positive_control import (
     LocalTruthInfoJudge,
     OFFICIAL_BASE_PROMPT_ID,
     PROMPT_BANK_SHA256,
+    PINNED_SNAPSHOTS,
     TruthfulQAItem,
     load_prompt_bank,
     official_twofold_splits,
     parse_binary_judge,
+    verify_pinned_snapshot,
 )
 from cognitive_console.experiments.iti_positive_control import (
+    AUTHORIZATION_KEY_ENV,
+    EXPERIMENT_ID,
     GenerationJob,
     GenerationRecord,
     JsonlCheckpoint,
-    TEST_AUTHORIZATION,
-    acquire_test_once_lock,
+    PRIMARY_BOOTSTRAP_SEED,
+    RANDOM_BOOTSTRAP_SEED,
+    RANDOM_DIRECTION_SEED_OFFSET,
+    SAMPLE_SEED_MAPPING_VERSION,
+    BOOTSTRAP_PERCENTILE_METHOD,
+    authorization_signing_bytes,
     adjudicate_test,
     config_hash,
+    consume_signed_test_authorization,
     dev_eligibility,
     deterministic_sample_seed,
 )
 from cognitive_console.steering.official_iti import (
+    FROZEN_SAMPLING_CONFIG,
     ITIHeadSpec,
     OfficialITIConfig,
     OfficialITIHFBackend,
@@ -33,6 +46,7 @@ from cognitive_console.steering.official_iti import (
     hook_bite_metrics,
     matched_random_config,
 )
+from cognitive_console.randomness import NUMPY_RNG_ALGORITHM, pcg64_rng
 from scripts import run_iti_truthfulqa_positive_control as runner
 
 
@@ -62,8 +76,12 @@ def test_frozen_runner_config_matches_preregistered_identities():
     assert frozen["method"]["top_k_heads"] == 48
     assert frozen["method"]["alpha"] == 15.0
     assert frozen["generation"]["k"] == 5
+    assert frozen["generation"]["top_p"] == 1.0
+    assert frozen["generation"]["top_k"] == 0
+    assert frozen["disk"]["overridable"] is False
     assert frozen["statistics"]["ci_level"] == pytest.approx(1.0 - 0.05 / 3.0)
     assert frozen["current_grid_preservation"].endswith("0/12")
+    assert "scikit-learn" in runner._runtime_environment()["packages"]
 
 
 def test_official_twofold_is_deterministic_disjoint_and_covers_all_items():
@@ -75,6 +93,10 @@ def test_official_twofold_is_deterministic_disjoint_and_covers_all_items():
         assert set(split.inner_train).isdisjoint(split.inner_dev)
         assert set(split.outer_train).isdisjoint(split.test)
         assert set(split.inner_train) | set(split.inner_dev) == set(split.outer_train)
+    assert first[0].inner_train[:5] == (410, 412, 414, 415, 416)
+    assert first[0].inner_dev[:5] == (409, 411, 413, 418, 423)
+    assert first[1].inner_train[:5] == (0, 1, 2, 3, 4)
+    assert first[1].inner_dev[:5] == (8, 9, 10, 11, 22)
 
 
 def test_truthfulqa_canonical_identity_changes_with_scientific_content():
@@ -127,14 +149,24 @@ def test_judges_load_sequentially_and_purge_dedicated_caches(tmp_path, monkeypat
     )
     events = []
 
-    def fake_load(model_id, revision, cache_dir):
+    def fake_load(kind, model_id, revision, cache_dir):
         assert not any(
             child.is_dir() and child != cache_dir
             for child in judge.cache_root.glob("*")
         )
         cache_dir.mkdir(parents=True, exist_ok=True)
         (cache_dir / "weight.bin").write_bytes(b"x")
-        events.append(("load", model_id, revision, cache_dir.name))
+        judge.snapshot_identities[kind] = {
+            "name": kind,
+            "revision": revision,
+            "files": {"weight.bin": {"sha256": "test"}},
+        }
+        judge.runtime_fingerprints[kind] = {
+            "model_id": model_id,
+            "revision": revision,
+            "attention_implementation": "eager",
+        }
+        events.append(("load", kind, model_id, revision, cache_dir.name))
         return object(), object()
 
     monkeypatch.setattr(judge, "_load", fake_load)
@@ -150,7 +182,7 @@ def test_judges_load_sequentially_and_purge_dedicated_caches(tmp_path, monkeypat
     )
     assert scores[0].truth is True
     assert scores[0].informative is False
-    assert [row[3] for row in events] == ["truth", "info"]
+    assert [row[4] for row in events] == ["truth", "info"]
     assert not list(judge.cache_root.glob("*"))
     resumed = judge.score_many(
         [("Question?", "Answer.")],
@@ -158,7 +190,22 @@ def test_judges_load_sequentially_and_purge_dedicated_caches(tmp_path, monkeypat
         checkpoint_root=tmp_path / "judge-checkpoints",
     )
     assert resumed == scores
-    assert [row[3] for row in events] == ["truth", "info"]
+    assert [row[4] for row in events] == ["truth", "info"]
+    truth_manifest = json.loads(
+        (
+            tmp_path
+            / "judge-checkpoints"
+            / "truth.jsonl.manifest.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert truth_manifest["complete"] is True
+    assert truth_manifest["snapshot_identity"]["revision"] == runner.TRUTH_JUDGE_REVISION
+    with pytest.raises(ValueError, match="ordered_inputs_hash"):
+        judge.score_many(
+            [("Question?", "Changed answer.")],
+            identities=["job-1"],
+            checkpoint_root=tmp_path / "judge-checkpoints",
+        )
 
 
 def test_official_iti_recovers_planted_attention_head():
@@ -273,13 +320,218 @@ def test_tiny_model_attention_pre_hook_edits_only_last_token_and_cleans_hooks():
     assert not model.model.layers[0].self_attn.o_proj._forward_pre_hooks
 
 
+def test_effective_generation_config_overrides_model_top_p_and_top_k():
+    torch = pytest.importorskip("torch")
+    from transformers import GenerationConfig
+
+    class TinyAttention(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.o_proj = torch.nn.Identity()
+
+    class TinyBlock(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.self_attn = TinyAttention()
+
+    class TinyCore(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.layers = torch.nn.ModuleList([TinyBlock()])
+
+    class TinyLM(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.model = TinyCore()
+            self.generation_config = GenerationConfig(
+                do_sample=True, top_p=0.9, top_k=50, temperature=1.3
+            )
+
+    class TinyTokenizer:
+        pad_token = "<pad>"
+        eos_token = "</s>"
+        padding_side = "left"
+        pad_token_id = 0
+        eos_token_id = 1
+        bos_token_id = 2
+
+    backend = OfficialITIHFBackend(
+        "tiny",
+        model=TinyLM(),
+        tokenizer=TinyTokenizer(),
+        config=SimpleNamespace(
+            hidden_size=8,
+            num_hidden_layers=1,
+            num_attention_heads=4,
+        ),
+    )
+    generation_kwargs, effective = backend.effective_generation_config(
+        max_new_tokens=64,
+        do_sample=True,
+        temperature=0.7,
+    )
+    assert effective["top_p"] == 1.0
+    assert effective["top_k"] == 0
+    assert effective["temperature"] == 0.7
+    assert {
+        key: effective[key] for key in FROZEN_SAMPLING_CONFIG
+    } == FROZEN_SAMPLING_CONFIG
+    runtime_fields = set(GenerationConfig().to_dict()) - {
+        "_from_model_config",
+        "transformers_version",
+    }
+    assert set(generation_kwargs) == runtime_fields
+    assert generation_kwargs == effective
+
+
+def test_judge_effective_generation_config_overrides_model_defaults():
+    pytest.importorskip("torch")
+    from transformers import GenerationConfig
+
+    class TinyModel:
+        generation_config = GenerationConfig(
+            do_sample=True,
+            num_beams=4,
+            top_p=0.2,
+            temperature=1.8,
+        )
+
+    tokenizer = SimpleNamespace(
+        pad_token_id=0,
+        eos_token_id=1,
+        bos_token_id=2,
+    )
+    generation_kwargs, effective = LocalTruthInfoJudge._effective_generation_config(
+        TinyModel(), tokenizer
+    )
+    assert generation_kwargs == effective
+    assert effective["do_sample"] is False
+    assert effective["num_beams"] == 1
+    assert effective["num_return_sequences"] == 1
+    assert effective["max_new_tokens"] == 3
+    assert effective["max_length"] is None
+
+
+def test_fold_configs_are_atomic_full_identity_bound_and_resume_rejects_mismatch(
+    tmp_path, monkeypatch
+):
+    config = _simple_config()
+    monkeypatch.setattr(
+        runner,
+        "_fit_fold_configs",
+        lambda items, splits, backend: (
+            {0: config},
+            {"0": {"hook_bites": {"passed": True}}},
+        ),
+    )
+
+    class Backend:
+        def assert_hook_bites(self, prompts, persisted):
+            assert persisted.to_dict() == config.to_dict()
+            return {"passed": True}
+
+    path = tmp_path / "fold_configs.json"
+    identity = {
+        "data": "hash-a",
+        "model": "hash-b",
+        "environment": "hash-c",
+    }
+    configs, payload = runner._load_or_create_fold_config_manifest(
+        path=path,
+        identity=identity,
+        items=[],
+        splits=[],
+        backend=Backend(),
+    )
+    assert configs[0].to_dict() == config.to_dict()
+    assert payload["fold_configs_hash"] == config_hash(payload["fold_configs"])
+    resumed, _ = runner._load_or_create_fold_config_manifest(
+        path=path,
+        identity=identity,
+        items=[],
+        splits=[],
+        backend=Backend(),
+    )
+    assert resumed[0].to_dict() == config.to_dict()
+    with pytest.raises(ValueError, match="data/model/environment"):
+        runner._load_or_create_fold_config_manifest(
+            path=path,
+            identity={**identity, "environment": "changed"},
+            items=[],
+            splits=[],
+            backend=Backend(),
+        )
+
+
+def test_pinned_snapshot_verifies_git_blob_lfs_and_all_file_sha256(
+    tmp_path, monkeypatch
+):
+    git_raw = b"small config"
+    lfs_raw = b"weight shard"
+    git_oid = hashlib.sha1(
+        f"blob {len(git_raw)}\0".encode() + git_raw
+    ).hexdigest()
+    monkeypatch.setitem(
+        PINNED_SNAPSHOTS,
+        "tiny",
+        {
+            "repo_id": "owner/tiny",
+            "repo_type": "model",
+            "revision": "abc",
+            "files": {
+                "config.json": {"size": len(git_raw), "git_oid": git_oid},
+                "model.bin": {
+                    "size": len(lfs_raw),
+                    "lfs_sha256": hashlib.sha256(lfs_raw).hexdigest(),
+                },
+            },
+        },
+    )
+    (tmp_path / "config.json").write_bytes(git_raw)
+    (tmp_path / "model.bin").write_bytes(lfs_raw)
+    identity = verify_pinned_snapshot("tiny", tmp_path)
+    assert identity["files"]["config.json"]["sha256"] == hashlib.sha256(
+        git_raw
+    ).hexdigest()
+    (tmp_path / "unexpected.txt").write_text("stale", encoding="utf-8")
+    with pytest.raises(ValueError, match="inventory mismatch"):
+        verify_pinned_snapshot("tiny", tmp_path)
+    (tmp_path / "unexpected.txt").unlink()
+    (tmp_path / "model.bin").write_bytes(b"forged shard")
+    with pytest.raises(ValueError, match="size mismatch|LFS SHA-256"):
+        verify_pinned_snapshot("tiny", tmp_path)
+    assert (
+        PINNED_SNAPSHOTS["generator"]["files"]["tokenizer.json"]["git_oid"]
+        == "b197f72effb9d5ed16ee0f5663e11e4cfac2ba62"
+    )
+    assert (
+        PINNED_SNAPSHOTS["truth_judge"]["files"]["tokenizer_config.json"][
+            "git_oid"
+        ]
+        == "a933e74dc87d5d5e5d8820a71f035c5ce3dac12f"
+    )
+
+
 def test_checkpoint_resume_rejects_unknown_and_preserves_order(tmp_path):
     jobs = [
         GenerationJob(0, "dev", "baseline", OFFICIAL_BASE_PROMPT_ID, "a", 0, i, 7 + i)
         for i in range(2)
     ]
     cfg = config_hash({"x": 1})
-    checkpoint = JsonlCheckpoint(tmp_path / "records.jsonl", run_config_hash=cfg, jobs=jobs)
+    binding = {
+        "run_config_hash": cfg,
+        "fold_config_file_sha256": "a" * 64,
+        "fold_configs_hash": "b" * 64,
+        "data_identity": {"canonical_items_hash": "c" * 64},
+        "model_identity": {"snapshot_hash": "d" * 64},
+        "environment_identity": {"fingerprint_hash": "e" * 64},
+    }
+    checkpoint = JsonlCheckpoint(
+        tmp_path / "records.jsonl",
+        run_config_hash=cfg,
+        jobs=jobs,
+        checkpoint_binding=binding,
+    )
     first = GenerationRecord.build(
         jobs[0],
         run_config_hash=cfg,
@@ -292,7 +544,12 @@ def test_checkpoint_resume_rejects_unknown_and_preserves_order(tmp_path):
         info_raw="yes",
     )
     checkpoint.append(first)
-    resumed = JsonlCheckpoint(tmp_path / "records.jsonl", run_config_hash=cfg, jobs=jobs)
+    resumed = JsonlCheckpoint(
+        tmp_path / "records.jsonl",
+        run_config_hash=cfg,
+        jobs=jobs,
+        checkpoint_binding=binding,
+    )
     assert resumed.pending() == [jobs[1]]
     second = GenerationRecord.build(
         jobs[1],
@@ -309,41 +566,107 @@ def test_checkpoint_resume_rejects_unknown_and_preserves_order(tmp_path):
     assert [row.job_id for row in resumed.ordered_records()] == [
         job.job_id for job in jobs
     ]
+    with pytest.raises(ValueError, match="identity mismatch"):
+        JsonlCheckpoint(
+            tmp_path / "records.jsonl",
+            run_config_hash=cfg,
+            jobs=jobs,
+            checkpoint_binding={
+                **binding,
+                "environment_identity": {"fingerprint_hash": "changed"},
+            },
+        )
 
 
 def test_common_random_seed_is_condition_independent():
     seed = deterministic_sample_seed(3, fold=1, item_id="x", sample_index=2)
+    assert SAMPLE_SEED_MAPPING_VERSION == "sha256-v1-utf8-pipe-mod-2pow31"
+    assert seed == 97396565
     assert seed == deterministic_sample_seed(3, fold=1, item_id="x", sample_index=2)
     assert seed != deterministic_sample_seed(3, fold=1, item_id="x", sample_index=3)
-
-
-def test_test_once_lock_requires_exact_authorization_and_is_idempotent(tmp_path):
-    with pytest.raises(PermissionError):
-        acquire_test_once_lock(
-            tmp_path,
-            authorization="wrong",
-            run_config_hash="cfg",
-            dev_manifest_hash="dev",
+    assert (
+        deterministic_sample_seed(
+            20260811,
+            fold=0,
+            item_id="truthfulqa-0000",
+            sample_index=0,
         )
-    first = acquire_test_once_lock(
-        tmp_path,
-        authorization=TEST_AUTHORIZATION,
-        run_config_hash="cfg",
-        dev_manifest_hash="dev",
+        == 1462874046
     )
-    second = acquire_test_once_lock(
-        tmp_path,
-        authorization=TEST_AUTHORIZATION,
-        run_config_hash="cfg",
-        dev_manifest_hash="dev",
+    assert (
+        deterministic_sample_seed(
+            20260811,
+            fold=1,
+            item_id="truthfulqa-0816",
+            sample_index=4,
+        )
+        == 629855610
     )
-    assert first == second
-    with pytest.raises(ValueError):
-        acquire_test_once_lock(
-            tmp_path,
-            authorization=TEST_AUTHORIZATION,
-            run_config_hash="other",
-            dev_manifest_hash="dev",
+    assert [
+        20260811 + RANDOM_DIRECTION_SEED_OFFSET + fold for fold in range(2)
+    ] == [20261720, 20261721]
+    assert PRIMARY_BOOTSTRAP_SEED == 20260811
+    assert RANDOM_BOOTSTRAP_SEED == 20260812
+    assert NUMPY_RNG_ALGORITHM == "numpy.random.Generator(numpy.random.PCG64)"
+    assert BOOTSTRAP_PERCENTILE_METHOD == "linear"
+    assert type(pcg64_rng(1).bit_generator).__name__ == "PCG64"
+
+
+def test_signed_global_test_authorization_is_atomic_and_cross_outdir(monkeypatch, tmp_path):
+    key = "k" * 40
+    monkeypatch.setenv(AUTHORIZATION_KEY_ENV, key)
+    registry = tmp_path / "global" / "attempts.jsonl"
+    monkeypatch.setattr(
+        "cognitive_console.experiments.iti_positive_control.global_attempt_registry_path",
+        lambda: registry,
+    )
+    manifest = {
+        "schema_version": 2,
+        "authorization_id": "auth-1",
+        "experiment_id": EXPERIMENT_ID,
+        "code_commit": "abc",
+        "audited_dev_artifact_sha256": "d" * 64,
+        "audited_dev_artifact_manifest_sha256": "e" * 64,
+        "issued_at": "2026-08-11T19:00:00+08:00",
+        "key_id": "owner-local-v1",
+    }
+    manifest["signature_hmac_sha256"] = hmac.new(
+        key.encode(),
+        authorization_signing_bytes(manifest),
+        hashlib.sha256,
+    ).hexdigest()
+    path = tmp_path / "authorization.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(PermissionError, match="commit mismatch"):
+        consume_signed_test_authorization(
+            authorization_manifest=path,
+            code_commit="wrong",
+            audited_dev_artifact_sha256="d" * 64,
+            audited_dev_artifact_manifest_sha256="e" * 64,
+            out_dir=tmp_path / "run-a",
+        )
+    first = consume_signed_test_authorization(
+        authorization_manifest=path,
+        code_commit="abc",
+        audited_dev_artifact_sha256="d" * 64,
+        audited_dev_artifact_manifest_sha256="e" * 64,
+        out_dir=tmp_path / "run-a",
+    )
+    assert first["status"] == "CONSUMED"
+    assert consume_signed_test_authorization(
+        authorization_manifest=path,
+        code_commit="abc",
+        audited_dev_artifact_sha256="d" * 64,
+        audited_dev_artifact_manifest_sha256="e" * 64,
+        out_dir=tmp_path / "run-a",
+    ) == first
+    with pytest.raises(PermissionError, match="already consumed globally"):
+        consume_signed_test_authorization(
+            authorization_manifest=path,
+            code_commit="abc",
+            audited_dev_artifact_sha256="d" * 64,
+            audited_dev_artifact_manifest_sha256="e" * 64,
+            out_dir=tmp_path / "run-b",
         )
 
 
@@ -419,9 +742,28 @@ def test_random_control_veto_and_missingness_gate_are_fail_closed():
             ]
         )
     vetoed = adjudicate_test(
-        records, fold_prompt_ids={0: "winner", 1: "winner"}, k=1, bootstrap_seed=3
+        records,
+        fold_prompt_ids={0: "winner", 1: "winner"},
+        k=1,
+        bootstrap_seed=PRIMARY_BOOTSTRAP_SEED,
     )
     assert vetoed["status"] == "INVALID_RANDOM"
+    assert vetoed["random_control"]["bootstrap_seed"] == RANDOM_BOOTSTRAP_SEED
+    assert (
+        vetoed["primary"]["bootstrap_rng_algorithm"]
+        == NUMPY_RNG_ALGORITHM
+    )
+    assert (
+        vetoed["primary"]["bootstrap_percentile_method"]
+        == BOOTSTRAP_PERCENTILE_METHOD
+    )
+    with pytest.raises(ValueError, match="primary bootstrap seed"):
+        adjudicate_test(
+            records,
+            fold_prompt_ids={0: "winner", 1: "winner"},
+            k=1,
+            bootstrap_seed=3,
+        )
 
     missing_records = list(records)
     target = next(
@@ -442,7 +784,7 @@ def test_random_control_veto_and_missingness_gate_are_fail_closed():
         missing_records,
         fold_prompt_ids={0: "winner", 1: "winner"},
         k=1,
-        bootstrap_seed=3,
+        bootstrap_seed=PRIMARY_BOOTSTRAP_SEED,
     )
     assert invalid["status"] == "INVALID_MISSINGNESS_OR_TRUNCATION"
 
@@ -480,13 +822,250 @@ def test_hf_output_must_be_outside_source_repository(tmp_path):
     runner._assert_external_hf_output(tmp_path / "good")
 
 
+def test_disk_limits_and_backend_phase_are_not_cli_overridable(
+    tmp_path, monkeypatch
+):
+    assert runner.DISK_BUDGET_GB == 60.0
+    assert runner.DISK_CEILING_GB == 70.0
+    assert runner.PINNED_CONCURRENT_WORST_CASE_BYTES == 38137686854
+    cache_variables = (
+        "HF_HOME",
+        "HF_HUB_CACHE",
+        "HUGGINGFACE_HUB_CACHE",
+        "HF_ASSETS_CACHE",
+        "HF_XET_CACHE",
+        "HF_DATASETS_CACHE",
+        "HF_MODULES_CACHE",
+        "TRANSFORMERS_CACHE",
+        "XDG_CACHE_HOME",
+        "TORCH_HOME",
+    )
+    for name in cache_variables:
+        monkeypatch.setenv(name, "restore-after-test")
+    cache_root = runner._configure_dedicated_caches(tmp_path / "external")
+    for name in cache_variables:
+        Path(os.environ[name]).resolve().relative_to(cache_root.resolve())
+    parser = runner.build_parser()
+    with pytest.raises(SystemExit):
+        parser.parse_args([])
+    with pytest.raises(SystemExit):
+        parser.parse_args(
+            [
+                "--backend",
+                "hf",
+                "--phase",
+                "dev",
+                "--disk-budget-gb",
+                "10",
+            ]
+        )
+
+
+def test_per_row_judge_exception_becomes_missing_and_next_row_continues(
+    tmp_path, monkeypatch
+):
+    judge = LocalTruthInfoJudge.from_pretrained(
+        device="cpu",
+        dtype="float32",
+        cache_root=tmp_path / "judges",
+    )
+
+    def fake_load(kind, model_id, revision, cache_dir):
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        judge.snapshot_identities[kind] = {
+            "name": kind,
+            "revision": revision,
+            "files": {},
+        }
+        judge.runtime_fingerprints[kind] = {
+            "model_id": model_id,
+            "revision": revision,
+            "attention_implementation": "eager",
+        }
+        return object(), object()
+
+    calls = {"count": 0}
+
+    def fake_generate(model, tokenizer, prompt):
+        calls["count"] += 1
+        if "bad question" in prompt:
+            raise RuntimeError("row failure")
+        return "yes"
+
+    monkeypatch.setattr(judge, "_load", fake_load)
+    monkeypatch.setattr(judge, "_generate_label", fake_generate)
+    scores = judge.score_many(
+        [("bad question", "answer"), ("good question", "answer")],
+        identities=["bad", "good"],
+        checkpoint_root=tmp_path / "judge-checkpoints",
+    )
+    assert scores[0].valid is False
+    assert scores[0].outcome == 0.0
+    assert scores[0].truth_raw.startswith("ERROR:RuntimeError")
+    assert scores[1].valid is True
+    assert calls["count"] == 4
+
+
+def test_resume_after_partial_final_checkpoint_keeps_full_judge_identity(tmp_path):
+    items = [
+        SimpleNamespace(item_id=f"item-{index}", index=index, question=f"Q{index}?")
+        for index in range(2)
+    ]
+    jobs = [
+        GenerationJob(
+            0,
+            "dev",
+            "baseline",
+            OFFICIAL_BASE_PROMPT_ID,
+            item.item_id,
+            item.index,
+            0,
+            100 + item.index,
+        )
+        for item in items
+    ]
+    run_hash = config_hash({"run": "stable"})
+    binding = {"run_config_hash": run_hash, "fold_configs_hash": "a" * 64}
+
+    class Generator:
+        calls = 0
+
+        def generate_with_metadata(self, prompt, **kwargs):
+            del kwargs
+            self.calls += 1
+            return f"answer:{prompt}", 2, False
+
+    class IdentityBoundJudge:
+        calls = []
+
+        def score_many(self, pairs, *, identities, checkpoint_root):
+            del pairs
+            checkpoint_root.mkdir(parents=True, exist_ok=True)
+            identity_path = checkpoint_root / "ordered-identities.json"
+            material = list(identities)
+            if identity_path.exists():
+                assert json.loads(identity_path.read_text(encoding="utf-8")) == material
+            else:
+                identity_path.write_text(json.dumps(material), encoding="utf-8")
+            self.calls.append(material)
+            return [runner.JudgeScore(True, True, "yes", "yes") for _ in material]
+
+    generator = Generator()
+    judge = IdentityBoundJudge()
+    checkpoint = tmp_path / "dev.jsonl"
+    records = runner._execute_jobs(
+        jobs,
+        checkpoint_path=checkpoint,
+        run_config_hash=run_hash,
+        items=items,
+        prompts={OFFICIAL_BASE_PROMPT_ID: "Answer truthfully and informatively."},
+        generator=generator,
+        judge=judge,
+        configs={},
+        checkpoint_binding=binding,
+    )
+    assert len(records) == 2
+    lines = checkpoint.read_text(encoding="utf-8").splitlines()
+    checkpoint.write_text(lines[0] + "\n", encoding="utf-8")
+    manifest_path = checkpoint.with_suffix(".jsonl.manifest.json")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["complete"] = False
+    manifest["record_count"] = 1
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    resumed = runner._execute_jobs(
+        jobs,
+        checkpoint_path=checkpoint,
+        run_config_hash=run_hash,
+        items=items,
+        prompts={OFFICIAL_BASE_PROMPT_ID: "Answer truthfully and informatively."},
+        generator=generator,
+        judge=judge,
+        configs={},
+        checkpoint_binding=binding,
+    )
+    assert len(resumed) == 2
+    assert generator.calls == 2
+    assert judge.calls[0] == judge.calls[1]
+
+
+def test_model_load_failure_writes_atomic_invalid_mechanics_record(
+    tmp_path, monkeypatch
+):
+    out_dir = tmp_path / "external-run"
+    monkeypatch.setattr(
+        runner,
+        "run_hf_dev",
+        lambda args: (_ for _ in ()).throw(RuntimeError("load failed")),
+    )
+    rc = runner.main(
+        [
+            "--backend",
+            "hf",
+            "--phase",
+            "dev",
+            "--expected-code-commit",
+            "abc",
+            "--out-dir",
+            str(out_dir),
+        ]
+    )
+    assert rc == 2
+    failure = json.loads(
+        (out_dir / "failure_record.json").read_text(encoding="utf-8")
+    )
+    assert failure["status"] == "INVALID_MECHANICS"
+    assert failure["error_type"] == "RuntimeError"
+    failure_hash = json.loads(
+        (out_dir / "failure_record.sha256.json").read_text(encoding="utf-8")
+    )
+    assert failure_hash["sha256"] == hashlib.sha256(
+        (out_dir / "failure_record.json").read_bytes()
+    ).hexdigest()
+
+
+def test_artifact_hash_manifest_rejects_missing_required_file(tmp_path):
+    present = tmp_path / "present.jsonl"
+    present.write_text("{}\n", encoding="utf-8")
+    with pytest.raises(FileNotFoundError, match="required artifact"):
+        runner._artifact_hashes(
+            tmp_path,
+            [present, tmp_path / "missing.jsonl"],
+        )
+    manifest_path = tmp_path / "artifacts.json"
+    manifest_path.write_text(
+        json.dumps(runner._artifact_hashes(tmp_path, [present])),
+        encoding="utf-8",
+    )
+    verified = runner._verify_artifact_hash_manifest(
+        tmp_path, manifest_path, [present]
+    )
+    assert verified["files"]["present.jsonl"]["sha256"] == hashlib.sha256(
+        present.read_bytes()
+    ).hexdigest()
+    present.write_text('{"tampered": true}\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="size mismatch|SHA-256 mismatch"):
+        runner._verify_artifact_hash_manifest(
+            tmp_path, manifest_path, [present]
+        )
+
+
+def test_gpu_preflight_fails_closed_without_cuda(monkeypatch):
+    torch = pytest.importorskip("torch")
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+    with pytest.raises(RuntimeError, match="requires CUDA"):
+        runner.gpu_preflight_assertions(
+            object(), generator_snapshot_identity={"revision": "x"}
+        )
+
+
 def test_synthetic_end_to_end_smoke_is_non_evidence(tmp_path):
     rc = runner.main(
         [
             "--backend",
             "synthetic",
             "--phase",
-            "full",
+            "smoke",
             "--out-dir",
             str(tmp_path / "smoke"),
             "--k",
@@ -500,8 +1079,8 @@ def test_synthetic_end_to_end_smoke_is_non_evidence(tmp_path):
         )
     )
     assert payload["valid_for_paper"] is False
-    assert payload["eligibility"]["status"] == "ELIGIBLE"
-    assert payload["status"] == "FULL_PC_PASS"
-    assert payload["adjudication"]["current_grid_preservation"].endswith(
-        "must not be rewritten as 1/13."
-    )
+    assert payload["status"] == "SMOKE_PASS_PATH_EXERCISED"
+    assert payload["experiment_id"] != EXPERIMENT_ID
+    assert "FULL_PC_PASS" not in json.dumps(payload)
+    assert "ELIGIBLE" not in json.dumps(payload)
+    assert payload["path_checks"]["current_grid_preserved"] is True

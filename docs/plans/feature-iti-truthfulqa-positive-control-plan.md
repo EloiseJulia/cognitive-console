@@ -34,3 +34,13 @@
 6. Run targeted pytest plus synthetic and tiny-model CPU smoke. Verify
    implementation/protocol parity, then mark the preregistration FROZEN and
    commit with the required trailers.
+
+## Hostile-audit repair
+
+Commit `d63c5d3` was rejected before GPU/DEV/TEST. The repair slice freezes the
+effective generation config, persists and fingerprints complete fold configs,
+adds schema-v2 signed global TEST authorization over both DEV lineage roots,
+forces/monitors dedicated caches under non-overridable disk limits, records and
+re-verifies complete runtime/artifact provenance, stabilizes judge resume
+identity, isolates synthetic smoke status, freezes exact PCG64 algorithms, and
+adds adversarial tests plus code-only GPU preflight assertions.

@@ -344,9 +344,9 @@ def test_replay_default_plan_excludes_immutable_existing_cell():
         cell_key="iti__qwen2.5-7b",
         out_dir=Path("out"),
         qwen_model="Qwen/Qwen2.5-7B-Instruct",
-        llama_model="meta-llama/Meta-Llama-3-8B-Instruct",
+        llama_model="NousResearch/Meta-Llama-3-8B-Instruct",
         qwen_revision="a09a35458c702b33eeacc393d103063234e8bc28",
-        llama_revision="8afb486c1db24fe5011ec46dfbe5b5dccdb575c2",
+        llama_revision="53346005fb0ef11d3b6a83b12c895cca40156b6c",
         expected_code_commit="a" * 40,
         authorization=protocol["execution"]["authorization_id"],
         scratch_dir=Path("scratch"),
@@ -379,7 +379,7 @@ def test_cell_argv_binds_direct_hf_guard_identity(tmp_path):
         cell_key="caa__qwen2.5-7b",
         out_dir=tmp_path / "out",
         qwen_model="Qwen/Qwen2.5-7B-Instruct",
-        llama_model="meta-llama/Meta-Llama-3-8B-Instruct",
+        llama_model="NousResearch/Meta-Llama-3-8B-Instruct",
         qwen_revision="a" * 40,
         llama_revision="b" * 40,
         expected_code_commit="c" * 40,
@@ -418,6 +418,22 @@ def test_protocol_binds_all_four_cells_and_exact_replay_job_counts():
     assert {row["splits"]["test"]["generations"] for row in plans.values()} == {795}
     assert {row["splits"]["dev"]["generations"] for row in plans.values()} == {405}
     assert all(row["test_use_policy"] == R.TEST_USE_POLICY for row in plans.values())
+    assert plans["iti__qwen2.5-7b"]["authorized_a800_environment_ready"] is True
+    assert plans["iti__qwen2.5-7b"]["model_source"] == {
+        "hf_repo_id": "Qwen/Qwen2.5-7B-Instruct",
+        "revision": "a09a35458c702b33eeacc393d103063234e8bc28",
+        "snapshot_aggregate_sha256": (
+            "94e27571b6d46e0bcddf1769e5ed9c8f1b3abb77540d34aeb667cd0d3f5a5997"
+        ),
+    }
+    for cell_key in ("caa__llama3-8b", "iti__llama3-8b"):
+        assert plans[cell_key]["authorized_a800_environment_ready"] is False
+        assert plans[cell_key]["model_source"]["hf_repo_id"] == (
+            "NousResearch/Meta-Llama-3-8B-Instruct"
+        )
+        assert plans[cell_key]["model_source"]["revision"] == (
+            "53346005fb0ef11d3b6a83b12c895cca40156b6c"
+        )
     assert plans["iti__qwen2.5-7b"]["requested_alpha"] == 12.0
     assert plans["iti__qwen2.5-7b"]["effective_steer_alpha"] == pytest.approx(
         12.0 * 4.546516468477585

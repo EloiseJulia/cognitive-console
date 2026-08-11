@@ -83,6 +83,14 @@ selection, or scoring.
 
 The Qwen and Llama Hugging Face repositories are pinned to the exact revisions
 and mandatory audited model-hash source record in `frozen-manifest.json`.
+E-0006 used `NousResearch/Meta-Llama-3-8B-Instruct` under decision D-0038,
+not the gated `meta-llama` repository. The arm result files retain only the
+local runtime path, while D-0038/D-0039, the experiment registry, and the
+E-0006-era Llama metadata identify the NousResearch source and record all four
+shard hashes. The pinned NousResearch revision predates E-0006 and matches
+those hashes exactly. Its ten required runtime files are byte-identical to the
+corresponding gated upstream files; that equivalence is documented but does
+not permit a silent source-identity swap.
 Caller-supplied or optional content hashes are forbidden. The runner requires
 the exact frozen path/size/SHA-256 inventory and aggregate for all root
 Transformers weight shards, weight index, `config.json`,
@@ -91,9 +99,11 @@ present. Model identity also binds the exact effective chat-template bytes used
 by `apply_chat_template`. Pinned snapshots must be pre-staged in the explicit
 cache; the replay runner is local-files-only and never downloads weights. A
 matching basename, revision alone, or partial cache is never model identity.
-The authorized A800 Qwen cache matches. The pinned Llama cache currently holds
-only `LICENSE` and `README.md`, so every Llama replay must fail until the exact
-frozen required files are staged and independently re-verified.
+The authorized A800 Qwen cache matches. No pinned NousResearch Llama snapshot
+exists anywhere in the authorized read-only home/cache inventory. The host's
+two gated-upstream documentation files are irrelevant and cannot substitute.
+CAA×Llama and ITI×Llama therefore fail until the exact NousResearch snapshot is
+staged and independently re-verified. ITI×Qwen remains independently eligible.
 
 The replay produces raw generation text solely to measure confidence-format
 presence/missingness and the pre-specified sensitivities. It does not reselect
@@ -149,12 +159,14 @@ retained and no completed TEST batch is regenerated.
 From the audited commit at repository root:
 
 ```text
-python scripts/run_uncertainty_grid_replay.py --execute --expected-code-commit <AUDITED_REPAIR_SHA> --authorization owner-2026-08-11-e0013-grid-recheck-after-hostile-audit --scratch-root <EXTERNAL_SCRATCH_ROOT> --hf-cache-dir <EXTERNAL_HF_CACHE> --qwen-model Qwen/Qwen2.5-7B-Instruct --qwen-revision a09a35458c702b33eeacc393d103063234e8bc28 --llama-model meta-llama/Meta-Llama-3-8B-Instruct --llama-revision 8afb486c1db24fe5011ec46dfbe5b5dccdb575c2
+python scripts/run_uncertainty_grid_replay.py --execute --expected-code-commit <AUDITED_REPAIR_SHA> --authorization owner-2026-08-11-e0013-grid-recheck-after-hostile-audit --scratch-root <EXTERNAL_SCRATCH_ROOT> --hf-cache-dir <EXTERNAL_HF_CACHE> --qwen-model Qwen/Qwen2.5-7B-Instruct --qwen-revision a09a35458c702b33eeacc393d103063234e8bc28 --llama-model NousResearch/Meta-Llama-3-8B-Instruct --llama-revision 53346005fb0ef11d3b6a83b12c895cca40156b6c
 ```
 
 The default plan targets only the three absent cells; CAA×Qwen remains the
 immutable original E-0013 source. The plan is 3,600 generations in 234 fixed
-batches. Execution is presently blocked before model loading because the
-authorized pinned Llama cache is incomplete. After exact cache staging and a
-third hostile audit, the pre-run estimate remains approximately 0.3–0.7
-sequential A800 GPU-hours, excluding queue/download time.
+batches. The two Llama cells are presently environment-blocked. After the
+required code audit, ITI×Qwen can be selected independently with
+`--cells iti__qwen2.5-7b`; this protocol change does not authorize executing it
+in the current repair task. After exact NousResearch cache staging, the full
+pre-run estimate remains approximately 0.3–0.7 sequential A800 GPU-hours,
+excluding queue/download time.

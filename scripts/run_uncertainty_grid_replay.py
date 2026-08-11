@@ -373,6 +373,9 @@ def _cell_plan(
     split: Dict[str, List[Dict]],
 ) -> Dict:
     generation = dict(protocol["generation"])
+    model_policy = dict(
+        protocol["execution"]["model_identity"][cfg.model_label]
+    )
     batch_size = int(generation["batch_size"])
     split_rows: Dict[str, Dict] = {}
     all_jobs: List[Dict] = []
@@ -400,6 +403,20 @@ def _cell_plan(
         "cell": cell_key,
         "method": cfg.method,
         "model_label": cfg.model_label,
+        "model_source": {
+            "hf_repo_id": model_policy["hf_repo_id"],
+            "revision": model_policy["revision"],
+            "snapshot_aggregate_sha256": model_policy["snapshot_manifest"][
+                "aggregate_sha256"
+            ],
+        },
+        "authorized_a800_cache_status": model_policy.get(
+            "authorized_cache_status", "UNRECORDED"
+        ),
+        "authorized_a800_environment_ready": model_policy.get(
+            "authorized_cache_status"
+        )
+        == "EXACT_REQUIRED_FILES_VERIFIED",
         "legacy_model_label_key": runner._legacy_model_label_key(cfg.model_id),
         "selected_prompt_id": cfg.best_prompt_id,
         "selected_prompt_sha256": runner._sha256_text(cfg.best_prompt_text),

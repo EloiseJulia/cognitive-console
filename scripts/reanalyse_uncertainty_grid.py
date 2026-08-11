@@ -187,8 +187,8 @@ def load_protocol(path: Path) -> Dict:
         ),
         (
             "llama3-8b",
-            "meta-llama/Meta-Llama-3-8B-Instruct",
-            "8afb486c1db24fe5011ec46dfbe5b5dccdb575c2",
+            "NousResearch/Meta-Llama-3-8B-Instruct",
+            "53346005fb0ef11d3b6a83b12c895cca40156b6c",
         ),
     ):
         spec = dict(model_identity.get(label) or {})

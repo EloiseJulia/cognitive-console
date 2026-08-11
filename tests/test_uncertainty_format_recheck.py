@@ -74,7 +74,7 @@ def test_legacy_model_label_key_normalizes_historical_references_only():
     qwen_autodl = "/root/autodl-tmp/models/Qwen2.5-7B-Instruct"
     qwen_hf = "Qwen/Qwen2.5-7B-Instruct"
     llama_autodl = "/root/autodl-tmp/models/Meta-Llama-3-8B-Instruct"
-    llama_hf = "meta-llama/Meta-Llama-3-8B-Instruct"
+    llama_hf = "NousResearch/Meta-Llama-3-8B-Instruct"
 
     assert R._legacy_model_label_key(qwen_autodl) == R._legacy_model_label_key(qwen_hf)
     assert R._legacy_model_label_key(llama_autodl) == R._legacy_model_label_key(llama_hf)
@@ -146,8 +146,10 @@ def test_committed_model_manifests_bind_exact_files_and_chat_templates():
         "94e27571b6d46e0bcddf1769e5ed9c8f1b3abb77540d34aeb667cd0d3f5a5997"
     )
     assert llama["aggregate_sha256"] == (
-        "dfbfb454047cacd028913f3c23bca28786013e0e0720e20fb0a5ef20aa3fdf5c"
+        "075181da60e585890a7d3c82c2522edd6199157ae55bbc1e2a6ba681bbd8dbec"
     )
+    assert llama["hf_repo_id"] == "NousResearch/Meta-Llama-3-8B-Instruct"
+    assert llama["revision"] == "53346005fb0ef11d3b6a83b12c895cca40156b6c"
     assert qwen["chat_template"]["sha256"] == (
         "cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f"
     )
@@ -155,6 +157,14 @@ def test_committed_model_manifests_bind_exact_files_and_chat_templates():
         "ba03a121d097859c7b5b9cd03af99aafe95275210d2876f642ad9929a150f122"
     )
     assert all(row["sha256"] for row in qwen["files"] + llama["files"])
+    gated_substitution = {
+        **policies["llama3-8b"],
+        "hf_repo_id": "meta-llama/Meta-Llama-3-8B-Instruct",
+    }
+    with pytest.raises(RuntimeError, match="source-record HF repo mismatch"):
+        R._load_model_snapshot_manifest(
+            gated_substitution, model_label="llama3-8b"
+        )
 
 
 def test_hf_direct_runner_requires_manifest_audit_sha_and_authorization(

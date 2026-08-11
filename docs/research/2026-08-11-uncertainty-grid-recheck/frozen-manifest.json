@@ -42,26 +42,34 @@
         "revision_source": "Hugging Face model API resolved SHA, verified 2026-08-11",
         "snapshot_manifest": {
           "source_path": "docs/research/2026-08-11-uncertainty-grid-recheck/model-hash-source.json",
-          "source_sha256": "667a2d4876d5031691bf2a6f0219185b3364caf10680876f1bded1767c07226e",
+          "source_sha256": "a30e173a5d0edf5d4b522a574962de30f9c06de59c9850319af68a01043d149f",
           "source_hash_mode": "utf8_lf_normalized",
           "model_key": "qwen2.5-7b",
           "aggregate_sha256": "94e27571b6d46e0bcddf1769e5ed9c8f1b3abb77540d34aeb667cd0d3f5a5997"
         },
+        "authorized_cache_status": "EXACT_REQUIRED_FILES_VERIFIED",
         "local_alternative": "Allowed only when the exact mandatory per-file and aggregate SHA-256 manifest above matches; no caller-supplied substitute hash is accepted."
       },
       "llama3-8b": {
-        "hf_repo_id": "meta-llama/Meta-Llama-3-8B-Instruct",
-        "revision": "8afb486c1db24fe5011ec46dfbe5b5dccdb575c2",
-        "revision_source": "Hugging Face model API resolved SHA, verified 2026-08-11",
+        "hf_repo_id": "NousResearch/Meta-Llama-3-8B-Instruct",
+        "revision": "53346005fb0ef11d3b6a83b12c895cca40156b6c",
+        "revision_source": "E-0006 source fixed by D-0038; Hugging Face model API resolved SHA and authoritative file identities verified 2026-08-12",
+        "e0006_source_evidence": [
+          "docs/ledgers/decision-log.md D-0038 and D-0039",
+          "docs/ledgers/experiment-registry.yaml E-0006 entries",
+          "results/llama_c1_facade_2026-07-24/c1_facade_run_metadata.json exact command and verified shard hashes",
+          "results/arm_full Llama cell runtime path metadata"
+        ],
         "snapshot_manifest": {
           "source_path": "docs/research/2026-08-11-uncertainty-grid-recheck/model-hash-source.json",
-          "source_sha256": "667a2d4876d5031691bf2a6f0219185b3364caf10680876f1bded1767c07226e",
+          "source_sha256": "a30e173a5d0edf5d4b522a574962de30f9c06de59c9850319af68a01043d149f",
           "source_hash_mode": "utf8_lf_normalized",
           "model_key": "llama3-8b",
-          "aggregate_sha256": "dfbfb454047cacd028913f3c23bca28786013e0e0720e20fb0a5ef20aa3fdf5c"
+          "aggregate_sha256": "075181da60e585890a7d3c82c2522edd6199157ae55bbc1e2a6ba681bbd8dbec"
         },
-        "authorized_cache_status": "FAIL_MISSING_REQUIRED_FILES",
-        "local_alternative": "Allowed only when the exact mandatory per-file and aggregate SHA-256 manifest above matches; the currently authorized A800 cache is incomplete and must fail."
+        "authorized_cache_status": "FAIL_REQUIRED_NOUS_SNAPSHOT_ABSENT",
+        "equivalence_note": "The gated meta-llama revision is byte-identical for all ten required runtime files, but it is not the E-0006 source identity and cannot silently substitute for the frozen NousResearch mirror.",
+        "local_alternative": "Allowed only when the exact mandatory NousResearch per-file and aggregate SHA-256 manifest above matches; the currently authorized A800 cache lacks that snapshot and Llama cells must fail."
       }
     },
     "resource_guards": {

@@ -33,6 +33,9 @@ the frozen E-0006 scorer results.
    model revisions, including the effective chat-template identity. Require the
    exact manifest for repo-ID and local-path execution; reject optional
    caller-supplied hashes and incomplete caches.
+   The Llama pin must be the `NousResearch/Meta-Llama-3-8B-Instruct` mirror
+   source actually used by E-0006 under D-0038, not a silent substitution with
+   the gated upstream repository.
 6. Seal the activation cache with every key/path/size/SHA-256 and validate the
    inventory before direction derivation and resume. Permit only newly created
    entries during derivation, then atomically reseal before checkpoint reuse.

@@ -3,7 +3,7 @@
 const app = {
   csrf: null, locale: null, common: null, sequenceCodes: [], capability: null,
   attemptId: null, current: null, hiddenStarted: null, hiddenMs: 0,
-  formal: false, ended: false, pendingRequests: {},
+  formal: false, ended: false, pendingRequests: {}, saveExitTrigger: null,
 };
 const gate = document.getElementById("language-gate");
 const startPanel = document.getElementById("start");
@@ -67,12 +67,27 @@ function requestId() {
   return Array.from(bytes, value => value.toString(16).padStart(2, "0")).join("");
 }
 
-function optionFieldset(name, question, options) {
-  const fieldset = el("fieldset");
-  fieldset.append(el("legend", {}, question));
+function optionFieldset(name, question, options, config = {}) {
+  const fieldset = el("fieldset", {id: `${name}-group`});
+  if (config.labelledby) fieldset.setAttribute("aria-labelledby", config.labelledby);
+  else fieldset.append(el("legend", {}, question));
+  const describedBy = [];
+  if (config.helper) {
+    const helperId = `${name}-helper`;
+    fieldset.append(el("p", {id: helperId, class: "choice-helper"}, config.helper));
+    describedBy.push(helperId);
+  }
+  const errorId = `${name}-error`;
+  describedBy.push(errorId);
+  fieldset.append(el("p", {
+    id: errorId, class: "error choice-error", role: "alert",
+  }));
   for (const option of options) {
     const label = el("label", {class: "choice"});
-    const input = el("input", {type: "radio", name, value: option.id});
+    const input = el("input", {
+      type: "radio", name, value: option.id,
+      "aria-describedby": describedBy.join(" "),
+    });
     label.append(input, document.createTextNode(` ${option.text}`));
     fieldset.append(label);
   }
@@ -83,8 +98,38 @@ function selected(name) {
   return document.querySelector(`input[name="${name}"]:checked`)?.value ?? null;
 }
 
-function lock(name) {
-  document.querySelectorAll(`input[name="${name}"]`).forEach(node => { node.disabled = true; });
+function showChoiceError(name, message) {
+  const radios = [...document.querySelectorAll(`input[name="${name}"]`)];
+  const error = document.getElementById(`${name}-error`);
+  if (error) error.textContent = message;
+  radios.forEach(node => node.setAttribute("aria-invalid", "true"));
+  radios[0]?.focus();
+}
+
+function clearChoiceError(name) {
+  const error = document.getElementById(`${name}-error`);
+  if (error) error.textContent = "";
+  document.querySelectorAll(`input[name="${name}"]`).forEach(node => {
+    node.removeAttribute("aria-invalid");
+  });
+}
+
+function selectedText(name) {
+  return document.querySelector(`input[name="${name}"]:checked`)
+    ?.closest("label")?.textContent.trim() ?? "";
+}
+
+function lockedSummary(state) {
+  return el("div", {
+    class: "locked-summary", role: "status", "aria-live": "polite",
+  }, format(app.common.locked.summary, {state}));
+}
+
+function detailsBlock(summary, paragraphs, className = "") {
+  const details = el("details", {class: className});
+  details.append(el("summary", {}, summary));
+  for (const paragraph of paragraphs) details.append(el("p", {}, paragraph));
+  return details;
 }
 
 async function api(path, data) {
@@ -115,7 +160,6 @@ async function api(path, data) {
 
 function renderEvidence(cardData) {
   const card = el("article", {class: "evidence-card", "aria-label": cardData.aria_label});
-  card.append(el("h2", {}, cardData.notice));
   const rows = el("dl", {class: "evidence-rows"});
   cardData.rows.forEach((rowData, index) => {
     const row = el("div", {
@@ -149,27 +193,43 @@ function showWelcome() {
   const welcome = app.common.welcome;
   const sequence = el("select", {id: "sequence", required: ""});
   for (const code of app.sequenceCodes) sequence.append(el("option", {value: code}, code));
+  const participantLabel = el("label", {for: "participant-code"}, welcome.participant_code);
+  const participantHelp = el(
+    "p", {id: "participant-code-help", class: "help"}, welcome.participant_code_help,
+  );
+  const participantInput = el("input", {
+    id: "participant-code", autocomplete: "off", maxlength: "64", required: "",
+    "aria-describedby": "participant-code-help",
+  });
+  const sequenceLabel = el("label", {for: "sequence"}, welcome.sequence);
+  const sequenceHelp = el("p", {id: "sequence-help", class: "help"}, welcome.sequence_help);
+  sequence.setAttribute("aria-describedby", "sequence-help");
+  const privacyDetails = detailsBlock(
+    welcome.details_summary, welcome.details.map(row => row.text), "welcome-details",
+  );
   const switchButton = el(
     "button", {type: "button", "data-action": "switch-language"},
     welcome.switch_language,
   );
   startPanel.replaceChildren(
     el("h1", {}, welcome.heading),
+    el("p", {class: "subtitle"}, welcome.subtitle),
+    el("p", {class: "task-size"}, welcome.task_size),
+    el("p", {class: "estimate"}, welcome.estimate),
     el("p", {class: "warning"}, welcome.warning),
+    el("p", {class: "no-resume"}, welcome.no_resume),
     el("p", {}, welcome.setup_placeholder),
-    el("label", {}, welcome.participant_code),
-    el("label", {}, welcome.sequence),
+    privacyDetails,
+    participantLabel,
+    participantHelp,
+    participantInput,
+    sequenceLabel,
+    sequenceHelp,
+    sequence,
     el("div", {class: "actions"}),
     el("p", {id: "start-error", class: "error", role: "alert", tabindex: "-1"}),
   );
-  startPanel.children[3].append(
-    el("input", {
-      id: "participant-code", autocomplete: "off", maxlength: "64", required: "",
-      "aria-label": welcome.participant_code,
-    }),
-  );
-  startPanel.children[4].append(sequence);
-  startPanel.children[5].append(
+  startPanel.querySelector(".actions").append(
     el("button", {id: "start-button", type: "button", "data-action": "start"}, welcome.start),
     switchButton,
   );
@@ -211,55 +271,79 @@ function showTutorial() {
     glossary,
     el("h2", {}, onboarding.states_heading),
     states,
+    el("p", {class: "state-distinction"}, onboarding.state_distinction),
     el("h2", {}, onboarding.steps_heading),
     steps,
+    el("p", {class: "guard"}, app.common.position_guard),
     el("button", {type: "button", "data-action": "show-practice"}, onboarding.continue_practice),
   );
 }
 
 function showPractice() {
   const practice = app.common.practice;
+  const card = {
+    aria_label: practice.card_aria,
+    rows: practice.facts.map(row => ({label: row.label, body: row.body})),
+  };
   replaceStage(
     el("h1", {}, practice.heading),
-    el("article", {class: "practice-card"},
-      null),
-    optionFieldset("practice-q1", practice.q1.text, practice.q1.options),
-    el("button", {type: "button", "data-action": "practice-q1"}, practice.submit_q1),
+    el("p", {class: "context-label"}, practice.notice),
+    el("p", {class: "guard"}, app.common.position_guard),
+    renderEvidence(card),
+    el("div", {id: "practice-q1-area"}),
     el("div", {id: "practice-next"}),
   );
-  stage.children[2].append(
-    el("h2", {}, practice.notice),
-    el("p", {}, practice.narrative),
+  document.getElementById("practice-q1-area").append(
+    optionFieldset("practice-q1", practice.q1.text, practice.q1.options),
+    el("button", {type: "button", "data-action": "practice-q1"}, practice.submit_q1),
   );
 }
 
 async function practiceQ1(button) {
   const answer = selected("practice-q1");
-  if (!answer) return;
+  if (!answer) {
+    showChoiceError("practice-q1", app.common.errors.required_q1);
+    return;
+  }
+  clearChoiceError("practice-q1");
+  const state = selectedText("practice-q1");
   button.disabled = true;
   await api("/api/practice", {attempt_id: app.attemptId, step: "q1", answer});
-  lock("practice-q1");
+  document.getElementById("practice-q1-area").replaceChildren(lockedSummary(state));
   const practice = app.common.practice;
   document.getElementById("practice-next").append(
-    optionFieldset("practice-q2", practice.q2.text, practice.q2.options),
+    el("h2", {id: "practice-q2-heading", tabindex: "-1"}, practice.q2.text),
+    optionFieldset("practice-q2", practice.q2.text, practice.q2.options, {
+      labelledby: "practice-q2-heading",
+    }),
     el("button", {type: "button", "data-action": "practice-q2"}, practice.submit_q2),
   );
-  document.querySelector('input[name="practice-q2"]').focus();
+  document.getElementById("practice-q2-heading").focus();
 }
 
 async function practiceQ2(button) {
   const answer = selected("practice-q2");
-  if (!answer) return;
+  if (!answer) {
+    showChoiceError("practice-q2", app.common.errors.required_q2);
+    return;
+  }
+  clearChoiceError("practice-q2");
   button.disabled = true;
   const response = await api("/api/practice", {
     attempt_id: app.attemptId, step: "q2", answer,
   });
-  lock("practice-q2");
-  document.getElementById("practice-next").append(
+  app.current = response;
+  const transition = app.common.transition;
+  const steps = el("ol");
+  for (const step of transition.steps) steps.append(el("li", {}, step));
+  replaceStage(
+    el("h1", {}, transition.heading),
     el("p", {class: "feedback"}, response.feedback),
+    el("p", {}, transition.intro),
+    steps,
+    el("p", {class: "guard"}, app.common.position_guard),
     el("button", {type: "button", "data-action": "begin-formal"}, app.common.practice.begin_formal),
   );
-  app.current = response;
 }
 
 function showTrial() {
@@ -267,37 +351,60 @@ function showTrial() {
   const trial = app.current;
   app.hiddenMs = 0;
   app.hiddenStarted = document.hidden ? performance.now() : null;
+  const heading = format(app.common.progress.record_heading, {
+    current: trial.trial_index + 1,
+  });
+  const progress = format(app.common.progress.question_progress, {
+    question: 1, block: trial.block,
+  });
   replaceStage(
-    el("h1", {class: "sr-only"}, format(app.common.progress.formal_trial, {
-      current: trial.trial_index + 1, block: trial.block,
-    })),
-    el("p", {class: "progress"}, format(app.common.progress.formal_trial, {
-      current: trial.trial_index + 1, block: trial.block,
-    })),
+    el("h1", {}, heading),
+    el("p", {id: "question-progress", class: "progress"}, progress),
+    detailsBlock(trial.context.summary, [trial.context.body], "record-context"),
+    el("p", {class: "guard"}, app.common.position_guard),
     renderEvidence(trial.card),
+    el("div", {id: "q1-area"}),
+    el("div", {id: "q2-area"}),
+  );
+  document.getElementById("q1-area").append(
     optionFieldset("formal-q1", trial.q1.text, trial.q1.options),
     el("button", {type: "button", "data-action": "formal-q1"}, app.common.buttons.submit_q1),
-    el("div", {id: "q2-area"}),
   );
 }
 
 async function formalQ1(button) {
   const answer = selected("formal-q1");
-  if (!answer) return;
+  if (!answer) {
+    showChoiceError("formal-q1", app.common.errors.required_q1);
+    return;
+  }
+  clearChoiceError("formal-q1");
+  const state = selectedText("formal-q1");
   button.disabled = true;
   const response = await api("/api/q1", {attempt_id: app.attemptId, answer});
-  lock("formal-q1");
+  document.getElementById("q1-area").replaceChildren(lockedSummary(state));
+  document.getElementById("question-progress").textContent = format(
+    app.common.progress.question_progress, {question: 2, block: app.current.block},
+  );
   const q2Area = document.getElementById("q2-area");
+  const q2Heading = el("h2", {id: "q2-heading", tabindex: "-1"}, response.q2.text);
   q2Area.append(
-    optionFieldset("formal-q2", response.q2.text, response.q2.options),
+    q2Heading,
+    optionFieldset("formal-q2", response.q2.text, response.q2.options, {
+      labelledby: "q2-heading", helper: response.q2.helper,
+    }),
     el("button", {type: "button", "data-action": "formal-q2"}, app.common.buttons.submit_q2),
   );
-  document.querySelector('input[name="formal-q2"]').focus();
+  q2Heading.focus();
 }
 
 async function formalQ2(button) {
   const answer = selected("formal-q2");
-  if (!answer) return;
+  if (!answer) {
+    showChoiceError("formal-q2", app.common.errors.required_q2);
+    return;
+  }
+  clearChoiceError("formal-q2");
   button.disabled = true;
   const hidden = Math.round(app.hiddenMs + (
     app.hiddenStarted === null ? 0 : performance.now() - app.hiddenStarted
@@ -324,7 +431,11 @@ function showEase(block) {
 async function submitEase(button, skip) {
   const block = Number(button.dataset.block);
   const answer = skip ? null : selected("ease");
-  if (!skip && !answer) return;
+  if (!skip && !answer) {
+    showChoiceError("ease", app.common.errors.required_choice);
+    return;
+  }
+  clearChoiceError("ease");
   button.disabled = true;
   app.current = await api("/api/ease", {attempt_id: app.attemptId, block, answer});
   if (app.current.phase === "diagnostic") showDiagnostic();
@@ -346,7 +457,11 @@ function showDiagnostic() {
 
 async function submitDiagnostic(skip) {
   const answer = skip ? null : selected("diagnostic");
-  if (!skip && !answer) return;
+  if (!skip && !answer) {
+    showChoiceError("diagnostic", app.common.errors.required_choice);
+    return;
+  }
+  clearChoiceError("diagnostic");
   document.querySelectorAll('[data-action^="diagnostic"]').forEach(node => { node.disabled = true; });
   await api("/api/diagnostic", {attempt_id: app.attemptId, answer});
   await api("/api/complete", {attempt_id: app.attemptId});
@@ -393,10 +508,61 @@ async function downloadExport(outputFormat) {
     format(app.common.export.download_started, {format: outputFormat.toUpperCase()});
 }
 
+function saveExitDialog() {
+  let dialog = document.getElementById("save-exit-dialog");
+  if (dialog) return dialog;
+  const copy = app.common.save_exit;
+  dialog = el("dialog", {
+    id: "save-exit-dialog", "aria-labelledby": "save-exit-heading",
+    "aria-describedby": "save-exit-description",
+  });
+  const consequences = el("ul");
+  for (const consequence of copy.consequences) {
+    consequences.append(el("li", {}, consequence));
+  }
+  dialog.append(
+    el("h2", {id: "save-exit-heading"}, copy.heading),
+    el("p", {id: "save-exit-description"}, copy.intro),
+    consequences,
+    el("div", {class: "actions"}),
+  );
+  dialog.lastChild.append(
+    el("button", {
+      type: "button", class: "secondary", "data-action": "cancel-save-exit",
+    }, copy.cancel),
+    el("button", {
+      type: "button", "data-action": "confirm-save-exit",
+    }, copy.confirm),
+  );
+  dialog.addEventListener("cancel", event => {
+    event.preventDefault();
+    closeSaveExitDialog();
+  });
+  document.body.append(dialog);
+  return dialog;
+}
+
+function showSaveExitDialog(button) {
+  app.saveExitTrigger = button;
+  const dialog = saveExitDialog();
+  dialog.showModal();
+  dialog.querySelector('[data-action="cancel-save-exit"]').focus();
+}
+
+function closeSaveExitDialog() {
+  const dialog = document.getElementById("save-exit-dialog");
+  if (dialog?.open) dialog.close();
+  app.saveExitTrigger?.focus();
+  app.saveExitTrigger = null;
+}
+
 async function saveAndExit(button) {
   button.disabled = true;
   const response = await api("/api/save-exit", {attempt_id: app.attemptId});
   if (response.phase !== "export_ready") throw new Error("export_not_ready");
+  const dialog = document.getElementById("save-exit-dialog");
+  if (dialog?.open) dialog.close();
+  app.saveExitTrigger = null;
   showExportScreen(false);
 }
 
@@ -441,7 +607,9 @@ document.addEventListener("click", event => {
     "ease-skip": () => submitEase(button, true),
     "diagnostic": () => submitDiagnostic(false),
     "diagnostic-skip": () => submitDiagnostic(true),
-    "save-exit": () => saveAndExit(button),
+    "save-exit": () => showSaveExitDialog(button),
+    "cancel-save-exit": () => closeSaveExitDialog(),
+    "confirm-save-exit": () => saveAndExit(button),
     "download-json": () => downloadExport("json"),
     "download-csv": () => downloadExport("csv"),
     "finish": () => finish(),
@@ -459,6 +627,10 @@ document.addEventListener("visibilitychange", () => {
     app.hiddenMs += performance.now() - app.hiddenStarted;
     app.hiddenStarted = null;
   }
+});
+
+document.addEventListener("change", event => {
+  if (event.target.matches('input[type="radio"]')) clearChoiceError(event.target.name);
 });
 
 fetch("/api/bootstrap", {cache: "no-store", credentials: "same-origin"})

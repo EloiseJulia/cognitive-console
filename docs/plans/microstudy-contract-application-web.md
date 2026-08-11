@@ -1,7 +1,7 @@
 # Implementation Plan: Local Contract-Application Micro-Study
 
 - **Plan ID:** `microstudy-contract-application-web`
-- **Status:** `ready_for_owner_local_preview_no_human_data`
+- **Status:** `v8_novice_ux_implemented_pending_independent_hostile_audit_no_human_data`
 - **Current scope:** loopback website, deterministic export, analysis, MDE sensitivity, tests, and docs
 - **Spec:** [`../specs/microstudy-contract-application.md`](../specs/microstudy-contract-application.md)
 
@@ -30,13 +30,20 @@ parity, independent locale leakage heuristics, Contract-token forbidden scans,
 same-locale body parity, router derivation, sequence checks, and the existing
 CCA/leakage gates.
 
+The current novice-UX slice bumps the material identity to
+`microstudy-stimuli-v8-bilingual-novice-ux` /
+`microstudy-contract-application-20260811-v8-novice-ux-draft` while preserving
+the signed V4 export schema, router, answer keys, sequences, duplicate policy,
+missingness, and analysis. Old V7 and new V8 previews are not one material
+version.
+
 The local web app is implemented without recruitment, pilot, public deployment,
 paper changes, or participant data.
 
-The final audited implementation identity is
-`1702d7a4ae5132b09fd29d216502504c7afb493c`. Any subsequent docs-only commit
-that persists audit or governance records is not the implementation code
-commit.
+The previous V7 audited implementation identity is
+`1702d7a4ae5132b09fd29d216502504c7afb493c`. The V8 implementation must receive
+a fresh independent hostile audit before governance pins a final audited V8
+implementation identity.
 
 ## 2. Implemented rule
 
@@ -66,15 +73,29 @@ src/cognitive_console/microstudy/
 
 - Initial bilingual language gate; no default, browser/URL/storage detection, or
   recovery token. Welcome may switch; start may not.
-- Neutral common onboarding explains four states and five information types
-  without Contract labels, a complete router, threshold priority, or lookup.
-- One community activity-room practice, Q1 withheld and Q2 lock answer D, with
-  example-only feedback.
+- Welcome names the five-fact task, one practice plus ten formal records, the
+  not-timing-validated about-ten-minute estimate, anonymous-code and
+  presentation-order help, visible DRAFT/no-recruitment/no-ethics status, and
+  visible no-resume warning before collapsed privacy/server details.
+- Neutral common onboarding uses a three-step flow, symmetric four-state
+  definitions, and the explicit cannot-yet-tell versus can-tell-but-not-support
+  distinction without a complete router or Flat row mapping.
+- One formal-like five-row room-safety practice, with only Fact 1–5 labels,
+  independent IDs/positions, Q1 withheld, Q2 lock answer D, and example-only
+  feedback.
 - Render Contract/Flat from one proposition map.
-- Use exact Contract labels `READ`/`TRANSFER`/`BOUNDED PROMPT COMPARATOR`/`CALIBRATION WARNING`/`EVIDENCE TIER`; use Flat `Evidence A`–`Evidence E`.
+- Use participant Contract labels `Initial check`/`Paired comparison`/
+  `Reference setup`/`Consistency check`/`Applicable setting` and Chinese
+  equivalents; keep old academic labels and internal role IDs out of
+  common/Flat/DOM/ARIA/participant projections. Flat remains Evidence A–E.
 - Use Contract's fixed JSON role order and each Flat item's JSON `flat_order`.
 - Implement the exact JSON DOM tags/classes/data attributes and bind all evidence-body text only to `primitive_evidence`.
 - Lock Q1 before Q2 and prohibit navigation back.
+- Show one H1 per formal record, low-salience collapsed record context, the
+  exact no-position-clue guard, inline required-answer alerts with no request,
+  and a persistent locked-state summary before focusing Q2.
+- Change only Q2-COVERAGE visible wording/helper; retain every Q2 option ID,
+  order, key, and non-COVERAGE construct.
 - Apply the same exact geometry tokens to both conditions: `1440×900` desktop (`1280px` minimum), `960px` card, `240/648px` label/body, `72px` row minimum, and declared padding/gap/type tokens.
 - At 100% zoom prohibit internal card scroll and clipping; at 200% allow page scrolling but prohibit hidden/clipped content.
 - Add fixed-viewport DOM and screenshot parity at `1px` tolerance, evidence-text identity after label/order removal, forbidden answer/state/verdict/action row checks, and label-only pixel masking plus declared-permutation structural comparison.
@@ -85,7 +106,7 @@ src/cognitive_console/microstudy/
 - Use exact validated `A1..D5` rows.
 - Generate a server-side random UUID attempt ID.
 - Preserve ten planned slots and all truth-table states in volatile server memory.
-- Generate complete and Save-&-Exit partial V4 bilingual exports canonically on
+- Generate complete and confirmed early-end partial V4 bilingual exports canonically on
   the server and HMAC-SHA256 sign them; both retain all ten slots and add
   `ui_language`, locale bundle version, and locale bundle hash.
 - Sign random per-run `run_id` and monotonic per-start `attempt_serial`; require an
@@ -114,7 +135,9 @@ src/cognitive_console/microstudy/
   and request-id idempotency.
 - Real Chrome/Edge full-flow CDP gates cover both viewports and zooms, keyboard
   operation, dynamic `lang`, h1 focus, selected-only DOM/network/ARIA,
-  geometry/overflow, complete/partial/retry, refresh-to-gate, and PNG artifacts.
+  geometry/overflow, viewport hierarchy, inline error/focus/no-request,
+  locked-summary, accessible cancel/confirm dialog, complete/partial/retry,
+  refresh-to-gate, and PNG artifacts.
   Manual bilingual semantic and screen-reader review remain `UNVERIFIED
   PRE-RECRUITMENT`.
 
@@ -129,8 +152,8 @@ git diff --check
 ```
 
 Required validator results are documented in the spec/prereg and enforced from
-JSON. The final independent hostile audit closed the TTL-renewal MAJOR and
-verified the validator, Node checks, HTTP TTL/idempotency/export behavior,
-Chrome/Edge bilingual flows, and the full pytest suite without residue.
-Registry status is `ready_for_owner_local_preview_no_human_data`; there is no
-human run, public deployment, paper evidence, or confirmatory MDE result.
+JSON. Implementation self-validation covers the validator, Node checks,
+targeted HTTP/export behavior, Chrome/Edge bilingual full flows at both
+viewports and zooms, and the full pytest suite. A fresh independent hostile
+audit remains required for V8. Registry remains `valid_for_paper=false`; there
+is no human run, public deployment, paper evidence, or confirmatory MDE result.

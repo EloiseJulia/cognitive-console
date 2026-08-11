@@ -5,6 +5,33 @@
 
 ---
 
+## 2026-08-11 · D-0112 · Owner authorizes synthetic-feedback novice-UX revision for local preview only
+- The owner authorized implementation of the fixed novice-UX proposal after
+  three zero-background synthetic novice-agent blind walkthroughs and an
+  independent proposal audit verdict of `APPROVE`. The revision clarifies the
+  five-fact → locked status → follow-up flow without teaching formal answers or
+  changing the experimental construct.
+- Authorized changes are participant-facing information architecture,
+  plain-language Contract labels, one neutral formal-like five-row safety
+  practice, record hierarchy, inline validation/focus, persistent Q1 lock
+  summary, Q2-COVERAGE wording/helper, accessible early-end confirmation, and
+  responsive bilingual accessibility/security tests.
+- The nonlocalized router, Q1/Q2 keys, Q2 option IDs/order, Flat orders,
+  A1..D5 sequences, CCA scoring, signed V4 export schema, duplicate policy,
+  missingness, and analysis remain unchanged. Materials advance to
+  `microstudy-stimuli-v8-bilingual-novice-ux` /
+  `microstudy-contract-application-20260811-v8-novice-ux-draft`; V7 and V8
+  previews must not be pooled as one material version.
+- The three walkthroughs are AI role-play, not human-subject data. They cannot
+  establish the target of ten-second task comprehension, usability, timing, or
+  accessibility. `valid_for_paper=false`; no paper Claim, result, or evidence
+  is changed.
+- V8 remains DRAFT, owner-local, no recruitment, no participant contact, no
+  human data, no timing pilot, no public deployment, and not frozen. Fresh
+  hostile implementation audit, human bilingual semantic review, manual
+  screen-reader review, ethics/recruitment authorization, timing/MDE work, and
+  Protocol Freeze remain open gates.
+
 ## 2026-08-11 · D-0111 · Final bilingual implementation and audit close owner-local-preview lineage only
 - The final audited bilingual implementation commit is
   `1702d7a4ae5132b09fd29d216502504c7afb493c`. The preceding hostile audit

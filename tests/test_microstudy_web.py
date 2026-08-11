@@ -203,6 +203,9 @@ def test_server_material_privacy_headers_and_no_logging(live_server):
         "locale_bundle_hash", "common", "sequence_codes",
     }
     assert materials["ui_language"] == "zh-Hans"
+    assert materials["materials_version"].endswith("v8-novice-ux-draft")
+    for academic in ("初始读取", "迁移比较", "有界提示比较器", "校准警示", "证据层级"):
+        assert academic not in json.dumps(materials, ensure_ascii=False)
     with pytest.raises(urllib.error.HTTPError):
         request_json(base, "/api/materials")
     assert output.getvalue() == ""
@@ -249,11 +252,17 @@ def test_locale_is_locked_and_formal_projection_is_selected_only(live_server):
     assert server.sessions[attempt]["ui_language"] == "zh-Hans"
     assert set(trial) == {
         "phase", "trial_index", "slot_index", "block", "position", "card",
-        "q1", "feedback",
+        "context", "q1", "feedback",
     }
     encoded = json.dumps(trial, ensure_ascii=False)
-    assert "模拟评估记录" in encoded
-    assert "Simulated evaluation record" not in encoded
+    assert "使用虚构教学数值的模拟记录" in encoded
+    assert "Simulated record with fabricated teaching values" not in encoded
+    assert [row["label"] for row in trial["card"]["rows"]] == [
+        "初始检查", "配对比较", "参照设置", "一致性检查", "适用情境",
+    ]
+    assert not any(term in encoded for term in (
+        "初始读取", "迁移比较", "有界提示比较器", "校准警示", "证据层级",
+    ))
     for forbidden in (
         "condition", "stimulus", "primitive", "router", "correct_key",
         "expected_q1", "content_set", "pattern",
@@ -290,11 +299,12 @@ def test_signed_export_validation_tamper_wrong_key_and_csv(live_server):
         ("ui_language", "fr"),
         ("locale_bundle_version", "wrong"),
         ("locale_bundle_hash", "0" * 64),
+        ("material_schema_version", "microstudy-stimuli-v7-bilingual"),
     ):
         altered = copy.deepcopy(data)
         altered[field] = value
         altered = sign_export(altered, TEST_KEY)
-        with pytest.raises(ExportError, match="locale|language"):
+        with pytest.raises(ExportError, match="locale|language|material schema"):
             validate_export(altered, TEST_KEY)
     bad_bool = copy.deepcopy(data)
     bad_bool["practice_presented"] = 1
@@ -785,8 +795,14 @@ def test_static_dom_accessibility_and_no_semantic_attributes():
     assert "heading.focus()" in js
     assert js.count('document.addEventListener("click"') == 1
     assert "correct_key" not in js and "q1_key" not in js and "q2_key" not in js
+    assert 'role: "status"' in js
+    assert 'role: "alert"' in js
+    assert '"aria-invalid", "true"' in js
+    assert "showModal()" in js and 'addEventListener("cancel"' in js
+    assert "app.common.position_guard" in js
     assert "Microsoft YaHei" in css and "overflow-wrap:anywhere" in css
     assert "focus-visible" in css and "prefers-reduced-motion" in css
+    assert "dialog::backdrop" in css and ".locked-summary" in css
 
 
 def test_exact_sign_flip_ties_and_equality():
@@ -896,7 +912,9 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
         cdp.call("Input.dispatchKeyEvent", {"type": "keyDown", **params})
         cdp.call("Input.dispatchKeyEvent", {"type": "keyUp", **params})
 
-    def start_formal(cdp, participant, sequence, locale="en", keyboard=False):
+    def start_formal(
+        cdp, participant, sequence, locale="en", keyboard=False, server=None
+    ):
         cdp.wait(
             "window.MicrostudyTest"
             " && document.querySelector('[data-action=\"choose-language\"]')"
@@ -913,6 +931,29 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
         cdp.wait("document.querySelector('#sequence option')")
         assert cdp.eval("document.documentElement.lang") == locale
         assert cdp.eval("!document.querySelector('#language-gate')")
+        hierarchy = cdp.eval("""(() => ({
+          heading:document.querySelector('#start h1').innerText,
+          subtitle:document.querySelector('#start .subtitle').innerText,
+          task:document.querySelector('#start .task-size').innerText,
+          warning:document.querySelector('#start .warning').innerText,
+          noResume:document.querySelector('#start .no-resume').innerText,
+          startBottom:document.querySelector('#start-button').getBoundingClientRect().bottom,
+          detailsOpen:document.querySelector('#start details').open
+        }))()""")
+        assert hierarchy["startBottom"] <= 900
+        assert hierarchy["detailsOpen"] is False
+        if locale == "en":
+            assert hierarchy["heading"] == "Five-fact decision task"
+            assert hierarchy["subtitle"].startswith("Read five facts")
+            assert "1 practice record and 10 formal records" in hierarchy["task"]
+            assert "no recruitment" in hierarchy["warning"]
+            assert "no resume" in hierarchy["noResume"].lower()
+        else:
+            assert hierarchy["heading"] == "五条事实判断任务"
+            assert hierarchy["subtitle"].startswith("阅读五条事实")
+            assert "1 条练习记录和 10 条正式记录" in hierarchy["task"]
+            assert "不招募" in hierarchy["warning"]
+            assert "不能恢复" in hierarchy["noResume"]
         cdp.eval(
             f"document.querySelector('#participant-code').value={json.dumps(participant)};"
             "document.querySelector('#participant-code').focus();"
@@ -926,16 +967,51 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
         else:
             cdp.eval("document.querySelector('#start-button').click()")
         cdp.wait("document.querySelector('[data-action=\"show-practice\"]')")
+        assert cdp.eval("document.querySelectorAll('#stage h1').length") == 1
+        assert cdp.eval("document.querySelector('#stage .guard').innerText") in {
+            "Use all five facts; row order and Fact/Evidence labels are not clues.",
+            "请结合全部五条事实；行顺序和事实/证据编号不是线索。",
+        }
         cdp.click("show-practice")
+        cdp.wait("document.querySelectorAll('.evidence-row').length === 5")
+        practice = cdp.eval("""(() => ({
+          labels:[...document.querySelectorAll('.evidence-label')].map(n=>n.innerText),
+          text:document.querySelector('#stage').innerText,
+          h1:document.querySelectorAll('#stage h1').length,
+          guard:document.querySelector('#stage .guard').innerText
+        }))()""")
+        assert practice["h1"] == 1
+        assert practice["labels"] == (
+            [f"Fact {index}" for index in range(1, 6)]
+            if locale == "en" else [f"事实 {index}" for index in range(1, 6)]
+        )
+        assert not any(term in practice["text"] for term in (
+            "READ", "TRANSFER", "BOUNDED PROMPT COMPARATOR",
+            "CALIBRATION WARNING", "EVIDENCE TIER",
+            "初始读取", "迁移比较", "有界提示比较器", "校准警示", "证据层级",
+        ))
+        if server is not None:
+            attempt = next(iter(server.sessions))
+            before = len(server.sessions[attempt]["requests"])
+            cdp.click("practice-q1")
+            cdp.wait("document.querySelector('#practice-q1-error').textContent.length > 0")
+            assert len(server.sessions[attempt]["requests"]) == before
+            assert cdp.eval(
+                "document.activeElement === document.querySelector('input[name=\"practice-q1\"]')"
+                " && document.activeElement.getAttribute('aria-invalid') === 'true'"
+            )
         cdp.choose_and_click("practice-q1", "practice-q1")
+        cdp.wait("document.querySelector('.locked-summary[role=\"status\"]')")
         cdp.choose_and_click("practice-q2", "practice-q2")
         cdp.wait("document.querySelector('[data-action=\"begin-formal\"]')")
+        assert cdp.eval("document.querySelectorAll('#stage h1').length") == 1
         cdp.click("begin-formal")
 
     def finish_formal(
-        cdp, locale, audit_geometry=False, screenshot_prefix=None
+        cdp, locale, audit_geometry=False, screenshot_prefix=None, server=None
     ):
         captured = set()
+        coverage_helpers = 0
         for index in range(10):
             cdp.wait(
                 "document.querySelector('[data-action=\"formal-q1\"]')"
@@ -951,6 +1027,14 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
                     /condition|stimulus|evidence-id|answer|correct|router/i.test(name));
                   return {
                     aria:card.getAttribute('aria-label'), labels,
+                    h1Count:document.querySelectorAll('#stage h1').length,
+                    heading:document.querySelector('#stage h1').innerText,
+                    progress:document.querySelector('#question-progress').innerText,
+                    guard:document.querySelector('#stage .guard').innerText,
+                    text:document.querySelector('#stage').innerText,
+                    contextOpen:document.querySelector('.record-context').open,
+                    primaryBottom:document.querySelector('[data-action="formal-q1"]')
+                      .getBoundingClientRect().bottom,
                     cardWidth:card.getBoundingClientRect().width,
                     cardOverflow:card.scrollWidth>card.clientWidth,
                     documentOverflow:document.documentElement.scrollWidth>
@@ -965,6 +1049,26 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
                 })()""")
                 expected_aria = "证据面板" if locale == "zh-Hans" else "Evidence panel"
                 assert audit["aria"] == expected_aria and audit["saveVisible"]
+                assert audit["h1Count"] == 1
+                assert audit["heading"] == (
+                    f"Record {index + 1} of 10"
+                    if locale == "en" else f"第 {index + 1}/10 条记录"
+                )
+                assert audit["progress"].startswith(
+                    "Question 1 of 2" if locale == "en" else "问题 1/2"
+                )
+                assert audit["guard"] == (
+                    "Use all five facts; row order and Fact/Evidence labels are not clues."
+                    if locale == "en"
+                    else "请结合全部五条事实；行顺序和事实/证据编号不是线索。"
+                )
+                assert not any(term in audit["text"] for term in (
+                    "READ", "TRANSFER", "BOUNDED PROMPT COMPARATOR",
+                    "CALIBRATION WARNING", "EVIDENCE TIER",
+                    "初始读取", "迁移比较", "有界提示比较器", "校准警示", "证据层级",
+                ))
+                assert audit["contextOpen"] is False
+                assert audit["primaryBottom"] <= 900
                 assert not audit["cardOverflow"] and not audit["documentOverflow"]
                 assert audit["cardWidth"] <= 961
                 assert all(value >= 71 for value in audit["rowHeights"])
@@ -987,7 +1091,49 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
                     path.write_bytes(content)
                     assert content[:8] == b"\x89PNG\r\n\x1a\n" and len(content) > 5000
                     captured.add(condition)
+            if server is not None and index == 0:
+                attempt = next(iter(server.sessions))
+                before = len(server.sessions[attempt]["requests"])
+                cdp.click("formal-q1")
+                cdp.wait("document.querySelector('#formal-q1-error').textContent.length > 0")
+                assert len(server.sessions[attempt]["requests"]) == before
+                assert cdp.eval(
+                    "document.activeElement === document.querySelector('input[name=\"formal-q1\"]')"
+                    " && document.activeElement.getAttribute('aria-invalid') === 'true'"
+                )
             cdp.choose_and_click("formal-q1", "formal-q1")
+            cdp.wait(
+                "document.querySelector('.locked-summary[role=\"status\"]')"
+                " && document.querySelector('#q2-heading')"
+            )
+            locked = cdp.eval("""(() => ({
+              text:document.querySelector('.locked-summary').innerText,
+              q1Button:document.querySelector('[data-action="formal-q1"]'),
+              focus:document.activeElement.id,
+              h1Count:document.querySelectorAll('#stage h1').length,
+              helper:document.querySelector('#formal-q2-helper')?.innerText || null
+            }))()""")
+            assert locked["q1Button"] is None
+            assert locked["focus"] == "q2-heading"
+            assert locked["h1Count"] == 1
+            assert ("cannot be changed" in locked["text"]) == (locale == "en")
+            assert ("不能更改" in locked["text"]) == (locale == "zh-Hans")
+            if locked["helper"]:
+                coverage_helpers += 1
+                assert locked["helper"] in {
+                    "Usable does not mean positive.",
+                    "“可用”不等于“结果为正”。",
+                }
+            if server is not None and index == 0:
+                attempt = next(iter(server.sessions))
+                before = len(server.sessions[attempt]["requests"])
+                cdp.click("formal-q2")
+                cdp.wait("document.querySelector('#formal-q2-error').textContent.length > 0")
+                assert len(server.sessions[attempt]["requests"]) == before
+                assert cdp.eval(
+                    "document.activeElement === document.querySelector('input[name=\"formal-q2\"]')"
+                    " && document.activeElement.getAttribute('aria-invalid') === 'true'"
+                )
             cdp.choose_and_click("formal-q2", "formal-q2")
             if index in (4, 9):
                 cdp.wait("document.querySelector('[data-action=\"ease-skip\"]')")
@@ -999,11 +1145,12 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
         assert cdp.eval("document.querySelector('[data-action=\"finish\"]') !== null")
         if audit_geometry:
             assert captured == {"contract", "flat"}
+            assert coverage_helpers == 2
             body = cdp.eval("document.body.innerText")
             if locale == "en":
-                assert "模拟评估记录" not in body
+                assert "使用虚构教学数值的模拟记录" not in body
             else:
-                assert "Simulated evaluation record" not in body
+                assert "Simulated record with fabricated teaching values" not in body
 
     def assert_manual_downloads(cdp, server):
         before_json = len(list(downloads.glob("*.json")))
@@ -1056,9 +1203,9 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
                             cdp.call("Emulation.setPageScaleFactor", {"pageScaleFactor": zoom})
                             start_formal(
                                 cdp, f"G{case_index}{browser_name[0]}",
-                                sequence, locale, True,
+                                sequence, locale, True, server,
                             )
-                            finish_formal(cdp, locale, True, label)
+                            finish_formal(cdp, locale, True, label, server)
                             assert_manual_downloads(cdp, server)
                         finally:
                             cdp.close()
@@ -1124,7 +1271,30 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
                             )
                             cdp.wait("!document.querySelector('#save-exit-button').hidden")
                             attempt = next(iter(server.sessions))
+                            before = len(server.sessions[attempt]["requests"])
                             cdp.click("save-exit")
+                            cdp.wait("document.querySelector('#save-exit-dialog').open")
+                            dialog = cdp.eval("""(() => ({
+                              role:document.querySelector('#save-exit-dialog').tagName,
+                              text:document.querySelector('#save-exit-dialog').innerText,
+                              focus:document.activeElement.dataset.action
+                            }))()""")
+                            assert dialog["role"] == "DIALOG"
+                            assert dialog["focus"] == "cancel-save-exit"
+                            assert (
+                                "cannot resume" in dialog["text"].lower()
+                                if locale == "en" else "无法恢复" in dialog["text"]
+                            )
+                            cdp.click("cancel-save-exit")
+                            cdp.wait("!document.querySelector('#save-exit-dialog').open")
+                            assert len(server.sessions[attempt]["requests"]) == before
+                            assert server.sessions[attempt]["phase"] == "q1"
+                            assert cdp.eval(
+                                "document.activeElement.id === 'save-exit-button'"
+                            )
+                            cdp.click("save-exit")
+                            cdp.wait("document.querySelector('#save-exit-dialog').open")
+                            cdp.click("confirm-save-exit")
                             cdp.wait(
                                 "document.querySelector('[data-action=\"download-json\"]')"
                             )

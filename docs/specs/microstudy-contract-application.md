@@ -1,7 +1,7 @@
 # Spec: Contract Legibility/Application Micro-Study
 
 - **Spec ID:** `microstudy-contract-application`
-- **Status:** `DRAFT / NOT FROZEN / bilingual owner-local-preview engineering / no human data`
+- **Status:** `DRAFT / NOT FROZEN / novice-UX revision implemented pending independent hostile audit / no human data`
 - **Study class:** exploratory formative micro-study
 - **Authorized:** DRAFT protocol, simulated bilingual materials, validators, and owner-local loopback implementation
 - **Not authorized:** recruitment, ethics administration, pilot/data collection, public deployment, or paper changes
@@ -22,6 +22,11 @@ links, answer keys, condition assignment, export schema, and validation rules.
 Each locale branch owns every participant-facing string. The canonical UTF-8
 locale bundle version/hash is derived from that branch and validated. Markdown
 must not become a second copy, and JavaScript must not hardcode either locale.
+The novice-UX revision is material schema
+`microstudy-stimuli-v8-bilingual-novice-ux` and materials version
+`microstudy-contract-application-20260811-v8-novice-ux-draft`. V7 and V8
+previews are distinct materials and must not be pooled or represented as one
+version. The signed V4 export schema is unchanged.
 
 Run:
 
@@ -38,24 +43,50 @@ The study measures **structured rule application**: whether technical GenAI user
 
 The treatment is a semantic-organization package:
 
-- **Contract:** exact labels `READ`, `TRANSFER`, `BOUNDED PROMPT COMPARATOR`, `CALIBRATION WARNING`, `EVIDENCE TIER`, in fixed role order.
+- **Contract:** participant-visible labels `Initial check`, `Paired comparison`,
+  `Reference setup`, `Consistency check`, `Applicable setting` (Chinese:
+  `初始检查`, `配对比较`, `参照设置`, `一致性检查`, `适用情境`) in fixed role order.
 - **Flat:** exact neutral labels `Evidence A`–`Evidence E`, with per-item order read from `flat_order`.
 - Both consume the same canonical proposition map and use identical questions, options, dimensions, word limits, viewport, and no-scroll behavior.
 
-Common onboarding symmetrically explains only the four states and the five
-neutral information types: initial check, paired comparison, reference setup,
-consistency check, and applicable setting. It does not show Contract labels, the
-complete router, threshold priority, or a row-to-answer lookup. Contract labels
-appear only as visible row labels in formal Contract cards. Flat uses only the
-selected locale's neutral Evidence A–E labels. Formal body text, Q1, Q2, and
-options contain no Contract label tokens; router inputs and answer keys remain
-private and nonlocalized.
+The internal stable role-ID mapping remains
+`representation→Initial check`, `comparison→Paired comparison`,
+`comparator→Reference setup`, `coherence→Consistency check`, and
+`scope→Applicable setting`; those internal IDs, the older academic labels
+`READ`/`TRANSFER`/`BOUNDED PROMPT COMPARATOR`/`CALIBRATION WARNING`/
+`EVIDENCE TIER`, router inputs, and correct keys never enter participant
+common/Flat copy, DOM, ARIA, or endpoint projections. Flat receives no common
+row mapping.
 
-Every formal card begins with the selected locale's translation of `Simulated
-evaluation record`. The one practice is a separate community activity-room
-booking narrative, not a five-row card. Q1 is persisted and irreversibly locked
-before Q2 appears. Formal trials show no correctness feedback. The primary
-outcome remains:
+Welcome states the task as “Five-fact decision task,” summarizes one practice
+plus ten formal records and an about-ten-minute estimate explicitly marked
+not timing-validated, explains anonymous participant codes and sequence order,
+and keeps the DRAFT/no-recruitment/no-ethics status visible before a collapsed
+privacy/server details block. No-resume is visible outside the details block.
+Common onboarding uses three steps and four symmetric plain-language states,
+with the explicit distinction `Unresolved = cannot yet tell` versus
+`Withheld = can tell and the decision is not to support`.
+
+The single practice uses the same five-row card DOM/CSS as formal records but
+only `Fact 1`–`Fact 5` / `事实 1`–`事实 5`. Its independent IDs and positions
+are disjoint from formal primitive roles. It presents a Saturday-afternoon room
+request, completed safety check, blocked emergency exit, clear-exit policy, and
+room/time-specific cannot-open result. Q1 is booking action with key
+`Q1_WITHHELD`; Q2 asks only what happens after Q1 submission and retains key
+`D`. Feedback explains only the safety example and lock. There is no second
+practice, quiz, attention check, or formal numeric/interval/margin/model/method/
+tier pattern.
+
+After practice, a transition restates five facts → locked status → follow-up.
+Every formal stage has one visible H1 (`Record n of 10` / `第 n/10 条记录`) and
+a secondary Question/Block line. Simulated/fabricated-record metadata is
+low-salience collapsed context; the five rows never collapse. The exact guard
+“Use all five facts; row order and Fact/Evidence labels are not clues.” and its
+Chinese counterpart appears at onboarding, practice/transition, and formal
+records. Q1 is persisted and irreversibly locked before Q2 appears. Successful
+Q1 replaces radios and submit control with a persistent `role=status` summary
+of the chosen state, immutability, and same-five-facts instruction, then focuses
+the Q2 heading. Formal trials show no correctness feedback. The primary outcome remains:
 
 ```text
 CCA = 1 iff Q1 is correct AND Q2 is correct
@@ -141,12 +172,19 @@ there is no switch after start. Refresh or close returns to the language gate
 without a recovery token; an abandoned volatile server session remains only
 until its monotonic TTL.
 
-The single unscored practice is the approved community activity-room booking
-narrative. It contains no five-row card, Contract labels, Evidence A–E, formal
-numbers, interval, margin, tier, model, method, or formal task content. Its Q1
-key is `Q1_WITHHELD`; Q2 asks only about Q1 lock behavior and has key `D`.
-Feedback explains only that example and the lock. There is one practice and no
+The single unscored practice is the approved five-fact room-safety record. It
+uses the formal five-row visual DOM/CSS but independent practice IDs and only
+Fact 1–5 labels. It contains no Contract labels, Evidence A–E, formal numbers,
+interval, margin, tier, model, method, or formal-record pattern. Its Q1 key is
+`Q1_WITHHELD`; Q2 asks only about Q1 lock behavior and has key `D`. Feedback
+explains only that safety example and the lock. There is one practice and no
 quiz or attention check.
+
+Only `Q2-COVERAGE` participant wording changes in V8: “Which checks have
+completed, usable results in this record?” / “这条记录中，哪些检查已有完成且可用的结果？”
+with the helper “Usable does not mean positive” / ““可用”不等于“结果为正””.
+Its A/B/C/D IDs, option order, options, and per-item correct keys remain exactly
+unchanged. `Q2-NEXT` and `Q2-BASELINE` retain their construct and copy.
 
 The post-task manipulation diagnostic has one fixed four-option question/key,
 is descriptive only, and is never an exclusion criterion. The block-ease item
@@ -182,7 +220,11 @@ and relative monotonic timing only in volatile memory. Its strict endpoints are
 start/practice/Q1/Q2/ease/diagnostic/complete/save-exit/export; the browser cannot skip a
 phase or construct a completed export. All ten planned slots are exported only
 as server-signed complete or partial products. During every formal-study stage,
-`Save & Exit` atomically transitions the session to `export_ready` and freezes a
+`End & prepare partial export` first opens an accessible confirmation dialog.
+The dialog states that the session cannot resume, submitted answers freeze into
+a signed partial, unfinished answers remain missing, and no file downloads
+automatically. Cancel sends no request, changes no state, and returns focus.
+Confirm atomically transitions the session to `export_ready` and freezes a
 signed partial export (`complete=false`). Full completion uses the same
 `export_ready` lifecycle. The server retains that immutable product until the
 session TTL expires; JSON and CSV GETs are idempotent and retryable. The browser
@@ -271,7 +313,9 @@ The initial HTML has `lang=und`; selection sets the exact locale and each new
 stage focuses its `h1`. The Chinese stack includes common Simplified Chinese
 system fonts with safe line breaking and overflow. At 1440×900 and 1280×800,
 100% and 200% zoom may use page scrolling but must not clip or drop card
-content. Bootstrap contains no materials; welcome returns only selected-locale
+content. At the first 900 CSS pixels, welcome exposes the task core, record
+count, and start action; formal records expose their identity/count, five facts,
+and Q1 action. Bootstrap contains no materials; welcome returns only selected-locale
 common copy; formal endpoints return only the selected visible card/question
 projection. Browser state, network payloads, DOM, and ARIA must not contain the
 other locale's formal bundle, router, correct keys, primitive-role IDs, or
@@ -289,12 +333,16 @@ remain `PRE-RECRUITMENT` human gates.
 2. Validator metrics exactly match Section 4.
 3. P3-Y Q2 requests missing scope and Q1 remains withheld.
 4. No attention-check field, free text, duplicate materials source, or hardcoded website key exists.
-5. Registry and decision notes pin the final audited bilingual implementation
-   to `1702d7a4ae5132b09fd29d216502504c7afb493c`. The final independent audit
-   closed the TTL-renewal MAJOR and permits owner-local preview only; any later
-   docs-only audit-persistence commit is not the implementation code commit.
+5. Registry and D-0112 identify V8 as an owner-authorized local-preview UX
+   revision based on synthetic novice-agent role-play, not human-subject data.
+   The prior V7 audited implementation remains
+   `1702d7a4ae5132b09fd29d216502504c7afb493c`; V8 requires a fresh independent
+   hostile implementation audit before any equivalent audited-lineage claim.
 6. The website is loopback-only, memory-only, and consumes authoritative JSON.
 7. No recruitment, pilot, human data, public deployment, paper edit, or claim
    upgrade occurs in this revision.
 8. The maximum state is `READY_FOR_OWNER_LOCAL_PREVIEW_NO_HUMAN_DATA`; the
-   protocol remains `DRAFT / NOT FROZEN`.
+   protocol remains `DRAFT / NOT FROZEN`. AI role-play cannot demonstrate
+   ten-second comprehension or usability. Human bilingual semantic review,
+   manual screen-reader review, ethics/recruitment, timing, MDE/sample-size, and
+   Protocol Freeze remain open.

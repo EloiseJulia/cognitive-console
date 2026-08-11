@@ -7,7 +7,7 @@
 
 ## 1. Scope and design
 
-This exploratory formative within-participant study estimates whether a semantic-organization package changes technical GenAI users' structured application of a four-state contract to simulated records. Contract uses the exact English semantic labels `READ`, `TRANSFER`, `BOUNDED PROMPT COMPARATOR`, `CALIBRATION WARNING`, and `EVIDENCE TIER` (and stable-ID Simplified Chinese translations) only as formal Contract row labels in fixed order. Flat uses only neutral `Evidence A`–`Evidence E` / `证据 A`–`证据 E` labels with deterministic per-item row shuffles. Common onboarding and all shared formal body/question/option copy use neutral language. Label word-count and visual differences are acknowledged parts of treatment; no filler padding is permitted. It does not test deep integration, transfer, benefit, trust, safety, productivity, deployment, or latent control.
+This exploratory formative within-participant study estimates whether a semantic-organization package changes technical GenAI users' structured application of a four-state contract to simulated records. Contract uses the participant-visible labels `Initial check`, `Paired comparison`, `Reference setup`, `Consistency check`, and `Applicable setting` (and stable-ID Simplified Chinese equivalents) only as formal Contract row labels in fixed order. Internal primitive IDs and the older academic labels remain implementation/documentation concepts and never enter participant common/Flat copy, DOM, ARIA, or endpoint projections. Flat uses only neutral `Evidence A`–`Evidence E` / `证据 A`–`证据 E` labels with deterministic per-item row shuffles. Common onboarding and all shared formal body/question/option copy use neutral language. Label word-count and visual differences are acknowledged parts of treatment; no filler padding is permitted. It does not test deep integration, transfer, benefit, trust, safety, productivity, deployment, or latent control.
 
 There are ten formal trials, five per condition in two blocks, plus one different unscored practice. Q1 locks before Q2. The sole primary outcome is:
 
@@ -54,16 +54,30 @@ Simplified Chinese are stable-ID locale bundles in the authoritative JSON.
 Welcome may switch language; `/api/start` requires and immutably locks exact
 `ui_language`. Common onboarding symmetrically introduces the four states and
 the five neutral information types without the complete router, threshold
-priority, or row-to-answer lookup.
+priority, row-to-answer lookup, or Flat row mapping. Welcome states one practice
+plus ten formal records and an about-ten-minute estimate marked not
+timing-validated, explains anonymous-code and presentation-sequence fields, and
+keeps DRAFT/no-recruitment/no-ethics and no-resume text visible before collapsed
+privacy/server details. The onboarding flow has three steps and explicitly
+separates `Unresolved = cannot yet tell` from `Withheld = can tell and the
+decision is not to support`.
 
-The one practice is the approved community activity-room booking narrative:
+The one practice is the approved five-fact room-safety record:
 Q1=`Q1_WITHHELD`; Q2 asks only how the locked Q1 behaves and has key `D`.
-It is not a formal five-row card and contains no Contract labels, Evidence A–E,
-formal numeric/interval/margin/tier/model/method/task content, quiz, or attention
-check. Feedback explains only that example and lock behavior. The post-task
+It uses the same five-row visual DOM/CSS as formal records, but only Fact 1–5
+labels and independent IDs/positions with no formal-role mapping. It contains no
+Contract labels, Evidence A–E, formal numeric/interval/margin/tier/model/method
+content, quiz, or attention check. Feedback explains only that safety example
+and lock behavior. The exact no-position-clue guard appears at onboarding,
+practice/transition, and formal records. The post-task
 format-recognition diagnostic is fixed, descriptive, and never excludes. Block
 ease uses stable IDs `SEQ1`–`SEQ7`, appears after each block, is nullable, and is
 descriptive. There is no free text.
+
+Only Q2-COVERAGE participant wording is clarified to ask which checks have
+completed usable results and to state that usable does not mean positive. Its
+option IDs/order/keys and all router-derived per-item correct keys remain
+unchanged. Q2-NEXT and Q2-BASELINE constructs are unchanged.
 
 The JSON `render_contract` is authoritative for DOM tags/classes/data attributes,
 the single `primitive_evidence` text binding, Contract fixed order, Flat per-item
@@ -86,9 +100,12 @@ submitted == complete
 
 Primary available-case CCA uses complete trials only. Eligibility requires at least four complete trials per condition and eight total. The required sensitivity uses all ten planned trials and treats a missing component as incorrect.
 
-The formal-stage `Save & Exit` creates a signed partial export with all ten slots,
-nullable ease/diagnostic fields, and relative RTs, downloads JSON/CSV, and ends
-without performance feedback. Silent browser abandonment produces no export and
+The formal-stage `End & prepare partial export` opens an accessible confirmation
+dialog. It states no resume, frozen submitted answers, missing unfinished
+answers, and no automatic download. Cancel sends no request and preserves state;
+confirm creates a signed partial export with all ten slots, nullable
+ease/diagnostic fields, and relative RTs, and ends without performance feedback.
+JSON/CSV remain explicit manual downloads. Silent browser abandonment produces no export and
 is unobservable here; if recruitment is authorized, only the recruitment-platform
 completion log can report it, and it cannot be inserted into study-export ITT.
 
@@ -123,13 +140,17 @@ primary paired sign-flip test. Primary-test MDE remains
 
 ## 6. No-upgrade and human-gate rule
 
-This remains `DRAFT / NOT FROZEN`. Bilingual owner-local-preview engineering
-is implemented and independently audited at
-`1702d7a4ae5132b09fd29d216502504c7afb493c`; a later docs-only
-audit-persistence commit is not the implementation code commit. This lineage
-closure does not authorize recruitment, ethics activity, timing pilot, human
-data collection, public deployment, paper edit, or claim upgrade. Human
-English/Chinese stable-ID semantic review, manual screen-reader evaluation,
-ethics/recruitment approval, timing/MDE gates, and Protocol Freeze remain
-required. Automated QA and the final hostile audit cannot close a human gate or
-turn this micro-study into paper evidence.
+This remains `DRAFT / NOT FROZEN`. The prior V7 bilingual implementation was
+independently audited at `1702d7a4ae5132b09fd29d216502504c7afb493c`. The V8
+novice-UX revision uses schema/material identity
+`microstudy-stimuli-v8-bilingual-novice-ux` /
+`microstudy-contract-application-20260811-v8-novice-ux-draft` and requires a
+fresh hostile implementation audit. V7 and V8 exports cannot be treated as one
+material version. Owner authorization is based on synthetic novice-agent
+role-play feedback; those AI role-plays are not human-subject data and cannot
+demonstrate ten-second comprehension or usability. This revision does not
+authorize recruitment, ethics activity, timing pilot, human data collection,
+public deployment, paper edit, or claim upgrade. Human English/Chinese stable-ID
+semantic review, manual screen-reader evaluation, ethics/recruitment approval,
+timing/MDE gates, and Protocol Freeze remain required. Automated QA cannot close
+a human gate or turn this micro-study into paper evidence.

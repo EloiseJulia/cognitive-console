@@ -1,6 +1,6 @@
 {
-  "schema_version": "microstudy-stimuli-v7-bilingual",
-  "materials_version": "microstudy-contract-application-20260811-v7-bilingual-draft",
+  "schema_version": "microstudy-stimuli-v8-bilingual-novice-ux",
+  "materials_version": "microstudy-contract-application-20260811-v8-novice-ux-draft",
   "status": "DRAFT_NOT_FROZEN_OWNER_LOCAL_PREVIEW_NO_HUMAN_DATA",
   "locale_contract": {
     "version": "microstudy-locale-contract-v1",
@@ -22,8 +22,15 @@
       "coherence",
       "scope"
     ],
+    "practice_fact_ids": [
+      "practice_schedule",
+      "practice_safety_check",
+      "practice_exit_hazard",
+      "practice_policy",
+      "practice_room_decision"
+    ],
     "render_contract": {
-      "version": "microstudy-render-contract-v2-bilingual",
+      "version": "microstudy-render-contract-v3-bilingual-novice-ux",
       "common_evidence_text_source": "locales[ui_language].formal.items[*].primitive_evidence",
       "conditions": {
         "contract": {
@@ -142,6 +149,12 @@
       "treatment_acknowledgement": {
         "label_word_count_and_visual_difference": "Contract labels intentionally differ from Flat labels in wording, word count, and visual footprint; this is part of the semantic-organization treatment.",
         "no_filler_padding": "Do not add filler words, hidden text, blank rows, spacer glyphs, or condition-specific padding to equalize labels."
+      },
+      "practice_independence": {
+        "labels": "selected locale practice.facts[*].label",
+        "fact_ids": "nonlocalized.practice_fact_ids",
+        "formal_role_mapping": "none",
+        "invariant": "Practice fact IDs and positions are disjoint from primitive_ids and do not encode or teach a Contract or Flat row mapping."
       }
     },
     "router": {
@@ -677,50 +690,72 @@
   "locales": {
     "en": {
       "language_name": "English",
-      "document_title": "Task preview — local only",
+      "document_title": "Five-fact decision task — local preview",
+      "position_guard": "Use all five facts; row order and Fact/Evidence labels are not clues.",
       "chrome": {
-        "header_title": "Task preview · local only",
+        "header_title": "Five-fact decision task · local preview",
         "privacy_note": "The local server does not persist participant data.",
         "footer": "Simulated materials · loopback server · memory only",
-        "save_exit": "Save & Exit"
+        "save_exit": "End & prepare partial export"
       },
       "welcome": {
-        "heading": "Rule-application task preview",
-        "warning": "Owner-operated local preview only. Use a desktop window at least 1280px wide. This page does not claim ethics approval or recruit participants.",
-        "setup_placeholder": "Study information and consent text will be supplied by the owner after the applicable ethics and recruitment process. This DRAFT does not provide or imply ethics approval.",
-        "participant_code": "Owner-assigned anonymous participant code",
-        "sequence": "Owner-assigned sequence",
+        "heading": "Five-fact decision task",
+        "subtitle": "Read five facts, choose one status, then answer one follow-up question.",
+        "task_size": "You will complete 1 practice record and 10 formal records.",
+        "estimate": "Estimated time: about 10 minutes. This estimate has not been timing-validated.",
+        "warning": "DRAFT owner-local preview only · no recruitment · no ethics approval.",
+        "no_resume": "There is no resume function. Refreshing, closing, or ending the session returns you to the language gate.",
+        "setup_placeholder": "Study information and consent text would require the applicable ethics and recruitment process. This DRAFT does not provide or imply approval.",
+        "participant_code": "Anonymous participant code",
+        "participant_code_help": "Enter the anonymous code assigned by the owner. Do not enter your name.",
+        "sequence": "Presentation sequence",
+        "sequence_help": "The sequence changes presentation order only; it is not an answer hint.",
+        "details_summary": "Privacy and local-server details",
+        "details": [
+          {
+            "id": "privacy",
+            "text": "The loopback server keeps this attempt in volatile memory only and does not persist participant data."
+          },
+          {
+            "id": "downloads",
+            "text": "Exports are prepared only after completion or confirmed early ending. Files never download automatically."
+          },
+          {
+            "id": "recovery",
+            "text": "The server provides no recovery token, account, cookie, or browser storage."
+          }
+        ],
         "start": "Start preview",
         "switch_language": "简体中文"
       },
       "onboarding": {
-        "heading": "Before you begin",
-        "intro": "Each formal record contains five kinds of information. Use all of them to choose one of four current states. Your answer locks when submitted; then answer a second question.",
+        "heading": "How the task works",
+        "intro": "Each record has five facts. Combine all five to choose one status, lock it, and then answer one follow-up question about the same record.",
         "glossary": [
           {
             "id": "initial_check",
             "term": "Initial check",
-            "description": "Whether the first check for this setting was completed and what it found."
+            "description": "Whether the first check was completed and what it found."
           },
           {
             "id": "paired_comparison",
             "term": "Paired comparison",
-            "description": "Whether a paired comparison was completed, with its estimate and interval."
+            "description": "Whether a comparison was completed and what its result was."
           },
           {
             "id": "reference_setup",
             "term": "Reference setup",
-            "description": "How the reference used for comparison was set up."
+            "description": "How the reference for the comparison was set up."
           },
           {
             "id": "consistency_check",
             "term": "Consistency check",
-            "description": "Whether the registered consistency requirement was met."
+            "description": "Whether the required consistency check passed."
           },
           {
             "id": "applicability",
             "term": "Applicable setting",
-            "description": "The exact setting to which the record applies."
+            "description": "The exact setting where the record applies."
           }
         ],
         "states_heading": "Four states",
@@ -728,41 +763,44 @@
           {
             "id": "Q1_UNRESOLVED",
             "label": "Unresolved",
-            "description": "Key information is missing, the initial check is unsupported, or the interval crosses zero."
+            "description": "The five facts do not yet support a decision; you cannot yet tell."
           },
           {
             "id": "Q1_DIAGNOSTIC",
             "label": "Diagnostic only",
-            "description": "The initial check is supported, but the paired comparison has not been run."
+            "description": "The initial check is usable, but the paired comparison has not been completed."
           },
           {
             "id": "Q1_WITHHELD",
             "label": "Withheld",
-            "description": "The comparison does not meet the requirement, or the consistency check fails or is unavailable."
+            "description": "The five facts support a decision, and the decision is not to support."
           },
           {
             "id": "Q1_SUPPORTED",
             "label": "Supported for this setting",
-            "description": "The comparison clearly meets the requirement and consistency passes, only for the stated setting."
+            "description": "The five facts support use, only in the stated setting."
           }
         ],
-        "steps_heading": "How to answer",
+        "state_distinction": "Important: Unresolved means you cannot yet tell. Withheld means you can tell, and the decision is not to support.",
+        "steps_heading": "Three-step flow",
         "steps": [
-          "Consider all five facts; do not guess from row position.",
-          "Choose the current state first. After submission, it cannot be changed.",
-          "Answer the second question. Formal trials do not show correctness feedback.",
-          "A formal trial counts as correct only when both answers are correct."
+          "Read all five facts.",
+          "Choose one status and lock it.",
+          "Use the same five facts to answer one follow-up question."
         ],
         "continue_practice": "Continue to practice"
       },
       "formal": {
-        "notice": "Simulated evaluation record",
+        "context": {
+          "summary": "Record context",
+          "body": "Simulated record with fabricated teaching values."
+        },
         "contract_labels": {
-          "representation": "READ",
-          "comparison": "TRANSFER",
-          "comparator": "BOUNDED PROMPT COMPARATOR",
-          "coherence": "CALIBRATION WARNING",
-          "scope": "EVIDENCE TIER"
+          "representation": "Initial check",
+          "comparison": "Paired comparison",
+          "comparator": "Reference setup",
+          "coherence": "Consistency check",
+          "scope": "Applicable setting"
         },
         "flat_labels": [
           "Evidence A",
@@ -773,7 +811,7 @@
         ],
         "evidence_panel_aria": "Evidence panel",
         "q1": {
-          "text": "Using all the information, which state should be shown now?",
+          "text": "Use all five facts. Choose one status; submitting locks it before the follow-up question.",
           "options": [
             {
               "id": "Q1_UNRESOLVED",
@@ -797,6 +835,7 @@
           {
             "id": "Q2-NEXT",
             "text": "What needs to be checked next?",
+            "helper": null,
             "options": [
               {
                 "id": "A",
@@ -819,6 +858,7 @@
           {
             "id": "Q2-BASELINE",
             "text": "What does this record say about the reference?",
+            "helper": null,
             "options": [
               {
                 "id": "A",
@@ -840,7 +880,8 @@
           },
           {
             "id": "Q2-COVERAGE",
-            "text": "Which information is directly established in this record?",
+            "text": "Which checks have completed, usable results in this record?",
+            "helper": "Usable does not mean positive.",
             "options": [
               {
                 "id": "A",
@@ -966,10 +1007,37 @@
       },
       "practice": {
         "heading": "Practice",
-        "notice": "Community activity room example",
-        "narrative": "A community center has a request to use an activity room on Saturday afternoon. Another group requested the same time, and both groups meet the basic requirements. The center's rule says that if priority cannot be decided, the booking is not confirmed and a staff member reviews it.",
+        "notice": "Practice record",
+        "card_aria": "Practice facts",
+        "facts": [
+          {
+            "id": "practice_schedule",
+            "label": "Fact 1",
+            "body": "The room is requested for Saturday afternoon."
+          },
+          {
+            "id": "practice_safety_check",
+            "label": "Fact 2",
+            "body": "The safety check is complete."
+          },
+          {
+            "id": "practice_exit_hazard",
+            "label": "Fact 3",
+            "body": "A blocked emergency exit was found."
+          },
+          {
+            "id": "practice_policy",
+            "label": "Fact 4",
+            "body": "Policy requires exits to remain clear while the room is in use."
+          },
+          {
+            "id": "practice_room_decision",
+            "label": "Fact 5",
+            "body": "The result applies to this room and time: the room cannot be opened."
+          }
+        ],
         "q1": {
-          "text": "What should happen to the booking now?",
+          "text": "What should happen to this booking?",
           "options": [
             {
               "id": "Q1_UNRESOLVED",
@@ -990,7 +1058,7 @@
           ]
         },
         "q2": {
-          "text": "After submitting the first answer, which action matches this flow's lock behavior?",
+          "text": "After you submit Question 1, what happens next?",
           "options": [
             {
               "id": "A",
@@ -1010,13 +1078,25 @@
             }
           ]
         },
-        "feedback": "In this example, both requests meet the basic requirements but priority cannot be decided, so booking confirmation is withheld. Once the first answer is submitted, it stays locked; the second question does not change it.",
-        "submit_q1": "Submit practice Q1",
+        "feedback": "In this safety example, the blocked emergency exit means the room cannot open, so the booking is withheld. Question 1 stays locked while you answer Question 2.",
+        "submit_q1": "Lock practice Q1 answer",
         "submit_q2": "Submit practice Q2",
-        "begin_formal": "Begin formal trials"
+        "begin_formal": "Begin 10 formal records"
+      },
+      "transition": {
+        "heading": "Practice complete",
+        "intro": "The 10 formal records use the same flow and do not show correctness feedback.",
+        "steps": [
+          "Read all five facts.",
+          "Lock one status.",
+          "Use the same five facts for the follow-up question."
+        ]
+      },
+      "locked": {
+        "summary": "Q1 locked: {state}. This answer cannot be changed. Use the same five facts for Question 2."
       },
       "buttons": {
-        "submit_q1": "Submit Q1 and lock answer",
+        "submit_q1": "Lock Q1 answer",
         "submit_q2": "Submit Q2 and continue",
         "continue": "Continue",
         "prefer_not": "Prefer not to answer",
@@ -1026,8 +1106,21 @@
         "finish": "Finish"
       },
       "progress": {
-        "formal_trial": "Formal trial {current} of 10 · Block {block}",
+        "record_heading": "Record {current} of 10",
+        "question_progress": "Question {question} of 2 · Block {block}",
         "block_complete": "Block {block} complete"
+      },
+      "save_exit": {
+        "heading": "End this session and prepare a partial export?",
+        "intro": "Confirm only if you want to end now.",
+        "consequences": [
+          "You cannot resume this session after ending it.",
+          "Answers already submitted will be frozen in a signed partial export.",
+          "Unfinished answers will remain missing.",
+          "No file downloads automatically; choose a format on the next screen."
+        ],
+        "cancel": "Cancel",
+        "confirm": "End & prepare partial export"
       },
       "ease": {
         "question": "How easy or difficult was it to apply the rule in the block you just completed?",
@@ -1086,69 +1179,94 @@
       },
       "export": {
         "complete_heading": "Preview complete",
-        "partial_heading": "Session ended",
+        "partial_heading": "Session ended — partial export prepared",
         "completed_trials": "Completed formal trials: 10 of 10.",
-        "partial_ready": "Your signed partial export is ready. No performance feedback is shown.",
-        "ready": "Export ready. Choose each format to download manually.",
-        "retry": "If a download fails, the buttons remain available; retry while this local server retains the export.",
+        "partial_ready": "This session cannot be resumed. Submitted answers are frozen in the signed partial export; unfinished answers remain missing.",
+        "ready": "Export ready. No file downloads automatically; choose a format below.",
+        "retry": "If a download fails, the buttons remain available while this local server retains the export.",
         "download_started": "{format} download started. Both formats remain available.",
         "finished_heading": "Finished",
-        "finished": "This browser view is cleared. The local server retains the signed export until its session TTL expires."
+        "finished": "This session is finished and cannot be resumed. The browser view is cleared; the local server retains the signed export until its session TTL expires."
       },
       "debrief": "These are simulated teaching records with fabricated values. This task assesses structured rule application, not real-world benefit. Responses do not change the paper's claims.",
       "errors": {
         "load": "Could not load materials for the selected language.",
         "state": "Study state error.",
         "download": "Signed export download failed.",
-        "export_not_ready": "Signed export is not ready."
+        "export_not_ready": "Signed export is not ready.",
+        "required_q1": "Choose one status before locking Question 1.",
+        "required_q2": "Choose one answer before submitting Question 2.",
+        "required_choice": "Choose one answer before continuing."
       }
     },
     "zh-Hans": {
       "language_name": "简体中文",
-      "document_title": "任务预览 — 仅限本地",
+      "document_title": "五条事实判断任务 — 本地预览",
+      "position_guard": "请结合全部五条事实；行顺序和事实/证据编号不是线索。",
       "chrome": {
-        "header_title": "任务预览 · 仅限本地",
+        "header_title": "五条事实判断任务 · 本地预览",
         "privacy_note": "本地服务器不会持久保存参与者数据。",
         "footer": "模拟材料 · 回环服务器 · 仅内存",
-        "save_exit": "保存并退出"
+        "save_exit": "结束并生成部分导出"
       },
       "welcome": {
-        "heading": "规则应用任务预览",
-        "warning": "仅供负责人本地预览。请使用至少 1280 像素宽的桌面窗口。本页面不表示已获伦理批准，也不招募参与者。",
-        "setup_placeholder": "适用的伦理与招募流程完成后，负责人将提供研究说明与同意文本。本 DRAFT 不表示已获伦理批准。",
-        "participant_code": "负责人分配的匿名参与者代码",
-        "sequence": "负责人分配的序列",
+        "heading": "五条事实判断任务",
+        "subtitle": "阅读五条事实，选择一个状态，再回答一个跟进问题。",
+        "task_size": "你将完成 1 条练习记录和 10 条正式记录。",
+        "estimate": "预计约 10 分钟。此估计尚未经过计时验证。",
+        "warning": "仅限负责人本地预览的 DRAFT · 不招募 · 未获伦理批准。",
+        "no_resume": "本任务不能恢复。刷新、关闭或结束会话后，将返回语言选择页。",
+        "setup_placeholder": "研究说明与同意文本须经过适用的伦理与招募流程。本 DRAFT 不提供或暗示已获批准。",
+        "participant_code": "匿名参与者代码",
+        "participant_code_help": "请输入负责人分配的匿名代码，请勿填写姓名。",
+        "sequence": "呈现序列",
+        "sequence_help": "序列只改变呈现顺序，不提供答案提示。",
+        "details_summary": "隐私与本地服务器详情",
+        "details": [
+          {
+            "id": "privacy",
+            "text": "回环服务器只在易失内存中保留本次尝试，不会持久保存参与者数据。"
+          },
+          {
+            "id": "downloads",
+            "text": "仅在完成任务或确认提前结束后生成导出；文件不会自动下载。"
+          },
+          {
+            "id": "recovery",
+            "text": "服务器不提供恢复令牌、账户、Cookie 或浏览器存储。"
+          }
+        ],
         "start": "开始预览",
         "switch_language": "English"
       },
       "onboarding": {
-        "heading": "开始前",
-        "intro": "每条正式记录包含五类信息。请结合全部信息，先选择当前应显示的四种状态之一；提交后答案会锁定。随后回答第二个问题。",
+        "heading": "任务流程",
+        "intro": "每条记录包含五条事实。请结合全部五条事实选择一个状态并锁定，再根据同一条记录回答一个跟进问题。",
         "glossary": [
           {
             "id": "initial_check",
             "term": "初始检查",
-            "description": "说明此设置的第一项检查是否已完成及其结果。"
+            "description": "说明第一项检查是否已完成及其结果。"
           },
           {
             "id": "paired_comparison",
             "term": "配对比较",
-            "description": "说明是否完成配对比较，以及估计值和区间。"
+            "description": "说明配对比较是否已完成及其结果。"
           },
           {
             "id": "reference_setup",
             "term": "参照设置",
-            "description": "说明用于比较的参照如何设置。"
+            "description": "说明比较所用的参照如何设置。"
           },
           {
             "id": "consistency_check",
             "term": "一致性检查",
-            "description": "说明预先登记的一致性要求是否满足。"
+            "description": "说明要求的一致性检查是否通过。"
           },
           {
             "id": "applicability",
             "term": "适用情境",
-            "description": "说明结果适用于哪个明确设置。"
+            "description": "说明记录适用于哪个明确设置。"
           }
         ],
         "states_heading": "四种状态",
@@ -1156,41 +1274,44 @@
           {
             "id": "Q1_UNRESOLVED",
             "label": "尚未确定",
-            "description": "关键信息缺失、未通过初始检查，或比较区间跨过零。"
+            "description": "五条事实尚不足以作出判断；目前还不能确定。"
           },
           {
             "id": "Q1_DIAGNOSTIC",
             "label": "仅供诊断",
-            "description": "初始检查已有支持，但配对比较尚未进行。"
+            "description": "初始检查已有可用结果，但配对比较尚未完成。"
           },
           {
             "id": "Q1_WITHHELD",
             "label": "暂不启用",
-            "description": "比较未达到要求，或一致性检查未通过或不可用。"
+            "description": "五条事实足以作出判断，且结论是不支持。"
           },
           {
             "id": "Q1_SUPPORTED",
             "label": "可在该设置下启用",
-            "description": "比较清楚达到要求，且一致性检查通过；只适用于所写设置。"
+            "description": "五条事实支持使用，但只适用于所写情境。"
           }
         ],
-        "steps_heading": "如何作答",
+        "state_distinction": "请特别区分：尚未确定表示目前还不能判断；暂不启用表示已经能判断，且结论是不支持。",
+        "steps_heading": "三步流程",
         "steps": [
-          "阅读五条信息，不要根据行的位置猜测。",
-          "先选择当前状态并提交。提交后不能返回修改。",
-          "回答第二个问题。正式题不显示正误反馈。",
-          "只有两个问题都答对，该正式题才计为正确。"
+          "阅读全部五条事实。",
+          "选择一个状态并锁定。",
+          "根据同样五条事实回答一个跟进问题。"
         ],
         "continue_practice": "继续练习"
       },
       "formal": {
-        "notice": "模拟评估记录",
+        "context": {
+          "summary": "记录背景",
+          "body": "使用虚构教学数值的模拟记录。"
+        },
         "contract_labels": {
-          "representation": "初始读取",
-          "comparison": "迁移比较",
-          "comparator": "有界提示比较器",
-          "coherence": "校准警示",
-          "scope": "证据层级"
+          "representation": "初始检查",
+          "comparison": "配对比较",
+          "comparator": "参照设置",
+          "coherence": "一致性检查",
+          "scope": "适用情境"
         },
         "flat_labels": [
           "证据 A",
@@ -1201,7 +1322,7 @@
         ],
         "evidence_panel_aria": "证据面板",
         "q1": {
-          "text": "结合全部信息，当前应显示哪一种状态？",
+          "text": "请结合全部五条事实选择一个状态；提交后答案会锁定，再进入跟进问题。",
           "options": [
             {
               "id": "Q1_UNRESOLVED",
@@ -1225,6 +1346,7 @@
           {
             "id": "Q2-NEXT",
             "text": "下一步需要检查什么？",
+            "helper": null,
             "options": [
               {
                 "id": "A",
@@ -1247,6 +1369,7 @@
           {
             "id": "Q2-BASELINE",
             "text": "这条记录说明参照值处于什么情况？",
+            "helper": null,
             "options": [
               {
                 "id": "A",
@@ -1268,7 +1391,8 @@
           },
           {
             "id": "Q2-COVERAGE",
-            "text": "这条记录直接确定了哪些信息？",
+            "text": "这条记录中，哪些检查已有完成且可用的结果？",
+            "helper": "“可用”不等于“结果为正”。",
             "options": [
               {
                 "id": "A",
@@ -1394,10 +1518,37 @@
       },
       "practice": {
         "heading": "练习",
-        "notice": "社区活动室预约示例",
-        "narrative": "社区中心的活动室已有人申请周六下午使用。该时段还有另一项申请，两个团体都符合基本条件。中心规定：如无法确认哪项申请应优先，就暂不确认预约，等待工作人员处理。",
+        "notice": "练习记录",
+        "card_aria": "练习事实",
+        "facts": [
+          {
+            "id": "practice_schedule",
+            "label": "事实 1",
+            "body": "有人申请周六下午使用该房间。"
+          },
+          {
+            "id": "practice_safety_check",
+            "label": "事实 2",
+            "body": "安全检查已完成。"
+          },
+          {
+            "id": "practice_exit_hazard",
+            "label": "事实 3",
+            "body": "检查发现紧急出口受阻。"
+          },
+          {
+            "id": "practice_policy",
+            "label": "事实 4",
+            "body": "政策要求房间使用期间紧急出口保持畅通。"
+          },
+          {
+            "id": "practice_room_decision",
+            "label": "事实 5",
+            "body": "结论适用于该房间和时段：房间不能开放。"
+          }
+        ],
         "q1": {
-          "text": "此时预约应处于哪种状态？",
+          "text": "应该如何处理这项预约？",
           "options": [
             {
               "id": "Q1_UNRESOLVED",
@@ -1418,7 +1569,7 @@
           ]
         },
         "q2": {
-          "text": "提交第一个答案后，哪项操作符合本流程的锁定方式？",
+          "text": "提交问题 1 后，接下来会怎样？",
           "options": [
             {
               "id": "A",
@@ -1438,13 +1589,25 @@
             }
           ]
         },
-        "feedback": "本例中，两项申请都符合基本条件，但无法确定优先顺序，因此暂不确认预约。第一个答案一经提交便会锁定；第二个问题不会修改它。",
-        "submit_q1": "提交练习问题 1",
+        "feedback": "在这个安全示例中，紧急出口受阻，因此房间不能开放，预约应暂不启用。问题 1 提交后保持锁定，再回答问题 2。",
+        "submit_q1": "锁定练习问题 1 答案",
         "submit_q2": "提交练习问题 2",
-        "begin_formal": "开始正式题"
+        "begin_formal": "开始 10 条正式记录"
+      },
+      "transition": {
+        "heading": "练习完成",
+        "intro": "接下来的 10 条正式记录采用相同流程，且不显示正误反馈。",
+        "steps": [
+          "阅读全部五条事实。",
+          "锁定一个状态。",
+          "根据同样五条事实回答跟进问题。"
+        ]
+      },
+      "locked": {
+        "summary": "问题 1 已锁定：{state}。答案不能更改。请根据同样五条事实回答问题 2。"
       },
       "buttons": {
-        "submit_q1": "提交问题 1 并锁定答案",
+        "submit_q1": "锁定问题 1 答案",
         "submit_q2": "提交问题 2 并继续",
         "continue": "继续",
         "prefer_not": "不回答",
@@ -1454,8 +1617,21 @@
         "finish": "完成"
       },
       "progress": {
-        "formal_trial": "正式题 {current}/10 · 第 {block} 组",
+        "record_heading": "第 {current}/10 条记录",
+        "question_progress": "问题 {question}/2 · 第 {block} 组",
         "block_complete": "第 {block} 组完成"
+      },
+      "save_exit": {
+        "heading": "结束本次会话并生成部分导出？",
+        "intro": "仅在确定现在结束时确认。",
+        "consequences": [
+          "结束后无法恢复本次会话。",
+          "已提交答案将冻结在签名的部分导出中。",
+          "未完成答案将保持缺失。",
+          "文件不会自动下载；请在下一页选择导出格式。"
+        ],
+        "cancel": "取消",
+        "confirm": "结束并生成部分导出"
       },
       "ease": {
         "question": "刚完成的一组题中，应用规则有多容易或多困难？",
@@ -1514,21 +1690,24 @@
       },
       "export": {
         "complete_heading": "预览完成",
-        "partial_heading": "会话已结束",
+        "partial_heading": "会话已结束 — 已生成部分导出",
         "completed_trials": "已完成正式题：10/10。",
-        "partial_ready": "签名的部分导出文件已准备好。这里不显示答题表现反馈。",
-        "ready": "导出文件已准备好。请手动选择要下载的格式。",
-        "retry": "如果下载失败，按钮仍会保留；只要本地服务器仍保留本次导出，即可重试。",
+        "partial_ready": "本次会话无法恢复。已提交答案已冻结在签名的部分导出中；未完成答案保持缺失。",
+        "ready": "导出已准备好。文件不会自动下载；请在下方选择格式。",
+        "retry": "如果下载失败，只要本地服务器仍保留本次导出，按钮就会继续可用。",
         "download_started": "{format} 下载已开始。两种格式仍可继续下载。",
         "finished_heading": "已完成",
-        "finished": "浏览器视图已清空。本地服务器会保留签名导出，直至会话 TTL 到期。"
+        "finished": "本次会话已完成且无法恢复。浏览器视图已清空；本地服务器会保留签名导出，直至会话 TTL 到期。"
       },
       "debrief": "这些是使用虚构数值的模拟教学记录。本任务评估按规则处理信息的过程，不评估现实收益。答题结果不会改变论文主张。",
       "errors": {
         "load": "无法加载所选语言的材料。",
         "state": "任务状态错误。",
         "download": "签名导出下载失败。",
-        "export_not_ready": "签名导出尚未准备好。"
+        "export_not_ready": "签名导出尚未准备好。",
+        "required_q1": "请先选择一个状态，再锁定问题 1。",
+        "required_q2": "请先选择一个答案，再提交问题 2。",
+        "required_choice": "请先选择一个答案，再继续。"
       }
     }
   }

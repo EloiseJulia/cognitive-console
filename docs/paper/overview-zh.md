@@ -5,8 +5,11 @@
 > 主 framing 是 comparator-bound actionability gate，而不是 latent steering 普遍失败。Bo et al.
 > （UIST 2026，SELECT/CALIBRATE/LEARN，探索性被试内 `n=14`，含 unscaffolded PROMPT baseline）
 > 是最近的用户界面邻居；Golden Gate Claude 仅作为公开内部特征放大的中性动机；Goodfire
-> 不进入当前论文叙事。Contract-application micro-study 网站已在 `b7043d2` 合并，但仅
-> **READY FOR OWNER PREVIEW**，prereg 仍 DRAFT，且无 recruitment、pilot 或 human data。
+> 不进入当前论文叙事。Contract-application micro-study implementation `d17df47`
+> 的 final read-only hostile audit 已通过 owner-local-preview gate；摘要见
+> `reviews/2026-08-10-microstudy-web-final-audit/audit-summary.md`。D-0108 状态仅为
+> **READY FOR OWNER PREVIEW; NO HUMAN DATA**，prereg 仍 DRAFT，且无 recruitment、
+> pilot 或 human data authorization。
 > E-0016 仍无 DEV/TEST 或科学结果。任何旧 reviewer acceptance probability 均早于最新写作，
 > 不得当作当前评分；需对当前 `main` 重新独立评审。
 >

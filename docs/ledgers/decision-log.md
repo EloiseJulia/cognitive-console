@@ -5,6 +5,22 @@
 
 ---
 
+## 2026-08-11 · D-0108 · Final micro-study audit passes owner-local-preview gate only
+- Persisted the completed final read-only hostile audit of implementation commit
+  `d17df47` at
+  `reviews/2026-08-10-microstudy-web-final-audit/audit-summary.md`.
+- The audit closed the remaining export-retry, duplicate-resolution, and
+  browser-stability blockers; Chrome/Edge stress and full tests plus the
+  security/privacy checks passed for the audited local-preview scope.
+- Verdict: **READY FOR OWNER PILOT PREVIEW, NO HUMAN RECRUITMENT
+  AUTHORIZATION**. Registry status is
+  `ready_for_owner_preview_no_human_data`; human collection remains false.
+- This gate permits owner-local preview only. It authorizes no recruitment,
+  participant contact, human-data collection, public deployment, protocol
+  freeze, paper evidence, scientific result, or claim upgrade. Manual
+  screen-reader evaluation, owner pilot decision, defensible primary MDE,
+  ethics, and recruitment authorization remain PRE-RECRUITMENT gates.
+
 ## 2026-08-11 · D-0107 · Manager rotation handoff prepared; incoming session must pass exam before unique takeover
 - Created `docs/handoffs/2026-08-11-manager-handoff.md` as the sole primary
   re-entry point and marked the 2026-08-05 handoff superseded. The incoming

@@ -2,12 +2,15 @@
 
 > **唯一 primary re-entry。** 本文件取代
 > [`2026-08-05-manager-handoff.md`](2026-08-05-manager-handoff.md)。
-> Incoming Manager 先完成本文末尾接管考试并宣布接管；在此之前不得编辑、派发或改变 gate。
-> 接管后，旧 Manager 立即只读退休，禁止双 Manager 并行调度。
+> Incoming Manager 先完成本文末尾接管考试，再派一个全新、只读的
+> Handoff Auditor 逐题复核；只有 auditor 明确输出 `HANDOFF EXAM PASS`
+> 后才能宣布接管、更新 `ACTIVE_MANAGER` 或派发任务。在此之前不得编辑、
+> 派发或改变 gate。Fail 时只能修订答案并交由全新 auditor 重审。
+> Current/outgoing Manager 从 handoff 开始即只读退休；禁止双 Manager 并行调度。
 
 ## 0. One-paragraph state
 
-当前主线是一篇以 IUI 为目标、writing-first 的 comparator-bound interface-evaluation-method paper：它不再把贡献写成“latent steering 普遍失败”，而是提出一个可审计 gate，要求可读 latent axis 在获得 control affordance 前，以预注册 margin、coherence 和 bounded prompt comparator 证明增量行为收益。当前 CAA/ITI×Qwen/Llama worked application 没有任何 latent arm 获得 control；不同轴的证据分辨率不同，且 calibration 只能写成 steer-vs-bounded-prompt contrast。8 月 6–7 日已经完成多轮 writing、artifact-consistency、layout、abstract 和 nearest-neighbor 修订，但这些修改之后**没有新的独立 full-paper reviewer verdict**，所以旧的 30–35%、35–50% 或其它 acceptance probability 都已 stale、不得复用。证据 ceiling 未变：无 passing latent behavioral positive control、无 user study、E-0016 无科学结果。Micro-study 网站已实现、完成 hostile-audit repair 并在 `b7043d2` 合并，但仅 **READY FOR OWNER PREVIEW**；没有 recruitment、pilot 或 human data authorization。
+当前主线是一篇以 IUI 为目标、writing-first 的 comparator-bound interface-evaluation-method paper：它不再把贡献写成“latent steering 普遍失败”，而是提出一个可审计 gate，要求可读 latent axis 在获得 control affordance 前，以预注册 margin、coherence 和 bounded prompt comparator 证明增量行为收益。当前 CAA/ITI×Qwen/Llama worked application 没有任何 latent arm 获得 control；不同轴的证据分辨率不同，且 calibration 只能写成 steer-vs-bounded-prompt contrast。8 月 6–7 日已经完成多轮 writing、artifact-consistency、layout、abstract 和 nearest-neighbor 修订，但这些修改之后**没有新的独立 full-paper reviewer verdict**，所以旧的 30–35%、35–50% 或其它 acceptance probability 都已 stale、不得复用。证据 ceiling 未变：无 passing latent behavioral positive control、无 user study、E-0016 无科学结果。Micro-study implementation commit `d17df47` 的 final read-only hostile audit 已通过 owner-local-preview gate；摘要见 [`../../reviews/2026-08-10-microstudy-web-final-audit/audit-summary.md`](../../reviews/2026-08-10-microstudy-web-final-audit/audit-summary.md)。状态仅为 **READY FOR OWNER PREVIEW; NO HUMAN DATA**；没有 recruitment、pilot 或 human data authorization。
 
 ## 1. Frozen/current paper claim and mandatory scope guard
 
@@ -35,8 +38,8 @@
   ```
 
 - 2026-08-11 fresh rebuild: **12 pages**, **655631 bytes**, no undefined citations/references.
-- Fresh-build SHA-256:
-  `C9E1D804F7DE70362F5AEEB8B390C9A821A780099C38391C82EFB1B30CFD5D52`
+- Current observed SHA-256:
+  `4FA6EAB1FC9F933E4936892F5C6B1CF6EDDB4E27A5DF1D89C5D8B57D5101B1EA`
 - PDF generation is not byte-deterministic across rebuilds; after any paper-source edit, rebuild and record the newly generated hash instead of expecting this hash to persist.
 
 ### Latest independent reviewer status
@@ -56,7 +59,8 @@
 - Audited scientific/content base HEAD before this handoff commit:
   `b7043d28481c30eaf8c84575f884fd63f970591f`
 - At audit time, local `main` was **62 commits ahead of `origin/main`**.
-- This documentation commit makes the expected post-commit count **63 ahead**; verify with:
+- The governance/audit persistence commit following the handoff makes the expected
+  post-commit count **64 ahead**; verify with:
 
   ```powershell
   git rev-list --count origin/main..HEAD
@@ -188,9 +192,10 @@ Other users had active allocations/processes. Do not infer that low utilization 
 
 ## 7. Micro-study website and protocol state
 
-- Merge/base commit: `b7043d28481c30eaf8c84575f884fd63f970591f`.
-- Implementation plus hostile-audit repairs are merged.
-- Operational label: **READY FOR OWNER PREVIEW ONLY**.
+- Implementation commit: `d17df47`.
+- Final read-only hostile-audit summary:
+  [`../../reviews/2026-08-10-microstudy-web-final-audit/audit-summary.md`](../../reviews/2026-08-10-microstudy-web-final-audit/audit-summary.md).
+- D-0108 operational label: **READY FOR OWNER PREVIEW; NO HUMAN DATA**.
 - The preregistration remains **DRAFT / NOT FROZEN**.
 - There is **no recruitment authorization, no public deployment, no timing pilot authorization, and no human data**.
 - Ethics, recruitment, participant contact, assignment roster, and any actual run are owner responsibilities and human-gated.
@@ -293,7 +298,9 @@ Internal writing work, isolated worktrees, independent reviews/audits, ledger sy
 
 ```text
 Acceptance exam + read-only verification
-  -> announce unique Manager takeover
+  -> fresh read-only Handoff Auditor judges every answer
+     -> FAIL: revise answers only, then fresh audit; no edits/actions
+     -> HANDOFF EXAM PASS: announce unique Manager takeover/update ACTIVE_MANAGER
   -> freeze current-paper review bundle at exact HEAD/PDF hash
   -> fresh independent IUI reviewer pass
   -> Manager bounded triage/disposition
@@ -336,8 +343,18 @@ Avoid endless review loops: a fresh review gets one bounded revision cycle plus,
 9. Which actions are human-only, and what must happen to the old Manager immediately after takeover?
 10. Recite the immediate writing dependency chain and the rule that prevents endless audit expansion.
 
-**Pass condition:** answer from repository evidence, verify mutable facts, then announce:
-“我已通过接管考试并成为唯一 Manager；旧 Manager 现只读退休。”
+**Pass condition:** answer from repository evidence and verify mutable facts, then
+dispatch a **fresh read-only Handoff Auditor** to judge questions 1–10 individually
+as PASS/FAIL against the repository and this handoff. The incoming Manager may
+announce takeover, update `ACTIVE_MANAGER`, or dispatch work **only** after the
+auditor explicitly returns:
+
+`HANDOFF EXAM PASS`
+
+If any answer fails, revise answers only and send them to a fresh auditor. No
+repository edits, actions, or takeover announcement are allowed while failed or
+unaudited. The current/outgoing Manager is already read-only retired; dual Manager
+operation is forbidden.
 
 ---
 
@@ -346,26 +363,21 @@ Avoid endless review loops: a fresh review gets one bounded revision cycle plus,
 ```text
 你是 cognitive-console 的唯一 Incoming Manager。用中文工作。你的主焦点是论文写作与投稿前证据一致性，但也可以按依赖图调度其它任务。你本人只做调度、gate、triage、账本与决策，不亲自改代码、论文正文、实验脚本或结果；每个具体编辑、研究、实验都派给全新的独立 subagent。每个结果与每次 pre-merge 都必须由另一个全新、无上下文、敌对、只报不修的 audit/reviewer subagent 独立检查。
 
-禁止双 Manager：你只有在通过接管考试并明确宣布接管后才成为唯一 Manager；宣布后，旧 Manager 立即只读退休，不再派发、编辑、合并或决策。
+禁止双 Manager：Current/outgoing Manager 已只读退休，不再派发、编辑、合并或决策。你只有在回答全部 10 题，并由一个全新、只读 Handoff Auditor 逐题依据 repo/handoff 判定且明确输出 `HANDOFF EXAM PASS` 后，才可宣布接管、更新 `ACTIVE_MANAGER` 或派发任务。
 
 你的第一阶段只有“接管考试 + 只读核验”，不得编辑、commit、push、派发任务或运行实验：
 
 按以下顺序完整阅读：
-1. docs/handoffs/2026-08-11-manager-handoff.md（唯一 primary re-entry）
-2. AGENTS.md
-3. AI-Instruction.md Part I，尤其 §2–§5、§8–§10、§13，以及 Manager rotation/acceptance exam
-4. docs/ledgers/decision-log.md 的 D-0074..latest
-5. docs/ledgers/claim-ledger.md
-6. docs/ledgers/evidence-ledger.md
-7. docs/ledgers/experiment-registry.yaml 中 E-0013/E-0014/E-0015/E-0015-logit/E-0016/microstudy
-8. docs/ledgers/failure-log.md、open-risks.md、compute-ledger.md
-9. docs/paper/main.tex、overview-zh.md、claim-map.yaml、citation-map.yaml、references.bib、submission-evidence-ledger.md
-10. docs/specs/microstudy-contract-application.md
-11. docs/research/2026-08-10-microstudy-contract-application-DRAFT.md
-12. docs/plans/microstudy-contract-application-web.md
-13. README.md 的 Local micro-study preview
-14. docs/research/2026-08-04-ablation-positive-control/design.md 与 prereg-e0016-FROZEN.md
-15. results/E-0016-regime-b-confirmatory 的 failure lineage（只读）
+1. AGENTS.md
+2. docs/handoffs/2026-08-11-manager-handoff.md（唯一 primary re-entry）
+3. AI-Instruction.md 全部 Parts
+4. docs/charter/project-charter.md
+5. docs/ledgers/claim-ledger.md、hypothesis-ledger.md、evidence-ledger.md、experiment-registry.yaml
+6. docs/ledgers/decision-log.md、failure-log.md、open-risks.md、compute-ledger.md
+7. docs/paper/main.tex、overview-zh.md、outline.md、claim-map.yaml、submission-evidence-ledger.md
+8. docs/specs/microstudy-contract-application.md、docs/research/2026-08-10-microstudy-contract-application-DRAFT.md、reviews/2026-08-10-microstudy-web-final-audit/audit-summary.md
+9. docs/research/2026-08-04-ablation-positive-control/prereg-e0016-FROZEN.md 与 results/E-0016-regime-b-confirmatory failure lineage
+10. 与当前任务相关的 latest reviews；需要引用时再读 citation-map.yaml、references.bib 和其它 supporting files
 
 随后只读核验：
 - git status、HEAD、origin/main..HEAD ahead count、recent log、worktree list；
@@ -373,12 +385,13 @@ Avoid endless review loops: a fresh review gets one bounded revision cycle plus,
 - 从 main.tex 抽取精确标题；
 - 运行 .\docs\paper\build.ps1 -Clean，核对 docs/paper/build/main.pdf 的页数、hash、undefined cite/ref；
 - 核对 http://127.0.0.1:8876/ 与 PID（它们是 ephemeral）；
-- 核对 micro-study merged at b7043d2，仅 READY FOR OWNER PREVIEW，无 recruitment/data authorization；
+- 核对 micro-study implementation `d17df47` 与 final audit summary，仅 READY FOR OWNER PREVIEW、human collection=false，无 recruitment/data authorization；
 - 核对 E-0016 只有 pre-DEV infrastructure failure + serialization repair，无科学结果；
 - 若检查远程 GPU，只做 nvidia-smi 只读检查，不干扰他人进程。
 
-然后逐题回答 handoff §13 的 10 道接管考试。答案必须包含 current claim/scope、calibration comparator、E0013/14/15/logit/E0016、microstudy gate、Git/PDF/server、Bo/Golden/Goodfire、human-only gates、writing dependency graph。回答完成后明确宣布：
-“我已通过接管考试并成为唯一 Manager；旧 Manager 现只读退休。”
+然后逐题回答 handoff §13 的 10 道接管考试。答案必须包含 current claim/scope、calibration comparator、E0013/14/15/logit/E0016、microstudy gate、Git/PDF/server、Bo/Golden/Goodfire、human-only gates、writing dependency graph。
+
+回答后必须派一个全新、无上下文、只读 Handoff Auditor。Auditor 必须依据 repo 与本 handoff 对 1–10 题逐题给 PASS/FAIL，并只在全部通过时明确输出 `HANDOFF EXAM PASS`。若 FAIL，只能修订答案并交给另一个全新 auditor 重审；仍不得编辑、执行、更新 `ACTIVE_MANAGER` 或派发。只有收到明确 `HANDOFF EXAM PASS` 后，才能宣布“我已通过经独立审计的接管考试并成为唯一 Manager；旧 Manager 保持只读退休。”
 
 接管前不得做任何编辑。接管后也不得 push、对外投稿/发布、招募/接触参与者、收集 human data、启动 owner timing pilot、暴露 verification key、改变/冻结 microstudy protocol、改变 frozen protocol、超 GPU 预算、运行 harmful Regime A，除非对应 owner/human gate 已明确通过。用户提供 DOCX 永远保持 untracked，除非用户另有明确命令。
 

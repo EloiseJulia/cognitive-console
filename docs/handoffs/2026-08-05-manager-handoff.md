@@ -6,8 +6,11 @@
 > single primary handoff. Do not resume this file's stale title, PDF, reviewer
 > probability, E-0016 gate state, worktree queue, or next-step list.
 
-> Supersedes `2026-07-28-manager-handoff.md`. This is the primary re-entry point for the next Manager.
-> Read this file first, then `AGENTS.md`, `AI-Instruction.md`, the opening report, `docs/ledgers/decision-log.md` D-0074..D-0090, and the current paper.
+> **Historical text at preparation time; superseded by the notice above.**
+> At preparation time this file superseded `2026-07-28-manager-handoff.md` and
+> described itself as the primary re-entry point. Its historical read order was
+> this file, `AGENTS.md`, `AI-Instruction.md`, the opening report,
+> `docs/ledgers/decision-log.md` D-0074..D-0090, and the then-current paper.
 > Conflict order: Part I research red-lines > AGENTS.md > Part II/III. If uncertain, stop and ask the owner.
 
 > **Post-handoff addendum (D-0092/D-0093, 2026-08-05):** Sections §0, §4,

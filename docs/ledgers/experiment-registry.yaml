@@ -1393,8 +1393,8 @@ experiments:
   hypothesis_id: H-MICROSTUDY-CONTRACT-APPLICATION
   claim_ids: []
   type: exploratory_formative_human_protocol
-  status: implemented_pending_reaudit_nohuman
-  code_commit: null
+  status: ready_for_owner_preview_no_human_data
+  code_commit: d17df47
   dirty_tree: null
   data_hash: null
   env_hash: null
@@ -1426,6 +1426,7 @@ experiments:
   - docs/specs/microstudy-contract-application.md
   - docs/research/2026-08-10-microstudy-contract-application-DRAFT.md
   - docs/plans/microstudy-contract-application-web.md
+  - reviews/2026-08-10-microstudy-web-final-audit/audit-summary.md
   failure_reason: null
   valid_for_paper: false
   validation_notes: >-
@@ -1459,8 +1460,13 @@ experiments:
     at both viewports and zoom levels and validate DOM geometry/accessibility plus PNG
     artifacts. Manual screen-reader evaluation is UNVERIFIED PRE-RECRUITMENT.
     Real-browser cases now use isolated ephemeral servers with readiness waits
-    and owned cleanup. The implementation and assumption-labelled DRAFT MDE tool remain pending
-    hostile re-audit and are not a run or paper evidence. Recruitment, ethics
-    administration, public deployment, owner pilot, and human data collection are not
-    authorized. The preregistration remains DRAFT and not frozen; this row records
-    materials and implementation preparation only and must not be represented as a run.
+    and owned cleanup. The final read-only hostile audit of implementation commit
+    d17df47 is persisted at
+    reviews/2026-08-10-microstudy-web-final-audit/audit-summary.md and passed the
+    owner-local-preview gate after export retry, duplicate, browser-stability,
+    full-test, security, and privacy closure. The assumption-labelled DRAFT MDE
+    tool is not a recruitment/sample-size basis. Recruitment, ethics administration,
+    public deployment, owner pilot, and human data collection are not authorized;
+    human_collection is false. The preregistration remains DRAFT and not frozen;
+    this row records materials and implementation preparation only and must not be
+    represented as a run or paper evidence.

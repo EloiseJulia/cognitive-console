@@ -90,6 +90,7 @@ def test_frozen_runner_config_matches_preregistered_identities():
         "revision": runner.MODEL_REVISION,
     }
     assert frozen["dataset"]["revision"] == runner.TRUTHFULQA_REVISION
+    assert frozen["dataset"]["canonical_order_config"] == "multiple_choice"
     assert frozen["method"]["top_k_heads"] == 48
     assert frozen["method"]["alpha"] == 15.0
     assert frozen["generation"]["k"] == 5
@@ -1043,8 +1044,10 @@ def test_truthfulqa_loader_joins_exact_configs_and_rejects_question_set_drift(
     calls = []
     datasets = ModuleType("datasets")
 
-    def fake_load_dataset(builder, *, data_files, split, cache_dir):
-        calls.append((builder, data_files, split, cache_dir))
+    def fake_load_dataset(
+        builder, config_name, *, data_files, split, cache_dir
+    ):
+        calls.append((builder, config_name, data_files, split, cache_dir))
         path = next(iter(data_files.values()))
         if "generation" in path:
             return generation_rows
@@ -1056,6 +1059,23 @@ def test_truthfulqa_loader_joins_exact_configs_and_rejects_question_set_drift(
     monkeypatch.setitem(sys.modules, "datasets", datasets)
     monkeypatch.setattr(
         "cognitive_console.eval.truthfulqa_positive_control.TRUTHFULQA_N", 2
+    )
+    def question_order_hash(rows):
+        return hashlib.sha256(
+            json.dumps(
+                [row["question"] for row in rows],
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+                allow_nan=False,
+            ).encode("utf-8")
+        ).hexdigest()
+
+    canonical_order_hash = question_order_hash(multiple_choice_rows)
+    monkeypatch.setattr(
+        "cognitive_console.eval.truthfulqa_positive_control."
+        "TRUTHFULQA_CANONICAL_ORDER_SHA256",
+        canonical_order_hash,
     )
     pinned_snapshot = tmp_path / "hub" / "pinned-truthfulqa"
     monkeypatch.setattr(
@@ -1073,18 +1093,27 @@ def test_truthfulqa_loader_joins_exact_configs_and_rejects_question_set_drift(
         tmp_path, cache_dir=tmp_path / "datasets-processed"
     )
     assert [item.question for item in items] == [
+        "Question two? ",
         "Question one?",
-        "Question two?",
     ]
-    assert items[0].mc2_choices == ("Incorrect one", "Correct one")
+    assert items[0].correct_answers == ("Correct two",)
+    assert items[1].mc2_choices == ("Incorrect one", "Correct one")
     assert all(call[0] == "parquet" for call in calls)
-    assert all(call[2] == "validation" for call in calls)
+    assert [call[1] for call in calls] == ["generation", "multiple_choice"]
+    assert all(call[3] == "validation" for call in calls)
     assert "generation/validation-00000-of-00001.parquet" in next(
-        iter(calls[0][1].values())
+        iter(calls[0][2].values())
     ).replace("\\", "/")
     assert "multiple_choice/validation-00000-of-00001.parquet" in next(
-        iter(calls[1][1].values())
+        iter(calls[1][2].values())
     ).replace("\\", "/")
+
+    multiple_choice_rows.reverse()
+    with pytest.raises(ValueError, match="canonical multiple_choice row order"):
+        load_pinned_truthfulqa(
+            tmp_path, cache_dir=tmp_path / "datasets-processed"
+        )
+    multiple_choice_rows.reverse()
 
     multiple_choice_rows[0] = {
         "question": "Wrong config question?",
@@ -1093,6 +1122,11 @@ def test_truthfulqa_loader_joins_exact_configs_and_rejects_question_set_drift(
             "labels": [1, 0],
         },
     }
+    monkeypatch.setattr(
+        "cognitive_console.eval.truthfulqa_positive_control."
+        "TRUTHFULQA_CANONICAL_ORDER_SHA256",
+        question_order_hash(multiple_choice_rows),
+    )
     with pytest.raises(ValueError, match="config question set mismatch"):
         load_pinned_truthfulqa(
             tmp_path, cache_dir=tmp_path / "datasets-processed"

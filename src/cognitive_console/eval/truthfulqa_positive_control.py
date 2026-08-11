@@ -26,6 +26,12 @@ from ..randomness import pcg64_rng
 TRUTHFULQA_DATASET_ID = "truthfulqa/truthful_qa"
 TRUTHFULQA_REVISION = "741b8276f2d1982aa3d5b832d3ee81ed3b896490"
 TRUTHFULQA_N = 817
+TRUTHFULQA_CANONICAL_CONFIG = "multiple_choice"
+TRUTHFULQA_ANSWER_CONFIG = "generation"
+TRUTHFULQA_SPLIT = "validation"
+TRUTHFULQA_CANONICAL_ORDER_SHA256 = (
+    "19aa16c8633c0c91817201943bd7b135de06eead0c217aa270e13ee2c8d19954"
+)
 TRUTH_JUDGE_ID = "allenai/truthfulqa-truth-judge-llama2-7B"
 TRUTH_JUDGE_REVISION = "8f718cb4e68bc30a488727a0e37190835a7c129e"
 INFO_JUDGE_ID = "allenai/truthfulqa-info-judge-llama2-7B"
@@ -451,45 +457,53 @@ def load_pinned_truthfulqa(
         raise NotImplementedError("TruthfulQA HF loading requires datasets") from exc
     snapshot_dir = resolve_pinned_snapshot_path("truthfulqa", cache_root)
     verify_pinned_snapshot("truthfulqa", snapshot_dir)
+    spec = PINNED_SNAPSHOTS["truthfulqa"]
+    if (
+        spec["repo_id"] != TRUTHFULQA_DATASET_ID
+        or spec["revision"] != TRUTHFULQA_REVISION
+        or spec["repo_type"] != "dataset"
+    ):
+        raise RuntimeError("TruthfulQA pinned repository identity changed")
     if cache_dir is not None:
         Path(cache_dir).mkdir(parents=True, exist_ok=True)
-    generation = datasets.load_dataset(
-        "parquet",
-        data_files={
-            "validation": str(
-                snapshot_dir / "generation/validation-00000-of-00001.parquet"
+
+    def load_config(config_name: str):
+        relative = f"{config_name}/{TRUTHFULQA_SPLIT}-00000-of-00001.parquet"
+        if relative not in spec["files"]:
+            raise RuntimeError(
+                f"TruthfulQA pinned config/split is absent: {relative}"
             )
-        },
-        split="validation",
-        cache_dir=None if cache_dir is None else str(cache_dir),
-    )
-    multiple_choice = datasets.load_dataset(
-        "parquet",
-        data_files={
-            "validation": str(
-                snapshot_dir
-                / "multiple_choice/validation-00000-of-00001.parquet"
-            )
-        },
-        split="validation",
-        cache_dir=None if cache_dir is None else str(cache_dir),
-    )
+        return datasets.load_dataset(
+            "parquet",
+            config_name,
+            data_files={
+                TRUTHFULQA_SPLIT: str(snapshot_dir / relative)
+            },
+            split=TRUTHFULQA_SPLIT,
+            cache_dir=None if cache_dir is None else str(cache_dir),
+        )
+
+    generation = load_config(TRUTHFULQA_ANSWER_CONFIG)
+    multiple_choice = load_config(TRUTHFULQA_CANONICAL_CONFIG)
     if len(generation) != TRUTHFULQA_N or len(multiple_choice) != TRUTHFULQA_N:
         raise ValueError("pinned TruthfulQA row count changed")
-    mc_by_question = {}
-    for mc in multiple_choice:
-        question_key = str(mc["question"]).strip()
-        if question_key in mc_by_question:
-            raise ValueError("TruthfulQA multiple_choice questions are not unique")
-        mc_by_question[question_key] = mc
-    generation_keys = [str(row["question"]).strip() for row in generation]
-    if len(set(generation_keys)) != len(generation_keys):
-        raise ValueError("TruthfulQA generation questions are not unique")
-    if set(generation_keys) != set(mc_by_question):
+    generation_by_question = {}
+    for row in generation:
+        question_key = str(row["question"]).strip()
+        if question_key in generation_by_question:
+            raise ValueError("TruthfulQA generation questions are not unique")
+        generation_by_question[question_key] = row
+    canonical_questions = [str(row["question"]) for row in multiple_choice]
+    if _canonical_hash(canonical_questions) != TRUTHFULQA_CANONICAL_ORDER_SHA256:
+        raise ValueError("TruthfulQA canonical multiple_choice row order changed")
+    canonical_keys = [question.strip() for question in canonical_questions]
+    if len(set(canonical_keys)) != len(canonical_keys):
+        raise ValueError("TruthfulQA multiple_choice questions are not unique")
+    if set(canonical_keys) != set(generation_by_question):
         raise ValueError("TruthfulQA config question set mismatch")
     items: List[TruthfulQAItem] = []
-    for index, gen in enumerate(generation):
-        mc = mc_by_question[generation_keys[index]]
+    for index, mc in enumerate(multiple_choice):
+        gen = generation_by_question[canonical_keys[index]]
         labels = tuple(int(x) for x in mc["mc2_targets"]["labels"])
         choices = tuple(str(x) for x in mc["mc2_targets"]["choices"])
         if len(labels) != len(choices) or not ({0, 1} <= set(labels)):
@@ -498,7 +512,7 @@ def load_pinned_truthfulqa(
             TruthfulQAItem(
                 item_id=f"truthfulqa-{index:04d}",
                 index=index,
-                question=str(gen["question"]),
+                question=str(mc["question"]),
                 correct_answers=tuple(str(x) for x in gen["correct_answers"]),
                 incorrect_answers=tuple(str(x) for x in gen["incorrect_answers"]),
                 mc2_choices=choices,

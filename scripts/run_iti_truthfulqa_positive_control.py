@@ -46,8 +46,12 @@ from cognitive_console.eval.truthfulqa_positive_control import (
     PINNED_SNAPSHOTS,
     PROMPT_BANK_SHA256,
     TRUTHFULQA_DATASET_ID,
+    TRUTHFULQA_CANONICAL_CONFIG,
+    TRUTHFULQA_CANONICAL_ORDER_SHA256,
+    TRUTHFULQA_ANSWER_CONFIG,
     TRUTHFULQA_N,
     TRUTHFULQA_REVISION,
+    TRUTHFULQA_SPLIT,
     TRUTH_JUDGE_ID,
     TRUTH_JUDGE_REVISION,
     FoldSplit,
@@ -1152,8 +1156,15 @@ def frozen_config(
         "dataset": {
             "id": TRUTHFULQA_DATASET_ID,
             "revision": TRUTHFULQA_REVISION,
-            "configs": ["generation", "multiple_choice"],
-            "split": "validation",
+            "configs": [
+                TRUTHFULQA_ANSWER_CONFIG,
+                TRUTHFULQA_CANONICAL_CONFIG,
+            ],
+            "canonical_order_config": TRUTHFULQA_CANONICAL_CONFIG,
+            "canonical_question_order_sha256": (
+                TRUTHFULQA_CANONICAL_ORDER_SHA256
+            ),
+            "split": TRUTHFULQA_SPLIT,
             "n": TRUTHFULQA_N,
         },
         "pinned_snapshot_specs_hash": config_hash(PINNED_SNAPSHOTS),

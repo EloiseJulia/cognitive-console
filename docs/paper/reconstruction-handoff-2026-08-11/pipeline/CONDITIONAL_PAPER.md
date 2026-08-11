@@ -1,7 +1,7 @@
 <!-- CONDITIONAL DRAFT — NOT FINAL NARRATIVE LOCK -->
 <!-- Human-study and prompt-plus-steer result slots remain empty and gated. -->
 
-# When Does a Legible Latent Axis Earn a Control? A Comparator-Bound Evaluation Contract for Latent-Control Interfaces
+# Before You Add the Slider: A Comparator-Bound Test for Latent Controls in LLM Interfaces
 
 ## Abstract
 

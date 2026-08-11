@@ -22,6 +22,9 @@
   `microstudy-stimuli-v8-bilingual-novice-ux` /
   `microstudy-contract-application-20260811-v8-novice-ux-draft`; V7 and V8
   previews must not be pooled as one material version.
+- The exact V8 implementation commit is
+  `12c46e1090fb2890ec03009b592dd3b9668340a6`. The follow-up governance commit
+  that records this hash does not replace the implementation identity.
 - The three walkthroughs are AI role-play, not human-subject data. They cannot
   establish the target of ten-second task comprehension, usability, timing, or
   accessibility. `valid_for_paper=false`; no paper Claim, result, or evidence

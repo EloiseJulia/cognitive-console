@@ -1393,14 +1393,14 @@ experiments:
   hypothesis_id: H-MICROSTUDY-CONTRACT-APPLICATION
   claim_ids: []
   type: exploratory_formative_human_protocol
-  status: ready_for_owner_local_preview_no_human_data
-  code_commit: 1702d7a4ae5132b09fd29d216502504c7afb493c
+  status: v8_novice_ux_implemented_pending_hostile_audit_no_human_data
+  code_commit: 12c46e1090fb2890ec03009b592dd3b9668340a6
   dirty_tree: null
   data_hash: >-
-    stimuli_sha256=7d4dc8c55e723a382dfb0d98d6dcc0c45f59c06019b531881acf8d7245e8bbf9;
+    stimuli_sha256=1d7f57e91d8133669c523100b3fd4f3321c42c17095162c07eb95565b5e37436;
     sequences_sha256=a63492e2862dcef84fe0d57b3f3c4f3420582c9b988f081d4ca99ae2207e47a8;
-    locale_en=de2690eea13e64c2172341d25c9bd9c41787726119a0ade03565aca5c8f6c71d;
-    locale_zh-Hans=2508b0ed1d326e51feb72ad65f7e8417221abf165d90e194840384271db2e857
+    locale_en=1cb2733351dd112532c5fdccf77dcfd63b59ab3bfc246f1eed9e2a743917c376;
+    locale_zh-Hans=d617055d8ae38bffe4e6ce29c2d626c85287ba5fecad12510d6e4efaba834a2a
   env_hash: null
   config_hash: null
   model: null
@@ -1435,6 +1435,24 @@ experiments:
   failure_reason: null
   valid_for_paper: false
   validation_notes: >-
+    D-0112 and implementation commit 12c46e1090fb2890ec03009b592dd3b9668340a6
+    advance the DRAFT materials to microstudy-stimuli-v8-bilingual-novice-ux /
+    microstudy-contract-application-20260811-v8-novice-ux-draft. The owner
+    authorized this owner-local UX revision from three synthetic novice-agent
+    blind walkthroughs after an independent proposal audit returned APPROVE.
+    Those AI role-plays are not human-subject data and cannot demonstrate
+    ten-second comprehension, usability, timing, or accessibility. V7 and V8
+    exports are distinct material identities and cannot be pooled as one
+    material version. V8 preserves the nonlocalized router, all Q1/Q2 correct
+    keys, Q2 option IDs/order, Flat orders, A1..D5 sequences, CCA scoring,
+    signed V4 export schema, duplicate policy, missingness, and analysis.
+    It changes participant information architecture, visible Contract labels,
+    the single five-row safety practice, hierarchy/focus/error/lock behavior,
+    Q2-COVERAGE copy/helper, and confirmed partial-export wording. Self-checks
+    passed the authoritative validator, targeted tests, Node, complete pytest,
+    isolated HTTP smoke, and Chrome/Edge bilingual 1280x800/1440x900 at
+    100%/200%; a fresh independent hostile audit is still required before V8
+    can inherit an audited owner-preview verdict.
     D-0100 authorizes protocol, simulated materials, and loopback-only web engineering;
     D-0101 records the first audit revision, D-0102 the second, D-0103 the executable
     materials repair, D-0104 the initial implementation, D-0105 its first repair,

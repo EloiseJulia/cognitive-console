@@ -43,7 +43,9 @@ paper changes, or participant data.
 The previous V7 audited implementation identity is
 `1702d7a4ae5132b09fd29d216502504c7afb493c`. The V8 implementation must receive
 a fresh independent hostile audit before governance pins a final audited V8
-implementation identity.
+implementation identity. Its current implementation commit is
+`12c46e1090fb2890ec03009b592dd3b9668340a6`; a later registry-only commit that
+records this hash is governance lineage, not a replacement implementation.
 
 ## 2. Implemented rule
 

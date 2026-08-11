@@ -2,9 +2,12 @@
 
 > **2026-08-11 当前状态（内部导航，不是论文证据）：** 当前 source 标题仍为
 > **When Does a Legible Latent Axis Earn a Control? A Comparator-Bound Evaluation Contract for Latent-Control Interfaces**。
-> 主 framing 是 comparator-bound actionability gate，而不是 latent steering 普遍失败。Bo et al.
-> （UIST 2026，SELECT/CALIBRATE/LEARN，探索性被试内 `n=14`，含 unscaffolded PROMPT baseline）
-> 是最近的用户界面邻居；Golden Gate Claude 仅作为公开内部特征放大的中性动机；Goodfire
+> 主 framing 是 comparator-bound actionability gate，而不是 latent steering 普遍失败。AxBench
+> 已在 method-level benchmark 中直接比较 prompting 与多种 representation-level interventions；
+> Basu et al. 已在临床 triage 中直接研究 representation-to-actionability gap，且 Arm 1 含
+> safety-focused prompt engineering。Bo et al.（UIST 2026，SELECT/CALIBRATE/LEARN，
+> 探索性被试内 `n=14`，含 unscaffolded PROMPT baseline）是最近的用户界面邻居；
+> Golden Gate Claude 仅作为公开内部特征放大的中性动机；Goodfire
 > 不进入当前论文叙事。Contract-application micro-study implementation `d17df47`
 > 的 final read-only hostile audit 已通过 owner-local-preview gate；摘要见
 > `reviews/2026-08-10-microstudy-web-final-audit/audit-summary.md`。D-0108 状态仅为
@@ -25,6 +28,8 @@
 界面一旦给 latent axis 命名并配置 slider，就会暗示该轴不仅可解释，而且能可靠改变目标行为。这一暗示可能影响 calibrated reliance。已有 HCI 文献支持“可见信号会塑造依赖判断”以及“更多 confidence/quality cues 不保证更好校准”，但本文没有访谈、形成性研究或真实用户反馈。因此用户侧问题严格写成 literature-grounded design problem，而不是需求发现。
 
 Bo et al. 已为 SELECT/CALIBRATE/LEARN 三种个性化 steering 界面及未脚手架化的 PROMPT baseline 提供 \(n=14\) 探索性被试内用户证据，且用户偏好呈异质性。本文不继承该用户证据，而是补充面向 objective/task outcomes 的逐 affordance、comparator-bound 模型证据 qualification procedure；Golden Gate Claude 仅作为内部特征放大公开可见的中性动机，不进入本文测试范围。
+
+经验前提已有直接先例。AxBench 已在 Gemma-2-2B/9B 的 method-level benchmark 中比较 prompting 与 SAE、LAT、supervised steering vectors、linear probes、ReFT；正式论文 Table 2 与后续可变 leaderboard 是不同 artifact，不能混用。Basu et al. 已用 400 个临床 vignettes 量化 internal representation 与 output/error correction 的差距；其 Arm 1 明确含 safety-focused prompt engineering，且 refined parser 会把 Qwen sensitivity 从 0.451 提高到 0.729。本文因此不主张 first prompt--steering comparison，也不主张 first interpretability/actionability gap。差异是逐 affordance 的预注册 interface qualification record：绑定 bounded DEV-selected prompt budget、matched items、`delta=0.05`、Bonferroni、coherence、measurement warning 与 evidence tier/interface state。
 
 本文的设计过程也不是虚构的迭代故事，而是：
 
@@ -69,7 +74,7 @@ READ 表示某个内部方向在指定测量下可读；CONTROL 表示该干预�
 
 ### 4.3 Fully worked artifact instantiation
 
-论文首次完整应用五字段 contract，在 Qwen2.5-7B 和 Llama-3-8B 上对 CAA/ITI 使用同一冻结 evaluation procedure：
+论文将五字段 contract 完整应用于 Qwen2.5-7B 和 Llama-3-8B 上的 CAA/ITI，并使用同一冻结 evaluation procedure：
 
 - prompt channel：16 个预先编写候选，只在 DEV 选；
 - latent channel：method-specific 单层加法 `h'_L = h_L + alpha*s_m*u_m`，其中 `s_CAA=1`，`s_ITI=sigma_L`；两者都只在 DEV 从 `alpha in {2,4,6,8,12,16,24}` 选择系数，但 effective injected norm 不同；

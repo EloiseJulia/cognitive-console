@@ -1,11 +1,15 @@
 "use strict";
 
 const app = {
-  materials: null, csrf: null, capability: null, attemptId: null, current: null,
-  hiddenStarted: null, hiddenMs: 0, formal: false, ended: false, pendingRequests: {},
+  csrf: null, locale: null, common: null, sequenceCodes: [], capability: null,
+  attemptId: null, current: null, hiddenStarted: null, hiddenMs: 0,
+  formal: false, ended: false, pendingRequests: {},
 };
-const stage = document.getElementById("stage");
+const gate = document.getElementById("language-gate");
 const startPanel = document.getElementById("start");
+const stage = document.getElementById("stage");
+const header = document.getElementById("site-header");
+const footer = document.getElementById("site-footer");
 const saveExitButton = document.getElementById("save-exit-button");
 
 function el(tag, attrs = {}, text = null) {
@@ -18,20 +22,37 @@ function el(tag, attrs = {}, text = null) {
   return node;
 }
 
+function format(text, values) {
+  return Object.entries(values).reduce(
+    (result, [key, value]) => result.replaceAll(`{${key}}`, String(value)), text,
+  );
+}
+
+function focusHeading(container) {
+  const heading = container.querySelector("h1");
+  if (heading) {
+    heading.tabIndex = -1;
+    heading.focus();
+  }
+  window.scrollTo(0, 0);
+}
+
 function replaceStage(...nodes) {
   const error = el("p", {id: "stage-error", class: "error", role: "alert", tabindex: "-1"});
   stage.replaceChildren(error, ...nodes);
   stage.hidden = false;
-  stage.focus();
-  window.scrollTo(0, 0);
+  focusHeading(stage);
 }
 
 function showError(error) {
-  const target = startPanel.hidden
-    ? document.getElementById("stage-error")
-    : document.getElementById("start-error");
-  target.textContent = error.message || String(error);
+  const message = app.common?.errors?.state || "错误 / Error";
+  const target = !gate.isConnected
+    ? (startPanel.hidden ? document.getElementById("stage-error") : document.getElementById("start-error"))
+    : document.getElementById("gate-error");
+  if (!target) return;
+  target.textContent = message;
   target.focus();
+  console.error(error);
 }
 
 function setFormal(value) {
@@ -49,7 +70,7 @@ function optionFieldset(name, question, options) {
   fieldset.append(el("legend", {}, question));
   for (const option of options) {
     const label = el("label", {class: "choice"});
-    const input = el("input", {type: "radio", name, value: option.key});
+    const input = el("input", {type: "radio", name, value: option.id});
     label.append(input, document.createTextNode(` ${option.text}`));
     fieldset.append(label);
   }
@@ -67,40 +88,32 @@ function lock(name) {
 async function api(path, data) {
   const nonce = app.pendingRequests[path] || requestId();
   app.pendingRequests[path] = nonce;
-  let response;
-  try {
-    response = await fetch(path, {
-      method: "POST", cache: "no-store", credentials: "same-origin",
-      headers: {
-        "Content-Type": "application/json", "X-CSRF-Token": app.csrf,
-        ...(app.capability ? {"X-Study-Capability": app.capability} : {}),
-      },
-      body: JSON.stringify({...data, request_id: nonce}),
-    });
-  } catch (error) {
-    throw error;
-  }
+  const response = await fetch(path, {
+    method: "POST", cache: "no-store", credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json", "X-CSRF-Token": app.csrf,
+      ...(app.capability ? {"X-Study-Capability": app.capability} : {}),
+    },
+    body: JSON.stringify({...data, request_id: nonce}),
+  });
   const value = await response.json();
   delete app.pendingRequests[path];
-  if (!response.ok) throw new Error(value.error || "Study state error.");
+  if (!response.ok) throw new Error(value.error || "state");
   return value;
 }
 
-function renderEvidence(item, condition) {
-  const card = el("article", {class: "evidence-card", "aria-label": "Evidence panel"});
-  card.append(el("h2", {}, app.materials.simulated_record_notice));
+function renderEvidence(cardData) {
+  const card = el("article", {class: "evidence-card", "aria-label": cardData.aria_label});
+  card.append(el("h2", {}, cardData.notice));
   const rows = el("dl", {class: "evidence-rows"});
-  const order = condition === "Contract" ? app.materials.primitive_ids : item.flat_order;
-  order.forEach((evidenceId, index) => {
+  cardData.rows.forEach((rowData, index) => {
     const row = el("div", {
       class: "evidence-row", "data-row-id": `row-${index + 1}`,
       "data-position": String(index + 1),
     });
-    const label = condition === "Contract"
-      ? app.materials.contract_headings[evidenceId] : `Evidence ${"ABCDE"[index]}`;
     row.append(
-      el("dt", {class: "evidence-label"}, label),
-      el("dd", {class: "evidence-body"}, item.primitive_evidence[evidenceId]),
+      el("dt", {class: "evidence-label"}, rowData.label),
+      el("dd", {class: "evidence-body"}, rowData.body),
     );
     rows.append(row);
   });
@@ -108,23 +121,104 @@ function renderEvidence(item, condition) {
   return card;
 }
 
+function applyChrome() {
+  const chrome = app.common.chrome;
+  document.documentElement.lang = app.locale;
+  document.title = app.common.document_title;
+  document.getElementById("header-title").textContent = chrome.header_title;
+  document.getElementById("header-privacy").textContent = chrome.privacy_note;
+  saveExitButton.textContent = chrome.save_exit;
+  footer.textContent = chrome.footer;
+  header.hidden = false;
+  footer.hidden = false;
+}
+
+function showWelcome() {
+  applyChrome();
+  const welcome = app.common.welcome;
+  const sequence = el("select", {id: "sequence", required: ""});
+  for (const code of app.sequenceCodes) sequence.append(el("option", {value: code}, code));
+  const switchButton = el(
+    "button", {type: "button", "data-action": "switch-language"},
+    welcome.switch_language,
+  );
+  startPanel.replaceChildren(
+    el("h1", {}, welcome.heading),
+    el("p", {class: "warning"}, welcome.warning),
+    el("p", {}, welcome.setup_placeholder),
+    el("label", {}, welcome.participant_code),
+    el("label", {}, welcome.sequence),
+    el("div", {class: "actions"}),
+    el("p", {id: "start-error", class: "error", role: "alert", tabindex: "-1"}),
+  );
+  startPanel.children[3].append(
+    el("input", {
+      id: "participant-code", autocomplete: "off", maxlength: "64", required: "",
+      "aria-label": welcome.participant_code,
+    }),
+  );
+  startPanel.children[4].append(sequence);
+  startPanel.children[5].append(
+    el("button", {id: "start-button", type: "button", "data-action": "start"}, welcome.start),
+    switchButton,
+  );
+  startPanel.hidden = false;
+  stage.hidden = true;
+  focusHeading(startPanel);
+}
+
+async function chooseLanguage(locale) {
+  const response = await fetch(
+    `/api/welcome?ui_language=${encodeURIComponent(locale)}`,
+    {cache: "no-store", credentials: "same-origin"},
+  );
+  if (!response.ok) throw new Error("locale");
+  const selectedBundle = await response.json();
+  if (selectedBundle.ui_language !== locale) throw new Error("locale mismatch");
+  app.locale = locale;
+  app.common = selectedBundle.common;
+  app.sequenceCodes = selectedBundle.sequence_codes;
+  if (gate.isConnected) gate.remove();
+  showWelcome();
+}
+
 function showTutorial() {
-  const m = app.materials.participant_materials;
-  const button = el("button", {type: "button", "data-action": "show-practice"}, "Continue to practice");
-  replaceStage(el("h1", {}, "Tutorial and legend"), el("p", {}, m.legend), el("p", {}, m.tutorial), button);
+  const onboarding = app.common.onboarding;
+  const glossary = el("dl", {class: "glossary"});
+  for (const row of onboarding.glossary) {
+    glossary.append(el("dt", {}, row.term), el("dd", {}, row.description));
+  }
+  const states = el("dl", {class: "glossary"});
+  for (const row of onboarding.states) {
+    states.append(el("dt", {}, row.label), el("dd", {}, row.description));
+  }
+  const steps = el("ol");
+  for (const step of onboarding.steps) steps.append(el("li", {}, step));
+  replaceStage(
+    el("h1", {}, onboarding.heading),
+    el("p", {}, onboarding.intro),
+    glossary,
+    el("h2", {}, onboarding.states_heading),
+    states,
+    el("h2", {}, onboarding.steps_heading),
+    steps,
+    el("button", {type: "button", "data-action": "show-practice"}, onboarding.continue_practice),
+  );
 }
 
 function showPractice() {
-  const practice = app.materials.participant_materials.practice;
-  const item = {
-    stimulus_id: "practice", primitive_evidence: practice.primitive_evidence,
-    flat_order: app.materials.primitive_ids,
-  };
+  const practice = app.common.practice;
   replaceStage(
-    el("h1", {}, "Practice"), renderEvidence(item, "Contract"),
-    optionFieldset("practice-q1", practice.q1.text, app.materials.q1.options),
-    el("button", {type: "button", "data-action": "practice-q1"}, "Submit practice Q1"),
+    el("h1", {}, practice.heading),
+    el("article", {class: "practice-card"},
+      null),
+    optionFieldset("practice-q1", practice.q1.text, practice.q1.options),
+    el("button", {type: "button", "data-action": "practice-q1"}, practice.submit_q1),
     el("div", {id: "practice-next"}),
+  );
+  stage.children[2].append(
+    el("h2", {}, practice.notice),
+    el("p", {}, practice.narrative),
   );
 }
 
@@ -134,11 +228,10 @@ async function practiceQ1(button) {
   button.disabled = true;
   await api("/api/practice", {attempt_id: app.attemptId, step: "q1", answer});
   lock("practice-q1");
-  button.disabled = true;
-  const practice = app.materials.participant_materials.practice;
+  const practice = app.common.practice;
   document.getElementById("practice-next").append(
     optionFieldset("practice-q2", practice.q2.text, practice.q2.options),
-    el("button", {type: "button", "data-action": "practice-q2"}, "Submit practice Q2"),
+    el("button", {type: "button", "data-action": "practice-q2"}, practice.submit_q2),
   );
   document.querySelector('input[name="practice-q2"]').focus();
 }
@@ -151,10 +244,9 @@ async function practiceQ2(button) {
     attempt_id: app.attemptId, step: "q2", answer,
   });
   lock("practice-q2");
-  button.disabled = true;
   document.getElementById("practice-next").append(
     el("p", {class: "feedback"}, response.feedback),
-    el("button", {type: "button", "data-action": "begin-formal"}, "Begin formal trials"),
+    el("button", {type: "button", "data-action": "begin-formal"}, app.common.practice.begin_formal),
   );
   app.current = response;
 }
@@ -165,10 +257,15 @@ function showTrial() {
   app.hiddenMs = 0;
   app.hiddenStarted = document.hidden ? performance.now() : null;
   replaceStage(
-    el("p", {class: "progress"}, `Formal trial ${trial.trial_index + 1} of 10 · Block ${trial.block}`),
-    renderEvidence(trial.item, trial.condition),
-    optionFieldset("formal-q1", app.materials.q1.text, app.materials.q1.options),
-    el("button", {type: "button", "data-action": "formal-q1"}, "Submit Q1 and lock answer"),
+    el("h1", {class: "sr-only"}, format(app.common.progress.formal_trial, {
+      current: trial.trial_index + 1, block: trial.block,
+    })),
+    el("p", {class: "progress"}, format(app.common.progress.formal_trial, {
+      current: trial.trial_index + 1, block: trial.block,
+    })),
+    renderEvidence(trial.card),
+    optionFieldset("formal-q1", trial.q1.text, trial.q1.options),
+    el("button", {type: "button", "data-action": "formal-q1"}, app.common.buttons.submit_q1),
     el("div", {id: "q2-area"}),
   );
 }
@@ -179,11 +276,10 @@ async function formalQ1(button) {
   button.disabled = true;
   const response = await api("/api/q1", {attempt_id: app.attemptId, answer});
   lock("formal-q1");
-  button.disabled = true;
   const q2Area = document.getElementById("q2-area");
   q2Area.append(
     optionFieldset("formal-q2", response.q2.text, response.q2.options),
-    el("button", {type: "button", "data-action": "formal-q2"}, "Submit Q2 and continue"),
+    el("button", {type: "button", "data-action": "formal-q2"}, app.common.buttons.submit_q2),
   );
   document.querySelector('input[name="formal-q2"]').focus();
 }
@@ -203,16 +299,14 @@ async function formalQ2(button) {
 }
 
 function showEase(block) {
-  const material = app.materials.participant_materials.block_ease;
   replaceStage(
-    el("h1", {}, `Block ${block} complete`),
-    optionFieldset("ease", material.question, material.options),
-    el("div", {class: "actions"},
-      null),
+    el("h1", {}, format(app.common.progress.block_complete, {block})),
+    optionFieldset("ease", app.common.ease.question, app.common.ease.options),
+    el("div", {class: "actions"}),
   );
   stage.lastChild.append(
-    el("button", {type: "button", "data-action": "ease", "data-block": String(block)}, "Continue"),
-    el("button", {type: "button", "data-action": "ease-skip", "data-block": String(block)}, "Prefer not to answer"),
+    el("button", {type: "button", "data-action": "ease", "data-block": String(block)}, app.common.buttons.continue),
+    el("button", {type: "button", "data-action": "ease-skip", "data-block": String(block)}, app.common.buttons.prefer_not),
   );
 }
 
@@ -227,15 +321,15 @@ async function submitEase(button, skip) {
 }
 
 function showDiagnostic() {
-  const material = app.materials.participant_materials.post_task_manipulation_diagnostic;
+  const diagnostic = app.common.diagnostic;
   replaceStage(
-    el("h1", {}, "Post-task format question"),
-    optionFieldset("diagnostic", material.question, material.options),
+    el("h1", {}, diagnostic.heading),
+    optionFieldset("diagnostic", diagnostic.question, diagnostic.options),
     el("div", {class: "actions"}),
   );
   stage.lastChild.append(
-    el("button", {type: "button", "data-action": "diagnostic"}, "Submit"),
-    el("button", {type: "button", "data-action": "diagnostic-skip"}, "Prefer not to answer"),
+    el("button", {type: "button", "data-action": "diagnostic"}, app.common.buttons.submit),
+    el("button", {type: "button", "data-action": "diagnostic-skip"}, app.common.buttons.prefer_not),
   );
 }
 
@@ -245,56 +339,53 @@ async function submitDiagnostic(skip) {
   document.querySelectorAll('[data-action^="diagnostic"]').forEach(node => { node.disabled = true; });
   await api("/api/diagnostic", {attempt_id: app.attemptId, answer});
   await api("/api/complete", {attempt_id: app.attemptId});
-  showDebrief();
-}
-
-function showDebrief() {
   showExportScreen(true);
 }
 
 function showExportScreen(complete) {
   app.ended = true;
   setFormal(false);
-  const jsonLink = el("button", {type: "button", "data-action": "download-json"}, "Download signed JSON");
-  const csvLink = el("button", {type: "button", "data-action": "download-csv"}, "Download signed CSV");
-  const finish = el("button", {type: "button", "data-action": "finish"}, "Finish");
+  const copy = app.common.export;
   replaceStage(
-    el("h1", {}, complete ? "Preview complete" : "Session ended"),
+    el("h1", {}, complete ? copy.complete_heading : copy.partial_heading),
     ...(complete ? [
-      el("p", {}, app.materials.participant_materials.debrief),
-      el("p", {}, "Completed formal trials: 10 of 10."),
-    ] : [
-      el("p", {}, "Your signed partial export is ready. No performance feedback is shown."),
-    ]),
-    el("p", {id: "export-status"}, "Export ready. Choose each format to download manually."),
-    el("p", {}, "If a download fails, the buttons remain available; retry as often as needed while this local server retains the export."),
+      el("p", {}, app.common.debrief),
+      el("p", {}, copy.completed_trials),
+    ] : [el("p", {}, copy.partial_ready)]),
+    el("p", {id: "export-status"}, copy.ready),
+    el("p", {}, copy.retry),
     el("div", {class: "actions"}),
   );
-  stage.lastChild.append(jsonLink, csvLink, finish);
+  stage.lastChild.append(
+    el("button", {type: "button", "data-action": "download-json"}, app.common.buttons.download_json),
+    el("button", {type: "button", "data-action": "download-csv"}, app.common.buttons.download_csv),
+    el("button", {type: "button", "data-action": "finish"}, app.common.buttons.finish),
+  );
 }
 
-async function downloadExport(format) {
+async function downloadExport(outputFormat) {
   const response = await fetch(
-    `/api/export?attempt_id=${encodeURIComponent(app.attemptId)}&format=${format}`,
+    `/api/export?attempt_id=${encodeURIComponent(app.attemptId)}&format=${outputFormat}`,
     {cache: "no-store", credentials: "same-origin", headers: {"X-Study-Capability": app.capability}},
   );
-  if (!response.ok) throw new Error("Signed export download failed.");
+  if (!response.ok) throw new Error("download");
   const blob = await response.blob();
   const link = document.createElement("a");
-  link.download = `microstudy-${app.attemptId}.${format}`;
+  link.download = `microstudy-${app.attemptId}.${outputFormat}`;
   link.href = URL.createObjectURL(blob);
   document.body.append(link);
   link.click();
+  const url = link.href;
   link.remove();
-  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
   document.getElementById("export-status").textContent =
-    `${format.toUpperCase()} download started. Both formats remain available.`;
+    format(app.common.export.download_started, {format: outputFormat.toUpperCase()});
 }
 
 async function saveAndExit(button) {
   button.disabled = true;
   const response = await api("/api/save-exit", {attempt_id: app.attemptId});
-  if (response.phase !== "export_ready") throw new Error("Signed export is not ready.");
+  if (response.phase !== "export_ready") throw new Error("export");
   showExportScreen(false);
 }
 
@@ -302,17 +393,22 @@ function finish() {
   app.ended = true;
   setFormal(false);
   replaceStage(
-    el("h1", {}, "Finished"),
-    el("p", {}, "This browser view is cleared. The local server retains the signed export until its session TTL expires."),
+    el("h1", {}, app.common.export.finished_heading),
+    el("p", {}, app.common.export.finished),
   );
 }
 
-async function startStudy() {
-  const participantCode = document.getElementById("participant-code").value.trim();
-  const sequence = document.getElementById("sequence").value;
-  const response = await api("/api/start", {participant_code: participantCode, sequence});
+async function startStudy(button) {
+  button.disabled = true;
+  const response = await api("/api/start", {
+    participant_code: document.getElementById("participant-code").value.trim(),
+    sequence: document.getElementById("sequence").value,
+    ui_language: app.locale,
+  });
+  if (response.ui_language !== app.locale) throw new Error("locale lock");
   app.attemptId = response.attempt_id;
   app.capability = response.capability;
+  startPanel.replaceChildren();
   startPanel.hidden = true;
   showTutorial();
 }
@@ -321,6 +417,9 @@ document.addEventListener("click", event => {
   const button = event.target.closest("[data-action]");
   if (!button) return;
   const actions = {
+    "choose-language": () => chooseLanguage(button.dataset.locale),
+    "switch-language": () => chooseLanguage(app.locale === "en" ? "zh-Hans" : "en"),
+    "start": () => startStudy(button),
     "show-practice": () => showPractice(),
     "practice-q1": () => practiceQ1(button),
     "practice-q2": () => practiceQ2(button),
@@ -351,25 +450,12 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
-document.getElementById("start-button").addEventListener("click", () => {
-  document.getElementById("start-button").disabled = true;
-  startStudy().catch(error => {
-    showError(error);
-    document.getElementById("start-button").disabled = false;
-  });
-});
-
 fetch("/api/bootstrap", {cache: "no-store", credentials: "same-origin"})
-  .then(response => response.ok ? response.json() : Promise.reject(new Error("Could not load materials.")))
+  .then(response => response.ok ? response.json() : Promise.reject(new Error("bootstrap")))
   .then(bootstrap => {
+    if (bootstrap.fallback !== null || bootstrap.auto_detect !== false) throw new Error("locale contract");
     app.csrf = bootstrap.csrf_token;
-    app.materials = bootstrap.materials;
-    const select = document.getElementById("sequence");
-    for (const code of app.materials.sequence_codes) select.append(el("option", {value: code}, code));
   })
-  .catch(error => {
-    showError(error);
-    document.getElementById("start-button").disabled = true;
-  });
+  .catch(showError);
 
 window.MicrostudyTest = {renderEvidence};

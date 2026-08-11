@@ -18,7 +18,12 @@ from typing import Any, Iterable
 
 from cognitive_console.microstudy_materials import route_state
 
-from .materials import material_hashes, planned_trials, validated_sources
+from .materials import (
+    locale_bundle_metadata,
+    material_hashes,
+    planned_trials,
+    validated_sources,
+)
 from .server import canonical_bytes
 
 BOOTSTRAP_B = 10_000
@@ -61,7 +66,11 @@ def validate_export(data: dict[str, Any], verification_key: bytes) -> dict[str, 
         and hmac.compare_digest(verification["signature"], signature),
         "signature mismatch",
     )
-    _check(data.get("export_schema_version") == "microstudy-export-v3-signed", "wrong export schema")
+    _check(
+        data.get("export_schema_version")
+        == "microstudy-export-v4-bilingual-signed",
+        "wrong export schema",
+    )
     _check(
         data.get("material_schema_version") == stimuli["schema_version"],
         "wrong material schema",
@@ -77,7 +86,24 @@ def validate_export(data: dict[str, Any], verification_key: bytes) -> dict[str, 
         "wrong material hashes",
         "materials_version_mismatch",
     )
-    session_fields = stimuli["export_schema"]["session_fields"]
+    ui_language = data.get("ui_language")
+    _check(
+        ui_language in stimuli["locale_contract"]["supported"],
+        "missing or invalid ui_language",
+        "materials_version_mismatch",
+    )
+    locale_meta = locale_bundle_metadata(ui_language)
+    _check(
+        data.get("locale_bundle_version") == locale_meta["locale_bundle_version"],
+        "wrong locale bundle version",
+        "materials_version_mismatch",
+    )
+    _check(
+        data.get("locale_bundle_hash") == locale_meta["locale_bundle_hash"],
+        "wrong locale bundle hash",
+        "materials_version_mismatch",
+    )
+    session_fields = stimuli["nonlocalized"]["export_schema"]["session_fields"]
     expected_top = {
         "export_schema_version",
         "material_schema_version",
@@ -130,17 +156,19 @@ def validate_export(data: dict[str, Any], verification_key: bytes) -> dict[str, 
         "practice Q2 precedes Q1",
         "impossible_state_transition",
     )
-    ease_keys = {row["key"] for row in stimuli["participant_materials"]["block_ease"]["options"]}
+    locale_bundle = stimuli["locales"][ui_language]
+    ease_keys = {row["id"] for row in locale_bundle["ease"]["options"]}
     _check(data["block_1_ease"] is None or data["block_1_ease"] in ease_keys, "invalid block 1 ease")
     _check(data["block_2_ease"] is None or data["block_2_ease"] in ease_keys, "invalid block 2 ease")
-    diagnostic = stimuli["participant_materials"]["post_task_manipulation_diagnostic"]
-    diagnostic_keys = {row["key"] for row in diagnostic["options"]}
+    diagnostic = locale_bundle["diagnostic"]
+    diagnostic_keys = {row["id"] for row in diagnostic["options"]}
+    diagnostic_key = stimuli["nonlocalized"]["answer_keys"]["diagnostic"]
     if data["post_task_diagnostic_submitted"]:
         _check(data["post_task_diagnostic_presented"], "diagnostic submitted before presentation")
         _check(data["post_task_diagnostic_response"] in diagnostic_keys, "invalid diagnostic response")
         _check(
             data["post_task_diagnostic_correct"]
-            == (data["post_task_diagnostic_response"] == diagnostic["correct_key"]),
+            == (data["post_task_diagnostic_response"] == diagnostic_key),
             "wrong diagnostic scoring",
         )
     else:
@@ -157,10 +185,17 @@ def validate_export(data: dict[str, Any], verification_key: bytes) -> dict[str, 
         plan = planned_trials(data["sequence"])
     except ValueError:
         raise ExportError("unknown sequence", "sequence_mismatch") from None
-    items = {item["stimulus_id"]: item for item in stimuli["items"]}
-    allowed_q1 = {row["key"] for row in stimuli["q1"]["options"]}
-    templates = {row["template_id"]: row for row in stimuli["q2_templates"]}
-    trial_fields = stimuli["export_schema"]["trial_fields"]
+    items = {
+        item["stimulus_id"]: item
+        for item in stimuli["nonlocalized"]["items"]
+    }
+    allowed_q1 = {
+        row["id"] for row in locale_bundle["formal"]["q1"]["options"]
+    }
+    templates = {
+        row["id"]: row for row in locale_bundle["formal"]["q2_templates"]
+    }
+    trial_fields = stimuli["nonlocalized"]["export_schema"]["trial_fields"]
     for expected, trial in zip(plan, trials):
         _check(set(trial) == set(trial_fields), "unexpected or missing trial fields")
         for field in trial_fields:
@@ -206,7 +241,10 @@ def validate_export(data: dict[str, Any], verification_key: bytes) -> dict[str, 
         else:
             _check(trial["q1"] is None and trial["q1_correct"] is None, "unsubmitted Q1 populated")
         if trial["q2_submitted"]:
-            q2_keys = {row["key"] for row in templates[expected["q2_template_id"]]["options"]}
+            q2_keys = {
+                row["id"]
+                for row in templates[expected["q2_template_id"]]["options"]
+            }
             _check(trial["q2"] in q2_keys, "invalid Q2 response")
             _check(trial["q2_correct"] == (trial["q2"] == expected["q2_key"]), "wrong Q2 scoring")
             _check(
@@ -294,10 +332,14 @@ def load_exports(
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     valid, rejected = [], []
     attempts: dict[str, tuple[bytes, str, str]] = {}
+    observed_schema_versions: set[str] = set()
     for path in paths:
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
             if isinstance(raw, dict):
+                schema = raw.get("export_schema_version")
+                if isinstance(schema, str):
+                    observed_schema_versions.add(schema)
                 attempt_id = raw.get("attempt_id")
                 verification = raw.get("verification")
                 signature = (
@@ -337,6 +379,11 @@ def load_exports(
                     "detail": str(exc),
                 }
             )
+    if observed_schema_versions - {"microstudy-export-v4-bilingual-signed"}:
+        raise ExportError(
+            "v3/v4 or unsupported export schemas must not be mixed in analysis",
+            "schema_version_mismatch",
+        )
     return valid, rejected
 
 
@@ -402,6 +449,9 @@ def resolve_duplicates(
                 "attempt_id": row["attempt_id"],
                 "participant_code": row["participant_code"],
                 "reason": "duplicate_attempt",
+                "ui_language": row["ui_language"],
+                "kept_ui_language": winner["ui_language"],
+                "locale_conflict": row["ui_language"] != winner["ui_language"],
             }
             for row in attempts
             if row is not winner
@@ -553,14 +603,15 @@ def analyze(
         condition: {metric: _mean(values) for metric, values in metrics.items()}
         for condition, metrics in descriptive.items()
     }
+    all_rejections = rejected + (assignment_exclusions or []) + duplicate_exclusions
     return {
-        "analysis_version": "microstudy-analysis-v1",
+        "analysis_version": "microstudy-analysis-v2-bilingual-v4-only",
         "status": "DRAFT_ANALYSIS_NOT_PAPER_EVIDENCE",
         "bootstrap": {"B": BOOTSTRAP_B, "seed": BOOTSTRAP_SEED},
         "input_attempts": len(exports) + len(rejected),
         "kept_attempts": len(kept),
         "eligible_primary_n": len(differences),
-        "rejected": rejected + (assignment_exclusions or []) + duplicate_exclusions,
+        "rejected": all_rejections,
         "participants": participants,
         "primary": {
             "estimand": "mean participant paired Contract-minus-Flat CCA",
@@ -584,6 +635,26 @@ def analyze(
         "descriptive_diagnostic": {
             "submitted": sum(row["post_task_diagnostic_submitted"] for row in kept),
             "correct": sum(row["post_task_diagnostic_correct"] is True for row in kept),
+        },
+        "descriptive_locale_qa": {
+            "kept_counts": dict(Counter(row["ui_language"] for row in kept)),
+            "duplicate_locale_conflict_count": sum(
+                row.get("locale_conflict") is True for row in all_rejections
+            ),
+            "duplicate_locale_conflicts": [
+                {
+                    "participant_code": row["participant_code"],
+                    "excluded_ui_language": row["ui_language"],
+                    "kept_ui_language": row["kept_ui_language"],
+                }
+                for row in all_rejections
+                if row.get("locale_conflict") is True
+            ],
+            "analysis_role": (
+                "descriptive QA only; locale is not used for eligibility, "
+                "exclusion, assignment, duplicate winner selection, outcomes, "
+                "bootstrap, sign-flip tests, or stratification"
+            ),
         },
     }
 

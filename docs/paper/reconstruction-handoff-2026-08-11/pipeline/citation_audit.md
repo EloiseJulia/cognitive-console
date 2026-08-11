@@ -97,13 +97,12 @@ Scope began as internal resolution between `CC main - Copy.tex` and `CC referenc
 
 ### Current Citation-State Consequence
 
-The generated conditional manuscript cites 23 unique keys; all 23 have source-level rows above, and none is missing from the 39-entry bibliography. Several checks are explicitly abstract/page-level rather than full-text. `lee2004trust` and `schemmer2023appropriate` remain checked candidates but are not cited in the current narrative.
+The generated conditional manuscript cites 26 unique keys, and none is missing from the 39-entry bibliography. The restored `mishra2026nonsurj`, `heyman2026steer`, and `sprejer2026mindgap` entries are verified in the repository citation map and are used only as theory/method-scope boundaries; Mishra is workshop background, Heyman bounds the claim with trained steering, and Sprejer is a preprint comparator-risk neighbor. Several other checks are explicitly abstract/page-level rather than full-text. `lee2004trust` and `schemmer2023appropriate` remain checked candidates but are not cited in the current narrative.
 
 The checked sources preserve a narrow candidate distinction: AxBench benchmarks methods; Basu tests actionability in a clinical task; Bo, Huang, and Labarta expose steering through interfaces/workflows; Anthropic demonstrates public interaction with an internally modified model; Karny evaluates passive neural transparency; and Raval exposes concept-guided latent manipulation. None of the checked sources was found to define the same per-affordance comparator-bound permission rule for an active language-model control. This supports a scoped novelty distinction, not proof that the proposed rule is normatively necessary or sufficient; broader literature search remains incomplete.
 
 ### Delegated-Search Candidates Not Added
 
-- `mishra2026nonsurj` and `heyman2026steer`: technically relevant 2026 prompt/steering neighbors, but the present comparator paragraph is already supported by peer-reviewed benchmark and interface work; adding workshop/preprint claims would not change the scoped argument.
-- `sprejer2026mindgap`: relevant to capability–behavior trade-offs, but currently an unreviewed, narrow-system preprint; held rather than used to justify the coherence gate.
+- `mishra2026nonsurj`, `heyman2026steer`, and `sprejer2026mindgap` are now cited narrowly as theory/method-scope boundaries. They do not justify the qualification rule, comparator fairness, coherence criterion, or a general steering verdict.
 - `jacovi2021formalizingTrust`: conceptually relevant to warranted trust, but Lee/See, Buçinca, and Schemmer already support the narrower reliance claims used here.
 - `subramani2026latent`, `fan2026asteer`, `neumann2026whocontrols`, and the manipulation/dark-pattern candidates: useful motivation or adjacent technical/safety context, but they do not support the manuscript's comparator-bound affordance claim closely enough to cite now.

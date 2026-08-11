@@ -40,6 +40,8 @@ Representation-engineering methods identify and intervene on directions inside l
 
 Recent benchmarks make this distinction empirically consequential. AxBench evaluates prompting, finetuning, and several representation-level methods on common concepts; its official Table 2 reports a mean overall steering score of 0.894 for Prompt and 0.239 for DiffMean after factor selection, distinct from the mutable repository leaderboard. \cite{wu2025axbench} <!-- SRC-007 --> Basu et al. examine the gap between internal representation and actionable output correction in 400 clinical vignettes, including a safety-focused prompt-engineering condition in Arm 1; for Qwen, sensitivity changes from 0.451 under the original parser to 0.729 under the refined parser, showing that the measured gap is parser-sensitive. \cite{basu2026actionability} <!-- SRC-008 --> These studies compare channels or expose representation-to-output gaps. Our narrower target is the interface decision that follows: when may evidence about a specified latent intervention authorize an active latent control?
 
+Internal reach and behavioral advantage are also distinct. Mishra et al. show that bounded prompting does not reproduce every residual state reached by steering, but internal non-surjectivity does not establish a superior user-visible outcome. \cite{mishra2026nonsurj} Heyman and Vandeputte show that trained steering can mimic prompting, while Sprejer et al. report capability–behavior trade-offs for feature steering relative to prompting. \cite{heyman2026steer,sprejer2026mindgap} These results bound the present application in both directions: latent interventions need not collapse to prompts internally, but stronger or trained methods cannot inherit conclusions from the tested single-layer additive CAA/ITI convention.
+
 This question cannot be answered by legibility alone. Work on metacognitive demands and human-centered transparency warns that information exposed by an AI system must be interpreted relative to a task and decision. \cite{tankelevitch2024metacog,liao2024transparency} <!-- SOURCE_CHECKED 2026-08-11 --> We operationalize the evidence boundary as READ versus TRANSFER and reserve CONTROL for interface permission. READ remains model-, method-, axis-, layer-, and protocol-specific. TRANSFER additionally requires a declared outcome, alternative, uncertainty rule, point-estimate floor, and coherence criterion. The distinction is part of the proposed qualification procedure, not a causal theorem or a validated human decision rule.
 
 ### Prompting as a Declared Behavioral Alternative
@@ -59,6 +61,30 @@ Public demonstrations extend this trajectory beyond research prototypes. Anthrop
 Karny et al. provide the closest verified interface and human-evidence neighbor. Their neural-transparency system projects a system prompt onto persona trait vectors and presents the predictions through an interactive sunburst before users chat with their configured model. In a controlled between-subjects study, the visualization increased endpoint trust and was rated helpful, but it did not produce significant differences in prompt iteration, resulting persona scores, message engagement, or confidence in predicting unintended behavior. \cite{karny2026neural} <!-- SRC-010 --> They study passive prediction and explicitly leave active steering interfaces to future work. Their subjective/behavioral divergence also cautions against treating perceived usefulness as evidence that an interface improves actionability judgments.
 
 Documentation frameworks such as model cards and datasheets demonstrate how structured records can bind claims to provenance, evaluation, and scope. \cite{mitchell2019modelcards,gebru2021datasheets} Internal algorithmic-audit frameworks add a process-oriented precedent: staged development decisions produce linked records across the system lifecycle. \cite{raji2020accountability} <!-- SOURCE_CHECKED 2026-08-11 --> Our five-field record applies a related accountability move at the control-affordance level: it records READ, TRANSFER, comparator, calibration warning, and evidence tier for one proposed active latent control. These precedents motivate traceability; the contribution is a qualification procedure and worked application rather than a documentation standard.
+
+\begin{table*}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\caption{Nearest neighbors and the interface decision each leaves open.}
+\label{tab:novelty-neighbors}
+\begin{tabular}{@{}p{0.22\textwidth}p{0.34\textwidth}p{0.36\textwidth}@{}}
+\TopRule
+Prior work & What it establishes & What remains for the present interface decision \\
+\midrule
+Huang and Lim \cite{huang2025steering} & A lay interface for SAE feature steering and persona construction. & Whether each visible feature carries comparative behavioral evidence sufficient for an active control. \\
+Bo et al. \cite{bo2026steerable} & SELECT, CALIBRATE, and LEARN interfaces, an unscaffolded PROMPT baseline, and exploratory within-subject user evidence. & A per-affordance qualification against a declared selected comparator, with margin, coherence, warning, and evidence tier. \\
+Karny et al. \cite{karny2026neural} & A passive neural-transparency interface with controlled human evidence and subjective/behavioral divergence. & When evidence licenses an active intervention rather than a prediction display. \\
+Wu et al. (AxBench) \cite{wu2025axbench} & A method-level benchmark comparing prompting with multiple representation-level interventions. & A widget-level decision tied to matched items, a declared margin, coherence, and scope. \\
+Basu et al. \cite{basu2026actionability} & A clinical representation-to-actionability study whose Arm 1 includes prompt engineering and whose gap is parser-sensitive. & A uniform per-affordance record that carries comparator and measurement limits into an interface state. \\
+Riche et al.; Labarta et al.; Raval et al. \cite{riche2025aiinstr,labarta2026attribution,raval2026latman} & Prompt instruments, an expert activation-steering workflow, and concept-guided latent manipulation. & A prompt-versus-latent behavioral qualification procedure for one language-model control. \\
+Mishra et al. \cite{mishra2026nonsurj} & Internal residual-state non-surjectivity under bounded prompts. & Whether internal reach yields superior behavior under the declared outcome and comparator. \\
+Heyman and Vandeputte \cite{heyman2026steer} & Trained steering that mimics prompting. & New evidence for the trained method rather than transfer from the present naive additive setting. \\
+Sprejer et al. \cite{sprejer2026mindgap} & Capability–behavior trade-offs for feature steering relative to prompting. & A preregistered CAA/ITI comparison on the present outcomes and an interface permission record. \\
+Rimsky et al.; Li et al. \cite{rimsky2024caa,li2023iti} & The CAA and ITI intervention families. & Whether the tested implementations exceed the declared comparator while preserving coherence. \\
+\bottomrule
+\end{tabular}
+\end{table*}
 
 ### Positioning Summary
 
@@ -241,6 +267,10 @@ This heterogeneity matters for the evidence record. An aggregate “three of fou
 
 ### TRANSFER No-Pass States Differ by Axis
 
+\input{../tables/c2-delta-4cell.tex}
+
+Table \ref{tab:c2-delta-4cell} exposes the complete four-cell grid rather than asking the aggregate 0/12 label to carry the evidence. Every model–method–axis test is a procedural no-pass under the reported rule, but the table does not convert an underpowered or mixed comparison into a resolved failure or a withheld-control conclusion.
+
 **Skepticism calls for more resolution, not an ineffectiveness label.** Minimum detectable positive effects (MDEs) were 0.188, 0.268, 0.225, and 0.279 across the four model–method cells, compared with a declared point-estimate floor of 0.05. <!-- FL-041 --><!-- FL-031 --> The study could not resolve effects near its own floor, so the next action is more information rather than an ineffectiveness claim.
 
 **Deliberation resists both superiority and equivalence summaries.** Two ITI cells fell inside a $\pm0.05$ equivalence interval in a post-hoc TOST, while the CAA cells remained underpowered. <!-- FL-005 --><!-- FL-014 --><!-- FL-043 --> The evidence is mixed: the exploratory analysis bounds two cells but cannot become a preregistered equivalence result.
@@ -265,6 +295,14 @@ Uncertainty & Frozen steer-minus-prompt contrasts negative; one-cell complete-ca
 \end{table*}
 
 ### Comparator Choice Changes the Calibration Reading
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{../figures/c2-calibration-harm.pdf}
+\caption{Paired steer-minus-bounded-prompt uncertainty effects and Bonferroni-corrected intervals across the four tested model–method cells.}
+\Description{All four uncertainty point estimates are negative relative to the selected prompt comparator, and their intervals exclude zero under the frozen scorer. The figure does not show direct steer-versus-unsteered-baseline harm or resolve missingness.}
+\label{fig:c2-calibration-harm}
+\end{figure}
 
 In the Qwen–CAA format-and-missingness recheck, steering remained close to the unsteered baseline—about $+0.011$ in parseable-confidence rate and $+0.0008$ in $1-\mathrm{Brier}$—while the comparator scored higher under the reported outcome. <!-- FL-044 --><!-- BD-009 --> The three-way comparison therefore supports a comparator-relative warning, not a claim that steering directly harmed baseline calibration.
 

@@ -219,15 +219,27 @@ def test_console_ui_contract_figure_script_runs():
             normalized_content = " ".join(content.split())
             assert "BOUNDED PROMPT COMPARATOR" in normalized_content
             assert "PROMPT-CEILING" not in normalized_content
-            for expected in (
+            for removed_label in (
+                "DIAGNOSTIC-ONLY",
                 "UNRESOLVED",
+                "UNSTABLE",
+                "ELIGIBLE",
+                "EVIDENCE-SUPPORTED CONTROL",
                 "WITHHELD CONTROL",
+            ):
+                assert removed_label not in normalized_content
+            for expected in (
+                "COMPUTATIONAL RECORD",
+                "READ STATUS",
+                "TRANSFER STATUS",
+                "BLOCKING REASON",
+                "INTERFACE ACTION",
+                "Read-only diagnostic candidate within this evidence tier; active control withheld.",
                 "Frozen 2x2 grid; mixed resolution; split-sensitivity only.",
                 "Frozen 2x2 comparator result; targeted CAA x Qwen recheck.",
-                "Near-baseline only in the CAA x Qwen recheck.",
-                "Complete-case result only for CAA x Qwen.",
-                "Adversarial bounds cross zero.",
-                "Other 3 method-model cells unrechecked.",
+                "Mixed resolution: ITI exploratory equivalence; CAA underpowered.",
+                "Missingness-limited: complete-case support in one cell; bounds cross zero.",
+                "Near-baseline only in CAA x Qwen; other 3 cells unrechecked.",
             ):
                 assert expected in normalized_content
             font_sizes = [

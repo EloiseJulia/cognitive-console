@@ -7,7 +7,7 @@ This directory transfers the reconstructed manuscript and its evidence controls 
 - **Canonical prose source:** `pipeline/CONDITIONAL_PAPER.md`
 - **Front matter and ACM template:** `pipeline/iui_conditional.template.tex`
 - **Generated output:** `reframed.tex` (do not edit as the primary source)
-- **Current rendered baseline:** `reframed.pdf` (16 pages, 26 cited references, clean build on 2026-08-11)
+- **Current rendered baseline:** `reframed.pdf` (17 pages, 26 cited references, clean build on 2026-08-11)
 - **Bibliography used by the generated TeX:** `reframed-references.bib`
 - **Venue conflict requiring human adjudication:** this handoff uses an anonymous IUI-style `acmart` template, while the repository constitution currently names CHI as the target venue. Do not replace the repository's primary manuscript or change venue claims without the required human gate.
 
@@ -18,9 +18,9 @@ The reconstruction reframes the paper around a real interface trajectory:
 1. Bo et al. prototype user-facing activation-steering controls.
 2. Golden Gate Claude publicly demonstrates interaction with an internally modified model.
 3. The paper asks what evidence should support turning a named latent direction into a product-facing control.
-4. The reported qualification rule and the post hoc four-state design mapping are explicitly separated.
+4. The reported qualification rule feeds a direct hybrid mapping: computational result, structured evidence or blocking reason, then record-specific interface eligibility and action.
 
-The handoff preserves strict boundaries: the prompt comparator is DEV-selected from a preregistered bounded candidate set; the assay has no passing latent behavioral positive control; the four-state mapping is not a preregistered or validated rubric; and human/prompt-plus-steer results remain pending.
+The handoff preserves strict boundaries: the prompt comparator is DEV-selected from a preregistered bounded candidate set; the assay has no passing latent behavioral positive control; the interface mapping has not been evaluated with people and makes no operational-readiness claim; and human/prompt-plus-steer results remain pending.
 
 ## Package Contents
 
@@ -93,13 +93,14 @@ Do not overwrite `docs/paper/main.tex` immediately. Integrate in this order:
 
 Follow `pipeline/WRITING_GUARDRAILS.md`. In particular:
 
-- Use READ evidence / TRANSFER evidence / CONTROL permission.
-- Use the formal states *Diagnostic-only*, *Unresolved*, *Unstable*, and *Eligible*.
-- Distinguish evidence profiles, affordance states, and evidence tiers.
+- Use READ evidence / TRANSFER evidence / interface eligibility and action.
+- Use the sequence computational result → structured evidence or blocking reason → record-specific interface action.
+- Use `read-only diagnostic candidate within this evidence tier`, `active control withheld`, and `active control passes the computational gate within this evidence tier`.
+- Keep READ unsupported/not evaluated, TRANSFER not tested/not evaluable/no-pass/pass, interval includes zero, comparator-negative, below-floor, coherence-failure, and missingness-limited reasons distinct.
 - Distinguish the preregistered bounded candidate set from the DEV-selected prompt comparator.
 - The reported qualification rule produces the 0/12 classification.
-- The four-state mapping is a separate post hoc design synthesis and does not produce or validate 0/12.
-- Do not claim comparator fairness/global optimality, assay validation, inter-rater validation, general steering failure, or human benefit without new evidence.
+- Do not classify the 0/12 grid as one withheld scientific state; the worked Qwen–CAA uncertainty record alone supports the illustrated slider-withholding action.
+- Do not claim comparator fairness/global optimality, assay validation, general steering failure, human-facing effects, or operational readiness without new evidence.
 
 ## Recommended First Action in the Full Repo
 

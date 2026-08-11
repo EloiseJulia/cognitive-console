@@ -40,14 +40,14 @@ claims:
     valid_for_paper: "background citation only; not our empirical claim"
     gate_notes: "No project evidence row because it is not our claim. Must not enter Abstract/Contributions/Conclusion as an empirical contribution."
   C3:
-    statement: "Proposed, artifact-instantiated evidence-accounting and evaluation framework for latent-control affordances: READ status, TRANSFER verdict, bounded best-prompt comparison, calibration warning, and evidence tier."
-    status: "proposed, artifact-instantiated methodological contribution derived from model evidence; no validated comprehensibility, usability, reliance effect, effectiveness, or benefit"
+    statement: "Proposed, artifact-instantiated evidence-accounting and evaluation framework for latent-control affordances: computational READ/TRANSFER results feed a structured evidence or blocking reason, which then determines record-specific interface eligibility and action while retaining the bounded prompt comparator, calibration warning, and evidence tier."
+    status: "human-approved core methodological restructuring; proposed and artifact-instantiated from model evidence, with no formal four-state taxonomy and no validated human-facing or operational outcome"
     supporting_evidence_ids: []
     scope: "Pure-model route; no formative or controlled user study; human study deferred/owner-gated"
     paper_sections: ["Abstract", "Introduction", "Interface-evaluation contract", "Limitations", "Conclusion"]
     main_artifacts: []
     valid_for_paper: "true as a proposed, artifact-instantiated methodological framework derived from model evidence; false as a validated HCI-effectiveness claim"
-    gate_notes: "C3 may be the primary methodological contribution when consistently described as a proposed evidence-accounting/evaluation framework instantiated by C1/C2 model evidence. No claim of user comprehension, usability, reduced over-trust, calibrated reliance, or benefit is permitted without human evidence."
+    gate_notes: "C3 is the primary proposed methodological contribution when consistently expressed as computational result -> structured evidence/blocking reason -> interface eligibility/action. Canonical phrases: 'read-only diagnostic candidate within this evidence tier', 'active control withheld', and 'active control passes the computational gate within this evidence tier'. Diagnostic-only/Unresolved/Unstable/Eligible are not formal states. Do not classify the 0/12 grid as one withheld scientific state or claim user comprehension, usability, reduced over-trust, calibrated reliance, or operational readiness."
   C4:
     statement: "Discussion-only exploratory social-inference-axis extension: the novice/user-model axis is legible in latent space (READ_HOLDS), but the powered LLM-judge TEST finds an honest behavioral null on implemented M1 option-pushing and M4 deference; M2/M3 are not implemented and support no claim."
     status: "discussion-only exploratory extension; behavioral honest-null on implemented M1/M4; READ_HOLDS; valid_for_paper=false"

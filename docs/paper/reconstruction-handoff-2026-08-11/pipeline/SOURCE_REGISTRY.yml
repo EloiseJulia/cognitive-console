@@ -99,7 +99,7 @@
   verification: metadata_and_full_text_checked_2026-08-11
   may_supply_facts: source_claims_only
   may_supply_framing: no
-  notes: "Passive persona-prediction visualization; between-subjects N=80. Trust endpoint increased, but design behavior/outcomes and prediction-confidence effects were null. Active steering interfaces are future work; no comparator-bound permission gate found."
+  notes: "Passive persona-prediction visualization; between-subjects N=80. Trust endpoint increased, but design behavior/outcomes and prediction-confidence effects were null. Active steering interfaces are future work; no comparator-bound eligibility gate found."
 
 - id: SRC-011
   path: HUMAN_STUDY_PENDING.md

@@ -19,9 +19,12 @@ The problem is grounded in real interface precedents: Bo et al. prototype direct
 - procedural no-pass classification;
 - study-specific comparator;
 - author-proposed five-field record;
+- computational result → structured evidence/blocking reason → interface eligibility/action;
+- read-only diagnostic candidate within this evidence tier;
+- active control withheld;
+- active control passes the computational gate within this evidence tier;
 - unresolved manipulation validity;
 - no passing latent behavioral positive control;
-- no blinded independent state assignment.
 
 ## Canonical Terminology
 
@@ -29,11 +32,13 @@ The problem is grounded in real interface precedents: Bo et al. prototype direct
 |---|---|---|
 | Representational evidence | READ evidence | CONTROL evidence |
 | Behavioral evidence | TRANSFER evidence | behavioral CONTROL evidence |
-| Interface authorization | CONTROL permission | TRANSFER permission |
+| Interface decision | interface eligibility / interface action | deployment readiness |
 | Test unit | model–method–axis test | axis-by-method-model test |
 | Descriptive result pattern | evidence profile | evidence state |
-| Formal interface classification | affordance state | evidence profile / evidence tier |
-| Formal states | *Diagnostic-only*, *Unresolved*, *Unstable*, *Eligible* | compound variants such as unresolved-untested or unstable-no-pass |
+| Computational output | READ/TRANSFER status and qualification result | affordance state |
+| Interpretation | structured evidence / blocking reason | badge / formal taxonomy |
+| Read-only action | read-only diagnostic candidate within this evidence tier | Diagnostic-only |
+| Active-control action | active control withheld / active control passes the computational gate within this evidence tier | Unresolved / Unstable / Eligible |
 | Prompt search space | preregistered bounded candidate set | bounded comparator |
 | Selected alternative | DEV-selected prompt comparator | DEV-selected prompt set |
 | Full workflow | qualification procedure | qualification criterion |
@@ -71,7 +76,6 @@ The problem is grounded in real interface precedents: Bo et al. prototype direct
 - end-to-end manipulation validated;
 - known-positive latent control passed;
 - inter-rater validated;
-- independently reproducible state assignment;
 - validated rubric;
 - five fields are necessary or sufficient.
 
@@ -90,7 +94,7 @@ The problem is grounded in real interface precedents: Bo et al. prototype direct
 
 - users understand the contract;
 - the record improves calibrated reliance;
-- the state machine improves decisions;
+- the record or interface mapping improves decisions;
 - the console is usable, preferred, or beneficial;
 - warnings reduce over-trust;
 - any predicted positive, null, adverse, or mixed human-study outcome.
@@ -101,7 +105,7 @@ The problem is grounded in real interface precedents: Bo et al. prototype direct
 |---|---|
 | 0/12 / no tested cell qualified | reported rule; tested models/methods/axes; no passing latent behavioral positive control |
 | comparator result | identify the declared comparator or use “the comparator” after its Method definition; do not repeat the full provenance list |
-| five-field/state assignment | at first definition or a new worked assignment, identify the mapping as author-proposed and not independently reproduced; ordinary later mentions need not repeat it |
+| five-field/interface mapping | at first definition, identify it as a proposed computational eligibility mapping and not evidence of user benefit or deployment readiness |
 | uncertainty contrast | one-cell complete-case support; bounds cross zero; three cells unrechecked |
 | prompt-plus-steer | pending until verified results arrive |
 | human effect | no result as of 2026-08-11; pending packet controls integration |
@@ -113,14 +117,16 @@ The problem is grounded in real interface precedents: Bo et al. prototype direct
 - State the consequence once in Limitations: conclusions are relative to this comparator and may change with another candidate set or budget.
 - In Results, the worked record, Discussion, and Conclusion, use “the comparator” unless disambiguation is necessary.
 - Do not repeat lists such as “blind, fair, exhaustive, globally optimal” across sections. Repetition is not additional rigor and should be treated as a prose defect.
-- State the assignment limitation at the first state-vocabulary definition, the worked mapping, and Limitations. Do not repeat it in captions, contribution bullets, scenario prose, Discussion summaries, or Conclusion.
+- State the human-evidence limitation at the first interface-mapping definition and once in Limitations. Do not repeat it in captions, contribution bullets, scenario prose, Discussion summaries, or Conclusion.
 
-## Rule and Mapping Separation
+## Direct Hybrid Mapping
 
 - The reported qualification rule produces the 0/12 pass/no-pass result.
-- The four-state affordance vocabulary is a post hoc design synthesis of observed evidence profiles.
-- The state mapping does not generate, validate, or explain the 0/12 result.
-- Present the mapping as a hypothesis for interface evaluation, not as preregistered or validated rubric output.
+- The manuscript then preserves the structured evidence or blocking reason before giving a record-specific interface action.
+- READ support makes a representation a read-only diagnostic candidate within the exact evidence tier.
+- An active control passes the computational gate within the exact evidence tier only when READ is supported and TRANSFER passes; otherwise the active control is withheld.
+- READ unsupported/not evaluated, TRANSFER not tested/not evaluable/no-pass/pass, interval includes zero, comparator-negative, below-floor, coherence failure, and missingness-limited are reasons or computational statuses, not formal interface states.
+- Do not classify all 0/12 as withheld scientific states. The illustrated slider action applies only to the worked Qwen–CAA uncertainty record.
 
 ## Pending-Result Rule
 

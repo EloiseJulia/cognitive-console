@@ -65,7 +65,6 @@ def _reader_text(text: object) -> str:
         "human-alpha PENDING -> not-yet-confirmatory": "not yet confirmatory",
         "calibration harm": "steer-vs-prompt calibration contrast",
         "uncertainty harm": "uncertainty steer-vs-prompt contrast",
-        "LEGIBLE: no added control demonstrated": "WITHHELD CONTROL / diagnostic retained",
     }
     out = str(text)
     for old, new in replacements.items():
@@ -84,10 +83,7 @@ def _transfer_summary(card: dict) -> str:
     replications = card["calibration_harm"].get("arm_replications", [])
     if card["axis"] == "uncertainty_awareness" and replications:
         negative = sum(1 for row in replications if row.get("robust_harm"))
-        return (
-            f"{transfer.get('verdict')}; {negative}/{len(replications)} "
-            "frozen contrasts comparator-negative."
-        )
+        return f"{negative}/{len(replications)} frozen contrasts comparator-negative."
     return f"{transfer.get('verdict')}; {transfer.get('summary', '')}"
 
 
@@ -96,27 +92,25 @@ def _load_e0013() -> dict:
         return json.load(fh)
 
 
-def _card_state(card: dict) -> str:
-    if card["axis"] == "deliberation":
-        return "UNRESOLVED"
-    return "WITHHELD CONTROL"
-
-
 def _card_lines(card: dict, e0013: dict, grid_size: int) -> list[tuple[str, str]]:
     read = card["read_status"]
     ceiling = card["prompt_ceiling"]
     if card["axis"] == "deliberation":
         return [
-            _signal_line("READ", f"{read.get('status')}; local CAA evidence only."),
-            _signal_line("TRANSFER", "Mixed resolution: ITI exploratory equivalence; CAA underpowered."),
+            _signal_line("READ STATUS", f"{read.get('status')}; local CAA evidence only."),
+            _signal_line("TRANSFER STATUS", "NO-PASS in the tested cells."),
+            _signal_line(
+                "BLOCKING REASON",
+                "Mixed resolution: ITI exploratory equivalence; CAA underpowered.",
+            ),
             _signal_line("BOUNDED PROMPT COMPARATOR", ceiling.get("summary", "n/a")),
             _signal_line(
                 "EXACT EVIDENCE TIER",
                 "Frozen 2x2 grid; mixed resolution; split-sensitivity only.",
             ),
             _signal_line(
-                "NEXT ACTION",
-                "More evidence at the registered margin or a new powered evaluation.",
+                "INTERFACE ACTION",
+                "Read-only diagnostic candidate within this evidence tier; active control withheld.",
             ),
         ]
 
@@ -137,15 +131,23 @@ def _card_lines(card: dict, e0013: dict, grid_size: int) -> list[tuple[str, str]
     assert "format_compliant_only_delta_steer_minus_prompt" in cell
     assert rechecked == 1 and grid_size >= rechecked
     return [
-        _signal_line("READ", f"{read.get('status')}; local CAA evidence only."),
-        _signal_line("TRANSFER", _transfer_summary(card)),
-        _signal_line("DIRECT VS BASELINE", "Near-baseline only in the CAA x Qwen recheck."),
-        _signal_line("FORMAT RECHECK", "Complete-case result only for CAA x Qwen."),
-        _signal_line("MISSINGNESS", "Adversarial bounds cross zero."),
-        _signal_line("UNRECHECKED SCOPE", f"Other {grid_size - rechecked} method-model cells unrechecked."),
+        _signal_line("READ STATUS", f"{read.get('status')}; local CAA evidence only."),
+        _signal_line("TRANSFER STATUS", f"NO-PASS; {_transfer_summary(card)}"),
+        _signal_line(
+            "BLOCKING REASON",
+            "Missingness-limited: complete-case support in one cell; bounds cross zero.",
+        ),
+        _signal_line(
+            "SCOPE",
+            f"Near-baseline only in CAA x Qwen; other {grid_size - rechecked} cells unrechecked.",
+        ),
         _signal_line(
             "EXACT EVIDENCE TIER",
             "Frozen 2x2 comparator result; targeted CAA x Qwen recheck.",
+        ),
+        _signal_line(
+            "INTERFACE ACTION",
+            "Read-only diagnostic candidate within this evidence tier; active control withheld.",
         ),
     ]
 
@@ -170,7 +172,13 @@ def write_pdf(payload: dict, out_path: Path) -> None:
     ax.set_ylim(0, 260)
     ax.axis("off")
     ax.text(18, 241, "COMPARATOR-BOUND CONTROL RECORD", fontsize=12, fontweight="bold", va="baseline")
-    ax.text(18, 228, "Artifact-derived interface states; no user-effect claim.", fontsize=7, va="baseline")
+    ax.text(
+        18,
+        228,
+        "Computational status, structured reason, and record-specific action.",
+        fontsize=7,
+        va="baseline",
+    )
     x0 = 18
     y0 = 18
     w = 230
@@ -200,7 +208,7 @@ def write_pdf(payload: dict, out_path: Path) -> None:
         ax.text(
             x + 8,
             y0 + h - 31,
-            _card_state(card),
+            "COMPUTATIONAL RECORD",
             fontsize=8.5,
             fontweight="bold",
             va="baseline",

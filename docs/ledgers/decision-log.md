@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-08-12 · D-0098 · Owner authorizes pre-outcome method-faithful E-0016 hook-bites correction
+- Clean AutoDL preflight reached the mechanistic guard before any baseline, ablation, random-control, DEV, or TEST generation and reported decoder layer `2` as vacuous for a mid-layer-extracted refusal direction. No refusal-reduction outcome was observed.
+- Code/transformers inspection confirmed that `[2]` is literal one-based decoder-layer identity, not index `2` of candidate source layers `(8,12,16,20)`, and that the old non-vacuity loop incorrectly required every decoder layer `1..num_hidden_layers` to exceed the floor.
+- The owner authorizes a method-faithful correction: exact all-decoder-layer hook coverage and per-element projection-removal checks remain mandatory; non-vacuity is required at each candidate direction's own extraction layer and in aggregate across the residual stream. Individual non-extraction layers, especially early layers naturally near-orthogonal to a mid-layer direction, may be vacuous and remain reported diagnostically.
+- Every candidate is checked before generation; after DEV selection, the selected direction hash/source layer must bind to its already-passed pre-generation guard before TEST can start.
+- This decision changes only the mechanistic validity guard before any outcome observation. Candidate layers, direction extraction, N/DEV/TEST, seeds, K, generation, random-direction control, coherence, `>=0.25` DEV eligibility and outcome gates, verdict ladder, compute cap, and all harmful-text safety redlines remain frozen.
+
 ## 2026-08-12 · D-0097 · Owner authorizes alternate AutoDL RTX 4080 SUPER 32 GiB execution profile for E-0016
 - The owner explicitly authorizes one alternate execution profile alongside the existing A800 profile: a single `NVIDIA GeForce RTX 4080 SUPER` exposing 32 GiB, bound by `CUDA_VISIBLE_DEVICES=0`, with `/root/miniconda3` Python 3.12, torch 2.8/cu128, transformers 4.44.2, and `HF_HOME=/root/autodl-tmp/hf`.
 - This is an operational hardware/memory/cache amendment only. Direction extraction, candidate layers, N/DEV/TEST split, seeds, K, generation settings, deterministic scorers, coherence/random controls, `>=0.25` gates, verdict ladder, and all safety boundaries remain frozen.

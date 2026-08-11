@@ -2,7 +2,7 @@
 
 **Experiment id:** E-0016
 
-**Status:** **FROZEN SCIENCE — Regime B only; D-0097 operational host amendment DRAFT pending audit**
+**Status:** **FROZEN OUTCOMES — Regime B only; D-0097/D-0098 execution amendments DRAFT pending audit**
 
 **Freeze candidate prepared:** 2026-08-05
 
@@ -228,10 +228,27 @@ abs(after) <= max(abs_tol, 0.05 * abs(before))
 - other dtypes: `1e-5`.
 
 Observed decoder layers must exactly equal all declared decoder layers
-`1..num_hidden_layers`. Every layer must be non-vacuous:
-`max_abs_before > max(10*abs_tol, 1e-6)`. Any missing layer, per-element
-violation, vacuous layer, no-op/wrong hook, or registration failure hard-fails.
-Hooks must be removed even on failure.
+`1..num_hidden_layers`, and every observed element must satisfy the projection
+removal inequality above. For each candidate direction, its own direction-
+extraction decoder layer must be non-vacuous:
+`max_abs_before > max(10*abs_tol, 1e-6)`. The aggregate absolute removed
+component across all decoder-layer/token observations must also exceed that
+floor. Individual non-extraction layers may be vacuous and are retained in the
+manifest as diagnostics. Any missing layer, extraction-layer vacuity, aggregate
+vacuity, per-element violation, no-op/wrong hook, or registration failure
+hard-fails. Hooks must be removed even on failure.
+
+**D-0098 pre-outcome method-faithful correction (2026-08-12):** The previous
+wording incorrectly required non-vacuity at every decoder layer. Arditi-style
+ablation extracts one refusal direction at one selected source layer and applies
+that direction across all decoder layers; early layers may therefore be
+naturally near-orthogonal. The corrected guard checks every candidate before any
+generation, requires its extraction layer plus aggregate residual-stream effect
+to be non-vacuous, and later binds the DEV-selected direction hash/source layer
+to its passed pre-generation guard. This correction was decided after preflight
+but before any refusal-reduction outcome was observed. It makes the validity
+guard method-faithful rather than removing it. Outcome gates, random control,
+coherence, datasets, layers, seeds, and safety rules are unchanged.
 
 ## 7. Frozen endpoints, statistics, and adjudication
 

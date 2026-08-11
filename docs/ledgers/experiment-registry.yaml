@@ -1191,7 +1191,7 @@ experiments:
   claim_ids:
   - C2b
   type: confirmatory_positive_control
-  status: operational_amendment_draft_owner_authorized_pending_audit_no_run
+  status: execution_amendments_draft_owner_authorized_pending_audit_no_run
   code_commit: null
   previous_audited_retry_commit: c094f07fa3592c2210f46caba9e69c49a5a92fad
   operational_amendment_base_commit: b61601d1785a28a28c13373a533c3aa8da344ee9
@@ -1256,7 +1256,8 @@ experiments:
       managed_disk_hard_ceiling_gib: 45
       qwen_revision: a09a35458c702b33eeacc393d103063234e8bc28
     remaining_gpu_hours_hard_cap: 2.99277778
-    protocol_changed: false
+    protocol_changed: D-0098 method-faithful hook-bites correction authorized before any refusal outcome
+    hook_bites_guard_version: method_faithful_extraction_plus_aggregate_v2
     pending_gates:
     - independent_operational_amendment_audit
     - exact_clean_run_commit_recorded
@@ -1298,7 +1299,12 @@ experiments:
     amendment is DRAFT pending independent audit and a new exact clean run
     commit; no GPU/DEV/TEST run has occurred from it. D-0095/D-0097 retain the
     original 3 cumulative GPU-hour hard cap; 0.00722222 GPU-h was consumed,
-    leaving at most 2.99277778 GPU-h. DEV baseline
+    leaving at most 2.99277778 GPU-h. D-0098 corrects the pre-outcome
+    hook-bites validity rule to require non-vacuity at the candidate direction's
+    extraction layer and in aggregate, while preserving exact all-layer coverage
+    and per-element removal. Early non-extraction-layer vacuity is diagnostic,
+    not an automatic invalidation. No refusal outcome had been observed when
+    D-0098 was decided. DEV baseline
     false-refusal must be >=0.25 or the runner emits
     INVALID_REGIME_B_UNDERPOWERED and stops before TEST. Harmful prompts are
     forward-pass-only direction inputs. Regime A is excluded and requires a new

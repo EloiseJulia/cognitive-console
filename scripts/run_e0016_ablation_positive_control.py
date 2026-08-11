@@ -100,6 +100,7 @@ HF_FROZEN_GENERATION_BATCH_SIZE = 1
 SYNTHETIC_DEFAULT_GENERATION_BATCH_SIZE = 3
 HOOK_BITES_BATCH_SIZE = 2
 HOOK_BITES_REL_TOL = 0.05
+HOOK_BITES_GUARD_VERSION = "method_faithful_extraction_plus_aggregate_v2"
 SCORER_VERSION = "score_refusal_marker_v1"
 DEGENERACY_SCORER_VERSION = "degeneracy_score_v1"
 GENERATION_RECORD_SCHEMA_VERSION = 2
@@ -1603,10 +1604,16 @@ def pre_load_eligibility_config(args: argparse.Namespace) -> Dict[str, Any]:
             "selection": "max coherent DEV refusal reduction; lower layer tie-break",
         },
         "hook_bites": {
+            "guard_version": HOOK_BITES_GUARD_VERSION,
             "probe_hashes": [sha_text(x) for x in HOOK_BITE_PROBES],
             "rel_tol": HOOK_BITES_REL_TOL,
             "formula": "per_element_abs_after<=max(abs_tol,rel_tol*abs_before)",
             "required_layer_coverage": "all_decoder_layers_exact",
+            "non_vacuity_rule": (
+                "direction extraction layer is non-vacuous and aggregate absolute "
+                "removed component across all decoder layers is nonzero; individual "
+                "early decoder layers may be vacuous"
+            ),
         },
         "random_control": {"direction_seed_offset": RANDOM_DIRECTION_SEED_OFFSET},
         "coherence": {
@@ -1700,7 +1707,7 @@ def resolved_frozen_run_config(
     return {
         **pre_load_eligibility_config(args),
         "identity_stage": "post_resolution_full_run",
-        "identity_schema_version": 2,
+        "identity_schema_version": 3,
         "model": {
             "model_id": args.model_id,
             "revision_requested": args.model_revision,
@@ -1774,6 +1781,7 @@ def resolved_frozen_run_config(
             "recipe": "numpy.default_rng(seed+offset).standard_normal(hidden_dim), unit-normalized",
         },
         "hook_all_layer_recipe": {
+            "guard_version": HOOK_BITES_GUARD_VERSION,
             "formula": "h_new=h_old-(h_old dot r_hat)r_hat",
             "layer_set": list(range(1, int(declared_decoder_layers) + 1)),
             "required_layer_coverage": "all_declared_decoder_layers_exact",
@@ -1782,7 +1790,15 @@ def resolved_frozen_run_config(
             "abs_tol": abs_tol,
             "rel_tol": HOOK_BITES_REL_TOL,
             "non_vacuity_floor": max(abs_tol * 10.0, 1e-6),
-            "non_vacuity_rule": "every layer max_abs_before > non_vacuity_floor",
+            "aggregate_effect_floor": max(abs_tol * 10.0, 1e-6),
+            "non_vacuity_rule": (
+                "candidate direction extraction layer max_abs_before exceeds "
+                "non_vacuity_floor and aggregate sum_abs_removed across every "
+                "decoder-layer/token observation exceeds aggregate_effect_floor"
+            ),
+            "individual_layer_vacuity": (
+                "allowed outside the direction extraction layer; retained as diagnostics"
+            ),
         },
         "scorers": {
             "refusal_version": SCORER_VERSION,
@@ -1826,7 +1842,7 @@ def finalized_run_identity(
     return {
         **resolved_config,
         "identity_stage": "finalized_post_dev_pre_test",
-        "identity_schema_version": 3,
+        "identity_schema_version": 4,
         "selected_intervention": {
             **expected,
             "selection_metric": (
@@ -2079,6 +2095,7 @@ def assert_ablation_hook_bites(
     stats: Dict[int, Dict[str, float]],
     *,
     expected_layers: Sequence[int],
+    extraction_layer: int,
     abs_tol: float,
     rel_tol: float = 0.05,
 ) -> Dict[str, object]:
@@ -2091,15 +2108,53 @@ def assert_ablation_hook_bites(
             "ablation hook-bites decoder-layer coverage mismatch: "
             f"expected={sorted(expected_layer_set)}, observed={sorted(observed_layers)}"
         )
+    extraction_layer = int(extraction_layer)
+    if extraction_layer not in expected_layer_set:
+        raise ValueError(
+            "direction extraction layer is not a declared decoder layer: "
+            f"{extraction_layer}"
+        )
     non_vacuity_floor = max(abs_tol * 10.0, 1e-6)
+    # D-0098, decided before any refusal-reduction outcome: Arditi-style
+    # ablation uses one mid-layer-extracted direction across every decoder layer.
+    # Early layers can legitimately be near-orthogonal, so exact coverage and
+    # projection removal remain per-layer, while "bites" is required at the
+    # extraction layer and in aggregate across the residual stream.
     vacuous_layers = [
         int(layer)
         for layer, row in sorted(stats.items())
         if float(row.get("max_abs_before", 0.0)) <= non_vacuity_floor
     ]
-    non_vacuous = not vacuous_layers
+    aggregate_sum_abs_before = 0.0
+    aggregate_sum_abs_after = 0.0
+    aggregate_sum_abs_removed = 0.0
     failures = []
     for layer, row in sorted(stats.items()):
+        n_values = int(row.get("n_values", 0))
+        max_abs_before = float(row.get("max_abs_before", math.nan))
+        max_abs_after = float(row.get("max_abs_after", math.nan))
+        mean_abs_before = float(row.get("mean_abs_before", math.nan))
+        mean_abs_after = float(row.get("mean_abs_after", math.nan))
+        if (
+            n_values <= 0
+            or not all(
+                math.isfinite(value) and value >= 0.0
+                for value in (
+                    max_abs_before,
+                    max_abs_after,
+                    mean_abs_before,
+                    mean_abs_after,
+                )
+            )
+        ):
+            raise ValueError(
+                f"ablation hook-bites layer {layer} has invalid activation statistics"
+            )
+        aggregate_sum_abs_before += mean_abs_before * n_values
+        aggregate_sum_abs_after += mean_abs_after * n_values
+        aggregate_sum_abs_removed += (
+            max(0.0, mean_abs_before - mean_abs_after) * n_values
+        )
         violation_count = int(row.get("violation_count", -1))
         max_violation = float(row.get("max_violation", math.inf))
         if violation_count < 0 or not math.isfinite(max_violation):
@@ -2114,11 +2169,32 @@ def assert_ablation_hook_bites(
                     "max_violation": max_violation,
                 }
             )
+    extraction_max_abs_before = float(
+        stats[extraction_layer]["max_abs_before"]
+    )
+    extraction_layer_non_vacuous = (
+        extraction_max_abs_before > non_vacuity_floor
+    )
+    aggregate_effect_floor = non_vacuity_floor
+    aggregate_non_vacuous = (
+        aggregate_sum_abs_removed > aggregate_effect_floor
+    )
+    non_vacuous = extraction_layer_non_vacuous and aggregate_non_vacuous
     payload = {
+        "guard_version": HOOK_BITES_GUARD_VERSION,
         "rel_tol": rel_tol,
         "abs_tol": abs_tol,
         "non_vacuous": non_vacuous,
         "non_vacuity_floor": non_vacuity_floor,
+        "extraction_layer": extraction_layer,
+        "extraction_layer_max_abs_before": extraction_max_abs_before,
+        "extraction_layer_non_vacuous": extraction_layer_non_vacuous,
+        "aggregate_sum_abs_before": aggregate_sum_abs_before,
+        "aggregate_sum_abs_after": aggregate_sum_abs_after,
+        "aggregate_sum_abs_removed": aggregate_sum_abs_removed,
+        "aggregate_effect_floor": aggregate_effect_floor,
+        "aggregate_non_vacuous": aggregate_non_vacuous,
+        "individual_layer_vacuity_allowed_outside_extraction_layer": True,
         "vacuous_layers": vacuous_layers,
         "expected_decoder_layers": sorted(expected_layer_set),
         "observed_decoder_layers": sorted(observed_layers),
@@ -2131,13 +2207,20 @@ def assert_ablation_hook_bites(
         "per_layer": {str(k): v for k, v in sorted(stats.items())},
         "failures": failures,
     }
-    if not non_vacuous:
+    if not extraction_layer_non_vacuous:
         raise ValueError(
-            "ablation hook-bites vacuous at decoder layers: "
-            f"{vacuous_layers}"
+            "ablation hook-bites vacuous at direction extraction decoder layer "
+            f"{extraction_layer}: max_abs_before={extraction_max_abs_before}, "
+            f"required>{non_vacuity_floor}"
         )
     if failures:
         raise ValueError(f"ablation hook-bites failed: {failures[:3]}")
+    if not aggregate_non_vacuous:
+        raise ValueError(
+            "ablation hook-bites aggregate residual-stream effect is vacuous: "
+            f"sum_abs_removed={aggregate_sum_abs_removed}, "
+            f"required>{aggregate_effect_floor}"
+        )
     return payload
 
 
@@ -3423,8 +3506,8 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         )
     hook_bites_payload = {"synthetic_noop": True}
     guard_path = out_dir / "e0016_pre_generation_guards.json"
+    candidate_hook_bites: Dict[str, object] = {}
     if backend == "hf":
-        candidate_hook_bites: Dict[str, object] = {}
         try:
             for bundle in bundles:
                 assert_real_not_smoke(
@@ -3444,14 +3527,19 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                     abs_tol=abs_tol,
                     rel_tol=HOOK_BITES_REL_TOL,
                 )
-                candidate_hook_bites[str(bundle.source_layer)] = (
-                    assert_ablation_hook_bites(
-                        stats,
-                        expected_layers=hook_backend.decoder_layer_indices,
-                        abs_tol=abs_tol,
-                        rel_tol=HOOK_BITES_REL_TOL,
-                    )
+                guard = assert_ablation_hook_bites(
+                    stats,
+                    expected_layers=hook_backend.decoder_layer_indices,
+                    extraction_layer=bundle.source_layer,
+                    abs_tol=abs_tol,
+                    rel_tol=HOOK_BITES_REL_TOL,
                 )
+                guard["direction_sha256"] = assert_direction_hash(
+                    bundle.direction,
+                    bundle.provenance.get("direction_sha256"),
+                    context=f"hook-bites source layer {bundle.source_layer}",
+                )
+                candidate_hook_bites[str(bundle.source_layer)] = guard
             hook_bites_payload = {
                 "status": "PASSED_BEFORE_ANY_GENERATION",
                 "candidate_source_layers": sorted(
@@ -3592,6 +3680,28 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         run_start_source_state=run_start_source_state,
         run_output_dir=out_dir,
     )
+    selected_direction_hook_bites = None
+    if backend == "hf" and dev_payload["status"] == "ELIGIBLE":
+        selected_direction_hook_bites = candidate_hook_bites.get(
+            str(selected.source_layer)
+        )
+        selected_direction_sha256 = assert_direction_hash(
+            selected.direction,
+            selected.provenance.get("direction_sha256"),
+            context="selected hook-bites binding",
+        )
+        if (
+            not isinstance(selected_direction_hook_bites, dict)
+            or selected_direction_hook_bites.get("extraction_layer")
+            != selected.source_layer
+            or selected_direction_hook_bites.get("direction_sha256")
+            != selected_direction_sha256
+            or selected_direction_hook_bites.get("non_vacuous") is not True
+        ):
+            raise ValueError(
+                "DEV-selected direction is not bound to its passed pre-generation "
+                "method-faithful hook-bites guard"
+            )
     if backend == "hf":
         assert profile is not None and cache_identity is not None
         operational_preflight = {
@@ -3660,6 +3770,7 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         "xstest_provenance": xstest_prov,
         "dev": dev_payload,
         "hook_bites": hook_bites_payload,
+        "selected_direction_hook_bites": selected_direction_hook_bites,
         "raw_harmful_prompts_committed": False,
         "harmful_generation_performed": False,
         "generation_prompt_scope": "benign XSTest-safe prompts only",
@@ -3732,6 +3843,7 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         "test_plan_hash": test_plan["test_plan_hash"],
         "environment_identity_hash": environment_identity_hash,
         "selected_direction_sha256": selected_direction_sha256,
+        "selected_direction_hook_bites": selected_direction_hook_bites,
         "random_direction_sha256": random_direction_sha256,
         "record_schema_version": GENERATION_RECORD_SCHEMA_VERSION,
         "record_validator_version": RECORD_VALIDATOR_VERSION,
@@ -3783,6 +3895,7 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                     "direction_derivation",
                     "dev",
                     "hook_bites",
+                    "selected_direction_hook_bites",
                     "valid_for_paper",
                     "scope_guard",
                 )

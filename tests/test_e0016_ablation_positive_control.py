@@ -26,10 +26,78 @@ def test_projection_ablation_zeroes_component_and_hook_bites_guard():
     assert np.max(np.abs(np.tensordot(new, r, axes=([-1], [0])))) < 1e-10
     stats = {1: {"max_abs_before": 3.0, "max_abs_after": 1e-8, "mean_abs_before": 1.0, "mean_abs_after": 1e-8, "n_values": 2, "violation_count": 0, "max_violation": 0.0}}
     payload = e0016.assert_ablation_hook_bites(
-        stats, expected_layers=[1], abs_tol=1e-5
+        stats, expected_layers=[1], extraction_layer=1, abs_tol=1e-5
     )
     assert payload["non_vacuous"] is True
     assert payload["violation_count"] == 0
+
+
+def test_hook_bites_allows_expected_early_layer_vacuity():
+    stats = {
+        1: {
+            "max_abs_before": 0.0,
+            "max_abs_after": 0.0,
+            "mean_abs_before": 0.0,
+            "mean_abs_after": 0.0,
+            "n_values": 4,
+            "violation_count": 0,
+            "max_violation": 0.0,
+        },
+        2: {
+            "max_abs_before": 2.0,
+            "max_abs_after": 1e-6,
+            "mean_abs_before": 0.8,
+            "mean_abs_after": 1e-6,
+            "n_values": 4,
+            "violation_count": 0,
+            "max_violation": 0.0,
+        },
+        3: {
+            "max_abs_before": 0.2,
+            "max_abs_after": 1e-6,
+            "mean_abs_before": 0.1,
+            "mean_abs_after": 1e-6,
+            "n_values": 4,
+            "violation_count": 0,
+            "max_violation": 0.0,
+        },
+    }
+    payload = e0016.assert_ablation_hook_bites(
+        stats,
+        expected_layers=[1, 2, 3],
+        extraction_layer=2,
+        abs_tol=1e-3,
+    )
+    assert payload["non_vacuous"] is True
+    assert payload["extraction_layer_non_vacuous"] is True
+    assert payload["aggregate_non_vacuous"] is True
+    assert (
+        payload["aggregate_sum_abs_removed"]
+        > payload["aggregate_effect_floor"]
+    )
+    assert payload["vacuous_layers"] == [1]
+
+
+def test_hook_bites_rejects_genuinely_dead_direction():
+    stats = {
+        layer: {
+            "max_abs_before": 0.0,
+            "max_abs_after": 0.0,
+            "mean_abs_before": 0.0,
+            "mean_abs_after": 0.0,
+            "n_values": 4,
+            "violation_count": 0,
+            "max_violation": 0.0,
+        }
+        for layer in (1, 2, 3)
+    }
+    with pytest.raises(ValueError, match="direction extraction decoder layer 2"):
+        e0016.assert_ablation_hook_bites(
+            stats,
+            expected_layers=[1, 2, 3],
+            extraction_layer=2,
+            abs_tol=1e-3,
+        )
 
 
 def test_hook_bites_rejects_per_element_violation_hidden_by_global_max():
@@ -46,7 +114,11 @@ def test_hook_bites_rejects_per_element_violation_hidden_by_global_max():
     }
     with pytest.raises(ValueError, match="failed"):
         e0016.assert_ablation_hook_bites(
-            stats, expected_layers=[1], abs_tol=1e-3, rel_tol=0.05
+            stats,
+            expected_layers=[1],
+            extraction_layer=1,
+            abs_tol=1e-3,
+            rel_tol=0.05,
         )
 
 
@@ -612,9 +684,9 @@ def test_hf_hook_bites_are_persisted_before_first_dev_generation(
         _config = Config()
 
     class HookBackend:
-        decoder_layer_indices = [1, 2]
+        decoder_layer_indices = list(range(1, 29))
         max_length = e0016.HF_BACKEND_MAX_LENGTH
-        num_hidden_layers = 2
+        num_hidden_layers = 28
 
         def capture_ablation_hook_bites(self, *a, **k):
             events.append("hook")
@@ -856,6 +928,7 @@ def test_actual_hook_bites_passes_per_element_and_cleans_hooks():
     payload = e0016.assert_ablation_hook_bites(
         stats,
         expected_layers=backend.decoder_layer_indices,
+        extraction_layer=2,
         abs_tol=tol,
     )
     assert payload["observed_decoder_layers"] == [1, 2, 3]
@@ -876,6 +949,7 @@ def test_actual_hook_noop_is_rejected_and_hooks_are_cleaned(monkeypatch):
         e0016.assert_ablation_hook_bites(
             stats,
             expected_layers=backend.decoder_layer_indices,
+            extraction_layer=2,
             abs_tol=1e-5,
         )
     assert all(not block._forward_hooks for block in blocks)
@@ -902,6 +976,7 @@ def test_wrong_projection_is_rejected(monkeypatch):
         e0016.assert_ablation_hook_bites(
             stats,
             expected_layers=backend.decoder_layer_indices,
+            extraction_layer=2,
             abs_tol=1e-5,
         )
 
@@ -918,6 +993,7 @@ def test_missing_decoder_layer_is_rejected_and_hooks_are_cleaned():
         e0016.assert_ablation_hook_bites(
             stats,
             expected_layers=backend.decoder_layer_indices,
+            extraction_layer=2,
             abs_tol=1e-5,
         )
     assert all(not block._forward_hooks for block in blocks)

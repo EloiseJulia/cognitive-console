@@ -39,6 +39,16 @@
       "revision": "53346005fb0ef11d3b6a83b12c895cca40156b6c"
     }
   },
+  "frozen_artifacts": {
+    "root": "results/arm_full",
+    "files": {
+      "arm_matrix_summary.json": "fd9140e8764da8b46e531644b9f885d363f718107c2e86d592ea4593eb75338e",
+      "cell_caa__llama3-8b/c2b_adjudication_results.json": "d301bacf70744406356fd2e1a597c01b8738c10d392a9901feae461bebfa0f42",
+      "cell_caa__qwen2.5-7b/c2b_adjudication_results.json": "33f242faf921f4a5de49b9620b6a5507415a157d21f9688dce6616d32cda1800",
+      "cell_iti__llama3-8b/c2b_adjudication_results.json": "ac9d18aa67a5e2afe9b37441fa08c008cfad139a557f323fa5052d8c38f85282",
+      "cell_iti__qwen2.5-7b/c2b_adjudication_results.json": "e168392f4c44d29467791883da122d27b470ce0770bc81c8b5d705119bc6647e"
+    }
+  },
   "dataset_pin": {
     "repo_id": "openai/gsm8k",
     "config": "main",

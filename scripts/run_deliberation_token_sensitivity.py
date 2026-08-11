@@ -107,6 +107,24 @@ MODEL_SPECS = {
     },
 }
 
+FROZEN_ARTIFACT_SHA256 = {
+    "arm_matrix_summary.json": (
+        "fd9140e8764da8b46e531644b9f885d363f718107c2e86d592ea4593eb75338e"
+    ),
+    "cell_caa__llama3-8b/c2b_adjudication_results.json": (
+        "d301bacf70744406356fd2e1a597c01b8738c10d392a9901feae461bebfa0f42"
+    ),
+    "cell_caa__qwen2.5-7b/c2b_adjudication_results.json": (
+        "33f242faf921f4a5de49b9620b6a5507415a157d21f9688dce6616d32cda1800"
+    ),
+    "cell_iti__llama3-8b/c2b_adjudication_results.json": (
+        "ac9d18aa67a5e2afe9b37441fa08c008cfad139a557f323fa5052d8c38f85282"
+    ),
+    "cell_iti__qwen2.5-7b/c2b_adjudication_results.json": (
+        "e168392f4c44d29467791883da122d27b470ce0770bc81c8b5d705119bc6647e"
+    ),
+}
+
 
 @dataclass(frozen=True)
 class FrozenCellConfig:
@@ -262,6 +280,30 @@ def _validate_control_paths(
     return out, registry
 
 
+def _pinned_frozen_artifact_identity() -> Dict[str, object]:
+    return {
+        "root": "results/arm_full",
+        "files": dict(FROZEN_ARTIFACT_SHA256),
+    }
+
+
+def _verify_pinned_frozen_root(path: Path) -> Tuple[Path, Dict[str, object]]:
+    resolved = Path(path).resolve()
+    expected_root = DEFAULT_FROZEN_ROOT.resolve()
+    if resolved != expected_root:
+        raise SystemExit(
+            "E-0017 frozen root is pinned to in-repository results/arm_full; "
+            "external or substitute roots are forbidden"
+        )
+    for relative_path, expected_sha256 in FROZEN_ARTIFACT_SHA256.items():
+        artifact = resolved / Path(relative_path)
+        if not artifact.is_file() or _sha256_file(artifact) != expected_sha256:
+            raise SystemExit(
+                f"E-0017 pinned frozen artifact mismatch: {relative_path}"
+            )
+    return resolved, _pinned_frozen_artifact_identity()
+
+
 def _git_source_state(out_dir: Optional[Path] = None) -> Dict[str, object]:
     def _run(*args: str) -> subprocess.CompletedProcess:
         return subprocess.run(
@@ -309,15 +351,17 @@ def _parse_prereg_status(text: str) -> Tuple[str, str]:
     if len(status_lines) != 1:
         raise ValueError("preregistration must contain exactly one Status line")
     status_line = status_lines[0]
-    match = re.fullmatch(
-        r"Status:\s+\*\*(DRAFT|FROZEN)(?:\s+/\s+[A-Z0-9 -]+)*\*\*",
-        status_line,
-    )
-    if match is None:
+    canonical = {
+        "Status: DRAFT / AUDIT-READY / NOT RUN": "DRAFT",
+        "Status: FROZEN / AUDIT-READY / NOT RUN": "FROZEN",
+    }
+    status = canonical.get(status_line)
+    if status is None:
         raise ValueError(
-            "preregistration Status must start with the exact token DRAFT or FROZEN"
+            "preregistration Status must equal one unambiguous canonical DRAFT "
+            "or FROZEN line"
         )
-    return match.group(1), status_line
+    return status, status_line
 
 
 def _preregistration_identity(*, require_frozen: bool) -> Dict[str, object]:
@@ -1482,6 +1526,102 @@ def _item_cluster_metric_ci(
     )
 
 
+def _conditional_accuracy_by_item(
+    records: Sequence[Dict[str, object]],
+    *,
+    hit_cap: bool,
+) -> Tuple[Dict[str, float], int]:
+    grouped: Dict[str, List[float]] = {}
+    n_samples = 0
+    for record in records:
+        if bool(record["hit_max_new_tokens"]) != bool(hit_cap):
+            continue
+        grouped.setdefault(str(record["item_id"]), []).append(
+            float(record["correct"])
+        )
+        n_samples += 1
+    return (
+        {
+            item_id: float(np.mean(values))
+            for item_id, values in sorted(grouped.items())
+        },
+        n_samples,
+    )
+
+
+def _conditional_accuracy_summary(
+    item_means: Dict[str, float],
+    *,
+    n_samples: int,
+    bootstrap_b: int,
+    seed: int,
+) -> Dict[str, object]:
+    if not item_means:
+        return {
+            "defined": False,
+            "point": None,
+            "ci_lo": None,
+            "ci_hi": None,
+            "ci_level": 0.95,
+            "bootstrap_b": int(bootstrap_b),
+            "n_items": 0,
+            "n_samples": int(n_samples),
+            "zero_denominator": True,
+        }
+    ci = _ci(
+        [item_means[item_id] for item_id in sorted(item_means)],
+        bootstrap_b=bootstrap_b,
+        ci_level=0.95,
+        seed=seed,
+    )
+    return {
+        "defined": True,
+        **ci,
+        "n_samples": int(n_samples),
+        "zero_denominator": False,
+        "estimand": "mean per-item conditional accuracy",
+    }
+
+
+def _conditional_accuracy_difference(
+    hit_by_item: Dict[str, float],
+    nonhit_by_item: Dict[str, float],
+    *,
+    bootstrap_b: int,
+    seed: int,
+) -> Dict[str, object]:
+    paired_ids = sorted(set(hit_by_item) & set(nonhit_by_item))
+    if not paired_ids:
+        return {
+            "defined": False,
+            "point": None,
+            "ci_lo": None,
+            "ci_hi": None,
+            "ci_level": 0.95,
+            "bootstrap_b": int(bootstrap_b),
+            "n_items": 0,
+            "zero_denominator": True,
+        }
+    ci = _ci(
+        [
+            hit_by_item[item_id] - nonhit_by_item[item_id]
+            for item_id in paired_ids
+        ],
+        bootstrap_b=bootstrap_b,
+        ci_level=0.95,
+        seed=seed,
+    )
+    return {
+        "defined": True,
+        **ci,
+        "zero_denominator": False,
+        "estimand": (
+            "mean within-item conditional-accuracy difference among items "
+            "observed in both stop strata"
+        ),
+    }
+
+
 def _condition_summary(
     records: Sequence[Dict[str, object]],
     cap: int,
@@ -1495,16 +1635,6 @@ def _condition_summary(
     )
     hit = [bool(record["hit_max_new_tokens"]) for record in records]
     equals_cap = [int(record["generated_token_count"]) == int(cap) for record in records]
-    correct_hit = [
-        int(record["correct"])
-        for record in records
-        if bool(record["hit_max_new_tokens"])
-    ]
-    correct_not_hit = [
-        int(record["correct"])
-        for record in records
-        if not bool(record["hit_max_new_tokens"])
-    ]
     n = len(records)
     hit_ci = _item_cluster_metric_ci(
         records,
@@ -1550,9 +1680,31 @@ def _condition_summary(
         bootstrap_b=bootstrap_b,
         seed=seed,
     )
-    accuracy_hit = float(np.mean(correct_hit)) if correct_hit else None
-    accuracy_not_hit = (
-        float(np.mean(correct_not_hit)) if correct_not_hit else None
+    hit_accuracy_by_item, n_hit_samples = _conditional_accuracy_by_item(
+        records,
+        hit_cap=True,
+    )
+    nonhit_accuracy_by_item, n_nonhit_samples = _conditional_accuracy_by_item(
+        records,
+        hit_cap=False,
+    )
+    hit_accuracy = _conditional_accuracy_summary(
+        hit_accuracy_by_item,
+        n_samples=n_hit_samples,
+        bootstrap_b=bootstrap_b,
+        seed=seed,
+    )
+    nonhit_accuracy = _conditional_accuracy_summary(
+        nonhit_accuracy_by_item,
+        n_samples=n_nonhit_samples,
+        bootstrap_b=bootstrap_b,
+        seed=seed,
+    )
+    accuracy_difference = _conditional_accuracy_difference(
+        hit_accuracy_by_item,
+        nonhit_accuracy_by_item,
+        bootstrap_b=bootstrap_b,
+        seed=seed,
     )
     return {
         "n_samples": n,
@@ -1644,16 +1796,14 @@ def _condition_summary(
         else math.nan,
         "mean_degeneracy_ci_95_item_cluster": degeneracy_ci,
         "accuracy_by_cap_stop": {
-            "n_hit_cap": len(correct_hit),
-            "n_did_not_hit_cap": len(correct_not_hit),
-            "hit_cap": accuracy_hit,
-            "did_not_hit_cap": accuracy_not_hit,
-            "hit_minus_did_not_hit": (
-                None
-                if accuracy_hit is None or accuracy_not_hit is None
-                else accuracy_hit - accuracy_not_hit
-            ),
+            "hit_cap": hit_accuracy,
+            "did_not_hit_cap": nonhit_accuracy,
+            "hit_minus_did_not_hit": accuracy_difference,
             "association_only": True,
+            "unit": (
+                "item; sample outcomes are averaged within item and stratum "
+                "before item-cluster inference"
+            ),
         },
     }
 
@@ -2540,6 +2690,7 @@ def _load_run_authorization(
         "designated_host",
         "model_pins",
         "dataset_pin",
+        "frozen_artifacts",
     }
     if not isinstance(payload, dict) or set(payload) != expected_top:
         raise SystemExit("E-0017 authorization schema mismatch")
@@ -2636,6 +2787,8 @@ def _load_run_authorization(
 
     if payload["model_pins"] != MODEL_SPECS:
         raise SystemExit("E-0017 authorization model pins mismatch")
+    if payload["frozen_artifacts"] != _pinned_frozen_artifact_identity():
+        raise SystemExit("E-0017 authorization frozen-artifact pins mismatch")
     if payload["dataset_pin"] != {
         "repo_id": "openai/gsm8k",
         "config": "main",
@@ -3323,7 +3476,9 @@ def _main(argv: Optional[List[str]] = None) -> int:
 
     args = build_parser().parse_args(argv)
     _validate_args(args)
-    frozen_root = Path(args.frozen_root).resolve()
+    frozen_root, frozen_artifact_pins = _verify_pinned_frozen_root(
+        Path(args.frozen_root)
+    )
     out_dir = _validate_external_control_path(
         Path(args.out_dir),
         label="output directory",
@@ -3389,6 +3544,7 @@ def _main(argv: Optional[List[str]] = None) -> int:
             "reconstruction_revision": GSM8K_REVISION,
         },
         "frozen_lineage": frozen_lineage,
+        "frozen_artifact_pins": frozen_artifact_pins,
         "preregistration": preregistration,
         "implementation_files_sha256": _implementation_lineage(),
         "scorer_contract": {

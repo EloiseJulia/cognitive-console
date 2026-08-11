@@ -87,4 +87,9 @@ Repository/results/frozen-tree redirection is forbidden. `LOCKED` seals never
 adopt an existing analysis artifact, and `None→number` frozen-parser
 transitions count as semantic materiality.
 
+The frozen source is additionally pinned to repository `results/arm_full` and
+the preregistered SHA-256 values of its arm summary plus four cell results,
+verified before JSON loading and repeated in authorization. Stop/non-stop
+accuracy is item-conditional with item-cluster 95% CIs, not sample-pooled.
+
 Independent audit is required before any paper wording changes.

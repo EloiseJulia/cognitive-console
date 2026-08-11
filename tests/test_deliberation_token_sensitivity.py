@@ -218,12 +218,22 @@ def test_final_answer_diagnostic_is_independent_of_frozen_parser_fallback():
 
 
 def test_prereg_status_rejects_unfrozen_substring():
-    assert S._parse_prereg_status("Status: **FROZEN**") == (
+    assert S._parse_prereg_status(
+        S.PREREG_PATH.read_text(encoding="utf-8")
+    )[0] == "DRAFT"
+    assert S._parse_prereg_status(
+        "Status: FROZEN / AUDIT-READY / NOT RUN"
+    ) == (
         "FROZEN",
-        "Status: **FROZEN**",
+        "Status: FROZEN / AUDIT-READY / NOT RUN",
     )
-    with pytest.raises(ValueError, match="exact token"):
-        S._parse_prereg_status("Status: **UNFROZEN**")
+    for contradictory in (
+        "Status: FROZEN / NOT FROZEN / NOT RUN",
+        "Status: FROZEN / DRAFT / NOT RUN",
+        "Status: UNFROZEN / AUDIT-READY / NOT RUN",
+    ):
+        with pytest.raises(ValueError, match="unambiguous canonical"):
+            S._parse_prereg_status(contradictory)
 
 
 def test_continuation_ci_handles_zero_cap_stop_denominator():
@@ -297,6 +307,96 @@ def test_parser_number_addition_is_semantically_material():
     assert row["n_continuation_changed_frozen_parser_number"] == 1
     assert row["n_operational_semantic_truncation_evidence"] == 1
     assert row["operational_semantic_truncation_evidence_present"] is True
+
+
+def test_stop_accuracy_uses_item_means_not_pooled_samples():
+    cfg = _cfg(S.FROZEN_CELL_KEYS[0])
+    records = [
+        _record(
+            cfg,
+            64,
+            "prompt",
+            "item-a",
+            correct=1,
+            hit=True,
+            answer=1.0,
+            token_ids=list(range(64)),
+        )
+    ]
+    records.extend(
+        _record(
+            cfg,
+            64,
+            "prompt",
+            "item-b",
+            correct=0,
+            hit=True,
+            answer=0.0,
+            token_ids=list(range(64)),
+        )
+        for _ in range(5)
+    )
+    records.extend(
+        [
+            _record(
+                cfg,
+                64,
+                "prompt",
+                "item-a",
+                correct=0,
+                hit=False,
+                answer=0.0,
+                token_ids=[10, 2],
+            ),
+            _record(
+                cfg,
+                64,
+                "prompt",
+                "item-b",
+                correct=1,
+                hit=False,
+                answer=1.0,
+                token_ids=[10, 2],
+            ),
+        ]
+    )
+    summary = S._condition_summary(
+        records,
+        64,
+        bootstrap_b=100,
+        seed=S.DEFAULT_SEED,
+    )
+    assert math.isclose(
+        np.mean(
+            [
+                record["correct"]
+                for record in records
+                if record["hit_max_new_tokens"]
+            ]
+        ),
+        1 / 6,
+    )
+    stop = summary["accuracy_by_cap_stop"]
+    assert stop["hit_cap"]["defined"] is True
+    assert math.isclose(stop["hit_cap"]["point"], 0.5)
+    assert stop["hit_cap"]["n_items"] == 2
+    assert stop["hit_cap"]["n_samples"] == 6
+    assert stop["hit_cap"]["ci_lo"] is not None
+    assert stop["hit_cap"]["ci_hi"] is not None
+    assert stop["did_not_hit_cap"]["defined"] is True
+    assert stop["hit_minus_did_not_hit"]["defined"] is True
+    assert math.isclose(stop["hit_minus_did_not_hit"]["point"], 0.0)
+    assert stop["hit_minus_did_not_hit"]["ci_level"] == 0.95
+
+    only_hits = S._condition_summary(
+        records[:6],
+        64,
+        bootstrap_b=100,
+        seed=S.DEFAULT_SEED,
+    )["accuracy_by_cap_stop"]
+    assert only_hits["did_not_hit_cap"]["defined"] is False
+    assert only_hits["did_not_hit_cap"]["zero_denominator"] is True
+    assert only_hits["hit_minus_did_not_hit"]["defined"] is False
 
 
 def test_loads_all_frozen_deliberation_configs():
@@ -686,6 +786,7 @@ def _full_authorization(out_dir, *, auditor_id="audit-session-1"):
             "canonical_out_dir": str(out_dir),
         },
         "model_pins": S.MODEL_SPECS,
+        "frozen_artifacts": S._pinned_frozen_artifact_identity(),
         "dataset_pin": {
             "repo_id": "openai/gsm8k",
             "config": "main",
@@ -694,6 +795,18 @@ def _full_authorization(out_dir, *, auditor_id="audit-session-1"):
             "item_identity_sha256": S._sha256_file(S.ITEM_IDENTITY_PATH),
         },
     }
+
+
+def test_frozen_root_rejects_external_substitute():
+    root = _scratch_dir("external-frozen-root")
+    try:
+        resolved, identity = S._verify_pinned_frozen_root(S.DEFAULT_FROZEN_ROOT)
+        assert resolved == S.DEFAULT_FROZEN_ROOT.resolve()
+        assert identity == S._pinned_frozen_artifact_identity()
+        with pytest.raises(SystemExit, match="pinned.*results/arm_full"):
+            S._verify_pinned_frozen_root(root / "substitute-arm")
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
 
 
 def test_authorization_rejects_blank_auditor_and_registry_redirection(monkeypatch):
@@ -737,6 +850,21 @@ def test_authorization_rejects_blank_auditor_and_registry_redirection(monkeypatc
         )
         S._write_json(auth_path, redirected)
         with pytest.raises(SystemExit, match="designated-host schema"):
+            S._load_run_authorization(
+                auth_path,
+                source_commit="a" * 40,
+                preregistration=preregistration,
+                out_dir=out_dir,
+                registry_path=registry_path,
+                frozen_root=frozen_root,
+            )
+
+        wrong_frozen_pin = _full_authorization(out_dir)
+        wrong_frozen_pin["frozen_artifacts"]["files"][
+            "arm_matrix_summary.json"
+        ] = "0" * 64
+        S._write_json(auth_path, wrong_frozen_pin)
+        with pytest.raises(SystemExit, match="frozen-artifact pins"):
             S._load_run_authorization(
                 auth_path,
                 source_commit="a" * 40,

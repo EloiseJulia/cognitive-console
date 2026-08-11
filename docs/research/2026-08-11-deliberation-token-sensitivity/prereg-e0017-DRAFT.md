@@ -1,6 +1,6 @@
 # E-0017 DRAFT preregistration — deliberation token-cap sensitivity
 
-Status: **DRAFT / AUDIT-READY / NOT FROZEN / NOT RUN**
+Status: DRAFT / AUDIT-READY / NOT RUN
 
 E-0017 is a reconstructed-TEST-index sensitivity companion to E-0006. It does not edit,
 replace, relabel, or rerun the complete E-0006 adjudication, and it cannot turn
@@ -95,6 +95,22 @@ same-basename substitutions, unsafe shard paths, missing shards, and any
 run-config/checkpoint resume drift. Failure of the 64-token reproduction gate
 is `INVALID_64_NONREPRODUCTION`; it may not be explained away as a cap effect.
 
+### Frozen E-0006 artifact pins
+
+The only accepted frozen root is the resolved in-repository
+`results/arm_full`. Before any result JSON is loaded, the runner verifies:
+
+| relative artifact | SHA-256 |
+|---|---|
+| `arm_matrix_summary.json` | `fd9140e8764da8b46e531644b9f885d363f718107c2e86d592ea4593eb75338e` |
+| `cell_caa__llama3-8b/c2b_adjudication_results.json` | `d301bacf70744406356fd2e1a597c01b8738c10d392a9901feae461bebfa0f42` |
+| `cell_caa__qwen2.5-7b/c2b_adjudication_results.json` | `33f242faf921f4a5de49b9620b6a5507415a157d21f9688dce6616d32cda1800` |
+| `cell_iti__llama3-8b/c2b_adjudication_results.json` | `ac9d18aa67a5e2afe9b37441fa08c008cfad139a557f323fa5052d8c38f85282` |
+| `cell_iti__qwen2.5-7b/c2b_adjudication_results.json` | `e168392f4c44d29467791883da122d27b470ce0770bc81c8b5d705119bc6647e` |
+
+The authorization repeats this exact root-relative manifest. External,
+symlink-resolved substitute, relocated, or hash-mismatched roots are rejected.
+
 ## 3. Sample plan and variables
 
 Planned generations:
@@ -154,8 +170,12 @@ For each cell, cap `t`, and condition `c`:
 - frozen-parser failure/number-presence rates and independent
   explicit-or-terminal-final-answer-presence rate;
 - accuracy and mean degeneracy;
-- accuracy among mechanical stops and non-stops, with their difference marked
-  association-only and non-causal.
+- accuracy among mechanical stops and non-stops: average correctness within
+  each item/stratum first, then report the mean item-conditional accuracy and
+  item-cluster bootstrap 95% CI; report the hit-minus-non-hit within-item
+  difference and 95% CI among items observed in both strata. Empty strata or no
+  paired items are explicitly undefined with `zero_denominator=true`. These
+  diagnostics remain association-only and non-causal.
 
 Item-paired estimands:
 
@@ -212,21 +232,24 @@ These are planning references only. No top-up is permitted.
 
 The runner must fail closed unless:
 
-1. this status line begins with the exact normalized token `FROZEN` in a
-   committed preregistration; substring forms such as `UNFROZEN` are rejected;
+1. this status line equals exactly
+   `Status: FROZEN / AUDIT-READY / NOT RUN` in a committed preregistration;
+   any line containing `NOT FROZEN`, `DRAFT`, or `UNFROZEN` is rejected;
 2. an external structured authorization file records:
    - non-empty normalized audit-record and auditor IDs, with the auditor
      distinct from owner `EloiseJulia`, and verdict `FREEZE_RECOMMENDED`;
    - the exact 40-hex audited run commit equal to clean `HEAD`;
    - owner `EloiseJulia` authorization, expiry, a ≤3 A800-GPU-hour cap, exact
      GPU UUID/name, designated hostname, and canonical output directory;
-   - the current frozen prereg hash, item-identity hash, dataset revision, and
-     exact model revisions;
+   - the current frozen prereg hash, the exact five-file frozen-artifact
+     manifest above, item-identity hash, dataset revision, and exact model
+     revisions;
    `authorization-template.json` is schema documentation only and is rejected
    by the runner until independently/owner populated outside the repository;
 3. the operator passes `--confirm-frozen-test-once`;
-4. all frozen result hashes are readable and the arm summary still encodes
-   exactly `0/12`;
+4. `--frozen-root` resolves exactly to repository `results/arm_full`, all five
+   frozen artifact hashes equal the table above before JSON loading, and the
+   arm summary still encodes exactly `0/12`;
 5. the output directory is the sole authorized canonical directory and both it
    and the derived registry are outside the repository, every directory named
    `results`, and `results/arm_full`;

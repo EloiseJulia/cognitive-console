@@ -1586,5 +1586,9 @@ experiments:
     reproduction, a 24-estimand joint item-cluster max-T family, zero-safe
     continuation CIs, explicit `None->number` parser-change materiality, an
     explicit/terminal final-answer diagnostic, and a sealed TEST-once analysis
-    that rejects LOCKED pre-existing analysis fail closed. E-0006 0/12 remains immutable. A
+    that rejects LOCKED pre-existing analysis fail closed. The source root is
+    fixed to repository results/arm_full with preregistered SHA-256 pins for
+    the arm summary and four cell results before load. Stop/non-stop accuracy
+    uses per-item conditional means and item-cluster 95% CIs, including an
+    explicitly undefined zero-denominator branch. E-0006 0/12 remains immutable. A
     future run must undergo independent hostile results audit before paper use.

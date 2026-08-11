@@ -14,6 +14,8 @@ import types
 import numpy as np
 import pytest
 
+from cognitive_console.activations import provider as activation_provider_module
+from cognitive_console.steering import generate as generate_module
 from cognitive_console.steering.generate import (
     GenBackend,
     GenerationResult,
@@ -211,6 +213,97 @@ def test_activation_provider_forwards_hf_cache_to_all_loaders(
     for _, _, kwargs in calls:
         assert kwargs["cache_dir"] == str(hf_cache)
         assert kwargs["revision"] == "rev"
+
+
+def test_transformers_4442_uses_torch_dtype_for_provider_and_generator(
+    monkeypatch,
+):
+    monkeypatch.setattr(
+        activation_provider_module.importlib.metadata,
+        "version",
+        lambda name: "4.44.2",
+    )
+    marker = object()
+    assert activation_provider_module._transformers_model_dtype_kwargs(
+        marker
+    ) == {"torch_dtype": marker}
+    assert generate_module._transformers_model_dtype_kwargs(marker) == {
+        "torch_dtype": marker
+    }
+
+
+def test_steered_generator_4442_loader_passes_torch_dtype(
+    monkeypatch,
+):
+    dtype_marker = object()
+    calls = []
+
+    class AutoConfig:
+        @staticmethod
+        def from_pretrained(name, **kwargs):
+            return types.SimpleNamespace(
+                hidden_size=4,
+                num_hidden_layers=1,
+            )
+
+    class Tokenizer:
+        pad_token = None
+        eos_token = "<eos>"
+
+    class AutoTokenizer:
+        @staticmethod
+        def from_pretrained(name, **kwargs):
+            return Tokenizer()
+
+    class Model:
+        def __init__(self):
+            self.model = types.SimpleNamespace(layers=[object()])
+
+        def to(self, device):
+            return self
+
+        def eval(self):
+            return self
+
+    class AutoModelForCausalLM:
+        @staticmethod
+        def from_pretrained(name, **kwargs):
+            calls.append(kwargs)
+            return Model()
+
+    monkeypatch.setattr(
+        activation_provider_module.importlib.metadata,
+        "version",
+        lambda name: "4.44.2",
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "torch",
+        types.SimpleNamespace(float16=dtype_marker, float32=object()),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "transformers",
+        types.SimpleNamespace(
+            AutoConfig=AutoConfig,
+            AutoModelForCausalLM=AutoModelForCausalLM,
+            AutoTokenizer=AutoTokenizer,
+        ),
+    )
+    backend = SteeredHFBackend(
+        "fake/model",
+        device="cpu",
+        dtype="float16",
+        model_revision="rev",
+    )
+    backend._ensure_loaded()
+    assert calls == [
+        {
+            "low_cpu_mem_usage": True,
+            "torch_dtype": dtype_marker,
+            "revision": "rev",
+        }
+    ]
 
 
 def test_locate_decoder_layers_supports_llama_style_path():

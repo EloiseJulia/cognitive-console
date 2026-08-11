@@ -327,6 +327,185 @@ def test_operational_limits_are_frozen_and_not_cli_overridable():
     assert limits["generation_retry_budget_per_backend_call"] == 1
 
 
+@pytest.mark.parametrize(
+    ("name", "total_gib", "expected"),
+    [
+        ("NVIDIA A800 80GB PCIe", 79.1, "nvidia-a800-80gb"),
+        (
+            "NVIDIA GeForce RTX 4080 SUPER",
+            31.473,
+            "autodl-rtx4080-super-32gb",
+        ),
+    ],
+)
+def test_authorized_hardware_profiles_accept_frozen_hosts(
+    name, total_gib, expected
+):
+    assert (
+        R.select_authorized_hardware_profile(name, total_gib).profile_id
+        == expected
+    )
+
+
+@pytest.mark.parametrize(
+    ("name", "total_gib"),
+    [
+        ("NVIDIA GeForce RTX 4080 SUPER", 30.999),
+        ("NVIDIA GeForce RTX 4090", 23.9),
+        ("NVIDIA A100-SXM4-80GB", 79.1),
+    ],
+)
+def test_hardware_profile_rejects_smaller_or_unapproved_cards(
+    name, total_gib
+):
+    with pytest.raises(ValueError, match="unauthorized GPU hardware profile"):
+        R.select_authorized_hardware_profile(name, total_gib)
+
+
+def test_torch_smi_memory_tolerance_accepts_autodl_reserved_gap():
+    result = R.validate_torch_smi_total_memory(31.473, 31.992)
+    assert result["gap_gib"] == pytest.approx(0.519)
+    assert result["allowed_gap_gib"] == pytest.approx(0.95976)
+
+
+@pytest.mark.parametrize(
+    ("torch_total", "smi_total"),
+    [
+        (30.0, 31.992),
+        (32.1, 31.992),
+        (float("nan"), 31.992),
+    ],
+)
+def test_torch_smi_memory_tolerance_rejects_genuine_mismatch(
+    torch_total, smi_total
+):
+    with pytest.raises(ValueError):
+        R.validate_torch_smi_total_memory(torch_total, smi_total)
+
+
+def test_autodl_profile_pins_runtime_memory_and_disk_guards():
+    profile = next(
+        row
+        for row in R.AUTHORIZED_HARDWARE_PROFILES
+        if row.profile_id == "autodl-rtx4080-super-32gb"
+    )
+    assert profile.min_total_vram_gib == 31.0
+    assert profile.min_free_before_load_gib == 24.0
+    assert profile.min_free_after_load_gib == 10.0
+    assert profile.disk_budget_gb == 40.0
+    assert profile.disk_ceiling_gb == 45.0
+    assert profile.required_hf_home == R.AUTODL_HF_HOME
+    assert profile.required_output_root == R.AUTODL_OUTPUT_ROOT
+    assert profile.required_transformers == "4.44.2"
+    identity = R.hardware_profile_identity(profile)
+    assert json.loads(json.dumps(identity)) == identity
+
+
+def test_profile_disk_guard_normal_path_uses_shutil(tmp_path, monkeypatch):
+    profile = R.HardwareProfile(
+        profile_id="unit-disk",
+        accepted_name_fragments=("GPU",),
+        min_total_vram_gib=1.0,
+        max_total_vram_gib=None,
+        min_free_before_load_gib=1.0,
+        min_free_after_load_gib=1.0,
+        disk_budget_gb=1.0,
+        disk_ceiling_gb=2.0,
+        filesystem_free_reserve_gib=0.5,
+    )
+    paths = R._run_paths(tmp_path / "run", "hf")
+    layout = R._cache_layout(paths, str(tmp_path / "hf"))
+    guard_paths = R._guarded_growth_paths(paths, layout, None)
+    monkeypatch.setattr(
+        R.shutil,
+        "disk_usage",
+        lambda path: type(
+            "Usage",
+            (),
+            {
+                "total": int(50 * 1024**3),
+                "used": int(10 * 1024**3),
+                "free": int(40 * 1024**3),
+            },
+        )(),
+    )
+    result = R.check_profile_disk_guard(
+        profile,
+        guard_paths,
+        layout,
+        paths,
+        stage="unit",
+    )
+    assert result["managed_usage"]["status"] == "ok"
+    assert result["filesystems"][0]["free_gib"] == pytest.approx(40.0)
+
+
+def test_profile_disk_guard_rejects_low_filesystem_free_space(
+    tmp_path, monkeypatch
+):
+    profile = R.HardwareProfile(
+        profile_id="unit-disk-floor",
+        accepted_name_fragments=("GPU",),
+        min_total_vram_gib=1.0,
+        max_total_vram_gib=None,
+        min_free_before_load_gib=1.0,
+        min_free_after_load_gib=1.0,
+        disk_budget_gb=1.0,
+        disk_ceiling_gb=2.0,
+        filesystem_free_reserve_gib=0.5,
+    )
+    paths = R._run_paths(tmp_path / "run", "hf")
+    layout = R._cache_layout(paths, str(tmp_path / "hf"))
+    monkeypatch.setattr(
+        R.shutil,
+        "disk_usage",
+        lambda path: type(
+            "Usage",
+            (),
+            {"total": 1024**3, "used": 1024**3, "free": 0},
+        )(),
+    )
+    with pytest.raises(ValueError, match="filesystem free space"):
+        R.check_profile_disk_guard(
+            profile,
+            R._guarded_growth_paths(paths, layout, None),
+            layout,
+            paths,
+            stage="unit",
+        )
+
+
+def test_preflight_only_is_restricted_to_hf_dev():
+    with pytest.raises(SystemExit, match="requires --phase dev --backend hf"):
+        R.main(["--phase", "test", "--backend", "hf", "--preflight-only"])
+    with pytest.raises(SystemExit, match="requires --phase dev --backend hf"):
+        R.main(
+            ["--phase", "dev", "--backend", "synthetic", "--preflight-only"]
+        )
+
+
+def test_preflight_only_dispatches_without_starting_dev(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(R, "_run_preflight", lambda args: 17)
+    monkeypatch.setattr(
+        R,
+        "_run_dev",
+        lambda args: pytest.fail("DEV must not start during preflight"),
+    )
+    assert R.main(
+        [
+            "--phase",
+            "dev",
+            "--backend",
+            "hf",
+            "--preflight-only",
+            "--out-dir",
+            str(tmp_path),
+        ]
+    ) == 17
+
+
 def test_all_hf_growth_roots_are_disk_guarded(tmp_path):
     paths = R._run_paths(tmp_path / "run", "hf")
     default_layout = R._cache_layout(paths, None)

@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import abc
 import hashlib
+import importlib.metadata
 import inspect
 import os
 from dataclasses import dataclass, field
@@ -54,6 +55,16 @@ _HF_INSTALL_HINT = (
     "  pip install torch --index-url https://download.pytorch.org/whl/cpu\n"
     "  pip install -e .[hf]"
 )
+
+
+def _transformers_model_dtype_kwargs(dtype) -> Dict[str, object]:
+    """Use the causal-LM loader keyword supported by transformers."""
+    try:
+        version = importlib.metadata.version("transformers")
+        major = int(version.split(".", 1)[0])
+    except (importlib.metadata.PackageNotFoundError, ValueError):
+        major = 4
+    return {"dtype": dtype} if major >= 5 else {"torch_dtype": dtype}
 
 
 class ActivationProvider(abc.ABC):
@@ -365,19 +376,24 @@ class HFActivationProvider(ActivationProvider):
         )
         if self._tokenizer.pad_token is None:
             self._tokenizer.pad_token = self._tokenizer.eos_token
-        # transformers >=5 renamed `torch_dtype` -> `dtype`; support both.
+        dtype_kwargs = _transformers_model_dtype_kwargs(dtype)
         try:
             model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
-                dtype=dtype,
                 low_cpu_mem_usage=True,
+                **dtype_kwargs,
                 **load_kwargs_for(AutoModelForCausalLM),
             )
         except TypeError:
+            fallback = (
+                {"torch_dtype": dtype}
+                if "dtype" in dtype_kwargs
+                else {"dtype": dtype}
+            )
             model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
-                torch_dtype=dtype,
                 low_cpu_mem_usage=True,
+                **fallback,
                 **load_kwargs_for(AutoModelForCausalLM),
             )
         model.to(self.device)

@@ -44,6 +44,10 @@ from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
+from cognitive_console.activations.provider import (
+    _transformers_model_dtype_kwargs,
+)
+
 _EPS = 1e-12
 
 _HF_INSTALL_HINT = (
@@ -408,15 +412,24 @@ class SteeredHFBackend(GenBackend):
         # continuation is a single slice. Single-sequence generate() is unaffected
         # (it tokenizes one prompt with no padding).
         self._tokenizer.padding_side = "left"
+        dtype_kwargs = _transformers_model_dtype_kwargs(dtype)
         try:
             model = AutoModelForCausalLM.from_pretrained(
-                self.model_name, dtype=dtype, low_cpu_mem_usage=True, **load_kwargs
+                self.model_name,
+                low_cpu_mem_usage=True,
+                **dtype_kwargs,
+                **load_kwargs,
             )
         except TypeError:
+            fallback = (
+                {"torch_dtype": dtype}
+                if "dtype" in dtype_kwargs
+                else {"dtype": dtype}
+            )
             model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
-                torch_dtype=dtype,
                 low_cpu_mem_usage=True,
+                **fallback,
                 **load_kwargs,
             )
         model.to(self.device)

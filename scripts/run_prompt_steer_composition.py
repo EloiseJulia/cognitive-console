@@ -13,8 +13,10 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.metadata
 import io
 import json
+import math
 import os
 import platform
 import shutil
@@ -77,6 +79,70 @@ IDENTITY_FILES = (
     "src/cognitive_console/activations/provider.py",
     "src/cognitive_console/steering/generate.py",
     "docs/research/2026-08-11-prereg-prompt-steer-composition-FROZEN.md",
+)
+AUTODL_HF_HOME = Path("/root/autodl-tmp/hf")
+AUTODL_OUTPUT_ROOT = Path("/root/autodl-tmp")
+AUTODL_REQUIRED_PYTHON = (3, 12)
+AUTODL_REQUIRED_PYTHON_EXECUTABLE = Path("/root/miniconda3/bin/python")
+AUTODL_REQUIRED_TORCH = "2.8.0"
+AUTODL_REQUIRED_CUDA = "12.8"
+AUTODL_REQUIRED_TRANSFORMERS = "4.44.2"
+
+
+@dataclass(frozen=True)
+class HardwareProfile:
+    profile_id: str
+    accepted_name_fragments: tuple[str, ...]
+    min_total_vram_gib: float
+    max_total_vram_gib: Optional[float]
+    min_free_before_load_gib: float
+    min_free_after_load_gib: float
+    disk_budget_gb: float
+    disk_ceiling_gb: float
+    filesystem_free_reserve_gib: float
+    required_visible_selector: Optional[str] = None
+    required_physical_gpu_count: Optional[int] = None
+    required_hf_home: Optional[Path] = None
+    required_output_root: Optional[Path] = None
+    required_python: Optional[tuple[int, int]] = None
+    required_python_executable: Optional[Path] = None
+    required_torch: Optional[str] = None
+    required_cuda: Optional[str] = None
+    required_transformers: Optional[str] = None
+
+
+AUTHORIZED_HARDWARE_PROFILES = (
+    HardwareProfile(
+        profile_id="nvidia-a800-80gb",
+        accepted_name_fragments=("NVIDIA A800",),
+        min_total_vram_gib=75.0,
+        max_total_vram_gib=82.0,
+        min_free_before_load_gib=40.0,
+        min_free_after_load_gib=10.0,
+        disk_budget_gb=DISK_BUDGET_GB,
+        disk_ceiling_gb=DISK_CEILING_GB,
+        filesystem_free_reserve_gib=5.0,
+    ),
+    HardwareProfile(
+        profile_id="autodl-rtx4080-super-32gb",
+        accepted_name_fragments=("NVIDIA GeForce RTX 4080 SUPER",),
+        min_total_vram_gib=31.0,
+        max_total_vram_gib=33.0,
+        min_free_before_load_gib=24.0,
+        min_free_after_load_gib=10.0,
+        disk_budget_gb=40.0,
+        disk_ceiling_gb=45.0,
+        filesystem_free_reserve_gib=5.0,
+        required_visible_selector="0",
+        required_physical_gpu_count=1,
+        required_hf_home=AUTODL_HF_HOME,
+        required_output_root=AUTODL_OUTPUT_ROOT,
+        required_python=AUTODL_REQUIRED_PYTHON,
+        required_python_executable=AUTODL_REQUIRED_PYTHON_EXECUTABLE,
+        required_torch=AUTODL_REQUIRED_TORCH,
+        required_cuda=AUTODL_REQUIRED_CUDA,
+        required_transformers=AUTODL_REQUIRED_TRANSFORMERS,
+    ),
 )
 
 
@@ -259,6 +325,459 @@ def _guarded_growth_paths(
             continue
         guarded.append(candidate)
     return [str(path) for path in guarded]
+
+
+def _gib(n_bytes: float) -> float:
+    return float(n_bytes) / (1024.0 ** 3)
+
+
+def _base_package_version(value: str) -> str:
+    return str(value).split("+", 1)[0]
+
+
+def _package_version(name: str) -> str:
+    try:
+        return importlib.metadata.version(name)
+    except importlib.metadata.PackageNotFoundError:
+        return "not-installed"
+
+
+def hardware_profile_identity(profile: HardwareProfile) -> Dict[str, object]:
+    payload = asdict(profile)
+    payload["accepted_name_fragments"] = list(
+        profile.accepted_name_fragments
+    )
+    if profile.required_python is not None:
+        payload["required_python"] = list(profile.required_python)
+    for key in (
+        "required_hf_home",
+        "required_output_root",
+        "required_python_executable",
+    ):
+        value = payload.get(key)
+        if value is not None:
+            payload[key] = str(value)
+    return payload
+
+
+def select_authorized_hardware_profile(
+    device_name: str,
+    total_vram_gib: float,
+) -> HardwareProfile:
+    matches = [
+        profile
+        for profile in AUTHORIZED_HARDWARE_PROFILES
+        if any(
+            fragment in str(device_name)
+            for fragment in profile.accepted_name_fragments
+        )
+        and float(total_vram_gib) >= profile.min_total_vram_gib
+        and (
+            profile.max_total_vram_gib is None
+            or float(total_vram_gib) <= profile.max_total_vram_gib
+        )
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            "unauthorized GPU hardware profile: "
+            f"name={device_name!r}, usable_total_vram_gib="
+            f"{float(total_vram_gib):.3f}; accepted profiles are NVIDIA A800 "
+            "80GB or owner-authorized NVIDIA GeForce RTX 4080 SUPER with "
+            "at least 31.0 GiB torch-usable memory"
+        )
+    return matches[0]
+
+
+def validate_torch_smi_total_memory(
+    torch_total_gib: float,
+    smi_total_gib: float,
+) -> Dict[str, float]:
+    torch_total = float(torch_total_gib)
+    smi_total = float(smi_total_gib)
+    if (
+        not math.isfinite(torch_total)
+        or not math.isfinite(smi_total)
+        or torch_total <= 0.0
+        or smi_total <= 0.0
+    ):
+        raise ValueError(
+            "torch/nvidia-smi total-memory values must be finite and positive"
+        )
+    allowed_gap = max(0.75, 0.03 * smi_total)
+    gap = smi_total - torch_total
+    if torch_total > smi_total or gap > allowed_gap:
+        raise ValueError(
+            "torch/nvidia-smi total-memory mismatch: "
+            f"torch={torch_total:.3f} GiB, nvidia-smi={smi_total:.3f} GiB, "
+            f"allowed_gap={allowed_gap:.3f} GiB"
+        )
+    return {
+        "torch_total_gib": torch_total,
+        "nvidia_smi_total_gib": smi_total,
+        "gap_gib": gap,
+        "allowed_gap_gib": allowed_gap,
+    }
+
+
+def _parse_nvidia_smi_rows(raw: str) -> List[Dict[str, object]]:
+    rows: List[Dict[str, object]] = []
+    for line in str(raw).splitlines():
+        if not line.strip():
+            continue
+        parts = [part.strip() for part in line.split(",", 5)]
+        if len(parts) != 6:
+            raise ValueError(f"unexpected nvidia-smi row: {line!r}")
+        rows.append(
+            {
+                "physical_index": int(parts[0]),
+                "uuid": parts[1],
+                "pci_bus_id": parts[2],
+                "name": parts[3],
+                "total_memory_mib": int(parts[4]),
+                "free_memory_mib": int(parts[5]),
+            }
+        )
+    if not rows:
+        raise ValueError("nvidia-smi returned no GPU rows")
+    return rows
+
+
+def _query_nvidia_smi_rows() -> List[Dict[str, object]]:
+    completed = subprocess.run(
+        [
+            "nvidia-smi",
+            "--query-gpu=index,uuid,pci.bus_id,name,memory.total,memory.free",
+            "--format=csv,noheader,nounits",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return _parse_nvidia_smi_rows(completed.stdout)
+
+
+def _single_visible_gpu_selector() -> str:
+    raw = os.environ.get("CUDA_VISIBLE_DEVICES")
+    if raw is None or not raw.strip():
+        raise ValueError(
+            "HF E-0017 requires CUDA_VISIBLE_DEVICES to bind one physical GPU"
+        )
+    selectors = [part.strip() for part in raw.split(",") if part.strip()]
+    if len(selectors) != 1:
+        raise ValueError(
+            "HF E-0017 requires exactly one CUDA_VISIBLE_DEVICES selector"
+        )
+    selector = selectors[0]
+    if selector.startswith("MIG-"):
+        raise ValueError("MIG devices are not an authorized E-0017 profile")
+    return selector
+
+
+def _select_physical_gpu_row(
+    rows: Sequence[Dict[str, object]],
+    selector: str,
+) -> Dict[str, object]:
+    if selector.isdigit():
+        matches = [
+            row
+            for row in rows
+            if int(row["physical_index"]) == int(selector)
+        ]
+    else:
+        matches = [row for row in rows if str(row["uuid"]) == selector]
+    if len(matches) != 1:
+        raise ValueError(
+            "CUDA_VISIBLE_DEVICES selector did not bind one nvidia-smi "
+            f"physical GPU: {selector!r}"
+        )
+    return dict(matches[0])
+
+
+def _validate_profile_runtime(
+    profile: HardwareProfile,
+    *,
+    torch_version: str,
+    cuda_runtime: object,
+) -> Dict[str, object]:
+    transformers_version = _package_version("transformers")
+    python_version = (sys.version_info.major, sys.version_info.minor)
+    if profile.required_python and python_version != profile.required_python:
+        raise ValueError(
+            f"{profile.profile_id} requires Python "
+            f"{profile.required_python[0]}.{profile.required_python[1]}, got "
+            f"{python_version[0]}.{python_version[1]}"
+        )
+    if profile.required_python_executable is not None:
+        expected = profile.required_python_executable.resolve(strict=False)
+        actual = Path(sys.executable).resolve(strict=False)
+        if actual != expected:
+            raise ValueError(
+                f"{profile.profile_id} requires Python executable {expected}, "
+                f"got {actual}"
+            )
+    if (
+        profile.required_torch
+        and _base_package_version(torch_version) != profile.required_torch
+    ):
+        raise ValueError(
+            f"{profile.profile_id} requires torch {profile.required_torch}, "
+            f"got {torch_version}"
+        )
+    if profile.required_cuda and str(cuda_runtime) != profile.required_cuda:
+        raise ValueError(
+            f"{profile.profile_id} requires torch CUDA {profile.required_cuda}, "
+            f"got {cuda_runtime}"
+        )
+    if (
+        profile.required_transformers
+        and transformers_version != profile.required_transformers
+    ):
+        raise ValueError(
+            f"{profile.profile_id} requires transformers "
+            f"{profile.required_transformers}, got {transformers_version}"
+        )
+    return {
+        "python": platform.python_version(),
+        "python_executable": str(Path(sys.executable).resolve(strict=False)),
+        "torch": torch_version,
+        "torch_cuda_runtime": cuda_runtime,
+        "transformers": transformers_version,
+    }
+
+
+def configure_cuda_allocator_environment() -> str:
+    key = "PYTORCH_CUDA_ALLOC_CONF"
+    required = "expandable_segments:True"
+    current = os.environ.get(key)
+    if current and required not in current.replace(" ", ""):
+        raise ValueError(
+            f"{key} must include {required} for E-0017 memory-safe execution"
+        )
+    if not current:
+        os.environ[key] = required
+    return os.environ[key]
+
+
+def capture_authorized_hardware_preflight(
+) -> tuple[HardwareProfile, Dict[str, object]]:
+    import torch
+
+    if not torch.cuda.is_available():
+        raise ValueError("HF E-0017 requires CUDA; CPU execution is not authorized")
+    if torch.cuda.device_count() != 1:
+        raise ValueError(
+            "HF E-0017 requires exactly one logical CUDA device after binding"
+        )
+    selector = _single_visible_gpu_selector()
+    smi_rows = _query_nvidia_smi_rows()
+    physical = _select_physical_gpu_row(smi_rows, selector)
+    torch.cuda.set_device(0)
+    props = torch.cuda.get_device_properties(0)
+    free_bytes, total_bytes = torch.cuda.mem_get_info(0)
+    total_gib = _gib(total_bytes)
+    free_gib = _gib(free_bytes)
+    smi_total_gib = float(physical["total_memory_mib"]) / 1024.0
+    if str(props.name) != str(physical["name"]):
+        raise ValueError(
+            "torch/nvidia-smi GPU-name mismatch: "
+            f"torch={props.name!r}, nvidia-smi={physical['name']!r}"
+        )
+    memory_consistency = validate_torch_smi_total_memory(
+        total_gib,
+        smi_total_gib,
+    )
+    profile = select_authorized_hardware_profile(str(props.name), total_gib)
+    if (
+        profile.required_visible_selector is not None
+        and selector != profile.required_visible_selector
+    ):
+        raise ValueError(
+            f"{profile.profile_id} requires CUDA_VISIBLE_DEVICES="
+            f"{profile.required_visible_selector}, got {selector!r}"
+        )
+    if (
+        profile.required_physical_gpu_count is not None
+        and len(smi_rows) != profile.required_physical_gpu_count
+    ):
+        raise ValueError(
+            f"{profile.profile_id} requires exactly "
+            f"{profile.required_physical_gpu_count} nvidia-smi GPU row, got "
+            f"{len(smi_rows)}"
+        )
+    if free_gib < profile.min_free_before_load_gib:
+        raise ValueError(
+            f"{profile.profile_id} requires at least "
+            f"{profile.min_free_before_load_gib:.1f} GiB free before model "
+            f"load, got {free_gib:.3f} GiB"
+        )
+    runtime = _validate_profile_runtime(
+        profile,
+        torch_version=str(torch.__version__),
+        cuda_runtime=getattr(torch.version, "cuda", None),
+    )
+    return profile, {
+        "profile": hardware_profile_identity(profile),
+        "cuda_visible_devices": selector,
+        "logical_device": "cuda:0",
+        "physical_gpu": {
+            **physical,
+            "torch_device_name": str(props.name),
+            "torch_total_vram_gib": total_gib,
+            "compute_capability": [int(props.major), int(props.minor)],
+            "torch_nvidia_smi_memory_consistency": memory_consistency,
+        },
+        "runtime": runtime,
+        "memory_observation": {
+            "stage": "before_model_load",
+            "free_gib": free_gib,
+            "total_gib": total_gib,
+            "required_free_gib": profile.min_free_before_load_gib,
+        },
+    }
+
+
+def _validate_profile_paths(
+    profile: HardwareProfile,
+    paths: RunPaths,
+    cache_layout: Dict[str, str],
+) -> Dict[str, object]:
+    hf_home = Path(cache_layout["hf_home"]).resolve(strict=False)
+    if profile.required_hf_home is not None:
+        required = profile.required_hf_home.resolve(strict=False)
+        if hf_home != required:
+            raise ValueError(
+                f"{profile.profile_id} requires HF_HOME={required}, got {hf_home}"
+            )
+    out_dir = paths.root.resolve(strict=False)
+    if profile.required_output_root is not None:
+        output_root = profile.required_output_root.resolve(strict=False)
+        if out_dir == output_root or not out_dir.is_relative_to(output_root):
+            raise ValueError(
+                f"{profile.profile_id} requires OUT_DIR below {output_root}"
+            )
+    if out_dir == hf_home or out_dir.is_relative_to(hf_home):
+        raise ValueError("OUT_DIR must not be inside HF_HOME")
+    for name, value in cache_layout.items():
+        cache_path = Path(value).resolve(strict=False)
+        if name != "hf_home" and not cache_path.is_relative_to(hf_home):
+            raise ValueError(
+                f"{name} points outside the authorized HF_HOME: {cache_path}"
+            )
+    return {
+        "hf_home": str(hf_home),
+        "out_dir": str(out_dir),
+        "disk_budget_gb": profile.disk_budget_gb,
+        "disk_ceiling_gb": profile.disk_ceiling_gb,
+        "filesystem_free_reserve_gib": profile.filesystem_free_reserve_gib,
+    }
+
+
+def _nearest_existing_parent(path: Path) -> Path:
+    cursor = Path(path)
+    while not cursor.exists() and cursor != cursor.parent:
+        cursor = cursor.parent
+    if not cursor.exists():
+        raise ValueError(f"no existing filesystem ancestor for {path}")
+    return cursor
+
+
+def check_profile_disk_guard(
+    profile: HardwareProfile,
+    guard_paths: Sequence[str],
+    cache_layout: Dict[str, str],
+    paths: RunPaths,
+    *,
+    stage: str,
+) -> Dict[str, object]:
+    usage = check_disk_budget(
+        guard_paths,
+        profile.disk_budget_gb,
+        profile.disk_ceiling_gb,
+        raise_on_over=True,
+    )
+    filesystem_rows = []
+    checked_parents: set[Path] = set()
+    for requested in (
+        Path(cache_layout["hf_home"]).resolve(strict=False),
+        paths.root.resolve(strict=False),
+    ):
+        parent = _nearest_existing_parent(requested).resolve(strict=False)
+        if parent in checked_parents:
+            continue
+        checked_parents.add(parent)
+        disk = shutil.disk_usage(parent)
+        free_gib = _gib(disk.free)
+        if free_gib < profile.filesystem_free_reserve_gib:
+            raise ValueError(
+                f"{profile.profile_id} filesystem free space {free_gib:.3f} "
+                f"GiB is below the {stage} reserve "
+                f"{profile.filesystem_free_reserve_gib:.1f} GiB"
+            )
+        filesystem_rows.append(
+            {
+                "path": str(parent),
+                "free_gib": free_gib,
+                "required_free_gib": profile.filesystem_free_reserve_gib,
+            }
+        )
+    return {
+        "stage": stage,
+        "managed_usage": usage.to_dict(),
+        "filesystems": filesystem_rows,
+    }
+
+
+def check_cuda_memory_headroom(
+    profile: HardwareProfile,
+    *,
+    stage: str,
+) -> Dict[str, object]:
+    import torch
+
+    free_bytes, total_bytes = torch.cuda.mem_get_info(0)
+    free_gib = _gib(free_bytes)
+    total_gib = _gib(total_bytes)
+    if free_gib < profile.min_free_after_load_gib:
+        raise ValueError(
+            f"{profile.profile_id} CUDA free memory {free_gib:.3f} GiB is "
+            f"below the post-load/run requirement "
+            f"{profile.min_free_after_load_gib:.1f} GiB at {stage}"
+        )
+    return {
+        "stage": stage,
+        "free_gib": free_gib,
+        "total_gib": total_gib,
+        "required_free_gib": profile.min_free_after_load_gib,
+        "allocated_gib": _gib(torch.cuda.memory_allocated(0)),
+        "reserved_gib": _gib(torch.cuda.memory_reserved(0)),
+        "max_allocated_gib": _gib(torch.cuda.max_memory_allocated(0)),
+    }
+
+
+def _prepare_hf_operational_preflight(
+    paths: RunPaths,
+    cache_layout: Dict[str, str],
+    guard_paths: Sequence[str],
+) -> tuple[HardwareProfile, Dict[str, object]]:
+    allocator = configure_cuda_allocator_environment()
+    profile, hardware = capture_authorized_hardware_preflight()
+    cache = _validate_profile_paths(profile, paths, cache_layout)
+    disk = check_profile_disk_guard(
+        profile,
+        guard_paths,
+        cache_layout,
+        paths,
+        stage="before_model_load",
+    )
+    return profile, {
+        **hardware,
+        "cuda_allocator": {
+            "environment_variable": "PYTORCH_CUDA_ALLOC_CONF",
+            "value": allocator,
+        },
+        "cache": cache,
+        "pre_load_disk_observation": disk,
+    }
 
 
 def _code_identity() -> Dict[str, object]:
@@ -827,6 +1346,12 @@ def _load_direction_specs(
     return specs
 
 
+def _hf_device_dtype() -> tuple[str, str]:
+    if p0._pick_device() != "cuda" or p0._pick_dtype() != "float16":
+        raise ValueError("HF E-0017 requires one CUDA device with fp16 loading")
+    return "cuda:0", "float16"
+
+
 def _build_dev_specs(
     backend: str,
     pools: Dict[str, comp.PoolPlan],
@@ -860,7 +1385,7 @@ def _build_dev_specs(
 
     from cognitive_console.activations.provider import HFActivationProvider
 
-    device, dtype = p0._pick_device(), p0._pick_dtype()
+    device, dtype = _hf_device_dtype()
     c1_out = attempt_dir / "direction_derivation" / "c1"
     provider = HFActivationProvider(
         comp.FROZEN_MODEL,
@@ -967,7 +1492,7 @@ def _load_pinned_hf_backend(
 ) -> tuple[SteeredHFBackend, str]:
     from cognitive_console.activations.provider import HFActivationProvider
 
-    device, dtype = p0._pick_device(), p0._pick_dtype()
+    device, dtype = _hf_device_dtype()
     provider = HFActivationProvider(
         comp.FROZEN_MODEL,
         device=device,
@@ -993,6 +1518,46 @@ def _load_pinned_hf_backend(
             f"expected {comp.FROZEN_MODEL_REVISION}, got {resolved}"
         )
     return backend, str(resolved)
+
+
+def _verify_hf_hook_generation_compatibility(
+    backend: SteeredHFBackend,
+) -> Dict[str, object]:
+    direction = np.ones(backend.hidden_dim, dtype=np.float32)
+    layer = max(1, backend.num_hidden_layers // 2)
+    probe_batch_size = max(
+        1,
+        (BATCH_SIZE // comp.K_SAMPLES) * comp.K_SAMPLES,
+    )
+    results = backend.generate_batch(
+        ["Reply with exactly: OK"] * probe_batch_size,
+        SteerConfig(direction=direction, alpha=0.01, layer=layer),
+        max_new_tokens=1,
+        seeds=[comp.SEED + index for index in range(probe_batch_size)],
+        do_sample=False,
+        return_metadata=True,
+    )
+    if len(results) != probe_batch_size or not all(
+        isinstance(result, GenerationResult) for result in results
+    ):
+        raise RuntimeError("transformers generation compatibility probe failed")
+    return {
+        "transformers_version": _package_version("transformers"),
+        "generation_api": "model.generate",
+        "hook_path": "decoder_block_forward_hook_additive_residual",
+        "compatible_steering_methods": ["caa", "iti"],
+        "shared_hook_contract": (
+            "CAA and ITI use the same SteerConfig additive forward-hook path; "
+            "ITI differs only in direction derivation/alpha scaling"
+        ),
+        "probe_batch_size": probe_batch_size,
+        "frozen_sampler_batch_size": BATCH_SIZE,
+        "k_samples": comp.K_SAMPLES,
+        "probe_max_new_tokens": 1,
+        "probe_layer": layer,
+        "probe_finish_reason": results[0].finish_reason,
+        "probe_generated_token_count": results[0].generated_token_count,
+    }
 
 
 def _hf_factory(
@@ -1437,6 +2002,74 @@ def _register_recorded_dev_finalization_failure(
     )
 
 
+def _run_preflight(args) -> int:
+    paths = _run_paths(Path(args.out_dir), args.backend)
+    paths.backend_root.mkdir(parents=True, exist_ok=True)
+    cache_layout = _cache_layout(paths, args.hf_home)
+    identity = _code_identity()
+    if identity["dirty"]:
+        raise SystemExit(
+            "[composition] HF preflight requires a clean committed tree"
+        )
+    guard_paths = _guarded_growth_paths(paths, cache_layout, args.venv)
+    profile, operational = _prepare_hf_operational_preflight(
+        paths,
+        cache_layout,
+        guard_paths,
+    )
+    backend, resolved_revision = _load_pinned_hf_backend(
+        Path(cache_layout["activation_cache"]),
+        Path(cache_layout["hub_cache"]),
+    )
+    compatibility = _verify_hf_hook_generation_compatibility(backend)
+    operational["post_load_probe_memory_observation"] = (
+        check_cuda_memory_headroom(
+            profile,
+            stage="after_model_load_and_one_token_hook_probe",
+        )
+    )
+    operational["post_load_probe_disk_observation"] = (
+        check_profile_disk_guard(
+            profile,
+            guard_paths,
+            cache_layout,
+            paths,
+            stage="after_model_load_and_one_token_hook_probe",
+        )
+    )
+    payload = {
+        "protocol_id": comp.PROTOCOL_ID,
+        "phase": "PREFLIGHT",
+        "status": "PREFLIGHT_PASSED_DIAGNOSTIC_ONE_TOKEN_GENERATION",
+        "scientific_status": "OPERATIONAL_ONLY_NOT_DEV_OR_TEST",
+        "created_at": utcnow(),
+        "code_identity": identity,
+        "out_dir": str(paths.root),
+        "backend_root": str(paths.backend_root),
+        "model": comp.FROZEN_MODEL,
+        "model_revision_expected": comp.FROZEN_MODEL_REVISION,
+        "model_revision_resolved": resolved_revision,
+        "device": backend.device,
+        "dtype": backend.dtype,
+        "runtime_batch_size": BATCH_SIZE,
+        "operational_preflight": operational,
+        "transformers_hook_generation_compatibility": compatibility,
+        "generation_scope": (
+            "one-token operational compatibility probe only; no C2 item, "
+            "DEV selection, TEST item, estimand, or verdict was evaluated"
+        ),
+        "valid_for_paper": False,
+    }
+    output = paths.backend_root / "preflight" / "hardware_preflight.json"
+    _atomic_json(output, payload)
+    print(
+        f"[composition] preflight passed: profile={profile.profile_id} "
+        f"model={comp.FROZEN_MODEL} fp16; wrote {_rel(output)}",
+        flush=True,
+    )
+    return 0
+
+
 def _run_dev(args) -> int:
     paths = _run_paths(Path(args.out_dir), args.backend)
     paths.backend_root.mkdir(parents=True, exist_ok=True)
@@ -1509,14 +2142,22 @@ def _run_dev(args) -> int:
     started_at = utcnow()
 
     guard_paths = _guarded_growth_paths(paths, cache_layout, args.venv)
+    hardware_profile: Optional[HardwareProfile] = None
+    operational_preflight: Optional[Dict[str, object]] = None
     if args.backend == "hf":
-        usage = check_disk_budget(
-            guard_paths,
-            DISK_BUDGET_GB,
-            DISK_CEILING_GB,
-            raise_on_over=True,
+        hardware_profile, operational_preflight = (
+            _prepare_hf_operational_preflight(
+                paths,
+                cache_layout,
+                guard_paths,
+            )
         )
-        print(f"[composition] disk pre-DEV: {usage.message}", flush=True)
+        pre_disk = operational_preflight["pre_load_disk_observation"]
+        print(
+            "[composition] disk pre-DEV: "
+            f"{pre_disk['managed_usage']['message']}",
+            flush=True,
+        )
 
     all_items = _load_all_items(
         args.backend,
@@ -1544,6 +2185,11 @@ def _run_dev(args) -> int:
             "condition_shared_sample_rng": True,
         },
         "operational_limits": frozen_operational_limits(),
+        "hardware_profile": (
+            None
+            if hardware_profile is None
+            else hardware_profile_identity(hardware_profile)
+        ),
         "cache_layout": cache_layout,
         "guarded_growth_paths": guard_paths,
         "bootstrap_b": int(args.bootstrap_b),
@@ -1557,6 +2203,28 @@ def _run_dev(args) -> int:
             paths.dev_attempt,
             cache_layout,
         )
+        if args.backend == "hf":
+            assert hardware_profile is not None
+            assert operational_preflight is not None
+            operational_preflight["post_load_memory_observation"] = (
+                check_cuda_memory_headroom(
+                    hardware_profile,
+                    stage="after_DEV_model_load",
+                )
+            )
+            operational_preflight["post_load_disk_observation"] = (
+                check_profile_disk_guard(
+                    hardware_profile,
+                    guard_paths,
+                    cache_layout,
+                    paths,
+                    stage="after_DEV_model_load",
+                )
+            )
+            _atomic_json(
+                paths.dev_attempt / "hardware_preflight.json",
+                operational_preflight,
+            )
     except (RuntimeError, MemoryError, ValueError, OSError) as exc:
         failure_reason = f"{type(exc).__name__}: {exc}"
         _register_failure(
@@ -1587,6 +2255,11 @@ def _run_dev(args) -> int:
     )
     identity["direction_artifact_sha256"] = direction_hash
     identity["model_revision_expected"] = comp.FROZEN_MODEL_REVISION
+    identity["hardware_profile"] = (
+        None
+        if hardware_profile is None
+        else hardware_profile_identity(hardware_profile)
+    )
     preliminary_hash = comp.canonical_hash(identity)
     collector = PersistentTranscriptCollector(
         paths.dev_attempt / "checkpoints" / "raw_generations.jsonl",
@@ -1679,15 +2352,37 @@ def _run_dev(args) -> int:
 
     if args.backend == "hf":
         try:
-            usage = check_disk_budget(
-                guard_paths,
-                DISK_BUDGET_GB,
-                DISK_CEILING_GB,
-                raise_on_over=True,
+            assert hardware_profile is not None
+            assert operational_preflight is not None
+            operational_preflight["post_dev_memory_observation"] = (
+                check_cuda_memory_headroom(
+                    hardware_profile,
+                    stage="after_DEV_generation",
+                )
             )
-            print(f"[composition] disk post-DEV: {usage.message}", flush=True)
-        except DiskBudgetError as exc:
-            failure_reason = f"post-DEV disk budget violation: {exc}"
+            operational_preflight["post_dev_disk_observation"] = (
+                check_profile_disk_guard(
+                    hardware_profile,
+                    guard_paths,
+                    cache_layout,
+                    paths,
+                    stage="after_DEV_generation",
+                )
+            )
+            _atomic_json(
+                paths.dev_attempt / "hardware_preflight.json",
+                operational_preflight,
+            )
+            post_dev_disk = operational_preflight[
+                "post_dev_disk_observation"
+            ]
+            print(
+                "[composition] disk post-DEV: "
+                f"{post_dev_disk['managed_usage']['message']}",
+                flush=True,
+            )
+        except (DiskBudgetError, ValueError) as exc:
+            failure_reason = f"post-DEV operational guard violation: {exc}"
             _register_failure(
                 registry_path=paths.registry,
                 prefix="e0017-composition-dev",
@@ -1699,8 +2394,9 @@ def _run_dev(args) -> int:
                 dirty_tree_at_start=dirty_tree_at_start,
                 summary={"phase": "DEV"},
                 validation_notes=(
-                    "DEV completed generation but failed the frozen post-run disk "
-                    "guard; no DEV seal or TEST authorization template was issued."
+                    "DEV completed generation but failed a frozen post-run "
+                    "memory/disk guard; no DEV seal or TEST authorization "
+                    "template was issued."
                 ),
                 failure_reason=failure_reason,
                 scientific=True,
@@ -1757,6 +2453,12 @@ def _run_dev(args) -> int:
         "protocol": comp.frozen_protocol_dict(),
         "identity": identity,
         "operational_limits": frozen_operational_limits(),
+        "hardware_profile": (
+            None
+            if hardware_profile is None
+            else hardware_profile_identity(hardware_profile)
+        ),
+        "dev_operational_preflight": operational_preflight,
         "cache_layout": cache_layout,
         "guarded_growth_paths": guard_paths,
         "generation_accounting": generation_budget.to_dict(),
@@ -1819,7 +2521,7 @@ def _run_dev(args) -> int:
             ),
             seed=comp.SEED,
             hardware=(
-                f"{p0._pick_device()}-{p0._pick_dtype()}"
+                hardware_profile.profile_id
                 if args.backend == "hf"
                 else "cpu-offline"
             ),
@@ -1976,14 +2678,30 @@ def _run_test_impl(args) -> int:
     auth_path = Path(args.test_authorization_file).resolve()
     authorization = validate_test_authorization(auth_path, selection)
 
+    hardware_profile: Optional[HardwareProfile] = None
+    operational_preflight: Optional[Dict[str, object]] = None
     if args.backend == "hf":
-        usage = check_disk_budget(
-            guard_paths,
-            DISK_BUDGET_GB,
-            DISK_CEILING_GB,
-            raise_on_over=True,
+        hardware_profile, operational_preflight = (
+            _prepare_hf_operational_preflight(
+                paths,
+                cache_layout,
+                guard_paths,
+            )
         )
-        print(f"[composition] disk pre-TEST: {usage.message}", flush=True)
+        if hardware_profile_identity(hardware_profile) != selection.get(
+            "hardware_profile"
+        ):
+            raise SystemExit(
+                "[composition] TEST hardware profile differs from sealed DEV"
+            )
+        pre_test_disk = operational_preflight[
+            "pre_load_disk_observation"
+        ]
+        print(
+            "[composition] disk pre-TEST: "
+            f"{pre_test_disk['managed_usage']['message']}",
+            flush=True,
+        )
 
     all_items = _load_all_items(
         args.backend,
@@ -2051,6 +2769,27 @@ def _run_test_impl(args) -> int:
             )
             if resolved != selection.get("model_revision_resolved"):
                 raise ValueError("TEST model revision differs from DEV")
+            assert hardware_profile is not None
+            assert operational_preflight is not None
+            operational_preflight["post_load_memory_observation"] = (
+                check_cuda_memory_headroom(
+                    hardware_profile,
+                    stage="after_TEST_model_load",
+                )
+            )
+            operational_preflight["post_load_disk_observation"] = (
+                check_profile_disk_guard(
+                    hardware_profile,
+                    guard_paths,
+                    cache_layout,
+                    paths,
+                    stage="after_TEST_model_load",
+                )
+            )
+            _atomic_json(
+                paths.test_attempt / "hardware_preflight.json",
+                operational_preflight,
+            )
 
         progress = c2.ProgressTracker(logical_generation_limit)
         checkpoint = base.TranscriptCheckpointStore(
@@ -2127,20 +2866,42 @@ def _run_test_impl(args) -> int:
         "started_at": started_at,
         "dirty_tree_at_start": dirty_tree_at_start,
     }
-    post_test_disk_violation = None
+    post_test_operational_violation = None
     if args.backend == "hf":
         try:
-            usage = check_disk_budget(
-                guard_paths,
-                DISK_BUDGET_GB,
-                DISK_CEILING_GB,
-                raise_on_over=True,
+            assert hardware_profile is not None
+            assert operational_preflight is not None
+            operational_preflight["post_test_memory_observation"] = (
+                check_cuda_memory_headroom(
+                    hardware_profile,
+                    stage="after_TEST_generation",
+                )
             )
-            print(f"[composition] disk post-TEST: {usage.message}", flush=True)
-        except DiskBudgetError as exc:
-            post_test_disk_violation = str(exc)
+            operational_preflight["post_test_disk_observation"] = (
+                check_profile_disk_guard(
+                    hardware_profile,
+                    guard_paths,
+                    cache_layout,
+                    paths,
+                    stage="after_TEST_generation",
+                )
+            )
+            _atomic_json(
+                paths.test_attempt / "hardware_preflight.json",
+                operational_preflight,
+            )
+            post_test_disk = operational_preflight[
+                "post_test_disk_observation"
+            ]
             print(
-                f"[composition] post-TEST disk violation: {exc}",
+                "[composition] disk post-TEST: "
+                f"{post_test_disk['managed_usage']['message']}",
+                flush=True,
+            )
+        except (DiskBudgetError, ValueError) as exc:
+            post_test_operational_violation = str(exc)
+            print(
+                f"[composition] post-TEST operational violation: {exc}",
                 flush=True,
             )
 
@@ -2177,12 +2938,20 @@ def _run_test_impl(args) -> int:
                 "SMOKE_ONLY"
                 if args.backend == "synthetic"
                 else (
-                    "BLOCKED_POST_TEST_DISK_BUDGET_VIOLATION"
-                    if post_test_disk_violation
+                    "BLOCKED_POST_TEST_OPERATIONAL_GUARD_VIOLATION"
+                    if post_test_operational_violation
                     else "PENDING_HOSTILE_RESULT_AUDIT"
                 )
             ),
-            "post_test_disk_violation": post_test_disk_violation,
+            "post_test_operational_violation": (
+                post_test_operational_violation
+            ),
+            "hardware_profile": (
+                None
+                if hardware_profile is None
+                else hardware_profile_identity(hardware_profile)
+            ),
+            "test_operational_preflight": operational_preflight,
             "scientific_status": (
                 "SMOKE_ONLY"
                 if args.backend == "synthetic"
@@ -2223,7 +2992,7 @@ def _run_test_impl(args) -> int:
             if str(row.get("experiment_id", "")).startswith(prefix + "-")
             and row.get("config_hash") == test_fingerprint
             and row.get("status")
-            == ("invalidated" if post_test_disk_violation else "done")
+            == ("invalidated" if post_test_operational_violation else "done")
         ),
         None,
     )
@@ -2243,7 +3012,7 @@ def _run_test_impl(args) -> int:
         hypothesis_id="H4" if args.backend == "hf" else None,
         claim_ids=["C2"] if args.backend == "hf" else [],
         type="confirmatory" if args.backend == "hf" else "diagnostic",
-        status="invalidated" if post_test_disk_violation else "done",
+        status="invalidated" if post_test_operational_violation else "done",
         code_commit=str(start_identity["commit"]),
         dirty_tree=dirty_tree_at_start,
         data_hash=summary["data_hash"],
@@ -2257,13 +3026,13 @@ def _run_test_impl(args) -> int:
         ),
         seed=comp.SEED,
         hardware=(
-            f"{p0._pick_device()}-{p0._pick_dtype()}"
+            hardware_profile.profile_id
             if args.backend == "hf"
             else "cpu-offline"
         ),
         started_at=started_at,
         ended_at=utcnow(),
-        exit_code=4 if post_test_disk_violation else 0,
+        exit_code=4 if post_test_operational_violation else 0,
         summary_metrics=summary,
         artifacts=[_rel(paths.test_sealed / "composition_test_results.json")],
         valid_for_paper=False,
@@ -2289,7 +3058,9 @@ def _run_test_impl(args) -> int:
             raw_data_hash=_sha256_file(result_path),
             manual_edits_allowed=False,
             last_verified=utcnow(),
-            verdict="rejected" if post_test_disk_violation else "pending",
+            verdict=(
+                "rejected" if post_test_operational_violation else "pending"
+            ),
         )
         write_manifest(
             str(staging / "composition_results.manifest.yaml"),
@@ -2343,7 +3114,7 @@ def _run_test_impl(args) -> int:
         print(f"[composition] TEST finalization failed: {failure_reason}")
         return 5
 
-    if post_test_disk_violation:
+    if post_test_operational_violation:
         return 4
     print(
         f"[composition] TEST complete: verdict={payload['overall_verdict']} "
@@ -2415,6 +3186,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--test-authorization-file", default=None)
     parser.add_argument("--bootstrap-b", type=int, default=comp.BOOTSTRAP_B)
     parser.add_argument("--fresh", action="store_true")
+    parser.add_argument(
+        "--preflight-only",
+        action="store_true",
+        help=(
+            "Validate authorized GPU/runtime/cache/disk/fp16 model load and run "
+            "one non-scientific token through the shared CAA/ITI hook path; "
+            "never starts DEV or TEST."
+        ),
+    )
     parser.add_argument("--smoke-dev-n", type=int, default=4)
     parser.add_argument("--smoke-test-n", type=int, default=6)
     parser.add_argument("--hf-home", default=None)
@@ -2424,6 +3204,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: Optional[List[str]] = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.preflight_only and (
+        args.backend != "hf" or args.phase != "dev"
+    ):
+        raise SystemExit(
+            "--preflight-only requires --phase dev --backend hf"
+        )
     if args.bootstrap_b < 1:
         raise SystemExit("--bootstrap-b must be >=1")
     if args.backend == "hf" and args.bootstrap_b != comp.BOOTSTRAP_B:
@@ -2433,6 +3219,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.backend == "synthetic":
         if args.smoke_dev_n < 2 or args.smoke_test_n < 2:
             raise SystemExit("synthetic smoke requires DEV and TEST N>=2")
+    if args.preflight_only:
+        return _run_preflight(args)
     if args.phase == "dev":
         return _run_dev(args)
     return _run_test(args)

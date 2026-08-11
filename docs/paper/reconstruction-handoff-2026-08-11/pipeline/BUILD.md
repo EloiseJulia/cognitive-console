@@ -33,5 +33,5 @@ pdflatex --enable-installer --interaction=nonstopmode --halt-on-error reframed.t
 - Conditional Title/Abstract are in `pipeline/iui_conditional.template.tex` and must be rewritten after pending-study branch integration.
 - Missing implementation facts remain explicit in Method prose and `CONDITIONAL_ASSEMBLY_AUDIT.md`; the rendered draft contains no red gap markers.
 - Human and prompt+steer result sections intentionally contain no result.
-- Final clean build on 2026-08-11: 17 pages, 5 labeled equations, 1 TikZ flow figure, 5 evidence tables, 1 generated calibration figure, and 2 substantive appendices; no undefined references, overfull boxes, or substantive LaTeX warnings.
+- Final clean build on 2026-08-11: 16 pages, 5 labeled equations, 1 TikZ flow figure, 5 evidence tables, 1 generated calibration figure, and 2 substantive appendices; no undefined references, overfull boxes, or substantive LaTeX warnings.
 - Current citation baseline: 26 unique cited keys, 0 missing from the 39-entry bibliography. The restored Mishra, Heyman, and Sprejer citations are used only to bound internal non-surjectivity, trained-method, and capability--behavior interpretations. Several checks are explicitly abstract/page-level, and broader literature search remains incomplete. `lee2004trust` and `schemmer2023appropriate` remain checked bibliography candidates but are not cited.

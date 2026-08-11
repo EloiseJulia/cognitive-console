@@ -1,0 +1,48 @@
+{
+  "captured_at": "2026-08-11",
+  "workspace": "new paper folder",
+  "sources": [
+    {
+      "name": "CC main - Copy.tex",
+      "bytes": 54909,
+      "modified": "2026-08-11T12:00:18.0000000+08:00",
+      "sha256": "BE1F53E6417C2AF2C19202571DBB5B5E0DE6BDBE2DAD8E65DB59DA3AEBF8B6F4"
+    },
+    {
+      "name": "CC references - Copy.bib",
+      "bytes": 20448,
+      "modified": "2026-08-11T13:26:57.2488787+08:00",
+      "sha256": "AB4044CB0DA05E13674917382220F7CEE69D163E63F2250F752A40D560CD57FA"
+    },
+    {
+      "name": "NARRATIVE_BRIEF.md",
+      "bytes": 27809,
+      "modified": "2026-08-10T18:47:32.0000000+08:00",
+      "sha256": "FE5E074A6A354B69A41BD2D5F9D3211A13FF28E19034BE8727E824A326E81CEF"
+    },
+    {
+      "name": "overview-zh.md",
+      "bytes": 17296,
+      "modified": "2026-08-11T13:46:21.3094234+08:00",
+      "sha256": "DDCA69906EDFFEDF4D664E9CE711BB16A8FDBC8F07B14C52E4F8F85653055FCA"
+    },
+    {
+      "name": "STYLE_GUIDE.md",
+      "bytes": 20996,
+      "modified": "2026-08-10T18:43:37.0000000+08:00",
+      "sha256": "D44EACCBAD43DF93CD0CFAA57DD018DCE056BB36A663FB0C73D987934CFC24B6"
+    },
+    {
+      "name": "Karny et al. IUI 2026 Neural Transparency.pdf",
+      "bytes": 12233997,
+      "modified": "2026-08-11T13:22:02.0827451+08:00",
+      "sha256": "53068E4196F38BF441685E5E578F08FD850CAEA61ED0E2B426D110492B45D563"
+    },
+    {
+      "name": "pipeline/AUTHOR_ADJUDICATION_2026-08-11.md",
+      "bytes": 1962,
+      "modified": "2026-08-11T13:43:48.5810592+08:00",
+      "sha256": "AFEC543ABFF367F2BF6D7EBF03D29A573B2DE80C150790850531E7937CC4F6CF"
+    }
+  ]
+}

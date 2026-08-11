@@ -267,8 +267,20 @@ def test_required_ticket_caveats_and_audio_practice_are_visible():
         assert len(practice["facts"]) == 6
         assert [row["id"] for row in practice["q2_options"]] == list("ABCD")
         assert "router" not in json.dumps(practice, ensure_ascii=False).lower()
-    assert "does not offer" in materials["locales"]["en"]["practice"]["facts"][-1]
-    assert "W" in materials["locales"]["en"]["practice"]["feedback"]
+        feedback = practice["feedback"]
+        assert "Q1" in feedback or "问题 1" in feedback
+        assert not any(
+            marker in feedback
+            for marker in (
+                "use W", "选择 W", "Pending", "Read-only", "Hide", "Adjustable",
+                "待定", "只读诊断", "隐藏", "仅在明确写出的范围内可调",
+            )
+        )
+    english = materials["locales"]["en"]["practice"]
+    assert "locked" in english["facts"][-1]
+    assert "changed preview" in english["feedback"]
+    assert "beats the existing preset" in english["feedback"]
+    assert "speech-quality check failed" in english["feedback"]
 
 
 def test_twelve_sequences_are_deterministic_exact_cover_and_complemented():

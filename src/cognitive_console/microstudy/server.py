@@ -13,6 +13,8 @@ import mimetypes
 import os
 import re
 import secrets
+import stat
+import subprocess
 import threading
 import time
 import uuid
@@ -67,23 +69,161 @@ def sign_export(data: dict[str, Any], key: bytes) -> dict[str, Any]:
 def load_or_create_key(path: Path) -> bytes:
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists():
-        key = path.read_bytes()
-        if len(key) < 32:
-            raise ValueError("verification key file must contain at least 32 bytes")
-        _restrict_key_permissions(path)
+        if path.is_symlink() or not path.is_file():
+            raise ValueError("verification key path must be a regular file")
+        try:
+            _restrict_key_permissions(path)
+            key = path.read_bytes()
+            if len(key) < 32:
+                raise ValueError(
+                    "verification key file must contain at least 32 bytes"
+                )
+        except BaseException:
+            _remove_failed_key(path)
+            raise
         return key
     key = secrets.token_bytes(32)
-    with path.open("xb") as handle:
-        handle.write(key)
-    _restrict_key_permissions(path)
+    created = False
+    try:
+        with path.open("xb") as handle:
+            created = True
+            handle.write(key)
+            handle.flush()
+            os.fsync(handle.fileno())
+        _restrict_key_permissions(path)
+    except BaseException:
+        if created:
+            _remove_failed_key(path)
+        raise
     return key
 
 
-def _restrict_key_permissions(path: Path) -> None:
+def _remove_failed_key(path: Path) -> None:
     try:
-        os.chmod(path, 0o600)
-    except OSError:
+        path.unlink()
+    except FileNotFoundError:
         pass
+    except OSError as cleanup_error:
+        raise RuntimeError(
+            "verification key permission setup failed and cleanup failed"
+        ) from cleanup_error
+
+
+def _restrict_key_permissions(path: Path) -> None:
+    if _is_windows():
+        _restrict_windows_key_permissions(path)
+    else:
+        _restrict_posix_key_permissions(path)
+
+
+def _is_windows() -> bool:
+    return os.name == "nt"
+
+
+def _restrict_posix_key_permissions(path: Path) -> None:
+    os.chmod(path, 0o600)
+    if _key_mode(path) != 0o600:
+        raise PermissionError("verification key mode is not 0600")
+
+
+def _key_mode(path: Path) -> int:
+    return stat.S_IMODE(path.stat().st_mode)
+
+
+def _restrict_windows_key_permissions(path: Path) -> None:
+    identity = subprocess.run(
+        ["whoami.exe", "/user", "/fo", "csv", "/nh"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if identity.returncode:
+        raise PermissionError("could not identify the current Windows user")
+    try:
+        _, sid = next(csv.reader([identity.stdout.strip()]))
+    except (StopIteration, ValueError) as exc:
+        raise PermissionError("could not parse the current Windows user SID") from exc
+    for arguments in (
+        [str(path), "/reset"],
+        [str(path), "/setowner", f"*{sid}"],
+        [str(path), "/inheritance:r", "/grant:r", f"*{sid}:(F)"],
+    ):
+        completed = subprocess.run(
+            ["icacls.exe", *arguments],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if completed.returncode:
+            detail = (completed.stderr or completed.stdout).strip()
+            raise PermissionError(
+                "could not restrict verification key to the current Windows user"
+                + (f": {detail}" if detail else "")
+            )
+
+    script = r"""
+$ErrorActionPreference = 'Stop'
+$path = [Environment]::GetEnvironmentVariable(
+    'COGNITIVE_CONSOLE_VERIFICATION_KEY_PATH', 'Process'
+)
+$sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+$sections = (
+    [System.Security.AccessControl.AccessControlSections]::Access -bor
+    [System.Security.AccessControl.AccessControlSections]::Owner
+)
+$verified = [System.Security.AccessControl.FileSecurity]::new($path, $sections)
+$rules = @($verified.GetAccessRules(
+    $true,
+    $true,
+    [System.Security.Principal.SecurityIdentifier]
+))
+if ($verified.GetOwner(
+        [System.Security.Principal.SecurityIdentifier]
+    ).Value -ne $sid.Value) {
+    throw 'verification key owner mismatch'
+}
+if ($rules.Count -ne 1) {
+    throw 'verification key has additional access rules'
+}
+$verifiedRule = $rules[0]
+if ($verifiedRule.IsInherited) {
+    throw 'verification key still inherits permissions'
+}
+if ($verifiedRule.IdentityReference.Value -ne $sid.Value) {
+    throw 'verification key access rule is not current-user-only'
+}
+if ($verifiedRule.AccessControlType -ne
+        [System.Security.AccessControl.AccessControlType]::Allow) {
+    throw 'verification key access rule is not allow'
+}
+if (($verifiedRule.FileSystemRights -band
+        [System.Security.AccessControl.FileSystemRights]::FullControl) -ne
+        [System.Security.AccessControl.FileSystemRights]::FullControl) {
+    throw 'verification key current-user rule is not full control'
+}
+"""
+    environment = os.environ.copy()
+    environment["COGNITIVE_CONSOLE_VERIFICATION_KEY_PATH"] = str(path.resolve())
+    completed = subprocess.run(
+        [
+            "powershell.exe",
+            "-NoLogo",
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            script,
+        ],
+        capture_output=True,
+        text=True,
+        env=environment,
+        check=False,
+    )
+    if completed.returncode:
+        detail = (completed.stderr or completed.stdout).strip()
+        raise PermissionError(
+            "could not verify current-user-only Windows key permissions"
+            + (f": {detail}" if detail else "")
+        )
 
 
 def common_materials(locale: str) -> dict[str, Any]:

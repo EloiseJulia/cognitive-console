@@ -1125,7 +1125,7 @@ def _common_copy() -> dict[str, dict[str, Any]]:
                         "The candidate has not beaten the existing preset.",
                         "The speech-quality check fails.",
                         "The comparison and quality result apply to this audio workflow.",
-                        "The release policy therefore does not offer this candidate knob.",
+                        "After practice Q1 is locked, it cannot be changed before Q2.",
                     ]
                     if en else
                     [
@@ -1134,7 +1134,7 @@ def _common_copy() -> dict[str, dict[str, Any]]:
                         "候选设置尚未优于现有预设。",
                         "语音质量检查未通过。",
                         "比较与质量结果适用于该音频工作流。",
-                        "因此发布政策不提供该候选旋钮。",
+                        "练习问题 1 锁定后，在问题 2 前不能更改。",
                     ]
                 ),
                 "q1": (
@@ -1161,8 +1161,8 @@ def _common_copy() -> dict[str, dict[str, Any]]:
                     ]
                 ),
                 "feedback": (
-                    "Practice result: use W. A changed preview is not enough; the preset was not beaten and speech quality failed."
-                    if en else "练习结论：选择 W。仅改变试听不足以发布；候选未优于预设，且语音质量失败。"
+                    "Practice result: Q1 is locked. A changed preview does not show that the candidate beats the existing preset, and the speech-quality check failed."
+                    if en else "练习结论：问题 1 已锁定。试听发生变化并不表示候选优于现有预设，且语音质量检查未通过。"
                 ),
                 "submit_q1": "Lock practice Q1" if en else "锁定练习问题 1",
                 "submit_q2": "Submit practice Q2" if en else "提交练习问题 2",

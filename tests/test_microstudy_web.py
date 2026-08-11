@@ -34,8 +34,10 @@ from cognitive_console.microstudy.server import (
     STATIC_DIR,
     StudyHandler,
     create_server,
+    load_or_create_key,
     sign_export,
 )
+import cognitive_console.microstudy.server as microstudy_server
 from cognitive_console.microstudy_materials import (
     EXPORT_SCHEMA_VERSION,
     MATERIAL_SCHEMA_VERSION,
@@ -48,6 +50,114 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / ".runtime" / "tests-v9"
 TEST_KEY = b"microstudy-test-key-32-bytes-long!!"
 CLIENTS: dict[str, dict] = {}
+
+
+def test_verification_key_permission_paths_are_fail_closed(monkeypatch):
+    shutil.rmtree(RUNTIME, ignore_errors=True)
+    RUNTIME.mkdir(parents=True)
+
+    windows_key = RUNTIME / "windows-failure.key"
+
+    def deny_windows_acl(path):
+        raise PermissionError("ACL denied")
+
+    monkeypatch.setattr(microstudy_server, "_is_windows", lambda: True)
+    monkeypatch.setattr(
+        microstudy_server,
+        "_restrict_windows_key_permissions",
+        deny_windows_acl,
+    )
+    with pytest.raises(PermissionError, match="ACL denied"):
+        load_or_create_key(windows_key)
+    assert not windows_key.exists()
+
+    existing_windows_key = RUNTIME / "existing-windows-failure.key"
+    existing_windows_key.write_bytes(TEST_KEY)
+    with pytest.raises(PermissionError, match="ACL denied"):
+        load_or_create_key(existing_windows_key)
+    assert not existing_windows_key.exists()
+
+    posix_failure_key = RUNTIME / "posix-failure.key"
+    monkeypatch.setattr(microstudy_server, "_is_windows", lambda: False)
+
+    def deny_posix_mode(path, mode):
+        raise PermissionError("chmod denied")
+
+    monkeypatch.setattr(microstudy_server.os, "chmod", deny_posix_mode)
+    with pytest.raises(PermissionError, match="chmod denied"):
+        load_or_create_key(posix_failure_key)
+    assert not posix_failure_key.exists()
+
+    posix_key = RUNTIME / "posix.key"
+    chmod_calls = []
+    monkeypatch.setattr(
+        microstudy_server.os,
+        "chmod",
+        lambda path, mode: chmod_calls.append((path, mode)),
+    )
+    monkeypatch.setattr(
+        microstudy_server,
+        "_key_mode",
+        lambda path: 0o600,
+    )
+    assert load_or_create_key(posix_key)
+    assert chmod_calls == [(posix_key, 0o600)]
+    shutil.rmtree(RUNTIME, ignore_errors=True)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows ACL verification")
+def test_windows_verification_key_acl_is_current_user_only():
+    shutil.rmtree(RUNTIME, ignore_errors=True)
+    RUNTIME.mkdir(parents=True)
+    key_path = RUNTIME / "owner-only.key"
+    try:
+        assert len(load_or_create_key(key_path)) == 32
+        script = r"""
+$path = [Environment]::GetEnvironmentVariable('KEY_PATH', 'Process')
+$sid = [System.Security.Principal.WindowsIdentity]::GetCurrent().User
+$sections = (
+    [System.Security.AccessControl.AccessControlSections]::Access -bor
+    [System.Security.AccessControl.AccessControlSections]::Owner
+)
+$acl = [System.Security.AccessControl.FileSecurity]::new($path, $sections)
+$rules = @($acl.GetAccessRules(
+    $true,
+    $true,
+    [System.Security.Principal.SecurityIdentifier]
+))
+$result = [ordered]@{
+    owner = $acl.GetOwner(
+        [System.Security.Principal.SecurityIdentifier]
+    ).Value
+    current = $sid.Value
+    count = $rules.Count
+    inherited = $rules[0].IsInherited
+    rule_sid = $rules[0].IdentityReference.Value
+}
+$result | ConvertTo-Json -Compress
+"""
+        environment = os.environ.copy()
+        environment["KEY_PATH"] = str(key_path.resolve())
+        completed = subprocess.run(
+            [
+                "powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive",
+                "-Command", script,
+            ],
+            capture_output=True,
+            text=True,
+            env=environment,
+            check=True,
+        )
+        acl = json.loads(completed.stdout)
+        assert acl == {
+            "owner": acl["current"],
+            "current": acl["current"],
+            "count": 1,
+            "inherited": False,
+            "rule_sid": acl["current"],
+        }
+    finally:
+        shutil.rmtree(RUNTIME, ignore_errors=True)
 
 
 def request_json(base, path, body=None, *, headers=None):

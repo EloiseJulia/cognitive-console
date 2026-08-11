@@ -25,7 +25,7 @@ references:
 
   axbench:
     status: VERIFIED
-    verification_scope: "Primary PMLR paper and current author-maintained repository checked separately. The published ICML 2025 paper's Table 2 steering aggregate reports Prompt 0.905 and DiffMean 0.409 on its test set. The mutable repository leaderboard currently reports Prompt 0.894, DiffMean 0.239, and HyperSteer 0.917; those values are a later artifact and must not be substituted for Table 2 or described as the paper's ranking."
+    verification_scope: "Primary PMLR paper and current author-maintained repository checked separately. The official PMLR Table 2 reports mean overall steering scores after steering factor selection: Prompt 0.894 and DiffMean 0.239. The mutable repository leaderboard is a separate artifact and currently also includes HyperSteer 0.917, so Table 2 must not be described as the current leaderboard or Prompt as currently strongest."
     cite_key: "wu2025axbench"
     title: "AxBench: Steering LLMs? Even Simple Baselines Outperform Sparse Autoencoders"
     year: 2025
@@ -36,8 +36,9 @@ references:
       - "https://github.com/stanfordnlp/axbench#-rank-1-steering-leaderboard"
     claim_locations:
       - "Abstract and Section 1: benchmark compares prompting and finetuning with SAEs, LAT, supervised steering vectors, linear probes, and ReFT on Gemma-2-2B/9B."
-      - "Table 2: published steering test-set aggregate; Prompt 0.905 and DiffMean 0.409."
-      - "Repository README rank-1 steering leaderboard: mutable post-publication artifact; Prompt 0.894, DiffMean 0.239, HyperSteer 0.917 at verification time."
+      - "Table 2 and its caption: official PMLR mean overall steering scores after steering factor selection; Prompt 0.894 and DiffMean 0.239."
+      - "Sections 3.3 and 4.1: for each concept, instructions are split into a factor-selection half and a hold-out evaluation half; steering factors are selected on the former and evaluated on the latter."
+      - "Repository README rank-1 steering leaderboard: mutable artifact separate from PMLR Table 2; it currently also includes HyperSteer 0.917."
     how_we_use_it: "Direct nearest neighbor showing that prompt-versus-representation steering comparison predates this paper. AxBench is a method-level benchmark/ranking; our contribution is a preregistered per-affordance interface qualification record with a bounded DEV-selected comparator, matched items, a 0.05 superiority margin, Bonferroni correction, coherence, measurement warning, and evidence-tiered interface state."
     claim_links: ["C2", "C3"]
     paper_sections: ["Introduction", "Related Work"]

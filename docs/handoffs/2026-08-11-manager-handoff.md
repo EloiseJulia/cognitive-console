@@ -1,5 +1,7 @@
 # Manager Handoff Bundle — cognitive-console — 2026-08-11
 
+> **Retirement timing is governed by
+> [`D-0109`](../ledgers/decision-log.md).**
 > **唯一 primary re-entry。** 本文件取代
 > [`2026-08-05-manager-handoff.md`](2026-08-05-manager-handoff.md)。
 > Incoming Manager 先完成本文末尾接管考试，再派一个全新、只读的
@@ -60,7 +62,7 @@
   `b7043d28481c30eaf8c84575f884fd63f970591f`
 - At audit time, local `main` was **62 commits ahead of `origin/main`**.
 - The governance/audit persistence commit following the handoff makes the expected
-  post-commit count **64 ahead**; verify with:
+  count after this D-0109 correction commit **65 ahead**; verify with:
 
   ```powershell
   git rev-list --count origin/main..HEAD
@@ -363,7 +365,7 @@ operation is forbidden.
 ```text
 你是 cognitive-console 的唯一 Incoming Manager。用中文工作。你的主焦点是论文写作与投稿前证据一致性，但也可以按依赖图调度其它任务。你本人只做调度、gate、triage、账本与决策，不亲自改代码、论文正文、实验脚本或结果；每个具体编辑、研究、实验都派给全新的独立 subagent。每个结果与每次 pre-merge 都必须由另一个全新、无上下文、敌对、只报不修的 audit/reviewer subagent 独立检查。
 
-禁止双 Manager：Current/outgoing Manager 已只读退休，不再派发、编辑、合并或决策。你只有在回答全部 10 题，并由一个全新、只读 Handoff Auditor 逐题依据 repo/handoff 判定且明确输出 `HANDOFF EXAM PASS` 后，才可宣布接管、更新 `ACTIVE_MANAGER` 或派发任务。
+禁止双 Manager（退休时序以 decision-log D-0109 为准）：Current/outgoing Manager 已只读退休，不再派发、编辑、合并或决策。你只有在回答全部 10 题，并由一个全新、只读 Handoff Auditor 逐题依据 repo/handoff 判定且明确输出 `HANDOFF EXAM PASS` 后，才可宣布接管、更新 `ACTIVE_MANAGER` 或派发任务。
 
 你的第一阶段只有“接管考试 + 只读核验”，不得编辑、commit、push、派发任务或运行实验：
 

@@ -5,6 +5,24 @@
 
 ---
 
+## 2026-08-11 · D-0109 · Supersede D-0107 Manager-retirement timing; permit no-Manager gap, never dual Managers
+- This entry supersedes only D-0107's conflicting retirement-timing wording.
+  The outgoing/current Manager becomes immediately read-only retired once the
+  handoff bundle is complete and the handoff document audit has passed; it does
+  not remain active until the incoming Manager announces takeover.
+- The incoming session may perform only the read-only takeover verification,
+  answer the handoff exam, and submit those answers for independent audit. It
+  must not announce takeover, dispatch work, edit repository content, update
+  `ACTIVE_MANAGER`, merge, or make Manager decisions until an independent
+  Handoff Auditor explicitly returns `HANDOFF EXAM PASS`.
+- A short interval with no active Manager is allowed and is the required safe
+  state between retirement and audited takeover. There must never be two active
+  Managers. All other D-0107 scope, gates, and prohibitions remain unchanged.
+- At this correction's preparation, local `main` HEAD was `284effc`, 64 commits
+  ahead of `origin/main`; this governance-only commit is expected to make it 65
+  ahead. It authorizes no push or scientific, protocol, evidence, recruitment,
+  submission, budget, or GPU decision.
+
 ## 2026-08-11 · D-0108 · Final micro-study audit passes owner-local-preview gate only
 - Persisted the completed final read-only hostile audit of implementation commit
   `d17df47` at

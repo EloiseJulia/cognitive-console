@@ -9,17 +9,17 @@
 
 ## Introduction
 
-Activation steering has begun to appear in user-facing research interfaces and public research demonstrations. Bo et al. expose a linear steering factor through three chatbot interfaces—SELECT, CALIBRATE, and LEARN—and evaluate them in a within-subjects study. \cite{bo2026steerable} Anthropic took a different route: it increased an internal Claude 3 Sonnet feature, made the resulting Golden Gate Claude available on \texttt{claude.ai} for a 24-hour research demonstration, and showed corresponding changes in model behavior. \cite{anthropic2024goldengate} <!-- SOURCE_CHECKED 2026-08-11 --> One line of work prototypes direct control; the other demonstrates public interaction with an internally modified model. Together, they establish latent intervention as a concrete interface trajectory.
+Alex is drafting a policy recommendation with an AI assistant and sees a slider labeled “uncertainty awareness.” Raising it appears to promise that the assistant will better distinguish what it knows from what it does not. The widget makes a behavioral claim. A readable direction or a changed completion does not show that the latent route improves the named outcome over instructions Alex could already give.
 
-At the level of research prototypes, the next question is evidence policy, not whether an interface can technically expose a latent intervention. Whether or when such interfaces become products remains open; the evidentiary question precedes deployment. A named control promises more than a readable direction or a changed output: it promises a behavioral consequence relative to alternatives users already have. We therefore ask: **what evidence should support turning a named latent direction into a product-facing control?** Our answer is a comparator-bound qualification procedure that names the alternative, outcome, uncertainty rule, point-estimate floor, and coherence criterion. In the worked application, the alternative is a DEV-selected prompt drawn from a preregistered bounded set of sixteen candidates. <!-- C-002 --><!-- BD-009 -->
+This is no longer a hypothetical interface pattern. Bo et al. expose activation steering through SELECT, CALIBRATE, and LEARN controls, while Anthropic's Golden Gate Claude made interaction with an internally modified Claude 3 Sonnet publicly visible for 24 hours. \cite{bo2026steerable,anthropic2024goldengate} <!-- SOURCE_CHECKED 2026-08-11 --> Karny et al. further show that a neural-transparency interface can change reported trust and perceived helpfulness without changing several behavioral outcomes. \cite{karny2026neural} These precedents make the evidence behind an active latent control an interface question, not only a model-analysis question.
 
-We separate *READ evidence* from *TRANSFER evidence* and reserve *CONTROL* for downstream interface permission. READ asks whether a specified model, method, and direction family exposes a measurable internal axis. TRANSFER asks whether intervening on that axis improves a declared behavioral outcome over the declared comparator while satisfying the coherence criterion. READ can support inspection; it is not CONTROL permission, and exploratory CAA-style READ evidence does not silently transfer across models, axes, or to ITI directions. <!-- C-001 --><!-- C-006 --> This distinction matters because research interfaces already expose latent representations as displays and controls. \cite{bo2026steerable,karny2026neural} Karny et al., for example, found higher endpoint trust and perceived helpfulness without measurable changes in several design and prediction outcomes, showing why reception and behavioral consequence must remain separate. \cite{karny2026neural} <!-- SRC-010 -->
+We ask: **what evidence should a latent-control interface require before a readable axis is presented as an actionable control?** We answer with a comparator-bound evaluation contract. READ records whether the label has local representational support. TRANSFER tests whether the intervention improves a declared behavioral outcome over a declared prompt comparator while satisfying an uncertainty rule, a 0.05 point-estimate floor, and coherence. The comparator, calibration warning, and evidence tier carry the result into the interface without transferring it across models, methods, axes, or tasks. <!-- C-001 --><!-- C-002 --><!-- C-006 -->
 
-We instantiate the procedure across the Qwen and Llama model families, two methods (CAA and ITI), and three behavioral axes: twelve model–method–axis tests, not twelve independent studies. <!-- FL-002 --><!-- FL-042 --> The prompt and latent channels select settings on DEV, then enter paired TEST comparisons requiring a confidence interval that excludes zero, a 0.05 point-estimate floor, and the coherence criterion. <!-- FL-008 --><!-- FL-009 --><!-- FL-031 --> The experiment tests substitution—steering in place of the selected prompt—while prompt-plus-steer composition remains pending and supports no composition claim. <!-- FL-015 --><!-- OI-004 -->
+The worked application compares CAA and ITI on Qwen and Llama across deliberation, skepticism, and uncertainty awareness. The prompt comparator is selected on DEV from a preregistered bounded set of sixteen candidates; the latent coefficient is also selected on DEV, and the frozen settings enter paired TEST comparisons. <!-- FL-002 --><!-- FL-008 --><!-- FL-031 --> The design tests substitution—steering in place of the comparator—not prompt-plus-steer composition. <!-- FL-015 -->
 
-Across the Qwen and Llama model families, two methods (CAA and ITI), and three axes, 0 of 12 model–method–axis tests qualified under the reported rule; because no latent behavioral positive control passed, this is a scoped procedural classification rather than a validated assay or a general verdict on steering. <!-- FL-003 --><!-- FL-057 --><!-- C-003 --><!-- C-007 --> More importantly, the common label conceals three evidence profiles. Skepticism is underpowered relative to the 0.05 point-estimate floor. <!-- FL-041 --> Deliberation is mixed, with exploratory post-hoc equivalence only for two ITI cells. <!-- FL-005 --><!-- FL-043 --> Uncertainty is comparator-negative under the frozen scorer, but only one cell received a format-and-missingness recheck: its complete-case result remained negative while adversarial missingness bounds crossed zero, and three cells were not rechecked. <!-- FL-004 --><!-- FL-047 --><!-- FL-048 --> Those profiles call for different interface actions.
+None of the twelve model–method–axis tests qualifies under the reported rule. That common procedural result does not imply one common scientific state. Skepticism is underpowered near the point-estimate floor; deliberation is mixed; and uncertainty is negative relative to the comparator under the frozen scorer, with a targeted Qwen–CAA recheck whose complete-case estimate remains negative but whose all-generation missingness bounds cross zero. <!-- FL-003 --><!-- FL-004 --><!-- FL-041 --><!-- FL-043 --><!-- FL-047 --> The contract preserves these differences instead of converting 0/12 into a universal null or a single interface verdict.
 
-The five-field record carries READ, TRANSFER, comparator, calibration warning, and evidence tier into that decision. The reported qualification rule determines pass/no-pass; a separate post hoc design synthesis maps the observed evidence profiles to four proposed affordance states: *Diagnostic-only*, *Unresolved*, *Unstable*, and *Eligible*. This mapping does not generate the 0/12 result and remains a hypothesis for future interface evaluation. <!-- OI-014 -->
+The reported rule determines pass or no-pass. Separately, an author-proposed post hoc mapping translates evidence profiles into four affordance states: *Diagnostic-only*, *Unresolved*, *Unstable*, and *Eligible*. <!-- OI-014 --> In the worked uncertainty example, this mapping leads a design team to withhold one active slider while retaining a read-only diagnostic and comparator view. This is a concrete design action for that record, not the state assigned to all twelve tests.
 
 <!-- PENDING_HUMAN_STUDY_SLOT: Insert only a frozen preregistered result, including null/mixed/adverse/incomplete outcomes and caveat. -->
 <!-- PENDING_PROMPT_STEER_SLOT: Insert only frozen composition evidence; otherwise retain substitution-only scope. -->
@@ -27,7 +27,7 @@ The five-field record carries READ, TRANSFER, comparator, calibration warning, a
 This paper makes three contributions:
 
 1. **A comparator-bound qualification procedure for active latent controls.** It separates local READ evidence from behavioral TRANSFER evidence, reserves CONTROL for interface permission, and requires a declared alternative, outcome, uncertainty rule, point-estimate floor, coherence criterion, and evidence tier.
-2. **A five-field interface record and state vocabulary.** The record preserves comparator, calibration, and scope through the formal states *Diagnostic-only*, *Unresolved*, *Unstable*, and *Eligible*.
+2. **A five-field interface record and state vocabulary.** The record preserves comparator, calibration, and scope through the proposed states *Diagnostic-only*, *Unresolved*, *Unstable*, and *Eligible*.
 3. **A scoped worked application.** The reported CAA/ITI grid demonstrates how the procedure represents heterogeneous no-pass evidence profiles while preserving missingness, power, substitution, comparator, and assay-validity limits.
 
 Together, these contributions turn a familiar interface question into a versioned decision record: evidence first, affordance second.
@@ -371,9 +371,7 @@ The procedure therefore returns more than pass or no-pass: under the proposed ma
 
 ### From Evaluation Output to Affordance State
 
-The qualification record is intended to prevent three substitutions in interface reasoning. First, an internal READ result must not substitute for behavioral TRANSFER evidence. Second, an absolute change must not substitute for a comparison against the declared alternative. Third, one model-method-axis result must not substitute for evidence about another setting. The record keeps these obligations together by assigning one formal state: *Diagnostic-only*, *Unresolved*, *Unstable*, or *Eligible*.
-
-This mapping is a proposal. The computational rule can produce estimates and pass/no-pass outputs, but the supplied materials contain no blinded independent state assignment and no evidence that another analyst would fill the five fields identically. <!-- FL-077 --><!-- OI-014 --> The state labels below should therefore be read as a worked author application, not as validated rubric output.
+The record prevents three substitutions in interface reasoning: READ for TRANSFER, absolute output change for comparison against the declared alternative, and evidence from one tier for another. It binds those obligations to one proposed state: *Diagnostic-only*, *Unresolved*, *Unstable*, or *Eligible*. The mapping is applied here as a worked author synthesis; its validation boundary is consolidated in Limitations.
 
 ### Worked Record: Qwen–CAA Uncertainty
 
@@ -396,19 +394,27 @@ EVIDENCE TIER & Qwen2.5-7B-Instruct, CAA single-layer additive intervention at h
 % FL-003, FL-008, FL-009, FL-011, FL-024, FL-036, FL-038, FL-040, FL-042, FL-044, FL-047, FL-048, FL-080, FL-081
 \end{table*}
 
-Under the proposed mapping, this record is *Unresolved*: the TRANSFER test is no-pass relative to the comparator and all-generation uncertainty remains partially unidentified. <!-- C-005 --><!-- C-007 --> Local READ evidence can still support an inspection trace, but the record grants no CONTROL permission. “Unresolved under this record” is narrower than “uncertainty cannot be controlled.”
+Under the proposed mapping, this record is *Unresolved*: the TRANSFER test is no-pass relative to the comparator and the all-generation contrast remains partially unidentified. <!-- C-005 --><!-- C-007 --> Local READ evidence can still support inspection. “Unresolved under this record” is narrower than “uncertainty cannot be controlled.”
 
 ### Illustrative Design Scenario
 
-As a design walkthrough, consider a product team adding an *uncertainty awareness* slider to an AI assistant used by a policy analyst named Alex. Exploratory Qwen–CAA READ evidence makes the label appear plausible, but the completed record changes the question from “is the axis visible?” to “what behavioral promise has it earned?” TRANSFER is no-pass relative to the comparator, and the calibration reading remains limited by the Qwen–CAA format-and-missingness recheck: complete-case support, bounds crossing zero, and three cells without this recheck. <!-- FL-044 --><!-- FL-047 --><!-- FL-048 -->
+Return to Alex's policy-writing assistant. The prototype uncertainty slider has local Qwen–CAA READ support, but its TRANSFER record is no-pass relative to the comparator. The targeted recheck shows steering near the unsteered baseline, a negative complete-case steer-minus-prompt estimate, and missingness bounds that cross zero. <!-- FL-044 --><!-- FL-047 -->
 
-Under the proposed mapping, the team provisionally withholds the active slider while retaining a read-only inspection trace. The trace names the *Unresolved* state and its reason, shows steering near baseline only in the rechecked lineage, and exposes the comparator and missingness warning. <!-- OI-014 -->
+For this record, the team withholds the active slider and keeps a read-only inspection trace. The comparator view explains what the prompt channel achieved; the warning distinguishes steer-versus-prompt from steer-versus-baseline; and the evidence tier keeps the Qwen–CAA result from migrating to ITI or Llama. Withholding the slider is the design action in this scenario, not a uniform classification of every no-pass test.
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{../figures/console-ui-contract.pdf}
+\caption{Artifact-derived cards make the comparator, evidence profile, tier, and next design action visible.}
+\Description{Two console cards summarize deliberation and uncertainty. Deliberation is unresolved because evidence is mixed; uncertainty is unresolved because the comparator-relative result is limited by missingness. The uncertainty design action withholds one active slider while retaining diagnostic and comparator information.}
+\label{fig:console}
+\end{figure*}
 
 ### Display Requirements Implied by the Record
 
 An interface that exposes this record would need to keep the relative comparison visible. Showing only the negative steer-minus-prompt estimate could imply that steering harmed baseline calibration; the Qwen–CAA format-and-missingness recheck instead places steering near baseline and the comparator above it. <!-- FL-044 --> The record must also expose missingness rather than letting a complete-case interval stand in for all generations. <!-- FL-046 --><!-- FL-049 --> Finally, the evidence tier must prevent Qwen–CAA READ from appearing as evidence for Llama, ITI, another layer, or another task.
 
-These are proposed disclosure requirements, not demonstrated design benefits. Human-AI guidelines support communicating capabilities and limitations, but practitioner studies also show that interpretability tools can be misunderstood or misused. \cite{amershi2019guidelines,kaur2020interpreting} A compact card may overload users, a state label may be misunderstood, and a warning may increase rather than calibrate trust. Cognitive-forcing interfaces illustrate the possible divergence: designs that reduced overreliance received the least favorable subjective ratings. \cite{bucinca2021trust} Karny et al. similarly show why subjective reception and behavioral consequences must be measured separately: their visualization was valued and increased endpoint trust without changing several design and prediction outcomes. \cite{karny2026neural} <!-- SRC-010 -->
+Human-AI guidelines support communicating capabilities and limitations, but interpretability tools can also be misunderstood or misused. \cite{amershi2019guidelines,kaur2020interpreting} The record therefore exposes the reason for a state rather than presenting a green or red badge. Whether people understand or benefit from this presentation remains a separate empirical question addressed in Limitations.
 
 <!-- PENDING HUMAN INTERFACE RESULT: replace from HUMAN_STUDY_PENDING.md only. -->
 
@@ -418,7 +424,7 @@ These are proposed disclosure requirements, not demonstrated design benefits. Hu
 
 A readable direction can still support inspection, debugging, hypothesis formation, or a read-only trace. The worked READ results make that value concrete: deliberation and skepticism satisfy the facade criterion in both model families, while uncertainty and focus differ by model. <!-- FL-039 --><!-- FL-040 --> The alternative is not “ship a slider” or “hide the representation.” It is to preserve local evidence without turning visibility into a behavioral promise.
 
-The three no-pass stories then point to three actions. Skepticism requests more resolution; deliberation calls for a better-targeted test; uncertainty calls for measurement repair and a comparator-specific warning. <!-- FL-041 --><!-- FL-043 --><!-- FL-047 --> This translation from evidence profile to interface action is the record's practical contribution. <!-- FL-076 --><!-- FL-077 -->
+The three evidence profiles point to different actions. Skepticism requests more resolution; deliberation calls for a better-targeted test; uncertainty calls for measurement repair and a comparator-specific warning. <!-- FL-041 --><!-- FL-043 --><!-- FL-047 --> This translation from evidence profile to interface action is the record's practical contribution.
 
 ### Why the Comparator Changes the Interface Claim
 
@@ -430,9 +436,7 @@ The procedure asks designers to disclose the comparator rather than canonize it.
 
 ### Qualification Is a Versioned Lifecycle
 
-Assay sensitivity remains unresolved, so the procedure cannot cleanly separate a true transfer failure from limitations in direction construction, scale, hook, layer, generation, outcome, or scoring. <!-- FL-057 --> That boundary does not erase the record's use; it determines its version. A known-positive intervention, a new item pool, a different comparator, or a method change would each create new evidence rather than retroactively rewriting this result.
-
-The same principle applies to human evidence. The current study contains no human result, so it makes no claim that people understand the record or make better decisions with it. <!-- OI-003 --><!-- OI-016 --> Appropriate reliance must be measured separately from approval: Karny et al. found subjective value and higher trust without changes in several behavioral outcomes, and cognitive-forcing work reports the converse pattern of lower approval for designs that reduced overreliance. \cite{karny2026neural,bucinca2021trust} Future evidence may strengthen or redirect the interface contribution, but it should enter as a new version of the record rather than as validation assumed in advance.
+A new model, method, direction, comparator, item pool, or interface version creates a new evidence tier rather than inheriting the current result. This lifecycle keeps the artifact useful without treating a local classification as permanent or universal.
 
 <!-- PENDING HUMAN DISCUSSION: choose H-A through H-E; preserve null/adverse/incomplete evidence. -->
 
@@ -464,9 +468,9 @@ A structured record can itself create false assurance when its comparator is nar
 
 ## Conclusion
 
-An interface slider is a behavioral promise. Our comparator-bound procedure asks whether local READ evidence survives a behavioral test against a declared alternative, then carries the answer into a five-field record. In this application, the alternative is the comparator defined in Method.
+A latent control should not be licensed by readability or output movement alone. The comparator-bound contract asks whether the intervention improves the named behavior over a declared alternative, then preserves READ, TRANSFER, comparator, calibration warning, and evidence tier in the interface decision.
 
-Across the Qwen and Llama model families, two methods (CAA and ITI), and three axes, 0 of 12 model–method–axis tests qualified under the reported rule; because no latent behavioral positive control passed, this is a scoped procedural classification rather than a validated assay or a general steering verdict. <!-- FL-003 --><!-- FL-042 --><!-- FL-057 --> Its value lies in preserving what the aggregate conceals: underpowered, mixed, and measurement-limited evidence demand different interface actions. Local READ evidence can support inspection; under the proposed procedure, CONTROL permission requires comparative qualification within the exact evidence tier.
+In the tested Qwen/Llama and CAA/ITI setting, none of the twelve tests qualifies under the reported rule. The useful result is not a universal null: skepticism is underpowered, deliberation is mixed, and uncertainty is comparator-negative under the frozen scorer but limited by missingness. The contract keeps those profiles distinct. In the worked uncertainty scenario, that distinction supports a concrete action—retain diagnostic evidence, expose the comparator and warning, and withhold one unsupported slider. Evidence determines the affordance, and every new model, method, or task must earn its own record.
 
 \appendix
 

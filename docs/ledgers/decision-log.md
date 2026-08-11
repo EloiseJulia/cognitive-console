@@ -5,6 +5,25 @@
 
 ---
 
+## 2026-08-11 · D-0114 · Owner authorizes official-style ITI TruthfulQA positive-control implementation and future A800 execution
+- The owner explicitly authorized the official-style sparse multi-head ITI ×
+  TruthfulQA positive-control experiment and A800 use on 2026-08-11. No GPU was
+  unoccupied, so the current authorized activity is local/CPU implementation,
+  protocol preparation, synthetic/tiny-model validation, and independent audit.
+- The experiment is a new comparator-bound assay calibration. It must not edit
+  any frozen runner or result, and the existing CAA/ITI tested grid remains
+  exactly 0/12 regardless of outcome.
+- Real execution is split into DEV eligibility and TEST-once phases. TEST remains
+  forbidden unless DEV is eligible, the implementation/protocol has passed an
+  independent hostile audit, the exact audited commit and DEV manifest are
+  identity-bound, and the explicit TEST authorization phrase is supplied.
+- The authorization permits A800 use but records no fabricated run, result, or
+  paper-valid evidence. No GPU was contacted by this implementation decision.
+- Local verification then passed 55 targeted tests, a synthetic full-pipeline
+  smoke, and a tiny in-memory attention-hook smoke. The preregistration is frozen
+  at `docs/ledgers/prereg-iti-truthfulqa-positive-control.md`; real DEV remains
+  pending independent hostile audit and exact audited-commit pinning.
+
 ## 2026-08-11 · D-0113 · Novice-friendly owner-local preview gate passes only
 - The final V8 novice-UX implementation commit is
   `131ff25611579d9ae6859ee0c90f0c9ef99ed248`. Any later docs-only commit that

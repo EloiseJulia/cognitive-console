@@ -1388,6 +1388,50 @@ experiments:
     owner decision and new protocol. Retry and its independent results audit remain
     pending.
 
+- experiment_id: iti-truthfulqa-positive-control-20260811
+  parent: null
+  hypothesis_id: H-F2
+  claim_ids:
+  - C2b
+  type: confirmatory_positive_control
+  status: protocol_and_implementation_frozen_pending_independent_audit
+  code_commit: pending_branch_commit_and_independent_audit_pin
+  dirty_tree: null
+  data_hash: truthfulqa_revision=741b8276f2d1982aa3d5b832d3ee81ed3b896490;prompt_bank_sha256=597d5ea1dc07d1169912978ca3ef35a2d4f6cf185270eb0994ebf76c872b122c
+  env_hash: null
+  config_hash: runtime_canonical_hash_pending_exact_audited_commit
+  model: NousResearch/Meta-Llama-3-8B-Instruct@53346005fb0ef11d3b6a83b12c895cca40156b6c
+  dataset: truthfulqa/truthful_qa generation+multiple_choice validation@741b8276f2d1982aa3d5b832d3ee81ed3b896490
+  seed: 20260811
+  hardware: A800 authorized by owner 2026-08-11; no GPU currently occupied or contacted
+  started_at: null
+  ended_at: null
+  exit_code: null
+  raw_metrics: null
+  summary_metrics: null
+  artifacts:
+  - docs/ledgers/prereg-iti-truthfulqa-positive-control.md
+  - data/strongest_prompts/truthfulness_positive_control.jsonl
+  - src/cognitive_console/steering/official_iti.py
+  - src/cognitive_console/eval/truthfulqa_positive_control.py
+  - src/cognitive_console/experiments/iti_positive_control.py
+  - scripts/run_iti_truthfulqa_positive_control.py
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    D-0114 authorizes implementation and future A800 use. The protocol uses a
+    real free-form Truthful AND Informative endpoint, official-style top-48
+    attention-head ITI at alpha=15, a DEV-selected fixed 16-prompt comparator,
+    matched random control, strict missingness/truncation/coherence gates, and a
+    TEST-once lock. Local synthetic/tiny-model validation is not evidence. Model,
+    judge, and dataset revisions are pinned, but large weight shards were not
+    downloaded during implementation. Fifty-five targeted tests, a synthetic
+    full-pipeline smoke, and a tiny in-memory hook smoke passed before protocol
+    freeze. Independent hostile audit and exact
+    audited commit pinning remain required before real DEV; TEST additionally
+    requires eligible DEV and the exact authorization phrase. Existing 0/12 is
+    immutable.
+
 - experiment_id: microstudy-contract-application-20260810
   parent: null
   hypothesis_id: H-MICROSTUDY-CONTRACT-APPLICATION

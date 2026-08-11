@@ -40,7 +40,15 @@ Item = Dict[str, Any]
 # --------------------------------------------------------------------------- #
 _NUMBER_RE = re.compile(r"-?\d[\d,]*(?:\.\d+)?")
 _BOXED_RE = re.compile(r"\\boxed\{\s*([^}]*)\s*\}")
-_CONF_RE = re.compile(r"conf(?:idence)?\s*[:=]?\s*(\d{1,3}(?:\.\d+)?)\s*%?", re.IGNORECASE)
+_CONF_RE = re.compile(
+    r"\bconf(?:idence)?\s*[:=]?\s*(\d{1,3}(?:\.\d+)?)\s*(%)?",
+    re.IGNORECASE,
+)
+_EXPLICIT_ANSWER_RE = re.compile(
+    r"\b(?:final\s+)?answer\s*[:=]\s*(.+?)"
+    r"(?=\s+(?:conf(?:idence)?\s*[:=])|\n|$)",
+    re.IGNORECASE,
+)
 
 
 def _to_float(token: str) -> Optional[float]:
@@ -94,30 +102,114 @@ def parse_confidence(text: str) -> Optional[float]:
     val = _to_float(m.group(1))
     if val is None:
         return None
-    if val > 1.0:
+    if m.group(2):
         val = val / 100.0
-    return float(min(1.0, max(0.0, val)))
+    elif val > 1.0:
+        val = val / 100.0
+    if not 0.0 <= val <= 1.0:
+        return None
+    return float(val)
+
+
+def parse_explicit_answer(text: str) -> Optional[str]:
+    """Extract a non-empty answer from an explicit ``Answer:`` cue."""
+    if not isinstance(text, str):
+        raise TypeError("text must be a string")
+    match = _EXPLICIT_ANSWER_RE.search(text)
+    if not match:
+        return None
+    answer = match.group(1).strip()
+    return answer or None
 
 
 def parse_choice_letter(text: str, choices: Sequence[str]) -> Optional[str]:
     """Extract a selected multiple-choice letter (A, B, C, ...) from ``text``.
 
-    Looks for an explicit "answer: B" style cue first, then a standalone leading
-    option letter. ``choices`` is the list of valid letters (e.g. ["A","B","C"]).
+    Requires an explicit answer/option cue or a leading option marker.
+    ``choices`` is the list of valid letters (e.g. ["A","B","C"]).
     """
     if not isinstance(text, str):
         raise TypeError("text must be a string")
     valid = {c.upper() for c in choices}
-    cue = re.search(r"answer\s*(?:is|:|=)?\s*\(?([A-Za-z])\)?", text, re.IGNORECASE)
+    cue = re.search(
+        r"\b(?:final\s+)?(?:answer|option|choice)\s*(?:is|:|=)\s*"
+        r"\(?([A-Za-z])\)?(?:\b|[\).,:;])",
+        text,
+        re.IGNORECASE,
+    )
     if cue and cue.group(1).upper() in valid:
         return cue.group(1).upper()
-    m = re.search(r"\b([A-Za-z])[\).:]", text)
+    m = re.match(r"^\s*\(?([A-Za-z])\)?[\).:]\s*", text)
     if m and m.group(1).upper() in valid:
         return m.group(1).upper()
-    for ch in text:
-        if ch.upper() in valid:
-            return ch.upper()
     return None
+
+
+def parse_axis_response(axis: str, item: Item, text: str) -> Dict[str, Any]:
+    """Shared fail-closed parser used by composition scoring and diagnostics."""
+    if not isinstance(text, str):
+        raise TypeError("text must be a string")
+    missing: List[str] = []
+    parsed_number: Optional[float] = None
+    parsed_choice: Optional[str] = None
+    parsed_confidence: Optional[float] = None
+    explicit_answer: Optional[str] = None
+    correctness: Optional[int] = None
+
+    if axis == "deliberation":
+        parsed_number = parse_final_number(text)
+        if parsed_number is None:
+            missing.append("answer")
+        else:
+            correctness = item_is_correct(item, text)
+    elif axis == "skepticism":
+        choices = item.get("choices") or {}
+        if choices:
+            parsed_choice = parse_choice_letter(text, list(choices.keys()))
+            if parsed_choice is None:
+                missing.append("option")
+            else:
+                correctness = int(
+                    parsed_choice.upper() == str(item.get("answer_letter", "")).upper()
+                )
+        else:
+            correctness = score_skepticism(text, item)
+    elif axis == "uncertainty_awareness":
+        explicit_answer = parse_explicit_answer(text)
+        parsed_confidence = parse_confidence(text)
+        if explicit_answer is None:
+            missing.append("answer")
+        if parsed_confidence is None:
+            missing.append("confidence")
+        if not missing:
+            correctness = item_is_correct(item, explicit_answer)
+    else:
+        raise ValueError(f"unknown axis {axis!r}")
+
+    return {
+        "parsed_number": parsed_number,
+        "parsed_choice": parsed_choice,
+        "parsed_confidence": parsed_confidence,
+        "explicit_answer": explicit_answer,
+        "correctness": correctness,
+        "missing_fields": missing,
+        "axis_parse_failed": bool(missing),
+    }
+
+
+def score_strict_axis_response(axis: str, item: Item, text: str) -> float:
+    """Score a response only when the shared strict parser succeeds."""
+    parsed = parse_axis_response(axis, item, text)
+    if parsed["axis_parse_failed"]:
+        return 0.0
+    if axis in {"deliberation", "skepticism"}:
+        return float(parsed["correctness"])
+    if axis == "uncertainty_awareness":
+        return per_item_brier(
+            int(parsed["correctness"]),
+            float(parsed["parsed_confidence"]),
+        )
+    raise ValueError(f"unknown axis {axis!r}")
 
 
 # --------------------------------------------------------------------------- #

@@ -122,14 +122,18 @@ def load_fixture(axis: str, data_root: Optional[Path] = None) -> List[Dict[str, 
     return items
 
 
-def load_c2b_task(axis: str, use_fixture: bool = True,
-                  data_root: Optional[Path] = None) -> C2bTask:
+def load_c2b_task(
+    axis: str,
+    use_fixture: bool = True,
+    data_root: Optional[Path] = None,
+    cache_dir: Optional[Path] = None,
+) -> C2bTask:
     """Load a C2b task set. ``use_fixture=True`` (default, offline) returns the
     hand-authored fixture; ``use_fixture=False`` routes to the deferred real
     loader (A800 only) and raises offline."""
     manifest = load_manifest(axis, data_root)
     if not use_fixture:
-        return _load_real(axis, manifest)
+        return _load_real(axis, manifest, cache_dir=cache_dir)
     items = load_fixture(axis, data_root)
     return C2bTask(axis=axis, manifest=manifest, items=items, source="fixture")
 
@@ -146,15 +150,21 @@ def available_c2b_tasks(data_root: Optional[Path] = None) -> List[str]:
 # --------------------------------------------------------------------------- #
 # Real (A800-only) loaders — datasets imported LAZILY; offline they raise.
 # --------------------------------------------------------------------------- #
-def _load_real(axis: str, manifest: Dict[str, Any]) -> C2bTask:
+def _load_real(
+    axis: str,
+    manifest: Dict[str, Any],
+    *,
+    cache_dir: Optional[Path] = None,
+) -> C2bTask:
+    cache_kwargs = {"cache_dir": cache_dir} if cache_dir is not None else {}
     if axis == "deliberation":
-        items = load_gsm8k_test()
+        items = load_gsm8k_test(**cache_kwargs)
     elif axis == "skepticism":
-        items = load_skepticism_set()
+        items = load_skepticism_set(**cache_kwargs)
     elif axis == "uncertainty_awareness":
-        items = load_uncertainty_set()
+        items = load_uncertainty_set(**cache_kwargs)
     elif axis == "refusal_positive_control":
-        items = load_refusal_harmless_set()
+        items = load_refusal_harmless_set(**cache_kwargs)
     else:
         raise ValueError(f"unknown c2b axis {axis!r}")
     return C2bTask(axis=axis, manifest=manifest, items=items, source="download")
@@ -172,13 +182,19 @@ def _require_datasets():
     return datasets
 
 
-def load_gsm8k_test(n: Optional[int] = None, seed: int = 0) -> List[Dict[str, Any]]:
+def load_gsm8k_test(
+    n: Optional[int] = None,
+    seed: int = 0,
+    cache_dir: Optional[Path] = None,
+) -> List[Dict[str, Any]]:
     """Load the real GSM8K test split as deliberation items (A800 only).
 
     Each item = {id, prompt, answer} where answer is the gold number parsed from
     the '#### N' delimiter. Offline this raises (datasets/network deferred)."""
     datasets = _require_datasets()
-    ds = datasets.load_dataset("openai/gsm8k", "main", split="test")
+    ds = datasets.load_dataset(
+        "openai/gsm8k", "main", split="test", cache_dir=cache_dir
+    )
     items: List[Dict[str, Any]] = []
     for i, row in enumerate(ds):
         gold = str(row["answer"]).split("####")[-1].strip().replace(",", "")
@@ -264,7 +280,11 @@ def parse_uncertainty_rows(rows: Any) -> List[Dict[str, Any]]:
     return items
 
 
-def load_skepticism_set(n: Optional[int] = None, seed: int = 0) -> List[Dict[str, Any]]:
+def load_skepticism_set(
+    n: Optional[int] = None,
+    seed: int = 0,
+    cache_dir: Optional[Path] = None,
+) -> List[Dict[str, Any]]:
     """Load the real false-premise skepticism set from TruthfulQA (A800 only).
 
     Dataset: ``truthfulqa/truthful_qa`` config ``multiple_choice`` (Apache-2.0). TruthfulQA
@@ -278,12 +298,21 @@ def load_skepticism_set(n: Optional[int] = None, seed: int = 0) -> List[Dict[str
     always in the same position (TruthfulQA lists the correct answer first).
     Offline this raises (datasets/network deferred)."""
     datasets = _require_datasets()
-    ds = datasets.load_dataset("truthfulqa/truthful_qa", "multiple_choice", split="validation")
+    ds = datasets.load_dataset(
+        "truthfulqa/truthful_qa",
+        "multiple_choice",
+        split="validation",
+        cache_dir=cache_dir,
+    )
     items = parse_skepticism_rows(ds, seed=seed)
     return _subsample(items, n, seed)
 
 
-def load_uncertainty_set(n: Optional[int] = None, seed: int = 0) -> List[Dict[str, Any]]:
+def load_uncertainty_set(
+    n: Optional[int] = None,
+    seed: int = 0,
+    cache_dir: Optional[Path] = None,
+) -> List[Dict[str, Any]]:
     """Load the real calibration/uncertainty factual-QA set from TriviaQA (A800).
 
     Dataset: ``mandarjoshi/trivia_qa`` config ``rc.nocontext`` (Apache-2.0) — factual
@@ -296,12 +325,21 @@ def load_uncertainty_set(n: Optional[int] = None, seed: int = 0) -> List[Dict[st
     PROPER ``1 - Brier`` over the elicited answer + verbalized confidence (decision
     D-0025). Offline this raises."""
     datasets = _require_datasets()
-    ds = datasets.load_dataset("mandarjoshi/trivia_qa", "rc.nocontext", split="validation")
+    ds = datasets.load_dataset(
+        "mandarjoshi/trivia_qa",
+        "rc.nocontext",
+        split="validation",
+        cache_dir=cache_dir,
+    )
     items = parse_uncertainty_rows(ds)
     return _subsample(items, n, seed)
 
 
-def load_refusal_harmless_set(n: Optional[int] = None, seed: int = 20260804) -> List[Dict[str, Any]]:
+def load_refusal_harmless_set(
+    n: Optional[int] = None,
+    seed: int = 20260804,
+    cache_dir: Optional[Path] = None,
+) -> List[Dict[str, Any]]:
     """Load harmless factual questions for E-0014 refusal induction (A800 only).
 
     Source is the existing TriviaQA validation loader. We exclude the first 80
@@ -310,7 +348,8 @@ def load_refusal_harmless_set(n: Optional[int] = None, seed: int = 20260804) -> 
     from C2/E-0013. No answers are needed by the refusal scorer, but retaining
     them preserves provenance and auditability.
     """
-    items = load_uncertainty_set(n=None, seed=0)
+    cache_kwargs = {"cache_dir": cache_dir} if cache_dir is not None else {}
+    items = load_uncertainty_set(n=None, seed=0, **cache_kwargs)
     filtered = [it for it in items if not str(it.get("id", "")).startswith("triviaqa-")
                 or int(str(it["id"]).split("-")[-1]) >= 80]
     return _subsample(filtered, n, seed) if n is not None else _subsample(filtered, 60, seed)

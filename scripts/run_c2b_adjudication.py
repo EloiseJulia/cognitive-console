@@ -221,7 +221,14 @@ class TranscriptCollector:
     def _pending_key(self, axis: str, item_id: str, instruction: str) -> tuple:
         return (str(axis), str(item_id), str(instruction))
 
-    def _parse_diag(self, axis: str, item: Dict, text: str, max_new_tokens: int) -> Dict:
+    def _parse_diag(
+        self,
+        axis: str,
+        item: Dict,
+        text: str,
+        max_new_tokens: int,
+        generation_metadata: Optional[Dict] = None,
+    ) -> Dict:
         numbers = _TRANSCRIPT_NUMBER_RE.findall(text or "")
         parsed_number = c2b_scorers.parse_final_number(text)
         parsed_conf = c2b_scorers.parse_confidence(text)
@@ -245,13 +252,16 @@ class TranscriptCollector:
             "parsed_confidence": parsed_conf,
             "correctness": correctness,
             "axis_parse_failed": bool(axis_parse_failed),
-            "maybe_truncated": len((text or "").split()) >= int(max_new_tokens),
+            "maybe_truncated": bool(
+                (generation_metadata or {}).get("hit_max_new_tokens", False)
+            ),
         }
 
     def record_generation(self, *, axis: str, item: Dict, instruction: str, alpha: float,
                           layer: int, sample_index: int, sample_seed: int, prompt_text: str,
                           generation_text: str, outcome: float, degeneracy: float,
-                          max_new_tokens: int) -> None:
+                          max_new_tokens: int,
+                          generation_metadata: Optional[Dict] = None) -> None:
         item_id = str(item.get("id"))
         prompt_payload, prompt_truncated = _truncate_text(
             str(prompt_text), _TRANSCRIPT_MAX_PROMPT_CHARS
@@ -260,6 +270,7 @@ class TranscriptCollector:
         generation_payload, generation_truncated = _truncate_text(
             generation_full, _TRANSCRIPT_MAX_GENERATION_CHARS
         )
+        generation = dict(generation_metadata or {})
         rec = {
             "axis": str(axis),
             "item_id": item_id,
@@ -272,13 +283,24 @@ class TranscriptCollector:
             "generation_text": generation_payload,
             "prompt_truncated": bool(prompt_truncated),
             "generation_truncated": bool(generation_truncated),
+            "generation_hit_max_new_tokens": bool(
+                generation.get("hit_max_new_tokens", False)
+            ),
+            "transcript_storage_truncated": bool(generation_truncated),
             "transcript_char_limits": {
                 "prompt": int(_TRANSCRIPT_MAX_PROMPT_CHARS),
                 "generation": int(_TRANSCRIPT_MAX_GENERATION_CHARS),
             },
             "sample_outcome": float(outcome),
             "sample_degeneracy": float(degeneracy),
-            "parse": self._parse_diag(str(axis), item, generation_full, int(max_new_tokens)),
+            "generation": generation,
+            "parse": self._parse_diag(
+                str(axis),
+                item,
+                generation_full,
+                int(max_new_tokens),
+                generation,
+            ),
             "meta": {"method": self.method, "model": self.model, "backend": self.backend},
         }
         self._pending[self._pending_key(str(axis), item_id, str(instruction))].append(rec)

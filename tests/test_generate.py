@@ -16,12 +16,14 @@ import pytest
 
 from cognitive_console.steering.generate import (
     GenBackend,
+    GenerationResult,
     SteerConfig,
     SteeredHFBackend,
     SyntheticSteeredBackend,
     unit_vector,
 )
 from cognitive_console.experiments.behavior import behavior_score
+from cognitive_console.activations.provider import HFActivationProvider
 
 
 def test_unit_vector_normalizes():
@@ -102,6 +104,113 @@ def test_hf_backend_chat_template_error_is_explicit():
         SteeredHFBackend._render_user_chat_prompt(
             BrokenTokenizer(), "raw", model_name="Qwen/Qwen2.5-1.5B-Instruct"
         )
+
+
+def test_generation_result_uses_token_ids_for_eos_and_length_finish():
+    class Tokenizer:
+        pad_token_id = 0
+
+        @staticmethod
+        def decode(ids, skip_special_tokens):
+            assert skip_special_tokens is True
+            return ",".join(str(i) for i in ids if i not in {0, 2})
+
+    eos = SteeredHFBackend._generation_result(
+        Tokenizer(),
+        [11, 12, 2, 2],
+        max_new_tokens=4,
+        eos_token_ids=[2],
+    )
+    assert isinstance(eos, GenerationResult)
+    assert eos.generated_token_ids == (11, 12, 2)
+    assert eos.generated_token_count == 3
+    assert eos.finish_reason == "eos_token"
+    assert eos.contains_eos_token is True
+    assert eos.ended_with_eos is True
+    assert eos.hit_max_new_tokens is False
+
+    capped = SteeredHFBackend._generation_result(
+        Tokenizer(),
+        [11, 12, 13, 14],
+        max_new_tokens=4,
+        eos_token_ids=[2],
+    )
+    assert capped.generated_token_count == 4
+    assert capped.finish_reason == "length"
+    assert capped.contains_eos_token is False
+    assert capped.hit_max_new_tokens is True
+
+    padded = SteeredHFBackend._generation_result(
+        Tokenizer(),
+        [11, 12, 0, 0],
+        max_new_tokens=4,
+        eos_token_ids=[2],
+    )
+    assert padded.generated_token_count == 2
+    assert padded.finish_reason == "other"
+    assert padded.hit_max_new_tokens is False
+
+
+def test_activation_provider_forwards_hf_cache_to_all_loaders(
+    tmp_path, monkeypatch
+):
+    calls = []
+
+    class AutoConfig:
+        @staticmethod
+        def from_pretrained(name, **kwargs):
+            calls.append(("config", name, kwargs))
+            return types.SimpleNamespace(hidden_size=4, num_hidden_layers=1)
+
+    class Tokenizer:
+        pad_token = None
+        eos_token = "<eos>"
+
+    class AutoTokenizer:
+        @staticmethod
+        def from_pretrained(name, **kwargs):
+            calls.append(("tokenizer", name, kwargs))
+            return Tokenizer()
+
+    class Model:
+        def to(self, device):
+            return self
+
+        def eval(self):
+            return self
+
+    class AutoModelForCausalLM:
+        @staticmethod
+        def from_pretrained(name, **kwargs):
+            calls.append(("model", name, kwargs))
+            return Model()
+
+    monkeypatch.setitem(
+        sys.modules,
+        "torch",
+        types.SimpleNamespace(float32=np.float32),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "transformers",
+        types.SimpleNamespace(
+            AutoConfig=AutoConfig,
+            AutoModelForCausalLM=AutoModelForCausalLM,
+            AutoTokenizer=AutoTokenizer,
+        ),
+    )
+    hf_cache = tmp_path / "hf"
+    provider = HFActivationProvider(
+        "fake/model",
+        cache_dir=tmp_path / "activations",
+        hf_cache_dir=hf_cache,
+        model_revision="rev",
+    )
+    provider._ensure_loaded()
+    assert [kind for kind, _, _ in calls] == ["config", "tokenizer", "model"]
+    for _, _, kwargs in calls:
+        assert kwargs["cache_dir"] == str(hf_cache)
+        assert kwargs["revision"] == "rev"
 
 
 def test_locate_decoder_layers_supports_llama_style_path():

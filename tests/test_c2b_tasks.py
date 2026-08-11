@@ -99,3 +99,17 @@ def test_parse_uncertainty_rows_real_answer_schema():
     assert scorers.item_is_correct(it, "I think it's the State of Kansas!") == 1
     assert scorers.item_is_correct(it, "definitely nebraska") == 0
 
+
+def test_real_dataset_loader_forwards_cache_dir(tmp_path, monkeypatch):
+    calls = []
+
+    class FakeDatasets:
+        @staticmethod
+        def load_dataset(*args, **kwargs):
+            calls.append((args, kwargs))
+            return [{"question": "2+2?", "answer": "work #### 4"}]
+
+    monkeypatch.setattr(c2b_tasks, "_require_datasets", lambda: FakeDatasets())
+    items = c2b_tasks.load_gsm8k_test(cache_dir=tmp_path / "datasets")
+    assert items[0]["answer"] == "4"
+    assert calls[0][1]["cache_dir"] == tmp_path / "datasets"

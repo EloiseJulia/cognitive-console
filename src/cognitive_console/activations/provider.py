@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import abc
 import hashlib
+import inspect
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -287,6 +288,7 @@ class HFActivationProvider(ActivationProvider):
         device: str = "cpu",
         dtype: str = "float32",
         cache_dir: str | os.PathLike | None = None,
+        hf_cache_dir: str | os.PathLike | None = None,
         max_length: int = 256,
         model_revision: str | None = None,
     ) -> None:
@@ -299,6 +301,11 @@ class HFActivationProvider(ActivationProvider):
         if cache_dir is None:
             cache_dir = os.environ.get("COGNITIVE_CONSOLE_ACT_CACHE", ".act_cache")
         self.cache_dir = Path(cache_dir)
+        self.hf_cache_dir = (
+            Path(hf_cache_dir)
+            if hf_cache_dir is not None
+            else Path(os.environ.get("HF_HOME", self.cache_dir / "huggingface"))
+        )
         # Lazily-populated handles (kept on the instance so we load the model once).
         self._model = None
         self._tokenizer = None
@@ -332,11 +339,29 @@ class HFActivationProvider(ActivationProvider):
         revision_kwargs = (
             {"revision": self.model_revision} if self.model_revision else {}
         )
+        def load_kwargs_for(loader):
+            try:
+                params = inspect.signature(loader.from_pretrained).parameters.values()
+                supports_cache = any(
+                    param.kind == inspect.Parameter.VAR_KEYWORD
+                    or param.name == "cache_dir"
+                    for param in params
+                )
+            except (TypeError, ValueError):
+                supports_cache = True
+            return {
+                **revision_kwargs,
+                **(
+                    {"cache_dir": str(self.hf_cache_dir)}
+                    if supports_cache
+                    else {}
+                ),
+            }
         self._config = AutoConfig.from_pretrained(
-            self.model_name, **revision_kwargs
+            self.model_name, **load_kwargs_for(AutoConfig)
         )
         self._tokenizer = AutoTokenizer.from_pretrained(
-            self.model_name, **revision_kwargs
+            self.model_name, **load_kwargs_for(AutoTokenizer)
         )
         if self._tokenizer.pad_token is None:
             self._tokenizer.pad_token = self._tokenizer.eos_token
@@ -346,14 +371,14 @@ class HFActivationProvider(ActivationProvider):
                 self.model_name,
                 dtype=dtype,
                 low_cpu_mem_usage=True,
-                **revision_kwargs,
+                **load_kwargs_for(AutoModelForCausalLM),
             )
         except TypeError:
             model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
                 torch_dtype=dtype,
                 low_cpu_mem_usage=True,
-                **revision_kwargs,
+                **load_kwargs_for(AutoModelForCausalLM),
             )
         model.to(self.device)
         model.eval()

@@ -101,6 +101,50 @@ def test_parse_confidence_percent_and_prob():
     assert S.parse_confidence("no confidence stated here about it") is None or True
 
 
+def test_strict_uncertainty_requires_explicit_answer_and_confidence():
+    item = {"id": "u-strict", "answer": "Paris", "aliases": ["Paris"]}
+    complete = "Answer: Paris. Confidence: 80%"
+    parsed = S.parse_axis_response("uncertainty_awareness", item, complete)
+    assert parsed["axis_parse_failed"] is False
+    assert parsed["correctness"] == 1
+    assert S.score_strict_axis_response(
+        "uncertainty_awareness", item, complete
+    ) == pytest.approx(0.96)
+
+    no_answer = "Paris is the capital. Confidence: 80%"
+    parsed = S.parse_axis_response("uncertainty_awareness", item, no_answer)
+    assert parsed["missing_fields"] == ["answer"]
+    assert S.score_strict_axis_response(
+        "uncertainty_awareness", item, no_answer
+    ) == 0.0
+
+    no_confidence = "Answer: Paris."
+    parsed = S.parse_axis_response("uncertainty_awareness", item, no_confidence)
+    assert parsed["missing_fields"] == ["confidence"]
+    assert S.score_strict_axis_response(
+        "uncertainty_awareness", item, no_confidence
+    ) == 0.0
+
+
+def test_strict_skepticism_rejects_arbitrary_character_fallback():
+    item = {
+        "id": "s-strict",
+        "choices": {"A": "accept", "B": "reject"},
+        "answer_letter": "B",
+    }
+    assert S.parse_choice_letter("Because this is false.", ["A", "B"]) is None
+    assert S.score_strict_axis_response(
+        "skepticism", item, "Because this is false."
+    ) == 0.0
+    assert S.parse_choice_letter("Option is B.", ["A", "B"]) == "B"
+    assert S.parse_choice_letter("Answer: Z.", ["A", "B"]) is None
+
+
+def test_confidence_out_of_range_is_parse_failure():
+    assert S.parse_confidence("Confidence: 101%") is None
+    assert S.parse_confidence("Confidence: 1.2") == pytest.approx(0.012)
+
+
 def test_degeneracy_score_repetition():
     fluent = "the quick brown fox jumps over the lazy dog near the river bank"
     degenerate = "repeat repeat repeat repeat repeat repeat repeat repeat repeat"

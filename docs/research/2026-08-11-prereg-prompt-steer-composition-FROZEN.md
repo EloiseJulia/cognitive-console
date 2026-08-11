@@ -1,17 +1,26 @@
 # PRE-REGISTRATION — E-0017 Prompt + Steer Composition Construct Validation
 
 - **Protocol ID:** `E-0017-prompt-steer-composition-v1`
-- **Status:** **FROZEN BEFORE REAL DEV/TEST, 2026-08-11.**
+- **Status:** **FROZEN BEFORE REAL DEV/TEST, 2026-08-11; hostile-audit
+  repairs synchronized before any real execution.**
 - **Execution gate:** CPU/synthetic validation only until a fresh hostile audit
   returns `PASS`. Real TEST additionally requires a one-use authorization file
   tied to the DEV selection hash, protocol commit, audit verdict, and approved
   compute budget.
+- Synthetic execution is `SMOKE_ONLY`: it may validate plumbing but may not
+  emit a scientific verdict, confirmatory registry row, C2 claim manifest, or
+  evidence/claim upgrade.
 - **Scientific role:** construct validation for the current paper. This is not a
   composition-method novelty claim.
 - **Prior-work boundary:** Bo et al. already tested prompting on top of activation
   steering in their interface work. We therefore do **not** claim first
   prompt-plus-steer composition. The purpose here is to answer whether our
   substitution-only worked application measures the deployed-control construct.
+- **Historical exposure disclosure:** the team had already inspected historical
+  E-0012 branches/artifacts while diagnosing comparator and operational failures.
+  Those branches are invalidated historical lineage. E-0012 supplies no evidence,
+  effect-size prior, item selection, direction, result, or claim support for
+  E-0017; the disclosure records researcher exposure rather than evidence.
 - **Preservation rule:** the frozen substitution result remains exactly
   **0/12**. This protocol creates a new experiment and must not modify, relabel,
   or overwrite the C2 preregistration, runners, artifacts, or verdicts.
@@ -213,9 +222,17 @@ The exact frozen C2 outcomes remain:
 - uncertainty awareness:
   `1 - Brier = 1 - (confidence - correctness)^2`.
 
-The task formatter still requests a final answer/letter/confidence. For
-uncertainty, absent confidence retains the frozen scorer rule `confidence=0.5`;
-it is not silently dropped. Raw parse and truncation diagnostics are retained
+The task formatter requests a final answer/letter/confidence. A single shared,
+fail-closed parser is used by scoring and diagnostics:
+
+- uncertainty requires both an explicit `Answer:` field and a valid explicit
+  `Confidence:` field; if either is absent, the sample outcome is `0`, the parse
+  fails, and the missing field(s) remain recorded;
+- skepticism MC requires an explicit valid answer/option/choice cue or a leading
+  option marker. Arbitrary characters elsewhere in prose never select an option;
+- no row is dropped or repaired with a fallback parser.
+
+Raw parse diagnostics and exact token-level termination metadata are retained
 per condition.
 
 ## 8. Missingness, failures, and exclusions
@@ -226,10 +243,10 @@ per condition.
 - A GPU/driver failure leaves the TEST authorization in resumable `failed`
   state; resuming the same out-dir/config is allowed, but starting another TEST
   is not.
-- Missing confidence is scored as 0.5 under the frozen rule and counted as a
-  parse failure.
-- Missing final answer/choice is scored incorrect under the frozen scorer and
-  counted as a parse failure.
+- Missing uncertainty answer or confidence is scored `0`, counted as a parse
+  failure, and recorded in `missing_fields`.
+- Missing skepticism option or deliberation final answer is scored incorrect
+  and counted as a parse failure.
 - Any absent generation record, duplicate identity after de-duplication,
   non-finite score, item mismatch, or incomplete `5 x 4 x N` coverage invalidates
   the axis.
@@ -323,12 +340,16 @@ equivalence context, but not a cross-axis or universal equivalence result.
 
 ## 12. TEST-once and authorization
 
-DEV writes:
+DEV writes an immutable backend-specific sealed bundle:
 
-- `dev_selection.json`;
-- `directions.npz` and SHA-256;
-- DEV checkpoints/raw diagnostics;
-- `test_authorization.template.json`.
+- `backend-hf/dev/sealed/dev_selection.json`;
+- `backend-hf/dev/sealed/directions.npz` and SHA-256;
+- `backend-hf/dev/sealed/test_authorization.template.json`;
+- `backend-hf/dev/sealed/SEAL.json`.
+
+Mutable checkpoints and cache state live separately under
+`backend-hf/dev/attempts/attempt-0001/`. Synthetic and HF backends never share
+artifact directories.
 
 The external authorization must match:
 
@@ -343,21 +364,34 @@ The external authorization must match:
 The runner atomically consumes the authorization into a `.used.json` sidecar.
 Only an interrupted/failed run with the same selection hash, authorization-file
 hash, out-dir, and checkpoint fingerprint may resume. A completed TEST cannot be
-started again.
+generated again. TEST finalization publishes one immutable directory containing
+the result, authorization-consumption record, experiment record, seal, and—for
+real HF only—the C2 manifest. Publication is one directory rename; rerunning a
+completed command verifies the seal and repairs/deduplicates the registry mirror
+without generating.
 
 ## 13. Lineage, identity, and operational guards
 
-- Real DEV and TEST require a clean committed tree.
-- TEST may run after committing DEV/audit artifacts, but hashes of the runner,
-  analysis module, frozen C2 scorer/runner/task code, and this preregistration
-  must match DEV exactly. Any source/protocol change requires repeating DEV.
+- Real DEV and TEST require a clean committed tree. Commit, source hashes, and
+  effective config are checked at both phase start and phase end.
+- TEST `HEAD` must equal the DEV commit exactly; a post-DEV code/docs commit is
+  not permitted. Any source/protocol change requires a new DEV out-dir.
 - Config identity includes protocol, model/revision, method, axes, item IDs and
   hashes, prompt texts, neutral prompt, direction/layer, generation settings,
   seeds, selection, alpha, TEST N, and bootstrap settings.
 - The resolved model revision must equal the frozen revision.
-- Disk guard: 60 GiB soft budget, 70 GiB hard ceiling, checked before and after
-  real phases.
-- Stall watchdog: 600 seconds.
+- `--hf-home` controls `HF_HOME`, hub/transformers cache, dataset cache, and the
+  activation cache; model, tokenizer, and dataset loaders receive those paths
+  explicitly. The resolved cache layout is fingerprinted.
+- Disk guard is frozen and non-overridable: 60 GiB soft budget, 70 GiB hard
+  ceiling, checked before and after real phases.
+- Stall watchdog is frozen and non-overridable at 600 seconds.
+- Retry budget is frozen at one retry per backend call with identical seeds.
+  Physical generation attempts are persisted across resumes and hard-capped at
+  `2 ×` the logical generation budget.
+- Each HF record stores exact generated token IDs/count, finish reason, EOS-token
+  membership, and token-derived max-length status. Word count and transcript-log
+  character truncation never diagnose a generation cap.
 - Generated result and manifest remain `valid_for_paper=false` and `pending`
   until an independent hostile result/statistics/lineage audit.
 - No paper result text, claim-ledger upgrade, or evidence-ledger entry is written
@@ -371,19 +405,19 @@ Real DEV after implementation audit:
 python -m scripts.run_prompt_steer_composition `
   --phase dev `
   --backend hf `
-  --out-dir results/E-0017-prompt-steer-composition
+  --out-dir results\E-0017-prompt-steer-composition
 ```
 
 After hostile DEV audit, budget approval, and completion of
-`results/E-0017-prompt-steer-composition/test_authorization.json`:
+`results\E-0017-prompt-steer-composition\backend-hf\test_authorization.json`:
 
 ```powershell
 python -m scripts.run_prompt_steer_composition `
   --phase test `
   --backend hf `
-  --out-dir results/E-0017-prompt-steer-composition `
-  --selection-json results/E-0017-prompt-steer-composition/dev_selection.json `
-  --test-authorization-file results/E-0017-prompt-steer-composition/test_authorization.json
+  --out-dir results\E-0017-prompt-steer-composition `
+  --selection-json results\E-0017-prompt-steer-composition\backend-hf\dev\sealed\dev_selection.json `
+  --test-authorization-file results\E-0017-prompt-steer-composition\backend-hf\test_authorization.json
 ```
 
 Worst-case planned generations:
@@ -391,9 +425,14 @@ Worst-case planned generations:
 - DEV: `3 * 96 * 5 * (16 + 1 + 2*7) = 44,640`;
 - TEST at all caps:
   `4 * 5 * (384 + 680 + 1024) = 41,760`;
-- total maximum: `86,400` generations, about `5,400` padded batches at batch
-  size 16.
+- total maximum: `86,400` logical generations;
+- exact padded-batch count at batch size 16 and `k=5` (three items / 15
+  generations per batch, including partial final batches):
+  - DEV: `2,976`;
+  - TEST at all caps: `2,788`;
+  - total: **`5,764`**.
+- frozen one-retry hard ceiling: `172,800` physical generation attempts.
 
-Using the existing 2–4 seconds/batch planning range plus extraction/loading,
-budget **3.5–6.5 A800 GPU-hours** and under 60 GiB planned disk. This is an
-estimate, not authorization.
+Using the existing 2–4 seconds/batch range, partial batches, extraction/loading,
+and the frozen retry allowance, budget **4.5–13.5 A800 GPU-hours** and under
+60 GiB planned disk. This widened range is an estimate, not authorization.

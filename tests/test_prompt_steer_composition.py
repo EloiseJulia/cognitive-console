@@ -152,7 +152,22 @@ def test_protocol_keeps_original_frozen_settings():
     assert protocol["alpha_grid"] == list(c2.ALPHA_GRID)
     assert protocol["k_samples"] == c2.K_SAMPLES
     assert protocol["delta"] == c2.DELTA
+    assert protocol["generation_retry_budget_per_backend_call"] == 1
+    assert protocol["disk_budget_gb"] == 60.0
+    assert protocol["disk_ceiling_gb"] == 70.0
+    assert protocol["stall_timeout_seconds"] == 600.0
     assert C.PRIMARY_CI_LEVEL == pytest.approx(1.0 - 0.05 / 3.0)
+
+
+def test_worst_case_compute_plan_counts_partial_padded_batches():
+    plan = C.worst_case_compute_plan()
+    assert plan["dev_logical_generations"] == 44_640
+    assert plan["test_logical_generations"] == 41_760
+    assert plan["total_logical_generations"] == 86_400
+    assert plan["dev_padded_batches"] == 2_976
+    assert plan["test_padded_batches"] == 2_788
+    assert plan["total_padded_batches"] == 5_764
+    assert plan["max_physical_generations"] == 172_800
 
 
 def test_interaction_is_explicitly_secondary_and_scoped():

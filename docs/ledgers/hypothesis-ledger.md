@@ -54,6 +54,10 @@ Status: registered | testing | supported | refuted | parked
   statement; underpowered/ineligible/invalid axes remain unresolved. The original substitution 0/12 is unchanged.
 - novelty_boundary: Bo et al. already studied prompting on top of activation steering; H4 is construct
   validation, not a first-composition or composition-method novelty claim.
+- historical_exposure: historical E-0012 artifacts had been inspected before H4 implementation, but E-0012
+  is invalidated lineage and supplies no evidence, prior, item selection, direction, or claim support here.
+- measurement_rule: shared strict parser; uncertainty requires explicit answer+confidence, skepticism an
+  explicit valid option cue; missing fields score 0 and remain recorded.
 - protocol_frozen: **YES — `docs/research/2026-08-11-prereg-prompt-steer-composition-FROZEN.md`; real TEST
   remains authorization-locked pending hostile audit and budget approval.**
 - status: registered; no real DEV/TEST data and no evidence-ledger entry yet.

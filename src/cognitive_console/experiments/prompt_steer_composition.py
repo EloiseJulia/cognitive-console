@@ -87,6 +87,11 @@ PARSE_RATE_MIN: Dict[str, float] = {
     "uncertainty_awareness": 0.80,
 }
 TRUNCATION_RATE_MAX = 0.05
+FROZEN_BATCH_SIZE = 16
+FROZEN_RETRY_BUDGET = 1
+FROZEN_DISK_BUDGET_GB = 60.0
+FROZEN_DISK_CEILING_GB = 70.0
+FROZEN_STALL_TIMEOUT_SECONDS = 600.0
 
 PHASE_DEV_PROMPT = "composition_dev_prompt"
 PHASE_DEV_NEUTRAL = "composition_dev_neutral"
@@ -101,6 +106,41 @@ DiagnosticsFn = Callable[
     [str, str, str, Sequence[Dict], int],
     Dict[str, object],
 ]
+
+
+def padded_batch_count(
+    item_count: int,
+    *,
+    cells: int,
+    k: int = K_SAMPLES,
+    batch_size: int = FROZEN_BATCH_SIZE,
+) -> int:
+    items_per_batch = max(1, int(batch_size) // max(1, int(k)))
+    return int(cells) * int(math.ceil(int(item_count) / items_per_batch))
+
+
+def worst_case_compute_plan() -> Dict[str, int]:
+    dev_cells = 16 + 1 + 2 * len(ALPHA_GRID)
+    dev_generations = len(AXES) * DEV_N * K_SAMPLES * dev_cells
+    test_items = sum(TEST_MAX_N.values())
+    test_generations = 4 * K_SAMPLES * test_items
+    dev_batches = len(AXES) * padded_batch_count(DEV_N, cells=dev_cells)
+    test_batches = sum(
+        padded_batch_count(n, cells=4) for n in TEST_MAX_N.values()
+    )
+    logical_generations = dev_generations + test_generations
+    return {
+        "dev_logical_generations": int(dev_generations),
+        "test_logical_generations": int(test_generations),
+        "total_logical_generations": int(logical_generations),
+        "dev_padded_batches": int(dev_batches),
+        "test_padded_batches": int(test_batches),
+        "total_padded_batches": int(dev_batches + test_batches),
+        "retry_budget_per_backend_call": FROZEN_RETRY_BUDGET,
+        "max_physical_generations": int(
+            logical_generations * (FROZEN_RETRY_BUDGET + 1)
+        ),
+    }
 
 
 def canonical_hash(value: object) -> str:
@@ -1015,6 +1055,10 @@ def frozen_protocol_dict() -> Dict[str, object]:
             "Bo et al. already tested prompting on top of activation steering; "
             "this experiment does not claim composition novelty"
         ),
+        "historical_exposure": (
+            "historical invalidated E-0012 artifacts had been inspected, but "
+            "supply no evidence, prior, item selection, direction, or claim support"
+        ),
         "preserved_substitution_result": "original frozen substitution result remains 0/12",
         "axes": list(AXES),
         "conditions": ["neutral", "prompt", "steer", "prompt_steer"],
@@ -1049,5 +1093,21 @@ def frozen_protocol_dict() -> Dict[str, object]:
         ),
         "parse_rate_min": dict(PARSE_RATE_MIN),
         "truncation_rate_max": TRUNCATION_RATE_MAX,
+        "strict_parser": (
+            "uncertainty requires explicit Answer and Confidence fields; "
+            "skepticism requires an explicit valid option cue; missing fields "
+            "score 0 and remain recorded"
+        ),
+        "batch_size": FROZEN_BATCH_SIZE,
+        "generation_retry_budget_per_backend_call": FROZEN_RETRY_BUDGET,
+        "disk_budget_gb": FROZEN_DISK_BUDGET_GB,
+        "disk_ceiling_gb": FROZEN_DISK_CEILING_GB,
+        "stall_timeout_seconds": FROZEN_STALL_TIMEOUT_SECONDS,
+        "worst_case_compute_plan": worst_case_compute_plan(),
+        "synthetic_rule": (
+            "SMOKE_ONLY; no scientific verdict, confirmatory registry row, "
+            "C2 claim manifest, or evidence upgrade"
+        ),
+        "test_head_rule": "TEST HEAD must exactly equal the DEV commit",
         "test_rule": "TEST is generated once after external hostile-audit authorization",
     }

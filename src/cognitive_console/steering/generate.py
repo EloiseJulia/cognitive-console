@@ -40,7 +40,7 @@ from __future__ import annotations
 import abc
 import hashlib
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 
@@ -75,6 +75,18 @@ class SteerConfig:
         return unit_vector(self.direction)
 
 
+@dataclass(frozen=True)
+class GenerationResult:
+    """Decoded generation plus exact token-level termination metadata."""
+
+    text: str
+    generated_token_ids: Tuple[int, ...]
+    generated_token_count: int
+    finish_reason: str
+    eos_token_ids: Tuple[int, ...]
+    contains_eos_token: bool
+    ended_with_eos: bool
+    hit_max_new_tokens: bool
 
 
 @dataclass
@@ -329,12 +341,16 @@ class SteeredHFBackend(GenBackend):
         tokenizer=None,
         config=None,
         layers=None,
+        cache_dir: Optional[str] = None,
+        model_revision: Optional[str] = None,
     ) -> None:
         self.model_name = model_name
         self.device = device
         self.dtype = dtype
         self.max_length = int(max_length)
         self.seed = None if seed is None else int(seed)
+        self.cache_dir = cache_dir
+        self.model_revision = model_revision
         self._model = model
         self._tokenizer = tokenizer
         self._config = config
@@ -376,8 +392,15 @@ class SteeredHFBackend(GenBackend):
             raise NotImplementedError(_HF_INSTALL_HINT) from exc
 
         dtype = getattr(torch, self.dtype, torch.float32)
-        self._config = AutoConfig.from_pretrained(self.model_name)
-        self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        load_kwargs = {}
+        if self.cache_dir is not None:
+            load_kwargs["cache_dir"] = self.cache_dir
+        if self.model_revision is not None:
+            load_kwargs["revision"] = self.model_revision
+        self._config = AutoConfig.from_pretrained(self.model_name, **load_kwargs)
+        self._tokenizer = AutoTokenizer.from_pretrained(
+            self.model_name, **load_kwargs
+        )
         if self._tokenizer.pad_token is None:
             self._tokenizer.pad_token = self._tokenizer.eos_token
         # Left-pad for batched generation: newly-generated tokens then start at the
@@ -387,11 +410,14 @@ class SteeredHFBackend(GenBackend):
         self._tokenizer.padding_side = "left"
         try:
             model = AutoModelForCausalLM.from_pretrained(
-                self.model_name, dtype=dtype, low_cpu_mem_usage=True
+                self.model_name, dtype=dtype, low_cpu_mem_usage=True, **load_kwargs
             )
         except TypeError:
             model = AutoModelForCausalLM.from_pretrained(
-                self.model_name, torch_dtype=dtype, low_cpu_mem_usage=True
+                self.model_name,
+                torch_dtype=dtype,
+                low_cpu_mem_usage=True,
+                **load_kwargs,
             )
         model.to(self.device)
         model.eval()
@@ -492,6 +518,74 @@ class SteeredHFBackend(GenBackend):
     def available_layers(self) -> List[int]:
         self._ensure_loaded()
         return list(range(self._validate_decoder_layer_count() + 1))
+
+    def _eos_token_ids(self) -> Tuple[int, ...]:
+        values: List[int] = []
+        for source in (
+            getattr(self._model, "generation_config", None),
+            self._config,
+            self._tokenizer,
+        ):
+            raw = getattr(source, "eos_token_id", None)
+            if raw is None:
+                continue
+            candidates = raw if isinstance(raw, (list, tuple, set)) else [raw]
+            for candidate in candidates:
+                try:
+                    value = int(candidate)
+                except (TypeError, ValueError):
+                    continue
+                if value not in values:
+                    values.append(value)
+        return tuple(values)
+
+    @staticmethod
+    def _generation_result(
+        tokenizer,
+        token_ids,
+        *,
+        max_new_tokens: int,
+        eos_token_ids: Sequence[int],
+    ) -> GenerationResult:
+        if hasattr(token_ids, "tolist"):
+            raw_ids = [int(x) for x in token_ids.tolist()]
+        else:
+            raw_ids = [int(x) for x in token_ids]
+        eos_ids = tuple(dict.fromkeys(int(x) for x in eos_token_ids))
+        eos_set = set(eos_ids)
+        first_eos = next(
+            (idx for idx, token_id in enumerate(raw_ids) if token_id in eos_set),
+            None,
+        )
+        if first_eos is not None:
+            actual_ids = raw_ids[: first_eos + 1]
+        else:
+            actual_ids = list(raw_ids)
+            pad_token_id = getattr(tokenizer, "pad_token_id", None)
+            if pad_token_id is not None and int(pad_token_id) not in eos_set:
+                while actual_ids and actual_ids[-1] == int(pad_token_id):
+                    actual_ids.pop()
+        contains_eos = any(token_id in eos_set for token_id in actual_ids)
+        ended_with_eos = bool(actual_ids and actual_ids[-1] in eos_set)
+        count = len(actual_ids)
+        hit_cap = bool(not contains_eos and count >= int(max_new_tokens))
+        finish_reason = (
+            "eos_token"
+            if contains_eos
+            else "length"
+            if hit_cap
+            else "other"
+        )
+        return GenerationResult(
+            text=tokenizer.decode(actual_ids, skip_special_tokens=True),
+            generated_token_ids=tuple(actual_ids),
+            generated_token_count=count,
+            finish_reason=finish_reason,
+            eos_token_ids=eos_ids,
+            contains_eos_token=contains_eos,
+            ended_with_eos=ended_with_eos,
+            hit_max_new_tokens=hit_cap,
+        )
 
     # -- hook -------------------------------------------------------------
     def _make_hook(self, steer: SteerConfig):
@@ -886,7 +980,8 @@ class SteeredHFBackend(GenBackend):
         temperature: float = 1.0,
         top_p: Optional[float] = None,
         seed: Optional[int] = None,
-    ) -> str:
+        return_metadata: bool = False,
+    ):
         import torch
 
         self._ensure_loaded()
@@ -929,8 +1024,13 @@ class SteeredHFBackend(GenBackend):
             if handle is not None:
                 handle.remove()
 
-        new_tokens = out[0][input_len:]
-        return self._tokenizer.decode(new_tokens, skip_special_tokens=True)
+        result = self._generation_result(
+            self._tokenizer,
+            out[0][input_len:],
+            max_new_tokens=max_new_tokens,
+            eos_token_ids=self._eos_token_ids(),
+        )
+        return result if return_metadata else result.text
 
     # -- BATCHED generation (performance: FIX 3) ---------------------------
     def generate_batch(
@@ -941,7 +1041,8 @@ class SteeredHFBackend(GenBackend):
         seeds: Optional[Sequence[int]] = None,
         do_sample: bool = False,
         temperature: float = 1.0,
-    ) -> List[str]:
+        return_metadata: bool = False,
+    ):
         """Generate a whole PADDED batch in ONE forward loop on the GPU.
 
         The steering hook is registered on the shared decoder block, so it fires
@@ -1010,4 +1111,13 @@ class SteeredHFBackend(GenBackend):
                 handle.remove()
 
         new = out[:, input_len:]
-        return [self._tokenizer.decode(row, skip_special_tokens=True) for row in new]
+        results = [
+            self._generation_result(
+                self._tokenizer,
+                row,
+                max_new_tokens=max_new_tokens,
+                eos_token_ids=self._eos_token_ids(),
+            )
+            for row in new
+        ]
+        return results if return_metadata else [result.text for result in results]

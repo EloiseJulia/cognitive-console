@@ -7,10 +7,13 @@ This file persists the fresh hostile audit of final implementation commit
 `microstudy-stimuli-v8-bilingual-novice-ux` /
 `microstudy-contract-application-20260811-v8-novice-ux-draft`.
 
-The preceding synthetic novice-agent walkthroughs were design feedback and the
-separate proposal audit evaluated the proposed revision. They are not
-human-subject data and do not demonstrate usability, accessibility, timing, or
-ten-second comprehension.
+Before implementation, three independent synthetic novice-agents completed
+blind tests: one Chinese-language novice, one English-language novice, and one
+low-context novice. They are not human subjects or human-subject data, and
+their feedback was used only as design inspiration; it does not demonstrate
+usability, accessibility, timing, or ten-second comprehension. Implementation
+proceeded only after the proposal-only construct/leakage audit returned verdict
+`APPROVE`.
 
 Any later docs-only commit that persists this summary and related governance
 lineage is not a replacement implementation commit.

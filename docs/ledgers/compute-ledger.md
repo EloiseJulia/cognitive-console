@@ -7,10 +7,11 @@
 |---|---|---|---|---|---|
 | 2026-07-23 | (none) | 0 | — | — | 0 |
 | 2026-08-05 | A800 GPU-hours (failed pre-DEV attempt) | 0.00722222 upper bound | E-0016 | D-0095 | >=0.00722222 (legacy GPU runs not backfilled) |
+| 2026-08-12 | AutoDL RTX 4080 SUPER Qwen preflight + DEV eligibility | pending exact artifact wall-clock reconciliation | E-0016 | D-0097/D-0100 | >0.00722222; exact total pending |
 
 - max_gpu_hours: TBD (human)
 - max_api_cost: TBD (human)
 - max_full_runs: TBD (human)
 - max_pivot_count: 2 (then mandatory human review)
 
-- E-0016 D-0095/D-0097 authorized cap: 3 total GPU-hours across either the A800 profile or the owner-authorized AutoDL RTX 4080 SUPER 32 GiB profile; consumed upper bound 0.00722222 GPU-h before the valid pre-DEV failure. The remaining cumulative hard cap is 2.99277778 GPU-hours. D-0097 adds no hours; the operational amendment is DRAFT pending audit and a new exact run commit. No retry has yet been performed.
+- E-0016 D-0095/D-0097/D-0100 authorized cap: 3 total GPU-hours across either the A800 profile or the owner-authorized AutoDL RTX 4080 SUPER 32 GiB profile. The prior failed attempt consumed at most 0.00722222 GPU-h; the Qwen preflight/DEV eligibility run also consumed GPU time whose exact artifact wall-clock must be reconciled before computing the remaining cap. D-0100 adds no hours. Qwen stopped underpowered; Llama is the second and final authorized eligibility candidate.

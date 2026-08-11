@@ -350,6 +350,93 @@ def test_default_dataset_sources_are_ungated_choices():
     assert e0016.HARMLESS_SPEC.expected_row_count == 52002
 
 
+@pytest.mark.parametrize("model_profile", e0016.AUTHORIZED_MODEL_PROFILES)
+def test_hf_model_allowlist_accepts_both_exact_pinned_profiles(
+    tmp_path, model_profile
+):
+    args = _frozen_hf_args(
+        tmp_path,
+        "--model-id",
+        model_profile.model_id,
+        "--model-revision",
+        model_profile.revision,
+    )
+    e0016.assert_hf_frozen_config(args)
+    resolved = e0016.resolve_frozen_model_profile(
+        args.model_id, args.model_revision
+    )
+    assert resolved == model_profile
+    assert max(e0016.HF_FROZEN_CANDIDATE_LAYERS) <= resolved.decoder_layers
+
+
+@pytest.mark.parametrize(
+    ("model_id", "revision", "message"),
+    [
+        (
+            e0016.LLAMA_MODEL,
+            e0016.FROZEN_MODEL_REVISION,
+            "wrong frozen revision",
+        ),
+        ("unknown/model", "deadbeef", "unauthorized E-0016 model"),
+    ],
+)
+def test_hf_model_allowlist_rejects_wrong_revision_or_unknown_model(
+    tmp_path, model_id, revision, message
+):
+    args = _frozen_hf_args(
+        tmp_path,
+        "--model-id",
+        model_id,
+        "--model-revision",
+        revision,
+    )
+    with pytest.raises(ValueError, match=message):
+        e0016.assert_hf_frozen_config(args)
+
+
+def test_llama3_chat_template_is_shared_by_extraction_and_generation():
+    model_profile = e0016.resolve_frozen_model_profile(
+        e0016.LLAMA_MODEL, e0016.LLAMA_FROZEN_MODEL_REVISION
+    )
+
+    class Tokenizer:
+        chat_template = "llama3-template"
+
+        @staticmethod
+        def apply_chat_template(messages, *, tokenize, add_generation_prompt):
+            assert tokenize is False
+            assert add_generation_prompt is True
+            content = messages[0]["content"]
+            return (
+                "<|begin_of_text|><|start_header_id|>user<|end_header_id|>"
+                f"\n\n{content}<|eot_id|>"
+                "<|start_header_id|>assistant<|end_header_id|>\n\n"
+            )
+
+    class Provider:
+        hidden_dim = 4096
+        _config = SimpleNamespace(model_type="llama")
+        _render_user_chat_prompt = staticmethod(
+            e0016.HFActivationProvider._render_user_chat_prompt
+        )
+
+    class Backend:
+        num_hidden_layers = 32
+        _tokenizer = Tokenizer()
+        _render_user_chat_prompt = staticmethod(
+            e0016.SteeredHFBackend._render_user_chat_prompt
+        )
+
+    identity = e0016.verify_frozen_model_architecture_and_chat_template(
+        model_profile=model_profile,
+        provider=Provider(),
+        hook_backend=Backend(),
+    )
+    assert identity["chat_template_family"] == "llama3-header-eot"
+    assert identity["activation_and_generation_rendering_identical"] is True
+    assert identity["raw_harmful_text_present"] is False
+
+
 @pytest.mark.parametrize(
     ("name", "total_gib", "expected"),
     [
@@ -539,15 +626,25 @@ def test_frozen_snapshot_revision_and_shard_hashes_are_verified(
         json.dumps({"weight_map": {"a": "a.safetensors", "b": "b.safetensors"}}),
         encoding="utf-8",
     )
-    monkeypatch.setattr(e0016, "FROZEN_MODEL_SHARDS", frozen)
+    model_profile = e0016.FrozenModelProfile(
+        profile_id="test-model",
+        model_id="test/model",
+        revision=e0016.FROZEN_MODEL_REVISION,
+        hidden_dim=4,
+        decoder_layers=2,
+        config_model_type="test",
+        chat_template_family="test",
+        chat_template_required_markers=("marker",),
+        shards=frozen,
+        eligibility_order=99,
+    )
     monkeypatch.setitem(
         __import__("sys").modules,
         "huggingface_hub",
         SimpleNamespace(snapshot_download=lambda **kwargs: str(snapshot)),
     )
     identity = e0016.verify_frozen_model_snapshot(
-        model_id=e0016.DEFAULT_MODEL,
-        revision=e0016.FROZEN_MODEL_REVISION,
+        model_profile=model_profile,
         hf_hub_cache=tmp_path,
         config=SimpleNamespace(_commit_hash=e0016.FROZEN_MODEL_REVISION),
     )
@@ -768,6 +865,14 @@ def test_hf_hook_bites_are_persisted_before_first_dev_generation(
             "requested_revision": e0016.FROZEN_MODEL_REVISION,
             "resolved_revision": e0016.FROZEN_MODEL_REVISION,
             "all_shard_sha256_verified": True,
+        },
+        "model_profile_validation": {
+            "model_profile_id": "qwen2.5-7b-instruct",
+            "model_type": "qwen2",
+            "hidden_dim": 3584,
+            "decoder_layers": 28,
+            "chat_template_family": "qwen2.5-chatml",
+            "activation_and_generation_rendering_identical": True,
         },
     }
     handles = e0016.SharedHFHandles(
@@ -2111,7 +2216,7 @@ def test_cpu_hf_environment_identity_accepts_real_pretrained_config(monkeypatch)
         hook_backend=backend,
     )
 
-    assert identity["schema_version"] == 4
+    assert identity["schema_version"] == 5
     assert identity["environment_identity_hash"].startswith("sha256:")
     assert identity["hf_runtime"]["tokenizer_config"]["bytes"] > 0
 

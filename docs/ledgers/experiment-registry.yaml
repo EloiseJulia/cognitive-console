@@ -160,7 +160,23 @@ experiments:
   data_hash: null
   env_hash: null
   config_hash: sha256:0018d5ea7e84f48ac52bbbbdf16829f5
-  model: Qwen/Qwen2.5-7B-Instruct
+  model: fixed eligibility order Qwen/Qwen2.5-7B-Instruct then NousResearch/Meta-Llama-3-8B-Instruct
+  authorized_model_profiles:
+  - profile_id: qwen2.5-7b-instruct
+    model_id: Qwen/Qwen2.5-7B-Instruct
+    revision: a09a35458c702b33eeacc393d103063234e8bc28
+    hidden_dim: 3584
+    decoder_layers: 28
+    eligibility_order: 1
+    eligibility_status: invalid_regime_b_underpowered
+    dev_baseline_false_refusal: 0.0033
+  - profile_id: meta-llama-3-8b-instruct
+    model_id: NousResearch/Meta-Llama-3-8B-Instruct
+    revision: 53346005fb0ef11d3b6a83b12c895cca40156b6c
+    hidden_dim: 4096
+    decoder_layers: 32
+    eligibility_order: 2
+    eligibility_status: authorized_pending_preflight_and_dev
   dataset: data/c2b_tasks/* via frozen real loaders; data/contrast_pairs/*; data/strongest_prompts/*
   seed: 20260723
   hardware: NVIDIA GeForce RTX 4090 D 24GB; cuda-float16
@@ -1191,7 +1207,7 @@ experiments:
   claim_ids:
   - C2b
   type: confirmatory_positive_control
-  status: execution_amendments_draft_owner_authorized_pending_audit_no_run
+  status: qwen_underpowered_llama_profile_authorized_pending_audit_and_eligibility
   code_commit: null
   previous_audited_retry_commit: c094f07fa3592c2210f46caba9e69c49a5a92fad
   operational_amendment_base_commit: b61601d1785a28a28c13373a533c3aa8da344ee9
@@ -1211,7 +1227,7 @@ experiments:
   dataset: Regime B default Paul/XSTest train safe-filtered prompts for generation; harmful direction side default ungated llm-attacks AdvBench harmful_behaviors.csv raw URL; harmless side default tatsu-lab/alpaca train instructions; harmful-vs-harmless contrast used forward-pass-only, raw harmful prompts uncommitted
   seed: 20260804
   hardware: either A800 80GB or owner-authorized AutoDL NVIDIA GeForce RTX 4080 SUPER 32 GiB; exactly one visible physical GPU; hard cap 3 cumulative GPU-hours
-  gpu_owner_budget_authorization: D-0095 plus D-0097 alternate-host authorization; no added hours
+  gpu_owner_budget_authorization: D-0095 plus D-0097/D-0100 alternate host/model authorization; no added hours
   attempts:
   - attempt_id: attempt-1
     status: valid_pre_dev_infra_failure_superseded_for_retry
@@ -1232,7 +1248,7 @@ experiments:
     raw_harmful_text_committed: false
     valid_for_paper: false
   - attempt_id: retry
-    status: operational_amendment_draft_pending_audit_and_exact_run_commit
+    status: qwen_dev_underpowered_then_llama_profile_authorized_pending_audit
     run_commit: null
     code_commit: null
     serialization_fix_commits:
@@ -1240,8 +1256,8 @@ experiments:
     - fa58dcf5c739e7d89b36e6af7694e9ea0df84d27
     serialization_fix_audit: sound
     serialization_fix_environment_identity_schema_version: 3
-    operational_environment_identity_schema_version: 4
-    owner_authorization: D-0095/D-0097
+    operational_environment_identity_schema_version: 5
+    owner_authorization: D-0095/D-0097/D-0100
     owner_authorization_still_valid: true
     authorized_hardware_profiles:
     - nvidia-a800-80gb
@@ -1255,16 +1271,38 @@ experiments:
       output_root: /root/autodl-tmp
       managed_disk_hard_ceiling_gib: 45
       qwen_revision: a09a35458c702b33eeacc393d103063234e8bc28
-    remaining_gpu_hours_hard_cap: 2.99277778
-    protocol_changed: D-0098 method-faithful hook-bites correction authorized before any refusal outcome
+      llama3_revision: 53346005fb0ef11d3b6a83b12c895cca40156b6c
+    remaining_gpu_hours_hard_cap: pending_qwen_dev_wallclock_reconciliation_and_strictly_below_2.99277778
+    protocol_changed: D-0098/D-0099 guard corrections plus D-0100 fixed second-model eligibility profile
     hook_bites_guard_version: method_faithful_norm_scaled_removal_v3
     hook_bites_max_residual_fraction: 0.01
     hook_bites_norm_eps_multiplier: 2.0
     hook_bites_numerical_zero_floor: 0.000001
+    model_eligibility_attempts:
+    - model_profile_id: qwen2.5-7b-instruct
+      status: INVALID_REGIME_B_UNDERPOWERED
+      dev_baseline_false_refusal: 0.0033
+      required_floor: 0.25
+      direction_source_layer: 8
+      direction_separation_approx: 4.0
+      direction_separation_floor: 0.8
+      direction_norm: 1.0
+      ablation_outcome_observed: false
+      test_status: not_run
+      harmful_generation_performed: false
+      valid_for_paper: false
+    - model_profile_id: meta-llama-3-8b-instruct
+      status: authorized_pending_preflight_and_dev
+      required_floor: 0.25
+      ablation_outcome_observed: false
+      test_status: not_run
+      harmful_generation_performed: false
+      valid_for_paper: false
     pending_gates:
     - independent_operational_amendment_audit
     - exact_clean_run_commit_recorded
-    - real_regime_b_run
+    - llama3_preflight_and_dev_eligibility
+    - eligible_real_regime_b_test_if_and_only_if_dev_passes
     - independent_hostile_results_audit
   started_at: null
   ended_at: null
@@ -1283,10 +1321,12 @@ experiments:
   - test_informed_protocol_changes
   - gpu_execution_without_owner_budget_approval
   - gpu_execution_from_unaudited_operational_amendment
+  - unregistered_third_model_or_post_outcome_model_search
   pending_gates:
   - independent_operational_amendment_audit
   - exact_clean_run_commit_recorded
-  - real_regime_b_run
+  - llama3_preflight_and_dev_eligibility
+  - eligible_real_regime_b_test_if_and_only_if_dev_passes
   - independent_hostile_results_audit
   validation_notes: >-
     D-0089 Regime-B-only protocol. D-0091 harness findings were closed by the
@@ -1310,7 +1350,12 @@ experiments:
     D-0098 was decided. D-0099 then replaced the fixed absolute removal floor
     with the pre-outcome dtype-aware rule max(1% of the pre-projection,
     2*eps(dtype)*hidden L2 norm, 1e-6); exact coverage and failure of 50%/0%
-    removal remain mandatory. DEV baseline
+    removal remain mandatory. Qwen then completed the outcome-independent DEV
+    baseline screen at 0.0033, below 0.25, and stopped without an ablation
+    outcome or TEST. D-0100 fixes one second and final model candidate,
+    NousResearch/Meta-Llama-3-8B-Instruct at revision
+    53346005fb0ef11d3b6a83b12c895cca40156b6c, using the identical assay.
+    DEV baseline
     false-refusal must be >=0.25 or the runner emits
     INVALID_REGIME_B_UNDERPOWERED and stops before TEST. Harmful prompts are
     forward-pass-only direction inputs. Regime A is excluded and requires a new

@@ -47,6 +47,8 @@ from cognitive_console.steering.generate import AblationConfig, SteeredHFBackend
 EXPERIMENT_ID = "E-0016"
 DEFAULT_MODEL = "Qwen/Qwen2.5-7B-Instruct"
 FROZEN_MODEL_REVISION = "a09a35458c702b33eeacc393d103063234e8bc28"
+LLAMA_MODEL = "NousResearch/Meta-Llama-3-8B-Instruct"
+LLAMA_FROZEN_MODEL_REVISION = "53346005fb0ef11d3b6a83b12c895cca40156b6c"
 AUTODL_HF_HOME = Path("/root/autodl-tmp/hf")
 AUTODL_OUTPUT_ROOT = Path("/root/autodl-tmp")
 AUTODL_MANAGED_DISK_CEILING_GIB = 45.0
@@ -71,6 +73,24 @@ FROZEN_MODEL_SHARDS = {
     "model-00004-of-00004.safetensors": {
         "size": 3556377672,
         "sha256": "1a72d403cdf0c1ec3cb7f289f17b394a01e64394c2e9b3c0f94dbce3faf879bd",
+    },
+}
+LLAMA_FROZEN_MODEL_SHARDS = {
+    "model-00001-of-00004.safetensors": {
+        "size": 4976698672,
+        "sha256": "d8cf9c4d0dd972e1a2131bfe656235ee98221679711a3beef6d46dadf0f20b5c",
+    },
+    "model-00002-of-00004.safetensors": {
+        "size": 4999802720,
+        "sha256": "8d4782b4a69ef03845159ce1a15e272aadaaf134dc138d68f616098e8531729c",
+    },
+    "model-00003-of-00004.safetensors": {
+        "size": 4915916176,
+        "sha256": "3acdd690e65c24f42a24581b8467af98bd3ca357444580f8012aacd2bd607921",
+    },
+    "model-00004-of-00004.safetensors": {
+        "size": 1168138808,
+        "sha256": "67e9ad31c8c32abf3a55ee7fc7217b3ecb35fd3c74d98a5bd233e0e4d6964f46",
     },
 }
 DEFAULT_OUT_DIR = _REPO / "results" / "E-0016-ablation-positive-control"
@@ -108,7 +128,7 @@ DEGENERACY_SCORER_VERSION = "degeneracy_score_v1"
 GENERATION_RECORD_SCHEMA_VERSION = 2
 CHECKPOINT_SCHEMA_VERSION = 3
 SOURCE_STATE_SCHEMA_VERSION = 2
-ENVIRONMENT_SCHEMA_VERSION = 4
+ENVIRONMENT_SCHEMA_VERSION = 5
 ARTIFACT_MANIFEST_SCHEMA_VERSION = 1
 TEST_PLAN_SCHEMA_VERSION = 1
 RECORD_VALIDATOR_VERSION = "e0016_strict_record_validator_v2_rescore"
@@ -222,6 +242,57 @@ class SharedHFHandles:
     dtype: str
     from_pretrained_loads_expected: int = 1
     operational_preflight: Dict[str, object] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class FrozenModelProfile:
+    profile_id: str
+    model_id: str
+    revision: str
+    hidden_dim: int
+    decoder_layers: int
+    config_model_type: str
+    chat_template_family: str
+    chat_template_required_markers: Tuple[str, ...]
+    shards: Dict[str, Dict[str, object]]
+    eligibility_order: int
+
+
+AUTHORIZED_MODEL_PROFILES = (
+    FrozenModelProfile(
+        profile_id="qwen2.5-7b-instruct",
+        model_id=DEFAULT_MODEL,
+        revision=FROZEN_MODEL_REVISION,
+        hidden_dim=3584,
+        decoder_layers=28,
+        config_model_type="qwen2",
+        chat_template_family="qwen2.5-chatml",
+        chat_template_required_markers=(
+            "<|im_start|>user",
+            "<|im_end|>",
+            "<|im_start|>assistant",
+        ),
+        shards=FROZEN_MODEL_SHARDS,
+        eligibility_order=1,
+    ),
+    FrozenModelProfile(
+        profile_id="meta-llama-3-8b-instruct",
+        model_id=LLAMA_MODEL,
+        revision=LLAMA_FROZEN_MODEL_REVISION,
+        hidden_dim=4096,
+        decoder_layers=32,
+        config_model_type="llama",
+        chat_template_family="llama3-header-eot",
+        chat_template_required_markers=(
+            "<|begin_of_text|>",
+            "<|start_header_id|>user<|end_header_id|>",
+            "<|eot_id|>",
+            "<|start_header_id|>assistant<|end_header_id|>",
+        ),
+        shards=LLAMA_FROZEN_MODEL_SHARDS,
+        eligibility_order=2,
+    ),
+)
 
 
 @dataclass(frozen=True)
@@ -396,6 +467,28 @@ def _sha256_file(path: Path, chunk_bytes: int = 8 * 1024 * 1024) -> str:
 
 def _base_package_version(value: str) -> str:
     return str(value).split("+", 1)[0]
+
+
+def resolve_frozen_model_profile(
+    model_id: str, revision: str
+) -> FrozenModelProfile:
+    model_matches = [
+        profile
+        for profile in AUTHORIZED_MODEL_PROFILES
+        if profile.model_id == str(model_id)
+    ]
+    if len(model_matches) != 1:
+        raise ValueError(
+            "unauthorized E-0016 model: "
+            f"{model_id!r}; allowed={sorted(p.model_id for p in AUTHORIZED_MODEL_PROFILES)}"
+        )
+    profile = model_matches[0]
+    if str(revision) != profile.revision:
+        raise ValueError(
+            f"wrong frozen revision for {profile.model_id}: "
+            f"expected {profile.revision}, got {revision}"
+        )
+    return profile
 
 
 def select_authorized_hardware_profile(
@@ -718,13 +811,33 @@ def _nearest_existing_parent(path: Path) -> Path:
     return cursor
 
 
+def frozen_model_snapshot_cache_complete(
+    model_profile: FrozenModelProfile, hf_hub_cache: Path
+) -> bool:
+    repo_folder = f"models--{model_profile.model_id.replace('/', '--')}"
+    snapshot = (
+        Path(hf_hub_cache)
+        / repo_folder
+        / "snapshots"
+        / model_profile.revision
+    )
+    return snapshot.is_dir() and all(
+        (snapshot / filename).is_file()
+        and (snapshot / filename).stat().st_size == int(expected["size"])
+        for filename, expected in model_profile.shards.items()
+    )
+
+
 def check_managed_disk_guard(
     profile: HardwareProfile,
     cache_identity: Dict[str, object],
     out_dir: Path,
     *,
     stage: str,
+    model_profile: Optional[FrozenModelProfile] = None,
+    model_cache_complete: bool = False,
 ) -> Dict[str, object]:
+    model_profile = model_profile or AUTHORIZED_MODEL_PROFILES[0]
     hf_home = Path(str(cache_identity["hf_home"]))
     resolved_out = Path(out_dir).resolve(strict=False)
     paths = [hf_home]
@@ -740,10 +853,10 @@ def check_managed_disk_guard(
     usage = shutil.disk_usage(_nearest_existing_parent(hf_home))
     free_gib = gb(usage.free)
     model_download_gib = gb(
-        sum(int(row["size"]) for row in FROZEN_MODEL_SHARDS.values())
+        sum(int(row["size"]) for row in model_profile.shards.values())
     )
     required_free_gib = profile.filesystem_free_reserve_gib
-    if stage == "before_model_load":
+    if stage == "before_model_load" and not model_cache_complete:
         required_free_gib += model_download_gib + 1.0
     if free_gib < required_free_gib:
         raise ValueError(
@@ -757,6 +870,8 @@ def check_managed_disk_guard(
         "managed_hard_ceiling_gib": profile.managed_disk_ceiling_gib,
         "filesystem_free_gib": free_gib,
         "filesystem_required_free_gib": required_free_gib,
+        "model_profile_id": model_profile.profile_id,
+        "model_cache_complete_before_load": bool(model_cache_complete),
     }
 
 
@@ -787,47 +902,51 @@ def check_cuda_memory_headroom(
 
 def verify_frozen_model_snapshot(
     *,
-    model_id: str,
-    revision: str,
+    model_profile: FrozenModelProfile,
     hf_hub_cache: Path,
     config: object,
 ) -> Dict[str, object]:
-    if model_id != DEFAULT_MODEL or revision != FROZEN_MODEL_REVISION:
-        raise ValueError("snapshot verification only supports the frozen E-0016 model")
     resolved_revision = getattr(config, "_commit_hash", None)
-    if resolved_revision != revision:
+    if resolved_revision != model_profile.revision:
         raise ValueError(
-            f"resolved model revision mismatch: expected {revision}, got {resolved_revision}"
+            "resolved model revision mismatch: "
+            f"expected {model_profile.revision}, got {resolved_revision}"
         )
     from huggingface_hub import snapshot_download
 
     snapshot = Path(
         snapshot_download(
-            repo_id=model_id,
-            revision=revision,
+            repo_id=model_profile.model_id,
+            revision=model_profile.revision,
             cache_dir=str(hf_hub_cache),
             local_files_only=True,
         )
     )
-    if snapshot.name != revision:
+    if snapshot.name != model_profile.revision:
         raise ValueError(
-            f"HF snapshot directory is not bound to revision {revision}: {snapshot}"
+            "HF snapshot directory is not bound to revision "
+            f"{model_profile.revision}: {snapshot}"
         )
     index_path = snapshot / "model.safetensors.index.json"
     if not index_path.is_file():
-        raise ValueError("frozen Qwen snapshot lacks model.safetensors.index.json")
+        raise ValueError(
+            f"frozen {model_profile.profile_id} snapshot lacks "
+            "model.safetensors.index.json"
+        )
     index = json.loads(index_path.read_text(encoding="utf-8"))
     indexed_shards = set(dict(index.get("weight_map") or {}).values())
-    if indexed_shards != set(FROZEN_MODEL_SHARDS):
+    if indexed_shards != set(model_profile.shards):
         raise ValueError(
-            "frozen Qwen snapshot shard set mismatch: "
-            f"expected={sorted(FROZEN_MODEL_SHARDS)}, got={sorted(indexed_shards)}"
+            f"frozen {model_profile.profile_id} snapshot shard set mismatch: "
+            f"expected={sorted(model_profile.shards)}, got={sorted(indexed_shards)}"
         )
     verified = {}
-    for filename, expected in FROZEN_MODEL_SHARDS.items():
+    for filename, expected in model_profile.shards.items():
         path = snapshot / filename
         if not path.is_file():
-            raise ValueError(f"frozen Qwen snapshot missing shard {filename}")
+            raise ValueError(
+                f"frozen {model_profile.profile_id} snapshot missing shard {filename}"
+            )
         actual_size = path.stat().st_size
         actual_sha256 = _sha256_file(path)
         if (
@@ -843,14 +962,83 @@ def verify_frozen_model_snapshot(
             "sha256": actual_sha256,
         }
     return {
-        "model_id": model_id,
-        "requested_revision": revision,
+        "model_profile_id": model_profile.profile_id,
+        "model_id": model_profile.model_id,
+        "requested_revision": model_profile.revision,
         "resolved_revision": resolved_revision,
+        "hidden_dim": model_profile.hidden_dim,
+        "decoder_layers": model_profile.decoder_layers,
+        "chat_template_family": model_profile.chat_template_family,
         "snapshot_path": str(snapshot),
         "snapshot_directory_revision_matches": True,
         "index_sha256": _sha256_file(index_path),
         "shards": verified,
         "all_shard_sha256_verified": True,
+    }
+
+
+def verify_frozen_model_architecture_and_chat_template(
+    *,
+    model_profile: FrozenModelProfile,
+    provider: HFActivationProvider,
+    hook_backend: SteeredHFBackend,
+) -> Dict[str, object]:
+    config = provider._config
+    actual_hidden_dim = int(provider.hidden_dim)
+    actual_decoder_layers = int(hook_backend.num_hidden_layers)
+    actual_model_type = str(getattr(config, "model_type", ""))
+    mismatches = {}
+    for key, expected, actual in (
+        ("hidden_dim", model_profile.hidden_dim, actual_hidden_dim),
+        ("decoder_layers", model_profile.decoder_layers, actual_decoder_layers),
+        ("model_type", model_profile.config_model_type, actual_model_type),
+    ):
+        if actual != expected:
+            mismatches[key] = {"expected": expected, "actual": actual}
+    if mismatches:
+        raise ValueError(
+            f"frozen model architecture mismatch for {model_profile.profile_id}: "
+            f"{mismatches}"
+        )
+    tokenizer = hook_backend._tokenizer
+    chat_template = getattr(tokenizer, "chat_template", None)
+    if not isinstance(chat_template, str) or not chat_template.strip():
+        raise ValueError(
+            f"{model_profile.profile_id} tokenizer lacks a frozen chat template"
+        )
+    probe = "E-0016 benign chat-template verification."
+    provider_rendered = provider._render_user_chat_prompt(
+        tokenizer, probe, model_profile.model_id
+    )
+    backend_rendered = hook_backend._render_user_chat_prompt(
+        tokenizer, probe, model_profile.model_id
+    )
+    if provider_rendered != backend_rendered or probe not in provider_rendered:
+        raise ValueError(
+            f"{model_profile.profile_id} activation/generation chat rendering mismatch"
+        )
+    missing_markers = [
+        marker
+        for marker in model_profile.chat_template_required_markers
+        if marker not in provider_rendered
+    ]
+    if missing_markers:
+        raise ValueError(
+            f"{model_profile.profile_id} chat template missing required markers: "
+            f"{missing_markers}"
+        )
+    return {
+        "model_profile_id": model_profile.profile_id,
+        "model_type": actual_model_type,
+        "hidden_dim": actual_hidden_dim,
+        "decoder_layers": actual_decoder_layers,
+        "chat_template_family": model_profile.chat_template_family,
+        "chat_template_sha256": sha_text(chat_template),
+        "rendered_probe_sha256": sha_text(provider_rendered),
+        "required_markers": list(model_profile.chat_template_required_markers),
+        "activation_and_generation_rendering_identical": True,
+        "add_generation_prompt": True,
+        "raw_harmful_text_present": False,
     }
 
 
@@ -869,6 +1057,7 @@ def _stable_operational_identity(
             "cache",
             "disk_policy",
             "model_snapshot",
+            "model_profile_validation",
         )
     }
 
@@ -1552,12 +1741,29 @@ def strict_positive_integer(value: object, *, name: str) -> int:
 
 def pre_load_eligibility_config(args: argparse.Namespace) -> Dict[str, Any]:
     seed = strict_positive_integer(args.seed, name="seed")
+    model_profile = (
+        resolve_frozen_model_profile(args.model_id, args.model_revision)
+        if args.backend == "hf"
+        else None
+    )
     config = {
         "experiment_id": EXPERIMENT_ID,
         "primary_regime": PRIMARY_REGIME,
         "backend": args.backend,
         "model_id": args.model_id,
         "model_revision": args.model_revision,
+        "model_profile": (
+            None
+            if model_profile is None
+            else {
+                "profile_id": model_profile.profile_id,
+                "hidden_dim": model_profile.hidden_dim,
+                "decoder_layers": model_profile.decoder_layers,
+                "config_model_type": model_profile.config_model_type,
+                "chat_template_family": model_profile.chat_template_family,
+                "eligibility_order": model_profile.eligibility_order,
+            }
+        ),
         "seed": seed,
         "dev_n": int(args.dev_n),
         "test_n": int(args.test_n),
@@ -1716,7 +1922,7 @@ def resolved_frozen_run_config(
     return {
         **pre_load_eligibility_config(args),
         "identity_stage": "post_resolution_full_run",
-        "identity_schema_version": 3,
+        "identity_schema_version": 4,
         "model": {
             "model_id": args.model_id,
             "revision_requested": args.model_revision,
@@ -1858,7 +2064,7 @@ def finalized_run_identity(
     return {
         **resolved_config,
         "identity_stage": "finalized_post_dev_pre_test",
-        "identity_schema_version": 4,
+        "identity_schema_version": 5,
         "selected_intervention": {
             **expected,
             "selection_metric": (
@@ -1873,6 +2079,9 @@ def finalized_run_identity(
 def assert_hf_frozen_config(args: argparse.Namespace) -> None:
     if args.backend != "hf":
         return
+    model_profile = resolve_frozen_model_profile(
+        args.model_id, args.model_revision
+    )
     seed = strict_positive_integer(args.seed, name="seed")
     actual = {
         "model_id": args.model_id,
@@ -1893,8 +2102,8 @@ def assert_hf_frozen_config(args: argparse.Namespace) -> None:
         ),
     }
     expected = {
-        "model_id": DEFAULT_MODEL,
-        "model_revision": FROZEN_MODEL_REVISION,
+        "model_id": model_profile.model_id,
+        "model_revision": model_profile.revision,
         "seed": HF_FROZEN_SEED,
         "dev_n": HF_FROZEN_DEV_N,
         "test_n": HF_FROZEN_TEST_N,
@@ -1908,6 +2117,10 @@ def assert_hf_frozen_config(args: argparse.Namespace) -> None:
         "combined_contrast": None,
         "generation_batch_size": HF_FROZEN_GENERATION_BATCH_SIZE,
     }
+    if max(expected["layers"]) > model_profile.decoder_layers:
+        raise ValueError(
+            f"frozen candidate layers exceed {model_profile.profile_id} depth"
+        )
     local_override_keys = {
         "xstest_source": XSTEST_SPEC,
         "harmful_source": HARMFUL_SPEC,
@@ -1939,6 +2152,7 @@ def build_shared_hf_handles(
     out_dir: Path,
     *,
     profile: HardwareProfile,
+    model_profile: FrozenModelProfile,
     operational_preflight: Dict[str, object],
     cache_identity: Dict[str, object],
 ) -> SharedHFHandles:
@@ -1966,9 +2180,13 @@ def build_shared_hf_handles(
         tokenizer=tokenizer,
         config=config,
     )
+    model_profile_validation = verify_frozen_model_architecture_and_chat_template(
+        model_profile=model_profile,
+        provider=provider,
+        hook_backend=hook_backend,
+    )
     snapshot = verify_frozen_model_snapshot(
-        model_id=model_id,
-        revision=model_revision,
+        model_profile=model_profile,
         hf_hub_cache=Path(str(cache_identity["hf_hub_cache"])),
         config=config,
     )
@@ -1978,10 +2196,13 @@ def build_shared_hf_handles(
         cache_identity,
         out_dir,
         stage="after_model_load",
+        model_profile=model_profile,
+        model_cache_complete=True,
     )
     completed_preflight = {
         **operational_preflight,
         "model_snapshot": snapshot,
+        "model_profile_validation": model_profile_validation,
         "post_load_memory_observation": post_load_memory,
         "post_load_disk_observation": post_load_disk,
     }
@@ -3413,17 +3634,27 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
     current_code_commit = str(run_start_source_state["head"])
     manifest_path = out_dir / "e0016_ablation_positive_control_results.json"
     profile: Optional[HardwareProfile] = None
+    model_profile: Optional[FrozenModelProfile] = None
+    model_cache_complete = False
     cache_identity: Optional[Dict[str, object]] = None
     operational_preflight: Dict[str, object] = {}
     if backend == "hf":
         allocator = configure_cuda_allocator_environment()
         profile, hardware_binding = capture_authorized_hardware_preflight()
+        model_profile = resolve_frozen_model_profile(
+            args.model_id, args.model_revision
+        )
         cache_identity = configure_hf_cache_environment(profile, out_dir)
+        model_cache_complete = frozen_model_snapshot_cache_complete(
+            model_profile, Path(str(cache_identity["hf_hub_cache"]))
+        )
         pre_load_disk = check_managed_disk_guard(
             profile,
             cache_identity,
             out_dir,
             stage="before_model_load",
+            model_profile=model_profile,
+            model_cache_complete=model_cache_complete,
         )
         operational_preflight = {
             **hardware_binding,
@@ -3468,13 +3699,18 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         backend_max_length = 0
         declared_decoder_layers = len(layers)
     else:
-        assert profile is not None and cache_identity is not None
+        assert (
+            profile is not None
+            and model_profile is not None
+            and cache_identity is not None
+        )
         hf_handles = build_shared_hf_handles(
             args.model_id,
             args.model_revision,
             args.seed,
             out_dir,
             profile=profile,
+            model_profile=model_profile,
             operational_preflight=operational_preflight,
             cache_identity=cache_identity,
         )
@@ -3647,6 +3883,8 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                 cache_identity,
                 out_dir,
                 stage="before_dev_generation",
+                model_profile=model_profile,
+                model_cache_complete=True,
             ),
         }
         atomic_write_json(
@@ -3759,6 +3997,8 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                 cache_identity,
                 out_dir,
                 stage="after_dev",
+                model_profile=model_profile,
+                model_cache_complete=True,
             ),
         }
         atomic_write_json(
@@ -3967,6 +4207,8 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                 cache_identity,
                 out_dir,
                 stage="before_test",
+                model_profile=model_profile,
+                model_cache_complete=True,
             ),
         }
         payload["hardware_profile"] = operational_preflight
@@ -4074,6 +4316,8 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                 cache_identity,
                 out_dir,
                 stage="after_test",
+                model_profile=model_profile,
+                model_cache_complete=True,
             ),
         }
         payload["hardware_profile"] = operational_preflight

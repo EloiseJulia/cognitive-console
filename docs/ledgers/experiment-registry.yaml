@@ -1529,3 +1529,49 @@ experiments:
     human bilingual stable-ID semantic review and manual screen-reader review remain
     UNVERIFIED PRE-RECRUITMENT. This row records materials and implementation
     preparation only and must not be represented as a run or paper evidence.
+
+- experiment_id: E-0017
+  parent: E-0006
+  hypothesis_id: H2
+  claim_ids:
+  - C2
+  type: diagnostic_sensitivity
+  status: planned
+  code_commit: null
+  dirty_tree: false
+  data_hash: null
+  env_hash: null
+  config_hash: null
+  model: Qwen/Qwen2.5-7B-Instruct + meta-llama/Meta-Llama-3-8B-Instruct
+  dataset: >-
+    Frozen E-0006 deliberation TEST split only (40 sorted GSM8K TEST item IDs
+    derived from the same 60-item pool and seed 20260723); runtime run_config
+    must record the exact item hash and all four frozen result hashes.
+  seed: 20260723
+  hardware: >-
+    Planned one confirmed-idle free GPU; estimated 1-3 GPU-hours; no run or GPU
+    authorization recorded by this entry.
+  started_at: null
+  ended_at: null
+  exit_code: null
+  raw_metrics: null
+  summary_metrics: null
+  artifacts:
+  - docs/research/2026-08-11-deliberation-token-sensitivity/artifact-audit.md
+  - docs/research/2026-08-11-deliberation-token-sensitivity/prereg-e0017-DRAFT.md
+  - scripts/run_deliberation_token_sensitivity.py
+  - tests/test_deliberation_token_sensitivity.py
+  - src/cognitive_console/steering/generate.py
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    Preregistration-ready implementation only; NOT RUN and NOT FROZEN. Varies
+    only max_new_tokens across 64/128/256 while preserving frozen
+    prompt/alpha/layer/item/seed/batching/scorer identities and the immutable
+    E-0006 0/12. Exact token IDs separate count-at-cap, EOS-at-cap, and
+    mechanical cap stops. Same-seed exact-prefix continuations operationalize
+    semantic materiality. Fixed-batch atomic checkpoints, clean-code/frozen-hash
+    lineage, disk/free-space guards, exact 64 reproduction, and a sealed
+    TEST-once analysis gate fail closed. A future completed run must replace
+    null lineage fields from generated run_config/run_manifest artifacts and
+    undergo independent hostile audit before any paper use.

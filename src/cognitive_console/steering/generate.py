@@ -75,6 +75,71 @@ class SteerConfig:
         return unit_vector(self.direction)
 
 
+@dataclass(frozen=True)
+class GenerationTrace:
+    """Exact continuation metadata captured from model.generate token IDs."""
+
+    text: str
+    token_ids: List[int]
+    generated_token_count: int
+    visible_token_count: int
+    raw_continuation_width: int
+    stop_reason: str
+    hit_max_new_tokens: bool
+    eos_token_id: Optional[int]
+
+    def to_dict(self) -> Dict[str, object]:
+        return {
+            "text": self.text,
+            "token_ids": list(self.token_ids),
+            "generated_token_count": int(self.generated_token_count),
+            "visible_token_count": int(self.visible_token_count),
+            "raw_continuation_width": int(self.raw_continuation_width),
+            "stop_reason": self.stop_reason,
+            "hit_max_new_tokens": bool(self.hit_max_new_tokens),
+            "eos_token_id": self.eos_token_id,
+        }
+
+
+def generation_trace_from_token_ids(
+    token_ids: Sequence[int],
+    *,
+    tokenizer,
+    max_new_tokens: int,
+    eos_token_ids: Sequence[int],
+) -> GenerationTrace:
+    """Build an exact per-row trace, separating token-cap stops from EOS stops."""
+
+    raw_ids = [int(token_id) for token_id in token_ids]
+    eos_set = {int(token_id) for token_id in eos_token_ids if token_id is not None}
+    eos_index = next(
+        (idx for idx, token_id in enumerate(raw_ids) if token_id in eos_set),
+        None,
+    )
+    if eos_index is None:
+        actual_ids = raw_ids
+        visible_ids = raw_ids
+        hit_cap = len(raw_ids) == int(max_new_tokens)
+        stop_reason = "max_new_tokens" if hit_cap else "other"
+        eos_token_id = None
+    else:
+        actual_ids = raw_ids[: eos_index + 1]
+        visible_ids = raw_ids[:eos_index]
+        hit_cap = False
+        stop_reason = "eos"
+        eos_token_id = int(raw_ids[eos_index])
+    return GenerationTrace(
+        text=str(tokenizer.decode(actual_ids, skip_special_tokens=True)),
+        token_ids=actual_ids,
+        generated_token_count=len(actual_ids),
+        visible_token_count=len(visible_ids),
+        raw_continuation_width=len(raw_ids),
+        stop_reason=stop_reason,
+        hit_max_new_tokens=hit_cap,
+        eos_token_id=eos_token_id,
+    )
+
+
 
 
 @dataclass
@@ -942,6 +1007,26 @@ class SteeredHFBackend(GenBackend):
         do_sample: bool = False,
         temperature: float = 1.0,
     ) -> List[str]:
+        """Generate a padded batch and return decoded continuations."""
+        traces = self.generate_batch_with_metadata(
+            prompts,
+            steer,
+            max_new_tokens=max_new_tokens,
+            seeds=seeds,
+            do_sample=do_sample,
+            temperature=temperature,
+        )
+        return [trace.text for trace in traces]
+
+    def generate_batch_with_metadata(
+        self,
+        prompts: Sequence[str],
+        steer: Optional[SteerConfig] = None,
+        max_new_tokens: int = 128,
+        seeds: Optional[Sequence[int]] = None,
+        do_sample: bool = False,
+        temperature: float = 1.0,
+    ) -> List[GenerationTrace]:
         """Generate a whole PADDED batch in ONE forward loop on the GPU.
 
         The steering hook is registered on the shared decoder block, so it fires
@@ -1010,4 +1095,24 @@ class SteeredHFBackend(GenBackend):
                 handle.remove()
 
         new = out[:, input_len:]
-        return [self._tokenizer.decode(row, skip_special_tokens=True) for row in new]
+        eos_values: List[int] = []
+        for source in (
+            getattr(getattr(self._model, "generation_config", None), "eos_token_id", None),
+            getattr(self._config, "eos_token_id", None),
+            getattr(self._tokenizer, "eos_token_id", None),
+        ):
+            if source is None:
+                continue
+            if isinstance(source, (list, tuple, set)):
+                eos_values.extend(int(value) for value in source)
+            else:
+                eos_values.append(int(source))
+        return [
+            generation_trace_from_token_ids(
+                row.tolist(),
+                tokenizer=self._tokenizer,
+                max_new_tokens=max_new_tokens,
+                eos_token_ids=eos_values,
+            )
+            for row in new
+        ]

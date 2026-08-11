@@ -23,6 +23,54 @@ references:
     claim_links: ["C2"]
     paper_sections: ["Abstract", "Introduction", "Related Work", "Limitations", "Future Work"]
 
+  axbench:
+    status: VERIFIED
+    verification_scope: "Primary PMLR paper and current author-maintained repository checked separately. The official PMLR Table 2 reports mean overall steering scores after steering factor selection: Prompt 0.894 and DiffMean 0.239. The mutable repository leaderboard is a separate artifact and currently also includes HyperSteer 0.917, so Table 2 must not be described as the current leaderboard or Prompt as currently strongest."
+    cite_key: "wu2025axbench"
+    title: "AxBench: Steering LLMs? Even Simple Baselines Outperform Sparse Autoencoders"
+    year: 2025
+    venue_or_source: "ICML 2025; PMLR 267:67035--67080"
+    primary_urls:
+      - "https://proceedings.mlr.press/v267/wu25a.html"
+      - "https://arxiv.org/abs/2501.17148"
+      - "https://github.com/stanfordnlp/axbench#-rank-1-steering-leaderboard"
+    claim_locations:
+      - "Abstract and Section 1: benchmark compares prompting and finetuning with SAEs, LAT, supervised steering vectors, linear probes, and ReFT on Gemma-2-2B/9B."
+      - "Table 2 and its caption: official PMLR mean overall steering scores after steering factor selection; Prompt 0.894 and DiffMean 0.239."
+      - "Sections 3.3 and 4.1: for each concept, instructions are split into a factor-selection half and a hold-out evaluation half; steering factors are selected on the former and evaluated on the latter."
+      - "Repository README rank-1 steering leaderboard: mutable artifact separate from PMLR Table 2; it currently also includes HyperSteer 0.917."
+    how_we_use_it: "Direct nearest neighbor showing that prompt-versus-representation steering comparison predates this paper. AxBench is a method-level benchmark/ranking; our contribution is a preregistered per-affordance interface qualification record with a bounded DEV-selected comparator, matched items, a 0.05 superiority margin, Bonferroni correction, coherence, measurement warning, and evidence-tiered interface state."
+    claim_links: ["C2", "C3"]
+    paper_sections: ["Introduction", "Related Work"]
+    redlines:
+      - "Do not claim that this paper is the first prompt-versus-steering comparison."
+      - "Do not write that prompting is currently strongest; the live leaderboard changes and currently includes HyperSteer above Prompt."
+      - "Do not mix published Table 2 values with current repository leaderboard values."
+
+  interpretability_without_actionability:
+    status: VERIFIED
+    verification_scope: "arXiv:2603.18353v1 primary text checked. The study uses 400 physician-adjudicated clinical vignettes. Under the original parser, the Qwen probe AUROC is 98.2%, output sensitivity is 45.1%, and the reported knowledge-action gap is 53.1 percentage points. The limitations and Appendix Table 8 report refined-parser sensitivity 0.729, narrowing the gap to 25.3 percentage points. Arm 1 explicitly includes a safety-focused prompt-engineering condition."
+    cite_key: "basu2026actionability"
+    title: "Interpretability without actionability: mechanistic methods cannot correct language model errors despite near-perfect internal representations"
+    year: 2026
+    venue_or_source: "arXiv preprint v1, submitted 2026-03-18"
+    primary_urls:
+      - "https://arxiv.org/abs/2603.18353v1"
+      - "https://arxiv.org/html/2603.18353v1"
+    claim_locations:
+      - "Abstract and Sections 2.1--2.3: 400 clinical vignettes and tested models."
+      - "Section 2.4: Arm 1 includes a safety-focused prompt-engineering suffix."
+      - "Sections 3.2 and 3.6, plus Section 4.1: original-parser 45.1% output sensitivity, 98.2% probe AUROC, and 53-percentage-point knowledge-action gap."
+      - "Section 4.6 and Appendix Table 8: refined-parser Qwen sensitivity 0.729 and remaining 25.3-percentage-point gap."
+    how_we_use_it: "Direct nearest neighbor for a representation-to-actionability gap in clinical triage. It includes a safety-focused prompting condition in Arm 1, but its four-arm design is not a uniform DEV-selected, matched-item prompt comparator with one superiority estimand across every intervention arm, and it does not produce a latent-control UI/evidence-tier affordance record."
+    claim_links: ["C2", "C3"]
+    paper_sections: ["Related Work"]
+    redlines:
+      - "Do not claim that Basu et al. has no prompt comparator; Arm 1 includes safety-focused prompt engineering."
+      - "Do not state the 45.1% sensitivity or 53.1-point gap without identifying the original parser; the refined parser reports 0.729 sensitivity and a 25.3-point gap."
+      - "Do not claim that this paper is the first interpretability/actionability or representation/output gap study."
+      - "Do not generalize the clinical preprint beyond its tested task, models, methods, and parser choices."
+
   caa:
     status: VERIFIED
     cite_key: "rimsky2024caa"

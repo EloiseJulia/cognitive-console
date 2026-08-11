@@ -289,8 +289,8 @@ remain `PRE-RECRUITMENT` human gates.
 2. Validator metrics exactly match Section 4.
 3. P3-Y Q2 requests missing scope and Q1 remains withheld.
 4. No attention-check field, free text, duplicate materials source, or hardcoded website key exists.
-5. Registry and decision notes identify bilingual implementation commit
-   `786a6a8` pending fresh hostile audit; no prior audit is silently extended.
+5. Registry and decision notes identify bilingual implementation through
+   `5820d65` pending fresh hostile audit; no prior audit is silently extended.
 6. The website is loopback-only, memory-only, and consumes authoritative JSON.
 7. No recruitment, pilot, human data, public deployment, paper edit, or claim
    upgrade occurs in this revision.

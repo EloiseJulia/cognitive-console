@@ -52,8 +52,8 @@
     understandable. Human bilingual stable-ID review is a PRE-RECRUITMENT gate;
     until then the implementation is owner-local preview only and not study
     evidence.
-15. **[MED-NEW] Prior micro-study hostile audit does not cover bilingual commit
-    `786a6a8`.** Automated material/API/export/browser/security gates pass, but
+15. **[MED-NEW] Prior micro-study hostile audit does not cover bilingual commits
+    through `5820d65`.** Automated material/API/export/browser/security gates pass, but
     the prior final audit was for monolingual commit `d17df47`. A fresh
     independent hostile audit is required before any readiness claim beyond
     `READY_FOR_OWNER_LOCAL_PREVIEW_NO_HUMAN_DATA`.

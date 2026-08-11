@@ -1394,7 +1394,7 @@ experiments:
   claim_ids: []
   type: exploratory_formative_human_protocol
   status: bilingual_implemented_pending_fresh_hostile_reaudit_nohuman
-  code_commit: 786a6a8d0f90060c58116138a2d186ac4c7cc115
+  code_commit: 5820d65976b055e8422d93721de316a3fcd48977
   dirty_tree: null
   data_hash: >-
     stimuli_sha256=7d4dc8c55e723a382dfb0d98d6dcc0c45f59c06019b531881acf8d7245e8bbf9;
@@ -1454,7 +1454,7 @@ experiments:
     shuffles, complete missingness truth table, blinded A1..D5 replacement, orthogonal
     r/r+2 rotations, and frozen bootstrap/sign-flip settings.
     D-0110 records owner authorization for DRAFT bilingual owner-preview engineering
-    only. Implementation commit 786a6a8 upgrades the sole authoritative JSON to an
+    only. Implementation commits 786a6a8 and 5820d65 upgrade the sole authoritative JSON to an
     explicit nonlocalized plus en/zh-Hans stable-ID tree with fallback=null and
     auto_detect=false. Canonical UTF-8 locale versions/hashes, completeness,
     numeric/polarity/modality/scope parity, independent leakage heuristics, neutral-copy

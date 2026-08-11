@@ -1393,14 +1393,14 @@ experiments:
   hypothesis_id: H-MICROSTUDY-CONTRACT-APPLICATION
   claim_ids: []
   type: exploratory_formative_human_protocol
-  status: v8_novice_ux_implemented_pending_hostile_audit_no_human_data
-  code_commit: 12c46e1090fb2890ec03009b592dd3b9668340a6
+  status: ready_for_owner_local_preview_no_human_data
+  code_commit: 131ff25611579d9ae6859ee0c90f0c9ef99ed248
   dirty_tree: null
   data_hash: >-
-    stimuli_sha256=1d7f57e91d8133669c523100b3fd4f3321c42c17095162c07eb95565b5e37436;
+    stimuli_sha256=39a1d03baf2d63c22d786d1ca1c82f12dc0367ae4348c1fb38d3b9a339a8a0ed;
     sequences_sha256=a63492e2862dcef84fe0d57b3f3c4f3420582c9b988f081d4ca99ae2207e47a8;
-    locale_en=1cb2733351dd112532c5fdccf77dcfd63b59ab3bfc246f1eed9e2a743917c376;
-    locale_zh-Hans=d617055d8ae38bffe4e6ce29c2d626c85287ba5fecad12510d6e4efaba834a2a
+    locale_en=1aaddd0fb3d479b4cc4963b8e3c3bd6552230e1c6cfa9151881c0af2d5ddfb2b;
+    locale_zh-Hans=16170d039fe53479e983f917fe787438924cf1b54712c985df95fd11ef7ef3c1
   env_hash: null
   config_hash: null
   model: null
@@ -1432,11 +1432,13 @@ experiments:
   - docs/plans/microstudy-contract-application-web.md
   - reviews/2026-08-10-microstudy-web-final-audit/audit-summary.md
   - reviews/2026-08-11-microstudy-bilingual-final-audit/audit-summary.md
+  - reviews/2026-08-11-microstudy-novice-ux-final-audit/audit-summary.md
   failure_reason: null
   valid_for_paper: false
   validation_notes: >-
-    D-0112 and implementation commit 12c46e1090fb2890ec03009b592dd3b9668340a6
-    advance the DRAFT materials to microstudy-stimuli-v8-bilingual-novice-ux /
+    D-0112 authorized the DRAFT novice-UX revision, and D-0113 pins final
+    implementation commit 131ff25611579d9ae6859ee0c90f0c9ef99ed248 for
+    microstudy-stimuli-v8-bilingual-novice-ux /
     microstudy-contract-application-20260811-v8-novice-ux-draft. The owner
     authorized this owner-local UX revision from three synthetic novice-agent
     blind walkthroughs after an independent proposal audit returned APPROVE.
@@ -1451,8 +1453,14 @@ experiments:
     Q2-COVERAGE copy/helper, and confirmed partial-export wording. Self-checks
     passed the authoritative validator, targeted tests, Node, complete pytest,
     isolated HTTP smoke, and Chrome/Edge bilingual 1280x800/1440x900 at
-    100%/200%; a fresh independent hostile audit is still required before V8
-    can inherit an audited owner-preview verdict.
+    100%/200%. The fresh final hostile audit found two MAJOR issues in an
+    intermediate V8 state: common onboarding leaked Contract labels, and Edge
+    could race session start before CSRF bootstrap readiness. Commit
+    131ff25611579d9ae6859ee0c90f0c9ef99ed248 closed both. The final audit
+    returned SOUND for owner-local preview scope after independently validating
+    validator, Node, full pytest, isolated HTTP, Chrome and Edge A1/D5 in
+    English and Simplified Chinese, complete/partial/download-failure paths,
+    zoom/stress, TTL/privacy/governance, and diff hygiene.
     D-0100 authorizes protocol, simulated materials, and loopback-only web engineering;
     D-0101 records the first audit revision, D-0102 the second, D-0103 the executable
     materials repair, D-0104 the initial implementation, D-0105 its first repair,
@@ -1511,8 +1519,10 @@ experiments:
     READY FOR OWNER LOCAL PREVIEW; NO HUMAN DATA. Automated Chrome/Edge tests cover
     both locales, viewports, zoom levels, keyboard selection, dynamic language/focus,
     selected-only projection, refresh-to-gate, complete/partial export, and retry behavior.
-    Any later docs-only audit-persistence commit records lineage only and is not the
-    implementation code commit. The assumption-labelled DRAFT MDE
+    The final V8 audit is persisted at
+    reviews/2026-08-11-microstudy-novice-ux-final-audit/audit-summary.md.
+    Any later docs-only audit-persistence commit records lineage only and is not
+    the implementation code commit. The assumption-labelled DRAFT MDE
     tool is not a recruitment/sample-size basis. Recruitment, ethics administration,
     public deployment, owner pilot, timing pilot, and human data collection are not authorized;
     human_collection is false. The preregistration remains DRAFT and not frozen;

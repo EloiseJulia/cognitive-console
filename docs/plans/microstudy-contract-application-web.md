@@ -1,7 +1,7 @@
 # Implementation Plan: Local Contract-Application Micro-Study
 
 - **Plan ID:** `microstudy-contract-application-web`
-- **Status:** `v8_novice_ux_implemented_pending_independent_hostile_audit_no_human_data`
+- **Status:** `ready_for_owner_local_preview_no_human_data`
 - **Current scope:** loopback website, deterministic export, analysis, MDE sensitivity, tests, and docs
 - **Spec:** [`../specs/microstudy-contract-application.md`](../specs/microstudy-contract-application.md)
 
@@ -41,11 +41,11 @@ The local web app is implemented without recruitment, pilot, public deployment,
 paper changes, or participant data.
 
 The previous V7 audited implementation identity is
-`1702d7a4ae5132b09fd29d216502504c7afb493c`. The V8 implementation must receive
-a fresh independent hostile audit before governance pins a final audited V8
-implementation identity. Its current implementation commit is
-`12c46e1090fb2890ec03009b592dd3b9668340a6`; a later registry-only commit that
-records this hash is governance lineage, not a replacement implementation.
+`1702d7a4ae5132b09fd29d216502504c7afb493c`. The final V8 implementation commit
+is `131ff25611579d9ae6859ee0c90f0c9ef99ed248`; its fresh hostile audit returned
+SOUND for owner-local preview after that commit closed common Contract-label
+leakage and an Edge CSRF readiness race. A later docs-only commit that records
+this lineage is governance persistence, not a replacement implementation.
 
 ## 2. Implemented rule
 
@@ -156,6 +156,7 @@ git diff --check
 Required validator results are documented in the spec/prereg and enforced from
 JSON. Implementation self-validation covers the validator, Node checks,
 targeted HTTP/export behavior, Chrome/Edge bilingual full flows at both
-viewports and zooms, and the full pytest suite. A fresh independent hostile
-audit remains required for V8. Registry remains `valid_for_paper=false`; there
-is no human run, public deployment, paper evidence, or confirmatory MDE result.
+viewports and zooms, and the full pytest suite. The fresh independent hostile
+audit returned SOUND for this owner-local-preview scope. Registry remains
+`valid_for_paper=false`; there is no human run, public deployment, paper
+evidence, or confirmatory MDE result.

@@ -1,7 +1,7 @@
 # Spec: Contract Legibility/Application Micro-Study
 
 - **Spec ID:** `microstudy-contract-application`
-- **Status:** `DRAFT / NOT FROZEN / novice-UX revision implemented pending independent hostile audit / no human data`
+- **Status:** `DRAFT / NOT FROZEN / novice-UX audit SOUND for owner-local preview / no human data`
 - **Study class:** exploratory formative micro-study
 - **Authorized:** DRAFT protocol, simulated bilingual materials, validators, and owner-local loopback implementation
 - **Not authorized:** recruitment, ethics administration, pilot/data collection, public deployment, or paper changes
@@ -27,6 +27,10 @@ The novice-UX revision is material schema
 `microstudy-contract-application-20260811-v8-novice-ux-draft`. V7 and V8
 previews are distinct materials and must not be pooled or represented as one
 version. The signed V4 export schema is unchanged.
+
+The final audited V8 implementation commit is
+`131ff25611579d9ae6859ee0c90f0c9ef99ed248`. Any later docs-only commit that
+persists audit or ledger lineage is not a replacement implementation commit.
 
 Run:
 
@@ -333,11 +337,12 @@ remain `PRE-RECRUITMENT` human gates.
 2. Validator metrics exactly match Section 4.
 3. P3-Y Q2 requests missing scope and Q1 remains withheld.
 4. No attention-check field, free text, duplicate materials source, or hardcoded website key exists.
-5. Registry and D-0112 identify V8 as an owner-authorized local-preview UX
-   revision based on synthetic novice-agent role-play, not human-subject data.
+5. Registry, D-0112, and D-0113 identify V8 as an owner-authorized local-preview
+   UX revision based on synthetic novice-agent role-play, not human-subject data.
    The prior V7 audited implementation remains
-   `1702d7a4ae5132b09fd29d216502504c7afb493c`; V8 requires a fresh independent
-   hostile implementation audit before any equivalent audited-lineage claim.
+   `1702d7a4ae5132b09fd29d216502504c7afb493c`; the final V8 implementation is
+   `131ff25611579d9ae6859ee0c90f0c9ef99ed248`, with a fresh hostile-audit
+   verdict of SOUND only for owner-local preview.
 6. The website is loopback-only, memory-only, and consumes authoritative JSON.
 7. No recruitment, pilot, human data, public deployment, paper edit, or claim
    upgrade occurs in this revision.

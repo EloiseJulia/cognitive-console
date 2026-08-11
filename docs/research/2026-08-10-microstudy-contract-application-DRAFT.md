@@ -144,13 +144,17 @@ This remains `DRAFT / NOT FROZEN`. The prior V7 bilingual implementation was
 independently audited at `1702d7a4ae5132b09fd29d216502504c7afb493c`. The V8
 novice-UX revision uses schema/material identity
 `microstudy-stimuli-v8-bilingual-novice-ux` /
-`microstudy-contract-application-20260811-v8-novice-ux-draft` and requires a
-fresh hostile implementation audit. V7 and V8 exports cannot be treated as one
-material version. Owner authorization is based on synthetic novice-agent
-role-play feedback; those AI role-plays are not human-subject data and cannot
-demonstrate ten-second comprehension or usability. This revision does not
-authorize recruitment, ethics activity, timing pilot, human data collection,
-public deployment, paper edit, or claim upgrade. Human English/Chinese stable-ID
+`microstudy-contract-application-20260811-v8-novice-ux-draft`. Its final
+implementation is pinned to `131ff25611579d9ae6859ee0c90f0c9ef99ed248`; a
+later docs-only persistence commit is lineage, not a replacement implementation
+commit. A fresh hostile audit returned SOUND only for owner-local preview after
+the final implementation closed common Contract-label leakage and an Edge CSRF
+readiness race. V7 and V8 exports cannot be treated as one material version.
+Owner authorization is based on synthetic novice-agent role-play feedback;
+those AI role-plays are not human-subject data and cannot demonstrate
+ten-second comprehension or usability. This revision does not authorize
+recruitment, ethics activity, timing pilot, human data collection, public
+deployment, paper edit, or claim upgrade. Human English/Chinese stable-ID
 semantic review, manual screen-reader evaluation, ethics/recruitment approval,
-timing/MDE gates, and Protocol Freeze remain required. Automated QA cannot close
-a human gate or turn this micro-study into paper evidence.
+timing/MDE gates, and Protocol Freeze remain required. Automated QA cannot
+close a human gate or turn this micro-study into paper evidence.

@@ -5,6 +5,29 @@
 
 ---
 
+## 2026-08-11 · D-0113 · Novice-friendly owner-local preview gate passes only
+- The final V8 novice-UX implementation commit is
+  `131ff25611579d9ae6859ee0c90f0c9ef99ed248`. Any later docs-only commit that
+  persists this audit and ledger lineage is not the implementation commit.
+- The hostile audit found two MAJOR issues in an intermediate V8 state: common
+  onboarding exposed Contract labels, and Edge could race session start before
+  CSRF bootstrap readiness. The final implementation closed both.
+- A fresh independent rerun returned `SOUND` for owner-local preview scope after
+  validator, Node, full-pytest, independent HTTP, Chrome and Edge A1/D5
+  English/Simplified-Chinese complete/partial/download-failure, zoom/stress,
+  TTL/privacy/governance, and diff-hygiene checks.
+- This passes only the novice-friendly owner-local preview gate. Synthetic
+  novice-agent feedback is AI role-play, not human data, and does not establish
+  ten-second comprehension, usability, accessibility, timing, or treatment
+  validity.
+- Human bilingual stable-ID semantic review, manual screen-reader evaluation,
+  ethics determination/administration, recruitment authorization, owner timing,
+  defensible primary-test MDE/sample-size work, and Protocol Freeze remain open.
+- The maximum state is `ready_for_owner_local_preview_no_human_data`;
+  `valid_for_paper=false`. No recruitment, participant contact, human-data
+  collection, public deployment, paper evidence, claim/result upgrade, or
+  protocol freeze is authorized.
+
 ## 2026-08-11 · D-0112 · Owner authorizes synthetic-feedback novice-UX revision for local preview only
 - The owner authorized implementation of the fixed novice-UX proposal after
   three zero-background synthetic novice-agent blind walkthroughs and an

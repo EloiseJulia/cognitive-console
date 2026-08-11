@@ -37,7 +37,9 @@ TRUTH_JUDGE_REVISION = "8f718cb4e68bc30a488727a0e37190835a7c129e"
 INFO_JUDGE_ID = "allenai/truthfulqa-info-judge-llama2-7B"
 INFO_JUDGE_REVISION = "72601eff294cbf7e8d7188ae82397e19cb9bb9bd"
 PROMPT_BANK_RELATIVE = Path("data/strongest_prompts/truthfulness_positive_control.jsonl")
-PROMPT_BANK_SHA256 = "597d5ea1dc07d1169912978ca3ef35a2d4f6cf185270eb0994ebf76c872b122c"
+# SHA-256 over UTF-8 bytes after CRLF/lone-CR normalization to LF. This is a
+# line-ending portability fix only; the frozen prompt JSON and text are unchanged.
+PROMPT_BANK_SHA256 = "9d58c45e7266888e107eaca3ddb691e8ca966f9aea74fa63623d23e9fcf68bc9"
 OFFICIAL_BASE_PROMPT_ID = "truth-p01-official-default"
 _GENERATION_CONFIG_METADATA_KEYS = GENERATION_CONFIG_METADATA_KEYS
 _JUDGE_SNAPSHOT_NAMES = {
@@ -421,11 +423,16 @@ def official_twofold_splits(
 
 def load_prompt_bank(repo_root: Path) -> List[Tuple[str, str]]:
     path = Path(repo_root) / PROMPT_BANK_RELATIVE
-    if hashlib.sha256(path.read_bytes()).hexdigest() != PROMPT_BANK_SHA256:
+    canonical_bytes = (
+        path.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    )
+    if hashlib.sha256(canonical_bytes).hexdigest() != PROMPT_BANK_SHA256:
         raise ValueError("truthfulness prompt-bank byte hash mismatch")
     rows: List[Tuple[str, str]] = []
     seen = set()
-    for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+    for lineno, line in enumerate(
+        canonical_bytes.decode("utf-8").splitlines(), 1
+    ):
         if not line.strip():
             continue
         row = json.loads(line)

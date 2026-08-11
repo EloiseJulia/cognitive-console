@@ -48,7 +48,7 @@ renormalize, hide, or relabel 0/12 as 1/13.
 | Truth judge | `allenai/truthfulqa-truth-judge-llama2-7B@8f718cb4e68bc30a488727a0e37190835a7c129e` |
 | Info judge | `allenai/truthfulqa-info-judge-llama2-7B@72601eff294cbf7e8d7188ae82397e19cb9bb9bd` |
 | Prompt bank | `data/strongest_prompts/truthfulness_positive_control.jsonl` |
-| Prompt-bank SHA-256 | `597d5ea1dc07d1169912978ca3ef35a2d4f6cf185270eb0994ebf76c872b122c` |
+| Prompt-bank SHA-256 | LF-normalized `9d58c45e7266888e107eaca3ddb691e8ca966f9aea74fa63623d23e9fcf68bc9` |
 | Generator EOS IDs | exact ordered list `[128001, 128009]` |
 | Generator EOS mapping | `128001=<|end_of_text|>`, `128009=<|eot_id|>` |
 | Transformers runtime | exact `4.44.2` |

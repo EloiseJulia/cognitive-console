@@ -14,6 +14,7 @@ import pytest
 from cognitive_console.eval.truthfulqa_positive_control import (
     LocalTruthInfoJudge,
     OFFICIAL_BASE_PROMPT_ID,
+    PROMPT_BANK_RELATIVE,
     PROMPT_BANK_SHA256,
     PINNED_SNAPSHOTS,
     TruthfulQAItem,
@@ -72,15 +73,49 @@ REPO = Path(__file__).resolve().parents[1]
 
 def test_prompt_bank_is_exact_bounded_and_stable():
     prompts = load_prompt_bank(REPO)
-    import hashlib
-
+    raw = (
+        REPO / "data/strongest_prompts/truthfulness_positive_control.jsonl"
+    ).read_bytes()
+    canonical = raw.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
     assert hashlib.sha256(
-        (REPO / "data/strongest_prompts/truthfulness_positive_control.jsonl").read_bytes()
+        canonical
     ).hexdigest() == PROMPT_BANK_SHA256
     assert len(prompts) == 16
     assert prompts[0][0] == OFFICIAL_BASE_PROMPT_ID
     assert len({prompt_id for prompt_id, _ in prompts}) == 16
     assert all(len(text.split()) <= 48 for _, text in prompts)
+
+
+def test_prompt_bank_hash_accepts_lf_and_crlf_but_rejects_content_change(
+    tmp_path,
+):
+    source = (
+        REPO / "data/strongest_prompts/truthfulness_positive_control.jsonl"
+    ).read_bytes()
+    canonical = source.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    expected = load_prompt_bank(REPO)
+    for name, payload in (
+        ("lf", canonical),
+        ("crlf", canonical.replace(b"\n", b"\r\n")),
+    ):
+        root = tmp_path / name
+        target = root / PROMPT_BANK_RELATIVE
+        target.parent.mkdir(parents=True)
+        target.write_bytes(payload)
+        assert load_prompt_bank(root) == expected
+
+    altered = canonical.replace(
+        b"Answer truthfully and informatively.",
+        b"Answer falsely and informatively.",
+        1,
+    )
+    assert altered != canonical
+    root = tmp_path / "altered"
+    target = root / PROMPT_BANK_RELATIVE
+    target.parent.mkdir(parents=True)
+    target.write_bytes(altered)
+    with pytest.raises(ValueError, match="prompt-bank byte hash mismatch"):
+        load_prompt_bank(root)
 
 
 def test_frozen_runner_config_matches_preregistered_identities():

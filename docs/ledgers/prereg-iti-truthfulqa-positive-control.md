@@ -1,13 +1,16 @@
 # PRE-REGISTRATION — Official-style multi-head ITI × TruthfulQA positive control
 
 - **Experiment ID:** `iti-truthfulqa-positive-control-20260811`
-- **Status:** **FROZEN 2026-08-11 — corrected fourth targeted audit repair pending fresh independent hostile re-audit**
+- **Status:** **FROZEN 2026-08-11 — owner-authorized AutoDL operational profile added 2026-08-12; fresh independent hostile re-audit pending**
 - **Purpose:** determine whether the comparator-bound qualification pipeline can
   register a coherent, specific, real latent behavioral advantage in at least one
   published-effect setting.
 - **Human authorization:** on **2026-08-11**, the owner explicitly authorized
-  this experiment and future A800 use. No GPU was unoccupied at authorization
-  time; this implementation phase is local/CPU only.
+  this experiment and future A800 use. On **2026-08-12**, the owner reported
+  renting and authorizing a dedicated single-GPU AutoDL host with one NVIDIA
+  GeForce RTX 4080 SUPER (32760 MiB), CUDA 12.x, bf16, PyTorch 2.8, Python 3.12,
+  and a 50 GiB `/root/autodl-tmp` data disk. This change authorizes an alternate
+  operational profile only; no GPU, preflight, DEV, or TEST is performed here.
 - **Validity:** the separate
   `iti-truthfulqa-positive-control-smoke-20260811` schema and all tiny-model artifacts are
   `valid_for_paper=false`. Real DEV is not evidence. Real TEST remains
@@ -48,6 +51,7 @@ renormalize, hide, or relabel 0/12 as 1/13.
 | Prompt-bank SHA-256 | `597d5ea1dc07d1169912978ca3ef35a2d4f6cf185270eb0994ebf76c872b122c` |
 | Generator EOS IDs | exact ordered list `[128001, 128009]` |
 | Generator EOS mapping | `128001=<|end_of_text|>`, `128009=<|eot_id|>` |
+| Transformers runtime | exact `4.44.2` |
 
 Public metadata reported all four repositories ungated on 2026-08-11.
 TruthfulQA and the two judge cards declare Apache-2.0; the generator remains
@@ -168,6 +172,16 @@ overriding repository defaults, with greedy decoding, one beam/return, and
 `max_new_tokens=3`. Its complete effective config and hash are stored in the
 judge runtime fingerprint.
 
+The executable environment is pinned to `transformers==4.44.2`. In that
+version, the multi-head pre-hook receives the three-dimensional Llama
+`self_attn.o_proj` input used by this implementation; eager attention is
+explicitly requested and fingerprinted; list-valued EOS IDs are supported; and
+all fields present in the 4.44.2 `GenerationConfig` are passed explicitly.
+Later-version fields absent from 4.44.2 (`top_h`, compile/continuous-batching,
+new assistant fields, `max_cache_len`, `prefill_chunk_size`, and `use_mtp`) have
+only their frozen neutral values and are recorded as protocol-only compatibility
+metadata rather than silently passed as unsupported kwargs.
+
 Each free-form answer is scored locally:
 
 ```text
@@ -240,18 +254,18 @@ Without an external coordination service, the code does not claim
 cross-machine uniqueness. Immediately before issuing schema-v3 TEST
 authorization, a human operational gate must verify that no TEST was consumed
 or authorized on any other machine and must sign only the fingerprint emitted
-by the designated A800 host.
+by the exact owner-authorized host that produced the audited DEV manifest.
 
 Before consumption or TEST execution-identity hashing, TEST re-verifies the
 complete DEV artifact-hash manifest and constructs execution-fingerprint
-**schema v2**. TEST forcibly loads both current judges sequentially even when
+**schema v3**. TEST forcibly loads both current judges sequentially even when
 their pre-consumption checkpoints are complete; snapshot/runtime provenance
 restored from checkpoint metadata cannot satisfy this gate. The freshly loaded
 truth and information judge snapshots and runtime fingerprints, plus the
 current generator snapshot/config/tokenizer/multi-EOS mapping/effective
 generation config, selected physical GPU identity, eager-attention
 implementation/source hashes, and Python/dependency environment must equal the
-audited DEV schema-v2 fingerprint exactly. Any mismatch stops before
+audited DEV schema-v3 fingerprint exactly. Any mismatch stops before
 authorization consumption.
 
 For outer TEST item `i`:
@@ -337,10 +351,14 @@ All outcomes are reportable. No outcome authorizes parameter tuning or rerun.
   inspectable atomic binding to the persisted fold-config file/hash, complete
   data/model/environment/cache fingerprints, run-config hash, and exact ordered
   job plan. Resume rejects any binding or job-field mismatch.
-- Generation is checkpointed before judging. The two `13,477,476,426`-byte
-  judge snapshots are loaded and scored sequentially from separate dedicated
-  caches; each judge cache is purged before the next judge is downloaded, so the
-  generator plus both judge caches never coexist on disk.
+- Generation is checkpointed before judging. The generator is irreversibly
+  released, Python references are cleared, garbage collection runs, and the
+  CUDA cache is emptied before either judge may load. A hard residency guard
+  requires both allocated and reserved CUDA memory to be at most 512 MiB after
+  generator unload. A non-blocking judge-residency lock permits only one judge
+  model at a time. The two `13,477,476,426`/`13,477,476,391`-byte judge
+  snapshots remain pinned on disk but are loaded, scored, and unloaded
+  sequentially.
 - Truth and informativeness judge outputs are independently append-checkpointed
   by generation job identity. Each judge checkpoint has an atomic manifest bound
   to the stable complete ordered generation plan (never merely the currently
@@ -356,7 +374,7 @@ All outcomes are reportable. No outcome authorizes parameter tuning or rerun.
 - Runtime fingerprints include Python, PyTorch/CUDA/cuDNN, Transformers,
   datasets, accelerate, NumPy, **scikit-learn**, model config, tokenizer
   class/vocabulary, exact two-EOS mapping, eager-attention and o-projection
-  implementation classes, and forward-source hashes. GPU schema v2 records the
+  implementation classes, and forward-source hashes. Execution schema v3 records the
   current CUDA logical index, raw `CUDA_DEVICE_ORDER`, raw
   `CUDA_VISIBLE_DEVICES`, its ordered logical-to-visible-token mapping, and the
   selected physical GPU's UUID and canonical PCI bus ID resolved by a
@@ -375,24 +393,39 @@ All outcomes are reportable. No outcome authorizes parameter tuning or rerun.
   chain record, raw audited DEV SHA-256, audited execution fingerprint, full
   matched-random configs/direction hashes and their exact PCG64 seeds, all
   raw/scored records, and reconstructable adjudication.
-- A dedicated virtualenv is mandatory. HF Home, both Hub cache variable names,
-  Hub assets, Xet, Transformers, datasets/modules, XDG, Torch, generator, and
-  sequential judge caches are forced and runtime-verified under
-  `<out_dir>/.cache`.
-- The 60 GiB planning budget and hard `<70 GiB` ceiling are constants with no
-  CLI override. Exact pinned concurrent worst case is precomputed from
-  generator `16,069,771,000` bytes, largest sequential judge
-  `13,477,476,426` bytes, dataset `504,836` bytes, and an 8 GiB artifact reserve;
-  exact concurrent total `38,137,686,854` bytes. Disk is checked before each snapshot
-  and after every downloaded file.
+- The original A800 profile retains its dedicated-virtualenv requirement,
+  60 GiB planning budget, hard `<70 GiB` ceiling, and 8 GiB artifact reserve.
+  The owner-authorized AutoDL profile requires the exact
+  `/root/miniconda3/bin/python`, `HF_HOME=/root/autodl-tmp/hf`, and an external
+  `OUT_DIR` under `/root/autodl-tmp`; all Hub, Transformers, datasets/modules,
+  XDG, Torch, generator, and judge caches are forced and runtime-verified under
+  that HF root.
+- All pinned snapshots persist on disk: generator `16,069,771,000` bytes,
+  truth judge `13,477,476,426`, info judge `13,477,476,391`, and dataset
+  `504,836`, totaling `43,025,228,653` bytes (40.0704 GiB). The AutoDL profile
+  adds a 3 GiB artifact reserve, giving an exact projected worst case of
+  `46,246,454,125` bytes (43.0704 GiB), a non-overridable 44 GiB planning
+  budget, and hard `<47 GiB` ceiling on the 50 GiB data disk. Resume projection
+  counts only missing pinned bytes. Disk is checked before every snapshot,
+  after every downloaded file, and after model loads.
 - HF run artifacts must be in a dedicated directory **outside the source
   repository** and remain `valid_for_paper=false` until hostile results audit.
 
 ### 12.1 Exact GPU preflight assertions
 
-Before real DEV, code must assert: CUDA available; device name contains
-`A800`; total memory at least 75 GiB; current CUDA logical device resolves
-through CUDA-reported PCI/UUID identity to exactly one targeted physical
+Before real DEV, code must assert CUDA availability and exactly one named,
+owner-authorized profile:
+
+1. `a800-80gb`: CUDA and physical names contain `A800`, with at least 75 GiB;
+2. `autodl-rtx4080-super-32gb`: exact device-name allowlist
+   `NVIDIA GeForce RTX 4080 SUPER`, 32000–33000 MiB, one visible device,
+   `CUDA_VISIBLE_DEVICES=0`, logical index 0, bf16, CUDA 12.x, PyTorch 2.8.x,
+   Python 3.12 at `/root/miniconda3/bin/python`, Transformers 4.44.2,
+   datasets 2.21.x, installed scikit-learn/accelerate, root identity, and
+   HF/output paths under `/root/autodl-tmp`.
+
+Any other or unknown profile fails closed. The current CUDA logical device must
+resolve through CUDA-reported PCI/UUID identity to exactly one targeted physical
 `nvidia-smi` row; the physical UUID and PCI bus ID are non-ambiguous; 32 decoder
 layers; hidden size 4096; 32 query heads; head dimension 128; eager attention;
 all pinned snapshot hashes; the complete effective generator and judge decoding
@@ -407,7 +440,7 @@ generation and supports no claim.
 ## 13. Commands after independent audit
 
 Provision and verify the fixed host-local registry directory once on the
-designated A800 host:
+owner-authorized execution host:
 
 ```bash
 sudo install -d -m 0700 -o "$(id -un)" -g "$(id -gn)" \
@@ -425,6 +458,7 @@ export CUDA_VISIBLE_DEVICES=1
 export OUT_DIR=/home/elzhang/cognitive-console-runs/iti-truthfulqa-positive-control-20260811
 python scripts/run_iti_truthfulqa_positive_control.py \
   --backend hf --phase preflight \
+  --hardware-profile a800-80gb \
   --model-id NousResearch/Meta-Llama-3-8B-Instruct \
   --model-revision 53346005fb0ef11d3b6a83b12c895cca40156b6c \
   --expected-code-commit <AUDITED_COMMIT_SHA> \
@@ -433,7 +467,7 @@ python scripts/run_iti_truthfulqa_positive_control.py \
   --activation-batch-size 8
 ```
 
-DEV only; it repeats the pinned snapshot, CUDA/A800, eager-attention,
+DEV only; it repeats the pinned snapshot, selected hardware-profile, eager-attention,
 effective-generation, tokenizer, and hook assertions:
 
 ```bash
@@ -442,12 +476,51 @@ export CUDA_VISIBLE_DEVICES=1
 export OUT_DIR=/home/elzhang/cognitive-console-runs/iti-truthfulqa-positive-control-20260811
 python scripts/run_iti_truthfulqa_positive_control.py \
   --backend hf --phase dev \
+  --hardware-profile a800-80gb \
   --model-id NousResearch/Meta-Llama-3-8B-Instruct \
   --model-revision 53346005fb0ef11d3b6a83b12c895cca40156b6c \
   --expected-code-commit <AUDITED_COMMIT_SHA> \
   --out-dir "$OUT_DIR" \
   --seed 20260811 --k 5 --max-new-tokens 64 \
   --activation-batch-size 8
+```
+
+Owner-authorized AutoDL preflight (no DEV/TEST generation):
+
+```bash
+export CUDA_DEVICE_ORDER=PCI_BUS_ID
+export CUDA_VISIBLE_DEVICES=0
+export HF_ENDPOINT=https://hf-mirror.com
+export HF_HOME=/root/autodl-tmp/hf
+export OUT_DIR=/root/autodl-tmp/iti-truthfulqa-positive-control-20260811
+/root/miniconda3/bin/python scripts/run_iti_truthfulqa_positive_control.py \
+  --backend hf --phase preflight \
+  --hardware-profile autodl-rtx4080-super-32gb \
+  --model-id NousResearch/Meta-Llama-3-8B-Instruct \
+  --model-revision 53346005fb0ef11d3b6a83b12c895cca40156b6c \
+  --expected-code-commit <AUDITED_COMMIT_SHA> \
+  --out-dir "$OUT_DIR" \
+  --seed 20260811 --k 5 --max-new-tokens 64 \
+  --activation-batch-size 1
+```
+
+Owner-authorized AutoDL DEV only:
+
+```bash
+export CUDA_DEVICE_ORDER=PCI_BUS_ID
+export CUDA_VISIBLE_DEVICES=0
+export HF_ENDPOINT=https://hf-mirror.com
+export HF_HOME=/root/autodl-tmp/hf
+export OUT_DIR=/root/autodl-tmp/iti-truthfulqa-positive-control-20260811
+/root/miniconda3/bin/python scripts/run_iti_truthfulqa_positive_control.py \
+  --backend hf --phase dev \
+  --hardware-profile autodl-rtx4080-super-32gb \
+  --model-id NousResearch/Meta-Llama-3-8B-Instruct \
+  --model-revision 53346005fb0ef11d3b6a83b12c895cca40156b6c \
+  --expected-code-commit <AUDITED_COMMIT_SHA> \
+  --out-dir "$OUT_DIR" \
+  --seed 20260811 --k 5 --max-new-tokens 64 \
+  --activation-batch-size 1
 ```
 
 Only if DEV returns `ELIGIBLE`, and after the independent audit authorizes the
@@ -459,6 +532,7 @@ export CUDA_VISIBLE_DEVICES=1
 export OUT_DIR=/home/elzhang/cognitive-console-runs/iti-truthfulqa-positive-control-20260811
 python scripts/run_iti_truthfulqa_positive_control.py \
   --backend hf --phase test \
+  --hardware-profile a800-80gb \
   --model-id NousResearch/Meta-Llama-3-8B-Instruct \
   --model-revision 53346005fb0ef11d3b6a83b12c895cca40156b6c \
   --expected-code-commit <AUDITED_COMMIT_SHA> \
@@ -473,9 +547,10 @@ python scripts/run_iti_truthfulqa_positive_control.py \
 Protocol/implementation parity was checked on 2026-08-11 without downloading
 large weights or touching a GPU:
 
-- 80 targeted CPU tests passed across
-  `test_iti_truthfulqa_positive_control.py`, `test_iti.py`, and
-  `test_adjudicate_c2b.py`;
+- 114 targeted CPU tests passed under exact `transformers==4.44.2` across
+  `test_iti_truthfulqa_positive_control.py`, `test_iti.py`,
+  `test_disk_guard.py`, `test_gpu_phase0.py`, and
+  `test_run_c2b_adjudication.py`;
 - the separate synthetic schema and every run/final/checkpoint manifest are
   explicitly `backend=synthetic, phase=smoke`, use no DEV/TEST partition labels
   or scientific verdict names, return only `SMOKE_PASS_PATH_EXERCISED`, and are
@@ -493,8 +568,11 @@ large weights or touching a GPU:
   cross-HOME/cross-output/concurrent authorization replay, registry hash-chain
   tampering, all five TEST execution-fingerprint dimensions, mocked multi-GPU
   logical-to-physical UUID/PCI mapping, fixed disk limits, pinned file/LFS
-  hashes, row-level judge failure, model-load failure records, explicit CLI
-  backend/phase, and no-CUDA preflight rejection;
+  hashes, A800/AutoDL profile acceptance and unknown/drifted-profile rejection,
+  exact AutoDL root/Python/HF/output binding, irreversible generator release,
+  exclusive judge residency, Transformers-version rejection, row-level judge
+  failure, model-load failure records, explicit CLI backend/phase, and no-CUDA
+  preflight rejection;
 - one earlier transient local NumPy 22.9 MiB allocation failure was rerun alone
   and the complete selection subsequently passed. It produced no experiment
   artifact or protocol change.
@@ -507,3 +585,10 @@ judge kinds `truth`/`info` to pinned snapshot keys
 frozen 0/12 grid. The protocol remains FROZEN, does not authorize real DEV
 before a fresh independent hostile re-audit, and never authorizes TEST except
 through §§7–8.
+
+The 2026-08-12 AutoDL repair is operational only and likewise performs no GPU,
+preflight, DEV, or TEST. It retains every scientific field and gate while adding
+the owner-authorized `autodl-rtx4080-super-32gb` profile, exact Transformers
+4.44.2 compatibility, sequential GPU model residency, and 50 GiB data-disk
+guards. Its exact commit remains pending at preregistration-edit time and must be
+independently audited before real preflight or DEV.

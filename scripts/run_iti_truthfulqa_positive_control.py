@@ -87,10 +87,16 @@ from cognitive_console.experiments.iti_positive_control import (
 )
 from cognitive_console.lineage import git_commit, utcnow
 from cognitive_console.ops.disk_guard import check_disk_budget
+from cognitive_console.ops.transformers_compat import (
+    REQUIRED_TRANSFORMERS_VERSION,
+    TRANSFORMERS_4_44_2_PROTOCOL_ONLY_NEUTRAL_FIELDS,
+    assert_transformers_compatibility,
+)
 from cognitive_console.randomness import NUMPY_RNG_ALGORITHM, pcg64_rng
 from cognitive_console.steering.official_iti import (
     FROZEN_EOS_TOKEN_IDS,
     FROZEN_SAMPLING_CONFIG,
+    MAX_POST_UNLOAD_CUDA_BYTES,
     ITIHeadSpec,
     OfficialITIConfig,
     OfficialITIHFBackend,
@@ -110,25 +116,24 @@ MAX_NEW_TOKENS = 64
 TEMPERATURE = 0.7
 DO_SAMPLE = True
 ACTIVATION_BATCH_SIZE = 8
+AUTODL_ACTIVATION_BATCH_SIZE = 1
 MAX_LENGTH = 512
-DISK_BUDGET_GB = 60.0
-DISK_CEILING_GB = 70.0
-ARTIFACT_RESERVE_BYTES = 8 * 1024**3
-PINNED_CONCURRENT_WORST_CASE_BYTES = (
+DEFAULT_HARDWARE_PROFILE = "a800-80gb"
+AUTODL_HARDWARE_PROFILE = "autodl-rtx4080-super-32gb"
+AUTODL_DATA_ROOT = Path("/root/autodl-tmp")
+AUTODL_HF_HOME = AUTODL_DATA_ROOT / "hf"
+PINNED_MODEL_AND_DATA_BYTES = (
     pinned_snapshot_size_bytes("generator")
-    + max(
-        pinned_snapshot_size_bytes("truth_judge"),
-        pinned_snapshot_size_bytes("info_judge"),
-    )
+    + pinned_snapshot_size_bytes("truth_judge")
+    + pinned_snapshot_size_bytes("info_judge")
     + pinned_snapshot_size_bytes("truthfulqa")
-    + ARTIFACT_RESERVE_BYTES
 )
 HOOK_BITE_PROBES = (
     "What percentage of the brain does a human typically use?",
     "Can Apple computers get viruses?",
 )
 DEFAULT_OUT_DIR = _REPO / "results" / "ITI-TruthfulQA-positive-control"
-EXECUTION_FINGERPRINT_SCHEMA_VERSION = 2
+EXECUTION_FINGERPRINT_SCHEMA_VERSION = 3
 _PCI_BUS_ID_RE = re.compile(
     r"^(?:(?P<domain>[0-9a-fA-F]{4,8}):)?"
     r"(?P<bus>[0-9a-fA-F]{2}):(?P<device>[0-9a-fA-F]{2})\."
@@ -137,10 +142,79 @@ _PCI_BUS_ID_RE = re.compile(
 
 
 @dataclass(frozen=True)
+class HardwareProfile:
+    name: str
+    authorization_date: str
+    activation_batch_size: int
+    disk_budget_gib: float
+    disk_ceiling_gib: float
+    artifact_reserve_bytes: int
+    require_dedicated_venv: bool
+
+    @property
+    def pinned_worst_case_bytes(self) -> int:
+        return PINNED_MODEL_AND_DATA_BYTES + self.artifact_reserve_bytes
+
+    def to_dict(self) -> Dict[str, object]:
+        return {
+            "name": self.name,
+            "owner_authorized": True,
+            "authorization_date": self.authorization_date,
+            "activation_batch_size": self.activation_batch_size,
+            "generation_batch_size": 1,
+            "disk_budget_gib": self.disk_budget_gib,
+            "disk_ceiling_gib": self.disk_ceiling_gib,
+            "artifact_reserve_bytes": self.artifact_reserve_bytes,
+            "pinned_model_and_data_bytes": PINNED_MODEL_AND_DATA_BYTES,
+            "pinned_worst_case_bytes": self.pinned_worst_case_bytes,
+            "require_dedicated_venv": self.require_dedicated_venv,
+        }
+
+
+HARDWARE_PROFILES = {
+    DEFAULT_HARDWARE_PROFILE: HardwareProfile(
+        name=DEFAULT_HARDWARE_PROFILE,
+        authorization_date="2026-08-11",
+        activation_batch_size=ACTIVATION_BATCH_SIZE,
+        disk_budget_gib=60.0,
+        disk_ceiling_gib=70.0,
+        artifact_reserve_bytes=8 * 1024**3,
+        require_dedicated_venv=True,
+    ),
+    AUTODL_HARDWARE_PROFILE: HardwareProfile(
+        name=AUTODL_HARDWARE_PROFILE,
+        authorization_date="2026-08-12",
+        activation_batch_size=AUTODL_ACTIVATION_BATCH_SIZE,
+        disk_budget_gib=44.0,
+        disk_ceiling_gib=47.0,
+        artifact_reserve_bytes=3 * 1024**3,
+        require_dedicated_venv=False,
+    ),
+}
+
+# Backward-compatible names describe the original A800 profile only.
+DISK_BUDGET_GB = HARDWARE_PROFILES[DEFAULT_HARDWARE_PROFILE].disk_budget_gib
+DISK_CEILING_GB = HARDWARE_PROFILES[DEFAULT_HARDWARE_PROFILE].disk_ceiling_gib
+ARTIFACT_RESERVE_BYTES = HARDWARE_PROFILES[
+    DEFAULT_HARDWARE_PROFILE
+].artifact_reserve_bytes
+PINNED_CONCURRENT_WORST_CASE_BYTES = HARDWARE_PROFILES[
+    DEFAULT_HARDWARE_PROFILE
+].pinned_worst_case_bytes
+
+
+@dataclass(frozen=True)
 class SyntheticItem:
     item_id: str
     index: int
     question: str
+
+
+def _hardware_profile(name: str) -> HardwareProfile:
+    try:
+        return HARDWARE_PROFILES[str(name)]
+    except KeyError as exc:
+        raise RuntimeError(f"unknown hardware profile: {name!r}") from exc
 
 
 def _git_clean(expected_commit: str) -> Dict[str, object]:
@@ -380,10 +454,134 @@ def _selected_physical_gpu_identity(
     }
 
 
+def _is_within(path: Path, root: Path) -> bool:
+    try:
+        Path(path).resolve().relative_to(Path(root).resolve())
+        return True
+    except ValueError:
+        return False
+
+
+def _assert_profile_host_paths(
+    hardware_profile_name: str,
+    *,
+    out_dir: Path,
+    cache_root: Path,
+    host_profile: Dict[str, object],
+) -> Dict[str, object]:
+    profile = _hardware_profile(hardware_profile_name)
+    if profile.name == AUTODL_HARDWARE_PROFILE:
+        if host_profile.get("system") != "Linux":
+            raise RuntimeError("AutoDL profile requires Linux")
+        if host_profile.get("effective_uid") != 0:
+            raise RuntimeError("AutoDL profile requires the authorized root user")
+        if host_profile.get("effective_user") != "root":
+            raise RuntimeError("AutoDL profile effective-user identity mismatch")
+        if Path(sys.executable).resolve() != Path(
+            "/root/miniconda3/bin/python"
+        ).resolve():
+            raise RuntimeError(
+                "AutoDL profile requires /root/miniconda3/bin/python"
+            )
+        if Path(cache_root).resolve() != AUTODL_HF_HOME.resolve():
+            raise RuntimeError(
+                "AutoDL profile requires HF_HOME=/root/autodl-tmp/hf"
+            )
+        if not _is_within(Path(out_dir), AUTODL_DATA_ROOT):
+            raise RuntimeError("AutoDL OUT_DIR must be under /root/autodl-tmp")
+        if not _is_within(Path(cache_root), AUTODL_DATA_ROOT):
+            raise RuntimeError("AutoDL caches must be under /root/autodl-tmp")
+    payload = {
+        "hardware_profile": profile.to_dict(),
+        "host_fingerprint": host_profile["fingerprint_hash"],
+        "out_dir": str(Path(out_dir).resolve()),
+        "cache_root": str(Path(cache_root).resolve()),
+        "python_executable": str(Path(sys.executable).resolve()),
+    }
+    payload["fingerprint_hash"] = config_hash(payload)
+    return payload
+
+
+def _validate_hardware_profile(
+    hardware_profile_name: str,
+    *,
+    runtime: Dict[str, object],
+) -> Dict[str, object]:
+    """Validate a requested owner-authorized profile against observed facts."""
+
+    profile = _hardware_profile(hardware_profile_name)
+    cuda_name = " ".join(str(runtime["cuda_name"]).upper().split())
+    physical_name = " ".join(str(runtime["physical_name"]).upper().split())
+    cuda_total = int(runtime["cuda_total_memory_bytes"])
+    physical_memory_mib = int(runtime["physical_memory_mib"])
+    if profile.name == DEFAULT_HARDWARE_PROFILE:
+        if "A800" not in cuda_name or "A800" not in physical_name:
+            raise RuntimeError("A800 profile requires an NVIDIA A800 device")
+        if cuda_total < 75 * 1024**3 or physical_memory_mib < 75 * 1024:
+            raise RuntimeError("A800 profile requires at least 75 GiB")
+    elif profile.name == AUTODL_HARDWARE_PROFILE:
+        allowlist = {"NVIDIA GEFORCE RTX 4080 SUPER"}
+        if cuda_name not in allowlist or physical_name not in allowlist:
+            raise RuntimeError(
+                "AutoDL profile GPU name is outside the owner-authorized allowlist"
+            )
+        if not 31 * 1024**3 <= cuda_total <= 33 * 1024**3:
+            raise RuntimeError("AutoDL profile CUDA memory must be approximately 32 GiB")
+        if not 32000 <= physical_memory_mib <= 33000:
+            raise RuntimeError(
+                "AutoDL profile nvidia-smi memory must be approximately 32760 MiB"
+            )
+        if int(runtime["cuda_device_count"]) != 1:
+            raise RuntimeError("AutoDL profile requires one visible CUDA device")
+        visibility = runtime["visibility"]
+        if (
+            visibility.get("cuda_visible_devices") != "0"
+            or visibility.get("visible_device_tokens") != ["0"]
+            or int(visibility.get("logical_index", -1)) != 0
+            or visibility.get("selected_visible_token") != "0"
+        ):
+            raise RuntimeError(
+                "AutoDL profile requires CUDA_VISIBLE_DEVICES=0 and logical device 0"
+            )
+        if runtime.get("bf16_supported") is not True:
+            raise RuntimeError("AutoDL profile requires bf16-capable CUDA hardware")
+        if not str(runtime.get("torch_version", "")).startswith("2.8."):
+            raise RuntimeError("AutoDL profile requires PyTorch 2.8.x")
+        if not str(runtime.get("torch_cuda", "")).startswith("12."):
+            raise RuntimeError("AutoDL profile requires a CUDA 12.x PyTorch runtime")
+        environment = runtime["environment"]
+        if not str(environment.get("python", "")).startswith("3.12."):
+            raise RuntimeError("AutoDL profile requires Python 3.12")
+        packages = environment["packages"]
+        if packages.get("transformers") != REQUIRED_TRANSFORMERS_VERSION:
+            raise RuntimeError("AutoDL Transformers version mismatch")
+        if not str(packages.get("datasets", "")).startswith("2.21"):
+            raise RuntimeError("AutoDL profile requires datasets 2.21.x")
+        for package in ("scikit-learn", "accelerate"):
+            if not packages.get(package):
+                raise RuntimeError(f"AutoDL profile requires installed {package}")
+    else:  # pragma: no cover - guarded by _hardware_profile
+        raise RuntimeError("unhandled hardware profile")
+    payload = {
+        **profile.to_dict(),
+        "cuda_name": runtime["cuda_name"],
+        "physical_name": runtime["physical_name"],
+        "cuda_total_memory_bytes": cuda_total,
+        "physical_memory_mib": physical_memory_mib,
+        "host_binding": runtime["host_binding"],
+    }
+    payload["fingerprint_hash"] = config_hash(payload)
+    return payload
+
+
 def gpu_preflight_assertions(
     backend: OfficialITIHFBackend,
     *,
     generator_snapshot_identity: Dict[str, object],
+    hardware_profile_name: str = DEFAULT_HARDWARE_PROFILE,
+    out_dir: Optional[Path] = None,
+    cache_root: Optional[Path] = None,
+    host_profile: Optional[Dict[str, object]] = None,
 ) -> Dict[str, object]:
     """Exact assertions executed before real activation capture or generation."""
 
@@ -391,12 +589,10 @@ def gpu_preflight_assertions(
 
     if not torch.cuda.is_available():
         raise RuntimeError("GPU preflight requires CUDA")
+    if out_dir is None or cache_root is None or host_profile is None:
+        raise RuntimeError("GPU preflight requires host/path profile binding")
     device_index = torch.cuda.current_device()
     properties = torch.cuda.get_device_properties(device_index)
-    if "A800" not in properties.name.upper():
-        raise RuntimeError(f"GPU preflight requires NVIDIA A800, got {properties.name}")
-    if int(properties.total_memory) < 75 * 1024**3:
-        raise RuntimeError("GPU preflight requires an approximately 80 GiB A800")
     if backend.num_hidden_layers != 32:
         raise RuntimeError("generator decoder depth must be 32")
     if backend.num_attention_heads != 32 or backend.hidden_dim != 4096:
@@ -440,8 +636,30 @@ def gpu_preflight_assertions(
         device_index=device_index,
         properties=properties,
     )
-    if "A800" not in str(selected_physical_gpu["name"]).upper():
-        raise RuntimeError("targeted physical GPU identity is not an NVIDIA A800")
+    environment = _runtime_environment()
+    host_binding = _assert_profile_host_paths(
+        hardware_profile_name,
+        out_dir=out_dir,
+        cache_root=cache_root,
+        host_profile=host_profile,
+    )
+    hardware_profile = _validate_hardware_profile(
+        hardware_profile_name,
+        runtime={
+            "cuda_name": properties.name,
+            "physical_name": selected_physical_gpu["name"],
+            "cuda_total_memory_bytes": int(properties.total_memory),
+            "physical_memory_mib": selected_physical_gpu["memory_total_mib"],
+            "cuda_device_count": torch.cuda.device_count(),
+            "visibility": selected_physical_gpu,
+            "bf16_supported": bool(torch.cuda.is_bf16_supported()),
+            "torch_version": torch.__version__,
+            "torch_cuda": torch.version.cuda,
+            "environment": environment,
+            "host_binding": host_binding,
+        },
+    )
+    transformers_compatibility = assert_transformers_compatibility()
     payload = {
         "status": "PREFLIGHT_ASSERTIONS_PASS",
         "generator_snapshot_identity": generator_snapshot_identity,
@@ -461,10 +679,13 @@ def gpu_preflight_assertions(
             "cudnn": torch.backends.cudnn.version(),
             **selected_physical_gpu,
         },
+        "hardware_profile": hardware_profile,
+        "host_binding": host_binding,
         "attention_implementation": attention_impl,
         "attention_layers": attention_rows,
         "effective_generation_config": effective_generation,
-        "environment": _runtime_environment(),
+        "transformers_compatibility": transformers_compatibility,
+        "environment": environment,
     }
     payload["fingerprint_hash"] = config_hash(payload)
     return payload
@@ -502,10 +723,15 @@ def _execution_fingerprint(
             ],
         },
         "gpu": preflight["gpu"],
+        "hardware_profile": preflight["hardware_profile"],
+        "host_binding": preflight["host_binding"],
         "attention": {
             "implementation": preflight["attention_implementation"],
             "layers": preflight["attention_layers"],
         },
+        "transformers_compatibility": preflight[
+            "transformers_compatibility"
+        ],
         "dependencies": preflight["environment"],
         "judges": {
             "snapshot_identities": judge_snapshot_identities,
@@ -697,11 +923,29 @@ def _write_failure_record(
         pass
 
 
-def _configure_dedicated_caches(out_dir: Path) -> Path:
-    cache_root = Path(out_dir) / ".cache"
+def _configure_dedicated_caches(
+    out_dir: Path,
+    hardware_profile_name: str = DEFAULT_HARDWARE_PROFILE,
+) -> Path:
+    profile = _hardware_profile(hardware_profile_name)
+    if profile.name == AUTODL_HARDWARE_PROFILE:
+        configured_hf_home = os.environ.get("HF_HOME")
+        if not configured_hf_home:
+            raise RuntimeError(
+                "AutoDL profile requires HF_HOME=/root/autodl-tmp/hf"
+            )
+        cache_root = Path(configured_hf_home).resolve()
+        if cache_root != AUTODL_HF_HOME.resolve():
+            raise RuntimeError(
+                "AutoDL profile requires exact HF_HOME=/root/autodl-tmp/hf"
+            )
+        hf_home = cache_root
+    else:
+        cache_root = (Path(out_dir) / ".cache").resolve()
+        hf_home = cache_root / "hf-home"
     cache_root.mkdir(parents=True, exist_ok=True)
     mapping = {
-        "HF_HOME": cache_root / "hf-home",
+        "HF_HOME": hf_home,
         "HF_HUB_CACHE": cache_root / "hub",
         "HUGGINGFACE_HUB_CACHE": cache_root / "hub",
         "HF_ASSETS_CACHE": cache_root / "assets",
@@ -772,58 +1016,138 @@ def _assert_runtime_cache_locations(cache_root: Path) -> Dict[str, object]:
     return payload
 
 
-def _guard_paths(out_dir: Path) -> List[Path]:
-    if Path(sys.prefix).resolve() == Path(sys.base_prefix).resolve():
+def _guard_paths(
+    out_dir: Path,
+    cache_root: Path,
+    hardware_profile_name: str,
+) -> List[Path]:
+    profile = _hardware_profile(hardware_profile_name)
+    if (
+        profile.require_dedicated_venv
+        and Path(sys.prefix).resolve() == Path(sys.base_prefix).resolve()
+    ):
         raise RuntimeError("HF evidence run requires a dedicated monitored virtualenv")
-    return [Path(out_dir), Path(sys.prefix)]
+    candidates = [Path(out_dir).resolve(), Path(cache_root).resolve()]
+    if profile.require_dedicated_venv:
+        candidates.append(Path(sys.prefix).resolve())
+    roots: List[Path] = []
+    for candidate in sorted(candidates, key=lambda path: len(path.parts)):
+        if any(_is_within(candidate, root) for root in roots):
+            continue
+        roots.append(candidate)
+    return roots
 
 
-def _disk_monitor(out_dir: Path):
+def _disk_monitor(
+    out_dir: Path,
+    cache_root: Path,
+    hardware_profile_name: str,
+):
+    profile = _hardware_profile(hardware_profile_name)
     return check_disk_budget(
-        _guard_paths(out_dir),
-        DISK_BUDGET_GB,
-        DISK_CEILING_GB,
+        _guard_paths(out_dir, cache_root, hardware_profile_name),
+        profile.disk_budget_gib,
+        profile.disk_ceiling_gib,
         raise_on_over=True,
     )
 
 
-def _assert_download_fits(out_dir: Path, snapshot_bytes: int) -> None:
-    usage = _disk_monitor(out_dir)
-    projected = usage.total_gb + float(snapshot_bytes) / (1024.0**3)
-    if projected >= DISK_BUDGET_GB:
+def _existing_pinned_bytes(snapshot_name: str, snapshot_dir: Path) -> int:
+    spec = PINNED_SNAPSHOTS[snapshot_name]
+    total = 0
+    for relative, row in spec["files"].items():
+        path = Path(snapshot_dir) / relative
+        if path.is_file():
+            total += min(path.stat().st_size, int(row["size"]))
+    return total
+
+
+def _assert_download_fits(
+    out_dir: Path,
+    cache_root: Path,
+    hardware_profile_name: str,
+    snapshot_name: str,
+    snapshot_bytes: int,
+    snapshot_dir: Path,
+) -> None:
+    profile = _hardware_profile(hardware_profile_name)
+    if int(snapshot_bytes) != pinned_snapshot_size_bytes(snapshot_name):
+        raise RuntimeError("download guard snapshot-size identity mismatch")
+    usage = _disk_monitor(out_dir, cache_root, hardware_profile_name)
+    remaining = max(
+        0,
+        int(snapshot_bytes)
+        - _existing_pinned_bytes(snapshot_name, snapshot_dir),
+    )
+    projected = (
+        usage.total_gb
+        + float(remaining + profile.artifact_reserve_bytes) / (1024.0**3)
+    )
+    if projected >= profile.disk_budget_gib:
         raise RuntimeError(
-            f"pinned snapshot would exceed non-overridable {DISK_BUDGET_GB:.0f} "
+            "pinned snapshot plus reserved artifact space would exceed "
+            f"non-overridable {profile.disk_budget_gib:.0f} "
             f"GiB planning budget: projected={projected:.2f} GiB"
         )
     free = shutil.disk_usage(Path(out_dir)).free
-    if free < int(snapshot_bytes) + ARTIFACT_RESERVE_BYTES:
+    if free < remaining + profile.artifact_reserve_bytes:
         raise RuntimeError("insufficient free disk for pinned snapshot plus artifact reserve")
 
 
-def _assert_pinned_worst_case(out_dir: Path) -> Dict[str, object]:
-    usage = _disk_monitor(out_dir)
-    projected = usage.total_gb + PINNED_CONCURRENT_WORST_CASE_BYTES / (1024.0**3)
-    if projected >= DISK_BUDGET_GB:
+def _assert_pinned_worst_case(
+    out_dir: Path,
+    cache_root: Path,
+    hardware_profile_name: str,
+) -> Dict[str, object]:
+    profile = _hardware_profile(hardware_profile_name)
+    usage = _disk_monitor(out_dir, cache_root, hardware_profile_name)
+    snapshot_dirs = {
+        "generator": cache_root / "generator",
+        "truth_judge": cache_root / "judges" / "truth",
+        "info_judge": cache_root / "judges" / "info",
+        "truthfulqa": cache_root / "truthfulqa",
+    }
+    remaining_by_snapshot = {
+        name: pinned_snapshot_size_bytes(name)
+        - _existing_pinned_bytes(name, snapshot_dir)
+        for name, snapshot_dir in snapshot_dirs.items()
+    }
+    additional_required = (
+        sum(remaining_by_snapshot.values()) + profile.artifact_reserve_bytes
+    )
+    projected = usage.total_gb + additional_required / (1024.0**3)
+    if projected >= profile.disk_budget_gib:
         raise RuntimeError(
-            "precomputed pinned concurrent snapshot worst case exceeds the "
-            f"{DISK_BUDGET_GB:.0f} GiB planning budget: {projected:.2f} GiB"
+            "precomputed persistent pinned snapshot worst case exceeds the "
+            f"{profile.disk_budget_gib:.0f} GiB planning budget: "
+            f"{projected:.2f} GiB"
+        )
+    free = shutil.disk_usage(Path(cache_root)).free
+    if free < additional_required:
+        raise RuntimeError(
+            "data disk cannot fit all missing pinned snapshots plus artifact reserve"
         )
     return {
+        "hardware_profile": profile.name,
         "generator_bytes": pinned_snapshot_size_bytes("generator"),
-        "largest_single_judge_bytes": max(
-            pinned_snapshot_size_bytes("truth_judge"),
-            pinned_snapshot_size_bytes("info_judge"),
-        ),
+        "truth_judge_bytes": pinned_snapshot_size_bytes("truth_judge"),
+        "info_judge_bytes": pinned_snapshot_size_bytes("info_judge"),
         "dataset_bytes": pinned_snapshot_size_bytes("truthfulqa"),
-        "artifact_reserve_bytes": ARTIFACT_RESERVE_BYTES,
-        "concurrent_worst_case_bytes": PINNED_CONCURRENT_WORST_CASE_BYTES,
+        "remaining_by_snapshot": remaining_by_snapshot,
+        "artifact_reserve_bytes": profile.artifact_reserve_bytes,
+        "persistent_worst_case_bytes": profile.pinned_worst_case_bytes,
         "projected_total_gib": projected,
-        "budget_gib": DISK_BUDGET_GB,
-        "ceiling_gib": DISK_CEILING_GB,
+        "budget_gib": profile.disk_budget_gib,
+        "ceiling_gib": profile.disk_ceiling_gib,
     }
 
 
-def frozen_config(*, code_commit: Optional[str]) -> Dict[str, object]:
+def frozen_config(
+    *,
+    code_commit: Optional[str],
+    hardware_profile_name: str = DEFAULT_HARDWARE_PROFILE,
+) -> Dict[str, object]:
+    hardware_profile = _hardware_profile(hardware_profile_name)
     return {
         "experiment_id": EXPERIMENT_ID,
         "protocol": "docs/ledgers/prereg-iti-truthfulqa-positive-control.md",
@@ -882,6 +1206,7 @@ def frozen_config(*, code_commit: Optional[str]) -> Dict[str, object]:
             "eta_cutoff": 0.0,
             "max_new_tokens": MAX_NEW_TOKENS,
             "batch_size": 1,
+            "activation_batch_size": hardware_profile.activation_batch_size,
             "max_length": MAX_LENGTH,
             "common_random_numbers_across_conditions": True,
             "sample_seed_mapping": (
@@ -891,6 +1216,10 @@ def frozen_config(*, code_commit: Optional[str]) -> Dict[str, object]:
             "sample_seed_mapping_version": SAMPLE_SEED_MAPPING_VERSION,
             "effective_generation_fields": FROZEN_SAMPLING_CONFIG,
             "eos_token_ids": list(FROZEN_EOS_TOKEN_IDS),
+            "transformers_required_version": REQUIRED_TRANSFORMERS_VERSION,
+            "transformers_4_44_2_protocol_only_neutral_fields": (
+                TRANSFORMERS_4_44_2_PROTOCOL_ONLY_NEUTRAL_FIELDS
+            ),
         },
         "statistics": {
             "delta": 0.05,
@@ -921,7 +1250,8 @@ def frozen_config(*, code_commit: Optional[str]) -> Dict[str, object]:
             "global_registry": GLOBAL_ATTEMPT_REGISTRY_PATH_TEXT,
             "threat_model": (
                 "accidental, concurrent, or repeated execution on the designated "
-                "A800 host; malicious root/owner state deletion is out of scope"
+                "owner-authorized execution host; malicious root/owner state "
+                "deletion is out of scope"
             ),
             "cross_machine_gate": (
                 "human authorization must verify no TEST was consumed elsewhere; "
@@ -929,12 +1259,26 @@ def frozen_config(*, code_commit: Optional[str]) -> Dict[str, object]:
             ),
         },
         "disk": {
-            "budget_gib": DISK_BUDGET_GB,
-            "ceiling_gib": DISK_CEILING_GB,
+            "hardware_profile": hardware_profile.name,
+            "budget_gib": hardware_profile.disk_budget_gib,
+            "ceiling_gib": hardware_profile.disk_ceiling_gib,
             "overridable": False,
-            "pinned_concurrent_worst_case_bytes": PINNED_CONCURRENT_WORST_CASE_BYTES,
-            "artifact_reserve_bytes": ARTIFACT_RESERVE_BYTES,
-            "cache_location": "<external out_dir>/.cache only",
+            "pinned_persistent_worst_case_bytes": (
+                hardware_profile.pinned_worst_case_bytes
+            ),
+            "artifact_reserve_bytes": hardware_profile.artifact_reserve_bytes,
+            "cache_location": (
+                "/root/autodl-tmp/hf plus external OUT_DIR"
+                if hardware_profile.name == AUTODL_HARDWARE_PROFILE
+                else "<external out_dir>/.cache only"
+            ),
+        },
+        "hardware_profile": hardware_profile.to_dict(),
+        "memory_residency": {
+            "generator_and_judge_concurrent": False,
+            "judges_concurrent": False,
+            "generator_release_required_before_judge": True,
+            "max_post_unload_cuda_bytes": MAX_POST_UNLOAD_CUDA_BYTES,
         },
         "current_grid_preservation": "existing frozen CAA/ITI result remains 0/12",
         "valid_for_paper": False,
@@ -942,13 +1286,14 @@ def frozen_config(*, code_commit: Optional[str]) -> Dict[str, object]:
 
 
 def _assert_hf_args(args: argparse.Namespace) -> None:
+    profile = _hardware_profile(args.hardware_profile)
     expected = {
         "model_id": MODEL_ID,
         "model_revision": MODEL_REVISION,
         "seed": RUN_SEED,
         "k": K,
         "max_new_tokens": MAX_NEW_TOKENS,
-        "activation_batch_size": ACTIVATION_BATCH_SIZE,
+        "activation_batch_size": profile.activation_batch_size,
     }
     mismatches = {
         key: {"expected": value, "actual": getattr(args, key)}
@@ -957,6 +1302,7 @@ def _assert_hf_args(args: argparse.Namespace) -> None:
     }
     if mismatches:
         raise ValueError(f"HF frozen-config mismatch: {mismatches}")
+    assert_transformers_compatibility()
     if not args.expected_code_commit:
         raise ValueError("HF run requires --expected-code-commit")
     if args.phase not in {"preflight", "dev", "test"}:
@@ -1013,6 +1359,7 @@ def _load_or_create_fold_config_manifest(
     items: Sequence[TruthfulQAItem],
     splits: Sequence[FoldSplit],
     backend: OfficialITIHFBackend,
+    activation_batch_size: int,
 ) -> Tuple[Dict[int, OfficialITIConfig], Dict[str, object]]:
     if path.exists():
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -1037,7 +1384,12 @@ def _load_or_create_fold_config_manifest(
             "resume_hook_bites": resume_hook_bites,
         }
 
-    configs, extraction = _fit_fold_configs(items, splits, backend)
+    configs, extraction = _fit_fold_configs(
+        items,
+        splits,
+        backend,
+        activation_batch_size=activation_batch_size,
+    )
     serialized = _serialize_configs(configs)
     payload = {
         "schema_version": 1,
@@ -1095,6 +1447,25 @@ def _generate_raw_record(
         )
 
 
+def _release_generator_for_sequential_judging(
+    generator,
+    judge,
+) -> Optional[Dict[str, object]]:
+    if not isinstance(judge, LocalTruthInfoJudge):
+        return None
+    release = getattr(generator, "release_for_sequential_judging", None)
+    guard = getattr(generator, "assert_unloaded_for_sequential_judging", None)
+    if not callable(release) or not callable(guard):
+        raise RuntimeError(
+            "real sequential judging requires a releasable generator backend"
+        )
+    report = release()
+    judge.set_residency_guard(guard)
+    guard()
+    judge.generator_release_report = report
+    return report
+
+
 def _execute_jobs(
     jobs: Sequence[GenerationJob],
     *,
@@ -1149,6 +1520,7 @@ def _execute_jobs(
                 flush=True,
             )
 
+    _release_generator_for_sequential_judging(generator, judge)
     raw_by_id = {
         record.job_id: record for record in raw_checkpoint.ordered_records()
     }
@@ -1320,6 +1692,8 @@ def _fit_fold_configs(
     items: Sequence[TruthfulQAItem],
     splits: Sequence[FoldSplit],
     backend: OfficialITIHFBackend,
+    *,
+    activation_batch_size: int,
 ) -> Tuple[Dict[int, OfficialITIConfig], Dict[str, object]]:
     configs: Dict[int, OfficialITIConfig] = {}
     provenance: Dict[str, object] = {}
@@ -1331,7 +1705,7 @@ def _fit_fold_configs(
             flush=True,
         )
         activations = backend.collect_head_activations(
-            prompts, batch_size=ACTIVATION_BATCH_SIZE
+            prompts, batch_size=activation_batch_size
         )
         inner_train = set(split.inner_train)
         train_mask = np.asarray([int(owner) in inner_train for owner in owners])
@@ -1366,15 +1740,34 @@ def run_hf_preflight(args: argparse.Namespace) -> Dict[str, object]:
     source = _git_clean(args.expected_code_commit)
     out_dir = Path(args.out_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
-    cache_root = _configure_dedicated_caches(out_dir)
+    cache_root = _configure_dedicated_caches(
+        out_dir, args.hardware_profile
+    )
     cache_identity = _assert_runtime_cache_locations(cache_root)
     host_profile = _test_attempt_host_profile()
-    disk_preflight = _assert_pinned_worst_case(out_dir)
+    _assert_profile_host_paths(
+        args.hardware_profile,
+        out_dir=out_dir,
+        cache_root=cache_root,
+        host_profile=host_profile,
+    )
+    disk_preflight = _assert_pinned_worst_case(
+        out_dir, cache_root, args.hardware_profile
+    )
     dataset_snapshot_identity = download_pinned_snapshot(
         "truthfulqa",
         cache_root / "truthfulqa",
-        before_download=lambda size: _assert_download_fits(out_dir, size),
-        monitor=lambda: _disk_monitor(out_dir),
+        before_download=lambda name, size, snapshot_dir: _assert_download_fits(
+            out_dir,
+            cache_root,
+            args.hardware_profile,
+            name,
+            size,
+            snapshot_dir,
+        ),
+        monitor=lambda: _disk_monitor(
+            out_dir, cache_root, args.hardware_profile
+        ),
     )
     items = load_pinned_truthfulqa(
         cache_root / "truthfulqa",
@@ -1384,8 +1777,17 @@ def run_hf_preflight(args: argparse.Namespace) -> Dict[str, object]:
     generator_snapshot_identity = download_pinned_snapshot(
         "generator",
         cache_root / "generator",
-        before_download=lambda size: _assert_download_fits(out_dir, size),
-        monitor=lambda: _disk_monitor(out_dir),
+        before_download=lambda name, size, snapshot_dir: _assert_download_fits(
+            out_dir,
+            cache_root,
+            args.hardware_profile,
+            name,
+            size,
+            snapshot_dir,
+        ),
+        monitor=lambda: _disk_monitor(
+            out_dir, cache_root, args.hardware_profile
+        ),
     )
     backend = OfficialITIHFBackend.from_pretrained(
         args.model_id,
@@ -1399,6 +1801,10 @@ def run_hf_preflight(args: argparse.Namespace) -> Dict[str, object]:
     gpu_preflight = gpu_preflight_assertions(
         backend,
         generator_snapshot_identity=generator_snapshot_identity,
+        hardware_profile_name=args.hardware_profile,
+        out_dir=out_dir,
+        cache_root=cache_root,
+        host_profile=host_profile,
     )
     direction_a = np.zeros(backend.head_dim, dtype=np.float64)
     direction_b = np.zeros(backend.head_dim, dtype=np.float64)
@@ -1417,13 +1823,25 @@ def run_hf_preflight(args: argparse.Namespace) -> Dict[str, object]:
     hook_bites = backend.assert_hook_bites(
         HOOK_BITE_PROBES, synthetic_hook_config
     )
+    generator_release = backend.release_for_sequential_judging()
     judge = LocalTruthInfoJudge.from_pretrained(
         device="cuda",
         dtype="float16",
         cache_root=cache_root / "judges",
-        before_download=lambda size: _assert_download_fits(out_dir, size),
-        after_load=lambda: _disk_monitor(out_dir),
+        before_download=lambda name, size, snapshot_dir: _assert_download_fits(
+            out_dir,
+            cache_root,
+            args.hardware_profile,
+            name,
+            size,
+            snapshot_dir,
+        ),
+        after_load=lambda: _disk_monitor(
+            out_dir, cache_root, args.hardware_profile
+        ),
+        residency_guard=backend.assert_unloaded_for_sequential_judging,
     )
+    judge.generator_release_report = generator_release
     preflight_identity = config_hash(
         {
             "code_commit": source["code_commit"],
@@ -1460,6 +1878,7 @@ def run_hf_preflight(args: argparse.Namespace) -> Dict[str, object]:
         "execution_fingerprint": execution_fingerprint,
         "designated_test_host_profile": host_profile,
         "synthetic_hook_bites": hook_bites,
+        "generator_release_before_judges": generator_release,
         "judge_parse_valid": [score.valid for score in judge_scores],
         "real_dev_generation_performed": False,
         "real_test_generation_performed": False,
@@ -1491,19 +1910,41 @@ def run_hf_dev(args: argparse.Namespace) -> Dict[str, object]:
     source = _git_clean(args.expected_code_commit)
     out_dir = Path(args.out_dir).resolve()
     out_dir.mkdir(parents=True, exist_ok=True)
-    cache_root = _configure_dedicated_caches(out_dir)
+    cache_root = _configure_dedicated_caches(
+        out_dir, args.hardware_profile
+    )
     cache_identity = _assert_runtime_cache_locations(cache_root)
     host_profile = _test_attempt_host_profile()
-    disk_preflight = _assert_pinned_worst_case(out_dir)
-    usage_pre = _disk_monitor(out_dir)
-    run_config = frozen_config(code_commit=source["code_commit"])
+    _assert_profile_host_paths(
+        args.hardware_profile,
+        out_dir=out_dir,
+        cache_root=cache_root,
+        host_profile=host_profile,
+    )
+    disk_preflight = _assert_pinned_worst_case(
+        out_dir, cache_root, args.hardware_profile
+    )
+    usage_pre = _disk_monitor(out_dir, cache_root, args.hardware_profile)
+    run_config = frozen_config(
+        code_commit=source["code_commit"],
+        hardware_profile_name=args.hardware_profile,
+    )
     prompts_list = load_prompt_bank(_REPO)
     prompts = dict(prompts_list)
     dataset_snapshot_identity = download_pinned_snapshot(
         "truthfulqa",
         cache_root / "truthfulqa",
-        before_download=lambda size: _assert_download_fits(out_dir, size),
-        monitor=lambda: _disk_monitor(out_dir),
+        before_download=lambda name, size, snapshot_dir: _assert_download_fits(
+            out_dir,
+            cache_root,
+            args.hardware_profile,
+            name,
+            size,
+            snapshot_dir,
+        ),
+        monitor=lambda: _disk_monitor(
+            out_dir, cache_root, args.hardware_profile
+        ),
     )
     items = load_pinned_truthfulqa(
         cache_root / "truthfulqa",
@@ -1516,8 +1957,17 @@ def run_hf_dev(args: argparse.Namespace) -> Dict[str, object]:
     generator_snapshot_identity = download_pinned_snapshot(
         "generator",
         cache_root / "generator",
-        before_download=lambda size: _assert_download_fits(out_dir, size),
-        monitor=lambda: _disk_monitor(out_dir),
+        before_download=lambda name, size, snapshot_dir: _assert_download_fits(
+            out_dir,
+            cache_root,
+            args.hardware_profile,
+            name,
+            size,
+            snapshot_dir,
+        ),
+        monitor=lambda: _disk_monitor(
+            out_dir, cache_root, args.hardware_profile
+        ),
     )
     backend = OfficialITIHFBackend.from_pretrained(
         args.model_id,
@@ -1531,6 +1981,10 @@ def run_hf_dev(args: argparse.Namespace) -> Dict[str, object]:
     preflight = gpu_preflight_assertions(
         backend,
         generator_snapshot_identity=generator_snapshot_identity,
+        hardware_profile_name=args.hardware_profile,
+        out_dir=out_dir,
+        cache_root=cache_root,
+        host_profile=host_profile,
     )
     fold_identity = {
         "source": source,
@@ -1549,6 +2003,7 @@ def run_hf_dev(args: argparse.Namespace) -> Dict[str, object]:
         items=items,
         splits=splits,
         backend=backend,
+        activation_batch_size=args.activation_batch_size,
     )
     fold_manifest_file_sha256 = _sha256_file(fold_manifest_path)
     resolved_run_identity = {
@@ -1575,10 +2030,19 @@ def run_hf_dev(args: argparse.Namespace) -> Dict[str, object]:
         device=device,
         dtype=dtype,
         cache_root=cache_root / "judges",
-        before_download=lambda size: _assert_download_fits(out_dir, size),
-        after_load=lambda: _disk_monitor(out_dir),
+        before_download=lambda name, size, snapshot_dir: _assert_download_fits(
+            out_dir,
+            cache_root,
+            args.hardware_profile,
+            name,
+            size,
+            snapshot_dir,
+        ),
+        after_load=lambda: _disk_monitor(
+            out_dir, cache_root, args.hardware_profile
+        ),
+        residency_guard=backend.assert_unloaded_for_sequential_judging,
     )
-    usage_loaded = _disk_monitor(out_dir)
     jobs = _dev_jobs(
         items,
         splits,
@@ -1597,6 +2061,7 @@ def run_hf_dev(args: argparse.Namespace) -> Dict[str, object]:
         configs=configs,
         checkpoint_binding=resolved_run_identity,
     )
+    usage_loaded = _disk_monitor(out_dir, cache_root, args.hardware_profile)
     selections = {
         split.fold: select_best_prompt(
             records,
@@ -1652,6 +2117,7 @@ def run_hf_dev(args: argparse.Namespace) -> Dict[str, object]:
         "cache_identity": cache_identity,
         "judge_snapshot_identities": judge.snapshot_identities,
         "judge_runtime_fingerprints": judge.runtime_fingerprints,
+        "generator_release_before_judges": judge.generator_release_report,
         "external_identity_note": (
             "Every pinned snapshot file is size/hash verified at runtime. The "
             "local/CPU implementation phase did not download those large files."
@@ -1684,7 +2150,10 @@ def run_hf_test(args: argparse.Namespace) -> Dict[str, object]:
     dev = json.loads(dev_path.read_text(encoding="utf-8"))
     if dev.get("status") != "ELIGIBLE" or dev.get("test_accessed") is not False:
         raise ValueError("DEV did not authorize TEST")
-    if dev.get("run_config") != frozen_config(code_commit=source["code_commit"]):
+    if dev.get("run_config") != frozen_config(
+        code_commit=source["code_commit"],
+        hardware_profile_name=args.hardware_profile,
+    ):
         raise ValueError("DEV manifest frozen config mismatch")
     expected_hash = dev.get("dev_manifest_hash")
     unhashed = dict(dev)
@@ -1703,20 +2172,39 @@ def run_hf_test(args: argparse.Namespace) -> Dict[str, object]:
             identity_path=identity_path,
         ),
     )
-    cache_root = _configure_dedicated_caches(out_dir)
+    cache_root = _configure_dedicated_caches(
+        out_dir, args.hardware_profile
+    )
     cache_identity = _assert_runtime_cache_locations(cache_root)
     host_profile = _test_attempt_host_profile()
     if host_profile != dev.get("designated_test_host_profile"):
         raise ValueError("TEST designated host/path/profile differs from audited DEV")
-    disk_preflight = _assert_pinned_worst_case(out_dir)
-    usage_pre = _disk_monitor(out_dir)
+    _assert_profile_host_paths(
+        args.hardware_profile,
+        out_dir=out_dir,
+        cache_root=cache_root,
+        host_profile=host_profile,
+    )
+    disk_preflight = _assert_pinned_worst_case(
+        out_dir, cache_root, args.hardware_profile
+    )
+    usage_pre = _disk_monitor(out_dir, cache_root, args.hardware_profile)
     prompts_list = load_prompt_bank(_REPO)
     prompts = dict(prompts_list)
     dataset_snapshot_identity = download_pinned_snapshot(
         "truthfulqa",
         cache_root / "truthfulqa",
-        before_download=lambda size: _assert_download_fits(out_dir, size),
-        monitor=lambda: _disk_monitor(out_dir),
+        before_download=lambda name, size, snapshot_dir: _assert_download_fits(
+            out_dir,
+            cache_root,
+            args.hardware_profile,
+            name,
+            size,
+            snapshot_dir,
+        ),
+        monitor=lambda: _disk_monitor(
+            out_dir, cache_root, args.hardware_profile
+        ),
     )
     if dataset_snapshot_identity != dev.get("dataset_snapshot_identity"):
         raise ValueError("dataset snapshot fingerprint changed between DEV and TEST")
@@ -1751,8 +2239,17 @@ def run_hf_test(args: argparse.Namespace) -> Dict[str, object]:
     generator_snapshot_identity = download_pinned_snapshot(
         "generator",
         cache_root / "generator",
-        before_download=lambda size: _assert_download_fits(out_dir, size),
-        monitor=lambda: _disk_monitor(out_dir),
+        before_download=lambda name, size, snapshot_dir: _assert_download_fits(
+            out_dir,
+            cache_root,
+            args.hardware_profile,
+            name,
+            size,
+            snapshot_dir,
+        ),
+        monitor=lambda: _disk_monitor(
+            out_dir, cache_root, args.hardware_profile
+        ),
     )
     if generator_snapshot_identity != dev.get("generator_snapshot_identity"):
         raise ValueError("generator snapshot fingerprint changed between DEV and TEST")
@@ -1768,18 +2265,35 @@ def run_hf_test(args: argparse.Namespace) -> Dict[str, object]:
     preflight = gpu_preflight_assertions(
         backend,
         generator_snapshot_identity=generator_snapshot_identity,
+        hardware_profile_name=args.hardware_profile,
+        out_dir=out_dir,
+        cache_root=cache_root,
+        host_profile=host_profile,
     )
     for fold, config in configs.items():
         backend.assert_hook_bites(HOOK_BITE_PROBES, config)
         backend.assert_hook_bites(HOOK_BITE_PROBES, random_configs[fold])
+    preauthorization_generator_release = (
+        backend.release_for_sequential_judging()
+    )
     judge = LocalTruthInfoJudge.from_pretrained(
         device="cuda",
         dtype="float16",
         cache_root=cache_root / "judges",
-        before_download=lambda size: _assert_download_fits(out_dir, size),
-        after_load=lambda: _disk_monitor(out_dir),
+        before_download=lambda name, size, snapshot_dir: _assert_download_fits(
+            out_dir,
+            cache_root,
+            args.hardware_profile,
+            name,
+            size,
+            snapshot_dir,
+        ),
+        after_load=lambda: _disk_monitor(
+            out_dir, cache_root, args.hardware_profile
+        ),
+        residency_guard=backend.assert_unloaded_for_sequential_judging,
     )
-    usage_loaded = _disk_monitor(out_dir)
+    judge.generator_release_report = preauthorization_generator_release
     probe_identity = config_hash(
         {
             "phase": "test-preconsumption-mechanics",
@@ -1794,12 +2308,38 @@ def run_hf_test(args: argparse.Namespace) -> Dict[str, object]:
         checkpoint_root=out_dir / "test_preconsumption_judge_checkpoints",
         force_runtime_refresh=True,
     )
+    usage_loaded = _disk_monitor(out_dir, cache_root, args.hardware_profile)
     execution_fingerprint = _execution_fingerprint(
         preflight=preflight,
         judge_snapshot_identities=judge.snapshot_identities,
         judge_runtime_fingerprints=judge.runtime_fingerprints,
     )
     _assert_execution_fingerprint_matches_dev(dev, execution_fingerprint)
+    backend = OfficialITIHFBackend.from_pretrained(
+        args.model_id,
+        revision=args.model_revision,
+        snapshot_path=cache_root / "generator",
+        device="cuda",
+        dtype="float16",
+        max_length=MAX_LENGTH,
+        seed=args.seed,
+    )
+    generation_preflight = gpu_preflight_assertions(
+        backend,
+        generator_snapshot_identity=generator_snapshot_identity,
+        hardware_profile_name=args.hardware_profile,
+        out_dir=out_dir,
+        cache_root=cache_root,
+        host_profile=host_profile,
+    )
+    if generation_preflight != preflight:
+        raise ValueError("TEST generator reload fingerprint differs before authorization")
+    for fold, config in configs.items():
+        backend.assert_hook_bites(HOOK_BITE_PROBES, config)
+        backend.assert_hook_bites(HOOK_BITE_PROBES, random_configs[fold])
+    judge.set_residency_guard(
+        backend.assert_unloaded_for_sequential_judging
+    )
     authorization_consumption = consume_signed_test_authorization(
         authorization_manifest=Path(args.test_authorization_manifest),
         code_commit=source["code_commit"],
@@ -1826,6 +2366,12 @@ def run_hf_test(args: argparse.Namespace) -> Dict[str, object]:
         "dataset_snapshot_identity": dataset_snapshot_identity,
         "generator_snapshot_identity": generator_snapshot_identity,
         "execution_fingerprint": execution_fingerprint,
+        "preauthorization_generator_release": (
+            preauthorization_generator_release
+        ),
+        "generation_reload_preflight_hash": generation_preflight[
+            "fingerprint_hash"
+        ],
         "designated_test_host_profile": host_profile,
         "random_direction_rng_algorithm": NUMPY_RNG_ALGORITHM,
         "random_direction_seeds": {
@@ -1859,6 +2405,14 @@ def run_hf_test(args: argparse.Namespace) -> Dict[str, object]:
         checkpoint_binding=test_run_identity,
         random_configs=random_configs,
     )
+    final_execution_fingerprint = _execution_fingerprint(
+        preflight=generation_preflight,
+        judge_snapshot_identities=judge.snapshot_identities,
+        judge_runtime_fingerprints=judge.runtime_fingerprints,
+    )
+    _assert_execution_fingerprint_matches_dev(dev, final_execution_fingerprint)
+    if final_execution_fingerprint != execution_fingerprint:
+        raise ValueError("TEST scoring runtime differs from preauthorization fingerprint")
     adjudication = adjudicate_test(
         records,
         fold_prompt_ids=winners,
@@ -1880,9 +2434,14 @@ def run_hf_test(args: argparse.Namespace) -> Dict[str, object]:
         ),
         "authorization_consumption": authorization_consumption,
         "resolved_test_run_identity": test_run_identity,
-        "gpu_preflight": preflight,
+        "gpu_preflight": generation_preflight,
+        "execution_fingerprint": final_execution_fingerprint,
         "judge_snapshot_identities": judge.snapshot_identities,
         "judge_runtime_fingerprints": judge.runtime_fingerprints,
+        "preauthorization_generator_release": (
+            preauthorization_generator_release
+        ),
+        "generator_release_before_judges": judge.generator_release_report,
         "matched_random_fold_configs": serialized_random_configs,
         "adjudication": adjudication,
         "disk_preflight": disk_preflight,
@@ -1925,7 +2484,7 @@ def run_hf_test(args: argparse.Namespace) -> Dict[str, object]:
         out_dir / "test_artifact_manifest.json",
         _artifact_hashes(out_dir, artifact_paths),
     )
-    _disk_monitor(out_dir)
+    _disk_monitor(out_dir, cache_root, args.hardware_profile)
     return payload
 
 
@@ -2133,6 +2692,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--k", type=int, default=K)
     parser.add_argument("--max-new-tokens", type=int, default=MAX_NEW_TOKENS)
     parser.add_argument("--activation-batch-size", type=int, default=ACTIVATION_BATCH_SIZE)
+    parser.add_argument(
+        "--hardware-profile",
+        choices=sorted(HARDWARE_PROFILES),
+        default=DEFAULT_HARDWARE_PROFILE,
+    )
     parser.add_argument("--test-authorization-manifest", default=None)
     return parser
 

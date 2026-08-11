@@ -1394,8 +1394,8 @@ experiments:
   claim_ids:
   - C2b
   type: confirmatory_positive_control
-  status: corrected_fourth_targeted_repair_pending_fresh_independent_reaudit
-  code_commit: d63c5d3_rejected; 68bd1cf3595f7a53061a8acb45a8c6baadf7e580_rejected; 380c235473d47e7281474c9476042cd7ab103b43_rejected; 58b08f3aca513b54cad909982991ef9d987c36bd_rejected; corrected_fourth_repair_commit_pending
+  status: owner_authorized_autodl_operational_profile_pending_fresh_independent_reaudit
+  code_commit: d63c5d3_rejected; 68bd1cf3595f7a53061a8acb45a8c6baadf7e580_rejected; 380c235473d47e7281474c9476042cd7ab103b43_rejected; 58b08f3aca513b54cad909982991ef9d987c36bd_rejected; a2fbbcd2415d624915935c4ff0dea9f771b049fd_base; autodl_profile_commit_pending
   dirty_tree: null
   data_hash: truthfulqa_revision=741b8276f2d1982aa3d5b832d3ee81ed3b896490;prompt_bank_sha256=597d5ea1dc07d1169912978ca3ef35a2d4f6cf185270eb0994ebf76c872b122c
   env_hash: null
@@ -1403,7 +1403,11 @@ experiments:
   model: NousResearch/Meta-Llama-3-8B-Instruct@53346005fb0ef11d3b6a83b12c895cca40156b6c
   dataset: truthfulqa/truthful_qa generation+multiple_choice validation@741b8276f2d1982aa3d5b832d3ee81ed3b896490
   seed: 20260811
-  hardware: A800 authorized by owner 2026-08-11; no GPU currently occupied or contacted
+  hardware: >-
+    owner-authorized profiles: A800 >=75 GiB (2026-08-11), or dedicated AutoDL
+    NVIDIA GeForce RTX 4080 SUPER 32760 MiB with CUDA_VISIBLE_DEVICES=0,
+    bf16/CUDA12/PyTorch2.8/Python3.12 and 50 GiB /root/autodl-tmp data disk
+    (2026-08-12); no GPU/preflight/DEV/TEST performed by this repair
   started_at: null
   ended_at: null
   exit_code: null
@@ -1449,7 +1453,16 @@ experiments:
     judge kinds did not resolve to the pinned `truth_judge`/`info_judge`
     snapshot-table keys; the corrected fourth repair closes that preflight
     blocker. Fresh hostile re-audit and repaired-commit pinning remain required
-    before preflight or real DEV. Existing 0/12 is immutable.
+    before preflight or real DEV. D-0118 records the owner's dedicated AutoDL
+    rental and authorization. The alternate profile changes only operational
+    hardware, sequential GPU residency, cache placement, and disk guards:
+    exact RTX 4080 SUPER allowlist plus host/path/runtime facts; physical
+    UUID/PCI binding; execution-fingerprint schema v3; generator unload before
+    one-at-a-time judges; exact
+    Transformers 4.44.2; HF_HOME and OUT_DIR under /root/autodl-tmp; and
+    non-overridable 44/47 GiB disk controls with 43.0704 GiB projected
+    pinned-plus-reserve use. Every scientific identity, estimator, threshold,
+    split, TEST-once/authorization gate, and existing 0/12 remains unchanged.
 
 - experiment_id: microstudy-contract-application-20260810
   parent: null

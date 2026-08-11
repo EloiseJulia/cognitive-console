@@ -1,18 +1,15 @@
-"""Disk-budget guard for the borrowed A800 session (D-0020: total disk < 70 GB).
+"""Disk-budget guard for owner-authorized GPU execution profiles.
 
-The human constraint on the borrowed hardware is HARD: keep total disk under a
-budget and delete everything after. This helper measures the on-disk footprint of
-the paths that grow during a run — primarily ``HF_HOME`` (downloaded model
-weights + hub cache) and the ``venv`` — and ABORTS with a clear message BEFORE the
-footprint crosses the ceiling, so a runaway download can never blow the borrowed
-box's disk.
+Each profile supplies a non-overridable planning budget and hard ceiling. This
+helper measures the paths that grow during a run and aborts when the ceiling is
+reached.
 
 Pure stdlib. No torch, no network — unit-testable offline against temp dirs.
 
 Budget vs ceiling
 -----------------
-* ``budget_gb`` (default 60) is the soft target we plan to stay under.
-* ``ceiling_gb`` (default 70) is the HARD limit from D-0020. Crossing it raises
+* ``budget_gb`` (default 60) is the planning target.
+* ``ceiling_gb`` (default 70) is the hard limit. Crossing it raises
   ``DiskBudgetError``. Between budget and ceiling we return a WARNING status so
   the caller can log it and proceed cautiously.
 """
@@ -132,8 +129,7 @@ def check_disk_budget(
         status = "over"
         message = (
             f"DISK OVER CEILING: total {total:.2f}GB >= ceiling {ceiling_gb:.0f}GB "
-            f"[{breakdown}]. Aborting BEFORE exceeding the borrowed-box budget "
-            "(D-0020: total disk must stay < 70GB, delete-after)."
+            f"[{breakdown}]. Aborting before exceeding the hardware-profile limit."
         )
     elif total >= budget_gb:
         status = "warn"

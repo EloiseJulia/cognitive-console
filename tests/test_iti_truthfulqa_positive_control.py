@@ -40,11 +40,17 @@ from cognitive_console.experiments.iti_positive_control import (
     dev_eligibility,
     deterministic_sample_seed,
 )
+from cognitive_console.ops.transformers_compat import (
+    REQUIRED_TRANSFORMERS_VERSION,
+    TRANSFORMERS_4_44_2_PROTOCOL_ONLY_NEUTRAL_FIELDS,
+    assert_transformers_compatibility,
+)
 from cognitive_console.steering.official_iti import (
     FROZEN_EOS_TOKEN_IDS,
     FROZEN_EOS_TOKEN_STRINGS,
     FROZEN_SAMPLING_CONFIG,
     ITIHeadSpec,
+    MAX_POST_UNLOAD_CUDA_BYTES,
     OfficialITIConfig,
     OfficialITIHFBackend,
     fit_official_iti,
@@ -87,6 +93,11 @@ def test_frozen_runner_config_matches_preregistered_identities():
     assert frozen["generation"]["top_k"] == 0
     assert frozen["generation"]["eos_token_ids"] == [128001, 128009]
     assert frozen["disk"]["overridable"] is False
+    assert frozen["hardware_profile"]["name"] == runner.DEFAULT_HARDWARE_PROFILE
+    assert (
+        frozen["generation"]["transformers_required_version"]
+        == REQUIRED_TRANSFORMERS_VERSION
+    )
     assert frozen["test_once"]["global_registry"] == (
         "/var/lib/cognitive-console/iti-truthfulqa-positive-control/"
         "test-attempts.jsonl"
@@ -94,6 +105,16 @@ def test_frozen_runner_config_matches_preregistered_identities():
     assert frozen["statistics"]["ci_level"] == pytest.approx(1.0 - 0.05 / 3.0)
     assert frozen["current_grid_preservation"].endswith("0/12")
     assert "scikit-learn" in runner._runtime_environment()["packages"]
+    autodl = runner.frozen_config(
+        code_commit="abc",
+        hardware_profile_name=runner.AUTODL_HARDWARE_PROFILE,
+    )
+    assert autodl["generation"]["activation_batch_size"] == 1
+    assert autodl["generation"]["k"] == frozen["generation"]["k"] == 5
+    assert autodl["method"] == frozen["method"]
+    assert autodl["statistics"] == frozen["statistics"]
+    assert autodl["disk"]["budget_gib"] == 44.0
+    assert autodl["disk"]["ceiling_gib"] == 47.0
 
 
 def test_official_twofold_is_deterministic_disjoint_and_covers_all_items():
@@ -192,6 +213,7 @@ def test_real_judge_load_resolves_runtime_kind_to_pinned_snapshot_key(
         dtype="float32",
         cache_root=tmp_path / "judges",
     )
+    judge._resident_kind = kind
     with pytest.raises(SnapshotKeyObserved):
         judge._load(
             kind,
@@ -203,10 +225,11 @@ def test_real_judge_load_resolves_runtime_kind_to_pinned_snapshot_key(
             ),
             tmp_path / kind,
         )
+    judge._resident_kind = None
     assert seen == [expected_snapshot_name]
 
 
-def test_judges_load_sequentially_and_purge_dedicated_caches(tmp_path, monkeypatch):
+def test_judges_load_sequentially_and_retain_pinned_disk_caches(tmp_path, monkeypatch):
     judge = LocalTruthInfoJudge.from_pretrained(
         device="cpu",
         dtype="float32",
@@ -216,10 +239,7 @@ def test_judges_load_sequentially_and_purge_dedicated_caches(tmp_path, monkeypat
     runtime_marker = {"value": "audited"}
 
     def fake_load(kind, model_id, revision, cache_dir):
-        assert not any(
-            child.is_dir() and child != cache_dir
-            for child in judge.cache_root.glob("*")
-        )
+        assert judge._resident_kind == kind
         cache_dir.mkdir(parents=True, exist_ok=True)
         (cache_dir / "weight.bin").write_bytes(b"x")
         judge.snapshot_identities[kind] = {
@@ -250,7 +270,10 @@ def test_judges_load_sequentially_and_purge_dedicated_caches(tmp_path, monkeypat
     assert scores[0].truth is True
     assert scores[0].informative is False
     assert [row[4] for row in events] == ["truth", "info"]
-    assert not list(judge.cache_root.glob("*"))
+    assert {path.name for path in judge.cache_root.glob("*")} == {
+        "truth",
+        "info",
+    }
     resumed = judge.score_many(
         [("Question?", "Answer.")],
         identities=["job-1"],
@@ -288,6 +311,11 @@ def test_judges_load_sequentially_and_purge_dedicated_caches(tmp_path, monkeypat
         },
         "attention_implementation": "eager",
         "attention_layers": [{"layer": 0, "source_sha256": "c" * 64}],
+        "hardware_profile": {"name": runner.DEFAULT_HARDWARE_PROFILE},
+        "host_binding": {"fingerprint_hash": "host-a"},
+        "transformers_compatibility": {
+            "required_version": REQUIRED_TRANSFORMERS_VERSION
+        },
         "environment": {"packages": {"transformers": "x"}},
     }
     audited_fingerprint = runner._execution_fingerprint(
@@ -324,6 +352,92 @@ def test_judges_load_sequentially_and_purge_dedicated_caches(tmp_path, monkeypat
             identities=["job-1"],
             checkpoint_root=tmp_path / "judge-checkpoints",
         )
+
+
+def test_execute_jobs_unloads_generator_before_any_real_judge(
+    tmp_path, monkeypatch
+):
+    item = SimpleNamespace(item_id="item-0", index=0, question="Question?")
+    job = GenerationJob(
+        0,
+        "dev",
+        "baseline",
+        OFFICIAL_BASE_PROMPT_ID,
+        item.item_id,
+        item.index,
+        0,
+        123,
+    )
+
+    class GuardedGenerator:
+        resident = True
+
+        def generate_with_metadata(self, prompt, **kwargs):
+            del prompt, kwargs
+            assert self.resident is True
+            return "Answer.", 1, False
+
+        def release_for_sequential_judging(self):
+            assert self.resident is True
+            self.resident = False
+            return {"after": {"allocated_bytes": 0, "reserved_bytes": 0}}
+
+        def assert_unloaded_for_sequential_judging(self):
+            if self.resident:
+                raise RuntimeError("generator remains resident")
+            return {
+                "released": True,
+                "max_post_unload_cuda_bytes": MAX_POST_UNLOAD_CUDA_BYTES,
+                "allocated_bytes": 0,
+                "reserved_bytes": 0,
+            }
+
+    generator = GuardedGenerator()
+    judge = LocalTruthInfoJudge.from_pretrained(
+        device="cpu",
+        dtype="float32",
+        cache_root=tmp_path / "judges",
+    )
+
+    def guarded_score_many(pairs, *, identities, checkpoint_root):
+        del identities, checkpoint_root
+        judge._assert_ready_for_judge_load()
+        assert generator.resident is False
+        return [runner.JudgeScore(True, True, "yes", "yes") for _ in pairs]
+
+    monkeypatch.setattr(judge, "score_many", guarded_score_many)
+    records = runner._execute_jobs(
+        [job],
+        checkpoint_path=tmp_path / "dev.jsonl",
+        run_config_hash="run-hash",
+        items=[item],
+        prompts={OFFICIAL_BASE_PROMPT_ID: "Answer truthfully."},
+        generator=generator,
+        judge=judge,
+        configs={},
+        checkpoint_binding={"run_config_hash": "run-hash"},
+    )
+    assert len(records) == 1
+    assert generator.resident is False
+    assert judge.generator_release_report is not None
+
+
+def test_judge_residency_lock_rejects_concurrent_model_load(tmp_path):
+    judge = LocalTruthInfoJudge.from_pretrained(
+        device="cpu",
+        dtype="float32",
+        cache_root=tmp_path / "judges",
+    )
+    assert judge._residency_lock.acquire(blocking=False)
+    try:
+        with pytest.raises(RuntimeError, match="concurrent judge residency"):
+            judge.score_many(
+                [("Question?", "Answer.")],
+                identities=["job-1"],
+                checkpoint_root=tmp_path / "checkpoints",
+            )
+    finally:
+        judge._residency_lock.release()
 
 
 def test_official_iti_recovers_planted_attention_head():
@@ -438,6 +552,68 @@ def test_tiny_model_attention_pre_hook_edits_only_last_token_and_cleans_hooks():
     assert not model.model.layers[0].self_attn.o_proj._forward_pre_hooks
 
 
+def test_transformers_4_44_2_llama_eager_o_proj_hook_shape_and_delta():
+    torch = pytest.importorskip("torch")
+    import transformers
+    from transformers import LlamaConfig, LlamaForCausalLM
+
+    assert transformers.__version__ == REQUIRED_TRANSFORMERS_VERSION
+    config_obj = LlamaConfig(
+        vocab_size=32,
+        hidden_size=8,
+        intermediate_size=16,
+        num_hidden_layers=1,
+        num_attention_heads=2,
+        num_key_value_heads=2,
+        max_position_embeddings=32,
+    )
+    config_obj._attn_implementation = "eager"
+    model = LlamaForCausalLM(config_obj).eval()
+    tokenizer = SimpleNamespace(
+        pad_token="<pad>",
+        eos_token="</s>",
+        padding_side="left",
+    )
+    backend = OfficialITIHFBackend(
+        "tiny-llama",
+        model=model,
+        tokenizer=tokenizer,
+        config=model.config,
+    )
+    iti_config = OfficialITIConfig(
+        specs=(
+            ITIHeadSpec(
+                layer=0,
+                head=1,
+                direction=np.asarray([1.0, 0.0, 0.0, 0.0]),
+                sigma=0.5,
+                validation_accuracy=1.0,
+            ),
+        ),
+        alpha=2.0,
+        num_attention_heads=2,
+        head_dim=4,
+    )
+    stats = {}
+    handles = backend._register_iti_hooks(
+        iti_config, stats_by_layer=stats
+    )
+    try:
+        with torch.no_grad():
+            model.model(
+                input_ids=torch.tensor([[1, 2, 3]], dtype=torch.long),
+                use_cache=False,
+            )
+    finally:
+        for handle in reversed(handles):
+            handle.remove()
+    before = {0: np.concatenate(stats[0]["before"], axis=0)}
+    after = {0: np.concatenate(stats[0]["after"], axis=0)}
+    assert before[0].shape == after[0].shape == (1, 8)
+    assert hook_bite_metrics(before, after, iti_config)["passed"] is True
+    assert not model.model.layers[0].self_attn.o_proj._forward_pre_hooks
+
+
 def test_effective_generation_config_overrides_model_top_p_and_top_k():
     torch = pytest.importorskip("torch")
     from transformers import GenerationConfig
@@ -500,15 +676,69 @@ def test_effective_generation_config_overrides_model_top_p_and_top_k():
     assert effective["top_k"] == 0
     assert effective["temperature"] == 0.7
     assert effective["eos_token_id"] == [128001, 128009]
+    supported_frozen = {
+        key: value
+        for key, value in FROZEN_SAMPLING_CONFIG.items()
+        if key in effective
+    }
     assert {
-        key: effective[key] for key in FROZEN_SAMPLING_CONFIG
-    } == FROZEN_SAMPLING_CONFIG
+        key: effective[key] for key in supported_frozen
+    } == supported_frozen
+    assert (
+        set(FROZEN_SAMPLING_CONFIG) - set(effective)
+        == set(TRANSFORMERS_4_44_2_PROTOCOL_ONLY_NEUTRAL_FIELDS)
+    )
     runtime_fields = set(GenerationConfig().to_dict()) - {
         "_from_model_config",
         "transformers_version",
     }
     assert set(generation_kwargs) == runtime_fields
     assert generation_kwargs == effective
+
+
+def test_official_backend_release_is_irreversible_and_memory_guarded(monkeypatch):
+    torch = pytest.importorskip("torch")
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: False)
+
+    class TinyLM(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.model = SimpleNamespace(
+                layers=torch.nn.ModuleList([torch.nn.Identity()])
+            )
+
+    tokenizer = SimpleNamespace(
+        pad_token="<pad>",
+        eos_token="<eos>",
+        padding_side="left",
+    )
+    backend = OfficialITIHFBackend(
+        "tiny",
+        model=TinyLM(),
+        tokenizer=tokenizer,
+        config=SimpleNamespace(
+            hidden_size=8,
+            num_hidden_layers=1,
+            num_attention_heads=1,
+        ),
+    )
+    report = backend.release_for_sequential_judging()
+    assert report["after"]["released"] is True
+    assert report["after"]["allocated_bytes"] <= MAX_POST_UNLOAD_CUDA_BYTES
+    with pytest.raises(RuntimeError, match="irreversibly released"):
+        backend._ensure_loaded()
+    with pytest.raises(RuntimeError, match="already released"):
+        backend.release_for_sequential_judging()
+
+
+def test_transformers_4_44_2_is_explicit_and_other_versions_fail_closed():
+    compatibility = assert_transformers_compatibility("4.44.2")
+    assert compatibility["installed_version"] == "4.44.2"
+    assert compatibility["protocol_only_neutral_fields"] == (
+        TRANSFORMERS_4_44_2_PROTOCOL_ONLY_NEUTRAL_FIELDS
+    )
+    with pytest.raises(RuntimeError, match="requires exact Transformers 4.44.2"):
+        assert_transformers_compatibility("4.45.0")
 
 
 def test_frozen_multi_eos_mapping_and_second_eos_stops_without_truncation():
@@ -578,9 +808,14 @@ def test_fold_configs_are_atomic_full_identity_bound_and_resume_rejects_mismatch
     monkeypatch.setattr(
         runner,
         "_fit_fold_configs",
-        lambda items, splits, backend: (
+        lambda items, splits, backend, *, activation_batch_size: (
             {0: config},
-            {"0": {"hook_bites": {"passed": True}}},
+            {
+                "0": {
+                    "hook_bites": {"passed": True},
+                    "activation_batch_size": activation_batch_size,
+                }
+            },
         ),
     )
 
@@ -601,6 +836,7 @@ def test_fold_configs_are_atomic_full_identity_bound_and_resume_rejects_mismatch
         items=[],
         splits=[],
         backend=Backend(),
+        activation_batch_size=1,
     )
     assert configs[0].to_dict() == config.to_dict()
     assert payload["fold_configs_hash"] == config_hash(payload["fold_configs"])
@@ -610,6 +846,7 @@ def test_fold_configs_are_atomic_full_identity_bound_and_resume_rejects_mismatch
         items=[],
         splits=[],
         backend=Backend(),
+        activation_batch_size=1,
     )
     assert resumed[0].to_dict() == config.to_dict()
     with pytest.raises(ValueError, match="data/model/environment"):
@@ -619,6 +856,7 @@ def test_fold_configs_are_atomic_full_identity_bound_and_resume_rejects_mismatch
             items=[],
             splits=[],
             backend=Backend(),
+            activation_batch_size=1,
         )
 
 
@@ -939,7 +1177,16 @@ def test_signed_authorization_refuses_host_path_and_profile_drift(
 
 @pytest.mark.parametrize(
     "section",
-    ["generator", "gpu", "attention", "dependencies", "judges"],
+    [
+        "generator",
+        "gpu",
+        "hardware_profile",
+        "host_binding",
+        "attention",
+        "transformers_compatibility",
+        "dependencies",
+        "judges",
+    ],
 )
 def test_test_execution_fingerprint_rejects_every_audited_dimension(section):
     preflight = {
@@ -965,6 +1212,11 @@ def test_test_execution_fingerprint_rejects_every_audited_dimension(section):
         },
         "attention_implementation": "eager",
         "attention_layers": [{"layer": 0, "source_sha256": "c" * 64}],
+        "hardware_profile": {"name": runner.DEFAULT_HARDWARE_PROFILE},
+        "host_binding": {"fingerprint_hash": "host-a"},
+        "transformers_compatibility": {
+            "required_version": REQUIRED_TRANSFORMERS_VERSION
+        },
         "environment": {"packages": {"transformers": "x"}},
     }
     current = runner._execution_fingerprint(
@@ -1016,6 +1268,11 @@ def test_execution_fingerprint_exactly_binds_physical_gpu(field, changed):
         },
         "attention_implementation": "eager",
         "attention_layers": [{"layer": 0, "source_sha256": "c" * 64}],
+        "hardware_profile": {"name": runner.DEFAULT_HARDWARE_PROFILE},
+        "host_binding": {"fingerprint_hash": "host-a"},
+        "transformers_compatibility": {
+            "required_version": REQUIRED_TRANSFORMERS_VERSION
+        },
         "environment": {"packages": {"transformers": "x"}},
     }
     audited = runner._execution_fingerprint(
@@ -1107,6 +1364,105 @@ def test_gpu_identity_uses_cuda_pci_not_numeric_visible_index(monkeypatch):
     assert identity["selected_visible_token"] == "1"
     assert identity["physical_identity"]["nvidia_smi_index"] == 1
     assert identity["physical_identity"]["uuid"] == "GPU-PHYSICAL-ONE"
+
+
+def _authorized_autodl_runtime():
+    return {
+        "cuda_name": "NVIDIA GeForce RTX 4080 SUPER",
+        "physical_name": "NVIDIA GeForce RTX 4080 SUPER",
+        "cuda_total_memory_bytes": 32760 * 1024**2,
+        "physical_memory_mib": 32760,
+        "cuda_device_count": 1,
+        "visibility": {
+            "cuda_visible_devices": "0",
+            "visible_device_tokens": ["0"],
+            "logical_index": 0,
+            "selected_visible_token": "0",
+        },
+        "bf16_supported": True,
+        "torch_version": "2.8.0+cu128",
+        "torch_cuda": "12.8",
+        "environment": {
+            "python": "3.12.11",
+            "packages": {
+                "transformers": "4.44.2",
+                "datasets": "2.21.0",
+                "scikit-learn": "1.5.1",
+                "accelerate": "0.34.2",
+            },
+        },
+        "host_binding": {"fingerprint_hash": "authorized-autodl-host"},
+    }
+
+
+def test_owner_authorized_hardware_profiles_accept_a800_or_autodl():
+    autodl = runner._validate_hardware_profile(
+        runner.AUTODL_HARDWARE_PROFILE,
+        runtime=_authorized_autodl_runtime(),
+    )
+    assert autodl["name"] == runner.AUTODL_HARDWARE_PROFILE
+    a800_runtime = _authorized_autodl_runtime()
+    a800_runtime.update(
+        {
+            "cuda_name": "NVIDIA A800 80GB PCIe",
+            "physical_name": "NVIDIA A800 80GB PCIe",
+            "cuda_total_memory_bytes": 80 * 1024**3,
+            "physical_memory_mib": 81920,
+        }
+    )
+    a800 = runner._validate_hardware_profile(
+        runner.DEFAULT_HARDWARE_PROFILE,
+        runtime=a800_runtime,
+    )
+    assert a800["name"] == runner.DEFAULT_HARDWARE_PROFILE
+
+
+@pytest.mark.parametrize(
+    "field, bad_value, error",
+    [
+        ("cuda_name", "NVIDIA RTX 4090", "allowlist"),
+        ("cuda_device_count", 2, "one visible"),
+        ("bf16_supported", False, "bf16"),
+        ("torch_version", "2.7.1+cu126", "PyTorch 2.8"),
+        ("torch_cuda", "11.8", "CUDA 12"),
+    ],
+)
+def test_autodl_hardware_profile_rejects_unknown_or_drifted_runtime(
+    field, bad_value, error
+):
+    runtime = _authorized_autodl_runtime()
+    runtime[field] = bad_value
+    with pytest.raises(RuntimeError, match=error):
+        runner._validate_hardware_profile(
+            runner.AUTODL_HARDWARE_PROFILE,
+            runtime=runtime,
+        )
+
+
+def test_autodl_profile_binds_authorized_root_host_and_data_paths(monkeypatch):
+    monkeypatch.setattr(
+        runner.sys, "executable", "/root/miniconda3/bin/python"
+    )
+    host = {
+        "system": "Linux",
+        "effective_uid": 0,
+        "effective_user": "root",
+        "fingerprint_hash": "host-fingerprint",
+    }
+    binding = runner._assert_profile_host_paths(
+        runner.AUTODL_HARDWARE_PROFILE,
+        out_dir=Path("/root/autodl-tmp/runs/iti"),
+        cache_root=Path("/root/autodl-tmp/hf"),
+        host_profile=host,
+    )
+    assert binding["host_fingerprint"] == "host-fingerprint"
+    with pytest.raises(RuntimeError, match="root user"):
+        runner._assert_profile_host_paths(
+            runner.AUTODL_HARDWARE_PROFILE,
+            out_dir=Path("/root/autodl-tmp/runs/iti"),
+            cache_root=Path("/root/autodl-tmp/hf"),
+            host_profile={**host, "effective_uid": 1000},
+        )
 
 
 def _record(
@@ -1266,7 +1622,11 @@ def test_disk_limits_and_backend_phase_are_not_cli_overridable(
 ):
     assert runner.DISK_BUDGET_GB == 60.0
     assert runner.DISK_CEILING_GB == 70.0
-    assert runner.PINNED_CONCURRENT_WORST_CASE_BYTES == 38137686854
+    assert runner.PINNED_CONCURRENT_WORST_CASE_BYTES == 51615163245
+    autodl = runner.HARDWARE_PROFILES[runner.AUTODL_HARDWARE_PROFILE]
+    assert autodl.disk_budget_gib == 44.0
+    assert autodl.disk_ceiling_gib == 47.0
+    assert autodl.pinned_worst_case_bytes == 46246454125
     cache_variables = (
         "HF_HOME",
         "HF_HUB_CACHE",
@@ -1298,6 +1658,19 @@ def test_disk_limits_and_backend_phase_are_not_cli_overridable(
                 "10",
             ]
         )
+    parsed = parser.parse_args(
+        [
+            "--backend",
+            "hf",
+            "--phase",
+            "preflight",
+            "--hardware-profile",
+            runner.AUTODL_HARDWARE_PROFILE,
+            "--activation-batch-size",
+            "1",
+        ]
+    )
+    assert parsed.hardware_profile == runner.AUTODL_HARDWARE_PROFILE
 
 
 def test_per_row_judge_exception_becomes_missing_and_next_row_continues(

@@ -5,6 +5,35 @@
 
 ---
 
+## 2026-08-12 · D-0118 · Owner authorizes dedicated AutoDL RTX 4080 SUPER alternate execution profile
+- The owner reported renting and explicitly authorized a dedicated single-GPU
+  AutoDL host for this positive-control experiment: NVIDIA GeForce RTX 4080
+  SUPER, 32760 MiB, `CUDA_VISIBLE_DEVICES=0`, bf16, CUDA 12.x, PyTorch 2.8,
+  `/root/miniconda3/bin/python` 3.12, Transformers 4.44.2, datasets 2.21,
+  scikit-learn and accelerate installed, `HF_HOME=/root/autodl-tmp/hf`, and a
+  50 GiB `/root/autodl-tmp` data disk.
+- This is an owner-authorized operational hardware/memory/disk profile alongside
+  the existing >=75 GiB A800 profile. It changes no model, judge, or dataset
+  identity; prompt; alpha=15; top-48 head method; K=5; max-new-tokens=64; seed;
+  split; estimator; bootstrap/CI; delta; coherence/random/missingness/truncation
+  gate; verdict; TEST-once rule; authorization rule; or frozen 0/12 result.
+- The AutoDL profile fails closed unless the exact GPU-name allowlist, one-device
+  visibility, root/Linux/Python/data paths, bf16/CUDA/PyTorch/package facts, and
+  runtime host fingerprint all match. The selected physical GPU UUID and PCI
+  identity remain execution-fingerprint bound from DEV through TEST.
+  Execution-fingerprint schema v3 adds the named hardware profile, exact host
+  path binding, and Transformers-compatibility record to the prior schema-v2
+  physical-GPU/dependency/judge identity.
+- Generator and judges may never be concurrently resident: the generator is
+  irreversibly unloaded and CUDA cache cleared before judge load; a <=512 MiB
+  post-unload guard and exclusive judge-residency lock enforce one model at a
+  time. Pinned snapshots remain on disk under the data root.
+- AutoDL disk controls are non-overridable: 44 GiB planning budget, hard
+  `<47 GiB` ceiling, and exact 43.0704 GiB pinned-plus-reserve projection.
+  Transformers is pinned to exact 4.44.2; its eager Llama `o_proj` hook path,
+  multi-EOS generation, and complete runtime generation configuration are
+  explicitly validated. This repair performs no GPU, preflight, DEV, or TEST.
+
 ## 2026-08-11 · D-0117 · 380c235/58b08f3 rejected; corrected fourth repair binds current judges and physical GPU
 - The follow-up narrow audit rejected
   `380c235473d47e7281474c9476042cd7ab103b43` before GPU, preflight, real DEV,

@@ -22,7 +22,7 @@ dev = ["pytest>=7.0"]
 #   pip install -e .[hf]
 hf = [
     "torch>=2.0",
-    "transformers>=4.40",
+    "transformers==4.44.2",
     "accelerate>=0.30",
     "safetensors>=0.4",
     "huggingface_hub>=0.23",

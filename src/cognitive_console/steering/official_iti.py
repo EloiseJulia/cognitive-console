@@ -8,16 +8,23 @@ head outputs immediately before ``self_attn.o_proj``.
 
 from __future__ import annotations
 
+import gc
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 
+from ..ops.transformers_compat import (
+    GENERATION_CONFIG_METADATA_KEYS,
+    assert_transformers_compatibility,
+    explicit_generation_material,
+)
 from ..randomness import pcg64_rng
 from .generate import SteeredHFBackend, unit_vector
 
 _EPS = 1e-12
+MAX_POST_UNLOAD_CUDA_BYTES = 512 * 1024**2
 FROZEN_EOS_TOKEN_IDS = (128001, 128009)
 FROZEN_EOS_TOKEN_STRINGS = ("<|end_of_text|>", "<|eot_id|>")
 FROZEN_SAMPLING_CONFIG = {
@@ -88,7 +95,7 @@ FROZEN_SAMPLING_CONFIG = {
     "continuous_batching_config": None,
     "decoder_start_token_id": None,
 }
-_GENERATION_CONFIG_METADATA_KEYS = {"_from_model_config", "transformers_version"}
+_GENERATION_CONFIG_METADATA_KEYS = GENERATION_CONFIG_METADATA_KEYS
 
 
 def validate_frozen_eos_mapping(tokenizer) -> Dict[str, object]:
@@ -412,6 +419,18 @@ def hook_bite_metrics(
 class OfficialITIHFBackend(SteeredHFBackend):
     """Llama-compatible head-output collector and official-style ITI generator."""
 
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self._released_for_sequential_judging = False
+        self._release_report: Optional[Dict[str, object]] = None
+
+    def _ensure_loaded(self):
+        if self._released_for_sequential_judging:
+            raise RuntimeError(
+                "generator was irreversibly released for sequential judging"
+            )
+        return super()._ensure_loaded()
+
     @staticmethod
     def _render_protocol_prompt(text: str) -> str:
         """Use the official repository's plain `Q: ... A:` tokenization path."""
@@ -431,31 +450,22 @@ class OfficialITIHFBackend(SteeredHFBackend):
         seed: int,
     ) -> "OfficialITIHFBackend":
         import torch
-        from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+        from transformers import AutoModelForCausalLM, AutoTokenizer
 
+        assert_transformers_compatibility()
         torch_dtype = getattr(torch, dtype)
         snapshot_path = str(snapshot_path)
-        config = AutoConfig.from_pretrained(snapshot_path, local_files_only=True)
         tokenizer = AutoTokenizer.from_pretrained(snapshot_path, local_files_only=True)
         validate_frozen_eos_mapping(tokenizer)
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
-        try:
-            model = AutoModelForCausalLM.from_pretrained(
-                snapshot_path,
-                local_files_only=True,
-                attn_implementation="eager",
-                dtype=torch_dtype,
-                low_cpu_mem_usage=True,
-            )
-        except TypeError:
-            model = AutoModelForCausalLM.from_pretrained(
-                snapshot_path,
-                local_files_only=True,
-                attn_implementation="eager",
-                torch_dtype=torch_dtype,
-                low_cpu_mem_usage=True,
-            )
+        model = AutoModelForCausalLM.from_pretrained(
+            snapshot_path,
+            local_files_only=True,
+            attn_implementation="eager",
+            torch_dtype=torch_dtype,
+            low_cpu_mem_usage=True,
+        )
         model.to(device)
         model.eval()
         config = model.config
@@ -470,6 +480,79 @@ class OfficialITIHFBackend(SteeredHFBackend):
             tokenizer=tokenizer,
             config=config,
         )
+
+    @staticmethod
+    def _cuda_residency() -> Dict[str, int]:
+        import torch
+
+        if not torch.cuda.is_available():
+            return {"allocated_bytes": 0, "reserved_bytes": 0}
+        return {
+            "allocated_bytes": int(torch.cuda.memory_allocated()),
+            "reserved_bytes": int(torch.cuda.memory_reserved()),
+        }
+
+    def assert_unloaded_for_sequential_judging(self) -> Dict[str, object]:
+        if not self._released_for_sequential_judging:
+            raise RuntimeError("generator has not been released before judge load")
+        if any(
+            value is not None
+            for value in (
+                self._model,
+                self._tokenizer,
+                self._config,
+                self._layers,
+            )
+        ):
+            raise RuntimeError("generator object still retains model residency")
+        residency = self._cuda_residency()
+        if (
+            residency["allocated_bytes"] > MAX_POST_UNLOAD_CUDA_BYTES
+            or residency["reserved_bytes"] > MAX_POST_UNLOAD_CUDA_BYTES
+        ):
+            raise RuntimeError(
+                "CUDA residency remains above the post-generator-unload guard: "
+                f"{residency}"
+            )
+        return {
+            "released": True,
+            "max_post_unload_cuda_bytes": MAX_POST_UNLOAD_CUDA_BYTES,
+            **residency,
+        }
+
+    def release_for_sequential_judging(self) -> Dict[str, object]:
+        """Irreversibly unload the generator before any judge can be loaded."""
+
+        import torch
+
+        if self._released_for_sequential_judging:
+            raise RuntimeError("generator was already released")
+        if self._model is None:
+            raise RuntimeError("cannot release an unloaded generator")
+        before = self._cuda_residency()
+        model = self._model
+        tokenizer = self._tokenizer
+        config = self._config
+        layers = self._layers
+        self._model = None
+        self._tokenizer = None
+        self._config = None
+        self._layers = None
+        self._released_for_sequential_judging = True
+        del layers
+        del config
+        del tokenizer
+        del model
+        gc.collect()
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            torch.cuda.synchronize()
+        after = self.assert_unloaded_for_sequential_judging()
+        self._release_report = {
+            "before": before,
+            "after": after,
+        }
+        return dict(self._release_report)
 
     def effective_generation_config(
         self,
@@ -496,13 +579,6 @@ class OfficialITIHFBackend(SteeredHFBackend):
                 "generation request differs from frozen sampling configuration"
             )
         runtime_defaults = GenerationConfig().to_dict()
-        runtime_fields = set(runtime_defaults) - _GENERATION_CONFIG_METADATA_KEYS
-        unsupported = set(FROZEN_SAMPLING_CONFIG) - runtime_fields
-        if unsupported:
-            raise RuntimeError(
-                f"installed Transformers lacks frozen generation fields: "
-                f"{sorted(unsupported)}"
-            )
         model_generation = getattr(self._model, "generation_config", None)
         if model_generation is not None:
             unknown_model_fields = (
@@ -515,19 +591,15 @@ class OfficialITIHFBackend(SteeredHFBackend):
                     "model generation_config contains unsupported custom fields: "
                     f"{sorted(unknown_model_fields)}"
                 )
-        material = {
-            key: value
-            for key, value in runtime_defaults.items()
-            if key not in _GENERATION_CONFIG_METADATA_KEYS
-        }
-        material.update(FROZEN_SAMPLING_CONFIG)
-        material.update(
-            {
+        material = explicit_generation_material(
+            runtime_defaults,
+            protocol_fields=FROZEN_SAMPLING_CONFIG,
+            overrides={
                 "max_new_tokens": 64,
                 "pad_token_id": self._tokenizer.pad_token_id,
                 "eos_token_id": list(FROZEN_EOS_TOKEN_IDS),
                 "bos_token_id": self._tokenizer.bos_token_id,
-            }
+            },
         )
         prepare = getattr(self._model, "_prepare_generation_config", None)
         if callable(prepare):

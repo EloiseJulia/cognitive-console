@@ -2,19 +2,25 @@
 
 from __future__ import annotations
 
+import gc
 import json
 import hashlib
 import inspect
 import os
 import re
-import shutil
+import threading
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
 import numpy as np
 
+from ..ops.transformers_compat import (
+    GENERATION_CONFIG_METADATA_KEYS,
+    assert_transformers_compatibility,
+    explicit_generation_material,
+)
 from ..randomness import pcg64_rng
 
 TRUTHFULQA_DATASET_ID = "truthfulqa/truthful_qa"
@@ -27,7 +33,7 @@ INFO_JUDGE_REVISION = "72601eff294cbf7e8d7188ae82397e19cb9bb9bd"
 PROMPT_BANK_RELATIVE = Path("data/strongest_prompts/truthfulness_positive_control.jsonl")
 PROMPT_BANK_SHA256 = "597d5ea1dc07d1169912978ca3ef35a2d4f6cf185270eb0994ebf76c872b122c"
 OFFICIAL_BASE_PROMPT_ID = "truth-p01-official-default"
-_GENERATION_CONFIG_METADATA_KEYS = {"_from_model_config", "transformers_version"}
+_GENERATION_CONFIG_METADATA_KEYS = GENERATION_CONFIG_METADATA_KEYS
 _JUDGE_SNAPSHOT_NAMES = {
     "truth": "truth_judge",
     "info": "info_judge",
@@ -224,7 +230,7 @@ def download_pinned_snapshot(
     snapshot_dir = Path(snapshot_dir)
     snapshot_dir.mkdir(parents=True, exist_ok=True)
     if before_download is not None:
-        before_download(pinned_snapshot_size_bytes(name))
+        before_download(name, pinned_snapshot_size_bytes(name), snapshot_dir)
     for relative in spec["files"]:
         hf_hub_download(
             repo_id=str(spec["repo_id"]),
@@ -473,13 +479,12 @@ class JudgeScore:
 
 
 class LocalTruthInfoJudge:
-    """Sequential pinned judges with per-judge cache cleanup.
+    """Sequential pinned judges with strict GPU-residency exclusion.
 
     The two public judge repositories together contain roughly 27 GB of source
-    weights (about 13.5 GB each). Loading/caching both simultaneously would
-    violate the borrowed-box disk ceiling once the generator is present, so real
-    runs load, score, unload, and purge one dedicated judge cache before loading
-    the other.
+    weights (about 13.5 GB each). Their pinned files may coexist on the data disk,
+    but the generator and judges must never coexist in GPU memory, and judges are
+    loaded, scored, and unloaded one at a time.
     """
 
     def __init__(
@@ -490,14 +495,19 @@ class LocalTruthInfoJudge:
         cache_root: Path,
         before_download=None,
         after_load=None,
+        residency_guard: Optional[Callable[[], Dict[str, object]]] = None,
     ):
         self.device = device
         self.dtype = dtype
         self.cache_root = Path(cache_root)
         self.before_download = before_download
         self.after_load = after_load
+        self.residency_guard = residency_guard
         self.snapshot_identities: Dict[str, Dict[str, object]] = {}
         self.runtime_fingerprints: Dict[str, Dict[str, object]] = {}
+        self._resident_kind: Optional[str] = None
+        self._residency_lock = threading.Lock()
+        self.generator_release_report: Optional[Dict[str, object]] = None
 
     @classmethod
     def from_pretrained(
@@ -508,6 +518,7 @@ class LocalTruthInfoJudge:
         cache_root: Path,
         before_download=None,
         after_load=None,
+        residency_guard: Optional[Callable[[], Dict[str, object]]] = None,
     ) -> "LocalTruthInfoJudge":
         return cls(
             device=device,
@@ -515,12 +526,36 @@ class LocalTruthInfoJudge:
             cache_root=cache_root,
             before_download=before_download,
             after_load=after_load,
+            residency_guard=residency_guard,
         )
+
+    def set_residency_guard(
+        self, guard: Callable[[], Dict[str, object]]
+    ) -> None:
+        if self._resident_kind is not None:
+            raise RuntimeError("cannot replace residency guard while a judge is loaded")
+        self.residency_guard = guard
+
+    def _assert_ready_for_judge_load(self) -> Dict[str, object]:
+        if self._resident_kind is not None:
+            raise RuntimeError(
+                f"judge {self._resident_kind} is already resident"
+            )
+        if self.residency_guard is None:
+            if self.device == "cuda":
+                raise RuntimeError(
+                    "CUDA judge load requires an explicit generator-unloaded guard"
+                )
+            return {"cpu_only": True}
+        return self.residency_guard()
 
     def _load(self, kind: str, model_id: str, revision: str, cache_dir: Path):
         import torch
-        from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+        from transformers import AutoModelForCausalLM, AutoTokenizer
 
+        assert_transformers_compatibility()
+        if self._resident_kind != kind:
+            raise RuntimeError("judge load bypassed the sequential residency guard")
         cache_dir.mkdir(parents=True, exist_ok=True)
         try:
             snapshot_name = _JUDGE_SNAPSHOT_NAMES[kind]
@@ -534,30 +569,18 @@ class LocalTruthInfoJudge:
         )
         self.snapshot_identities[kind] = snapshot_identity
         torch_dtype = getattr(torch, self.dtype)
-        config = AutoConfig.from_pretrained(
-            str(cache_dir), local_files_only=True
-        )
         tokenizer = AutoTokenizer.from_pretrained(
             str(cache_dir), local_files_only=True
         )
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
-        try:
-            model = AutoModelForCausalLM.from_pretrained(
-                str(cache_dir),
-                local_files_only=True,
-                attn_implementation="eager",
-                dtype=torch_dtype,
-                low_cpu_mem_usage=True,
-            )
-        except TypeError:
-            model = AutoModelForCausalLM.from_pretrained(
-                str(cache_dir),
-                local_files_only=True,
-                attn_implementation="eager",
-                torch_dtype=torch_dtype,
-                low_cpu_mem_usage=True,
-            )
+        model = AutoModelForCausalLM.from_pretrained(
+            str(cache_dir),
+            local_files_only=True,
+            attn_implementation="eager",
+            torch_dtype=torch_dtype,
+            low_cpu_mem_usage=True,
+        )
         model.to(self.device)
         model.eval()
         if model.config._attn_implementation != "eager":
@@ -607,6 +630,7 @@ class LocalTruthInfoJudge:
             "effective_generation_config_hash": _canonical_hash(
                 effective_generation
             ),
+            "transformers_compatibility": assert_transformers_compatibility(),
         }
         if self.after_load is not None:
             self.after_load()
@@ -630,13 +654,10 @@ class LocalTruthInfoJudge:
                     "judge generation_config contains unsupported custom fields: "
                     f"{sorted(unknown_model_fields)}"
                 )
-        material = {
-            key: value
-            for key, value in runtime_defaults.items()
-            if key not in _GENERATION_CONFIG_METADATA_KEYS
-        }
-        material.update(
-            {
+        material = explicit_generation_material(
+            runtime_defaults,
+            protocol_fields={},
+            overrides={
                 "max_length": None,
                 "max_new_tokens": 3,
                 "do_sample": False,
@@ -646,7 +667,7 @@ class LocalTruthInfoJudge:
                 "pad_token_id": tokenizer.pad_token_id,
                 "eos_token_id": tokenizer.eos_token_id,
                 "bos_token_id": tokenizer.bos_token_id,
-            }
+            },
         )
         prepare = getattr(model, "_prepare_generation_config", None)
         if callable(prepare):
@@ -820,7 +841,11 @@ class LocalTruthInfoJudge:
             return [persisted[str(identity)] for identity in identities]
         cache_dir = self.cache_root / kind
         model = tokenizer = None
+        if not self._residency_lock.acquire(blocking=False):
+            raise RuntimeError("concurrent judge residency attempt rejected")
         try:
+            self._assert_ready_for_judge_load()
+            self._resident_kind = kind
             self.snapshot_identities.pop(kind, None)
             self.runtime_fingerprints.pop(kind, None)
             model, tokenizer = self._load(kind, model_id, revision, cache_dir)
@@ -894,10 +919,12 @@ class LocalTruthInfoJudge:
         finally:
             del model
             del tokenizer
+            gc.collect()
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
-            if cache_dir.exists():
-                shutil.rmtree(cache_dir)
+                torch.cuda.synchronize()
+            self._resident_kind = None
+            self._residency_lock.release()
 
     def score_many(
         self,

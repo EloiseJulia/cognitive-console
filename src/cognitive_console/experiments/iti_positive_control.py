@@ -796,7 +796,9 @@ def designated_host_profile() -> Dict[str, object]:
     """Return the fixed Linux host/profile identity authorized for TEST."""
 
     if os.name != "posix":
-        raise RuntimeError("real TEST authorization is restricted to the Linux A800 host")
+        raise RuntimeError(
+            "real TEST authorization is restricted to an owner-authorized Linux host"
+        )
     machine_id_path = Path("/etc/machine-id")
     if not machine_id_path.is_file():
         raise RuntimeError("designated host fingerprint requires /etc/machine-id")

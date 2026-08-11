@@ -4,7 +4,9 @@
 
 - Planned completion: **on or before 2026-08-20**.
 - Current evidence date: **2026-08-11**.
-- Current state: **no supplied protocol or result**.
+- Current state: **protocol frozen; no real DEV/TEST result**.
+- Protocol:
+  `docs/research/2026-08-11-prereg-prompt-steer-composition-FROZEN.md`.
 - No result direction is assumed.
 
 ## Construct Question
@@ -21,22 +23,22 @@ The current worked application compares steering **instead of** the bounded prom
 | P-D Incomplete / invalid | implementation, power, missingness, or scorer prevents inference | Retain substitution-only scope and mark composition unresolved. |
 | P-E Delayed | no frozen result by submission | Submit model-only fallback or delay; do not imply composition evidence. |
 
-## Protocol — Pending
+## Protocol — Frozen, Execution Pending
 
 | Field | Pending value |
 |---|---|
-| Preregistration / registry | `[PENDING]` |
-| Model, method, axis, layer | `[PENDING]` |
-| User/base prompt | `[PENDING]` |
-| Added steering intervention | `[PENDING]` |
-| Prompt-only comparator | `[PENDING]` |
-| Steering-only comparator | `[PENDING]` |
-| Neutral/baseline condition | `[PENDING]` |
-| Selection budget and DEV rule | `[PENDING]` |
-| TEST freeze and access control | `[PENDING]` |
-| Outcome, margin, coherence rule | `[PENDING]` |
-| Missing/failure handling | `[PENDING]` |
-| Multiplicity and uncertainty | `[PENDING]` |
+| Preregistration / registry | `E-0017-prompt-steer-composition-v1`; H4 registered; real data absent; Bo et al. prior composition work rules out a composition-novelty claim |
+| Model, method, axis, layer | Qwen2.5-7B exact revision; CAA; 3 C2 axes; C2 extraction/layer rule |
+| User/base prompt | Existing 16 bounded candidates; DEV selects one per axis |
+| Added steering intervention | Same DEV-selected CAA direction/layer/alpha in `S` and `PS` |
+| Prompt-only comparator | `P`: DEV-selected bounded prompt, unsteered |
+| Steering-only comparator | `S`: neutral prompt plus the selected steer |
+| Neutral/baseline condition | `N`: frozen neutral prompt, no steer |
+| Selection budget and DEV rule | N=96/axis; prompt best-of-16; alpha grid 7; all selection DEV-only |
+| TEST freeze and access control | Fresh TEST outside original C2 pool; sealed IDs; one-use audited authorization |
+| Outcome, margin, coherence rule | Frozen C2 outcomes; primary `PS-P`; delta=.05; two-context 1.5x+0.02 |
+| Missing/failure handling | No row deletion; frozen parser fallbacks; coverage/parse/truncation gates; checkpoint resume |
+| Multiplicity and uncertainty | Item-cluster B=10000; 98.33% Bonferroni primary and interaction families; interaction is secondary and cannot establish utility when `PS-P` fails |
 
 ## Results — Keep Empty Until Frozen
 

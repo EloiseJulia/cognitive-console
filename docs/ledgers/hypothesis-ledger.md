@@ -41,3 +41,19 @@ Status: registered | testing | supported | refuted | parked
 - failure_interpretation: report as negative/limitation; keep as ablation
 - protocol_frozen: NO
 - status: registered
+
+## H4 (→ C2 construct validation) — Incremental prompt-plus-steer value
+- experiment_type: confirmatory construct validation after hostile pre-run audit
+- expected_outcome: no directional result assumed; estimate whether adding the same DEV-selected bounded
+  Qwen CAA steer to the DEV-selected bounded prompt improves the intended outcome.
+- primary_estimand: per-axis `prompt+steer - prompt`; secondary factorial interaction =
+  `(prompt+steer - prompt) - (steer - neutral)`. Interaction cannot establish utility when the primary fails.
+- success_criterion: Bonferroni 98.33% item-cluster bootstrap CI lower bound > 0, point estimate ≥ 0.05,
+  both-context coherence, and measurement eligibility.
+- failure_interpretation: an adequately powered valid no-pass supports only a scoped no-qualifying-increment
+  statement; underpowered/ineligible/invalid axes remain unresolved. The original substitution 0/12 is unchanged.
+- novelty_boundary: Bo et al. already studied prompting on top of activation steering; H4 is construct
+  validation, not a first-composition or composition-method novelty claim.
+- protocol_frozen: **YES — `docs/research/2026-08-11-prereg-prompt-steer-composition-FROZEN.md`; real TEST
+  remains authorization-locked pending hostile audit and budget approval.**
+- status: registered; no real DEV/TEST data and no evidence-ledger entry yet.

@@ -1776,10 +1776,7 @@ def run_hf_preflight(args: argparse.Namespace) -> Dict[str, object]:
             out_dir, cache_root, args.hardware_profile
         ),
     )
-    items = load_pinned_truthfulqa(
-        cache_root,
-        cache_dir=cache_root / "datasets-processed",
-    )
+    items = load_pinned_truthfulqa(cache_root)
     data_identity = _truthfulqa_identity(items)
     generator_snapshot_identity = download_pinned_snapshot(
         "generator",
@@ -1953,10 +1950,7 @@ def run_hf_dev(args: argparse.Namespace) -> Dict[str, object]:
             out_dir, cache_root, args.hardware_profile
         ),
     )
-    items = load_pinned_truthfulqa(
-        cache_root,
-        cache_dir=cache_root / "datasets-processed",
-    )
+    items = load_pinned_truthfulqa(cache_root)
     data_identity = _truthfulqa_identity(items)
     splits = official_twofold_splits()
     device = "cuda"
@@ -2215,10 +2209,7 @@ def run_hf_test(args: argparse.Namespace) -> Dict[str, object]:
     )
     if dataset_snapshot_identity != dev.get("dataset_snapshot_identity"):
         raise ValueError("dataset snapshot fingerprint changed between DEV and TEST")
-    items = load_pinned_truthfulqa(
-        cache_root,
-        cache_dir=cache_root / "datasets-processed",
-    )
+    items = load_pinned_truthfulqa(cache_root)
     data_identity = _truthfulqa_identity(items)
     if data_identity != dev.get("data_identity"):
         raise ValueError("TruthfulQA identity changed between DEV and TEST")

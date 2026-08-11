@@ -446,15 +446,13 @@ def load_prompt_bank(repo_root: Path) -> List[Tuple[str, str]]:
 
 def load_pinned_truthfulqa(
     cache_root: Path,
-    *,
-    cache_dir: Optional[Path] = None,
 ) -> List[TruthfulQAItem]:
     """Load the exact pinned generation and MC2 validation configurations."""
 
     try:
-        import datasets
+        import pyarrow.parquet as parquet
     except ImportError as exc:  # pragma: no cover - optional HF path
-        raise NotImplementedError("TruthfulQA HF loading requires datasets") from exc
+        raise NotImplementedError("TruthfulQA HF loading requires pyarrow") from exc
     snapshot_dir = resolve_pinned_snapshot_path("truthfulqa", cache_root)
     verify_pinned_snapshot("truthfulqa", snapshot_dir)
     spec = PINNED_SNAPSHOTS["truthfulqa"]
@@ -464,24 +462,13 @@ def load_pinned_truthfulqa(
         or spec["repo_type"] != "dataset"
     ):
         raise RuntimeError("TruthfulQA pinned repository identity changed")
-    if cache_dir is not None:
-        Path(cache_dir).mkdir(parents=True, exist_ok=True)
-
     def load_config(config_name: str):
         relative = f"{config_name}/{TRUTHFULQA_SPLIT}-00000-of-00001.parquet"
         if relative not in spec["files"]:
             raise RuntimeError(
                 f"TruthfulQA pinned config/split is absent: {relative}"
             )
-        return datasets.load_dataset(
-            "parquet",
-            config_name,
-            data_files={
-                TRUTHFULQA_SPLIT: str(snapshot_dir / relative)
-            },
-            split=TRUTHFULQA_SPLIT,
-            cache_dir=None if cache_dir is None else str(cache_dir),
-        )
+        return parquet.read_table(snapshot_dir / relative).to_pylist()
 
     generation = load_config(TRUTHFULQA_ANSWER_CONFIG)
     multiple_choice = load_config(TRUTHFULQA_CANONICAL_CONFIG)

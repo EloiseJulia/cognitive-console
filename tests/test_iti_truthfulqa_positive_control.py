@@ -1042,24 +1042,26 @@ def test_truthfulqa_loader_joins_exact_configs_and_rejects_question_set_drift(
         },
     ]
     calls = []
-    datasets = ModuleType("datasets")
+    pyarrow = ModuleType("pyarrow")
+    parquet = ModuleType("pyarrow.parquet")
 
-    def fake_load_dataset(
-        builder, config_name, *, data_files, split, cache_dir
-    ):
-        calls.append((builder, config_name, data_files, split, cache_dir))
-        path = next(iter(data_files.values()))
+    def fake_read_table(path):
+        path = str(path)
+        calls.append(path)
         if "generation" in path:
-            return generation_rows
+            return SimpleNamespace(to_pylist=lambda: generation_rows)
         if "multiple_choice" in path:
-            return multiple_choice_rows
+            return SimpleNamespace(to_pylist=lambda: multiple_choice_rows)
         raise AssertionError(f"unexpected TruthfulQA config path: {path}")
 
-    datasets.load_dataset = fake_load_dataset
-    monkeypatch.setitem(sys.modules, "datasets", datasets)
+    parquet.read_table = fake_read_table
+    pyarrow.parquet = parquet
+    monkeypatch.setitem(sys.modules, "pyarrow", pyarrow)
+    monkeypatch.setitem(sys.modules, "pyarrow.parquet", parquet)
     monkeypatch.setattr(
         "cognitive_console.eval.truthfulqa_positive_control.TRUTHFULQA_N", 2
     )
+
     def question_order_hash(rows):
         return hashlib.sha256(
             json.dumps(
@@ -1089,30 +1091,24 @@ def test_truthfulqa_loader_joins_exact_configs_and_rejects_question_set_drift(
         lambda name, snapshot_dir: {"name": name},
     )
 
-    items = load_pinned_truthfulqa(
-        tmp_path, cache_dir=tmp_path / "datasets-processed"
-    )
+    items = load_pinned_truthfulqa(tmp_path)
     assert [item.question for item in items] == [
         "Question two? ",
         "Question one?",
     ]
     assert items[0].correct_answers == ("Correct two",)
     assert items[1].mc2_choices == ("Incorrect one", "Correct one")
-    assert all(call[0] == "parquet" for call in calls)
-    assert [call[1] for call in calls] == ["generation", "multiple_choice"]
-    assert all(call[3] == "validation" for call in calls)
-    assert "generation/validation-00000-of-00001.parquet" in next(
-        iter(calls[0][2].values())
-    ).replace("\\", "/")
-    assert "multiple_choice/validation-00000-of-00001.parquet" in next(
-        iter(calls[1][2].values())
-    ).replace("\\", "/")
+    assert "generation/validation-00000-of-00001.parquet" in calls[0].replace(
+        "\\", "/"
+    )
+    assert (
+        "multiple_choice/validation-00000-of-00001.parquet"
+        in calls[1].replace("\\", "/")
+    )
 
     multiple_choice_rows.reverse()
     with pytest.raises(ValueError, match="canonical multiple_choice row order"):
-        load_pinned_truthfulqa(
-            tmp_path, cache_dir=tmp_path / "datasets-processed"
-        )
+        load_pinned_truthfulqa(tmp_path)
     multiple_choice_rows.reverse()
 
     multiple_choice_rows[0] = {
@@ -1128,9 +1124,7 @@ def test_truthfulqa_loader_joins_exact_configs_and_rejects_question_set_drift(
         question_order_hash(multiple_choice_rows),
     )
     with pytest.raises(ValueError, match="config question set mismatch"):
-        load_pinned_truthfulqa(
-            tmp_path, cache_dir=tmp_path / "datasets-processed"
-        )
+        load_pinned_truthfulqa(tmp_path)
 
 
 def test_checkpoint_resume_rejects_unknown_and_preserves_order(tmp_path):

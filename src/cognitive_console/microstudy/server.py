@@ -22,7 +22,12 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import parse_qs, unquote, urlsplit
 
-from .materials import material_hashes, planned_trials, validated_sources
+from .materials import (
+    locale_bundle_metadata,
+    material_hashes,
+    planned_trials,
+    validated_sources,
+)
 
 STATIC_DIR = Path(__file__).with_name("static")
 DEFAULT_KEY_FILE = Path(".runtime") / "microstudy-verification.key"
@@ -80,33 +85,17 @@ def _restrict_key_permissions(path: Path) -> None:
         pass
 
 
-def participant_materials() -> dict[str, Any]:
+def common_materials(locale: str) -> dict[str, Any]:
     stimuli, sequences = validated_sources()
-    participant = json.loads(json.dumps(stimuli["participant_materials"]))
-    participant["post_task_manipulation_diagnostic"].pop("correct_key", None)
-    participant["practice"]["q1"].pop("correct_key", None)
-    participant["practice"]["q2"].pop("correct_key", None)
-    items = [
-        {
-            "stimulus_id": item["stimulus_id"],
-            "primitive_evidence": item["primitive_evidence"],
-            "flat_order": item["flat_order"],
-        }
-        for item in stimuli["items"]
-    ]
-    templates = [
-        {"template_id": row["template_id"], "text": row["text"], "options": row["options"]}
-        for row in stimuli["q2_templates"]
-    ]
+    if locale not in stimuli["locale_contract"]["supported"]:
+        raise ValueError("unsupported locale")
+    bundle = json.loads(json.dumps(stimuli["locales"][locale]))
+    formal = bundle.pop("formal")
     return {
+        "ui_language": locale,
         "materials_version": stimuli["materials_version"],
-        "primitive_ids": stimuli["primitive_ids"],
-        "contract_headings": stimuli["contract_headings"],
-        "simulated_record_notice": stimuli["simulated_record_notice"],
-        "q1": stimuli["q1"],
-        "q2_templates": templates,
-        "items": items,
-        "participant_materials": participant,
+        **locale_bundle_metadata(locale),
+        "common": bundle,
         "sequence_codes": [row["code"] for row in sequences["sequences"]],
     }
 
@@ -142,6 +131,7 @@ class StudyServer(ThreadingHTTPServer):
         self.session_lock = threading.RLock()
         self.max_sessions = max_sessions
         self.session_ttl_seconds = session_ttl_seconds
+        self.clock = time.monotonic
         self.run_id = str(uuid.uuid4())
         self.attempt_serial = 0
         self.csrf_token = secrets.token_urlsafe(32)
@@ -156,7 +146,7 @@ class StudyServer(ThreadingHTTPServer):
         return f"{self.server_address[0]}:{self.server_port}"
 
     def cleanup_expired(self) -> None:
-        now = time.monotonic()
+        now = self.clock()
         with self.session_lock:
             expired = [
                 attempt for attempt, session in self.sessions.items()
@@ -249,25 +239,43 @@ class StudyHandler(BaseHTTPRequestHandler):
         capability = self.headers.get("X-Study-Capability", "")
         if not hmac.compare_digest(capability, session["capability"]):
             raise ValueError("invalid session capability")
-        session["last_seen"] = time.monotonic()
         return session
 
     def _trial_payload(self, session: dict[str, Any]) -> dict[str, Any]:
         index = session["index"]
         slot = session["plan"][index]
         item = session["items"][slot["item"]]
+        stimuli, _ = validated_sources()
+        formal = stimuli["locales"][session["ui_language"]]["formal"]
+        localized_item = next(
+            row for row in formal["items"] if row["id"] == slot["item"]
+        )
+        if slot["condition"] == "Contract":
+            order = stimuli["nonlocalized"]["primitive_ids"]
+            labels = [
+                formal["contract_labels"][primitive_id] for primitive_id in order
+            ]
+        else:
+            order = item["flat_order"]
+            labels = formal["flat_labels"]
         session["trials"][index]["presented"] = True
         session["phase"] = "q1"
         session["phase_started"] = time.monotonic()
         return {
             "phase": "q1", "trial_index": index, "slot_index": slot["slot_index"],
             "block": slot["block"], "position": slot["position"],
-            "condition": slot["condition"],
-            "item": {
-                "stimulus_id": item["stimulus_id"],
-                "primitive_evidence": item["primitive_evidence"],
-                "flat_order": item["flat_order"],
+            "card": {
+                "notice": formal["notice"],
+                "aria_label": formal["evidence_panel_aria"],
+                "rows": [
+                    {
+                        "label": label,
+                        "body": localized_item["primitive_evidence"][primitive_id],
+                    }
+                    for label, primitive_id in zip(labels, order)
+                ],
             },
+            "q1": formal["q1"],
         }
 
     def do_GET(self) -> None:
@@ -278,10 +286,29 @@ class StudyHandler(BaseHTTPRequestHandler):
         parsed = urlsplit(self.path)
         path = unquote(parsed.path)
         if path == "/api/bootstrap":
-            self._json({"csrf_token": self.server.csrf_token, "materials": participant_materials()})
+            stimuli, _ = validated_sources()
+            self._json({
+                "csrf_token": self.server.csrf_token,
+                "languages": [
+                    {
+                        "id": locale,
+                        "label": stimuli["locales"][locale]["language_name"],
+                    }
+                    for locale in stimuli["locale_contract"]["supported"]
+                ],
+                "fallback": stimuli["locale_contract"]["fallback"],
+                "auto_detect": stimuli["locale_contract"]["auto_detect"],
+            })
             return
-        if path == "/api/materials":
-            self._json(participant_materials())
+        if path == "/api/welcome":
+            query = parse_qs(parsed.query, keep_blank_values=True)
+            if set(query) != {"ui_language"} or len(query["ui_language"]) != 1:
+                self._error(400, "exact ui_language is required")
+                return
+            try:
+                self._json(common_materials(query["ui_language"][0]))
+            except ValueError as exc:
+                self._error(400, str(exc))
             return
         if path == "/api/export":
             query = parse_qs(parsed.query)
@@ -297,6 +324,9 @@ class StudyHandler(BaseHTTPRequestHandler):
                 ):
                     self._error(409, "export is not available")
                     return
+                if output_format not in {"json", "csv"}:
+                    self._error(400, "unsupported export format")
+                    return
                 export = session["signed_export"]
             if output_format == "json":
                 self._send(
@@ -304,9 +334,12 @@ class StudyHandler(BaseHTTPRequestHandler):
                     "application/json; charset=utf-8",
                 )
             elif output_format == "csv":
-                self._send(self._csv(export).encode("utf-8"), "text/csv; charset=utf-8")
-            else:
-                self._error(400, "unsupported export format")
+                self._send(
+                    b"\xef\xbb\xbf" + self._csv(export).encode("utf-8"),
+                    "text/csv; charset=utf-8",
+                )
+            with session["lock"]:
+                session["last_seen"] = self.server.clock()
             return
         relative = "index.html" if path in {"", "/"} else path.lstrip("/")
         candidate = (STATIC_DIR / relative).resolve()
@@ -364,36 +397,51 @@ class StudyHandler(BaseHTTPRequestHandler):
                     if cached is not None:
                         if cached[0] != request_bytes(body):
                             raise ValueError("request_id reuse with different payload")
+                        session["last_seen"] = self.server.clock()
                         self._json(cached[1])
                         return
                     result = handler(body, session=session)
                     session["requests"][(path, request_id)] = (request_bytes(body), result)
+                    session["last_seen"] = self.server.clock()
             self._json(result)
         except ValueError as exc:
             self._error(409, str(exc))
 
     def _start(self, body: dict[str, Any]) -> dict[str, Any]:
-        if set(body) != {"participant_code", "sequence", "request_id"}:
+        if set(body) != {
+            "participant_code", "sequence", "ui_language", "request_id"
+        }:
             raise ValueError("invalid start fields")
         participant = body["participant_code"]
         sequence = body["sequence"]
+        ui_language = body["ui_language"]
         if not isinstance(participant, str) or not PARTICIPANT_RE.fullmatch(participant):
             raise ValueError("invalid participant code")
         if not isinstance(sequence, str):
             raise ValueError("invalid sequence")
         plan = planned_trials(sequence)
         stimuli, sequences = validated_sources()
+        if (
+            not isinstance(ui_language, str)
+            or ui_language not in stimuli["locale_contract"]["supported"]
+        ):
+            raise ValueError("invalid ui_language")
         if len(self.server.sessions) >= self.server.max_sessions:
             raise ValueError("session capacity reached")
         attempt = str(uuid.uuid4())
         capability = secrets.token_urlsafe(32)
         self.server.attempt_serial += 1
-        items = {row["stimulus_id"]: row for row in stimuli["items"]}
+        items = {
+            row["stimulus_id"]: row
+            for row in stimuli["nonlocalized"]["items"]
+        }
+        locale_meta = locale_bundle_metadata(ui_language)
         self.server.sessions[attempt] = {
             "attempt_id": attempt, "participant_code": participant,
             "run_id": self.server.run_id, "attempt_serial": self.server.attempt_serial,
             "capability": capability, "lock": threading.RLock(), "requests": {},
             "sequence": sequence, "plan": plan, "items": items,
+            "ui_language": ui_language, **locale_meta,
             "trials": [_empty_trial(slot, items[slot["item"]], stimuli["materials_version"])
                        for slot in plan],
             "phase": "practice_q1", "index": 0, "started": time.monotonic(),
@@ -403,26 +451,32 @@ class StudyHandler(BaseHTTPRequestHandler):
             "diagnostic_submitted": False, "diagnostic_response": None,
             "material_schema_version": stimuli["schema_version"],
             "sequence_schema_version": sequences["schema_version"],
-            "last_seen": time.monotonic(),
+            "last_seen": self.server.clock(),
         }
         return {
             "attempt_id": attempt, "phase": "practice_q1",
             "capability": capability, "run_id": self.server.run_id,
             "attempt_serial": self.server.attempt_serial,
+            "ui_language": ui_language,
         }
 
     def _practice(self, body: dict[str, Any], *, session: dict[str, Any]) -> dict[str, Any]:
         if set(body) != {"attempt_id", "step", "answer", "request_id"}:
             raise ValueError("invalid practice fields")
-        practice = validated_sources()[0]["participant_materials"]["practice"]
+        stimuli, _ = validated_sources()
+        practice = stimuli["locales"][session["ui_language"]]["practice"]
         if body["step"] == "q1" and session["phase"] == "practice_q1":
-            if body["answer"] not in {row["key"] for row in validated_sources()[0]["q1"]["options"]}:
+            if body["answer"] not in {
+                row["id"] for row in practice["q1"]["options"]
+            }:
                 raise ValueError("invalid practice Q1")
             session["practice_q1"] = True
             session["phase"] = "practice_q2"
             return {"phase": "practice_q2"}
         if body["step"] == "q2" and session["phase"] == "practice_q2":
-            if body["answer"] not in {row["key"] for row in practice["q2"]["options"]}:
+            if body["answer"] not in {
+                row["id"] for row in practice["q2"]["options"]
+            }:
                 raise ValueError("invalid practice Q2")
             session["practice_q2"] = True
             payload = self._trial_payload(session)
@@ -437,7 +491,8 @@ class StudyHandler(BaseHTTPRequestHandler):
             raise ValueError("Q1 is not available")
         answer = body["answer"]
         stimuli, _ = validated_sources()
-        if answer not in {row["key"] for row in stimuli["q1"]["options"]}:
+        formal = stimuli["locales"][session["ui_language"]]["formal"]
+        if answer not in {row["id"] for row in formal["q1"]["options"]}:
             raise ValueError("invalid Q1 answer")
         index = session["index"]
         trial = session["trials"][index]
@@ -450,9 +505,11 @@ class StudyHandler(BaseHTTPRequestHandler):
             trial[field] = False
         session["phase"] = "q2"
         session["phase_started"] = time.monotonic()
-        template = next(row for row in stimuli["q2_templates"]
-                        if row["template_id"] == slot["q2_template_id"])
-        return {"phase": "q2", "q2": {"text": template["text"], "options": template["options"]}}
+        template = next(
+            row for row in formal["q2_templates"]
+            if row["id"] == slot["q2_template_id"]
+        )
+        return {"phase": "q2", "q2": template}
 
     def _q2(self, body: dict[str, Any], *, session: dict[str, Any]) -> dict[str, Any]:
         if set(body) != {"attempt_id", "answer", "hidden_ms", "request_id"}:
@@ -465,10 +522,13 @@ class StudyHandler(BaseHTTPRequestHandler):
         index = session["index"]
         trial = session["trials"][index]
         slot = session["plan"][index]
-        template = next(row for row in validated_sources()[0]["q2_templates"]
-                        if row["template_id"] == slot["q2_template_id"])
+        stimuli, _ = validated_sources()
+        template = next(
+            row for row in stimuli["locales"][session["ui_language"]]["formal"]["q2_templates"]
+            if row["id"] == slot["q2_template_id"]
+        )
         answer = body["answer"]
-        if answer not in {row["key"] for row in template["options"]}:
+        if answer not in {row["id"] for row in template["options"]}:
             raise ValueError("invalid Q2 answer")
         trial.update({
             "q2": answer, "q2_submitted": True, "complete": True, "submitted": True,
@@ -494,8 +554,12 @@ class StudyHandler(BaseHTTPRequestHandler):
         block = body["block"]
         if type(block) is not int or block not in (1, 2) or session["phase"] != f"ease_{block}":
             raise ValueError("invalid ease transition")
-        keys = {row["key"] for row in
-                validated_sources()[0]["participant_materials"]["block_ease"]["options"]}
+        keys = {
+            row["id"]
+            for row in validated_sources()[0]["locales"][session["ui_language"]][
+                "ease"
+            ]["options"]
+        }
         if body["answer"] is not None and body["answer"] not in keys:
             raise ValueError("invalid ease answer")
         session["ease"][block] = body["answer"]
@@ -511,9 +575,11 @@ class StudyHandler(BaseHTTPRequestHandler):
             raise ValueError("invalid diagnostic fields")
         if session["phase"] != "diagnostic":
             raise ValueError("invalid diagnostic transition")
-        diagnostic = validated_sources()[0]["participant_materials"]["post_task_manipulation_diagnostic"]
+        diagnostic = validated_sources()[0]["locales"][session["ui_language"]][
+            "diagnostic"
+        ]
         if body["answer"] is not None and body["answer"] not in {
-            row["key"] for row in diagnostic["options"]
+            row["id"] for row in diagnostic["options"]
         }:
             raise ValueError("invalid diagnostic answer")
         session["diagnostic_submitted"] = body["answer"] is not None
@@ -529,7 +595,6 @@ class StudyHandler(BaseHTTPRequestHandler):
         export = self._canonical_export(session, complete=True)
         session["signed_export"] = sign_export(export, self.server.verification_key)
         session["phase"] = "export_ready"
-        session["last_seen"] = time.monotonic()
         return {
             "phase": "export_ready", "attempt_id": session["attempt_id"],
             "complete": True,
@@ -543,17 +608,17 @@ class StudyHandler(BaseHTTPRequestHandler):
         export = self._canonical_export(session, complete=False)
         session["signed_export"] = sign_export(export, self.server.verification_key)
         session["phase"] = "export_ready"
-        session["last_seen"] = time.monotonic()
         return {
             "phase": "export_ready", "attempt_id": session["attempt_id"],
             "complete": False,
         }
 
     def _canonical_export(self, session: dict[str, Any], *, complete: bool) -> dict[str, Any]:
-        diagnostic = validated_sources()[0]["participant_materials"]["post_task_manipulation_diagnostic"]
+        stimuli, _ = validated_sources()
+        diagnostic_key = stimuli["nonlocalized"]["answer_keys"]["diagnostic"]
         response = session["diagnostic_response"]
         return {
-            "export_schema_version": "microstudy-export-v3-signed",
+            "export_schema_version": "microstudy-export-v4-bilingual-signed",
             "material_schema_version": session["material_schema_version"],
             "sequence_schema_version": session["sequence_schema_version"],
             "material_hashes": material_hashes(),
@@ -561,6 +626,9 @@ class StudyHandler(BaseHTTPRequestHandler):
             "run_id": session["run_id"], "attempt_serial": session["attempt_serial"],
             "participant_code": session["participant_code"],
             "sequence": session["sequence"],
+            "ui_language": session["ui_language"],
+            "locale_bundle_version": session["locale_bundle_version"],
+            "locale_bundle_hash": session["locale_bundle_hash"],
             "completion_status": "complete" if complete else "partial",
             "complete": complete,
             "practice_presented": True, "practice_q1_submitted": session["practice_q1"],
@@ -569,7 +637,7 @@ class StudyHandler(BaseHTTPRequestHandler):
             "post_task_diagnostic_submitted": session["diagnostic_submitted"],
             "post_task_diagnostic_response": response,
             "post_task_diagnostic_correct": (
-                None if response is None else response == diagnostic["correct_key"]
+                None if response is None else response == diagnostic_key
             ),
             "block_1_ease": session["ease"][1], "block_2_ease": session["ease"][2],
             "mechanical_exclusion": False, "mechanical_exclusion_reason": "none",

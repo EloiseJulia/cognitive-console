@@ -1,13 +1,13 @@
 # Implementation Plan: Local Contract-Application Micro-Study
 
 - **Plan ID:** `microstudy-contract-application-web`
-- **Status:** `implemented_pending_reaudit_nohuman`
+- **Status:** `ready_for_owner_local_preview_no_human_data`
 - **Current scope:** loopback website, deterministic export, analysis, MDE sensitivity, tests, and docs
 - **Spec:** [`../specs/microstudy-contract-application.md`](../specs/microstudy-contract-application.md)
 
 ## 1. Current revision
 
-This revision creates the only authoritative future-web inputs:
+The bilingual revision keeps the only authoritative inputs:
 
 ```text
 data/microstudy_contract_application/stimuli.json
@@ -22,18 +22,32 @@ scripts/validate_microstudy_materials.py
 tests/test_microstudy_materials.py
 ```
 
-The validator owns router derivation, render-contract schema/tokens, sequence generation checks, parity, template reuse, key variation, lexical/token heuristics, oracle/LOO/global baselines, single-row Q1, and combined CCA. Markdown is not parsed and is not a second materials source.
+`stimuli.json` is now an explicit nonlocalized + `en` / `zh-Hans` stable-ID
+tree with no fallback or auto-detection. It is the only participant-copy source;
+JavaScript has no second locale bundle. The validator owns canonical UTF-8
+locale versions/hashes, stable-ID completeness, numeric/polarity/modality/scope
+parity, independent locale leakage heuristics, Contract-token forbidden scans,
+same-locale body parity, router derivation, sequence checks, and the existing
+CCA/leakage gates.
 
 The local web app is implemented without recruitment, pilot, public deployment,
 paper changes, or participant data.
 
+The final audited implementation identity is
+`1702d7a4ae5132b09fd29d216502504c7afb493c`. Any subsequent docs-only commit
+that persists audit or governance records is not the implementation code
+commit.
+
 ## 2. Implemented rule
 
-The loopback server consumes the two JSON files directly and exposes only a
-participant-facing projection. Formal answer keys, routing inputs, validation
-metadata, and scoring never enter the browser. The server owns the strict
-practice→Q1→Q2→ease→diagnostic→debrief state machine and scores from private
-authoritative materials.
+The loopback server consumes the two JSON files directly. Bootstrap exposes
+only CSRF plus the bilingual gate labels. `/api/welcome` exposes only the chosen
+locale's common projection. `/api/start` requires and immutably locks exact
+`ui_language`; formal endpoints send only already-rendered visible rows and the
+selected question/options. Formal answer keys, routing inputs, primitive-role
+IDs, condition metadata, validation metadata, the other locale's formal bundle,
+and scoring never enter browser state/network/DOM/ARIA. The server owns the
+strict practice→Q1→Q2→ease→diagnostic→debrief state machine.
 
 Implemented package:
 
@@ -50,6 +64,12 @@ src/cognitive_console/microstudy/
 
 ### Rendering and flow
 
+- Initial bilingual language gate; no default, browser/URL/storage detection, or
+  recovery token. Welcome may switch; start may not.
+- Neutral common onboarding explains four states and five information types
+  without Contract labels, a complete router, threshold priority, or lookup.
+- One community activity-room practice, Q1 withheld and Q2 lock answer D, with
+  example-only feedback.
 - Render Contract/Flat from one proposition map.
 - Use exact Contract labels `READ`/`TRANSFER`/`BOUNDED PROMPT COMPARATOR`/`CALIBRATION WARNING`/`EVIDENCE TIER`; use Flat `Evidence A`–`Evidence E`.
 - Use Contract's fixed JSON role order and each Flat item's JSON `flat_order`.
@@ -65,8 +85,9 @@ src/cognitive_console/microstudy/
 - Use exact validated `A1..D5` rows.
 - Generate a server-side random UUID attempt ID.
 - Preserve ten planned slots and all truth-table states in volatile server memory.
-- Generate complete and Save-&-Exit partial exports canonically on the server and
-  HMAC-SHA256 sign them; partials retain all ten slots and nullable fields.
+- Generate complete and Save-&-Exit partial V4 bilingual exports canonically on
+  the server and HMAC-SHA256 sign them; both retain all ten slots and add
+  `ui_language`, locale bundle version, and locale bundle hash.
 - Sign random per-run `run_id` and monotonic per-start `attempt_serial`; require an
   explicit global-order manifest for duplicate participant codes across runs.
 - Keep the verification key in an owner-selected file (default gitignored
@@ -82,6 +103,8 @@ src/cognitive_console/microstudy/
   sensitivity while excluding them from primary eligibility.
 - Provide only a DRAFT sign-binomial MDE sensitivity; primary-test MDE remains
   `UNVERIFIED_NOT_ESTIMATED`.
+- Reject V3/V4 mixing. Locale contributes only descriptive counts and duplicate
+  conflict metadata; it never enters outcome or inferential paths.
 
 ### Privacy
 
@@ -90,8 +113,10 @@ src/cognitive_console/microstudy/
   16 KiB request limit, configurable session cap/monotonic TTL, per-session locks,
   and request-id idempotency.
 - Real Chrome/Edge full-flow CDP gates cover both viewports and zooms, keyboard
-  operation, geometry/overflow/focus/ARIA/hidden attributes, and PNG artifacts.
-  Manual screen-reader testing remains `UNVERIFIED PRE-RECRUITMENT`.
+  operation, dynamic `lang`, h1 focus, selected-only DOM/network/ARIA,
+  geometry/overflow, complete/partial/retry, refresh-to-gate, and PNG artifacts.
+  Manual bilingual semantic and screen-reader review remain `UNVERIFIED
+  PRE-RECRUITMENT`.
 
 ## 4. Current acceptance
 
@@ -104,6 +129,8 @@ git diff --check
 ```
 
 Required validator results are documented in the spec/prereg and enforced from
-JSON. Registry status is
-`implemented_pending_reaudit_nohuman`; there is no human run,
-public deployment, paper evidence, or confirmatory MDE result.
+JSON. The final independent hostile audit closed the TTL-renewal MAJOR and
+verified the validator, Node checks, HTTP TTL/idempotency/export behavior,
+Chrome/Edge bilingual flows, and the full pytest suite without residue.
+Registry status is `ready_for_owner_local_preview_no_human_data`; there is no
+human run, public deployment, paper evidence, or confirmatory MDE result.

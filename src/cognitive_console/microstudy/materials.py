@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import hashlib
+from functools import lru_cache
 from typing import Any
 
 from cognitive_console.microstudy_materials import (
     SEQUENCES_PATH,
     STIMULI_PATH,
     load_sources,
+    locale_manifest,
     route_state,
     validate_materials,
 )
@@ -21,6 +23,15 @@ def material_hashes() -> dict[str, str]:
     }
 
 
+def locale_bundle_metadata(locale: str) -> dict[str, str]:
+    stimuli, _ = validated_sources()
+    try:
+        return locale_manifest(stimuli)[locale]
+    except KeyError:
+        raise ValueError(f"unsupported locale: {locale}") from None
+
+
+@lru_cache(maxsize=1)
 def validated_sources() -> tuple[dict[str, Any], dict[str, Any]]:
     validate_materials()
     return load_sources()
@@ -35,7 +46,8 @@ def planned_trials(sequence_code: str) -> list[dict[str, Any]]:
         raise ValueError(f"unknown sequence: {sequence_code}")
     mapping = sequences["letter_mapping"][sequence_code[0]]
     items = {
-        (item["pattern_id"], item["content_set"]): item for item in stimuli["items"]
+        (item["pattern_id"], item["content_set"]): item
+        for item in stimuli["nonlocalized"]["items"]
     }
     slots: list[dict[str, Any]] = []
     for block in (1, 2):

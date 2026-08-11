@@ -5,6 +5,48 @@
 
 ---
 
+## 2026-08-11 · D-0111 · Final bilingual implementation and audit close owner-local-preview lineage only
+- The final audited bilingual implementation commit is
+  `1702d7a4ae5132b09fd29d216502504c7afb493c`. The preceding hostile audit
+  reported a TTL-renewal MAJOR against intermediate commit `d4ceafd`; the final
+  implementation renews session TTL only after successful requests.
+- A fresh independent final audit reran the materials validator, Node checks,
+  HTTP TTL/idempotency/export checks, Chrome and Edge bilingual flows, and the
+  full pytest suite, and found no server, browser, key, export, or generated-
+  artifact residue. Its sole verdict is **READY FOR OWNER LOCAL PREVIEW; NO
+  HUMAN DATA**.
+- This decision closes implementation/audit lineage only. Any subsequent
+  docs-only audit-persistence commit is not the implementation code commit.
+  Human bilingual semantic review, manual screen-reader review, ethics and
+  recruitment approval, owner timing, defensible MDE/sample-size work, and
+  Protocol Freeze remain `PRE-RECRUITMENT`.
+- No recruitment, participant contact, human-data collection, public
+  deployment, paper evidence, claim/result upgrade, or protocol freeze is
+  authorized.
+
+## 2026-08-11 · D-0110 · Owner authorizes DRAFT bilingual owner-preview engineering only
+- The owner explicitly authorized Simplified Chinese and English onboarding for
+  the contract-application micro-study so unfamiliar users can understand the
+  task more easily. This decision authorizes stable-ID locale materials,
+  language selection before session creation, immutable `ui_language`, selected-
+  locale-only projections, V4 signed locale identity, descriptive locale QA,
+  accessibility/security validation, and owner-local preview engineering.
+- This revision does not change the research question, primary CCA outcome,
+  Contract-versus-Flat contrast, nonlocalized router, answer keys, sequence
+  assignment, eligibility, exclusion, duplicate winner rule, or inferential
+  analysis. The protocol remains `DRAFT / NOT FROZEN`.
+- The implementation begins at `786a6a8` and is hardened through `d4ceafd`,
+  including idempotent network retry, validated-source caching, and stable
+  deferred script loading for browser execution.
+  Its maximum state is `READY_FOR_OWNER_LOCAL_PREVIEW_NO_HUMAN_DATA`, but a fresh
+  independent hostile audit is still pending and the prior final audit is not
+  silently extended to this revision.
+- No recruitment, participant contact, human data, timing pilot, ethics action,
+  public deployment, recovery mechanism, paper/claim/evidence-validity change,
+  or human authorization is granted. Human bilingual stable-ID semantic review,
+  manual screen-reader review, ethics/recruitment, timing/MDE, and Protocol
+  Freeze remain `PRE-RECRUITMENT` gates.
+
 ## 2026-08-11 · D-0109 · Supersede D-0107 Manager-retirement timing; permit no-Manager gap, never dual Managers
 - This entry supersedes only D-0107's conflicting retirement-timing wording.
   The outgoing/current Manager becomes immediately read-only retired once the

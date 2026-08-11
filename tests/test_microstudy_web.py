@@ -94,25 +94,34 @@ def live_server():
         CLIENTS.pop(base, None)
 
 
-def complete_attempt(base, participant="P001", sequence="A1"):
-    materials = request_json(base, "/api/materials")
+def locale_materials(base, locale="en"):
+    return request_json(base, f"/api/welcome?ui_language={locale}")
+
+
+def complete_attempt(base, participant="P001", sequence="A1", locale="en"):
+    materials = locale_materials(base, locale)
+    common = materials["common"]
     start = request_json(base, "/api/start", {
         "participant_code": participant, "sequence": sequence,
+        "ui_language": locale,
     })
     attempt = start["attempt_id"]
-    practice = materials["participant_materials"]["practice"]
+    practice = common["practice"]
     request_json(base, "/api/practice", {
-        "attempt_id": attempt, "step": "q1", "answer": materials["q1"]["options"][0]["key"],
+        "attempt_id": attempt, "step": "q1",
+        "answer": practice["q1"]["options"][0]["id"],
     })
     current = request_json(base, "/api/practice", {
-        "attempt_id": attempt, "step": "q2", "answer": practice["q2"]["options"][0]["key"],
+        "attempt_id": attempt, "step": "q2",
+        "answer": practice["q2"]["options"][0]["id"],
     })
     for index in range(10):
         q2 = request_json(base, "/api/q1", {
-            "attempt_id": attempt, "answer": materials["q1"]["options"][0]["key"],
+            "attempt_id": attempt, "answer": current["q1"]["options"][0]["id"],
         })
         current = request_json(base, "/api/q2", {
-            "attempt_id": attempt, "answer": q2["q2"]["options"][0]["key"], "hidden_ms": 0,
+            "attempt_id": attempt, "answer": q2["q2"]["options"][0]["id"],
+            "hidden_ms": 0,
         })
         if index in (4, 9):
             current = request_json(base, "/api/ease", {
@@ -124,28 +133,35 @@ def complete_attempt(base, participant="P001", sequence="A1"):
     return request_json(base, f"/api/export?attempt_id={attempt}&format=json")
 
 
-def partial_attempt(base, completed_trials=4, participant="P-PARTIAL", sequence="A1"):
-    materials = request_json(base, "/api/materials")
+def partial_attempt(
+    base, completed_trials=4, participant="P-PARTIAL", sequence="A1", locale="en"
+):
+    materials = locale_materials(base, locale)
+    common = materials["common"]
     start = request_json(base, "/api/start", {
         "participant_code": participant, "sequence": sequence,
+        "ui_language": locale,
     })
     attempt = start["attempt_id"]
-    practice = materials["participant_materials"]["practice"]
+    practice = common["practice"]
     request_json(base, "/api/practice", {
-        "attempt_id": attempt, "step": "q1", "answer": materials["q1"]["options"][0]["key"],
+        "attempt_id": attempt, "step": "q1",
+        "answer": practice["q1"]["options"][0]["id"],
     })
-    request_json(base, "/api/practice", {
-        "attempt_id": attempt, "step": "q2", "answer": practice["q2"]["options"][0]["key"],
+    current = request_json(base, "/api/practice", {
+        "attempt_id": attempt, "step": "q2",
+        "answer": practice["q2"]["options"][0]["id"],
     })
     for index in range(completed_trials):
         q2 = request_json(base, "/api/q1", {
-            "attempt_id": attempt, "answer": materials["q1"]["options"][0]["key"],
+            "attempt_id": attempt, "answer": current["q1"]["options"][0]["id"],
         })
-        request_json(base, "/api/q2", {
-            "attempt_id": attempt, "answer": q2["q2"]["options"][0]["key"], "hidden_ms": 0,
+        current = request_json(base, "/api/q2", {
+            "attempt_id": attempt, "answer": q2["q2"]["options"][0]["id"],
+            "hidden_ms": 0,
         })
         if index == 4:
-            request_json(base, "/api/ease", {
+            current = request_json(base, "/api/ease", {
                 "attempt_id": attempt, "block": 1, "answer": None,
             })
     request_json(base, "/api/save-exit", {"attempt_id": attempt})
@@ -170,24 +186,38 @@ def test_server_material_privacy_headers_and_no_logging(live_server):
             assert response.headers["Content-Security-Policy"] == CSP
             assert response.headers["Cache-Control"] == "no-store"
             assert response.headers.get("Access-Control-Allow-Origin") is None
-        materials = request_json(base, "/api/materials")
-    encoded = json.dumps(materials).lower()
+        bootstrap = request_json(base, "/api/bootstrap")
+        materials = locale_materials(base, "zh-Hans")
+    bootstrap_encoded = json.dumps(bootstrap, ensure_ascii=False).lower()
+    assert "formal" not in bootstrap_encoded and "materials" not in bootstrap
+    assert bootstrap["fallback"] is None and bootstrap["auto_detect"] is False
+    encoded = json.dumps(materials, ensure_ascii=False).lower()
     for forbidden in (
         "expected_q1", "correct_key", "state_routing_inputs", "router",
         "validation_contract", "render_contract", "export_schema", "q1_key", "q2_key",
+        "primitive_evidence", "contract_labels", "flat_labels", "q2_templates",
     ):
         assert forbidden not in encoded
     assert set(materials) == {
-        "materials_version", "primitive_ids", "contract_headings",
-        "simulated_record_notice", "q1", "q2_templates", "items",
-        "participant_materials", "sequence_codes",
+        "ui_language", "materials_version", "locale_bundle_version",
+        "locale_bundle_hash", "common", "sequence_codes",
     }
+    assert materials["ui_language"] == "zh-Hans"
+    with pytest.raises(urllib.error.HTTPError):
+        request_json(base, "/api/materials")
     assert output.getvalue() == ""
 
 
 def test_server_strict_state_machine_and_memory_only(live_server):
     base, server = live_server
-    start = request_json(base, "/api/start", {"participant_code": "P1", "sequence": "A1"})
+    with pytest.raises(urllib.error.HTTPError):
+        request_json(
+            base, "/api/start",
+            {"participant_code": "P0", "sequence": "A1"},
+        )
+    start = request_json(base, "/api/start", {
+        "participant_code": "P1", "sequence": "A1", "ui_language": "en",
+    })
     attempt = start["attempt_id"]
     with pytest.raises(urllib.error.HTTPError) as exc:
         request_json(base, "/api/q1", {"attempt_id": attempt, "answer": "A"})
@@ -200,6 +230,43 @@ def test_server_strict_state_machine_and_memory_only(live_server):
         create_server("0.0.0.0", 0, RUNTIME / "bad.key")
 
 
+def test_locale_is_locked_and_formal_projection_is_selected_only(live_server):
+    base, server = live_server
+    welcome = locale_materials(base, "zh-Hans")["common"]
+    start = request_json(base, "/api/start", {
+        "participant_code": "ZH1", "sequence": "A1", "ui_language": "zh-Hans",
+    })
+    attempt = start["attempt_id"]
+    practice = welcome["practice"]
+    request_json(base, "/api/practice", {
+        "attempt_id": attempt, "step": "q1",
+        "answer": practice["q1"]["options"][0]["id"],
+    })
+    trial = request_json(base, "/api/practice", {
+        "attempt_id": attempt, "step": "q2",
+        "answer": practice["q2"]["options"][0]["id"],
+    })
+    assert server.sessions[attempt]["ui_language"] == "zh-Hans"
+    assert set(trial) == {
+        "phase", "trial_index", "slot_index", "block", "position", "card",
+        "q1", "feedback",
+    }
+    encoded = json.dumps(trial, ensure_ascii=False)
+    assert "模拟评估记录" in encoded
+    assert "Simulated evaluation record" not in encoded
+    for forbidden in (
+        "condition", "stimulus", "primitive", "router", "correct_key",
+        "expected_q1", "content_set", "pattern",
+    ):
+        assert forbidden not in encoded.lower()
+    with pytest.raises(urllib.error.HTTPError):
+        request_json(base, "/api/q1", {
+            "attempt_id": attempt, "answer": trial["q1"]["options"][0]["id"],
+            "ui_language": "en",
+        })
+    assert server.sessions[attempt]["ui_language"] == "zh-Hans"
+
+
 def test_signed_export_validation_tamper_wrong_key_and_csv(live_server):
     base, _ = live_server
     data = complete_attempt(base)
@@ -209,12 +276,26 @@ def test_signed_export_validation_tamper_wrong_key_and_csv(live_server):
     assert TEST_KEY.hex() not in json.dumps(data)
     assert data["complete"] is True
     assert data["run_id"] and data["attempt_serial"] >= 1
+    assert data["export_schema_version"] == "microstudy-export-v4-bilingual-signed"
+    assert data["ui_language"] == "en"
+    assert data["locale_bundle_version"].endswith("-en")
+    assert len(data["locale_bundle_hash"]) == 64
     tampered = copy.deepcopy(data)
     tampered["participant_code"] = "FORGED"
     with pytest.raises(ExportError, match="signature"):
         validate_export(tampered, TEST_KEY)
     with pytest.raises(ExportError, match="key"):
         validate_export(data, b"x" * 32)
+    for field, value in (
+        ("ui_language", "fr"),
+        ("locale_bundle_version", "wrong"),
+        ("locale_bundle_hash", "0" * 64),
+    ):
+        altered = copy.deepcopy(data)
+        altered[field] = value
+        altered = sign_export(altered, TEST_KEY)
+        with pytest.raises(ExportError, match="locale|language"):
+            validate_export(altered, TEST_KEY)
     bad_bool = copy.deepcopy(data)
     bad_bool["practice_presented"] = 1
     bad_bool = sign_export(bad_bool, TEST_KEY)
@@ -230,9 +311,12 @@ def test_signed_export_validation_tamper_wrong_key_and_csv(live_server):
         headers={"X-Study-Capability": CLIENTS[base]["capabilities"][data["attempt_id"]]},
     )
     with urllib.request.urlopen(request) as response:
-        csv_text = response.read().decode()
+        csv_bytes = response.read()
+    assert csv_bytes.startswith(b"\xef\xbb\xbf")
+    csv_text = csv_bytes.decode("utf-8-sig")
     assert csv_text.count("\r\n") == 11
     assert "verification_signature" in csv_text
+    assert "ui_language" in csv_text and "locale_bundle_hash" in csv_text
 
 
 def test_export_ready_is_frozen_retryable_and_retained(live_server):
@@ -240,16 +324,26 @@ def test_export_ready_is_frozen_retryable_and_retained(live_server):
     data = complete_attempt(base)
     attempt = data["attempt_id"]
     assert server.sessions[attempt]["phase"] == "export_ready"
+    now = [1_000.0]
+    server.clock = lambda: now[0]
     first = request_json(base, f"/api/export?attempt_id={attempt}&format=json")
+    assert server.sessions[attempt]["last_seen"] == 1_000.0
+    now[0] = 1_100.0
     second = request_json(base, f"/api/export?attempt_id={attempt}&format=json")
+    assert server.sessions[attempt]["last_seen"] == 1_100.0
     assert first == second == data
     assert server.sessions[attempt]["signed_export"] == data
+    now[0] = 1_200.0
+    with pytest.raises(urllib.error.HTTPError) as exc:
+        request_json(base, f"/api/export?attempt_id={attempt}&format=xml")
+    assert exc.value.code == 400
+    assert server.sessions[attempt]["last_seen"] == 1_100.0
 
 
 def test_duplicate_first_complete_then_assignment_and_itt(live_server):
     base, _ = live_server
     first = complete_attempt(base, "P-DUP", "A1")
-    later = complete_attempt(base, "P-DUP", "B1")
+    later = complete_attempt(base, "P-DUP", "B1", locale="zh-Hans")
     other = complete_attempt(base, "P-OTHER", "D5")
     kept, duplicates = resolve_duplicates([first, later, other])
     assert [row["attempt_id"] for row in kept if row["participant_code"] == "P-DUP"] == [
@@ -266,6 +360,20 @@ def test_duplicate_first_complete_then_assignment_and_itt(live_server):
     assert summary["missing_as_incorrect_sensitivity"]["mean_difference"] is not None
     assert Counter(row["reason"] for row in summary["rejected"]) == {
         "duplicate_attempt": 1, "sequence_mismatch": 1,
+    }
+    assert summary["descriptive_locale_qa"] == {
+        "kept_counts": {"en": 2},
+        "duplicate_locale_conflict_count": 1,
+        "duplicate_locale_conflicts": [{
+            "participant_code": "P-DUP",
+            "excluded_ui_language": "zh-Hans",
+            "kept_ui_language": "en",
+        }],
+        "analysis_role": (
+            "descriptive QA only; locale is not used for eligibility, "
+            "exclusion, assignment, duplicate winner selection, outcomes, "
+            "bootstrap, sign-flip tests, or stratification"
+        ),
     }
 
 
@@ -312,6 +420,8 @@ def test_request_protection_idempotency_capacity_and_expiry():
     server = create_server(
         "127.0.0.1", 0, key_path, max_sessions=1, session_ttl_seconds=0.05
     )
+    now = [0.0]
+    server.clock = lambda: now[0]
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     base = f"http://127.0.0.1:{server.server_port}"
@@ -319,7 +429,8 @@ def test_request_protection_idempotency_capacity_and_expiry():
         bootstrap = request_json(base, "/api/bootstrap")
         assert "csrf_token" in bootstrap and "correct_key" not in json.dumps(bootstrap)
         cross_site_get = urllib.request.Request(
-            f"{base}/api/materials", headers={"Origin": "https://evil.invalid"}
+            f"{base}/api/welcome?ui_language=en",
+            headers={"Origin": "https://evil.invalid"},
         )
         with pytest.raises(urllib.error.HTTPError) as exc:
             urllib.request.urlopen(cross_site_get)
@@ -343,13 +454,16 @@ def test_request_protection_idempotency_capacity_and_expiry():
             request = urllib.request.Request(
                 f"{base}/api/start",
                 data=json.dumps({
-                    "participant_code": "SEC", "sequence": "A1", "request_id": uuid.uuid4().hex,
+                    "participant_code": "SEC", "sequence": "A1",
+                    "ui_language": "en", "request_id": uuid.uuid4().hex,
                 }).encode(),
                 headers=headers, method="POST",
             )
             with pytest.raises(urllib.error.HTTPError):
                 urllib.request.urlopen(request)
-        start = request_json(base, "/api/start", {"participant_code": "SEC", "sequence": "A1"})
+        start = request_json(base, "/api/start", {
+            "participant_code": "SEC", "sequence": "A1", "ui_language": "en",
+        })
         attempt = start["attempt_id"]
         oversized = urllib.request.Request(
             f"{base}/api/practice", data=b"{" + b" " * 20_000 + b"}",
@@ -378,13 +492,115 @@ def test_request_protection_idempotency_capacity_and_expiry():
         with pytest.raises(urllib.error.HTTPError):
             urllib.request.urlopen(missing_capability)
         with pytest.raises(urllib.error.HTTPError):
-            request_json(base, "/api/start", {"participant_code": "FLOOD", "sequence": "A2"})
-        time.sleep(0.07)
+            request_json(base, "/api/start", {
+                "participant_code": "FLOOD", "sequence": "A2", "ui_language": "en",
+            })
+        now[0] = 0.06
         replacement = request_json(base, "/api/start", {
-            "participant_code": "AFTER", "sequence": "A2",
+            "participant_code": "AFTER", "sequence": "A2", "ui_language": "zh-Hans",
         })
         assert replacement["attempt_id"] != attempt
         assert attempt not in server.sessions
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()
+        CLIENTS.pop(base, None)
+        shutil.rmtree(RUNTIME, ignore_errors=True)
+
+
+def test_session_ttl_renews_only_after_successful_authenticated_requests():
+    RUNTIME.mkdir(parents=True, exist_ok=True)
+    key_path = RUNTIME / "ttl-touch.key"
+    key_path.write_bytes(TEST_KEY)
+    server = create_server(
+        "127.0.0.1", 0, key_path, session_ttl_seconds=1_000
+    )
+    now = [100.0]
+    server.clock = lambda: now[0]
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    base = f"http://127.0.0.1:{server.server_port}"
+
+    def rejected_post(path, body, *, headers=None, status):
+        request_headers = {
+            "Content-Type": "application/json",
+            "Origin": base,
+            "X-CSRF-Token": CLIENTS[base]["csrf"],
+            "X-Study-Capability": start["capability"],
+        }
+        request_headers.update(headers or {})
+        request = urllib.request.Request(
+            f"{base}{path}", data=json.dumps(body).encode(),
+            headers=request_headers, method="POST",
+        )
+        with pytest.raises(urllib.error.HTTPError) as exc:
+            urllib.request.urlopen(request)
+        assert exc.value.code == status
+
+    try:
+        request_json(base, "/api/bootstrap")
+        welcome = locale_materials(base)
+        start = request_json(base, "/api/start", {
+            "participant_code": "TTL", "sequence": "A1", "ui_language": "en",
+        })
+        attempt = start["attempt_id"]
+        session = server.sessions[attempt]
+        assert session["last_seen"] == 100.0
+
+        now[0] = 110.0
+        rejected_post("/api/practice", {
+            "attempt_id": attempt, "step": "q1",
+            "request_id": "invalidpayload001",
+        }, status=409)
+        assert session["last_seen"] == 100.0
+
+        now[0] = 120.0
+        rejected_post("/api/practice", {
+            "attempt_id": attempt, "step": "q2",
+            "answer": welcome["common"]["practice"]["q2"]["options"][0]["id"],
+            "request_id": "badtransition001",
+        }, status=409)
+        assert session["last_seen"] == 100.0
+
+        successful = {
+            "attempt_id": attempt, "step": "q1",
+            "answer": welcome["common"]["practice"]["q1"]["options"][0]["id"],
+            "request_id": "successfulreq001",
+        }
+        now[0] = 130.0
+        assert request_json(base, "/api/practice", successful)["phase"] == "practice_q2"
+        assert session["last_seen"] == 130.0
+
+        now[0] = 140.0
+        assert request_json(base, "/api/practice", successful)["phase"] == "practice_q2"
+        assert session["last_seen"] == 140.0
+
+        now[0] = 150.0
+        rejected_post("/api/practice", {
+            **successful, "answer": "different",
+        }, status=409)
+        assert session["last_seen"] == 140.0
+
+        next_step = {
+            "attempt_id": attempt, "step": "q2",
+            "answer": welcome["common"]["practice"]["q2"]["options"][0]["id"],
+            "request_id": "protectedrequest1",
+        }
+        for current_time, headers, status in (
+            (160.0, {"X-Study-Capability": "wrong"}, 409),
+            (170.0, {"X-CSRF-Token": "wrong"}, 403),
+            (180.0, {"Origin": "https://evil.invalid"}, 403),
+        ):
+            now[0] = current_time
+            rejected_post("/api/practice", next_step, headers=headers, status=status)
+            assert session["last_seen"] == 140.0
+
+        now[0] = 190.0
+        rejected_post("/api/unknown", {
+            "attempt_id": attempt, "request_id": "unknownendpoint01",
+        }, status=404)
+        assert session["last_seen"] == 140.0
     finally:
         server.shutdown()
         server.server_close()
@@ -407,6 +623,7 @@ def test_server_restart_changes_run_id_and_resets_serial():
             request_json(base, "/api/bootstrap")
             start = request_json(base, "/api/start", {
                 "participant_code": participant, "sequence": "A1",
+                "ui_language": "en",
             })
             observed.append((start["run_id"], start["attempt_serial"]))
         finally:
@@ -421,19 +638,23 @@ def test_server_restart_changes_run_id_and_resets_serial():
 
 def test_concurrent_q1_same_request_is_exactly_once(live_server):
     base, server = live_server
-    materials = request_json(base, "/api/materials")
-    start = request_json(base, "/api/start", {"participant_code": "RACE", "sequence": "A1"})
-    attempt = start["attempt_id"]
-    practice = materials["participant_materials"]["practice"]
-    request_json(base, "/api/practice", {
-        "attempt_id": attempt, "step": "q1", "answer": materials["q1"]["options"][0]["key"],
+    materials = locale_materials(base, "en")["common"]
+    start = request_json(base, "/api/start", {
+        "participant_code": "RACE", "sequence": "A1", "ui_language": "en",
     })
+    attempt = start["attempt_id"]
+    practice = materials["practice"]
     request_json(base, "/api/practice", {
-        "attempt_id": attempt, "step": "q2", "answer": practice["q2"]["options"][0]["key"],
+        "attempt_id": attempt, "step": "q1",
+        "answer": practice["q1"]["options"][0]["id"],
+    })
+    current = request_json(base, "/api/practice", {
+        "attempt_id": attempt, "step": "q2",
+        "answer": practice["q2"]["options"][0]["id"],
     })
     request_id = uuid.uuid4().hex
     payload = json.dumps({
-        "attempt_id": attempt, "answer": materials["q1"]["options"][0]["key"],
+        "attempt_id": attempt, "answer": current["q1"]["options"][0]["id"],
         "request_id": request_id,
     }).encode()
     headers = {
@@ -462,7 +683,7 @@ def test_concurrent_q1_same_request_is_exactly_once(live_server):
     assert session["trials"][0]["q1_submitted"] is True
     assert len([key for key in session["requests"] if key[0] == "/api/q1"]) == 1
     altered = json.dumps({
-        "attempt_id": attempt, "answer": materials["q1"]["options"][1]["key"],
+        "attempt_id": attempt, "answer": current["q1"]["options"][1]["id"],
         "request_id": request_id,
     }).encode()
     with pytest.raises(urllib.error.HTTPError):
@@ -508,6 +729,22 @@ def test_load_exports_deduplicates_same_path_and_identical_copy(live_server):
     assert rejected == []
 
 
+def test_load_exports_hard_fails_v3_v4_mixing(live_server):
+    base, _ = live_server
+    current = complete_attempt(base)
+    legacy = copy.deepcopy(current)
+    legacy["attempt_id"] = str(uuid.uuid4())
+    legacy["export_schema_version"] = "microstudy-export-v3-signed"
+    legacy = sign_export(legacy, TEST_KEY)
+    RUNTIME.mkdir(parents=True, exist_ok=True)
+    current_path = RUNTIME / "current.json"
+    legacy_path = RUNTIME / "legacy.json"
+    current_path.write_text(json.dumps(current), encoding="utf-8")
+    legacy_path.write_text(json.dumps(legacy), encoding="utf-8")
+    with pytest.raises(ExportError, match="v3/v4"):
+        load_exports([current_path, legacy_path], TEST_KEY)
+
+
 def test_load_exports_hard_fails_attempt_id_conflict(live_server):
     base, _ = live_server
     data = complete_attempt(base)
@@ -536,12 +773,19 @@ def test_static_dom_accessibility_and_no_semantic_attributes():
     for forbidden in (
         "localStorage", "sessionStorage", "indexedDB", "document.cookie",
         "serviceWorker", "data-condition", "data-stimulus-id", "data-evidence-id",
+        "navigator.language", "navigator.languages", "location.search",
     ):
         assert forbidden not in combined
-    assert '<section id="stage" class="panel" tabindex="-1"' in html
-    assert '"aria-label": "Evidence panel"' in js
+    assert '<html lang="und">' in html
+    assert "请选择语言 / Choose a language" in html
+    assert 'id="language-gate"' in html
+    assert 'id="participant-code"' not in html
+    assert "cardData.aria_label" in js
+    assert "document.documentElement.lang = app.locale" in js
+    assert "heading.focus()" in js
     assert js.count('document.addEventListener("click"') == 1
     assert "correct_key" not in js and "q1_key" not in js and "q2_key" not in js
+    assert "Microsoft YaHei" in css and "overflow-wrap:anywhere" in css
     assert "focus-visible" in css and "prefers-reduced-motion" in css
 
 
@@ -652,8 +896,23 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
         cdp.call("Input.dispatchKeyEvent", {"type": "keyDown", **params})
         cdp.call("Input.dispatchKeyEvent", {"type": "keyUp", **params})
 
-    def start_formal(cdp, participant, sequence, keyboard=False):
+    def start_formal(cdp, participant, sequence, locale="en", keyboard=False):
+        cdp.wait(
+            "window.MicrostudyTest"
+            " && document.querySelector('[data-action=\"choose-language\"]')"
+        )
+        if keyboard:
+            cdp.eval(
+                f"document.querySelector('[data-locale=\"{locale}\"]').focus()"
+            )
+            press(cdp, "Enter", "Enter", 13)
+        else:
+            cdp.eval(
+                f"document.querySelector('[data-locale=\"{locale}\"]').click()"
+            )
         cdp.wait("document.querySelector('#sequence option')")
+        assert cdp.eval("document.documentElement.lang") == locale
+        assert cdp.eval("!document.querySelector('#language-gate')")
         cdp.eval(
             f"document.querySelector('#participant-code').value={json.dumps(participant)};"
             "document.querySelector('#participant-code').focus();"
@@ -673,7 +932,9 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
         cdp.wait("document.querySelector('[data-action=\"begin-formal\"]')")
         cdp.click("begin-formal")
 
-    def finish_formal(cdp, audit_geometry=False, screenshot_prefix=None):
+    def finish_formal(
+        cdp, locale, audit_geometry=False, screenshot_prefix=None
+    ):
         captured = set()
         for index in range(10):
             cdp.wait(
@@ -702,7 +963,8 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
                     forbidden, saveVisible:!document.querySelector('#save-exit-button').hidden
                   };
                 })()""")
-                assert audit["aria"] == "Evidence panel" and audit["saveVisible"]
+                expected_aria = "证据面板" if locale == "zh-Hans" else "Evidence panel"
+                assert audit["aria"] == expected_aria and audit["saveVisible"]
                 assert not audit["cardOverflow"] and not audit["documentOverflow"]
                 assert audit["cardWidth"] <= 961
                 assert all(value >= 71 for value in audit["rowHeights"])
@@ -711,7 +973,11 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
                 assert audit["labelFonts"] == [14] * 5
                 assert audit["bodyFonts"] == [16] * 5
                 assert not audit["forbidden"]
-                condition = "flat" if audit["labels"][0].startswith("Evidence ") else "contract"
+                condition = (
+                    "flat"
+                    if audit["labels"][0].startswith(("Evidence ", "证据 "))
+                    else "contract"
+                )
                 if condition not in captured:
                     result = cdp.call("Page.captureScreenshot", {
                         "format": "png", "captureBeyondViewport": False,
@@ -733,6 +999,11 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
         assert cdp.eval("document.querySelector('[data-action=\"finish\"]') !== null")
         if audit_geometry:
             assert captured == {"contract", "flat"}
+            body = cdp.eval("document.body.innerText")
+            if locale == "en":
+                assert "模拟评估记录" not in body
+            else:
+                assert "Simulated evaluation record" not in body
 
     def assert_manual_downloads(cdp, server):
         before_json = len(list(downloads.glob("*.json")))
@@ -744,7 +1015,7 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
         capability = server.sessions[attempt]["capability"]
         server.sessions[attempt]["capability"] = "temporarily-invalid"
         cdp.click("download-json")
-        cdp.wait("document.querySelector('#stage-error').textContent.includes('failed')")
+        cdp.wait("document.querySelector('#stage-error').textContent.length > 0")
         assert cdp.eval(
             "document.querySelector('#stage-error').getAttribute('role') === 'alert'"
             " && document.querySelector('[data-action=\"download-json\"]') !== null"
@@ -763,15 +1034,15 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
             time.sleep(0.1)
 
     geometry_cases = [
-        ("A1", 1280, 800, 1), ("D5", 1280, 800, 2),
-        ("A1", 1440, 900, 2), ("D5", 1440, 900, 1),
+        ("A1", "en", 1280, 800, 1), ("D5", "zh-Hans", 1280, 800, 2),
+        ("A1", "zh-Hans", 1440, 900, 2), ("D5", "en", 1440, 900, 1),
     ]
     stress_iterations = int(os.environ.get("MICROSTUDY_BROWSER_STRESS_ITERATIONS", "1"))
     try:
         for browser_name, executable in browsers.items():
             with browser_process(browser_name, executable) as port:
-                for case_index, (sequence, width, height, zoom) in enumerate(geometry_cases):
-                    label = f"{browser_name}-{sequence}-{width}-z{zoom}"
+                for case_index, (sequence, locale, width, height, zoom) in enumerate(geometry_cases):
+                    label = f"{browser_name}-{locale}-{sequence}-{width}-z{zoom}"
                     with isolated_server(label) as (base, server):
                         cdp = CDP.new_page(port, f"{base}/")
                         try:
@@ -783,13 +1054,49 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
                                 "deviceScaleFactor": 1, "mobile": False,
                             })
                             cdp.call("Emulation.setPageScaleFactor", {"pageScaleFactor": zoom})
-                            start_formal(cdp, f"G{case_index}{browser_name[0]}", sequence, True)
-                            finish_formal(cdp, True, label)
+                            start_formal(
+                                cdp, f"G{case_index}{browser_name[0]}",
+                                sequence, locale, True,
+                            )
+                            finish_formal(cdp, locale, True, label)
                             assert_manual_downloads(cdp, server)
                         finally:
                             cdp.close()
+                label = f"{browser_name}-refresh-language-reset"
+                with isolated_server(label) as (base, server):
+                    cdp = CDP.new_page(port, f"{base}/")
+                    try:
+                        cdp.wait(
+                            "window.MicrostudyTest"
+                            " && document.querySelector('[data-locale=\"en\"]')"
+                        )
+                        cdp.click("choose-language")
+                        cdp.wait("document.documentElement.lang === 'zh-Hans'")
+                        cdp.click("switch-language")
+                        cdp.wait("document.documentElement.lang === 'en'")
+                        start_button = "document.querySelector('#start-button')"
+                        cdp.eval(
+                            "document.querySelector('#participant-code').value='REFRESH';"
+                            "document.querySelector('#sequence').value='A1';"
+                            f"{start_button}.click()"
+                        )
+                        cdp.wait(
+                            "document.querySelector('[data-action=\"show-practice\"]')"
+                        )
+                        attempt = next(iter(server.sessions))
+                        cdp.call("Page.reload", {"ignoreCache": True})
+                        cdp.wait(
+                            "window.MicrostudyTest"
+                            " && document.querySelector('#language-gate')"
+                        )
+                        assert cdp.eval("document.documentElement.lang") == "und"
+                        assert cdp.eval("!document.querySelector('#participant-code')")
+                        assert attempt in server.sessions
+                    finally:
+                        cdp.close()
                 for iteration in range(stress_iterations):
                     sequence = "A1" if iteration % 2 == 0 else "D5"
+                    locale = "en" if iteration % 2 == 0 else "zh-Hans"
                     label = f"{browser_name}-stress-full-{iteration}"
                     with isolated_server(label) as (base, _):
                         cdp = CDP.new_page(port, f"{base}/")
@@ -797,8 +1104,11 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
                             cdp.call("Browser.setDownloadBehavior", {
                                 "behavior": "allow", "downloadPath": str(downloads),
                             })
-                            start_formal(cdp, f"SF{iteration}{browser_name[0]}", sequence)
-                            finish_formal(cdp)
+                            start_formal(
+                                cdp, f"SF{iteration}{browser_name[0]}",
+                                sequence, locale,
+                            )
+                            finish_formal(cdp, locale)
                         finally:
                             cdp.close()
                     label = f"{browser_name}-stress-partial-{iteration}"
@@ -808,16 +1118,21 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
                             cdp.call("Browser.setDownloadBehavior", {
                                 "behavior": "allow", "downloadPath": str(downloads),
                             })
-                            start_formal(cdp, f"SP{iteration}{browser_name[0]}", sequence)
+                            start_formal(
+                                cdp, f"SP{iteration}{browser_name[0]}",
+                                sequence, locale,
+                            )
                             cdp.wait("!document.querySelector('#save-exit-button').hidden")
                             attempt = next(iter(server.sessions))
                             cdp.click("save-exit")
-                            cdp.wait("document.body.innerText.includes('Session ended')")
+                            cdp.wait(
+                                "document.querySelector('[data-action=\"download-json\"]')"
+                            )
                             time.sleep(0.2)
                             assert not list(downloads.glob(f"microstudy-{attempt}.*"))
-                            assert "retry as often as needed" in cdp.eval(
-                                "document.body.innerText"
-                            ).lower()
+                            assert cdp.eval(
+                                "document.querySelector('[data-action=\"download-json\"]') !== null"
+                            )
                             assert cdp.eval(
                                 "document.querySelector('[data-action=\"download-json\"]') !== null"
                                 " && document.querySelector('[data-action=\"download-csv\"]') !== null"
@@ -825,7 +1140,9 @@ def test_real_chrome_edge_full_partial_isolated_server_gate():
                             assert server.sessions[attempt]["phase"] == "export_ready"
                             assert_manual_downloads(cdp, server)
                             cdp.click("finish")
-                            cdp.wait("document.body.innerText.includes('browser view is cleared')")
+                            cdp.wait(
+                                "!document.querySelector('[data-action=\"download-json\"]')"
+                            )
                             assert attempt in server.sessions
                         finally:
                             cdp.close()

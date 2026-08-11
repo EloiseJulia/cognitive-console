@@ -394,24 +394,80 @@ def test_hf_model_allowlist_rejects_wrong_revision_or_unknown_model(
         e0016.assert_hf_frozen_config(args)
 
 
-def test_llama3_chat_template_is_shared_by_extraction_and_generation():
-    model_profile = e0016.resolve_frozen_model_profile(
+def test_authorized_models_pin_exact_chat_template_hashes():
+    qwen = e0016.resolve_frozen_model_profile(
+        e0016.DEFAULT_MODEL, e0016.FROZEN_MODEL_REVISION
+    )
+    llama = e0016.resolve_frozen_model_profile(
         e0016.LLAMA_MODEL, e0016.LLAMA_FROZEN_MODEL_REVISION
+    )
+    assert qwen.chat_template_sha256 == (
+        "cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f"
+    )
+    assert qwen.role_probe_sha256 == (
+        "51df7c5c5e8e9c020dc9c4db426a33e56b58a85df4b92747d9c8c604a712eca6"
+    )
+    assert qwen.generation_probe_sha256 == (
+        "91cd685ba47fb02f298d76280e31c20af7e88657d1d7d8a61b117987dc9d497a"
+    )
+    assert llama.chat_template_sha256 == (
+        "ba03a121d097859c7b5b9cd03af99aafe95275210d2876f642ad9929a150f122"
+    )
+    assert llama.role_probe_sha256 == (
+        "0f9f78f3bce490e899bd9ed8f516c7f2496a557186767bfd3b653d8f21a0a96b"
+    )
+    assert llama.generation_probe_sha256 == (
+        "bf620d63fefb8f2242305d4f7bc5045c9240d7eef51a2ef3560df98f01901d99"
+    )
+
+
+def _chat_template_validation_fixture(mode):
+    template = "frozen-template-v1"
+    correct_role = (
+        "<SYS>E-0016 frozen system probe.<EOT>"
+        "<USR>E-0016 frozen user probe.<EOT>"
+        "<AST>E-0016 frozen assistant probe.<EOT>"
+    )
+    correct_generation = (
+        "<USR>E-0016 frozen generation probe.<EOT><AST>"
+    )
+    profile = e0016.FrozenModelProfile(
+        profile_id="test-chat",
+        model_id="test/chat",
+        revision="rev",
+        hidden_dim=4096,
+        decoder_layers=32,
+        config_model_type="llama",
+        chat_template_family="test-ordered-roles",
+        chat_template_required_markers=("<USR>", "<AST>", "<EOT>"),
+        chat_template_sha256=e0016.sha_text(template),
+        role_probe_sha256=e0016.sha_text(correct_role),
+        generation_probe_sha256=e0016.sha_text(correct_generation),
+        shards={},
+        eligibility_order=1,
     )
 
     class Tokenizer:
-        chat_template = "llama3-template"
+        chat_template = template
 
         @staticmethod
         def apply_chat_template(messages, *, tokenize, add_generation_prompt):
             assert tokenize is False
+            if len(messages) == 3:
+                if mode == "reversed":
+                    return (
+                        "<AST>E-0016 frozen assistant probe.<EOT>"
+                        "<USR>E-0016 frozen user probe.<EOT>"
+                        "<SYS>E-0016 frozen system probe.<EOT>"
+                    )
+                if mode == "altered-special-token":
+                    return correct_role.replace("<EOT>", "<ALT_EOT>")
+                assert add_generation_prompt is False
+                return correct_role
             assert add_generation_prompt is True
-            content = messages[0]["content"]
-            return (
-                "<|begin_of_text|><|start_header_id|>user<|end_header_id|>"
-                f"\n\n{content}<|eot_id|>"
-                "<|start_header_id|>assistant<|end_header_id|>\n\n"
-            )
+            if mode == "altered-special-token":
+                return correct_generation.replace("<EOT>", "<ALT_EOT>")
+            return correct_generation
 
     class Provider:
         hidden_dim = 4096
@@ -427,14 +483,31 @@ def test_llama3_chat_template_is_shared_by_extraction_and_generation():
             e0016.SteeredHFBackend._render_user_chat_prompt
         )
 
+    return profile, Provider(), Backend()
+
+
+def test_exact_frozen_chat_template_identity_passes():
+    profile, provider, backend = _chat_template_validation_fixture("correct")
     identity = e0016.verify_frozen_model_architecture_and_chat_template(
-        model_profile=model_profile,
-        provider=Provider(),
-        hook_backend=Backend(),
+        model_profile=profile,
+        provider=provider,
+        hook_backend=backend,
     )
-    assert identity["chat_template_family"] == "llama3-header-eot"
+    assert identity["expected_hashes"]["role_probe_sha256"] == (
+        identity["role_probe_sha256"]
+    )
     assert identity["activation_and_generation_rendering_identical"] is True
-    assert identity["raw_harmful_text_present"] is False
+
+
+@pytest.mark.parametrize("mode", ["reversed", "altered-special-token"])
+def test_chat_template_rejects_role_order_or_special_token_drift(mode):
+    profile, provider, backend = _chat_template_validation_fixture(mode)
+    with pytest.raises(ValueError, match="frozen chat template identity mismatch"):
+        e0016.verify_frozen_model_architecture_and_chat_template(
+            model_profile=profile,
+            provider=provider,
+            hook_backend=backend,
+        )
 
 
 @pytest.mark.parametrize(
@@ -635,6 +708,9 @@ def test_frozen_snapshot_revision_and_shard_hashes_are_verified(
         config_model_type="test",
         chat_template_family="test",
         chat_template_required_markers=("marker",),
+        chat_template_sha256="0" * 64,
+        role_probe_sha256="1" * 64,
+        generation_probe_sha256="2" * 64,
         shards=frozen,
         eligibility_order=99,
     )
@@ -2216,7 +2292,7 @@ def test_cpu_hf_environment_identity_accepts_real_pretrained_config(monkeypatch)
         hook_backend=backend,
     )
 
-    assert identity["schema_version"] == 5
+    assert identity["schema_version"] == 6
     assert identity["environment_identity_hash"].startswith("sha256:")
     assert identity["hf_runtime"]["tokenizer_config"]["bytes"] > 0
 

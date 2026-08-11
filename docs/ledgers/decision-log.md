@@ -5,6 +5,13 @@
 
 ---
 
+## 2026-08-12 · D-0101 · E-0016 exact chat-template identity becomes a fail-closed model-profile gate
+- Ordinary audit rejected the D-0100 implementation because unordered marker presence could accept reversed role headers or altered special-token ordering.
+- Each allowlisted model profile now freezes three exact SHA-256 identities from its pinned tokenizer revision: the canonical `tokenizer.chat_template` string, a rendered fixed `system -> user -> assistant` probe, and the actual single-user `add_generation_prompt=true` rendering used by activation extraction and generation.
+- Qwen hashes are template `cd8e9439...0527f`, role probe `51df7c5c...12eca6`, generation probe `91cd685b...d497a`; Llama-3 hashes are template `ba03a121...0f122`, role probe `0f9f78f3...0a96b`, generation probe `bf620d63...01d99`. Full values are frozen in code and the protocol.
+- Runtime must exactly match all three profile hashes and the pinned architecture/revision/shards. Reversed roles, template drift, special-token/EOT drift, or extraction/generation rendering disagreement hard-fail before direction extraction.
+- This closes an operational lineage/templating gap only. Model order, eligibility floor, direction/scoring/intervention, random control, coherence, outcome pass rule, compute cap, and harmful-text safety remain unchanged.
+
 ## 2026-08-12 · D-0100 · Owner authorizes fixed second-model eligibility attempt for E-0016
 - The clean Qwen2.5-7B-Instruct DEV eligibility screen completed with baseline false-refusal `0.0033`, far below the frozen `>=0.25` floor, and correctly returned `INVALID_REGIME_B_UNDERPOWERED` before ablation selection or TEST. No harmful generation occurred. Direction derivation itself was valid (source layer `8`, separation approximately `4.0` above the `0.8` floor, unit-norm direction).
 - The `>=0.25` screen is outcome-independent: it uses only baseline refusal on benign XSTest-safe prompts and is evaluated before any ablation-effect outcome. Qwen therefore has insufficient false-refusal headroom for this assay; this is not an ablation failure.

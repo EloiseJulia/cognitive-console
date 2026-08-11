@@ -49,6 +49,10 @@ DEFAULT_MODEL = "Qwen/Qwen2.5-7B-Instruct"
 FROZEN_MODEL_REVISION = "a09a35458c702b33eeacc393d103063234e8bc28"
 LLAMA_MODEL = "NousResearch/Meta-Llama-3-8B-Instruct"
 LLAMA_FROZEN_MODEL_REVISION = "53346005fb0ef11d3b6a83b12c895cca40156b6c"
+CHAT_TEMPLATE_SYSTEM_PROBE = "E-0016 frozen system probe."
+CHAT_TEMPLATE_USER_PROBE = "E-0016 frozen user probe."
+CHAT_TEMPLATE_ASSISTANT_PROBE = "E-0016 frozen assistant probe."
+CHAT_TEMPLATE_GENERATION_PROBE = "E-0016 frozen generation probe."
 AUTODL_HF_HOME = Path("/root/autodl-tmp/hf")
 AUTODL_OUTPUT_ROOT = Path("/root/autodl-tmp")
 AUTODL_MANAGED_DISK_CEILING_GIB = 45.0
@@ -128,7 +132,7 @@ DEGENERACY_SCORER_VERSION = "degeneracy_score_v1"
 GENERATION_RECORD_SCHEMA_VERSION = 2
 CHECKPOINT_SCHEMA_VERSION = 3
 SOURCE_STATE_SCHEMA_VERSION = 2
-ENVIRONMENT_SCHEMA_VERSION = 5
+ENVIRONMENT_SCHEMA_VERSION = 6
 ARTIFACT_MANIFEST_SCHEMA_VERSION = 1
 TEST_PLAN_SCHEMA_VERSION = 1
 RECORD_VALIDATOR_VERSION = "e0016_strict_record_validator_v2_rescore"
@@ -254,6 +258,9 @@ class FrozenModelProfile:
     config_model_type: str
     chat_template_family: str
     chat_template_required_markers: Tuple[str, ...]
+    chat_template_sha256: str
+    role_probe_sha256: str
+    generation_probe_sha256: str
     shards: Dict[str, Dict[str, object]]
     eligibility_order: int
 
@@ -272,6 +279,9 @@ AUTHORIZED_MODEL_PROFILES = (
             "<|im_end|>",
             "<|im_start|>assistant",
         ),
+        chat_template_sha256="cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f",
+        role_probe_sha256="51df7c5c5e8e9c020dc9c4db426a33e56b58a85df4b92747d9c8c604a712eca6",
+        generation_probe_sha256="91cd685ba47fb02f298d76280e31c20af7e88657d1d7d8a61b117987dc9d497a",
         shards=FROZEN_MODEL_SHARDS,
         eligibility_order=1,
     ),
@@ -289,6 +299,9 @@ AUTHORIZED_MODEL_PROFILES = (
             "<|eot_id|>",
             "<|start_header_id|>assistant<|end_header_id|>",
         ),
+        chat_template_sha256="ba03a121d097859c7b5b9cd03af99aafe95275210d2876f642ad9929a150f122",
+        role_probe_sha256="0f9f78f3bce490e899bd9ed8f516c7f2496a557186767bfd3b653d8f21a0a96b",
+        generation_probe_sha256="bf620d63fefb8f2242305d4f7bc5045c9240d7eef51a2ef3560df98f01901d99",
         shards=LLAMA_FROZEN_MODEL_SHARDS,
         eligibility_order=2,
     ),
@@ -1006,16 +1019,49 @@ def verify_frozen_model_architecture_and_chat_template(
         raise ValueError(
             f"{model_profile.profile_id} tokenizer lacks a frozen chat template"
         )
-    probe = "E-0016 benign chat-template verification."
+    role_probe = [
+        {"role": "system", "content": CHAT_TEMPLATE_SYSTEM_PROBE},
+        {"role": "user", "content": CHAT_TEMPLATE_USER_PROBE},
+        {"role": "assistant", "content": CHAT_TEMPLATE_ASSISTANT_PROBE},
+    ]
+    role_rendered = tokenizer.apply_chat_template(
+        role_probe,
+        tokenize=False,
+        add_generation_prompt=False,
+    )
     provider_rendered = provider._render_user_chat_prompt(
-        tokenizer, probe, model_profile.model_id
+        tokenizer, CHAT_TEMPLATE_GENERATION_PROBE, model_profile.model_id
     )
     backend_rendered = hook_backend._render_user_chat_prompt(
-        tokenizer, probe, model_profile.model_id
+        tokenizer, CHAT_TEMPLATE_GENERATION_PROBE, model_profile.model_id
     )
-    if provider_rendered != backend_rendered or probe not in provider_rendered:
+    if (
+        not isinstance(role_rendered, str)
+        or provider_rendered != backend_rendered
+        or CHAT_TEMPLATE_GENERATION_PROBE not in provider_rendered
+    ):
         raise ValueError(
             f"{model_profile.profile_id} activation/generation chat rendering mismatch"
+        )
+    runtime_hashes = {
+        "chat_template_sha256": sha_text(chat_template),
+        "role_probe_sha256": sha_text(role_rendered),
+        "generation_probe_sha256": sha_text(provider_rendered),
+    }
+    expected_hashes = {
+        "chat_template_sha256": model_profile.chat_template_sha256,
+        "role_probe_sha256": model_profile.role_probe_sha256,
+        "generation_probe_sha256": model_profile.generation_probe_sha256,
+    }
+    hash_mismatches = {
+        key: {"expected": expected_hashes[key], "actual": runtime_hashes[key]}
+        for key in expected_hashes
+        if runtime_hashes[key] != expected_hashes[key]
+    }
+    if hash_mismatches:
+        raise ValueError(
+            f"{model_profile.profile_id} frozen chat template identity mismatch: "
+            f"{hash_mismatches}"
         )
     missing_markers = [
         marker
@@ -1033,8 +1079,8 @@ def verify_frozen_model_architecture_and_chat_template(
         "hidden_dim": actual_hidden_dim,
         "decoder_layers": actual_decoder_layers,
         "chat_template_family": model_profile.chat_template_family,
-        "chat_template_sha256": sha_text(chat_template),
-        "rendered_probe_sha256": sha_text(provider_rendered),
+        **runtime_hashes,
+        "expected_hashes": expected_hashes,
         "required_markers": list(model_profile.chat_template_required_markers),
         "activation_and_generation_rendering_identical": True,
         "add_generation_prompt": True,
@@ -1761,6 +1807,9 @@ def pre_load_eligibility_config(args: argparse.Namespace) -> Dict[str, Any]:
                 "decoder_layers": model_profile.decoder_layers,
                 "config_model_type": model_profile.config_model_type,
                 "chat_template_family": model_profile.chat_template_family,
+                "chat_template_sha256": model_profile.chat_template_sha256,
+                "role_probe_sha256": model_profile.role_probe_sha256,
+                "generation_probe_sha256": model_profile.generation_probe_sha256,
                 "eligibility_order": model_profile.eligibility_order,
             }
         ),
@@ -1922,7 +1971,7 @@ def resolved_frozen_run_config(
     return {
         **pre_load_eligibility_config(args),
         "identity_stage": "post_resolution_full_run",
-        "identity_schema_version": 4,
+        "identity_schema_version": 5,
         "model": {
             "model_id": args.model_id,
             "revision_requested": args.model_revision,
@@ -2064,7 +2113,7 @@ def finalized_run_identity(
     return {
         **resolved_config,
         "identity_stage": "finalized_post_dev_pre_test",
-        "identity_schema_version": 5,
+        "identity_schema_version": 6,
         "selected_intervention": {
             **expected,
             "selection_metric": (

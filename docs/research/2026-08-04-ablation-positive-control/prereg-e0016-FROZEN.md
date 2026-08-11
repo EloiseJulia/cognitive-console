@@ -2,7 +2,7 @@
 
 **Experiment id:** E-0016
 
-**Status:** **FROZEN OUTCOMES — Regime B only; D-0097..D-0100 execution amendments DRAFT pending audit**
+**Status:** **FROZEN OUTCOMES — Regime B only; D-0097..D-0101 execution amendments DRAFT pending audit**
 
 **Freeze candidate prepared:** 2026-08-05
 
@@ -41,7 +41,7 @@ SUPER` exposing 32 GiB via `CUDA_VISIBLE_DEVICES=0`, Python 3.12, torch
 2.8/cu128, transformers 4.44.2, and `HF_HOME=/root/autodl-tmp/hf`. The amendment
 adds fail-closed physical-GPU identity binding, fp16 memory headroom checks,
 cache/disk ceilings, full pinned model-shard verification, and preflight/DEV-only
-operational stops under environment identity schema v5. It changes no scientific
+operational stops under environment identity schema v6. It changes no scientific
 parameter or safety rule and is not
 execution-ready until independently audited and assigned a new exact run commit.
 
@@ -113,7 +113,25 @@ chat-template identity, resolved revision, device, dtype, environment, source
 state, and full frozen-config hash. Evidence execution requires a clean source
 tree at the final audited run commit.
 
-### 3.1 D-0097 AutoDL operational profile (non-scientific)
+### 3.1 Exact frozen chat-template identities (D-0101)
+
+Runtime validation compares all three hashes, in order-sensitive form:
+
+| Profile | `tokenizer.chat_template` SHA-256 | fixed system→user→assistant probe SHA-256 | single-user generation probe SHA-256 |
+|---|---|---|---|
+| Qwen2.5-7B-Instruct | `cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f` | `51df7c5c5e8e9c020dc9c4db426a33e56b58a85df4b92747d9c8c604a712eca6` | `91cd685ba47fb02f298d76280e31c20af7e88657d1d7d8a61b117987dc9d497a` |
+| Meta-Llama-3-8B-Instruct | `ba03a121d097859c7b5b9cd03af99aafe95275210d2876f642ad9929a150f122` | `0f9f78f3bce490e899bd9ed8f516c7f2496a557186767bfd3b653d8f21a0a96b` | `bf620d63fefb8f2242305d4f7bc5045c9240d7eef51a2ef3560df98f01901d99` |
+
+The role probe uses the frozen literal contents `E-0016 frozen system probe.`,
+`E-0016 frozen user probe.`, and `E-0016 frozen assistant probe.` with
+`add_generation_prompt=false`. The actual-path probe uses the single user
+content `E-0016 frozen generation probe.` with
+`add_generation_prompt=true`. These hashes were computed from the pinned
+tokenizer revisions under transformers 4.44.2. Any role reordering, template or
+special-token drift, EOT change, or activation/generation rendering mismatch
+hard-fails before direction extraction.
+
+### 3.2 D-0097 AutoDL operational profile (non-scientific)
 
 - `CUDA_VISIBLE_DEVICES=0`; torch must expose exactly one logical CUDA device and
   its name/memory must match the selected `nvidia-smi` physical index, UUID, PCI

@@ -13,6 +13,27 @@ AXIS_LABELS = {
     "focus": "Focus",
 }
 
+AXIS_TASK_OUTCOMES = {
+    "deliberation": {
+        "task": "frozen deliberation item pool",
+        "outcome": "binary deliberation success",
+    },
+    "skepticism": {
+        "task": "frozen false-premise item pool",
+        "outcome": "binary skepticism success",
+    },
+    "uncertainty_awareness": {
+        "task": "frozen confidence-reporting item pool",
+        "outcome": "per-item 1-Brier",
+    },
+    "focus": {
+        "task": "exploratory focus probe pool",
+        "outcome": "focus proxy",
+    },
+}
+
+_TIER_MATCH_FIELDS = ("model", "method", "direction", "layer", "task", "outcome")
+
 C1_RESULTS_REL = Path("results") / "gpu_7b_2026-07-23" / "c1" / "c1_facade_results.json"
 C2B_RESULTS_REL = Path("results") / "c2b_adjudication_hf_2026-07-24" / "c2b_adjudication_results.json"
 ARM_SUMMARY_REL = Path("results") / "arm_full" / "arm_matrix_summary.json"
@@ -44,11 +65,162 @@ def _load_json(path: Path) -> Dict:
         return json.load(fh)
 
 
+def _model_identity_key(model: object) -> Optional[str]:
+    if not isinstance(model, str) or not model.strip():
+        return None
+    return model.replace("\\", "/").rstrip("/").rsplit("/", 1)[-1].lower()
+
+
+def _axis_task_outcome(axis: str) -> Dict[str, str]:
+    return AXIS_TASK_OUTCOMES.get(
+        axis,
+        {
+            "task": f"{axis} task",
+            "outcome": f"{axis} outcome",
+        },
+    )
+
+
+def _tier_identity(
+    *,
+    model: object,
+    method: object,
+    axis: str,
+    direction: object,
+    layer: object,
+    task: object,
+    outcome: object,
+    protocol: object,
+    version: object,
+    comparator: object,
+    comparator_required: bool,
+    source: str,
+) -> Dict:
+    identity = {
+        "model": _model_identity_key(model),
+        "method": str(method).lower() if method not in (None, "") else None,
+        "direction": (
+            str(direction)
+            if direction not in (None, "")
+            else (
+                f"{str(method).lower()}:{axis}"
+                if method not in (None, "")
+                else None
+            )
+        ),
+        "layer": int(layer) if isinstance(layer, (int, float)) else None,
+        "task": task,
+        "outcome": outcome,
+        "protocol": protocol,
+        "version": version,
+        "comparator": comparator,
+        "source": source,
+    }
+    required = [
+        "model",
+        "method",
+        "direction",
+        "layer",
+        "protocol",
+        "version",
+    ]
+    if task is not None or outcome is not None:
+        required.extend(["task", "outcome"])
+    if comparator_required:
+        required.append("comparator")
+    missing = [field for field in required if identity.get(field) in (None, "", {})]
+    if comparator_required and isinstance(comparator, dict):
+        if not comparator.get("kind") or not (
+            comparator.get("best_prompt_id") or comparator.get("contrast")
+        ):
+            if "comparator" not in missing:
+                missing.append("comparator")
+    identity["complete"] = not missing
+    identity["missing_fields"] = missing
+    return identity
+
+
+def _compare_tier_identities(read_identity: Dict, transfer_identity: Dict) -> Dict:
+    missing = []
+    mismatches = []
+    for field in _TIER_MATCH_FIELDS:
+        read_value = read_identity.get(field)
+        transfer_value = transfer_identity.get(field)
+        if read_value in (None, ""):
+            missing.append(f"READ.{field}")
+        if transfer_value in (None, ""):
+            missing.append(f"TRANSFER.{field}")
+        if read_value not in (None, "") and transfer_value not in (None, "") and read_value != transfer_value:
+            mismatches.append(
+                {
+                    "field": field,
+                    "read": read_value,
+                    "transfer": transfer_value,
+                }
+            )
+    if missing:
+        status = "INCOMPLETE"
+        reason = "Evidence-tier identity is incomplete: " + ", ".join(missing) + "."
+    elif mismatches:
+        status = "MISMATCH"
+        details = "; ".join(
+            f"{row['field']} READ={row['read']} TRANSFER={row['transfer']}"
+            for row in mismatches
+        )
+        reason = f"READ and TRANSFER belong to different evidence tiers: {details}."
+    else:
+        status = "MATCH"
+        reason = "READ and TRANSFER share the same model, method, direction, layer, task, and outcome."
+    return {
+        "status": status,
+        "matched": status == "MATCH",
+        "missing_fields": missing,
+        "mismatches": mismatches,
+        "reason": reason,
+    }
+
+
+def _c1_method(data: Dict) -> Optional[str]:
+    explicit = data.get("steering_method") or data.get("method")
+    if explicit:
+        return str(explicit).lower()
+    if str(data.get("kind", "")).startswith("c1_facade"):
+        return "caa"
+    return None
+
+
+def _c2_method(data: Dict, source_mode: str) -> Optional[str]:
+    explicit = data.get("steering_method") or data.get("method")
+    if explicit:
+        return str(explicit).lower()
+    if source_mode in {"results_c2b_json", "evidence_ledger_e0005_fallback"}:
+        return "caa"
+    return None
+
+
+def _direction_identity(data: Dict, row: Dict, method: object, axis: str) -> Optional[str]:
+    explicit = (
+        row.get("direction_id")
+        or row.get("direction_sha256")
+        or data.get("direction_by_axis", {}).get(axis)
+    )
+    if explicit:
+        return str(explicit)
+    if method not in (None, ""):
+        return f"{str(method).lower()}:{axis}"
+    return None
+
+
 def _load_c1_from_results(c1_path: Path) -> List[Dict]:
     data = _load_json(c1_path)
+    method = _c1_method(data)
+    version = data.get("generated_at") or data.get("type")
     rows: List[Dict] = []
     for axis_row in data.get("axes", []):
         axis = str(axis_row.get("axis"))
+        target = _axis_task_outcome(axis)
+        task = axis_row.get("task") or target["task"]
+        outcome = axis_row.get("outcome") or target["outcome"]
         rows.append(
             {
                 "axis": axis,
@@ -62,6 +234,22 @@ def _load_c1_from_results(c1_path: Path) -> List[Dict]:
                 "holds_ci": bool(axis_row.get("facade_gap_holds_ci", False)),
                 "limit_flag": bool(axis_row.get("facade_gap_holds_ci", False)),
                 "source": "c1_results_json",
+                "tier_identity": _tier_identity(
+                    model=data.get("model"),
+                    method=method,
+                    axis=axis,
+                    direction=_direction_identity(data, axis_row, method, axis),
+                    layer=axis_row.get("chosen_layer"),
+                    task=task,
+                    outcome=outcome,
+                    protocol=data.get("kind"),
+                    version=version,
+                    comparator=None,
+                    comparator_required=False,
+                    source=_as_rel(c1_path),
+                ),
+                "target_task": task,
+                "target_outcome": outcome,
             }
         )
     return rows
@@ -116,6 +304,20 @@ def _load_c1_fallback_from_evidence(evidence_ledger_path: Path) -> List[Dict]:
                 "limit_flag": ci_hi < 1.0,
                 "source": "evidence_ledger_e0003_fallback",
                 "note": "prompt_reach/pole_reach unavailable in fallback source.",
+                "tier_identity": _tier_identity(
+                    model=None,
+                    method=None,
+                    axis=axis,
+                    direction=None,
+                    layer=None,
+                    task=None,
+                    outcome=None,
+                    protocol="evidence-ledger E-0003 fallback",
+                    version="E-0003",
+                    comparator=None,
+                    comparator_required=False,
+                    source=_as_rel(evidence_ledger_path),
+                ),
             }
         )
     return rows
@@ -187,10 +389,16 @@ def _load_c2_data(c2b_path: Path, evidence_ledger_path: Path) -> Tuple[Dict, str
     return _load_c2_fallback_from_evidence(evidence_ledger_path), "evidence_ledger_e0005_fallback"
 
 
-def _build_c2_rows(c2b_data: Dict) -> List[Dict]:
+def _build_c2_rows(c2b_data: Dict, source_mode: str) -> List[Dict]:
+    method = _c2_method(c2b_data, source_mode)
+    protocol = c2b_data.get("prereg") or c2b_data.get("frozen_params", {}).get("prereg")
+    version = c2b_data.get("config_fingerprint") or c2b_data.get("generated_at")
     rows: List[Dict] = []
     for axis_row in c2b_data.get("axes", []):
         axis = str(axis_row.get("axis"))
+        target = _axis_task_outcome(axis)
+        task = axis_row.get("task") or target["task"]
+        outcome = axis_row.get("outcome") or target["outcome"]
         prompt_values = axis_row.get("per_item_prompt", [])
         steer_values = axis_row.get("per_item_steer", [])
         prompt_mean = mean(prompt_values) if prompt_values else None
@@ -221,6 +429,23 @@ def _build_c2_rows(c2b_data: Dict) -> List[Dict]:
                 "note": axis_row.get("note"),
                 "conflict_latent_drags_down": bool(
                     axis_row.get("conflict", {}).get("latent_drags_down", False)
+                ),
+                "tier_identity": _tier_identity(
+                    model=c2b_data.get("model"),
+                    method=method,
+                    axis=axis,
+                    direction=_direction_identity(c2b_data, axis_row, method, axis),
+                    layer=axis_row.get("layer"),
+                    task=task,
+                    outcome=outcome,
+                    protocol=protocol,
+                    version=version,
+                    comparator={
+                        "kind": "DEV-selected bounded prompt",
+                        "best_prompt_id": axis_row.get("dev_selection", {}).get("best_prompt_id"),
+                    },
+                    comparator_required=True,
+                    source=source_mode,
                 ),
             }
         )
@@ -271,6 +496,20 @@ def _read_signal_from_c1(row: Optional[Dict]) -> Dict:
             "ci_hi": None,
             "source": None,
             "summary": "No local C1 READ artifact for this axis.",
+            "tier_identity": _tier_identity(
+                model=None,
+                method=None,
+                axis="unknown",
+                direction=None,
+                layer=None,
+                task=None,
+                outcome=None,
+                protocol=None,
+                version=None,
+                comparator=None,
+                comparator_required=False,
+                source="missing",
+            ),
         }
     status = "HOLDS" if row.get("holds_ci") else "FAILS"
     return {
@@ -281,6 +520,7 @@ def _read_signal_from_c1(row: Optional[Dict]) -> Dict:
         "ci_hi": row.get("ci_hi"),
         "source": row.get("source"),
         "summary": f"facade ratio={row.get('ratio'):.3f}" if isinstance(row.get("ratio"), (int, float)) else "facade ratio unavailable",
+        "tier_identity": row.get("tier_identity", {}),
     }
 
 
@@ -293,6 +533,21 @@ def _transfer_signal_from_c2(row: Optional[Dict]) -> Dict:
             "ci_hi": None,
             "passed": None,
             "summary": "No local C2 behavior artifact for this axis.",
+            "coherence_ok": None,
+            "tier_identity": _tier_identity(
+                model=None,
+                method=None,
+                axis="unknown",
+                direction=None,
+                layer=None,
+                task=None,
+                outcome=None,
+                protocol=None,
+                version=None,
+                comparator=None,
+                comparator_required=True,
+                source="missing",
+            ),
         }
     verdict = "PASS" if row.get("passed") else "FAIL"
     return {
@@ -304,6 +559,8 @@ def _transfer_signal_from_c2(row: Optional[Dict]) -> Dict:
         "bonferroni_ci_level": row.get("ci_level"),
         "source": row.get("source"),
         "summary": f"Δ={row.get('mean_diff'):.3f}" if isinstance(row.get("mean_diff"), (int, float)) else "Δ unavailable",
+        "coherence_ok": row.get("coherence_ok"),
+        "tier_identity": row.get("tier_identity", {}),
     }
 
 
@@ -361,16 +618,91 @@ def _calibration_harm_from_c2(row: Optional[Dict], arm_payload: Dict) -> Dict:
     }
 
 
-def _card_verdict(read_signal: Dict, transfer_signal: Dict, calibration_harm: Dict) -> str:
-    if read_signal.get("status") == "HOLDS" and transfer_signal.get("verdict") in {"FAIL", "NULL"}:
-        return "LEGIBLE: no added control demonstrated"
-    if calibration_harm.get("status") == "HARM":
-        return "CONTROL ATTEMPT HARMS CALIBRATION"
-    if read_signal.get("status") == "HOLDS" and transfer_signal.get("verdict") == "PASS":
-        return "LEGIBLE and TRANSFERS"
-    if read_signal.get("status") == "FAILS":
-        return "NOT LEGIBLE as facade axis"
-    return "UNTESTED BOUNDARY"
+def _interface_mapping(
+    read_signal: Dict,
+    transfer_signal: Dict,
+    calibration_harm: Dict,
+) -> Dict:
+    tier_match = _compare_tier_identities(
+        read_signal.get("tier_identity", {}),
+        transfer_signal.get("tier_identity", {}),
+    )
+    read_candidate = read_signal.get("status") == "HOLDS"
+    transfer_pass = (
+        transfer_signal.get("verdict") == "PASS"
+        and transfer_signal.get("coherence_ok") is True
+    )
+
+    if not read_signal.get("tier_identity", {}).get("complete", False):
+        code = "READ_TIER_INCOMPLETE"
+        reason = "READ evidence lacks a complete model, method, direction/layer, protocol/version identity."
+    elif not transfer_signal.get("tier_identity", {}).get("complete", False):
+        code = "TRANSFER_TIER_INCOMPLETE"
+        reason = "TRANSFER evidence lacks a complete task/outcome, protocol/version, or comparator identity."
+    elif not tier_match["matched"]:
+        code = f"TIER_{tier_match['status']}"
+        reason = tier_match["reason"]
+    elif not read_candidate:
+        code = "READ_NOT_SUPPORTED"
+        reason = "READ is not supported within the matched evidence tier."
+    elif transfer_signal.get("verdict") == "UNTESTED":
+        code = "TRANSFER_UNTESTED"
+        reason = "TRANSFER has not been tested against the bounded comparator in this tier."
+    elif transfer_signal.get("coherence_ok") is False:
+        code = "COHERENCE_NOT_MET"
+        reason = "The comparative result does not satisfy the coherence requirement in this tier."
+    elif transfer_signal.get("verdict") != "PASS":
+        code = "TRANSFER_NOT_PASSED"
+        reason = "TRANSFER did not pass the comparator-bound behavioral gate in this tier."
+    elif calibration_harm.get("status") == "HARM":
+        code = "CALIBRATION_HARM"
+        reason = "The matched record carries a robust comparator-specific calibration warning."
+    else:
+        code = "NONE"
+        reason = "No blocking reason remains within the exact matched tier."
+
+    active_passes = transfer_pass and code == "NONE"
+    read_summary = (
+        "Read-only diagnostic candidate within this evidence tier."
+        if read_candidate
+        else "Read-only diagnostic candidate withheld because READ is unsupported."
+    )
+    active_summary = (
+        "Active control passes the computational gate within exact tier."
+        if active_passes
+        else f"Active control withheld: {reason}"
+    )
+    return {
+        "tier_match": tier_match,
+        "computational_result": {
+            "read": read_signal.get("status"),
+            "transfer": transfer_signal.get("verdict"),
+            "coherence_ok": transfer_signal.get("coherence_ok"),
+            "calibration": calibration_harm.get("status"),
+            "summary": (
+                f"READ={read_signal.get('status')}; "
+                f"TRANSFER={transfer_signal.get('verdict')}; "
+                f"tier={tier_match['status']}."
+            ),
+        },
+        "blocking_reason": {
+            "code": code,
+            "summary": reason,
+        },
+        "interface_action": {
+            "read_only_diagnostic": {
+                "eligibility": "candidate" if read_candidate else "withheld",
+                "summary": read_summary,
+            },
+            "active_control": {
+                "eligibility": (
+                    "passes_computational_gate" if active_passes else "withheld"
+                ),
+                "summary": active_summary,
+            },
+            "summary": f"{read_summary} {active_summary}",
+        },
+    }
 
 
 def _build_axis_cards(c1_rows: List[Dict], c2_rows: List[Dict], arm_payload: Dict) -> List[Dict]:
@@ -384,20 +716,27 @@ def _build_axis_cards(c1_rows: List[Dict], c2_rows: List[Dict], arm_payload: Dic
         transfer = _transfer_signal_from_c2(c2)
         prompt_ceiling = _prompt_ceiling_from_c2(c2)
         calibration = _calibration_harm_from_c2(c2, arm_payload)
+        mapping = _interface_mapping(read, transfer, calibration)
         cards.append(
             {
                 "axis": axis,
                 "label": _axis_label(axis),
                 "evidence_ids": ["E-0003", "E-0005", "E-0006"] if c2 else ["E-0003", "E-0008"],
-                "headline": _card_verdict(read, transfer, calibration),
+                "headline": mapping["interface_action"]["active_control"]["summary"],
                 "read_status": read,
                 "transfer_verdict": transfer,
                 "prompt_ceiling": prompt_ceiling,
                 "calibration_harm": calibration,
                 "evidence_tier": {
                     "tier": "exploratory",
+                    "read_identity": read.get("tier_identity"),
+                    "transfer_identity": transfer.get("tier_identity"),
+                    "match": mapping["tier_match"],
                     "notes": ["single-run facade READ", "C2 behavior has 2×2 robustness for uncertainty harm"],
                 },
+                "computational_result": mapping["computational_result"],
+                "blocking_reason": mapping["blocking_reason"],
+                "interface_action": mapping["interface_action"],
                 "source_files": {
                     "c1": c1.get("source") if c1 else None,
                     "c2": c2.get("source") if c2 else None,
@@ -433,6 +772,20 @@ def _load_social_card(behavior_path: Path, read_path: Path) -> Dict:
             if isinstance(token_blind.get("auc"), (int, float))
             else "token-blind AUC unavailable"
         ),
+        "tier_identity": _tier_identity(
+            model=read.get("config", {}).get("model"),
+            method="caa",
+            axis="social_inference_novice_disclosure",
+            direction=read.get("direction_id") or "caa:social_inference_novice_disclosure",
+            layer=read.get("selected_layer"),
+            task="novice-disclosure representational probe",
+            outcome="token-blind AUC",
+            protocol=read.get("config", {}).get("protocol_decision"),
+            version=read.get("config_fingerprint"),
+            comparator=None,
+            comparator_required=False,
+            source=_as_rel(read_path),
+        ),
     }
     transfer = {
         "verdict": "NULL"
@@ -450,6 +803,24 @@ def _load_social_card(behavior_path: Path, read_path: Path) -> Dict:
             if isinstance(ba_m1.get("point_estimate"), (int, float))
             and isinstance(ba_m1.get("p_bonferroni"), (int, float))
             else "B−A M1 unavailable"
+        ),
+        "coherence_ok": None,
+        "tier_identity": _tier_identity(
+            model=behavior.get("config", {}).get("model"),
+            method=behavior.get("config", {}).get("steering_method"),
+            axis="social_inference_novice_disclosure",
+            direction=behavior.get("direction_id"),
+            layer=None,
+            task=behavior.get("config", {}).get("task_pool"),
+            outcome="M1 option-pushing",
+            protocol=behavior.get("config", {}).get("protocol_decision"),
+            version=behavior.get("config_fingerprint"),
+            comparator={
+                "kind": "paired condition",
+                "contrast": "B_minus_A",
+            },
+            comparator_required=True,
+            source=_as_rel(behavior_path),
         ),
     }
     prompt_ceiling = {
@@ -475,16 +846,23 @@ def _load_social_card(behavior_path: Path, read_path: Path) -> Dict:
             "LLM-judge-only",
         ],
     }
+    mapping = _interface_mapping(read_status, transfer, calibration)
+    evidence_tier["read_identity"] = read_status["tier_identity"]
+    evidence_tier["transfer_identity"] = transfer["tier_identity"]
+    evidence_tier["match"] = mapping["tier_match"]
     return {
         "axis": "social_inference_novice_disclosure",
         "label": "Social inference: novice-disclosure",
         "evidence_ids": ["E-0010"],
-        "headline": _card_verdict(read_status, transfer, calibration),
+        "headline": mapping["interface_action"]["active_control"]["summary"],
         "read_status": read_status,
         "transfer_verdict": transfer,
         "prompt_ceiling": prompt_ceiling,
         "calibration_harm": calibration,
         "evidence_tier": evidence_tier,
+        "computational_result": mapping["computational_result"],
+        "blocking_reason": mapping["blocking_reason"],
+        "interface_action": mapping["interface_action"],
         "secondary_contrasts": {
             "B_minus_E_M1_delta": be_m1.get("point_estimate"),
             "B_minus_E_M1_p_bonferroni": be_m1.get("p_bonferroni"),
@@ -496,12 +874,17 @@ def _load_social_card(behavior_path: Path, read_path: Path) -> Dict:
 
 def _load_psr_panel(psr_path: Path) -> Dict:
     data = _load_json(psr_path)
+    method = data.get("steering_method")
+    protocol = data.get("prereg") or data.get("frozen_params", {}).get("prereg")
+    version = data.get("config_fingerprint") or data.get("generated_at")
     rows = []
     for axis_row in data.get("axes", []):
+        axis = str(axis_row.get("axis"))
+        target = _axis_task_outcome(axis)
         rows.append(
             {
-                "axis": axis_row.get("axis"),
-                "label": _axis_label(str(axis_row.get("axis"))),
+                "axis": axis,
+                "label": _axis_label(axis),
                 "delta": axis_row.get("mean_diff"),
                 "ci_lo": axis_row.get("ci_lo"),
                 "ci_hi": axis_row.get("ci_hi"),
@@ -509,6 +892,23 @@ def _load_psr_panel(psr_path: Path) -> Dict:
                 "best_prompt_id": axis_row.get("dev_selection", {}).get("best_prompt_id"),
                 "dev_prompt_outcome": axis_row.get("dev_selection", {}).get("dev_prompt_outcome"),
                 "source": _as_rel(psr_path),
+                "tier_identity": _tier_identity(
+                    model=data.get("model"),
+                    method=method,
+                    axis=axis,
+                    direction=_direction_identity(data, axis_row, method, axis),
+                    layer=axis_row.get("layer"),
+                    task=target["task"],
+                    outcome=target["outcome"],
+                    protocol=protocol,
+                    version=version,
+                    comparator={
+                        "kind": "DEV-selected bounded prompt",
+                        "best_prompt_id": axis_row.get("dev_selection", {}).get("best_prompt_id"),
+                    },
+                    comparator_required=True,
+                    source=_as_rel(psr_path),
+                ),
             }
         )
     return {
@@ -539,6 +939,7 @@ def _load_arm_from_results(root: Path, arm_summary_path: Path) -> Tuple[Dict, st
             result = _load_json(result_path)
             for axis_row in result.get("axes", []):
                 axis = str(axis_row.get("axis"))
+                target = _axis_task_outcome(axis)
                 axes.append(
                     {
                         "axis": axis,
@@ -553,6 +954,32 @@ def _load_arm_from_results(root: Path, arm_summary_path: Path) -> Tuple[Dict, st
                         and isinstance(axis_row.get("ci_hi"), (int, float))
                         and axis_row.get("mean_diff") < 0
                         and axis_row.get("ci_hi") < 0,
+                        "tier_identity": _tier_identity(
+                            model=result.get("model") or cell.get("model_id"),
+                            method=result.get("steering_method") or cell.get("method"),
+                            axis=axis,
+                            direction=_direction_identity(
+                                result,
+                                axis_row,
+                                result.get("steering_method") or cell.get("method"),
+                                axis,
+                            ),
+                            layer=axis_row.get("layer"),
+                            task=target["task"],
+                            outcome=target["outcome"],
+                            protocol=result.get("prereg")
+                            or result.get("frozen_params", {}).get("prereg"),
+                            version=result.get("config_fingerprint")
+                            or result.get("generated_at"),
+                            comparator={
+                                "kind": "DEV-selected bounded prompt",
+                                "best_prompt_id": axis_row.get("dev_selection", {}).get(
+                                    "best_prompt_id"
+                                ),
+                            },
+                            comparator_required=True,
+                            source=_as_rel(result_path),
+                        ),
                     }
                 )
         cells.append(
@@ -611,6 +1038,20 @@ def _load_arm_fallback_from_evidence(evidence_ledger_path: Path) -> Tuple[Dict, 
                         "passed": False,
                         "degradation_flag": mean_v < 0,
                         "robust_degradation_flag": mean_v < 0 and hi_v < 0,
+                        "tier_identity": _tier_identity(
+                            model=None,
+                            method=method.lower(),
+                            axis="uncertainty_awareness",
+                            direction=f"{method.lower()}:uncertainty_awareness",
+                            layer=None,
+                            task=_axis_task_outcome("uncertainty_awareness")["task"],
+                            outcome=_axis_task_outcome("uncertainty_awareness")["outcome"],
+                            protocol="evidence-ledger E-0006 fallback",
+                            version="E-0006",
+                            comparator=None,
+                            comparator_required=True,
+                            source=_as_rel(evidence_ledger_path),
+                        ),
                     }
                 ],
             }
@@ -742,7 +1183,7 @@ def build_console_payload(
 
     c2b_data, c2_source_mode = _load_c2_data(c2b_path, evidence_ledger_path)
     c1_rows, c1_source_mode = _load_c1_rows(c1_path, evidence_ledger_path)
-    c2_rows = _build_c2_rows(c2b_data)
+    c2_rows = _build_c2_rows(c2b_data, c2_source_mode)
     arm_payload, arm_source_mode = _load_arm_rows(root, arm_summary_path, evidence_ledger_path)
     arm_payload["source_mode"] = arm_source_mode
     cards = _build_axis_cards(c1_rows, c2_rows, arm_payload)

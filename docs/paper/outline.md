@@ -13,7 +13,7 @@ A readable latent axis should not automatically become a control. Actionability 
 ## Three-act argument
 
 1. **Problem and metric shift.** A slider implies behavioral control. Legibility and output movement do not establish incremental actionability over the prompt channel.
-2. **Method and artifact.** A comparative evidence gate tests the candidate latent route against a strong but bounded 16-prompt channel. READ, TRANSFER, comparator, calibration warning, and evidence tier record why an affordance is diagnostic, unresolved, withheld, or qualified.
+2. **Method and artifact.** A comparative evidence gate tests the candidate latent route against a strong but bounded 16-prompt channel. READ, TRANSFER, comparator, calibration warning, and evidence tier map the computational result to a blocking reason and record-specific interface action.
 3. **Evidence and implication.** No tested cell demonstrates superiority. The four uncertainty contrasts resolve in the comparator-negative direction, deliberation is mixed, and skepticism is underpowered near the registered margin. Four prospectively frozen new split seeds plus the previously observed frozen seed yield the same verdict across all five over the shared item pool. Positive controls narrow endpoint, instrument, and scale alternatives without supplying a passing latent behavioral positive control.
 
 ## Section roles
@@ -32,7 +32,7 @@ Important interface promise → output-change criterion is insufficient → comp
 
 ### 2. Related Work
 
-State the novelty boundary directly. AxBench already supplies a method-level benchmark comparing prompting with SAEs, LAT, supervised steering vectors, linear probes, and ReFT; the published Table 2 is distinct from the mutable author leaderboard. Basu et al. already supplies a clinical representation-to-actionability study and includes safety-focused prompt engineering in Arm 1, although not one uniform DEV-selected, matched-item prompt comparator and superiority estimand across all four intervention arms. Bo et al. supplies the closest user-facing comparator evidence: three personalization interfaces, an unscaffolded prompting-only baseline, and heterogeneous exploratory user preferences. The contribution is not the first prompt--steering comparison or the first interpretability/actionability gap. It is the explicit per-affordance qualification record binding a bounded selected prompt budget, matched items, \(\delta=0.05\), Bonferroni correction, coherence, measurement warning, and evidence tier/interface state. Golden Gate Claude remains neutral motivation; Mishra et al. supplies internal non-surjectivity as background; stronger and trained methods bound the tested naive-additive scope.
+State the novelty boundary directly. AxBench already supplies a method-level benchmark comparing prompting with SAEs, LAT, supervised steering vectors, linear probes, and ReFT; the published Table 2 is distinct from the mutable author leaderboard. Basu et al. already supplies a clinical representation-to-actionability study and includes safety-focused prompt engineering in Arm 1, although not one uniform DEV-selected, matched-item prompt comparator and superiority estimand across all four intervention arms. Bo et al. supplies the closest user-facing comparator evidence: three personalization interfaces, an unscaffolded prompting-only baseline, and heterogeneous exploratory user preferences. The contribution is not the first prompt--steering comparison or the first interpretability/actionability gap. It is the explicit per-affordance qualification record binding a bounded selected prompt budget, matched items, \(\delta=0.05\), Bonferroni correction, coherence, measurement warning, and exact evidence tier to an interface action. Golden Gate Claude remains neutral motivation; Mishra et al. supplies internal non-surjectivity as background; stronger and trained methods bound the tested naive-additive scope.
 
 ### 3. Comparative Gate and Contract
 
@@ -46,7 +46,7 @@ Derive each field from a recorded breakdown:
 
 Model cards and datasheets are documentation precedents; the contribution adds an ex-ante actionability gate at widget level.
 
-The section ends with an actionable candidate-to-state checklist: define the target and local READ evidence, establish a bounded usable prompt comparator, run TRANSFER plus coherence, attach warning and tier, then emit unresolved, diagnostic/withheld-control, or evidence-supported control. This is a proposed workflow, not a user-validated result.
+The section ends with a compact mapping checklist: define the exact tier and target outcome, establish local READ evidence and a bounded prompt comparator, run TRANSFER plus coherence, record any blocking reason, then determine read-only diagnostic and active-control eligibility. This is a proposed workflow, not a user-validated result.
 
 ### 4. Methods
 
@@ -72,12 +72,12 @@ The four skepticism MDE values and registered 0.05 margin appear immediately aft
 
 ### 6. Interface Contract in Use
 
-Do not redefine the five fields. Show how the evidence record produces diagnostic, unresolved, withheld-control, or qualified states. The illustrative policy-writing scenario replaces an unsupported slider with a diagnostic trace and comparator view.
+Do not redefine the five fields. Show the direct path from computational result to blocking reason to interface action. The illustrative policy-writing scenario replaces an unsupported slider with a read-only diagnostic trace and comparator view while active control remains withheld.
 
 ### 7. Discussion
 
 1. A control is a comparative claim: legibility supports diagnosis, while actionability requires the bounded comparator, margin, and coherence.
-2. Evidence tier and versioned lifecycle: failed, underpowered, unstable, and untested states remain distinct; model or method changes trigger re-evaluation.
+2. Evidence tier and versioned lifecycle: failed, underpowered, incoherent, untested, and mismatched evidence produce distinct blocking reasons; model or method changes trigger re-evaluation.
 3. Scope creates new obligations: prompt-plus-steer composition, stronger methods, mechanism claims, and user effects each need a new protocol.
 
 ### 8. Scope

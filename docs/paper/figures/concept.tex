@@ -1,35 +1,22 @@
 \begin{tikzpicture}[
   >=Latex,
   font=\footnotesize,
-  stagebox/.style={draw, rounded corners, align=center, minimum height=9mm, text width=42mm, inner sep=3pt},
-  check/.style={draw, diamond, aspect=2.5, align=center, inner sep=1.5pt, text width=25mm},
-  state/.style={draw, rounded corners, align=center, minimum height=14mm, text width=34mm, inner sep=3pt},
-  unresolved/.style={state, dashed},
-  withheld/.style={state, double},
-  supported/.style={state, line width=0.9pt},
+  box/.style={draw, rounded corners, align=center, minimum height=12mm, text width=112mm, inner sep=4pt},
   flow/.style={->, thick},
-  branch/.style={font=\footnotesize, fill=white, inner sep=1.5pt},
-  note/.style={draw, align=center, text width=154mm, inner sep=3pt}
+  note/.style={draw, dashed, align=center, text width=142mm, inner sep=4pt}
 ]
-  \node[stagebox] (candidate) at (0,0) {\textbf{Candidate axis}\\Named outcome and exact evidence tier};
-  \node[check] (read) at (0,-1.55) {\textbf{READ}\\supported?};
-  \node[check] (transfer) at (0,-3.25) {\textbf{TRANSFER evidence}\\tested?};
-  \node[check] (outcome) at (0,-5.05) {\textbf{Comparative outcome}\\with coherence};
+  \node[box] (candidate) at (0,0) {\textbf{CANDIDATE AND EXACT EVIDENCE TIER}\\
+    Model, method, direction and layer, task and outcome, protocol and version, comparator};
+  \node[box] (result) at (0,-1.9) {\textbf{COMPUTATIONAL RESULT}\\
+    READ support; comparator-bound TRANSFER result; coherence and calibration evidence};
+  \node[box] (reason) at (0,-3.8) {\textbf{BLOCKING REASON}\\
+    Record missing, mismatched, untested, failed, underpowered, incoherent, or measurement-limited evidence};
+  \node[box] (action) at (0,-5.7) {\textbf{INTERFACE ACTION / ELIGIBILITY}\\
+    READ may support a read-only diagnostic candidate within its tier. Active control is withheld unless the comparative gate passes within the exact same tier.};
+  \node[note] (annotation) at (0,-7.45) {A comparative pass means only that active control passes the computational gate within the exact tier. It is not deployment permission or evidence of user benefit.};
 
-  \node[unresolved] (unresolved) at (-5.9,-7.15) {\textbf{UNRESOLVED}\\Show uncertainty; no\\semantic control label\\when READ is unsupported};
-  \node[state] (diagnostic) at (-1.97,-7.15) {\textbf{DIAGNOSTIC ONLY}\\Inspection allowed; no validated control};
-  \node[withheld] (withheld) at (1.97,-7.15) {\textbf{WITHHELD CONTROL}\\Show comparator and failure};
-  \node[supported] (supported) at (5.9,-7.15) {\textbf{EVIDENCE-SUPPORTED}\\\textbf{CONTROL}\\Only for the exact passing tier};
-
-  \draw[flow] (candidate) -- (read);
-  \draw[flow] (read) -- node[branch, right]{yes} (transfer);
-  \draw[flow] (read.west) -| node[branch, near start, above]{no} (-5.9,-5.75) -- (unresolved.north);
-  \draw[flow] (transfer) -- node[branch, right]{tested} (outcome);
-  \draw[flow] (transfer.west) -| node[branch, near start, above]{not tested} (-1.97,-5.75) -- (diagnostic.north);
-  \draw[flow] (outcome.west) -| node[branch, near start, above]{underpowered / inconclusive} (-5.25,-5.75) -- (unresolved.north);
-  \draw[flow] (outcome) -| node[branch, near start, above]{failed} (withheld.north);
-  \draw[flow] (outcome.east) -| node[branch, near start, above]{pass + coherent} (supported.north);
-
-  \node[note] (annotation) at (0,-8.75) {\textbf{All states:} attach the exact evidence tier.\quad
-    \textbf{When comparator-specific risk exists:} attach a calibration warning.};
+  \draw[flow] (candidate) -- (result);
+  \draw[flow] (result) -- (reason);
+  \draw[flow] (reason) -- (action);
+  \draw[flow] (action) -- (annotation);
 \end{tikzpicture}

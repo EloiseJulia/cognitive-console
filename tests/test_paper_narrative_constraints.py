@@ -1,7 +1,8 @@
 import importlib.util
-import re
 from pathlib import Path
 
+import yaml
+from pypdf import PdfReader
 
 SCRIPT = (
     Path(__file__).resolve().parents[1]
@@ -88,15 +89,14 @@ def test_failure_taxonomy_scopes_direct_near_baseline_to_rechecked_cell():
     assert "Four-cell support is limited to the steer-vs-prompt comparator-negative contrast" in rendered
 
 
-def test_checklist_routes_each_condition_to_exact_state():
+def test_checklist_maps_result_reason_and_action_with_complete_tier():
     paper = CHECKER.PAPER.read_text(encoding="utf-8")
-    assert CHECKER.checklist_routes(paper) == CHECKER.EXPECTED_ROUTES
+    assert all(CHECKER.checklist_mapping(paper).values())
 
 
-def test_state_consistency_parses_cross_line_textbf_from_latex_source():
+def test_mapping_consistency_uses_approved_direct_vocabulary():
     paper = CHECKER.PAPER.read_text(encoding="utf-8")
-    assert r"\textbf{" + "\nwithheld-control}" in paper
-    assert all(CHECKER.state_consistency(paper).values())
+    assert all(CHECKER.mapping_consistency(paper).values())
 
 
 class _PaperSource:
@@ -113,83 +113,27 @@ def _assert_main_rejects(monkeypatch, paper):
     assert CHECKER.main([]) == 1
 
 
-def _mutate_checklist_state(paper, condition_pattern, replacement):
-    block = CHECKER.checklist_block(paper)
-    mutated, count = re.subn(
-        rf"(\\item\s+\\textbf\s*\{{[^}}]*{condition_pattern}[^}}]*\}}"
-        rf".*?\\\(\\rightarrow\\\)\s+\\textsc\s*\{{)[^}}]+(\}})",
-        rf"\g<1>{replacement}\2",
-        block,
-        count=1,
-        flags=re.I | re.S,
-    )
-    assert count == 1
-    return paper.replace(block, mutated, 1)
-
-
 def test_main_accepts_current_paper(monkeypatch):
     paper = CHECKER.PAPER.read_text(encoding="utf-8")
     monkeypatch.setattr(CHECKER, "PAPER", _PaperSource(paper))
     assert CHECKER.main([]) == 0
 
 
-def test_main_accepts_cross_line_textbf_in_checklist(monkeypatch):
+def test_main_rejects_missing_exact_tier_identity(monkeypatch):
     paper = CHECKER.PAPER.read_text(encoding="utf-8")
-    block = CHECKER.checklist_block(paper)
-    mutated = block.replace(
-        r"\textbf{READ unsupported}",
-        "\\textbf{\nREAD unsupported}",
-        1,
+    mutated = paper.replace(
+        "model, method, direction and layer, task and outcome, protocol and version, and comparator",
+        "model and method",
     )
-    assert mutated != block
-    paper = paper.replace(block, mutated, 1)
-    monkeypatch.setattr(CHECKER, "PAPER", _PaperSource(paper))
-    assert CHECKER.main([]) == 0
+    assert mutated != paper
+    _assert_main_rejects(monkeypatch, mutated)
 
 
-def test_main_rejects_checklist_unsupported_mapping_mutation(monkeypatch):
-    paper = _mutate_checklist_state(
-        CHECKER.PAPER.read_text(encoding="utf-8"),
-        r"READ\s+unsupported",
-        "Diagnostic only",
-    )
-    _assert_main_rejects(monkeypatch, paper)
-
-
-def test_main_rejects_checklist_read_only_mapping_mutation(monkeypatch):
-    paper = _mutate_checklist_state(
-        CHECKER.PAPER.read_text(encoding="utf-8"),
-        r"READ\s+supported;\s+TRANSFER\s+not\s+yet\s+tested",
-        "Unresolved",
-    )
-    _assert_main_rejects(monkeypatch, paper)
-
-
-def test_main_rejects_checklist_failed_mapping_mutation(monkeypatch):
-    paper = _mutate_checklist_state(
-        CHECKER.PAPER.read_text(encoding="utf-8"),
-        r"TRANSFER\s+tested\s+and\s+failed",
-        "Diagnostic only",
-    )
-    _assert_main_rejects(monkeypatch, paper)
-
-
-def test_main_rejects_checklist_underpowered_mapping_mutation(monkeypatch):
-    paper = _mutate_checklist_state(
-        CHECKER.PAPER.read_text(encoding="utf-8"),
-        r"TRANSFER\s+underpowered\s+or\s+inconclusive",
-        "Withheld control",
-    )
-    _assert_main_rejects(monkeypatch, paper)
-
-
-def test_main_rejects_checklist_coherence_mapping_mutation(monkeypatch):
-    paper = _mutate_checklist_state(
-        CHECKER.PAPER.read_text(encoding="utf-8"),
-        r"Comparative\s+pass\s+with\s+coherence",
-        "Withheld control",
-    )
-    _assert_main_rejects(monkeypatch, paper)
+def test_main_rejects_missing_direct_mapping_term(monkeypatch):
+    paper = CHECKER.PAPER.read_text(encoding="utf-8")
+    mutated = paper.replace("write the specific blocking reason", "write the result note", 1)
+    assert mutated != paper
+    _assert_main_rejects(monkeypatch, mutated)
 
 
 def test_main_rejects_abstract_without_steer_vs_prompt_qualifier(monkeypatch):
@@ -203,14 +147,49 @@ def test_main_rejects_abstract_without_steer_vs_prompt_qualifier(monkeypatch):
     _assert_main_rejects(monkeypatch, mutated)
 
 
-def test_main_rejects_abstract_diagnostic_state_without_only(monkeypatch):
+def test_main_rejects_abstract_without_direct_mapping(monkeypatch):
     paper = CHECKER.PAPER.read_text(encoding="utf-8")
-    mutated = paper.replace("diagnostic-only", "diagnostic", 1)
+    mutated = paper.replace("blocking reason and record-specific interface action", "record", 1)
     assert mutated != paper
     _assert_main_rejects(monkeypatch, mutated)
 
 
-def test_concept_figure_routes_each_branch_to_exact_state():
+def test_canonical_main_and_handoff_reject_stale_formal_taxonomy():
+    assert CHECKER.stale_taxonomy_hits() == {}
+
+
+def test_stale_taxonomy_pattern_catches_cross_surface_regression():
+    for stale in (
+        "diagnostic-only",
+        "Diagnostic only",
+        "withheld-control",
+        "evidence-supported control",
+        "formal four-state taxonomy",
+    ):
+        assert CHECKER.STALE_TAXONOMY.search(stale)
+
+
+def test_c3_claim_and_reverse_map_include_console_figure():
+    claim_map = yaml.safe_load(
+        (CHECKER.PAPER.parent / "claim-map.yaml").read_text(encoding="utf-8")
+    )
+    assert "fig-console-ui-contract" in claim_map["claims"]["C3"]["main_artifacts"]
+    reverse = claim_map["reverse_artifact_map"]["fig-console-ui-contract"]
+    assert reverse["supports_claims"] == ["C2", "C3"]
+    assert reverse["manifest"] == "docs/paper/figure-manifests/console-ui-contract.yaml"
+
+
+def test_handoff_build_page_count_matches_committed_pdf():
+    handoff = CHECKER.PAPER.parent / "reconstruction-handoff-2026-08-11"
+    page_count = len(PdfReader(str(handoff / "reframed.pdf")).pages)
+    build_notes = (handoff / "pipeline" / "BUILD.md").read_text(encoding="utf-8")
+    readme = (handoff / "README.md").read_text(encoding="utf-8")
+    assert page_count == 17
+    assert f"{page_count} pages" in build_notes
+    assert f"{page_count} pages" in readme
+
+
+def test_concept_figure_uses_direct_mapping_edges():
     source = CHECKER.CONCEPT_FIGURE.read_text(encoding="utf-8")
     assert CHECKER.concept_edges(source) == CHECKER.EXPECTED_FIGURE_EDGES
 
@@ -218,14 +197,7 @@ def test_concept_figure_routes_each_branch_to_exact_state():
 def test_concept_figure_uses_ordered_vertical_decision_layers():
     source = CHECKER.CONCEPT_FIGURE.read_text(encoding="utf-8")
     positions = CHECKER.concept_positions(source)
-    assert positions["candidate"][1] > positions["read"][1]
-    assert positions["read"][1] > positions["transfer"][1]
-    assert positions["transfer"][1] > positions["outcome"][1]
-    assert positions["outcome"][1] > positions["unresolved"][1]
-    assert positions["unresolved"][1] > positions["annotation"][1]
-    state_x = [
-        positions[name][0]
-        for name in ("unresolved", "diagnostic", "withheld", "supported")
-    ]
-    assert state_x == sorted(state_x)
-    assert all(right - left >= 3.8 for left, right in zip(state_x, state_x[1:]))
+    assert positions["candidate"][1] > positions["result"][1]
+    assert positions["result"][1] > positions["reason"][1]
+    assert positions["reason"][1] > positions["action"][1]
+    assert positions["action"][1] > positions["annotation"][1]

@@ -1,10 +1,10 @@
 # Paper Reconstruction Handoff (2026-08-11)
 
-This directory transfers the reconstructed manuscript and its evidence controls back into the full `cognitive-console` repository. It is intentionally isolated from the repository's current `docs/paper/main.tex`, `references.bib`, generated tables, figures, and artifact lineage.
+This directory preserves the reconstruction handoff and its evidence controls. The repository's canonical manuscript remains `docs/paper/main.tex`; this package is an archival reconstruction snapshot and must not become a second canonical paper.
 
 ## Important Status
 
-- **Canonical prose source:** `pipeline/CONDITIONAL_PAPER.md`
+- **Archival reconstruction source:** `pipeline/CONDITIONAL_PAPER.md`
 - **Front matter and ACM template:** `pipeline/iui_conditional.template.tex`
 - **Generated output:** `reframed.tex` (do not edit as the primary source)
 - **Current rendered baseline:** `reframed.pdf` (17 pages, 26 cited references, clean build on 2026-08-11)
@@ -30,9 +30,9 @@ The handoff preserves strict boundaries: the prompt comparator is DEV-selected f
 - `reframed-references.bib` — bibliography snapshot used by the generated TeX.
 - `reframed.pdf` — visual baseline for comparison after integration.
 
-### Canonical writing pipeline
+### Archival reconstruction pipeline
 
-- `pipeline/CONDITIONAL_PAPER.md` — canonical manuscript body.
+- `pipeline/CONDITIONAL_PAPER.md` — regeneration source for this archival snapshot only.
 - `pipeline/iui_conditional.template.tex` — title, abstract, template, and front matter.
 - `pipeline/conditional_to_latex.lua` — Pandoc conversion filter.
 - `pipeline/BUILD.md` — original build notes.
@@ -87,7 +87,7 @@ Do not overwrite `docs/paper/main.tex` immediately. Integrate in this order:
 4. **Integrate pending branches.** Populate the human-study and prompt-plus-steer packets regardless of whether results are positive, null, mixed, adverse, invalid, or delayed.
 5. **Re-run narrative selection.** Update claims, Introduction, title, abstract, Results, Discussion, Limitations, and Conclusion after branch integration.
 6. **Adjudicate venue/template.** Reconcile the handoff's IUI template with the repository's current CHI target through the human approval gate.
-7. **Promote deliberately.** Only after evidence audit and venue adjudication should content move into `docs/paper/main.tex` and `docs/paper/references.bib`.
+7. **Keep one canonical paper.** Any retained reconstruction content must be synchronized into `docs/paper/main.tex`; this handoff remains archival.
 
 ## Writing Invariants
 

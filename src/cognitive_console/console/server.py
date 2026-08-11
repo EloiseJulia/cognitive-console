@@ -44,7 +44,7 @@ def _render_html() -> str:
     <div class="muted" id="positioning"></div>
     <div class="panel">
       <h2>0) UI contract: latent-control affordance cards</h2>
-      <div class="muted">Each card exposes five artifact-derived signals: READ, TRANSFER, PROMPT-CEILING, CALIBRATION-HARM, EVIDENCE-TIER.</div>
+      <div class="muted">Each card maps an exact-tier computational result to a blocking reason and interface action/eligibility. No card grants deployment permission or user benefit.</div>
       <div class="grid" id="ui-contract-grid"></div>
     </div>
     <div class="panel">
@@ -114,15 +114,18 @@ def _render_html() -> str:
           const div = document.createElement("div");
           const isRed = card.calibration_harm && card.calibration_harm.severity === "red";
           const isSocial = card.axis === "social_inference_novice_disclosure";
+          const tier = card.evidence_tier.transfer_identity || {};
+          const action = card.interface_action || {};
           div.className = isRed ? "card red" : (isSocial ? "card amber" : "card");
           div.innerHTML = `
             <h3>${card.label}</h3>
-            <div class="headline">${card.headline}</div>
-            <div class="signal"><b>READ</b>: ${card.read_status.status} ${card.read_status.summary || ""}</div>
-            <div class="signal"><b>TRANSFER</b>: ${card.transfer_verdict.verdict} ${card.transfer_verdict.summary || ""}</div>
-            <div class="signal"><b>PROMPT-CEILING</b>: ${card.prompt_ceiling.summary || "n/a"}</div>
-            <div class="signal"><b>CALIBRATION-HARM</b>: ${card.calibration_harm.status} ${card.calibration_harm.summary || ""}</div>
-            <div class="signal"><b>EVIDENCE-TIER</b>: ${card.evidence_tier.tier}<div class="mini">${(card.evidence_tier.notes || []).join("; ")}</div></div>
+            <div class="headline">${(action.active_control || {}).summary || card.headline}</div>
+            <div class="signal"><b>COMPUTATIONAL RESULT</b>: ${card.computational_result.summary}</div>
+            <div class="signal"><b>BLOCKING REASON</b>: ${card.blocking_reason.summary}</div>
+            <div class="signal"><b>INTERFACE ACTION / ELIGIBILITY</b>: ${(action.read_only_diagnostic || {}).summary || ""} ${(action.active_control || {}).summary || ""}</div>
+            <div class="signal"><b>BOUNDED PROMPT COMPARATOR</b>: ${card.prompt_ceiling.summary || "n/a"}</div>
+            <div class="signal"><b>CALIBRATION WARNING</b>: ${card.calibration_harm.status} ${card.calibration_harm.summary || ""}</div>
+            <div class="signal"><b>EXACT EVIDENCE TIER</b>: ${tier.model || "n/a"}; ${tier.method || "n/a"}; ${tier.direction || "n/a"}; layer=${tier.layer ?? "n/a"}; ${tier.task || "n/a"}; ${tier.outcome || "n/a"}<div class="mini">${card.evidence_tier.match.reason}</div></div>
             <div class="mini">Evidence: ${(card.evidence_ids || []).join(", ")}</div>`;
           cardGrid.appendChild(div);
         });

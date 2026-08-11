@@ -381,7 +381,7 @@ Human-AI guidelines support communicating capabilities and limitations, while in
 
 A readable direction can still support inspection, debugging, hypothesis formation, or a read-only trace. The worked READ results make that value concrete: deliberation and skepticism satisfy the facade criterion in both model families, while uncertainty and focus differ by model. <!-- FL-039 --><!-- FL-040 --> The alternative is not “ship a slider” or “hide the representation.” It is to preserve local evidence without turning visibility into a behavioral promise.
 
-The three evidence profiles lead to different evaluation work. Skepticism requests more resolution; deliberation calls for a better-targeted test; uncertainty calls for measurement repair and a comparator-specific warning. <!-- FL-041 --><!-- FL-043 --><!-- FL-047 --> They do not require three interface states. The record's practical contribution is the explicit path from computational result to structured reason to record-specific interface action.
+The three evidence profiles lead to different evaluation work. Skepticism requests more resolution; deliberation calls for a better-targeted test; uncertainty calls for measurement repair and a comparator-specific warning. <!-- FL-041 --><!-- FL-043 --><!-- FL-047 --> They do not require new categorical labels. The record's practical contribution is the explicit path from computational result to structured reason to record-specific interface action.
 
 ### Why the Comparator Changes the Interface Claim
 

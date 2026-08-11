@@ -29,11 +29,11 @@
 
 Bo et al. 已为 SELECT/CALIBRATE/LEARN 三种个性化 steering 界面及未脚手架化的 PROMPT baseline 提供 \(n=14\) 探索性被试内用户证据，且用户偏好呈异质性。本文不继承该用户证据，而是补充面向 objective/task outcomes 的逐 affordance、comparator-bound 模型证据 qualification procedure；Golden Gate Claude 仅作为内部特征放大公开可见的中性动机，不进入本文测试范围。
 
-经验前提已有直接先例。AxBench 已在 Gemma-2-2B/9B 的 method-level benchmark 中比较 prompting 与 SAE、LAT、supervised steering vectors、linear probes、ReFT；正式论文 Table 2 与后续可变 leaderboard 是不同 artifact，不能混用。Basu et al. 已用 400 个临床 vignettes 量化 internal representation 与 output/error correction 的差距；其 Arm 1 明确含 safety-focused prompt engineering，且 refined parser 会把 Qwen sensitivity 从 0.451 提高到 0.729。本文因此不主张 first prompt--steering comparison，也不主张 first interpretability/actionability gap。差异是逐 affordance 的预注册 interface qualification record：绑定 bounded DEV-selected prompt budget、matched items、`delta=0.05`、Bonferroni、coherence、measurement warning 与 evidence tier/interface state。
+经验前提已有直接先例。AxBench 已在 Gemma-2-2B/9B 的 method-level benchmark 中比较 prompting 与 SAE、LAT、supervised steering vectors、linear probes、ReFT；正式论文 Table 2 与后续可变 leaderboard 是不同 artifact，不能混用。Basu et al. 已用 400 个临床 vignettes 量化 internal representation 与 output/error correction 的差距；其 Arm 1 明确含 safety-focused prompt engineering，且 refined parser 会把 Qwen sensitivity 从 0.451 提高到 0.729。本文因此不主张 first prompt--steering comparison，也不主张 first interpretability/actionability gap。差异是逐 affordance 的预注册 interface qualification record：绑定 bounded DEV-selected prompt budget、matched items、`delta=0.05`、Bonferroni、coherence、measurement warning 与 exact evidence tier，再映射到 interface action。
 
 本文的设计过程也不是虚构的迭代故事，而是：
 
-`model evidence -> failure taxonomy -> interface-evaluation contract -> console instantiation`
+`computational result -> blocking reason -> interface action/eligibility`
 
 ## 3. 核心研究问题
 
@@ -61,16 +61,16 @@ READ 表示某个内部方向在指定测量下可读；CONTROL 表示该干预�
 - **TRANSFER**：该干预是否在行为结果上通过冻结比较。
 - **BOUNDED PROMPT COMPARATOR**：在同一预算纪律下，prompt channel 已经达到什么水平。
 - **CALIBRATION WARNING**：明确区分 steer-vs-prompt 与 steer-vs-baseline。
-- **EVIDENCE TIER**：绑定 model、method、axis、task、layer、protocol 和统计强度，禁止跨设置移植。
+- **EVIDENCE TIER**：绑定 model、method、direction/layer、task/outcome、protocol/version、comparator 和统计强度，禁止跨设置移植。
 
-对应界面状态：
+对应界面动作：
 
-- READ 有证据、TRANSFER 未通过：可作为 diagnostic，withhold control。
-- TRANSFER 欠功效或未测试：显示 unresolved/untested，不写成“不可控”。
-- coherence 失败：control 被 instability 阻止。
-- 只有在指定设置下通过比较性行为检查后，slider 才获得证据许可。
+- READ 有证据：在该 tier 内可保留 read-only diagnostic candidate。
+- TRANSFER 欠功效、未测试或失败：保留具体 blocking reason，active control withheld。
+- coherence 失败或 tier identity 不匹配：active control withheld，不能继承别处证据。
+- 只有在 exact tier 内通过比较性行为检查后，active control 才算通过 computational gate。
 
-当前论文没有观察到最后一种状态，因为没有 latent behavioral positive control pass。
+当前论文没有观察到最后一种结果，因为没有 latent behavioral positive control pass。通过 computational gate 也不等于 deployment permission 或 user benefit。
 
 ### 4.3 Fully worked artifact instantiation
 
@@ -192,7 +192,7 @@ Console 不是展示更多模型内部信息，而是决定一个 affordance 的
 
 1. **Legibility is diagnostic.** 可读轴可用于 inspection/debugging，即使尚未获得 control 资格。
 2. **Control is comparative.** 需要 outcome、comparator、margin 和 coherence，而不是“输出变了”。
-3. **Negative evidence is an interface state.** failed、underpowered、unstable、untested 应分别显示。
+3. **Negative evidence supplies a blocking reason.** failed、underpowered、incoherent、untested、tier mismatch 应分别显示。
 4. **Calibration contrast must name the baseline.** steer-vs-prompt 与 steer-vs-baseline 回答不同问题。
 5. **Evidence tiers prevent substitution.** model、method、axis 任一变化都产生新的评估义务。
 
@@ -227,13 +227,13 @@ Console 不是展示更多模型内部信息，而是决定一个 affordance 的
 
 ## 10. Conclusion 边界
 
-结论首要主张是方法：五字段 contract 决定界面可以诚实支持什么状态。tested grid 的 no-pass 是 worked instantiation 的输出：
+结论首要主张是方法：五字段 contract 把 computational result 映射为 blocking reason 和 interface action。tested grid 的 no-pass 是 worked instantiation 的输出：
 
-- READ-positive 可以显示为 diagnostic；
-- 没有 comparative TRANSFER evidence 时，不应把轴包装为 slider；
+- READ-positive 可以保留为该 tier 内的 read-only diagnostic candidate；
+- 没有 matched comparative TRANSFER pass 时，active control 必须 withheld；
 - comparator 和 calibration contrast 必须可见；
-- negative、underpowered、unstable、untested 都应成为明确界面状态；
-- model、method 或 axis 改变后必须重新评估。
+- failed、underpowered、incoherent、untested、tier mismatch 都应成为明确 blocking reason；
+- model、method、direction/layer、task/outcome、protocol/version 或 comparator 改变后必须重新评估。
 
 ## 11. 证据速查
 

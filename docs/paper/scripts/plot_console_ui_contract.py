@@ -76,6 +76,39 @@ def _signal_line(label: str, body: str) -> tuple[str, str]:
     return label, body
 
 
+def _tier_summary(card: dict) -> str:
+    tier = card["evidence_tier"]["transfer_identity"]
+    model = str(tier.get("model")).replace("-instruct", "")
+    axis = {
+        "deliberation": "deliberation",
+        "uncertainty_awareness": "uncertainty",
+    }.get(card["axis"], card["axis"])
+    task_outcome = {
+        "deliberation": "deliberation/binary",
+        "uncertainty_awareness": "confidence/1-Brier",
+    }.get(card["axis"], f"{tier.get('task')}/{tier.get('outcome')}")
+    return (
+        f"{model}; {str(tier.get('method')).upper()}:{axis}@L{tier.get('layer')}; "
+        f"{task_outcome}; C2b-v2026-07-23; DEV-selected prompt."
+    )
+
+
+def _action_summary(card: dict) -> str:
+    read = card["interface_action"]["read_only_diagnostic"]["eligibility"]
+    active = card["interface_action"]["active_control"]["eligibility"]
+    read_text = (
+        "Read-only diagnostic candidate within this evidence tier"
+        if read == "candidate"
+        else "Read-only diagnostic candidate withheld"
+    )
+    active_text = (
+        "active control passes the computational gate within exact tier"
+        if active == "passes_computational_gate"
+        else "active control withheld"
+    )
+    return f"{read_text}; {active_text}."
+
+
 def _transfer_summary(card: dict) -> str:
     transfer = card["transfer_verdict"]
     if card["axis"] == "deliberation":
@@ -106,11 +139,11 @@ def _card_lines(card: dict, e0013: dict, grid_size: int) -> list[tuple[str, str]
             _signal_line("BOUNDED PROMPT COMPARATOR", ceiling.get("summary", "n/a")),
             _signal_line(
                 "EXACT EVIDENCE TIER",
-                "Frozen 2x2 grid; mixed resolution; split-sensitivity only.",
+                _tier_summary(card),
             ),
             _signal_line(
                 "INTERFACE ACTION",
-                "Read-only diagnostic candidate within this evidence tier; active control withheld.",
+                _action_summary(card),
             ),
         ]
 
@@ -143,11 +176,11 @@ def _card_lines(card: dict, e0013: dict, grid_size: int) -> list[tuple[str, str]
         ),
         _signal_line(
             "EXACT EVIDENCE TIER",
-            "Frozen 2x2 comparator result; targeted CAA x Qwen recheck.",
+            _tier_summary(card),
         ),
         _signal_line(
             "INTERFACE ACTION",
-            "Read-only diagnostic candidate within this evidence tier; active control withheld.",
+            _action_summary(card),
         ),
     ]
 

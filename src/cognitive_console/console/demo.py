@@ -57,7 +57,9 @@ def write_demo_artifacts(out_dir: Path | None = None) -> Tuple[Path, Path]:
         read = row["read_status"]
         transfer = row["transfer_verdict"]
         lines.append(
-            f"- {row['label']}: {row['headline']}; READ={read['status']} token-blind AUC={_fmt(read['value'])}; "
+            f"- {row['label']}: {row['interface_action']['summary']}; "
+            f"blocking_reason={row['blocking_reason']['summary']}; "
+            f"READ={read['status']} token-blind AUC={_fmt(read['value'])}; "
             f"TRANSFER={transfer['verdict']} B−A M1={_fmt(transfer['delta'])}, "
             f"CI=[{_fmt(transfer['ci_lo'])}, {_fmt(transfer['ci_hi'])}], p_bonf={_fmt(transfer['p_bonferroni'])}; "
             f"sources={row['source_files']}"

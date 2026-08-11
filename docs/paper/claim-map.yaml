@@ -45,7 +45,7 @@ claims:
     supporting_evidence_ids: []
     scope: "Pure-model route; no formative or controlled user study; human study deferred/owner-gated"
     paper_sections: ["Abstract", "Introduction", "Interface-evaluation contract", "Limitations", "Conclusion"]
-    main_artifacts: []
+    main_artifacts: ["fig-console-ui-contract"]
     valid_for_paper: "true as a proposed, artifact-instantiated methodological framework derived from model evidence; false as a validated HCI-effectiveness claim"
     gate_notes: "C3 is the primary proposed methodological contribution when consistently expressed as computational result -> structured evidence/blocking reason -> interface eligibility/action. Canonical phrases: 'read-only diagnostic candidate within this evidence tier', 'active control withheld', and 'active control passes the computational gate within this evidence tier'. Diagnostic-only/Unresolved/Unstable/Eligible are not formal states. Do not classify the 0/12 grid as one withheld scientific state or claim user comprehension, usability, reduced over-trust, calibrated reliance, or operational readiness."
   C4:
@@ -88,6 +88,11 @@ reverse_artifact_map:
     supports_claims: ["C2"]
     manifest: "docs/paper/figure-manifests/c2-calibration-harm-4cell.yaml"
     gate_status: "ok, manifest stub pending plotting script"
+  fig-console-ui-contract:
+    artifact_type: "main figure"
+    supports_claims: ["C2", "C3"]
+    manifest: "docs/paper/figure-manifests/console-ui-contract.yaml"
+    gate_status: "ok, proposed model-evidence mapping only; no deployment permission or user-benefit claim"
   flagship-social-powered:
     artifact_type: "exploratory powered result artifact"
     supports_claims: ["C4"]

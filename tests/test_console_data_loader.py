@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from io import BytesIO
 import re
@@ -7,6 +8,7 @@ from pathlib import Path
 
 import pytest
 import fitz
+import yaml
 from pypdf import PdfReader
 
 from cognitive_console.console.data_loader import build_console_payload, build_demo_report
@@ -55,6 +57,108 @@ def test_loader_is_not_hardcoded_for_c2_values(tmp_path: Path):
     assert unc_payload["mean_diff"] == pytest.approx(-0.123456)
     assert unc_payload["ci_lo"] == pytest.approx(-0.2)
     assert unc_payload["ci_hi"] == pytest.approx(-0.1)
+
+
+def _write_json(path: Path, payload: dict) -> Path:
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
+def _passing_c2_payload() -> dict:
+    payload = _read_json(C2B_JSON)
+    payload["steering_method"] = "caa"
+    payload["axes"] = [dict(row) for row in payload["axes"]]
+    for row in payload["axes"]:
+        if row["axis"] == "deliberation":
+            row["passed"] = True
+            row["coherence_ok"] = True
+            row["mean_diff"] = 0.10
+            row["ci_lo"] = 0.06
+            row["ci_hi"] = 0.14
+    return payload
+
+
+def test_axis_card_requires_complete_matched_tier_before_active_control():
+    payload = build_console_payload()
+    card = next(row for row in payload["ui_contract"]["cards"] if row["axis"] == "deliberation")
+
+    assert card["evidence_tier"]["match"]["status"] == "MATCH"
+    identity = card["evidence_tier"]["transfer_identity"]
+    for field in (
+        "model",
+        "method",
+        "direction",
+        "layer",
+        "task",
+        "outcome",
+        "protocol",
+        "version",
+        "comparator",
+    ):
+        assert identity[field] not in (None, "", {})
+    assert identity["complete"] is True
+    assert card["interface_action"]["read_only_diagnostic"]["eligibility"] == "candidate"
+    assert card["interface_action"]["active_control"]["eligibility"] == "withheld"
+    assert card["blocking_reason"]["code"] == "TRANSFER_NOT_PASSED"
+
+
+@pytest.mark.parametrize(
+    ("identity_field", "artifact_field", "mismatched_value"),
+    [
+        ("model", "model", "NousResearch/Meta-Llama-3-8B-Instruct"),
+        ("method", "steering_method", "iti"),
+        ("direction", "direction_id", "alternate-direction"),
+        ("layer", "layer", 18),
+        ("task", "task", "alternate task"),
+        ("outcome", "outcome", "alternate outcome"),
+    ],
+)
+def test_cross_tier_pass_is_withheld_with_explicit_mismatch(
+    tmp_path: Path,
+    identity_field: str,
+    artifact_field: str,
+    mismatched_value: object,
+):
+    c2 = _passing_c2_payload()
+    if artifact_field in {"model", "steering_method"}:
+        c2[artifact_field] = mismatched_value
+    else:
+        row = next(row for row in c2["axes"] if row["axis"] == "deliberation")
+        row[artifact_field] = mismatched_value
+    fake_c2 = _write_json(tmp_path / f"mismatched-{identity_field}-c2.json", c2)
+
+    payload = build_console_payload(
+        c2b_path=fake_c2,
+        c1_path=C1_JSON,
+        evidence_ledger_path=EVIDENCE_LEDGER,
+    )
+    card = next(row for row in payload["ui_contract"]["cards"] if row["axis"] == "deliberation")
+
+    assert card["transfer_verdict"]["verdict"] == "PASS"
+    assert card["evidence_tier"]["match"]["status"] == "MISMATCH"
+    assert card["evidence_tier"]["match"]["mismatches"][0]["field"] == identity_field
+    assert card["interface_action"]["active_control"]["eligibility"] == "withheld"
+    assert card["blocking_reason"]["code"] == "TIER_MISMATCH"
+    assert "different evidence tiers" in card["blocking_reason"]["summary"]
+
+
+def test_matched_tier_pass_maps_to_exact_tier_active_control(tmp_path: Path):
+    fake_c2 = _write_json(tmp_path / "passing-c2.json", _passing_c2_payload())
+
+    payload = build_console_payload(
+        c2b_path=fake_c2,
+        c1_path=C1_JSON,
+        evidence_ledger_path=EVIDENCE_LEDGER,
+    )
+    card = next(row for row in payload["ui_contract"]["cards"] if row["axis"] == "deliberation")
+
+    assert card["evidence_tier"]["match"]["status"] == "MATCH"
+    assert card["blocking_reason"]["code"] == "NONE"
+    assert card["interface_action"]["active_control"]["eligibility"] == "passes_computational_gate"
+    assert (
+        card["interface_action"]["active_control"]["summary"]
+        == "Active control passes the computational gate within exact tier."
+    )
 
 
 def test_c2_fallback_to_evidence_ledger_when_results_missing(tmp_path: Path):
@@ -175,7 +279,7 @@ def test_ui_contract_social_card_reads_e0010_artifacts():
     selected = read["layer_results"][str(read["selected_layer"])]
     ba_m1 = behavior["paired_bootstrap"]["B_minus_A"]["M1"]
 
-    assert card["headline"] == "LEGIBLE: no added control demonstrated"
+    assert card["headline"].startswith("Active control withheld:")
     assert card["read_status"]["status"] == "HOLDS"
     assert card["read_status"]["value"] == pytest.approx(selected["token_blind"]["auc"])
     assert card["transfer_verdict"]["verdict"] == "NULL"
@@ -183,6 +287,8 @@ def test_ui_contract_social_card_reads_e0010_artifacts():
     assert card["transfer_verdict"]["p_bonferroni"] == pytest.approx(ba_m1["p_bonferroni"])
     assert card["evidence_tier"]["tier"] == "exploratory"
     assert any("PENDING" in note for note in card["evidence_tier"]["notes"])
+    assert card["evidence_tier"]["match"]["status"] in {"INCOMPLETE", "MISMATCH"}
+    assert card["interface_action"]["active_control"]["eligibility"] == "withheld"
 
 
 def test_ui_contract_psr_panel_reads_method_strength_artifact():
@@ -235,8 +341,10 @@ def test_console_ui_contract_figure_script_runs():
                 "BLOCKING REASON",
                 "INTERFACE ACTION",
                 "Read-only diagnostic candidate within this evidence tier; active control withheld.",
-                "Frozen 2x2 grid; mixed resolution; split-sensitivity only.",
-                "Frozen 2x2 comparator result; targeted CAA x Qwen recheck.",
+                "qwen2.5-7b; CAA:deliberation@L20;",
+                "deliberation/binary; C2b-v2026-07-23; DEV-selected prompt.",
+                "qwen2.5-7b; CAA:uncertainty@L20;",
+                "confidence/1-Brier; C2b-v2026-07-23; DEV-selected prompt.",
                 "Mixed resolution: ITI exploratory equivalence; CAA underpowered.",
                 "Missingness-limited: complete-case support in one cell; bounds cross zero.",
                 "Near-baseline only in CAA x Qwen; other 3 cells unrechecked.",
@@ -260,3 +368,14 @@ def test_console_ui_contract_figure_script_runs():
             assert any(key in descriptor for key in ("/FontFile", "/FontFile2", "/FontFile3"))
     finally:
         out.unlink(missing_ok=True)
+
+
+def test_console_manifest_hashes_match_all_inputs_and_output():
+    manifest_path = REPO / "docs" / "paper" / "figure-manifests" / "console-ui-contract.yaml"
+    manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+
+    for rel, expected in manifest["source_artifact_hashes"].items():
+        actual = hashlib.sha256((REPO / rel).read_bytes()).hexdigest()
+        assert actual == expected
+    output = REPO / manifest["output_file"]
+    assert hashlib.sha256(output.read_bytes()).hexdigest() == manifest["output_sha256"]

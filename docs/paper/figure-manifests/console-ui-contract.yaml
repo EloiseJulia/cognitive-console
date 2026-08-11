@@ -23,7 +23,8 @@ rebuild_command: python docs\paper\scripts\plot_console_ui_contract.py
 rendering_notes:
   - Every PDF text segment explicitly sets black non-stroking and stroking color for high contrast on card fills and grayscale printing.
   - Native 504x260-point figure* layout; embedded text uses 7-point or larger fonts.
-  - The two cards summarize computational status, blocking reason, evidence tier, comparator or calibration evidence, and the record-specific interface action; they do not reproduce every five-field record item on each card.
+  - The two cards follow computational result -> blocking reason -> interface action/eligibility and show compact complete tier identities covering model, method, direction/layer, task/outcome, protocol/version, and comparator.
+  - A computational pass would remain tier-local; the figure makes no deployment-permission or user-benefit claim.
 artifact_id: fig-console-ui-contract
 artifact_type: main figure
 paper_location: "Interface-Evaluation Contract in Use / Illustrative Design Scenario (Figure fig:console)"
@@ -58,7 +59,7 @@ source_artifact_hashes:
   "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json": ac9d18aa67a5e2afe9b37441fa08c008cfad139a557f323fa5052d8c38f85282
   "results/E-0013-uncertainty-recheck/reanalysis.json": ea91f10cce1de06f9c38c4777064e85b7fcf44f295f7ef983092ca0843edfd01
 output_file: docs/paper/figures/console-ui-contract.pdf
-output_sha256: 3e20b965ed853f0342d0463c206caa7725dfd28f4ada1ed203da5059dbe2308d
+output_sha256: 016cc6794a948d7e0742f930f50790726781c873cba341e64aad04370e10c8dd
 manual_edits_allowed: false
 last_verified: "2026-08-11"
-verdict: "verified static model-evidence artifact; both displayed records retain a read-only diagnostic candidate within their exact evidence tier and mark the active control withheld with a distinct blocking reason; E-0013 contributes only its narrow CAA×Qwen caveats; supports no human-effect claim"
+verdict: "verified static model-evidence artifact; both displayed records map computational results to distinct blocking reasons, retain a read-only diagnostic candidate within their exact evidence tier, and mark active control withheld; E-0013 contributes only its narrow CAA×Qwen caveats; no deployment-permission, user-benefit, or human-effect claim"

@@ -550,6 +550,36 @@ def configure_cuda_allocator_environment() -> str:
     return os.environ[key]
 
 
+def validate_torch_smi_total_memory(
+    torch_total_gib: float, smi_total_gib: float
+) -> Dict[str, float]:
+    torch_total = float(torch_total_gib)
+    smi_total = float(smi_total_gib)
+    if (
+        not math.isfinite(torch_total)
+        or not math.isfinite(smi_total)
+        or torch_total <= 0.0
+        or smi_total <= 0.0
+    ):
+        raise ValueError(
+            "torch/nvidia-smi total-memory values must be finite and positive"
+        )
+    allowed_gap = max(0.75, 0.03 * smi_total)
+    gap = smi_total - torch_total
+    if torch_total > smi_total or gap > allowed_gap:
+        raise ValueError(
+            "torch/nvidia-smi total-memory mismatch: "
+            f"torch={torch_total:.3f} GiB, nvidia-smi={smi_total:.3f} GiB, "
+            f"allowed_gap={allowed_gap:.3f} GiB"
+        )
+    return {
+        "torch_total_gib": torch_total,
+        "nvidia_smi_total_gib": smi_total,
+        "gap_gib": gap,
+        "allowed_gap_gib": allowed_gap,
+    }
+
+
 def capture_authorized_hardware_preflight() -> Tuple[HardwareProfile, Dict[str, object]]:
     import torch
 
@@ -573,11 +603,7 @@ def capture_authorized_hardware_preflight() -> Tuple[HardwareProfile, Dict[str, 
             "torch/nvidia-smi GPU-name mismatch: "
             f"torch={props.name!r}, nvidia-smi={physical['name']!r}"
         )
-    if abs(total_gib - smi_total_gib) > 0.25:
-        raise ValueError(
-            "torch/nvidia-smi total-memory mismatch: "
-            f"torch={total_gib:.3f} GiB, nvidia-smi={smi_total_gib:.3f} GiB"
-        )
+    memory_consistency = validate_torch_smi_total_memory(total_gib, smi_total_gib)
     profile = select_authorized_hardware_profile(str(props.name), total_gib)
     if (
         profile.required_visible_selector is not None
@@ -616,6 +642,7 @@ def capture_authorized_hardware_preflight() -> Tuple[HardwareProfile, Dict[str, 
             "torch_device_name": str(props.name),
             "torch_total_vram_gib": total_gib,
             "compute_capability": [int(props.major), int(props.minor)],
+            "torch_nvidia_smi_memory_consistency": memory_consistency,
         },
         "runtime": runtime,
         "memory_observation": {

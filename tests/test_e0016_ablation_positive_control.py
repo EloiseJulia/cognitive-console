@@ -277,7 +277,7 @@ def test_authorized_hardware_profiles_accept_a800_or_autodl_32gb(
 @pytest.mark.parametrize(
     ("name", "total_gib"),
     [
-        ("NVIDIA GeForce RTX 4080 SUPER", 15.9),
+        ("NVIDIA GeForce RTX 4080 SUPER", 29.9),
         ("NVIDIA RTX 4090", 23.9),
         ("NVIDIA A100-SXM4-80GB", 79.1),
     ],
@@ -285,6 +285,26 @@ def test_authorized_hardware_profiles_accept_a800_or_autodl_32gb(
 def test_hardware_profile_rejects_unapproved_name_or_memory(name, total_gib):
     with pytest.raises(ValueError, match="unauthorized GPU hardware profile"):
         e0016.select_authorized_hardware_profile(name, total_gib)
+
+
+def test_torch_smi_total_memory_accepts_normal_reserved_gap():
+    result = e0016.validate_torch_smi_total_memory(31.473, 31.992)
+    assert result["gap_gib"] == pytest.approx(0.519)
+    assert result["allowed_gap_gib"] == pytest.approx(0.95976)
+
+
+@pytest.mark.parametrize(
+    ("torch_total", "smi_total"),
+    [
+        (30.0, 31.992),
+        (32.1, 31.992),
+    ],
+)
+def test_torch_smi_total_memory_rejects_genuine_mismatch(
+    torch_total, smi_total
+):
+    with pytest.raises(ValueError, match="total-memory mismatch"):
+        e0016.validate_torch_smi_total_memory(torch_total, smi_total)
 
 
 def test_visible_gpu_binding_maps_exact_physical_identity():

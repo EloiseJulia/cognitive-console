@@ -18,6 +18,10 @@ dist/
 # On-disk activation cache produced by the real CPU provider (regenerable)
 .act_cache/
 
+# E-0016 safety: raw AdvBench inputs are forward-pass-only and never committable.
+**/harmful_behaviors.csv
+**/advbench_harmful*.csv
+
 # Large / regenerable run artifacts. We DO commit the small results JSON +
 # human summary (see !exceptions below); everything else under results/ is local.
 results/**/activations/

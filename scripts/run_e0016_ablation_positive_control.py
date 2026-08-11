@@ -39,12 +39,39 @@ from cognitive_console.config import config_hash
 from cognitive_console.eval.scorers import REFUSAL_MARKERS, degeneracy_score, score_refusal
 from cognitive_console.experiments import adjudicate_c2b as adj
 from cognitive_console.lineage import git_commit, utcnow
+from cognitive_console.ops.disk_guard import dir_size_bytes, gb
 from cognitive_console.steering.extract import layer_diagnostics, mean_difference_vector
 from cognitive_console.steering.generate import AblationConfig, SteeredHFBackend, unit_vector
 
 EXPERIMENT_ID = "E-0016"
 DEFAULT_MODEL = "Qwen/Qwen2.5-7B-Instruct"
 FROZEN_MODEL_REVISION = "a09a35458c702b33eeacc393d103063234e8bc28"
+AUTODL_HF_HOME = Path("/root/autodl-tmp/hf")
+AUTODL_OUTPUT_ROOT = Path("/root/autodl-tmp")
+AUTODL_MANAGED_DISK_CEILING_GIB = 45.0
+AUTODL_FILESYSTEM_FREE_RESERVE_GIB = 5.0
+AUTODL_REQUIRED_PYTHON = (3, 12)
+AUTODL_REQUIRED_TORCH = "2.8.0"
+AUTODL_REQUIRED_CUDA = "12.8"
+AUTODL_REQUIRED_TRANSFORMERS = "4.44.2"
+FROZEN_MODEL_SHARDS = {
+    "model-00001-of-00004.safetensors": {
+        "size": 3945441440,
+        "sha256": "a1333e6293854747c481288ea83b348226af178dd565c49b6f9495ba1966aba7",
+    },
+    "model-00002-of-00004.safetensors": {
+        "size": 3864726352,
+        "sha256": "f5d25a2772cb825164a2a2c0fb6d51a87e282abf21e4dd75bc5cfb3cd0ea6185",
+    },
+    "model-00003-of-00004.safetensors": {
+        "size": 3864726424,
+        "sha256": "8efdec4c1bc12317ae1a38dc42b595ce777738a64deea3fcb8a0a91381bcdfd5",
+    },
+    "model-00004-of-00004.safetensors": {
+        "size": 3556377672,
+        "sha256": "1a72d403cdf0c1ec3cb7f289f17b394a01e64394c2e9b3c0f94dbce3faf879bd",
+    },
+}
 DEFAULT_OUT_DIR = _REPO / "results" / "E-0016-ablation-positive-control"
 XSTEST_FIXTURE = _REPO / "data" / "e0016" / "fixtures" / "xstest_safe_smoke.jsonl"
 CONTRAST_FIXTURE = _REPO / "data" / "e0016" / "fixtures" / "direction_contrast_smoke.jsonl"
@@ -77,7 +104,7 @@ DEGENERACY_SCORER_VERSION = "degeneracy_score_v1"
 GENERATION_RECORD_SCHEMA_VERSION = 2
 CHECKPOINT_SCHEMA_VERSION = 3
 SOURCE_STATE_SCHEMA_VERSION = 2
-ENVIRONMENT_SCHEMA_VERSION = 3
+ENVIRONMENT_SCHEMA_VERSION = 4
 ARTIFACT_MANIFEST_SCHEMA_VERSION = 1
 TEST_PLAN_SCHEMA_VERSION = 1
 RECORD_VALIDATOR_VERSION = "e0016_strict_record_validator_v2_rescore"
@@ -190,6 +217,61 @@ class SharedHFHandles:
     device: str
     dtype: str
     from_pretrained_loads_expected: int = 1
+    operational_preflight: Dict[str, object] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class HardwareProfile:
+    profile_id: str
+    accepted_name_fragments: Tuple[str, ...]
+    min_total_vram_gib: float
+    max_total_vram_gib: Optional[float]
+    min_free_before_load_gib: float
+    min_free_after_load_gib: float
+    managed_disk_ceiling_gib: float
+    filesystem_free_reserve_gib: float
+    required_visible_selector: Optional[str] = None
+    required_physical_gpu_count: Optional[int] = None
+    required_hf_home: Optional[Path] = None
+    required_output_root: Optional[Path] = None
+    required_python: Optional[Tuple[int, int]] = None
+    required_python_executable: Optional[Path] = None
+    required_torch: Optional[str] = None
+    required_cuda: Optional[str] = None
+    required_transformers: Optional[str] = None
+
+
+AUTHORIZED_HARDWARE_PROFILES = (
+    HardwareProfile(
+        profile_id="nvidia-a800-80gb",
+        accepted_name_fragments=("NVIDIA A800",),
+        min_total_vram_gib=75.0,
+        max_total_vram_gib=82.0,
+        min_free_before_load_gib=40.0,
+        min_free_after_load_gib=10.0,
+        managed_disk_ceiling_gib=70.0,
+        filesystem_free_reserve_gib=5.0,
+    ),
+    HardwareProfile(
+        profile_id="autodl-rtx4080-super-32gb",
+        accepted_name_fragments=("NVIDIA GeForce RTX 4080 SUPER",),
+        min_total_vram_gib=31.0,
+        max_total_vram_gib=33.0,
+        min_free_before_load_gib=24.0,
+        min_free_after_load_gib=10.0,
+        managed_disk_ceiling_gib=AUTODL_MANAGED_DISK_CEILING_GIB,
+        filesystem_free_reserve_gib=AUTODL_FILESYSTEM_FREE_RESERVE_GIB,
+        required_visible_selector="0",
+        required_physical_gpu_count=1,
+        required_hf_home=AUTODL_HF_HOME,
+        required_output_root=AUTODL_OUTPUT_ROOT,
+        required_python=AUTODL_REQUIRED_PYTHON,
+        required_python_executable=Path("/root/miniconda3/bin/python"),
+        required_torch=AUTODL_REQUIRED_TORCH,
+        required_cuda=AUTODL_REQUIRED_CUDA,
+        required_transformers=AUTODL_REQUIRED_TRANSFORMERS,
+    ),
+)
 
 
 @dataclass(frozen=True)
@@ -298,6 +380,477 @@ def _sha256_bytes(raw: bytes) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
+def _sha256_file(path: Path, chunk_bytes: int = 8 * 1024 * 1024) -> str:
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        while True:
+            chunk = handle.read(chunk_bytes)
+            if not chunk:
+                return digest.hexdigest()
+            digest.update(chunk)
+
+
+def _base_package_version(value: str) -> str:
+    return str(value).split("+", 1)[0]
+
+
+def select_authorized_hardware_profile(
+    device_name: str, total_vram_gib: float
+) -> HardwareProfile:
+    matches = [
+        profile
+        for profile in AUTHORIZED_HARDWARE_PROFILES
+        if any(fragment in str(device_name) for fragment in profile.accepted_name_fragments)
+        and float(total_vram_gib) >= profile.min_total_vram_gib
+        and (
+            profile.max_total_vram_gib is None
+            or float(total_vram_gib) <= profile.max_total_vram_gib
+        )
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            "unauthorized GPU hardware profile: "
+            f"name={device_name!r}, total_vram_gib={float(total_vram_gib):.3f}; "
+            "accepted profiles are NVIDIA A800 80GB or owner-authorized "
+            "NVIDIA GeForce RTX 4080 SUPER with 32 GiB"
+        )
+    return matches[0]
+
+
+def _parse_nvidia_smi_rows(raw: str) -> List[Dict[str, object]]:
+    rows: List[Dict[str, object]] = []
+    for line in str(raw).splitlines():
+        if not line.strip():
+            continue
+        parts = [part.strip() for part in line.split(",", 5)]
+        if len(parts) != 6:
+            raise ValueError(f"unexpected nvidia-smi row: {line!r}")
+        rows.append(
+            {
+                "physical_index": int(parts[0]),
+                "uuid": parts[1],
+                "pci_bus_id": parts[2],
+                "name": parts[3],
+                "total_memory_mib": int(parts[4]),
+                "free_memory_mib": int(parts[5]),
+            }
+        )
+    if not rows:
+        raise ValueError("nvidia-smi returned no GPU rows")
+    return rows
+
+
+def _query_nvidia_smi_rows() -> List[Dict[str, object]]:
+    completed = subprocess.run(
+        [
+            "nvidia-smi",
+            "--query-gpu=index,uuid,pci.bus_id,name,memory.total,memory.free",
+            "--format=csv,noheader,nounits",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return _parse_nvidia_smi_rows(completed.stdout)
+
+
+def _single_visible_gpu_selector() -> str:
+    raw = os.environ.get("CUDA_VISIBLE_DEVICES")
+    if raw is None or not raw.strip():
+        raise ValueError(
+            "HF execution requires CUDA_VISIBLE_DEVICES to bind exactly one physical GPU"
+        )
+    selectors = [part.strip() for part in raw.split(",") if part.strip()]
+    if len(selectors) != 1:
+        raise ValueError(
+            "HF execution requires exactly one CUDA_VISIBLE_DEVICES selector"
+        )
+    selector = selectors[0]
+    if selector.startswith("MIG-"):
+        raise ValueError("MIG devices are not an authorized E-0016 hardware profile")
+    return selector
+
+
+def _select_physical_gpu_row(
+    rows: Sequence[Dict[str, object]], selector: str
+) -> Dict[str, object]:
+    if selector.isdigit():
+        matches = [
+            row for row in rows if int(row["physical_index"]) == int(selector)
+        ]
+    else:
+        matches = [row for row in rows if str(row["uuid"]) == selector]
+    if len(matches) != 1:
+        raise ValueError(
+            "CUDA_VISIBLE_DEVICES selector did not bind one nvidia-smi physical GPU: "
+            f"{selector!r}"
+        )
+    return dict(matches[0])
+
+
+def _validate_profile_runtime(
+    profile: HardwareProfile, *, torch_version: str, cuda_runtime: object
+) -> Dict[str, object]:
+    transformers_version = _package_version("transformers")
+    python_version = (sys.version_info.major, sys.version_info.minor)
+    if profile.required_python and python_version != profile.required_python:
+        raise ValueError(
+            f"{profile.profile_id} requires Python "
+            f"{profile.required_python[0]}.{profile.required_python[1]}, "
+            f"got {python_version[0]}.{python_version[1]}"
+        )
+    if profile.required_python_executable is not None:
+        expected_executable = profile.required_python_executable.resolve(strict=False)
+        actual_executable = Path(sys.executable).resolve(strict=False)
+        if actual_executable != expected_executable:
+            raise ValueError(
+                f"{profile.profile_id} requires Python executable "
+                f"{expected_executable}, got {actual_executable}"
+            )
+    if (
+        profile.required_torch
+        and _base_package_version(torch_version) != profile.required_torch
+    ):
+        raise ValueError(
+            f"{profile.profile_id} requires torch {profile.required_torch}, "
+            f"got {torch_version}"
+        )
+    if profile.required_cuda and str(cuda_runtime) != profile.required_cuda:
+        raise ValueError(
+            f"{profile.profile_id} requires torch CUDA {profile.required_cuda}, "
+            f"got {cuda_runtime}"
+        )
+    if (
+        profile.required_transformers
+        and transformers_version != profile.required_transformers
+    ):
+        raise ValueError(
+            f"{profile.profile_id} requires transformers "
+            f"{profile.required_transformers}, got {transformers_version}"
+        )
+    return {
+        "python": platform.python_version(),
+        "python_executable": str(Path(sys.executable).resolve(strict=False)),
+        "torch": torch_version,
+        "torch_cuda_runtime": cuda_runtime,
+        "transformers": transformers_version,
+    }
+
+
+def configure_cuda_allocator_environment() -> str:
+    key = "PYTORCH_CUDA_ALLOC_CONF"
+    required = "expandable_segments:True"
+    current = os.environ.get(key)
+    if current and required not in current.replace(" ", ""):
+        raise ValueError(
+            f"{key} must include {required} for E-0016 memory-safe execution"
+        )
+    if not current:
+        os.environ[key] = required
+    return os.environ[key]
+
+
+def capture_authorized_hardware_preflight() -> Tuple[HardwareProfile, Dict[str, object]]:
+    import torch
+
+    if not torch.cuda.is_available():
+        raise ValueError("HF E-0016 requires CUDA; CPU execution is not authorized")
+    if torch.cuda.device_count() != 1:
+        raise ValueError(
+            "HF E-0016 requires exactly one logical CUDA device after visibility binding"
+        )
+    selector = _single_visible_gpu_selector()
+    smi_rows = _query_nvidia_smi_rows()
+    physical = _select_physical_gpu_row(smi_rows, selector)
+    torch.cuda.set_device(0)
+    props = torch.cuda.get_device_properties(0)
+    free_bytes, total_bytes = torch.cuda.mem_get_info(0)
+    total_gib = gb(total_bytes)
+    free_gib = gb(free_bytes)
+    smi_total_gib = float(physical["total_memory_mib"]) / 1024.0
+    if str(props.name) != str(physical["name"]):
+        raise ValueError(
+            "torch/nvidia-smi GPU-name mismatch: "
+            f"torch={props.name!r}, nvidia-smi={physical['name']!r}"
+        )
+    if abs(total_gib - smi_total_gib) > 0.25:
+        raise ValueError(
+            "torch/nvidia-smi total-memory mismatch: "
+            f"torch={total_gib:.3f} GiB, nvidia-smi={smi_total_gib:.3f} GiB"
+        )
+    profile = select_authorized_hardware_profile(str(props.name), total_gib)
+    if (
+        profile.required_visible_selector is not None
+        and selector != profile.required_visible_selector
+    ):
+        raise ValueError(
+            f"{profile.profile_id} requires CUDA_VISIBLE_DEVICES="
+            f"{profile.required_visible_selector}, got {selector!r}"
+        )
+    if (
+        profile.required_physical_gpu_count is not None
+        and len(smi_rows) != profile.required_physical_gpu_count
+    ):
+        raise ValueError(
+            f"{profile.profile_id} requires exactly "
+            f"{profile.required_physical_gpu_count} nvidia-smi GPU row, "
+            f"got {len(smi_rows)}"
+        )
+    if free_gib < profile.min_free_before_load_gib:
+        raise ValueError(
+            f"{profile.profile_id} requires at least "
+            f"{profile.min_free_before_load_gib:.1f} GiB free before model load, "
+            f"got {free_gib:.3f} GiB"
+        )
+    runtime = _validate_profile_runtime(
+        profile,
+        torch_version=str(torch.__version__),
+        cuda_runtime=getattr(torch.version, "cuda", None),
+    )
+    return profile, {
+        "profile_id": profile.profile_id,
+        "cuda_visible_devices": selector,
+        "logical_device": "cuda:0",
+        "physical_gpu": {
+            **physical,
+            "torch_device_name": str(props.name),
+            "torch_total_vram_gib": total_gib,
+            "compute_capability": [int(props.major), int(props.minor)],
+        },
+        "runtime": runtime,
+        "memory_observation": {
+            "stage": "before_model_load",
+            "free_gib": free_gib,
+            "total_gib": total_gib,
+            "required_free_gib": profile.min_free_before_load_gib,
+        },
+    }
+
+
+def configure_hf_cache_environment(
+    profile: HardwareProfile, out_dir: Path
+) -> Dict[str, object]:
+    raw_hf_home = os.environ.get("HF_HOME")
+    if raw_hf_home is None or not raw_hf_home.strip():
+        raise ValueError("HF_HOME must be explicitly set for E-0016 HF execution")
+    hf_home = Path(raw_hf_home).expanduser().resolve(strict=False)
+    if profile.required_hf_home is not None:
+        required = profile.required_hf_home.resolve(strict=False)
+        if hf_home != required:
+            raise ValueError(
+                f"{profile.profile_id} requires HF_HOME={required}, got {hf_home}"
+            )
+    resolved_out = Path(out_dir).expanduser().resolve(strict=False)
+    if profile.required_output_root is not None:
+        output_root = profile.required_output_root.resolve(strict=False)
+        if not _is_relative_to(resolved_out, output_root):
+            raise ValueError(
+                f"{profile.profile_id} requires OUT_DIR under {output_root}"
+            )
+    if resolved_out == hf_home or _is_relative_to(resolved_out, hf_home):
+        raise ValueError("OUT_DIR must not be inside HF_HOME")
+    desired = {
+        "HF_HOME": hf_home,
+        "HF_HUB_CACHE": hf_home / "hub",
+        "HUGGINGFACE_HUB_CACHE": hf_home / "hub",
+        "TRANSFORMERS_CACHE": hf_home / "hub",
+        "HF_DATASETS_CACHE": hf_home / "datasets",
+    }
+    for name, path in desired.items():
+        existing = os.environ.get(name)
+        if (
+            existing
+            and Path(existing).expanduser().resolve(strict=False)
+            != path.resolve(strict=False)
+        ):
+            raise ValueError(
+                f"{name} points outside the authorized HF_HOME cache tree: {existing}"
+            )
+        os.environ[name] = str(path)
+    return {
+        "hf_home": str(hf_home),
+        "hf_hub_cache": str(desired["HF_HUB_CACHE"]),
+        "transformers_cache": str(desired["TRANSFORMERS_CACHE"]),
+        "datasets_cache": str(desired["HF_DATASETS_CACHE"]),
+        "out_dir": str(resolved_out),
+        "managed_disk_ceiling_gib": profile.managed_disk_ceiling_gib,
+        "filesystem_free_reserve_gib": profile.filesystem_free_reserve_gib,
+    }
+
+
+def _nearest_existing_parent(path: Path) -> Path:
+    cursor = Path(path)
+    while not cursor.exists() and cursor != cursor.parent:
+        cursor = cursor.parent
+    if not cursor.exists():
+        raise ValueError(f"no existing filesystem ancestor for {path}")
+    return cursor
+
+
+def check_managed_disk_guard(
+    profile: HardwareProfile,
+    cache_identity: Dict[str, object],
+    out_dir: Path,
+    *,
+    stage: str,
+) -> Dict[str, object]:
+    hf_home = Path(str(cache_identity["hf_home"]))
+    resolved_out = Path(out_dir).resolve(strict=False)
+    paths = [hf_home]
+    if not _is_relative_to(resolved_out, hf_home):
+        paths.append(resolved_out)
+    per_path = {str(path): gb(dir_size_bytes(path)) for path in paths}
+    managed_gib = float(sum(per_path.values()))
+    if managed_gib >= profile.managed_disk_ceiling_gib:
+        raise ValueError(
+            f"{profile.profile_id} managed disk usage {managed_gib:.3f} GiB "
+            f"meets/exceeds hard ceiling {profile.managed_disk_ceiling_gib:.1f} GiB"
+        )
+    usage = shutil.disk_usage(_nearest_existing_parent(hf_home))
+    free_gib = gb(usage.free)
+    model_download_gib = gb(
+        sum(int(row["size"]) for row in FROZEN_MODEL_SHARDS.values())
+    )
+    required_free_gib = profile.filesystem_free_reserve_gib
+    if stage == "before_model_load":
+        required_free_gib += model_download_gib + 1.0
+    if free_gib < required_free_gib:
+        raise ValueError(
+            f"{profile.profile_id} filesystem free space {free_gib:.3f} GiB "
+            f"is below the {stage} requirement {required_free_gib:.3f} GiB"
+        )
+    return {
+        "stage": stage,
+        "per_path_gib": per_path,
+        "managed_total_gib": managed_gib,
+        "managed_hard_ceiling_gib": profile.managed_disk_ceiling_gib,
+        "filesystem_free_gib": free_gib,
+        "filesystem_required_free_gib": required_free_gib,
+    }
+
+
+def check_cuda_memory_headroom(
+    profile: HardwareProfile, *, stage: str
+) -> Dict[str, object]:
+    import torch
+
+    free_bytes, total_bytes = torch.cuda.mem_get_info(0)
+    free_gib = gb(free_bytes)
+    total_gib = gb(total_bytes)
+    required = profile.min_free_after_load_gib
+    if free_gib < required:
+        raise ValueError(
+            f"{profile.profile_id} CUDA free memory {free_gib:.3f} GiB "
+            f"is below the post-load/run requirement {required:.1f} GiB at {stage}"
+        )
+    return {
+        "stage": stage,
+        "free_gib": free_gib,
+        "total_gib": total_gib,
+        "required_free_gib": required,
+        "allocated_gib": gb(torch.cuda.memory_allocated(0)),
+        "reserved_gib": gb(torch.cuda.memory_reserved(0)),
+        "max_allocated_gib": gb(torch.cuda.max_memory_allocated(0)),
+    }
+
+
+def verify_frozen_model_snapshot(
+    *,
+    model_id: str,
+    revision: str,
+    hf_hub_cache: Path,
+    config: object,
+) -> Dict[str, object]:
+    if model_id != DEFAULT_MODEL or revision != FROZEN_MODEL_REVISION:
+        raise ValueError("snapshot verification only supports the frozen E-0016 model")
+    resolved_revision = getattr(config, "_commit_hash", None)
+    if resolved_revision != revision:
+        raise ValueError(
+            f"resolved model revision mismatch: expected {revision}, got {resolved_revision}"
+        )
+    from huggingface_hub import snapshot_download
+
+    snapshot = Path(
+        snapshot_download(
+            repo_id=model_id,
+            revision=revision,
+            cache_dir=str(hf_hub_cache),
+            local_files_only=True,
+        )
+    )
+    if snapshot.name != revision:
+        raise ValueError(
+            f"HF snapshot directory is not bound to revision {revision}: {snapshot}"
+        )
+    index_path = snapshot / "model.safetensors.index.json"
+    if not index_path.is_file():
+        raise ValueError("frozen Qwen snapshot lacks model.safetensors.index.json")
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    indexed_shards = set(dict(index.get("weight_map") or {}).values())
+    if indexed_shards != set(FROZEN_MODEL_SHARDS):
+        raise ValueError(
+            "frozen Qwen snapshot shard set mismatch: "
+            f"expected={sorted(FROZEN_MODEL_SHARDS)}, got={sorted(indexed_shards)}"
+        )
+    verified = {}
+    for filename, expected in FROZEN_MODEL_SHARDS.items():
+        path = snapshot / filename
+        if not path.is_file():
+            raise ValueError(f"frozen Qwen snapshot missing shard {filename}")
+        actual_size = path.stat().st_size
+        actual_sha256 = _sha256_file(path)
+        if (
+            actual_size != int(expected["size"])
+            or actual_sha256 != str(expected["sha256"])
+        ):
+            raise ValueError(
+                f"frozen Qwen snapshot shard mismatch for {filename}: "
+                f"size={actual_size}, sha256={actual_sha256}"
+            )
+        verified[filename] = {
+            "size": actual_size,
+            "sha256": actual_sha256,
+        }
+    return {
+        "model_id": model_id,
+        "requested_revision": revision,
+        "resolved_revision": resolved_revision,
+        "snapshot_path": str(snapshot),
+        "snapshot_directory_revision_matches": True,
+        "index_sha256": _sha256_file(index_path),
+        "shards": verified,
+        "all_shard_sha256_verified": True,
+    }
+
+
+def _stable_operational_identity(
+    preflight: Dict[str, object],
+) -> Dict[str, object]:
+    return {
+        key: preflight[key]
+        for key in (
+            "profile_id",
+            "cuda_visible_devices",
+            "logical_device",
+            "physical_gpu",
+            "runtime",
+            "cuda_allocator",
+            "cache",
+            "disk_policy",
+            "model_snapshot",
+        )
+    }
+
+
+def assert_harmful_local_source_not_in_repo(path: Path) -> None:
+    resolved = Path(path).resolve()
+    if _is_relative_to(resolved, _REPO.resolve()):
+        raise ValueError(
+            "raw harmful source files are forbidden inside the git worktree; "
+            "use the frozen remote URL or an external byte-identical path"
+        )
+
+
 def _schema_of_rows(rows: Sequence[dict]) -> Tuple[str, ...]:
     if not rows:
         raise ValueError("immutable dataset is empty")
@@ -360,6 +913,8 @@ def _load_immutable_hf_rows(
     source_text = str(source)
     path = Path(source_text)
     if path.exists():
+        if spec is HARMFUL_SPEC:
+            assert_harmful_local_source_not_in_repo(path)
         raw = path.read_bytes()
         source_type = "approved_local_override"
         resolved_source = str(path.resolve())
@@ -849,6 +1404,7 @@ def capture_environment_identity(
     backend: str,
     provider: object,
     hook_backend: Optional[SteeredHFBackend],
+    operational_identity: Optional[Dict[str, object]] = None,
 ) -> Dict[str, object]:
     packages = {
         name: _package_version(name)
@@ -934,6 +1490,7 @@ def capture_environment_identity(
             "vocab_count": len(vocab_rows),
             "vocab_sha256": _sha256_bytes(_canonical_object_bytes(vocab_rows)),
             "cuda": cuda,
+            "operational_identity": operational_identity,
         }
     return {
         **material,
@@ -1108,13 +1665,14 @@ def resolved_frozen_run_config(
     backend_max_length: int,
     hidden_dim: int,
     declared_decoder_layers: int,
+    operational_identity: Optional[Dict[str, object]] = None,
 ) -> Dict[str, Any]:
     """Canonical post-resolution protocol identity; excludes outcome values."""
     abs_tol = dtype_abs_tol(dtype, hidden_dim)
     return {
         **pre_load_eligibility_config(args),
         "identity_stage": "post_resolution_full_run",
-        "identity_schema_version": 1,
+        "identity_schema_version": 2,
         "model": {
             "model_id": args.model_id,
             "revision_requested": args.model_revision,
@@ -1127,6 +1685,7 @@ def resolved_frozen_run_config(
             "dtype": str(dtype),
             "provider_max_length": int(provider_max_length),
             "generation_backend_max_length": int(backend_max_length),
+            "operational_identity": operational_identity,
         },
         "generation": {
             "do_sample": GENERATION_DO_SAMPLE,
@@ -1239,7 +1798,7 @@ def finalized_run_identity(
     return {
         **resolved_config,
         "identity_stage": "finalized_post_dev_pre_test",
-        "identity_schema_version": 2,
+        "identity_schema_version": 3,
         "selected_intervention": {
             **expected,
             "selection_metric": (
@@ -1318,11 +1877,16 @@ def build_shared_hf_handles(
     model_revision: str,
     seed: int,
     out_dir: Path,
+    *,
+    profile: HardwareProfile,
+    operational_preflight: Dict[str, object],
+    cache_identity: Dict[str, object],
 ) -> SharedHFHandles:
     """Load HF model once through the provider and share handles with generation."""
-    from scripts import run_gpu_phase0 as p0
+    import torch
 
-    device, dtype = p0._pick_device(), p0._pick_dtype()
+    device, dtype = "cuda:0", "float16"
+    torch.cuda.reset_peak_memory_stats(0)
     provider = HFActivationProvider(
         model_id,
         device=device,
@@ -1342,7 +1906,32 @@ def build_shared_hf_handles(
         tokenizer=tokenizer,
         config=config,
     )
-    return SharedHFHandles(provider=provider, hook_backend=hook_backend, device=device, dtype=dtype)
+    snapshot = verify_frozen_model_snapshot(
+        model_id=model_id,
+        revision=model_revision,
+        hf_hub_cache=Path(str(cache_identity["hf_hub_cache"])),
+        config=config,
+    )
+    post_load_memory = check_cuda_memory_headroom(profile, stage="after_model_load")
+    post_load_disk = check_managed_disk_guard(
+        profile,
+        cache_identity,
+        out_dir,
+        stage="after_model_load",
+    )
+    completed_preflight = {
+        **operational_preflight,
+        "model_snapshot": snapshot,
+        "post_load_memory_observation": post_load_memory,
+        "post_load_disk_observation": post_load_disk,
+    }
+    return SharedHFHandles(
+        provider=provider,
+        hook_backend=hook_backend,
+        device=device,
+        dtype=dtype,
+        operational_preflight=completed_preflight,
+    )
 
 
 def derive_refusal_direction(provider, harmful: Sequence[str], harmless: Sequence[str], layers: Sequence[int], *, backend: str, model_id: str, contrast_prov: Dict[str, object]) -> List[DirectionBundle]:
@@ -2658,6 +3247,8 @@ def synthetic_provider_and_direction(harmful: Sequence[str], harmless: Sequence[
 
 def run(args: argparse.Namespace) -> Dict[str, object]:
     assert_hf_frozen_config(args)
+    if args.backend != "hf" and (args.preflight_only or args.stop_after_dev):
+        raise ValueError("operational preflight/DEV-only stages require --backend hf")
     out_dir = resolve_output_directory(args.out_dir)
     assert_dedicated_output_directory(out_dir, backend=args.backend)
     run_start_source_state = initialize_run_source_state(out_dir)
@@ -2668,6 +3259,32 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
     dirty_tree = bool(run_start_source_state["dirty"])
     current_code_commit = str(run_start_source_state["head"])
     manifest_path = out_dir / "e0016_ablation_positive_control_results.json"
+    profile: Optional[HardwareProfile] = None
+    cache_identity: Optional[Dict[str, object]] = None
+    operational_preflight: Dict[str, object] = {}
+    if backend == "hf":
+        allocator = configure_cuda_allocator_environment()
+        profile, hardware_binding = capture_authorized_hardware_preflight()
+        cache_identity = configure_hf_cache_environment(profile, out_dir)
+        pre_load_disk = check_managed_disk_guard(
+            profile,
+            cache_identity,
+            out_dir,
+            stage="before_model_load",
+        )
+        operational_preflight = {
+            **hardware_binding,
+            "cuda_allocator": {
+                "environment_variable": "PYTORCH_CUDA_ALLOC_CONF",
+                "value": allocator,
+            },
+            "cache": cache_identity,
+            "disk_policy": {
+                "managed_hard_ceiling_gib": profile.managed_disk_ceiling_gib,
+                "filesystem_free_reserve_gib": profile.filesystem_free_reserve_gib,
+            },
+            "pre_load_disk_observation": pre_load_disk,
+        }
     if manifest_path.exists():
         existing = json.loads(manifest_path.read_text(encoding="utf-8"))
         if (
@@ -2698,11 +3315,15 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         backend_max_length = 0
         declared_decoder_layers = len(layers)
     else:
+        assert profile is not None and cache_identity is not None
         hf_handles = build_shared_hf_handles(
             args.model_id,
             args.model_revision,
             args.seed,
             out_dir,
+            profile=profile,
+            operational_preflight=operational_preflight,
+            cache_identity=cache_identity,
         )
         provider = hf_handles.provider
         hook_backend = hf_handles.hook_backend
@@ -2720,11 +3341,21 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         provider_max_length = int(provider.max_length)
         backend_max_length = int(hook_backend.max_length)
         declared_decoder_layers = int(hook_backend.num_hidden_layers)
+        operational_preflight = hf_handles.operational_preflight
+
+    stable_operational_identity = (
+        None
+        if backend != "hf"
+        else _stable_operational_identity(operational_preflight)
+    )
 
     environment_identity = initialize_run_environment(
         out_dir,
         capture_environment_identity(
-            backend=backend, provider=provider, hook_backend=hook_backend
+            backend=backend,
+            provider=provider,
+            hook_backend=hook_backend,
+            operational_identity=stable_operational_identity,
         ),
     )
     environment_identity_hash = str(
@@ -2744,6 +3375,7 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         backend_max_length=backend_max_length,
         hidden_dim=provider.hidden_dim,
         declared_decoder_layers=declared_decoder_layers,
+        operational_identity=stable_operational_identity,
     )
     run_config["implementation"] = {
         "code_commit": current_code_commit,
@@ -2814,6 +3446,7 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                         "pre_load_eligibility_config_hash": eligibility_config_hash,
                         "frozen_config": run_config,
                         "frozen_config_hash": run_config_hash,
+                        "operational_preflight": operational_preflight,
                         "xstest_provenance": xstest_prov,
                         "contrast_provenance": contrast_prov,
                         "hook_bites": hook_bites_payload,
@@ -2835,11 +3468,84 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                         "pre_load_eligibility_config_hash": eligibility_config_hash,
                         "frozen_config": run_config,
                         "frozen_config_hash": run_config_hash,
+                        "operational_preflight": operational_preflight,
                         "generation_started": False,
                         "valid_for_paper": False,
                 },
             )
             raise
+
+        assert profile is not None and cache_identity is not None
+        operational_preflight = {
+            **operational_preflight,
+            "pre_dev_memory_observation": check_cuda_memory_headroom(
+                profile, stage="before_dev_generation"
+            ),
+            "pre_dev_disk_observation": check_managed_disk_guard(
+                profile,
+                cache_identity,
+                out_dir,
+                stage="before_dev_generation",
+            ),
+        }
+        atomic_write_json(
+            out_dir / "e0016_hardware_preflight.json",
+            {
+                "experiment_id": EXPERIMENT_ID,
+                "status": "PREFLIGHT_PASSED_NO_GENERATION",
+                "created_at": utcnow(),
+                "code_commit": current_code_commit,
+                "run_start_source_state": run_start_source_state,
+                "hardware_profile": operational_preflight,
+                "stable_operational_identity": stable_operational_identity,
+                "model_revision_requested": args.model_revision,
+                "model_revision_resolved": resolved_model_revision,
+                "hook_bites": hook_bites_payload,
+                "raw_harmful_prompts_committed": False,
+                "harmful_generation_performed": False,
+                "generation_started": False,
+                "valid_for_paper": False,
+            },
+        )
+
+    if args.preflight_only:
+        payload = {
+            "experiment_id": EXPERIMENT_ID,
+            "status": "PREFLIGHT_PASSED_NO_GENERATION",
+            "primary_regime": PRIMARY_REGIME,
+            "created_at": utcnow(),
+            "code_commit": current_code_commit,
+            "dirty_tree": dirty_tree,
+            "run_start_source_state": run_start_source_state,
+            "run_start_source_identity": run_source_identity,
+            "run_start_source_identity_hash": config_hash(run_source_identity),
+            "seed": int(args.seed),
+            "pre_load_eligibility_config": eligibility_config,
+            "pre_load_eligibility_config_hash": eligibility_config_hash,
+            "frozen_config": run_config,
+            "frozen_config_hash": run_config_hash,
+            "valid_for_paper": False,
+            "scope_guard": SCOPE_GUARD_SENTENCE,
+            "backend": backend,
+            "model_id": args.model_id,
+            "model_revision_requested": args.model_revision,
+            "model_revision_resolved": resolved_model_revision,
+            "device": device,
+            "dtype": dtype,
+            "environment_identity": environment_identity,
+            "environment_identity_hash": environment_identity_hash,
+            "hardware_profile": operational_preflight,
+            "direction_candidates": [bundle.provenance for bundle in bundles],
+            "xstest_provenance": xstest_prov,
+            "contrast_provenance": contrast_prov,
+            "hook_bites": hook_bites_payload,
+            "raw_harmful_prompts_committed": False,
+            "harmful_generation_performed": False,
+            "generation_started": False,
+            "generation_prompt_scope": "benign XSTest-safe prompts only",
+        }
+        atomic_write_json(manifest_path, payload)
+        return payload
 
     checkpoint_dir = out_dir / "checkpoints" / filesystem_hash_token(run_config_hash)
     selected, dev_payload = select_direction_on_dev(
@@ -2858,6 +3564,40 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         run_start_source_state=run_start_source_state,
         run_output_dir=out_dir,
     )
+    if backend == "hf":
+        assert profile is not None and cache_identity is not None
+        operational_preflight = {
+            **operational_preflight,
+            "post_dev_memory_observation": check_cuda_memory_headroom(
+                profile, stage="after_dev"
+            ),
+            "post_dev_disk_observation": check_managed_disk_guard(
+                profile,
+                cache_identity,
+                out_dir,
+                stage="after_dev",
+            ),
+        }
+        atomic_write_json(
+            out_dir / "e0016_hardware_preflight.json",
+            {
+                "experiment_id": EXPERIMENT_ID,
+                "status": "DEV_COMPLETE_TEST_NOT_STARTED",
+                "created_at": utcnow(),
+                "code_commit": current_code_commit,
+                "run_start_source_state": run_start_source_state,
+                "hardware_profile": operational_preflight,
+                "stable_operational_identity": stable_operational_identity,
+                "model_revision_requested": args.model_revision,
+                "model_revision_resolved": resolved_model_revision,
+                "hook_bites": hook_bites_payload,
+                "dev_status": dev_payload["status"],
+                "raw_harmful_prompts_committed": False,
+                "harmful_generation_performed": False,
+                "test_generation_started": False,
+                "valid_for_paper": False,
+            },
+        )
 
     payload: Dict[str, object] = {
         "experiment_id": EXPERIMENT_ID,
@@ -2885,6 +3625,7 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         "dtype": dtype,
         "environment_identity": environment_identity,
         "environment_identity_hash": environment_identity_hash,
+        "hardware_profile": operational_preflight if backend == "hf" else None,
         "single_shared_hf_handle": bool(backend == "hf"),
         "from_pretrained_loads_expected": None if backend != "hf" else hf_handles.from_pretrained_loads_expected,
         "direction_derivation": selected.provenance,
@@ -3019,8 +3760,30 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
                 )
         },
     )
+    if args.stop_after_dev:
+        payload["status"] = "DEV_ELIGIBLE_TEST_NOT_RUN"
+        payload["test_generation_started"] = False
+        payload["test_was_not_run"] = True
+        atomic_write_json(manifest_path, payload)
+        return payload
     payload["status"] = "TEST_PENDING"
     atomic_write_json(manifest_path, payload)
+
+    if backend == "hf":
+        assert profile is not None and cache_identity is not None
+        operational_preflight = {
+            **operational_preflight,
+            "pre_test_memory_observation": check_cuda_memory_headroom(
+                profile, stage="before_test"
+            ),
+            "pre_test_disk_observation": check_managed_disk_guard(
+                profile,
+                cache_identity,
+                out_dir,
+                stage="before_test",
+            ),
+        }
+        payload["hardware_profile"] = operational_preflight
 
     test_checkpoint_dir = checkpoint_dir / filesystem_hash_token(
         finalized_identity_hash
@@ -3113,6 +3876,21 @@ def run(args: argparse.Namespace) -> Dict[str, object]:
         expected_data_identity_hash=config_hash(run_config["data"]),
     )
     test_payload = reconstructed["test"]
+    if backend == "hf":
+        assert profile is not None and cache_identity is not None
+        operational_preflight = {
+            **operational_preflight,
+            "post_test_memory_observation": check_cuda_memory_headroom(
+                profile, stage="after_test"
+            ),
+            "post_test_disk_observation": check_managed_disk_guard(
+                profile,
+                cache_identity,
+                out_dir,
+                stage="after_test",
+            ),
+        }
+        payload["hardware_profile"] = operational_preflight
     payload.update({"status": test_payload["status"], "test": test_payload, "test_baseline": reconstructed["test_baseline"], "test_ablation": reconstructed["test_ablation"], "test_random": reconstructed["test_random"], "generation_records_artifact": artifact_manifest})
     atomic_write_json(manifest_path, payload)
     return payload
@@ -3171,6 +3949,23 @@ def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
         "--generation-batch-size",
         type=int,
         default=HF_FROZEN_GENERATION_BATCH_SIZE,
+    )
+    stage = p.add_mutually_exclusive_group()
+    stage.add_argument(
+        "--preflight-only",
+        action="store_true",
+        help=(
+            "Run immutable data/model/hardware/cache/hash/all-layer-hook guards "
+            "without any generation."
+        ),
+    )
+    stage.add_argument(
+        "--stop-after-dev",
+        action="store_true",
+        help=(
+            "Run the frozen DEV eligibility/selection stage and persist the "
+            "finalized TEST identity, but never start TEST generation."
+        ),
     )
     p.add_argument("--synthetic-baseline-refusal-rate", type=float, default=0.75)
     return p.parse_args(argv)

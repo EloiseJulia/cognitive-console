@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import abc
 import hashlib
+import importlib.metadata
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -53,6 +54,16 @@ _HF_INSTALL_HINT = (
     "  pip install torch --index-url https://download.pytorch.org/whl/cpu\n"
     "  pip install -e .[hf]"
 )
+
+
+def _transformers_model_dtype_kwargs(dtype) -> Dict[str, object]:
+    """Use the loader keyword supported by the installed transformers major."""
+    try:
+        version = importlib.metadata.version("transformers")
+        major = int(version.split(".", 1)[0])
+    except (importlib.metadata.PackageNotFoundError, ValueError):
+        major = 4
+    return {"dtype": dtype} if major >= 5 else {"torch_dtype": dtype}
 
 
 class ActivationProvider(abc.ABC):
@@ -340,20 +351,25 @@ class HFActivationProvider(ActivationProvider):
         )
         if self._tokenizer.pad_token is None:
             self._tokenizer.pad_token = self._tokenizer.eos_token
-        # transformers >=5 renamed `torch_dtype` -> `dtype`; support both.
+        dtype_kwargs = _transformers_model_dtype_kwargs(dtype)
         try:
             model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
-                dtype=dtype,
                 low_cpu_mem_usage=True,
                 **revision_kwargs,
+                **dtype_kwargs,
             )
         except TypeError:
+            fallback = (
+                {"torch_dtype": dtype}
+                if "dtype" in dtype_kwargs
+                else {"dtype": dtype}
+            )
             model = AutoModelForCausalLM.from_pretrained(
                 self.model_name,
-                torch_dtype=dtype,
                 low_cpu_mem_usage=True,
                 **revision_kwargs,
+                **fallback,
             )
         model.to(self.device)
         model.eval()
@@ -439,7 +455,7 @@ class HFActivationProvider(ActivationProvider):
             max_length=self.max_length,
         )
         enc = {k: v.to(self.device) for k, v in enc.items()}
-        with torch.no_grad():
+        with torch.inference_mode():
             out = self._model(**enc, output_hidden_states=True, use_cache=False)
         attn = enc.get("attention_mask")
         if attn is not None:

@@ -5,6 +5,14 @@
 
 ---
 
+## 2026-08-12 · D-0097 · Owner authorizes alternate AutoDL RTX 4080 SUPER 32 GiB execution profile for E-0016
+- The owner explicitly authorizes one alternate execution profile alongside the existing A800 profile: a single `NVIDIA GeForce RTX 4080 SUPER` exposing 32 GiB, bound by `CUDA_VISIBLE_DEVICES=0`, with `/root/miniconda3` Python 3.12, torch 2.8/cu128, transformers 4.44.2, and `HF_HOME=/root/autodl-tmp/hf`.
+- This is an operational hardware/memory/cache amendment only. Direction extraction, candidate layers, N/DEV/TEST split, seeds, K, generation settings, deterministic scorers, coherence/random controls, `>=0.25` gates, verdict ladder, and all safety boundaries remain frozen.
+- The existing D-0095 remaining hard cap of 2.99277778 GPU-hours applies cumulatively to either the A800 or RTX profile; this decision adds no GPU-hours and does not authorize exceeding the existing cost/compute cap.
+- The RTX profile must fail closed unless the exact GPU name and 32 GiB class, single visible physical-device binding, required runtime versions, `/root/autodl-tmp` cache/output placement, disk ceiling, pinned Qwen revision and shard hashes, fp16 load, and post-load memory headroom all validate.
+- Owner authorization of the profile does **not** make the implementation branch execution-ready. The operational amendment remains **DRAFT** pending targeted CPU tests, independent hostile audit, and recording of a new exact clean run commit. No GPU, DEV, or TEST run is authorized from an unaudited commit.
+- Harmful prompts remain forward-pass-only direction inputs. Raw harmful prompts/outputs must never be committed or published; Regime A and harmful generation remain prohibited.
+
 ## 2026-08-05 · D-0096 · E-0016 pre-DEV infrastructure failure validated; audited serialization repair authorizes retry within D-0095
 - Independent audit validated attempt 1 as a **VALID PRE-DEV INFRA FAILURE**, not a scientific result. Result branch/commit: `run/e0016-regime-b-20260805` / `c461c3c295ba96243d746f8fbfc60389a2635d1b`. The exact old run commit was `4def9ba59a00909d4cf2aae7dbdb1665877d6204`; DEV and TEST did not run, `valid_for_paper=false`, and no harmful generation or raw-harmful-text leakage occurred.
 - Root cause: transformers 5.14.1 exposed a tokenizer `AddedToken` during environment-identity capture, and the old canonical JSON path could not serialize it. Repair commits `75834b1f5913933ac412f93d5d41a44a58868060` and `fa58dcf5c739e7d89b36e6af7694e9ea0df84d27` add canonical `AddedToken` and typed configuration-key serialization (environment identity schema v3). The repair was independently audited **SOUND** and merged as the new exact run/code commit `c094f07fa3592c2210f46caba9e69c49a5a92fad`.

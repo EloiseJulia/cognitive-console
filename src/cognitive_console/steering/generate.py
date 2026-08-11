@@ -795,7 +795,7 @@ class SteeredHFBackend(GenBackend):
                 rel_tol=rel_tol,
             )
             try:
-                with torch.no_grad():
+                with torch.inference_mode():
                     base_model(**enc, use_cache=False)
             finally:
                 for handle in reversed(handles):
@@ -828,7 +828,7 @@ class SteeredHFBackend(GenBackend):
                 gen_kwargs["temperature"] = float(temperature)
                 if top_p is not None:
                     gen_kwargs["top_p"] = float(top_p)
-            with torch.no_grad():
+            with torch.inference_mode():
                 out = self._model.generate(**enc, **gen_kwargs)
         finally:
             for handle in reversed(handles):
@@ -868,7 +868,7 @@ class SteeredHFBackend(GenBackend):
                 gen_kwargs["temperature"] = float(temperature)
                 if top_p is not None:
                     gen_kwargs["top_p"] = float(top_p)
-            with torch.no_grad():
+            with torch.inference_mode():
                 out = self._model.generate(**enc, **gen_kwargs)
         finally:
             for handle in reversed(handles):
@@ -923,7 +923,7 @@ class SteeredHFBackend(GenBackend):
                 gen_kwargs["temperature"] = float(temperature)
                 if top_p is not None:
                     gen_kwargs["top_p"] = float(top_p)
-            with torch.no_grad():
+            with torch.inference_mode():
                 out = self._model.generate(**enc, **gen_kwargs)
         finally:
             if handle is not None:
@@ -1003,7 +1003,7 @@ class SteeredHFBackend(GenBackend):
             )
             if do_sample:
                 gen_kwargs["temperature"] = float(temperature)
-            with torch.no_grad():
+            with torch.inference_mode():
                 out = self._model.generate(**enc, **gen_kwargs)
         finally:
             if handle is not None:

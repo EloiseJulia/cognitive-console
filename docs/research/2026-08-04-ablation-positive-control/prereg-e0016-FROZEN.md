@@ -2,7 +2,7 @@
 
 **Experiment id:** E-0016
 
-**Status:** **FROZEN — Regime B only; retry authorized under D-0095**
+**Status:** **FROZEN SCIENCE — Regime B only; D-0097 operational host amendment DRAFT pending audit**
 
 **Freeze candidate prepared:** 2026-08-05
 
@@ -11,16 +11,18 @@
 **Protocol freeze candidate commit:** `c36a438977ae51be5172587e900811508fe77468`
 — this is the commit containing the first frozen-document candidate.
 
-**Required run commit:** `c094f07fa3592c2210f46caba9e69c49a5a92fad`.
-This is the audited merge commit containing the frozen protocol, harness, and
-pre-DEV infrastructure-only serialization repair. The
-experiment may check out and execute only this commit from a clean source tree.
+**Required run commit:** **TBD after independent audit and merge of the D-0097
+operational amendment.** Commit `c094f07fa3592c2210f46caba9e69c49a5a92fad`
+remains the audited historical retry basis before the alternate-host amendment;
+it must not be represented as containing the new AutoDL profile. No GPU/DEV/TEST
+execution may use the DRAFT amendment branch.
 
 **Validity:** `valid_for_paper=false` until a real eligible Regime-B run completes and an independent hostile results audit validates it.
 
-**Authorization boundary:** D-0095 authorizes at most 3 A800 GPU-hours. Attempt 1
-consumed an upper bound of 0.00722222 GPU-hours, leaving a retry hard cap of
-2.99277778 GPU-hours.
+**Authorization boundary:** D-0095/D-0097 authorize at most 3 cumulative
+GPU-hours across either the A800 profile or the owner-authorized AutoDL RTX 4080
+SUPER 32 GiB profile. Attempt 1 consumed an upper bound of 0.00722222 GPU-hours,
+leaving a retry hard cap of 2.99277778 GPU-hours. D-0097 adds no hours.
 
 **Pre-DEV infrastructure-only amendment (2026-08-05):** Attempt 1 at
 `4def9ba59a00909d4cf2aae7dbdb1665877d6204` failed before direction extraction,
@@ -30,6 +32,16 @@ non-JSON-serializable `AddedToken`. The audited repair introduces canonical
 schema v3. It changes no dataset, split, seed, model, generation setting,
 intervention, endpoint, statistic, threshold, or stopping rule. Attempt 1 produced
 no DEV/TEST result and remains `valid_for_paper=false`.
+
+**Operational-host amendment DRAFT (2026-08-12, D-0097):** The owner authorized
+an alternate rented AutoDL execution profile: one `NVIDIA GeForce RTX 4080
+SUPER` exposing 32 GiB via `CUDA_VISIBLE_DEVICES=0`, Python 3.12, torch
+2.8/cu128, transformers 4.44.2, and `HF_HOME=/root/autodl-tmp/hf`. The amendment
+adds fail-closed physical-GPU identity binding, fp16 memory headroom checks,
+cache/disk ceilings, full pinned Qwen shard verification, and preflight/DEV-only
+operational stops under environment identity schema v4. It changes no scientific
+parameter or safety rule and is not
+execution-ready until independently audited and assigned a new exact run commit.
 
 ## 1. Frozen purpose and scope
 
@@ -61,8 +73,9 @@ Only **Regime B: benign XSTest-safe generation** is frozen.
 - Regime A harmful generation is excluded. It has no command, configuration, or
   fallback in this protocol. Future consideration requires a new owner decision
   and a new protocol.
-- Regime-B GPU retry is authorized only within D-0095's remaining 2.99277778
-  A800 GPU-hour hard cap and from the required clean run commit.
+- Regime-B GPU retry is authorized only within D-0095/D-0097's remaining
+  2.99277778 cumulative GPU-hour hard cap, on one of the two authorized hardware
+  profiles, and from the required clean audited run commit.
 
 ## 3. Frozen model and runtime resolution
 
@@ -73,8 +86,9 @@ Only **Regime B: benign XSTest-safe generation** is frozen.
 | Requested revision | `a09a35458c702b33eeacc393d103063234e8bc28` |
 | Resolved revision | After load, `provider._config._commit_hash` must exactly equal the requested revision or the run hard-fails |
 | Seed | `20260804` |
-| Device | Runtime calls `_pick_device()`: `cuda` when PyTorch reports CUDA available, otherwise `cpu`; the protocol does not select a GPU index |
-| Dtype | `float16` when resolved device is `cuda`; otherwise `float32` |
+| Device | Evidence execution requires exactly one visible logical device, `cuda:0`, bound to one recorded physical index/UUID/PCI bus identity; CPU and multi-visible-GPU execution fail closed |
+| Authorized hardware | Either an NVIDIA A800 80GB profile or the D-0097 AutoDL `NVIDIA GeForce RTX 4080 SUPER` 32 GiB profile; all other names/memory classes fail closed |
+| Dtype | `float16` for both authorized profiles; no quantization/offload and one shared model handle |
 | Activation max length | `256` |
 | Generation backend max length | `512` |
 | Sampling | `do_sample=true`, temperature `0.7`, `top_p=None` |
@@ -84,6 +98,29 @@ Only **Regime B: benign XSTest-safe generation** is frozen.
 The run manifest binds the resolved device, dtype, model revision, environment,
 source state, and full frozen-config hash. Evidence execution requires a clean
 source tree at the final audited run commit.
+
+### 3.1 D-0097 AutoDL operational profile (non-scientific)
+
+- `CUDA_VISIBLE_DEVICES=0`; torch must expose exactly one logical CUDA device and
+  its name/memory must match the selected `nvidia-smi` physical index, UUID, PCI
+  bus id, name, and total memory.
+- Exact runtime: `/root/miniconda3/bin/python` resolving to Python 3.12, torch `2.8.0` with CUDA `12.8`,
+  transformers `4.44.2`. For transformers 4.44.2, model loading uses the
+  supported `torch_dtype=torch.float16` keyword; Qwen2 decoder hooks and
+  `generate()` retain their public 4.44.2-compatible interfaces.
+- `HF_HOME` must resolve exactly to `/root/autodl-tmp/hf`; hub, transformers, and
+  datasets caches are forced beneath it. `OUT_DIR` must be beneath
+  `/root/autodl-tmp` and outside `HF_HOME`.
+- Managed HF/output data hard-fails at `45 GiB`, leaving at least `5 GiB` on the
+  50 GiB disk. Before an uncached load, free space must also cover all four
+  pinned model shards plus the reserve.
+- The pinned snapshot directory and resolved config commit must equal
+  `a09a35458c702b33eeacc393d103063234e8bc28`. All four safetensor shard sizes
+  and SHA-256 values are recomputed and checked before DEV.
+- Pre-load free VRAM must be at least `24 GiB`; after fp16 model load and before
+  each generation phase it must be at least `10 GiB`. Generation batch remains
+  frozen at `1`; activation forwards and generation use inference mode, and
+  all-layer hooks retain no cross-call activation tensors.
 
 ## 4. Frozen immutable data
 
@@ -269,62 +306,83 @@ python scripts\run_e0016_ablation_positive_control.py `
 This may produce a synthetic PASS. It is explicitly non-evidence and must not be
 registered as a real run/result.
 
-### 9.2 Authorized HF Regime-B retry
+### 9.2 D-0097 AutoDL preflight only — no generation
 
-Prerequisites: owner GPU-budget approval recorded; independent protocol audit
-SOUND; run commit `c094f07fa3592c2210f46caba9e69c49a5a92fad` checked out in a clean
-source tree; a free GPU selected according
-to host etiquette without interfering with another user. GPU visibility/index is
-an execution-environment choice made after approval and is intentionally absent
-from the frozen CLI.
+This command is documentation for the post-audit exact run commit. Do not execute
+it from the DRAFT branch.
 
-```powershell
-Set-Location "<clean checkout of the final audited E-0016 run commit>"
-python scripts\run_e0016_ablation_positive_control.py `
-  --backend hf `
-  --model-id Qwen/Qwen2.5-7B-Instruct `
-  --model-revision a09a35458c702b33eeacc393d103063234e8bc28 `
-  --out-dir results\E-0016-regime-b-confirmatory `
-  --seed 20260804 `
-  --dev-n 60 `
-  --test-n 160 `
-  --k 5 `
-  --layers 8,12,16,20 `
-  --xstest-source Paul/XSTest:train `
-  --harmful-source https://raw.githubusercontent.com/llm-attacks/llm-attacks/098262edf85f807224e70ecd87b9d83716bf6b73/data/advbench/harmful_behaviors.csv `
-  --harmless-source tatsu-lab/alpaca:train:instruction `
-  --direction-n 64 `
-  --max-new-tokens 96 `
-  --generation-batch-size 1
+```bash
+export CUDA_VISIBLE_DEVICES=0
+export HF_HOME=/root/autodl-tmp/hf
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+OUT_DIR=/root/autodl-tmp/E-0016-regime-b-confirmatory
+/root/miniconda3/bin/python scripts/run_e0016_ablation_positive_control.py \
+  --backend hf \
+  --preflight-only \
+  --model-id Qwen/Qwen2.5-7B-Instruct \
+  --model-revision a09a35458c702b33eeacc393d103063234e8bc28 \
+  --out-dir "$OUT_DIR" \
+  --seed 20260804 --dev-n 60 --test-n 160 --k 5 \
+  --layers 8,12,16,20 \
+  --xstest-source Paul/XSTest:train \
+  --harmful-source https://raw.githubusercontent.com/llm-attacks/llm-attacks/098262edf85f807224e70ecd87b9d83716bf6b73/data/advbench/harmful_behaviors.csv \
+  --harmless-source tatsu-lab/alpaca:train:instruction \
+  --direction-n 64 --max-new-tokens 96 --generation-batch-size 1
 ```
 
-The output directory must be a new, dedicated, untracked `results\E-0016-*`
-directory. If DEV is underpowered, the command returns
-`INVALID_REGIME_B_UNDERPOWERED` without TEST; that is the frozen stopping rule.
+### 9.3 D-0097 AutoDL DEV only — TEST cannot start
+
+Use the same clean checkout, environment, and `OUT_DIR` after preflight passes:
+
+```bash
+export CUDA_VISIBLE_DEVICES=0
+export HF_HOME=/root/autodl-tmp/hf
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+OUT_DIR=/root/autodl-tmp/E-0016-regime-b-confirmatory
+/root/miniconda3/bin/python scripts/run_e0016_ablation_positive_control.py \
+  --backend hf \
+  --stop-after-dev \
+  --model-id Qwen/Qwen2.5-7B-Instruct \
+  --model-revision a09a35458c702b33eeacc393d103063234e8bc28 \
+  --out-dir "$OUT_DIR" \
+  --seed 20260804 --dev-n 60 --test-n 160 --k 5 \
+  --layers 8,12,16,20 \
+  --xstest-source Paul/XSTest:train \
+  --harmful-source https://raw.githubusercontent.com/llm-attacks/llm-attacks/098262edf85f807224e70ecd87b9d83716bf6b73/data/advbench/harmful_behaviors.csv \
+  --harmless-source tatsu-lab/alpaca:train:instruction \
+  --direction-n 64 --max-new-tokens 96 --generation-batch-size 1
+```
+
+If baseline DEV false-refusal is below `0.25`, the runner returns
+`INVALID_REGIME_B_UNDERPOWERED` and no TEST identity/generation begins. If DEV is
+eligible, it returns `DEV_ELIGIBLE_TEST_NOT_RUN`, persists the selected
+intervention and immutable TEST plan, and still cannot start TEST. A later TEST
+execution requires the existing Manager/audit gates; it is not authorized here.
 
 ## 10. Protocol-to-code mapping
 
 | Frozen element | Code authority |
 |---|---|
-| Model/revision, N/K/layers/tokens/seed/sampling/batch constants | `scripts/run_e0016_ablation_positive_control.py:45-74` |
-| Regime, DEV floor, pass delta, separation | `scripts/run_e0016_ablation_positive_control.py:89-92` |
-| Immutable XSTest/AdvBench/Alpaca specs | `scripts/run_e0016_ablation_positive_control.py:141-176` |
-| Immutable bytes/schema/canonical-row validation | `scripts/run_e0016_ablation_positive_control.py:296-406` |
-| Safe filter and deterministic split | `scripts/run_e0016_ablation_positive_control.py:439-467` |
-| Forward-only contrast extraction and prompt-hash lineage | `scripts/run_e0016_ablation_positive_control.py:480-535` |
-| Source-state and environment lineage | `scripts/run_e0016_ablation_positive_control.py:615-874` |
-| Full frozen identity and immutable TEST identity | `scripts/run_e0016_ablation_positive_control.py:886-1172` |
-| HF exact-config rejection | `scripts/run_e0016_ablation_positive_control.py:1175-1234` |
-| Shared handle and device/dtype resolution | `scripts/run_e0016_ablation_positive_control.py:1237-1266`; `scripts/run_gpu_phase0.py:201-212` |
-| Direction recipe and separation provenance | `scripts/run_e0016_ablation_positive_control.py:1269-1300` |
-| Dtype tolerance and hook-bites assertions | `scripts/run_e0016_ablation_positive_control.py:1372-1444` |
+| Model/revision, N/K/layers/tokens/seed/sampling/batch constants | E-0016 module constants; `assert_hf_frozen_config` |
+| Regime, DEV floor, pass delta, separation | `PRIMARY_REGIME`, `DEV_BASELINE_FLOOR`, `PASS_DELTA`, `SEPARATION_FLOOR` |
+| Immutable XSTest/AdvBench/Alpaca specs | `XSTEST_SPEC`, `HARMFUL_SPEC`, `HARMLESS_SPEC` |
+| Immutable bytes/schema/canonical-row validation | `_load_immutable_hf_rows`, `_parse_immutable_bytes`, `_canonical_rows_sha256` |
+| Safe filter and deterministic split | `_is_xstest_safe`, `load_xstest_items` |
+| Forward-only contrast extraction and prompt-hash lineage | `load_contrast_prompts`, `derive_refusal_direction` |
+| Source-state and environment lineage | `capture_source_state`, `capture_environment_identity`, `initialize_run_environment` |
+| Full frozen identity and immutable TEST identity | `resolved_frozen_run_config`, `finalized_run_identity`, `canonical_test_plan` |
+| HF exact-config rejection | `assert_hf_frozen_config` |
+| Authorized physical GPU/runtime/cache/disk binding | `capture_authorized_hardware_preflight`, `configure_hf_cache_environment`, `check_managed_disk_guard`, `check_cuda_memory_headroom` |
+| Shared fp16 handle and pinned snapshot verification | `build_shared_hf_handles`, `verify_frozen_model_snapshot` |
+| Direction recipe and separation provenance | `derive_refusal_direction` |
+| Dtype tolerance and hook-bites assertions | `dtype_abs_tol`, `assert_ablation_hook_bites` |
 | All-layer projection implementation and hook cleanup | `src/cognitive_console/steering/generate.py:81-107,722-862` |
-| Canonical TEST plan, records, and checkpoints | `scripts/run_e0016_ablation_positive_control.py:1569-1948` |
-| Bounded microbatch generation | `scripts/run_e0016_ablation_positive_control.py:2051-2192` |
-| Eligibility, coherence, pass/partial/fail/invalid matrix | `scripts/run_e0016_ablation_positive_control.py:2195-2244` |
-| DEV selection and lower-layer tie-break | `scripts/run_e0016_ablation_positive_control.py:2511-2567` |
-| Guard-before-generation, STOP-before-TEST, finalized identity, artifacts | `scripts/run_e0016_ablation_positive_control.py:2580-3039` |
-| Exact available CLI | `scripts/run_e0016_ablation_positive_control.py:3042-3097` |
+| Canonical TEST plan, records, and checkpoints | `canonical_test_plan`, `validate_generation_records`, `_load_checkpoint` |
+| Bounded microbatch generation | `eval_hf`; frozen `HF_FROZEN_GENERATION_BATCH_SIZE=1` |
+| Eligibility, coherence, pass/partial/fail/invalid matrix | `dev_eligibility_status`, `coherence_ok`, `pass_rule` |
+| DEV selection and lower-layer tie-break | `select_direction_on_dev` |
+| Guard-before-generation, DEV-only stop, finalized identity, artifacts | `run` |
+| Exact available CLI | `parse_args` |
 | Statistical constants | `src/cognitive_console/experiments/adjudicate_c2b.py:56-65` |
 | Audited behavioral/lineage tests | `tests/test_e0016_ablation_positive_control.py` |
 
@@ -336,8 +394,10 @@ directory. If DEV is underpowered, the command returns
 - No raw harmful text in git or run artifacts.
 - No TEST-informed rerun or parameter change.
 - No paper integration before a real run and independent results audit.
-- No GPU use beyond D-0095's remaining 2.99277778 A800 GPU-hour hard cap.
+- No GPU use beyond D-0095/D-0097's remaining 2.99277778 cumulative GPU-hour
+  hard cap across the two authorized profiles.
 
-**Remaining non-scientific execution gates:** real Regime-B retry and independent
-hostile results audit. No scientific parameter is BLOCKED or left open in this
-Regime-B protocol.
+**Remaining non-scientific execution gates:** independent audit of the D-0097
+operational amendment, recording a new exact clean run commit, real Regime-B
+retry, and independent hostile results audit. No scientific parameter is
+BLOCKED or left open in this Regime-B protocol.

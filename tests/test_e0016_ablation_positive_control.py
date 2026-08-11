@@ -10,6 +10,7 @@ import numpy as np
 import pytest
 from tokenizers import AddedToken
 
+from cognitive_console.activations import provider as activation_provider_module
 from cognitive_console.steering.generate import project_out_direction_array, unit_vector
 from scripts import run_e0016_ablation_positive_control as e0016
 
@@ -253,6 +254,201 @@ def test_default_dataset_sources_are_ungated_choices():
     assert e0016.HARMLESS_SPEC.expected_row_count == 52002
 
 
+@pytest.mark.parametrize(
+    ("name", "total_gib", "expected"),
+    [
+        ("NVIDIA A800 80GB PCIe", 79.1, "nvidia-a800-80gb"),
+        (
+            "NVIDIA GeForce RTX 4080 SUPER",
+            31.9,
+            "autodl-rtx4080-super-32gb",
+        ),
+    ],
+)
+def test_authorized_hardware_profiles_accept_a800_or_autodl_32gb(
+    name, total_gib, expected
+):
+    assert (
+        e0016.select_authorized_hardware_profile(name, total_gib).profile_id
+        == expected
+    )
+
+
+@pytest.mark.parametrize(
+    ("name", "total_gib"),
+    [
+        ("NVIDIA GeForce RTX 4080 SUPER", 15.9),
+        ("NVIDIA RTX 4090", 23.9),
+        ("NVIDIA A100-SXM4-80GB", 79.1),
+    ],
+)
+def test_hardware_profile_rejects_unapproved_name_or_memory(name, total_gib):
+    with pytest.raises(ValueError, match="unauthorized GPU hardware profile"):
+        e0016.select_authorized_hardware_profile(name, total_gib)
+
+
+def test_visible_gpu_binding_maps_exact_physical_identity():
+    rows = e0016._parse_nvidia_smi_rows(
+        "0, GPU-aaa, 00000000:01:00.0, NVIDIA GeForce RTX 4080 SUPER, 32768, 32000\n"
+        "1, GPU-bbb, 00000000:02:00.0, NVIDIA A800 80GB PCIe, 81920, 80000\n"
+    )
+    selected = e0016._select_physical_gpu_row(rows, "0")
+    assert selected["uuid"] == "GPU-aaa"
+    assert selected["pci_bus_id"] == "00000000:01:00.0"
+    with pytest.raises(ValueError, match="did not bind"):
+        e0016._select_physical_gpu_row(rows, "GPU-missing")
+
+
+def test_gpu_visibility_must_bind_exactly_one_device(monkeypatch):
+    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "0,1")
+    with pytest.raises(ValueError, match="exactly one"):
+        e0016._single_visible_gpu_selector()
+
+
+def test_transformers_4442_uses_compatible_torch_dtype_keyword(monkeypatch):
+    monkeypatch.setattr(
+        activation_provider_module.importlib.metadata,
+        "version",
+        lambda name: "4.44.2",
+    )
+    marker = object()
+    assert activation_provider_module._transformers_model_dtype_kwargs(marker) == {
+        "torch_dtype": marker
+    }
+
+
+def test_autodl_cache_paths_are_all_bound_under_hf_home(tmp_path, monkeypatch):
+    hf_home = tmp_path / "hf"
+    out_dir = tmp_path / "E-0016-autodl"
+    profile = e0016.HardwareProfile(
+        profile_id="test-autodl",
+        accepted_name_fragments=("GPU",),
+        min_total_vram_gib=1.0,
+        max_total_vram_gib=None,
+        min_free_before_load_gib=1.0,
+        min_free_after_load_gib=1.0,
+        managed_disk_ceiling_gib=45.0,
+        filesystem_free_reserve_gib=5.0,
+        required_hf_home=hf_home,
+        required_output_root=tmp_path,
+    )
+    monkeypatch.setenv("HF_HOME", str(hf_home))
+    for key in (
+        "HF_HUB_CACHE",
+        "HUGGINGFACE_HUB_CACHE",
+        "TRANSFORMERS_CACHE",
+        "HF_DATASETS_CACHE",
+    ):
+        monkeypatch.delenv(key, raising=False)
+    identity = e0016.configure_hf_cache_environment(profile, out_dir)
+    assert Path(identity["hf_hub_cache"]).parent == hf_home.resolve()
+    assert Path(identity["datasets_cache"]).parent == hf_home.resolve()
+    assert Path(identity["out_dir"]) == out_dir.resolve()
+
+
+def test_disk_guard_hard_fails_at_profile_ceiling(tmp_path, monkeypatch):
+    profile = e0016.HardwareProfile(
+        profile_id="test-disk",
+        accepted_name_fragments=("GPU",),
+        min_total_vram_gib=1.0,
+        max_total_vram_gib=None,
+        min_free_before_load_gib=1.0,
+        min_free_after_load_gib=1.0,
+        managed_disk_ceiling_gib=45.0,
+        filesystem_free_reserve_gib=5.0,
+    )
+    hf_home = tmp_path / "hf"
+    hf_home.mkdir()
+    out_dir = tmp_path / "E-0016-run"
+    monkeypatch.setattr(
+        e0016, "dir_size_bytes", lambda path: int(45 * 1024**3)
+    )
+    with pytest.raises(ValueError, match="hard ceiling"):
+        e0016.check_managed_disk_guard(
+            profile,
+            {"hf_home": str(hf_home)},
+            out_dir,
+            stage="after_model_load",
+        )
+
+
+def test_frozen_snapshot_revision_and_shard_hashes_are_verified(
+    tmp_path, monkeypatch
+):
+    snapshot = tmp_path / e0016.FROZEN_MODEL_REVISION
+    snapshot.mkdir()
+    shard_bytes = {"a.safetensors": b"alpha", "b.safetensors": b"beta"}
+    frozen = {}
+    for name, raw in shard_bytes.items():
+        (snapshot / name).write_bytes(raw)
+        frozen[name] = {"size": len(raw), "sha256": e0016._sha256_bytes(raw)}
+    (snapshot / "model.safetensors.index.json").write_text(
+        json.dumps({"weight_map": {"a": "a.safetensors", "b": "b.safetensors"}}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(e0016, "FROZEN_MODEL_SHARDS", frozen)
+    monkeypatch.setitem(
+        __import__("sys").modules,
+        "huggingface_hub",
+        SimpleNamespace(snapshot_download=lambda **kwargs: str(snapshot)),
+    )
+    identity = e0016.verify_frozen_model_snapshot(
+        model_id=e0016.DEFAULT_MODEL,
+        revision=e0016.FROZEN_MODEL_REVISION,
+        hf_hub_cache=tmp_path,
+        config=SimpleNamespace(_commit_hash=e0016.FROZEN_MODEL_REVISION),
+    )
+    assert identity["resolved_revision"] == e0016.FROZEN_MODEL_REVISION
+    assert identity["all_shard_sha256_verified"] is True
+
+
+def test_raw_harmful_local_source_cannot_live_in_git_worktree(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(e0016, "_REPO", tmp_path)
+    source = tmp_path / "harmful_behaviors.csv"
+    source.write_text("goal,target\n[raw-harmful-sentinel],x\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="forbidden inside the git worktree"):
+        e0016.assert_harmful_local_source_not_in_repo(source)
+    repo_ignore = Path(__file__).resolve().parents[1] / ".gitignore"
+    assert "**/harmful_behaviors.csv" in repo_ignore.read_text(encoding="utf-8")
+
+
+def test_contrast_provenance_contains_hashes_not_raw_harmful_text(tmp_path):
+    source = tmp_path / "contrast.jsonl"
+    source.write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {"prompt": "[raw-harmful-sentinel]", "label": "harmful"}
+                ),
+                json.dumps({"prompt": "Plan a picnic", "label": "harmless"}),
+            ]
+        ),
+        encoding="utf-8",
+    )
+    harmful, _, provenance = e0016.load_contrast_prompts(
+        source,
+        backend="synthetic",
+        harmful_source="unused",
+        harmless_source="unused",
+        direction_n=1,
+    )
+    assert harmful == ["[raw-harmful-sentinel]"]
+    assert "[raw-harmful-sentinel]" not in json.dumps(provenance)
+    assert provenance["raw_harmful_prompts_committed"] is False
+
+
+def test_preflight_and_dev_only_flags_do_not_change_frozen_science_identity(
+    tmp_path,
+):
+    preflight = _frozen_hf_args(tmp_path, "--preflight-only")
+    dev_only = _frozen_hf_args(tmp_path, "--stop-after-dev")
+    assert e0016.pre_load_eligibility_config(
+        preflight
+    ) == e0016.pre_load_eligibility_config(dev_only)
+
+
 def _frozen_hf_args(tmp_path, *extra):
     return e0016.parse_args(
         [
@@ -379,11 +575,56 @@ def test_hf_hook_bites_are_persisted_before_first_dev_generation(
             }
 
     hook_backend = HookBackend()
+    operational_identity = {
+        "profile_id": "nvidia-a800-80gb",
+        "cuda_visible_devices": "0",
+        "logical_device": "cuda:0",
+        "physical_gpu": {
+            "physical_index": 0,
+            "uuid": "GPU-test",
+            "pci_bus_id": "00000000:01:00.0",
+            "name": "NVIDIA A800 80GB PCIe",
+            "total_memory_mib": 81920,
+            "free_memory_mib": 80000,
+            "torch_device_name": "NVIDIA A800 80GB PCIe",
+            "torch_total_vram_gib": 80.0,
+            "compute_capability": [8, 0],
+        },
+        "runtime": {
+            "python": "3.12.0",
+            "torch": "2.8.0",
+            "torch_cuda_runtime": "12.8",
+            "transformers": "4.44.2",
+        },
+        "cuda_allocator": {
+            "environment_variable": "PYTORCH_CUDA_ALLOC_CONF",
+            "value": "expandable_segments:True",
+        },
+        "cache": {
+            "hf_home": str(tmp_path / "hf"),
+            "hf_hub_cache": str(tmp_path / "hf" / "hub"),
+            "transformers_cache": str(tmp_path / "hf" / "hub"),
+            "datasets_cache": str(tmp_path / "hf" / "datasets"),
+            "out_dir": str(tmp_path),
+            "managed_disk_ceiling_gib": 70.0,
+            "filesystem_free_reserve_gib": 5.0,
+        },
+        "disk_policy": {
+            "managed_hard_ceiling_gib": 70.0,
+            "filesystem_free_reserve_gib": 5.0,
+        },
+        "model_snapshot": {
+            "requested_revision": e0016.FROZEN_MODEL_REVISION,
+            "resolved_revision": e0016.FROZEN_MODEL_REVISION,
+            "all_shard_sha256_verified": True,
+        },
+    }
     handles = e0016.SharedHFHandles(
         provider=Provider(),
         hook_backend=hook_backend,
         device="cpu",
         dtype="float32",
+        operational_preflight=operational_identity,
     )
     bundles = [
         e0016.DirectionBundle(
@@ -406,6 +647,29 @@ def test_hf_hook_bites_are_persisted_before_first_dev_generation(
         lambda *a, **k: (["harm"] * 64, ["safe"] * 64, cprov),
     )
     monkeypatch.setattr(e0016, "build_shared_hf_handles", lambda *a, **k: handles)
+    monkeypatch.setattr(
+        e0016,
+        "capture_authorized_hardware_preflight",
+        lambda: (e0016.AUTHORIZED_HARDWARE_PROFILES[0], operational_identity),
+    )
+    monkeypatch.setattr(
+        e0016, "configure_cuda_allocator_environment", lambda: "test"
+    )
+    monkeypatch.setattr(
+        e0016,
+        "configure_hf_cache_environment",
+        lambda *a, **k: operational_identity["cache"],
+    )
+    monkeypatch.setattr(
+        e0016,
+        "check_managed_disk_guard",
+        lambda *a, stage, **k: {"stage": stage},
+    )
+    monkeypatch.setattr(
+        e0016,
+        "check_cuda_memory_headroom",
+        lambda *a, stage, **k: {"stage": stage},
+    )
     monkeypatch.setattr(e0016, "derive_refusal_direction", lambda *a, **k: bundles)
     monkeypatch.setattr(e0016, "assert_real_not_smoke", lambda *a, **k: None)
 
@@ -1659,7 +1923,7 @@ def test_cpu_hf_environment_identity_accepts_real_pretrained_config(monkeypatch)
         hook_backend=backend,
     )
 
-    assert identity["schema_version"] == 3
+    assert identity["schema_version"] == 4
     assert identity["environment_identity_hash"].startswith("sha256:")
     assert identity["hf_runtime"]["tokenizer_config"]["bytes"] > 0
 

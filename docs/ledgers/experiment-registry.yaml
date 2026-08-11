@@ -1191,13 +1191,18 @@ experiments:
   claim_ids:
   - C2b
   type: confirmatory_positive_control
-  status: retry_authorized_pending_real_regime_b_run
-  code_commit: c094f07fa3592c2210f46caba9e69c49a5a92fad
+  status: operational_amendment_draft_owner_authorized_pending_audit_no_run
+  code_commit: null
+  previous_audited_retry_commit: c094f07fa3592c2210f46caba9e69c49a5a92fad
+  operational_amendment_base_commit: b61601d1785a28a28c13373a533c3aa8da344ee9
+  operational_amendment_branch: run/e0016-retry-lineage
+  operational_amendment_commit: pending_after_implementation
   harness_commit: 4513820a679408b071984b8500cc9c5636255a49
   protocol_file: docs/research/2026-08-04-ablation-positive-control/prereg-e0016-FROZEN.md
   protocol_candidate_commit: c36a438977ae51be5172587e900811508fe77468
   protocol_audit: sound
-  run_commit: c094f07fa3592c2210f46caba9e69c49a5a92fad
+  operational_amendment_audit: pending
+  run_commit: null
   dirty_tree: null
   data_hash: null
   env_hash: null
@@ -1205,8 +1210,8 @@ experiments:
   model: Qwen/Qwen2.5-7B-Instruct
   dataset: Regime B default Paul/XSTest train safe-filtered prompts for generation; harmful direction side default ungated llm-attacks AdvBench harmful_behaviors.csv raw URL; harmless side default tatsu-lab/alpaca train instructions; harmful-vs-harmless contrast used forward-pass-only, raw harmful prompts uncommitted
   seed: 20260804
-  hardware: A800, any free GPU without interfering with other users; hard cap 3 GPU-hours
-  gpu_owner_budget_authorization: approved_2026-08-05_max_3_gpu_hours
+  hardware: either A800 80GB or owner-authorized AutoDL NVIDIA GeForce RTX 4080 SUPER 32 GiB; exactly one visible physical GPU; hard cap 3 cumulative GPU-hours
+  gpu_owner_budget_authorization: D-0095 plus D-0097 alternate-host authorization; no added hours
   attempts:
   - attempt_id: attempt-1
     status: valid_pre_dev_infra_failure_superseded_for_retry
@@ -1227,19 +1232,34 @@ experiments:
     raw_harmful_text_committed: false
     valid_for_paper: false
   - attempt_id: retry
-    status: authorized_pending_real_regime_b_run_and_results_audit
-    run_commit: c094f07fa3592c2210f46caba9e69c49a5a92fad
-    code_commit: c094f07fa3592c2210f46caba9e69c49a5a92fad
+    status: operational_amendment_draft_pending_audit_and_exact_run_commit
+    run_commit: null
+    code_commit: null
     serialization_fix_commits:
     - 75834b1f5913933ac412f93d5d41a44a58868060
     - fa58dcf5c739e7d89b36e6af7694e9ea0df84d27
     serialization_fix_audit: sound
-    environment_identity_schema_version: 3
-    owner_authorization: D-0095
+    serialization_fix_environment_identity_schema_version: 3
+    operational_environment_identity_schema_version: 4
+    owner_authorization: D-0095/D-0097
     owner_authorization_still_valid: true
-    remaining_a800_gpu_hours_hard_cap: 2.99277778
+    authorized_hardware_profiles:
+    - nvidia-a800-80gb
+    - autodl-rtx4080-super-32gb
+    autodl_runtime:
+      cuda_visible_devices: '0'
+      python: /root/miniconda3 python 3.12
+      torch: 2.8.0+cu128
+      transformers: 4.44.2
+      hf_home: /root/autodl-tmp/hf
+      output_root: /root/autodl-tmp
+      managed_disk_hard_ceiling_gib: 45
+      qwen_revision: a09a35458c702b33eeacc393d103063234e8bc28
+    remaining_gpu_hours_hard_cap: 2.99277778
     protocol_changed: false
     pending_gates:
+    - independent_operational_amendment_audit
+    - exact_clean_run_commit_recorded
     - real_regime_b_run
     - independent_hostile_results_audit
   started_at: null
@@ -1258,7 +1278,10 @@ experiments:
   - raw_harmful_text_in_git_or_artifacts
   - test_informed_protocol_changes
   - gpu_execution_without_owner_budget_approval
+  - gpu_execution_from_unaudited_operational_amendment
   pending_gates:
+  - independent_operational_amendment_audit
+  - exact_clean_run_commit_recorded
   - real_regime_b_run
   - independent_hostile_results_audit
   validation_notes: >-
@@ -1269,10 +1292,13 @@ experiments:
     findings. Attempt 1 at the former exact run commit 4def9ba failed before DEV
     because an AddedToken in tokenizer configuration was not JSON serializable;
     the failure is valid lineage but is not paper evidence. The audited canonical
-    serialization repair is merged at c094f07, now the exact retry run/code commit,
-    with no scientific-parameter or protocol drift. Owner authorization D-0095
-    remains valid within its original 3 A800 GPU-hour hard cap; 0.00722222 GPU-h
-    was consumed, leaving at most 2.99277778 GPU-h. DEV baseline
+    serialization repair is merged at c094f07, the previous exact retry commit.
+    D-0097 owner-authorizes an alternate AutoDL RTX 4080 SUPER 32 GiB hardware
+    profile without changing science or adding GPU-hours. The operational
+    amendment is DRAFT pending independent audit and a new exact clean run
+    commit; no GPU/DEV/TEST run has occurred from it. D-0095/D-0097 retain the
+    original 3 cumulative GPU-hour hard cap; 0.00722222 GPU-h was consumed,
+    leaving at most 2.99277778 GPU-h. DEV baseline
     false-refusal must be >=0.25 or the runner emits
     INVALID_REGIME_B_UNDERPOWERED and stops before TEST. Harmful prompts are
     forward-pass-only direction inputs. Regime A is excluded and requires a new

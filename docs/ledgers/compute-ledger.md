@@ -13,4 +13,4 @@
 - max_full_runs: TBD (human)
 - max_pivot_count: 2 (then mandatory human review)
 
-- E-0016 D-0095 authorized cap: 3 A800 GPU-hours; consumed upper bound 0.00722222 GPU-h before the valid pre-DEV failure. Retry is authorized under unchanged protocol/run commit `c094f07fa3592c2210f46caba9e69c49a5a92fad` with a remaining hard cap of 2.99277778 A800 GPU-hours; no retry has yet been performed.
+- E-0016 D-0095/D-0097 authorized cap: 3 total GPU-hours across either the A800 profile or the owner-authorized AutoDL RTX 4080 SUPER 32 GiB profile; consumed upper bound 0.00722222 GPU-h before the valid pre-DEV failure. The remaining cumulative hard cap is 2.99277778 GPU-hours. D-0097 adds no hours; the operational amendment is DRAFT pending audit and a new exact run commit. No retry has yet been performed.

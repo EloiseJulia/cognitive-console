@@ -35,11 +35,11 @@ The current worked application compares steering **instead of** the bounded prom
 | Steering-only comparator | `S`: neutral prompt plus the selected steer |
 | Neutral/baseline condition | `N`: frozen neutral prompt, no steer |
 | Selection budget and DEV rule | N=96/axis; prompt best-of-16; alpha grid 7; all selection DEV-only |
-| TEST freeze and access control | Fresh TEST outside original C2 pool; sealed IDs; one-use audited authorization |
+| TEST freeze and access control | Fresh TEST outside original C2 pool; TEST loads only the verified sealed DEV selection; its hash, DEV commit, and exact B=10000 are bound into one-use audited authorization |
 | Outcome, margin, coherence rule | Frozen C2 outcomes; primary `PS-P`; delta=.05; two-context 1.5x+0.02 |
 | Missing/failure handling | Shared strict parser; uncertainty needs explicit answer+confidence, skepticism an explicit valid option cue; failures score 0 and remain recorded; token-level cap metadata; checkpoint resume |
 | Multiplicity and uncertainty | Item-cluster B=10000; 98.33% Bonferroni primary and interaction families; interaction is secondary and cannot establish utility when `PS-P` fails |
-| Operational freeze | Backend/attempt separation; immutable DEV/TEST seals; TEST HEAD exactly equals DEV; explicit HF model/tokenizer/dataset caches; fixed 60/70 GiB guards, 600 s watchdog, one retry, persisted physical-generation hard cap |
+| Operational freeze | Backend/attempt separation; immutable recoverable DEV/TEST seals with staged experiment records and deduped registry repair; TEST HEAD exactly equals DEV; all caches under HF_HOME and every non-overlapping artifact-growth root guarded; fixed 60/70 GiB guards, 600 s watchdog, one retry, persisted physical-generation hard cap |
 
 Synthetic execution is `SMOKE_ONLY`: it cannot create a scientific verdict,
 confirmatory registry entry, C2 claim manifest, or evidence claim.

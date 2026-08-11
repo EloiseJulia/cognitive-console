@@ -1085,6 +1085,7 @@ def frozen_protocol_dict() -> Dict[str, object]:
             ),
         },
         "bootstrap_b": BOOTSTRAP_B,
+        "bootstrap_rule": "real HF DEV/TEST requires exactly B=10000",
         "primary_ci_level": PRIMARY_CI_LEVEL,
         "interaction_ci_level": INTERACTION_CI_LEVEL,
         "equivalence_ci_level": EQUIVALENCE_CI_LEVEL,
@@ -1109,5 +1110,13 @@ def frozen_protocol_dict() -> Dict[str, object]:
             "C2 claim manifest, or evidence upgrade"
         ),
         "test_head_rule": "TEST HEAD must exactly equal the DEV commit",
+        "selection_rule": (
+            "TEST loads only verified DEV-seal/dev_selection.json and matches "
+            "its selection hash to the seal identity"
+        ),
+        "disk_guard_scope": (
+            "non-overlapping roots cover the full backend artifact tree plus "
+            "external HF_HOME/venv growth"
+        ),
         "test_rule": "TEST is generated once after external hostile-audit authorization",
     }

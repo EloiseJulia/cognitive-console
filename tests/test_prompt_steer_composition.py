@@ -156,6 +156,9 @@ def test_protocol_keeps_original_frozen_settings():
     assert protocol["disk_budget_gb"] == 60.0
     assert protocol["disk_ceiling_gb"] == 70.0
     assert protocol["stall_timeout_seconds"] == 600.0
+    assert protocol["bootstrap_rule"] == "real HF DEV/TEST requires exactly B=10000"
+    assert "verified DEV-seal" in protocol["selection_rule"]
+    assert "full backend artifact tree" in protocol["disk_guard_scope"]
     assert C.PRIMARY_CI_LEVEL == pytest.approx(1.0 - 0.05 / 3.0)
 
 

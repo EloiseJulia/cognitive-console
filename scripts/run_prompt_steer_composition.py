@@ -39,7 +39,7 @@ from cognitive_console.experiments import adjudicate_c2b as c2
 from cognitive_console.experiments import prompt_steer_composition as comp
 from cognitive_console.lineage import git_commit, new_experiment_id, utcnow
 from cognitive_console.manifest import ArtifactManifest, write_manifest
-from cognitive_console.ops.disk_guard import DiskBudgetError, check_disk_budget, default_guard_paths
+from cognitive_console.ops.disk_guard import DiskBudgetError, check_disk_budget
 from cognitive_console.registry import ExperimentRecord, ExperimentRegistry
 from cognitive_console.steering.generate import (
     GenerationResult,
@@ -220,7 +220,7 @@ def _cache_layout(paths: RunPaths, hf_home: Optional[str]) -> Dict[str, str]:
         "hub_cache": str(root / "hub"),
         "datasets_cache": str(root / "datasets"),
         "transformers_cache": str(root / "transformers"),
-        "activation_cache": str(paths.backend_root / "cache" / "activations"),
+        "activation_cache": str(root / "activations"),
     }
     for value in layout.values():
         Path(value).mkdir(parents=True, exist_ok=True)
@@ -231,6 +231,34 @@ def _cache_layout(paths: RunPaths, hf_home: Optional[str]) -> Dict[str, str]:
     os.environ["TRANSFORMERS_CACHE"] = layout["transformers_cache"]
     os.environ["COGNITIVE_CONSOLE_ACT_CACHE"] = layout["activation_cache"]
     return layout
+
+
+def _guarded_growth_paths(
+    paths: RunPaths,
+    cache_layout: Dict[str, str],
+    venv: Optional[str],
+) -> List[str]:
+    candidates = [
+        paths.backend_root.resolve(),
+        Path(cache_layout["hf_home"]).resolve(),
+    ]
+    resolved_venv = venv or os.environ.get("VIRTUAL_ENV")
+    if resolved_venv:
+        candidates.append(Path(resolved_venv).resolve())
+
+    unique: List[Path] = []
+    for candidate in candidates:
+        if candidate not in unique:
+            unique.append(candidate)
+    guarded: List[Path] = []
+    for candidate in unique:
+        if any(
+            candidate != other and candidate.is_relative_to(other)
+            for other in unique
+        ):
+            continue
+        guarded.append(candidate)
+    return [str(path) for path in guarded]
 
 
 def _code_identity() -> Dict[str, object]:
@@ -263,13 +291,19 @@ def selection_hash(payload: Dict) -> str:
 
 
 def test_config_fingerprint(selection: Dict, bootstrap_b: int) -> str:
+    sealed_bootstrap_b = int(selection["bootstrap_b"])
+    if int(bootstrap_b) != sealed_bootstrap_b:
+        raise ValueError(
+            "TEST bootstrap_b differs from the DEV-sealed value: "
+            f"{bootstrap_b} != {sealed_bootstrap_b}"
+        )
     return comp.canonical_hash(
         {
             "protocol_id": comp.PROTOCOL_ID,
             "selection_hash": selection["selection_hash"],
             "phase": "TEST",
             "backend": selection["backend"],
-            "bootstrap_b": int(bootstrap_b),
+            "bootstrap_b": sealed_bootstrap_b,
             "operational_limits": frozen_operational_limits(),
         }
     )
@@ -1139,6 +1173,7 @@ def write_authorization_template(path: Path, selection: Dict) -> None:
         "protocol_id": comp.PROTOCOL_ID,
         "selection_hash": selection["selection_hash"],
         "protocol_commit": selection["code_commit"],
+        "bootstrap_b": int(selection["bootstrap_b"]),
         "authorization_id": "",
         "authorized_by": "",
         "authorized_at": "",
@@ -1163,6 +1198,7 @@ def validate_test_authorization(path: Path, selection: Dict) -> Dict:
         "protocol_id": comp.PROTOCOL_ID,
         "selection_hash": selection["selection_hash"],
         "protocol_commit": selection["code_commit"],
+        "bootstrap_b": int(selection["bootstrap_b"]),
         "hostile_audit_verdict": "PASS",
         "budget_status": "approved",
         "test_authorized": True,
@@ -1349,25 +1385,109 @@ def update_test_marker(marker: Path, status: str) -> None:
     _atomic_json(marker, payload)
 
 
+def _record_dev_finalization_failure(
+    paths: RunPaths,
+    *,
+    selection_hash_value: Optional[str],
+    config_fingerprint: Optional[str],
+    exc: BaseException,
+) -> Path:
+    failure_path = paths.dev_attempt / "finalization_failure.json"
+    _atomic_json(
+        failure_path,
+        {
+            "phase": "DEV_FINALIZATION",
+            "selection_hash": selection_hash_value,
+            "config_fingerprint": config_fingerprint,
+            "failure_reason": f"{type(exc).__name__}: {exc}",
+            "recorded_at": utcnow(),
+        },
+    )
+    return failure_path
+
+
+def _register_recorded_dev_finalization_failure(
+    paths: RunPaths,
+    *,
+    backend: str,
+) -> None:
+    failure_path = paths.dev_attempt / "finalization_failure.json"
+    if not failure_path.exists():
+        return
+    payload = json.loads(failure_path.read_text(encoding="utf-8"))
+    _register_failure(
+        registry_path=paths.registry,
+        prefix="e0017-composition-dev-finalization",
+        run_type="diagnostic",
+        cfg_hash=str(payload.get("config_fingerprint") or "unknown"),
+        backend=backend,
+        artifact=failure_path,
+        started_at=str(payload.get("recorded_at") or utcnow()),
+        dirty_tree_at_start=_git_dirty(),
+        summary={
+            "phase": "DEV_FINALIZATION",
+            "selection_hash": payload.get("selection_hash"),
+        },
+        validation_notes=(
+            "DEV seal was published but registry mirroring failed; the failure "
+            "was preserved and the sealed record was repaired idempotently."
+        ),
+        failure_reason=str(payload.get("failure_reason") or "unknown"),
+        scientific=backend == "hf",
+    )
+
+
 def _run_dev(args) -> int:
     paths = _run_paths(Path(args.out_dir), args.backend)
     paths.backend_root.mkdir(parents=True, exist_ok=True)
     cache_layout = _cache_layout(paths, args.hf_home)
     if paths.dev_sealed.exists():
-        _verify_seal(paths.dev_sealed)
+        dev_seal = _verify_seal(paths.dev_sealed)
         selection_path = paths.dev_sealed / "dev_selection.json"
         selection = json.loads(selection_path.read_text(encoding="utf-8"))
         current_identity = _code_identity()
+        current_guard_paths = _guarded_growth_paths(
+            paths,
+            cache_layout,
+            args.venv,
+        )
         if (
             selection.get("backend") != args.backend
             or Path(str(selection.get("out_dir"))).resolve() != paths.root
             or selection.get("code_commit") != current_identity["commit"]
             or selection.get("source_hashes") != current_identity["source_hashes"]
+            or int(selection.get("bootstrap_b", -1)) != int(args.bootstrap_b)
+            or selection.get("cache_layout") != cache_layout
+            or selection.get("guarded_growth_paths") != current_guard_paths
+            or (dev_seal.get("identity") or {}).get("selection_hash")
+            != selection.get("selection_hash")
         ):
             raise SystemExit("[composition] immutable DEV seal identity mismatch")
+        try:
+            exp_id = _mirror_sealed_registry_record(
+                paths.registry,
+                paths.dev_sealed,
+            )
+            _register_recorded_dev_finalization_failure(
+                paths,
+                backend=args.backend,
+            )
+        except BaseException as exc:
+            _record_dev_finalization_failure(
+                paths,
+                selection_hash_value=selection.get("selection_hash"),
+                config_fingerprint=selection.get("effective_config_fingerprint"),
+                exc=exc,
+            )
+            print(
+                f"[composition] DEV registry finalization failed: "
+                f"{type(exc).__name__}: {exc}",
+                flush=True,
+            )
+            return 5
         print(
             f"[composition] DEV already sealed at {_rel(paths.dev_sealed)}; "
-            "leaving it unchanged",
+            f"registry={exp_id}; leaving it unchanged",
             flush=True,
         )
         return 0
@@ -1388,7 +1508,7 @@ def _run_dev(args) -> int:
     paths.dev_attempt.mkdir(parents=True, exist_ok=True)
     started_at = utcnow()
 
-    guard_paths = default_guard_paths(cache_layout["hf_home"], args.venv)
+    guard_paths = _guarded_growth_paths(paths, cache_layout, args.venv)
     if args.backend == "hf":
         usage = check_disk_budget(
             guard_paths,
@@ -1425,6 +1545,8 @@ def _run_dev(args) -> int:
         },
         "operational_limits": frozen_operational_limits(),
         "cache_layout": cache_layout,
+        "guarded_growth_paths": guard_paths,
+        "bootstrap_b": int(args.bootstrap_b),
         "model_revision_expected": comp.FROZEN_MODEL_REVISION,
     }
     dev_request_hash = comp.canonical_hash(request_identity)
@@ -1620,6 +1742,7 @@ def _run_dev(args) -> int:
         "completed_at": utcnow(),
         "preliminary_config_hash": preliminary_hash,
         "effective_config_fingerprint": dev_request_hash,
+        "bootstrap_b": int(args.bootstrap_b),
         "direction_artifact": {
             "path": _rel(paths.dev_sealed / "directions.npz"),
             "sha256": direction_hash,
@@ -1635,25 +1758,10 @@ def _run_dev(args) -> int:
         "identity": identity,
         "operational_limits": frozen_operational_limits(),
         "cache_layout": cache_layout,
+        "guarded_growth_paths": guard_paths,
         "generation_accounting": generation_budget.to_dict(),
     }
     payload["selection_hash"] = selection_hash(payload)
-    staged_selection = staging / "dev_selection.json"
-    _atomic_json(staged_selection, payload)
-    write_authorization_template(
-        staging / "test_authorization.template.json",
-        payload,
-    )
-    _publish_sealed_directory(
-        staging,
-        paths.dev_sealed,
-        identity={
-            "selection_hash": payload["selection_hash"],
-            "config_fingerprint": dev_request_hash,
-            "code_commit": start_identity["commit"],
-        },
-    )
-    selection_path = paths.dev_sealed / "dev_selection.json"
     summary = {
         "data_hash": comp.canonical_hash(
             {axis: pools[axis].data_hash for axis in comp.AXES}
@@ -1664,24 +1772,103 @@ def _run_dev(args) -> int:
         "scientific_status": payload["scientific_status"],
         "generation_accounting": generation_budget.to_dict(),
     }
-    exp_id = _register(
-        registry_path=paths.registry,
-        prefix="e0017-composition-dev",
-        run_type="diagnostic",
-        status="done",
-        cfg_hash=payload["selection_hash"],
-        backend=args.backend,
-        artifact=selection_path,
-        started_at=started_at,
-        dirty_tree_at_start=dirty_tree_at_start,
-        summary=summary,
-        validation_notes=(
-            "SMOKE_ONLY synthetic pipeline validation; no scientific verdict."
-            if args.backend == "synthetic"
-            else "DEV-only prompt/alpha/power selection; TEST was not generated."
-        ),
-        scientific=args.backend == "hf",
-    )
+    try:
+        registry = ExperimentRegistry(str(paths.registry))
+        existing = next(
+            (
+                row
+                for row in registry.load()
+                if str(row.get("experiment_id", "")).startswith(
+                    "e0017-composition-dev-"
+                )
+                and row.get("config_hash") == payload["selection_hash"]
+                and row.get("status") == "done"
+            ),
+            None,
+        )
+        exp_id = (
+            str(existing["experiment_id"])
+            if existing is not None
+            else new_experiment_id(
+                registry,
+                "e0017-composition-dev",
+                payload["selection_hash"],
+            )
+        )
+        record = ExperimentRecord(
+            experiment_id=exp_id,
+            hypothesis_id="H4" if args.backend == "hf" else None,
+            claim_ids=["C2"] if args.backend == "hf" else [],
+            type="diagnostic",
+            status="done",
+            code_commit=str(start_identity["commit"]),
+            dirty_tree=dirty_tree_at_start,
+            data_hash=summary["data_hash"],
+            env_hash=_env_hash(),
+            config_hash=payload["selection_hash"],
+            model=(
+                comp.FROZEN_MODEL
+                if args.backend == "hf"
+                else "synthetic-offline"
+            ),
+            dataset=(
+                "fresh TEST outside original C2 first-N pool; "
+                "original C2 DEV reused only on DEV"
+                if args.backend == "hf"
+                else "bundled synthetic fixtures; SMOKE_ONLY"
+            ),
+            seed=comp.SEED,
+            hardware=(
+                f"{p0._pick_device()}-{p0._pick_dtype()}"
+                if args.backend == "hf"
+                else "cpu-offline"
+            ),
+            started_at=started_at,
+            ended_at=utcnow(),
+            exit_code=0,
+            summary_metrics=summary,
+            artifacts=[_rel(paths.dev_sealed / "dev_selection.json")],
+            valid_for_paper=False,
+            validation_notes=(
+                "SMOKE_ONLY synthetic pipeline validation; no scientific verdict."
+                if args.backend == "synthetic"
+                else "DEV-only prompt/alpha/power selection; TEST was not generated."
+            ),
+        )
+        _atomic_json(staging / "dev_selection.json", payload)
+        write_authorization_template(
+            staging / "test_authorization.template.json",
+            payload,
+        )
+        _atomic_json(
+            staging / "experiment_record.json",
+            record.to_ordered_dict(),
+        )
+        _publish_sealed_directory(
+            staging,
+            paths.dev_sealed,
+            identity={
+                "selection_hash": payload["selection_hash"],
+                "config_fingerprint": dev_request_hash,
+                "code_commit": start_identity["commit"],
+                "bootstrap_b": int(args.bootstrap_b),
+                "experiment_id": exp_id,
+            },
+        )
+        _mirror_sealed_registry_record(paths.registry, paths.dev_sealed)
+    except BaseException as exc:
+        _record_dev_finalization_failure(
+            paths,
+            selection_hash_value=payload.get("selection_hash"),
+            config_fingerprint=dev_request_hash,
+            exc=exc,
+        )
+        print(
+            f"[composition] DEV finalization failed: "
+            f"{type(exc).__name__}: {exc}",
+            flush=True,
+        )
+        return 5
     print(
         f"[composition] DEV complete: eligible={payload['eligible_axes']} "
         f"selection={payload['selection_hash']} exp={exp_id}",
@@ -1734,13 +1921,18 @@ def _run_test_impl(args) -> int:
 
     start_identity = _code_identity()
     dirty_tree_at_start = bool(start_identity["dirty"])
-    _verify_seal(paths.dev_sealed)
-    selection_path = Path(
-        args.selection_json or paths.dev_sealed / "dev_selection.json"
-    ).resolve()
+    dev_seal = _verify_seal(paths.dev_sealed)
+    selection_path = (paths.dev_sealed / "dev_selection.json").resolve()
     selection = json.loads(selection_path.read_text(encoding="utf-8"))
     if selection_hash(selection) != selection.get("selection_hash"):
         raise SystemExit("[composition] DEV selection artifact identity is invalid")
+    if (
+        (dev_seal.get("identity") or {}).get("selection_hash")
+        != selection.get("selection_hash")
+    ):
+        raise SystemExit(
+            "[composition] DEV selection hash differs from the verified seal identity"
+        )
     if selection.get("protocol_id") != comp.PROTOCOL_ID:
         raise SystemExit("[composition] selection protocol mismatch")
     if not selection.get("eligible_axes"):
@@ -1757,6 +1949,9 @@ def _run_test_impl(args) -> int:
         raise SystemExit("[composition] TEST backend directory differs from DEV")
     if cache_layout != selection.get("cache_layout"):
         raise SystemExit("[composition] TEST cache layout differs from DEV")
+    guard_paths = _guarded_growth_paths(paths, cache_layout, args.venv)
+    if guard_paths != selection.get("guarded_growth_paths"):
+        raise SystemExit("[composition] TEST guarded growth paths differ from DEV")
     if start_identity["commit"] != selection.get("code_commit"):
         raise SystemExit(
             "[composition] TEST HEAD must exactly equal the DEV commit"
@@ -1768,16 +1963,19 @@ def _run_test_impl(args) -> int:
     if args.backend == "hf":
         if dirty_tree_at_start:
             raise SystemExit("[composition] HF TEST requires a clean committed tree")
-    if args.bootstrap_b < comp.BOOTSTRAP_B and args.backend == "hf":
+    if args.backend == "hf" and args.bootstrap_b != comp.BOOTSTRAP_B:
         raise SystemExit(
-            f"[composition] real TEST requires bootstrap B>={comp.BOOTSTRAP_B}"
+            f"[composition] real TEST requires bootstrap B=={comp.BOOTSTRAP_B}"
+        )
+    if int(args.bootstrap_b) != int(selection.get("bootstrap_b", -1)):
+        raise SystemExit(
+            "[composition] TEST bootstrap B differs from the DEV-sealed value"
         )
     if not args.test_authorization_file:
         raise SystemExit("[composition] TEST requires --test-authorization-file")
     auth_path = Path(args.test_authorization_file).resolve()
     authorization = validate_test_authorization(auth_path, selection)
 
-    guard_paths = default_guard_paths(cache_layout["hf_home"], args.venv)
     if args.backend == "hf":
         usage = check_disk_budget(
             guard_paths,
@@ -2214,7 +2412,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--phase", choices=["dev", "test"], required=True)
     parser.add_argument("--backend", choices=["synthetic", "hf"], default="synthetic")
     parser.add_argument("--out-dir", default=str(DEFAULT_OUT_DIR))
-    parser.add_argument("--selection-json", default=None)
     parser.add_argument("--test-authorization-file", default=None)
     parser.add_argument("--bootstrap-b", type=int, default=comp.BOOTSTRAP_B)
     parser.add_argument("--fresh", action="store_true")
@@ -2229,9 +2426,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = build_parser().parse_args(argv)
     if args.bootstrap_b < 1:
         raise SystemExit("--bootstrap-b must be >=1")
-    if args.backend == "hf" and args.bootstrap_b < comp.BOOTSTRAP_B:
+    if args.backend == "hf" and args.bootstrap_b != comp.BOOTSTRAP_B:
         raise SystemExit(
-            f"real run requires --bootstrap-b >= {comp.BOOTSTRAP_B}"
+            f"real run requires --bootstrap-b == {comp.BOOTSTRAP_B}"
         )
     if args.backend == "synthetic":
         if args.smoke_dev_n < 2 or args.smoke_test_n < 2:

@@ -30,6 +30,56 @@ def test_parser_requires_explicit_phase():
         R.build_parser().parse_args([])
 
 
+def test_external_unsealed_selection_override_is_rejected(tmp_path):
+    out_dir = tmp_path / "out"
+    assert R.main(
+        ["--phase", "dev", "--backend", "synthetic", "--out-dir", str(out_dir)]
+    ) == 0
+    paths = _paths(out_dir)
+    external = tmp_path / "external-dev-selection.json"
+    external.write_bytes(
+        (paths.dev_sealed / "dev_selection.json").read_bytes()
+    )
+    with pytest.raises(SystemExit):
+        R.main(
+            [
+                "--phase",
+                "test",
+                "--backend",
+                "synthetic",
+                "--out-dir",
+                str(out_dir),
+                "--selection-json",
+                str(external),
+            ]
+        )
+
+
+def test_test_rejects_selection_hash_not_matching_seal_identity(tmp_path):
+    out_dir = tmp_path / "seal-identity"
+    assert R.main(
+        ["--phase", "dev", "--backend", "synthetic", "--out-dir", str(out_dir)]
+    ) == 0
+    paths = _paths(out_dir)
+    seal_path = paths.dev_sealed / "SEAL.json"
+    seal = json.loads(seal_path.read_text(encoding="utf-8"))
+    seal["identity"]["selection_hash"] = "sha256:" + ("0" * 64)
+    seal_path.write_text(json.dumps(seal), encoding="utf-8")
+    with pytest.raises(SystemExit, match="verified seal identity"):
+        R.main(
+            [
+                "--phase",
+                "test",
+                "--backend",
+                "synthetic",
+                "--out-dir",
+                str(out_dir),
+                "--test-authorization-file",
+                str(paths.backend_root / "unused.json"),
+            ]
+        )
+
+
 def test_test_rejects_unapproved_template(tmp_path):
     out_dir = tmp_path / "composition_locked"
     assert R.main(
@@ -95,8 +145,6 @@ def test_synthetic_dev_then_authorized_test_once(tmp_path):
         "200",
         "--out-dir",
         str(out_dir),
-        "--selection-json",
-        str(paths.dev_sealed / "dev_selection.json"),
         "--test-authorization-file",
         str(auth_path),
     ]
@@ -205,7 +253,7 @@ def test_authorization_copy_cannot_bypass_fixed_out_dir_marker(tmp_path):
         )
 
 
-def test_checkpoint_fingerprint_is_part_of_test_once_identity(tmp_path):
+def test_bootstrap_is_part_of_test_once_identity(tmp_path):
     out_dir = tmp_path / "fp"
     assert R.main(
         [
@@ -231,13 +279,8 @@ def test_checkpoint_fingerprint_is_part_of_test_once_identity(tmp_path):
         paths.backend_root,
         R.test_config_fingerprint(selection, 100),
     )
-    with pytest.raises(SystemExit, match="already consumed"):
-        R.reserve_test_once(
-            auth_path,
-            selection,
-            paths.backend_root,
-            R.test_config_fingerprint(selection, 200),
-        )
+    with pytest.raises(ValueError, match="DEV-sealed value"):
+        R.test_config_fingerprint(selection, 200)
 
 
 def test_synthetic_dev_resume_is_idempotent(tmp_path):
@@ -282,6 +325,145 @@ def test_operational_limits_are_frozen_and_not_cli_overridable():
     assert limits["disk_ceiling_gb"] == 70.0
     assert limits["stall_timeout_seconds"] == 600.0
     assert limits["generation_retry_budget_per_backend_call"] == 1
+
+
+def test_all_hf_growth_roots_are_disk_guarded(tmp_path):
+    paths = R._run_paths(tmp_path / "run", "hf")
+    default_layout = R._cache_layout(paths, None)
+    default_guarded = [
+        Path(path) for path in R._guarded_growth_paths(paths, default_layout, None)
+    ]
+    assert default_guarded == [paths.backend_root.resolve()]
+    for growth_path in (
+        paths.dev_attempt,
+        paths.dev_sealed,
+        paths.test_attempt,
+        paths.test_sealed,
+        paths.registry,
+        Path(default_layout["activation_cache"]),
+        Path(default_layout["datasets_cache"]),
+        Path(default_layout["hub_cache"]),
+        Path(default_layout["transformers_cache"]),
+    ):
+        assert any(
+            growth_path.resolve().is_relative_to(root)
+            for root in default_guarded
+        )
+
+    external_home = tmp_path / "external-hf-home"
+    external_layout = R._cache_layout(paths, str(external_home))
+    external_guarded = {
+        Path(path) for path in R._guarded_growth_paths(paths, external_layout, None)
+    }
+    assert external_guarded == {
+        paths.backend_root.resolve(),
+        external_home.resolve(),
+    }
+    assert Path(external_layout["activation_cache"]).is_relative_to(
+        external_home.resolve()
+    )
+
+
+def test_hf_bootstrap_is_exact_and_authorization_bound(tmp_path):
+    for bad_b in (R.comp.BOOTSTRAP_B - 1, R.comp.BOOTSTRAP_B + 1):
+        with pytest.raises(SystemExit, match="bootstrap-b =="):
+            R.main(
+                [
+                    "--phase",
+                    "dev",
+                    "--backend",
+                    "hf",
+                    "--bootstrap-b",
+                    str(bad_b),
+                    "--out-dir",
+                    str(tmp_path / f"hf-{bad_b}"),
+                ]
+            )
+
+    out_dir = tmp_path / "auth-bootstrap"
+    assert R.main(
+        [
+            "--phase",
+            "dev",
+            "--backend",
+            "synthetic",
+            "--bootstrap-b",
+            "100",
+            "--out-dir",
+            str(out_dir),
+        ]
+    ) == 0
+    paths = _paths(out_dir)
+    selection = json.loads(
+        (paths.dev_sealed / "dev_selection.json").read_text(encoding="utf-8")
+    )
+    seal = json.loads(
+        (paths.dev_sealed / "SEAL.json").read_text(encoding="utf-8")
+    )
+    assert selection["bootstrap_b"] == 100
+    assert seal["identity"]["bootstrap_b"] == 100
+    auth_path = paths.backend_root / "bad-bootstrap-authorization.json"
+    _authorize(paths.dev_sealed / "test_authorization.template.json", auth_path)
+    auth = json.loads(auth_path.read_text(encoding="utf-8"))
+    auth["bootstrap_b"] = 101
+    auth_path.write_text(json.dumps(auth), encoding="utf-8")
+    with pytest.raises(SystemExit, match="authorization invalid: bootstrap_b"):
+        R.validate_test_authorization(auth_path, selection)
+
+
+def test_dev_registry_write_failure_recovers_from_seal(tmp_path, monkeypatch):
+    out_dir = tmp_path / "dev-registry-recovery"
+    paths = _paths(out_dir)
+    original_append = R.ExperimentRegistry.append
+    calls = {"count": 0}
+
+    def fail_first_append(self, record):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            raise OSError("injected DEV registry write failure")
+        return original_append(self, record)
+
+    monkeypatch.setattr(R.ExperimentRegistry, "append", fail_first_append)
+    argv = [
+        "--phase",
+        "dev",
+        "--backend",
+        "synthetic",
+        "--bootstrap-b",
+        "100",
+        "--out-dir",
+        str(out_dir),
+    ]
+    assert R.main(argv) == 5
+    assert paths.dev_sealed.exists()
+    assert (paths.dev_sealed / "experiment_record.json").exists()
+    failure = json.loads(
+        (paths.dev_attempt / "finalization_failure.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert "injected DEV registry write failure" in failure["failure_reason"]
+
+    assert R.main(argv) == 0
+    records = R.ExperimentRegistry(str(paths.registry)).load()
+    dev_records = [
+        row
+        for row in records
+        if row["experiment_id"].startswith("e0017-composition-dev-")
+        and row["status"] == "done"
+    ]
+    assert len(dev_records) == 1
+    finalization_failures = [
+        row
+        for row in records
+        if row["experiment_id"].startswith(
+            "e0017-composition-dev-finalization-"
+        )
+        and row["status"] == "failed"
+    ]
+    assert len(finalization_failures) == 1
+    assert R.main(argv) == 0
+    assert len(R.ExperimentRegistry(str(paths.registry)).load()) == len(records)
 
 
 def test_condition_shared_sample_rng_ignores_condition_and_alpha():

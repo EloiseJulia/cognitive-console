@@ -271,7 +271,8 @@ A target gain that fails either comparison is `COHERENCE_FAIL`, not added value.
 ## 10. Statistical analysis and multiplicity
 
 - Resampling unit: TEST item; all five samples remain inside the item cluster.
-- Bootstrap: percentile item-cluster bootstrap, `B=10000`.
+- Bootstrap: percentile item-cluster bootstrap, **exactly `B=10000`** for every
+  real HF phase. Other values are rejected rather than treated as a minimum.
 - H4-P family: three axes, two-sided 98.33% intervals.
 - H4-I family: three axes, separately corrected two-sided 98.33% intervals.
 - `P-N` and `S-N`: descriptive 95% intervals.
@@ -345,17 +346,20 @@ DEV writes an immutable backend-specific sealed bundle:
 - `backend-hf/dev/sealed/dev_selection.json`;
 - `backend-hf/dev/sealed/directions.npz` and SHA-256;
 - `backend-hf/dev/sealed/test_authorization.template.json`;
+- `backend-hf/dev/sealed/experiment_record.json`;
 - `backend-hf/dev/sealed/SEAL.json`.
 
-Mutable checkpoints and cache state live separately under
-`backend-hf/dev/attempts/attempt-0001/`. Synthetic and HF backends never share
-artifact directories.
+Mutable checkpoints live separately under
+`backend-hf/dev/attempts/attempt-0001/`. All HF caches, including activation
+cache, are children of the resolved `HF_HOME`. Synthetic and HF backends never
+share artifact directories.
 
 The external authorization must match:
 
 - protocol ID;
 - DEV selection hash;
 - DEV protocol commit;
+- DEV-sealed `bootstrap_b=10000`;
 - hostile audit verdict `PASS`;
 - budget status `approved`;
 - non-empty authorization ID, authorizer, and timestamp;
@@ -369,6 +373,16 @@ the result, authorization-consumption record, experiment record, seal, and—for
 real HF only—the C2 manifest. Publication is one directory rename; rerunning a
 completed command verifies the seal and repairs/deduplicates the registry mirror
 without generating.
+
+TEST always loads `backend-hf/dev/sealed/dev_selection.json` after verifying the
+DEV seal and requires the selection hash to equal `SEAL.json.identity.selection_hash`.
+There is no external selection-path override.
+
+DEV finalization follows the same recoverable pattern: the experiment record is
+staged inside the immutable DEV bundle before its atomic directory publication.
+If the registry mirror write fails, the failure is recorded under the DEV
+attempt directory; rerunning verifies the seal and idempotently repairs the
+deduplicated registry without regenerating DEV.
 
 ## 13. Lineage, identity, and operational guards
 
@@ -384,7 +398,10 @@ without generating.
   activation cache; model, tokenizer, and dataset loaders receive those paths
   explicitly. The resolved cache layout is fingerprinted.
 - Disk guard is frozen and non-overridable: 60 GiB soft budget, 70 GiB hard
-  ceiling, checked before and after real phases.
+  ceiling, checked before and after real phases. Guard roots are normalized to
+  non-overlapping paths and cover the entire backend artifact tree
+  (attempts/seals/registry) plus an external `HF_HOME` and venv when they sit
+  outside that tree, so no growing directory escapes or is double-counted.
 - Stall watchdog is frozen and non-overridable at 600 seconds.
 - Retry budget is frozen at one retry per backend call with identical seeds.
   Physical generation attempts are persisted across resumes and hard-capped at
@@ -416,7 +433,6 @@ python -m scripts.run_prompt_steer_composition `
   --phase test `
   --backend hf `
   --out-dir results\E-0017-prompt-steer-composition `
-  --selection-json results\E-0017-prompt-steer-composition\backend-hf\dev\sealed\dev_selection.json `
   --test-authorization-file results\E-0017-prompt-steer-composition\backend-hf\test_authorization.json
 ```
 

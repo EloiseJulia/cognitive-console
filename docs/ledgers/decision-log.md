@@ -16,9 +16,9 @@
   Contract-versus-Flat contrast, nonlocalized router, answer keys, sequence
   assignment, eligibility, exclusion, duplicate winner rule, or inferential
   analysis. The protocol remains `DRAFT / NOT FROZEN`.
-- Implementation commits `786a6a8` and `5820d65` add the bilingual
-  materials/application/tests plus idempotent network-retry and validated-source
-  caching needed for stable browser execution.
+- The implementation begins at `786a6a8` and is hardened through `d4ceafd`,
+  including idempotent network retry, validated-source caching, and stable
+  deferred script loading for browser execution.
   Its maximum state is `READY_FOR_OWNER_LOCAL_PREVIEW_NO_HUMAN_DATA`, but a fresh
   independent hostile audit is still pending and the prior final audit is not
   silently extended to this revision.

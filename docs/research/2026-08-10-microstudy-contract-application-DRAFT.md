@@ -124,7 +124,7 @@ primary paired sign-flip test. Primary-test MDE remains
 ## 6. No-upgrade and human-gate rule
 
 This remains `DRAFT / NOT FROZEN`. Bilingual owner-local-preview engineering
-through commit `5820d65` does not authorize recruitment, ethics activity, timing pilot,
+through commit `d4ceafd` does not authorize recruitment, ethics activity, timing pilot,
 human data collection, public deployment, paper edit, or claim upgrade. Human
 English/Chinese stable-ID semantic review, manual screen-reader evaluation,
 ethics/recruitment approval, timing/MDE gates, Protocol Freeze, and fresh

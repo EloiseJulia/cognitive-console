@@ -28,6 +28,10 @@ PROMPT_BANK_RELATIVE = Path("data/strongest_prompts/truthfulness_positive_contro
 PROMPT_BANK_SHA256 = "597d5ea1dc07d1169912978ca3ef35a2d4f6cf185270eb0994ebf76c872b122c"
 OFFICIAL_BASE_PROMPT_ID = "truth-p01-official-default"
 _GENERATION_CONFIG_METADATA_KEYS = {"_from_model_config", "transformers_version"}
+_JUDGE_SNAPSHOT_NAMES = {
+    "truth": "truth_judge",
+    "info": "info_judge",
+}
 
 PINNED_SNAPSHOTS: Dict[str, Dict[str, object]] = {
     "generator": {
@@ -518,8 +522,12 @@ class LocalTruthInfoJudge:
         from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 
         cache_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            snapshot_name = _JUDGE_SNAPSHOT_NAMES[kind]
+        except KeyError as exc:
+            raise ValueError(f"unknown judge kind {kind!r}") from exc
         snapshot_identity = download_pinned_snapshot(
-            kind,
+            snapshot_name,
             cache_dir,
             before_download=self.before_download,
             monitor=self.after_load,

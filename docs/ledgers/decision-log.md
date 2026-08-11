@@ -5,11 +5,16 @@
 
 ---
 
-## 2026-08-11 · D-0117 · 380c235 rejected; fourth narrow repair binds current judges and physical GPU
+## 2026-08-11 · D-0117 · 380c235/58b08f3 rejected; corrected fourth repair binds current judges and physical GPU
 - The follow-up narrow audit rejected
   `380c235473d47e7281474c9476042cd7ab103b43` before GPU, preflight, real DEV,
   or TEST. It produced no scientific result and is not execution-authorized;
   existing 0/12 remains unchanged.
+- The final audit of `58b08f3aca513b54cad909982991ef9d987c36bd`
+  found that `_score_kind` passes runtime kinds `truth`/`info` while the pinned
+  snapshot table uses `truth_judge`/`info_judge`. The corrected fourth repair
+  maps those keys before download; 58b08f3 also remains non-authorized and
+  non-evidence.
 - Before TEST authorization consumption, both judges are now forcibly loaded
   from the current pinned snapshots and implementation. Complete checkpoint
   metadata cannot stand in for current snapshot/runtime provenance, and exact

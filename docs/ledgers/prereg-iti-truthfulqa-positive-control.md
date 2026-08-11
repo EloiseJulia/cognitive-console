@@ -1,7 +1,7 @@
 # PRE-REGISTRATION — Official-style multi-head ITI × TruthfulQA positive control
 
 - **Experiment ID:** `iti-truthfulqa-positive-control-20260811`
-- **Status:** **FROZEN 2026-08-11 — third targeted audit repair pending fresh independent hostile re-audit**
+- **Status:** **FROZEN 2026-08-11 — corrected fourth targeted audit repair pending fresh independent hostile re-audit**
 - **Purpose:** determine whether the comparator-bound qualification pipeline can
   register a coherent, specific, real latent behavioral advantage in at least one
   published-effect setting.
@@ -473,7 +473,7 @@ python scripts/run_iti_truthfulqa_positive_control.py \
 Protocol/implementation parity was checked on 2026-08-11 without downloading
 large weights or touching a GPU:
 
-- 78 targeted CPU tests passed across
+- 80 targeted CPU tests passed across
   `test_iti_truthfulqa_positive_control.py`, `test_iti.py`, and
   `test_adjudicate_c2b.py`;
 - the separate synthetic schema and every run/final/checkpoint manifest are
@@ -488,19 +488,22 @@ large weights or touching a GPU:
   PCG64 split/bootstrap/random algorithms, full fold-config resume mismatch,
   partial-final-checkpoint judge identity stability, forced current-judge loads
   over stale complete checkpoints, current-judge drift rejection before TEST
-  authorization, both frozen EOS stop IDs, cross-HOME/cross-output/concurrent
-  authorization replay, registry hash-chain tampering, all five TEST
-  execution-fingerprint dimensions, mocked multi-GPU logical-to-physical
-  UUID/PCI mapping, fixed disk limits, pinned file/LFS hashes, row-level judge
-  failure, model-load failure records, explicit CLI backend/phase, and no-CUDA
-  preflight rejection;
+  authorization, real `_load` resolution from `truth`/`info` runtime kinds to
+  `truth_judge`/`info_judge` pinned snapshot keys, both frozen EOS stop IDs,
+  cross-HOME/cross-output/concurrent authorization replay, registry hash-chain
+  tampering, all five TEST execution-fingerprint dimensions, mocked multi-GPU
+  logical-to-physical UUID/PCI mapping, fixed disk limits, pinned file/LFS
+  hashes, row-level judge failure, model-load failure records, explicit CLI
+  backend/phase, and no-CUDA preflight rejection;
 - one earlier transient local NumPy 22.9 MiB allocation failure was rerun alone
   and the complete selection subsequently passed. It produced no experiment
   artifact or protocol change.
 
-Commit `380c235473d47e7281474c9476042cd7ab103b43` was rejected by the follow-up
-narrow audit before GPU/preflight/DEV/TEST. This fourth repair contains no
-scientific result, preserves the frozen 0/12 grid, and changes only current
-judge pre-consumption provenance and physical-GPU identity binding. The
-protocol remains FROZEN, does not authorize real DEV before a fresh independent
-hostile re-audit, and never authorizes TEST except through §§7–8.
+Commits `380c235473d47e7281474c9476042cd7ab103b43` and
+`58b08f3aca513b54cad909982991ef9d987c36bd` were rejected by successive narrow
+audits before GPU/preflight/DEV/TEST. The corrected fourth repair maps runtime
+judge kinds `truth`/`info` to pinned snapshot keys
+`truth_judge`/`info_judge`; it contains no scientific result and preserves the
+frozen 0/12 grid. The protocol remains FROZEN, does not authorize real DEV
+before a fresh independent hostile re-audit, and never authorizes TEST except
+through §§7–8.

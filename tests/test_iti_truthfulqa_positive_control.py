@@ -5,7 +5,8 @@ import hashlib
 import hmac
 import os
 from pathlib import Path
-from types import SimpleNamespace
+import sys
+from types import ModuleType, SimpleNamespace
 
 import numpy as np
 import pytest
@@ -150,6 +151,59 @@ def test_truthfulqa_canonical_identity_changes_with_scientific_content():
 )
 def test_strict_judge_parser(text, expected):
     assert parse_binary_judge(text) is expected
+
+
+@pytest.mark.parametrize(
+    "kind, expected_snapshot_name",
+    [
+        ("truth", "truth_judge"),
+        ("info", "info_judge"),
+    ],
+)
+def test_real_judge_load_resolves_runtime_kind_to_pinned_snapshot_key(
+    kind,
+    expected_snapshot_name,
+    tmp_path,
+    monkeypatch,
+):
+    class SnapshotKeyObserved(Exception):
+        pass
+
+    seen = []
+    transformers = ModuleType("transformers")
+    transformers.AutoConfig = object
+    transformers.AutoModelForCausalLM = object
+    transformers.AutoTokenizer = object
+    monkeypatch.setitem(sys.modules, "torch", ModuleType("torch"))
+    monkeypatch.setitem(sys.modules, "transformers", transformers)
+
+    def observe_snapshot_key(name, snapshot_dir, **kwargs):
+        del snapshot_dir, kwargs
+        assert name in PINNED_SNAPSHOTS
+        seen.append(name)
+        raise SnapshotKeyObserved
+
+    monkeypatch.setattr(
+        "cognitive_console.eval.truthfulqa_positive_control.download_pinned_snapshot",
+        observe_snapshot_key,
+    )
+    judge = LocalTruthInfoJudge.from_pretrained(
+        device="cpu",
+        dtype="float32",
+        cache_root=tmp_path / "judges",
+    )
+    with pytest.raises(SnapshotKeyObserved):
+        judge._load(
+            kind,
+            runner.TRUTH_JUDGE_ID if kind == "truth" else runner.INFO_JUDGE_ID,
+            (
+                runner.TRUTH_JUDGE_REVISION
+                if kind == "truth"
+                else runner.INFO_JUDGE_REVISION
+            ),
+            tmp_path / kind,
+        )
+    assert seen == [expected_snapshot_name]
 
 
 def test_judges_load_sequentially_and_purge_dedicated_caches(tmp_path, monkeypatch):

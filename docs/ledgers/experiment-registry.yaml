@@ -1394,8 +1394,8 @@ experiments:
   claim_ids:
   - C2b
   type: confirmatory_positive_control
-  status: fourth_targeted_repair_pending_fresh_independent_reaudit
-  code_commit: d63c5d3_rejected; 68bd1cf3595f7a53061a8acb45a8c6baadf7e580_rejected; 380c235473d47e7281474c9476042cd7ab103b43_rejected; fourth_repair_commit_pending
+  status: corrected_fourth_targeted_repair_pending_fresh_independent_reaudit
+  code_commit: d63c5d3_rejected; 68bd1cf3595f7a53061a8acb45a8c6baadf7e580_rejected; 380c235473d47e7281474c9476042cd7ab103b43_rejected; 58b08f3aca513b54cad909982991ef9d987c36bd_rejected; corrected_fourth_repair_commit_pending
   dirty_tree: null
   data_hash: truthfulqa_revision=741b8276f2d1982aa3d5b832d3ee81ed3b896490;prompt_bank_sha256=597d5ea1dc07d1169912978ca3ef35a2d4f6cf185270eb0994ebf76c872b122c
   env_hash: null
@@ -1445,9 +1445,11 @@ experiments:
     load both current judges rather than trust completed checkpoint provenance,
     and execution-fingerprint schema v2 records CUDA visibility/order mapping
     while binding the selected physical GPU UUID and PCI bus ID through a
-    targeted nvidia-smi query. Fresh hostile re-audit and repaired-commit
-    pinning remain required before preflight or real DEV. Existing 0/12 is
-    immutable.
+    targeted nvidia-smi query. The final audit of 58b08f3 found that runtime
+    judge kinds did not resolve to the pinned `truth_judge`/`info_judge`
+    snapshot-table keys; the corrected fourth repair closes that preflight
+    blocker. Fresh hostile re-audit and repaired-commit pinning remain required
+    before preflight or real DEV. Existing 0/12 is immutable.
 
 - experiment_id: microstudy-contract-application-20260810
   parent: null

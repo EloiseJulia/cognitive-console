@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "experiment_id": "E-0017",
+  "status": "TEMPLATE_NOT_AUTHORIZED",
+  "issued_at": "<UTC ISO-8601 ending Z>",
+  "expires_at": "<UTC ISO-8601 ending Z>",
+  "protocol_freeze": {
+    "prereg_path": "docs/research/2026-08-11-deliberation-token-sensitivity/prereg-e0017-DRAFT.md",
+    "prereg_sha256": "<sha256 after Status is independently recommended and changed to FROZEN>",
+    "status": "FROZEN"
+  },
+  "independent_audit": {
+    "audit_record_id": "<independent audit record>",
+    "auditor_id": "<auditor session distinct from owner>",
+    "auditor_role": "independent_hostile_auditor",
+    "verdict": "FREEZE_RECOMMENDED",
+    "audited_run_commit": "<exact clean 40-hex HEAD>"
+  },
+  "owner_authorization": {
+    "authorization_id": "<unique owner authorization id>",
+    "authorized_by": "EloiseJulia",
+    "authorized_at": "<UTC ISO-8601 ending Z>",
+    "audited_run_commit": "<same exact clean 40-hex HEAD>",
+    "max_gpu_hours": 3.0,
+    "approved_gpu_uuid": "<GPU-UUID>",
+    "approved_gpu_name": "<exact nvidia-smi NVIDIA A800 name>"
+  },
+  "designated_host": {
+    "hostname": "<exact socket.gethostname()>",
+    "canonical_out_dir": "<absolute designated-host path>/results/E-0017-deliberation-token-sensitivity",
+    "attempt_registry_path": "<absolute path outside result dirs>/e0017-canonical-attempt.json"
+  },
+  "model_pins": {
+    "qwen2.5-7b": {
+      "repo_id": "Qwen/Qwen2.5-7B-Instruct",
+      "revision": "a09a35458c702b33eeacc393d103063234e8bc28"
+    },
+    "llama3-8b": {
+      "repo_id": "NousResearch/Meta-Llama-3-8B-Instruct",
+      "revision": "53346005fb0ef11d3b6a83b12c895cca40156b6c"
+    }
+  },
+  "dataset_pin": {
+    "repo_id": "openai/gsm8k",
+    "config": "main",
+    "split": "test",
+    "revision": "740312add88f781978c0658806c59bc2815b9866",
+    "item_identity_sha256": "<sha256 of e0006-item-identity.json at audited HEAD>"
+  }
+}

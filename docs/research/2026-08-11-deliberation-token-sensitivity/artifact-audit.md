@@ -64,13 +64,21 @@ the present criticism without its raw transcript artifact and exact definition.
 
 ## Minimum resolving action
 
-Run the DRAFT E-0017 companion preregistration in this directory. It regenerates
-only the frozen deliberation TEST channels at 64/128/256, captures token IDs and
-EOS stop reasons, verifies that the new 64-token run exactly reproduces frozen
-per-item outcomes and aggregate diagnostic, and then performs one sealed paired
-analysis. Fixed-batch atomic checkpoints, frozen-artifact hashes, clean-code
-lineage, disk/free-space guards, exact-prefix continuation checks, and a
-TEST-once seal fail closed. It does not reselect DEV settings and does not
-replace E-0006.
+The historical config fingerprints prove the first-60 ordered GSM8K index-ID
+pool and its sorted 40-ID TEST split, but E-0006 did not retain a dataset
+revision or item-payload hash. The outcome-blind recovery and exact IDs are
+recorded in `e0006-item-identity.json`; the payload is honestly labelled a
+revision-pinned reconstruction until the 64-token outcome reproduction gate
+passes.
+
+After an independent re-audit recommends `FREEZE`, run the DRAFT E-0017
+companion. It captures token IDs/EOS reasons, verifies exact 64-token per-item
+and aggregate reproduction, and performs one sealed analysis. Exact model
+revisions plus config/tokenizer/generation-config/all-shard hashes, one
+UUID-selected idle A800 in float16 with no CPU fallback, structured owner and
+audited-commit authorization, a host-global canonical-attempt registry,
+fixed-batch checkpoints, max-T familywise inference, item-cluster continuation
+CIs, and raw/spec/output seals fail closed. It does not reselect DEV settings
+or replace E-0006.
 
 Independent audit is required before any paper wording changes.

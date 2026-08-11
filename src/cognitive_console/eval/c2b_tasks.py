@@ -172,13 +172,22 @@ def _require_datasets():
     return datasets
 
 
-def load_gsm8k_test(n: Optional[int] = None, seed: int = 0) -> List[Dict[str, Any]]:
+def load_gsm8k_test(
+    n: Optional[int] = None,
+    seed: int = 0,
+    revision: Optional[str] = None,
+) -> List[Dict[str, Any]]:
     """Load the real GSM8K test split as deliberation items (A800 only).
 
     Each item = {id, prompt, answer} where answer is the gold number parsed from
     the '#### N' delimiter. Offline this raises (datasets/network deferred)."""
     datasets = _require_datasets()
-    ds = datasets.load_dataset("openai/gsm8k", "main", split="test")
+    ds = datasets.load_dataset(
+        "openai/gsm8k",
+        "main",
+        split="test",
+        revision=revision,
+    )
     items: List[Dict[str, Any]] = []
     for i, row in enumerate(ds):
         gold = str(row["answer"]).split("####")[-1].strip().replace(",", "")

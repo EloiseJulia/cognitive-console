@@ -1542,15 +1542,21 @@ experiments:
   data_hash: null
   env_hash: null
   config_hash: null
-  model: Qwen/Qwen2.5-7B-Instruct + meta-llama/Meta-Llama-3-8B-Instruct
+  model: >-
+    Qwen/Qwen2.5-7B-Instruct@a09a35458c702b33eeacc393d103063234e8bc28 +
+    NousResearch/Meta-Llama-3-8B-Instruct@53346005fb0ef11d3b6a83b12c895cca40156b6c
   dataset: >-
-    Frozen E-0006 deliberation TEST split only (40 sorted GSM8K TEST item IDs
-    derived from the same 60-item pool and seed 20260723); runtime run_config
-    must record the exact item hash and all four frozen result hashes.
+    Fingerprint-proven E-0006 ordered GSM8K index-ID pool/test split, with item
+    payload reconstructed from pinned openai/gsm8k revision
+    740312add88f781978c0658806c59bc2815b9866. Historical item-payload hash was
+    not retained; exact 64-token outcome reproduction is mandatory.
   seed: 20260723
   hardware: >-
-    Planned one confirmed-idle free GPU; estimated 1-3 GPU-hours; no run or GPU
-    authorization recorded by this entry.
+    Planned exactly one owner-authorized UUID-selected NVIDIA A800, CUDA
+    float16 only, no CPU fallback. Two nvidia-smi idle checks, zero compute
+    processes, 0% utilization, <=512 MiB used, torch single-device verification,
+    and host-global attempt lock are mandatory. Estimated <=3 GPU-hours; no run
+    or GPU authorization recorded by this entry.
   started_at: null
   ended_at: null
   exit_code: null
@@ -1559,19 +1565,24 @@ experiments:
   artifacts:
   - docs/research/2026-08-11-deliberation-token-sensitivity/artifact-audit.md
   - docs/research/2026-08-11-deliberation-token-sensitivity/prereg-e0017-DRAFT.md
+  - docs/research/2026-08-11-deliberation-token-sensitivity/e0006-item-identity.json
+  - docs/research/2026-08-11-deliberation-token-sensitivity/item-identity-recovery.md
+  - docs/research/2026-08-11-deliberation-token-sensitivity/authorization-template.json
   - scripts/run_deliberation_token_sensitivity.py
   - tests/test_deliberation_token_sensitivity.py
   - src/cognitive_console/steering/generate.py
+  - src/cognitive_console/eval/c2b_tasks.py
   failure_reason: null
   valid_for_paper: false
   validation_notes: >-
-    Preregistration-ready implementation only; NOT RUN and NOT FROZEN. Varies
-    only max_new_tokens across 64/128/256 while preserving frozen
-    prompt/alpha/layer/item/seed/batching/scorer identities and the immutable
-    E-0006 0/12. Exact token IDs separate count-at-cap, EOS-at-cap, and
-    mechanical cap stops. Same-seed exact-prefix continuations operationalize
-    semantic materiality. Fixed-batch atomic checkpoints, clean-code/frozen-hash
-    lineage, disk/free-space guards, exact 64 reproduction, and a sealed
-    TEST-once analysis gate fail closed. A future completed run must replace
-    null lineage fields from generated run_config/run_manifest artifacts and
-    undergo independent hostile audit before any paper use.
+    Audit-ready implementation only; NOT RUN and NOT FROZEN. E-0006 ordered
+    index IDs are proven by all four historical config fingerprints; the
+    revision-pinned item payload remains explicitly reconstructed. Exact model
+    revisions plus config/tokenizer/generation-config/all-weight-shard hashes,
+    structured independent-audit/owner/audited-commit authorization, one idle
+    UUID-selected A800 float16 device, a global canonical-attempt
+    STARTED/FAILED/COMPLETE registry, fixed-batch checkpoints, exact 64
+    reproduction, a 24-estimand joint item-cluster max-T family, zero-safe
+    continuation CIs, an explicit/terminal final-answer diagnostic, and a
+    sealed TEST-once analysis fail closed. E-0006 0/12 remains immutable. A
+    future run must undergo independent hostile results audit before paper use.

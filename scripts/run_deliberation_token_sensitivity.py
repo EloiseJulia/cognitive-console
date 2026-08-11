@@ -1,25 +1,32 @@
 """E-0017 deliberation 64/128/256-token sensitivity companion.
 
-The frozen E-0006 0/12 result is never modified. This runner reuses each
-deliberation cell's frozen TEST items, prompt, alpha, layer, seeds, scorer, and
-batch composition, while varying only max_new_tokens. It captures generated
-token IDs so a mechanical token-cap stop is measured exactly rather than
-inferred from whitespace or decoded-text length.
+The frozen E-0006 0/12 result is never modified. This runner uses the
+fingerprint-proven historical TEST index IDs on a revision-pinned reconstructed
+GSM8K payload, plus each cell's prompt, alpha, layer, seeds, scorer, and batch
+composition, while varying only max_new_tokens. Exact 64-token outcome
+reproduction gates interpretation. Generated token IDs distinguish mechanical
+token-cap stops from decoded-text heuristics.
 """
 
 from __future__ import annotations
 
 import argparse
+import csv
 import gc
 import hashlib
 import json
 import math
+import os
 import platform
+import re
 import shutil
+import socket
 import subprocess
 import sys
 import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
+from io import StringIO
 from pathlib import Path
 from statistics import NormalDist
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
@@ -61,6 +68,14 @@ DEFAULT_N_EXTRACTION = 28
 DEFAULT_DISK_BUDGET_GB = 60.0
 DEFAULT_DISK_CEILING_GB = 70.0
 DEFAULT_MIN_FREE_GB = 5.0
+DEFAULT_QWEN_MODEL = "Qwen/Qwen2.5-7B-Instruct"
+DEFAULT_QWEN_REVISION = "a09a35458c702b33eeacc393d103063234e8bc28"
+DEFAULT_LLAMA_MODEL = "NousResearch/Meta-Llama-3-8B-Instruct"
+DEFAULT_LLAMA_REVISION = "53346005fb0ef11d3b6a83b12c895cca40156b6c"
+GSM8K_REVISION = "740312add88f781978c0658806c59bc2815b9866"
+OWNER_IDENTITY = "EloiseJulia"
+GPU_IDLE_MAX_MEMORY_MIB = 512
+GPU_IDLE_MAX_UTILIZATION_PCT = 0
 PREREG_PATH = (
     _REPO
     / "docs"
@@ -68,8 +83,23 @@ PREREG_PATH = (
     / "2026-08-11-deliberation-token-sensitivity"
     / "prereg-e0017-DRAFT.md"
 )
+ITEM_IDENTITY_PATH = PREREG_PATH.parent / "e0006-item-identity.json"
 CHECKPOINT_SCHEMA_VERSION = 1
 TEST_ONCE_SCHEMA_VERSION = 1
+AUTHORIZATION_SCHEMA_VERSION = 1
+ATTEMPT_REGISTRY_SCHEMA_VERSION = 1
+MODEL_IDENTITY_SCHEMA_VERSION = 1
+
+MODEL_SPECS = {
+    "qwen2.5-7b": {
+        "repo_id": DEFAULT_QWEN_MODEL,
+        "revision": DEFAULT_QWEN_REVISION,
+    },
+    "llama3-8b": {
+        "repo_id": DEFAULT_LLAMA_MODEL,
+        "revision": DEFAULT_LLAMA_REVISION,
+    },
+}
 
 
 @dataclass(frozen=True)
@@ -93,6 +123,20 @@ class FrozenCellConfig:
     source_passed: bool
     source_per_item_prompt: Tuple[float, ...]
     source_per_item_steer: Tuple[float, ...]
+
+
+@dataclass(frozen=True)
+class ModelArtifact:
+    model_label: str
+    repo_id: str
+    revision: str
+    snapshot_path: str
+    identity: Dict[str, object]
+    identity_sha256: str
+
+    @property
+    def canonical_id(self) -> str:
+        return f"{self.repo_id}@{self.revision}"
 
 
 def _rel(path: Path) -> str:
@@ -248,23 +292,6 @@ def _check_runtime_disk(
     return result
 
 
-def _model_identity_key(model_ref: str) -> str:
-    parts = [
-        part
-        for part in str(model_ref).strip().replace("\\", "/").split("/")
-        if part
-    ]
-    return (parts[-1] if parts else str(model_ref)).lower()
-
-
-def _looks_like_local_path(model_ref: str) -> bool:
-    ref = str(model_ref).strip()
-    return (
-        ref.startswith(("/", "\\", "./", ".\\", "../", "..\\"))
-        or (len(ref) >= 3 and ref[1] == ":" and ref[2] in {"/", "\\"})
-    )
-
-
 def _axis_rows(payload: Dict[str, object]) -> List[Dict[str, object]]:
     rows = payload.get("axes", payload.get("axis_results"))
     if not isinstance(rows, list):
@@ -387,17 +414,150 @@ def frozen_lineage_inventory(
     }
 
 
-def load_test_items(*, seed: int) -> List[Dict[str, object]]:
-    items = list(c2b_tasks.load_c2b_task(AXIS, use_fixture=False).items)[
-        : adj.N_ITEMS_BY_AXIS[AXIS]
-    ]
+def _recompute_historical_e0006_fingerprints(
+    deliberation_pool_ids: Sequence[str],
+) -> Dict[str, str]:
+    axes = {
+        "deliberation": {
+            "item_ids": sorted(str(value) for value in deliberation_pool_ids),
+            "strong_ids": c1.load_strongest_prompts("deliberation").ids[:16],
+        },
+        "skepticism": {
+            "item_ids": [f"truthfulqa-mc1-{index:05d}" for index in range(60)],
+            "strong_ids": c1.load_strongest_prompts("skepticism").ids[:16],
+        },
+        "uncertainty_awareness": {
+            "item_ids": [f"triviaqa-{index:05d}" for index in range(80)],
+            "strong_ids": c1.load_strongest_prompts(
+                "uncertainty_awareness"
+            ).ids[:16],
+        },
+    }
+    results: Dict[str, str] = {}
+    for method, model_label, model_path in (
+        ("caa", "qwen2.5-7b", "/root/autodl-tmp/models/Qwen2.5-7B-Instruct"),
+        ("caa", "llama3-8b", "/root/autodl-tmp/models/Meta-Llama-3-8B-Instruct"),
+        ("iti", "qwen2.5-7b", "/root/autodl-tmp/models/Qwen2.5-7B-Instruct"),
+        ("iti", "llama3-8b", "/root/autodl-tmp/models/Meta-Llama-3-8B-Instruct"),
+    ):
+        payload = {
+            "seed": DEFAULT_SEED,
+            "model": model_path,
+            "backend": "hf",
+            "steering_method": method,
+            "max_new_tokens": 64,
+            "temperature": DEFAULT_TEMPERATURE,
+            "batch_size": DEFAULT_BATCH_SIZE,
+            "do_sample": True,
+            "k": adj.K_SAMPLES,
+            "bootstrap_b": adj.BOOTSTRAP_B,
+            "alpha_grid": list(adj.ALPHA_GRID),
+            "coherence_max_ratio": adj.COHERENCE_MAX_RATIO,
+            "delta": adj.DELTA,
+            "bonferroni_ci_level": adj.BONFERRONI_CI_LEVEL,
+            "dev_fraction": adj.DEV_FRACTION,
+            "stronger_prompt_optimizer": {
+                "enabled": False,
+                "budget_cli": None,
+                "budget_effective": None,
+                "seed_prompts": 4,
+                "rounds": 3,
+                "candidates_per_round": 4,
+                "keep_top_k": 2,
+                "optimizer_seed": DEFAULT_SEED,
+                "compute_parity_target_n_strong": 16,
+                "n_strong_requested": 16,
+            },
+            "axes": {
+                axis: {
+                    "n_items": len(values["item_ids"]),
+                    "item_ids": values["item_ids"],
+                    "n_strong": len(values["strong_ids"]),
+                    "strong_ids": values["strong_ids"],
+                }
+                for axis, values in axes.items()
+            },
+        }
+        digest = hashlib.sha256(
+            json.dumps(payload, sort_keys=True).encode("utf-8")
+        ).hexdigest()[:16]
+        results[f"{method}__{model_label}"] = digest
+    return results
+
+
+def load_item_identity() -> Dict[str, object]:
+    payload = json.loads(ITEM_IDENTITY_PATH.read_text(encoding="utf-8"))
+    required = {
+        "schema_version",
+        "identity_status",
+        "historical_code_commit",
+        "dataset",
+        "ordered_pool_ids",
+        "ordered_test_ids",
+        "ordered_pool_ids_sha256",
+        "ordered_test_ids_sha256",
+        "matched_source_config_fingerprints",
+        "limitations",
+    }
+    if not isinstance(payload, dict) or set(payload) != required:
+        raise ValueError(f"{ITEM_IDENTITY_PATH}: identity schema mismatch")
+    if payload["schema_version"] != 1:
+        raise ValueError(f"{ITEM_IDENTITY_PATH}: unsupported schema")
+    if payload["identity_status"] != "ORDERED_IDS_PROVEN_CONTENT_RECONSTRUCTED":
+        raise ValueError(f"{ITEM_IDENTITY_PATH}: item identity is not audit-ready")
+    dataset = dict(payload["dataset"])
+    if (
+        dataset.get("repo_id") != "openai/gsm8k"
+        or dataset.get("config") != "main"
+        or dataset.get("split") != "test"
+        or dataset.get("revision") != GSM8K_REVISION
+    ):
+        raise ValueError(f"{ITEM_IDENTITY_PATH}: pinned GSM8K identity mismatch")
+    pool_ids = [str(value) for value in payload["ordered_pool_ids"]]
+    test_ids = [str(value) for value in payload["ordered_test_ids"]]
+    if len(pool_ids) != adj.N_ITEMS_BY_AXIS[AXIS] or len(test_ids) != 40:
+        raise ValueError(f"{ITEM_IDENTITY_PATH}: recovered item count mismatch")
+    if payload["ordered_pool_ids_sha256"] != _canonical_json_hash(pool_ids):
+        raise ValueError(f"{ITEM_IDENTITY_PATH}: pool ID hash mismatch")
+    if payload["ordered_test_ids_sha256"] != _canonical_json_hash(test_ids):
+        raise ValueError(f"{ITEM_IDENTITY_PATH}: TEST ID hash mismatch")
+    expected_fingerprints = {
+        "caa__qwen2.5-7b": "433c5772c8ede7f8",
+        "caa__llama3-8b": "861d5b5f8773c6f0",
+        "iti__qwen2.5-7b": "2d1749bdc7089f83",
+        "iti__llama3-8b": "d39efbeac006dac5",
+    }
+    recomputed = _recompute_historical_e0006_fingerprints(pool_ids)
+    if (
+        payload["matched_source_config_fingerprints"] != expected_fingerprints
+        or recomputed != expected_fingerprints
+    ):
+        raise ValueError(f"{ITEM_IDENTITY_PATH}: fingerprint proof mismatch")
+    return payload
+
+
+def load_test_items(*, seed: int) -> Tuple[List[Dict[str, object]], Dict[str, object]]:
+    identity = load_item_identity()
+    items = list(
+        c2b_tasks.load_gsm8k_test(revision=GSM8K_REVISION)
+    )[: adj.N_ITEMS_BY_AXIS[AXIS]]
+    observed_pool_ids = [str(item["id"]) for item in items]
+    expected_pool_ids = [str(value) for value in identity["ordered_pool_ids"]]
+    if observed_pool_ids != expected_pool_ids:
+        raise ValueError(
+            "pinned GSM8K snapshot does not reproduce the recovered ordered "
+            "E-0006 index-ID pool"
+        )
     by_id = {str(item["id"]): item for item in items}
     split = adj.split_dev_test(
         list(by_id),
         dev_fraction=adj.DEV_FRACTION,
         seed=seed,
     )
-    return [by_id[item_id] for item_id in split.test_ids]
+    expected_test_ids = [str(value) for value in identity["ordered_test_ids"]]
+    if split.test_ids != expected_test_ids:
+        raise ValueError("recovered E-0006 TEST ID split mismatch")
+    return [by_id[item_id] for item_id in split.test_ids], identity
 
 
 def _condition_instruction_and_alpha(
@@ -438,7 +598,7 @@ def iter_original_batches(
 def _derive_hf_direction(
     cfg: FrozenCellConfig,
     *,
-    model_id: str,
+    model_load_path: str,
     out_dir: Path,
     n_extraction: int,
     seed: int,
@@ -446,66 +606,113 @@ def _derive_hf_direction(
     from cognitive_console.activations.provider import HFActivationProvider
 
     provider = HFActivationProvider(
-        model_id,
-        device=p0._pick_device(),
-        dtype=p0._pick_dtype(),
+        model_load_path,
+        device="cuda:0",
+        dtype="float16",
         cache_dir=str(out_dir / "activations" / "cache"),
     )
     if cfg.method == "caa":
         direction = p0._extract_direction(provider, AXIS, cfg.layer, n_extraction, seed)
-        return direction, {
+        metadata = {
             "source": "caa_mean_difference_rederived_at_frozen_layer",
             "layer": cfg.layer,
             "direction_sha256": hashlib.sha256(
                 np.asarray(direction, dtype=np.float64).tobytes()
             ).hexdigest(),
         }
+    else:
+        pairs = c1.load_axis_pairs(AXIS)
+        split = c1.make_split(
+            list(pairs.pos),
+            n_extraction=n_extraction,
+            seed=seed,
+        )
+        candidate_layers = [
+            layer for layer in provider.available_layers() if layer >= 1
+        ]
+        iti = extract_iti(
+            provider,
+            axis=AXIS,
+            pos_texts=[pairs.pos[pair_id] for pair_id in split.extraction_ids],
+            neg_texts=[pairs.neg[pair_id] for pair_id in split.extraction_ids],
+            layers=candidate_layers,
+            selection="nondegenerate",
+            neutral_texts=c1.load_neutral_prompts(),
+            min_layer=min_layer_for_depth(max(candidate_layers), min_depth_frac=0.2),
+            min_depth_frac=0.2,
+            n_null=2000,
+            null_seed=seed,
+        )
+        if int(iti.layer) != cfg.layer:
+            raise RuntimeError(
+                f"{cfg.cell_key}: rederived ITI layer {iti.layer} != frozen {cfg.layer}"
+            )
+        if not math.isclose(
+            float(iti.sigma),
+            cfg.sigma,
+            rel_tol=1e-6,
+            abs_tol=1e-8,
+        ):
+            raise RuntimeError(
+                f"{cfg.cell_key}: rederived ITI sigma {iti.sigma} != frozen {cfg.sigma}"
+            )
+        direction = iti.direction
+        metadata = {
+            "source": "iti_probe_rederived_by_frozen_path",
+            "layer": int(iti.layer),
+            "sigma": float(iti.sigma),
+            "probe_norm": float(np.linalg.norm(iti.vector)),
+            "direction_sha256": hashlib.sha256(
+                np.asarray(iti.direction, dtype=np.float64).tobytes()
+            ).hexdigest(),
+        }
+    del provider
+    gc.collect()
+    try:
+        import torch
 
-    pairs = c1.load_axis_pairs(AXIS)
-    split = c1.make_split(
-        list(pairs.pos),
-        n_extraction=n_extraction,
-        seed=seed,
-    )
-    candidate_layers = [layer for layer in provider.available_layers() if layer >= 1]
-    iti = extract_iti(
-        provider,
-        axis=AXIS,
-        pos_texts=[pairs.pos[pair_id] for pair_id in split.extraction_ids],
-        neg_texts=[pairs.neg[pair_id] for pair_id in split.extraction_ids],
-        layers=candidate_layers,
-        selection="nondegenerate",
-        neutral_texts=c1.load_neutral_prompts(),
-        min_layer=min_layer_for_depth(max(candidate_layers), min_depth_frac=0.2),
-        min_depth_frac=0.2,
-        n_null=2000,
-        null_seed=seed,
-    )
-    if int(iti.layer) != cfg.layer:
-        raise RuntimeError(
-            f"{cfg.cell_key}: rederived ITI layer {iti.layer} != frozen {cfg.layer}"
+        torch.cuda.empty_cache()
+    except ImportError:
+        pass
+    return np.asarray(direction), metadata
+
+
+_EXPLICIT_FINAL_NUMBER_RE = re.compile(
+    r"(?:\\boxed\s*\{\s*-?\d[\d,]*(?:\.\d+)?\s*\}"
+    r"|(?:final\s+)?answer\s*(?:is|:|=)\s*\$?\s*-?\d[\d,]*(?:\.\d+)?)",
+    re.IGNORECASE,
+)
+_TERMINAL_NUMBER_RE = re.compile(
+    r"(?:^|[\s:=])\$?\s*-?\d[\d,]*(?:\.\d+)?\s*"
+    r"(?:%|[.!?)]*)?\s*$",
+    re.IGNORECASE,
+)
+
+
+def explicit_or_terminal_final_answer_present(text: str) -> bool:
+    """Detect an explicit answer cue/box or a numeric answer at text termination."""
+
+    if not isinstance(text, str):
+        raise TypeError("text must be a string")
+    stripped = text.strip()
+    return bool(
+        stripped
+        and (
+            _EXPLICIT_FINAL_NUMBER_RE.search(stripped)
+            or _TERMINAL_NUMBER_RE.search(stripped)
         )
-    if not math.isclose(float(iti.sigma), cfg.sigma, rel_tol=1e-6, abs_tol=1e-8):
-        raise RuntimeError(
-            f"{cfg.cell_key}: rederived ITI sigma {iti.sigma} != frozen {cfg.sigma}"
-        )
-    return iti.direction, {
-        "source": "iti_probe_rederived_by_frozen_path",
-        "layer": int(iti.layer),
-        "sigma": float(iti.sigma),
-        "probe_norm": float(np.linalg.norm(iti.vector)),
-        "direction_sha256": hashlib.sha256(
-            np.asarray(iti.direction, dtype=np.float64).tobytes()
-        ).hexdigest(),
-    }
+    )
 
 
 def score_generation(text: str, item: Dict[str, object]) -> Dict[str, object]:
     parsed = scorers.parse_final_number(text)
     return {
         "parsed_final_number": parsed,
-        "final_answer_present": parsed is not None,
-        "parser_failed": parsed is None,
+        "frozen_parser_number_present": parsed is not None,
+        "frozen_parser_failed": parsed is None,
+        "explicit_or_terminal_final_answer_present": (
+            explicit_or_terminal_final_answer_present(text)
+        ),
         "correct": int(scorers.score_deliberation(text, item)),
         "degeneracy": float(scorers.degeneracy_score(text)),
     }
@@ -702,7 +909,12 @@ def _validate_condition_records(
                 f"{cfg.cell_key} cap={cap} condition={condition}: text hash mismatch"
             )
         rescored = score_generation(text, item_by_id[str(job["item_id"])])
-        for field in ("final_answer_present", "parser_failed", "correct"):
+        for field in (
+            "frozen_parser_number_present",
+            "frozen_parser_failed",
+            "explicit_or_terminal_final_answer_present",
+            "correct",
+        ):
             if record.get(field) != rescored[field]:
                 raise ValueError(
                     f"{cfg.cell_key} cap={cap} condition={condition}: "
@@ -830,6 +1042,7 @@ def generate_condition(
     batch_size: int,
     checkpoint_path: Optional[Path] = None,
     checkpoint_identity: Optional[Dict[str, object]] = None,
+    budget_guard=None,
 ) -> List[Dict[str, object]]:
     instruction, requested_alpha, effective_alpha = _condition_instruction_and_alpha(
         cfg, condition
@@ -867,6 +1080,8 @@ def generate_condition(
     completed_items = len(records) // adj.K_SAMPLES
     item_offset = 0
     for item_chunk in iter_original_batches(test_items, batch_size=batch_size):
+        if budget_guard is not None:
+            budget_guard()
         next_item_offset = item_offset + len(item_chunk)
         if next_item_offset <= completed_items:
             item_offset = next_item_offset
@@ -960,6 +1175,8 @@ def generate_condition(
                     complete=item_offset == len(test_items),
                 ),
             )
+        if budget_guard is not None:
+            budget_guard()
     _validate_condition_records(
         records,
         cfg=cfg,
@@ -1041,6 +1258,123 @@ def _ci(
     }
 
 
+def _max_t_simultaneous_cis(
+    estimands: Dict[str, Tuple[Sequence[str], Sequence[float]]],
+    *,
+    bootstrap_b: int,
+    seed: int,
+    ci_level: float = 0.95,
+) -> Dict[str, Dict[str, object]]:
+    if not estimands:
+        raise ValueError("max-T family must contain at least one estimand")
+    ordered_names = sorted(estimands)
+    reference_ids = [str(value) for value in estimands[ordered_names[0]][0]]
+    if not reference_ids:
+        raise ValueError("max-T family has no item clusters")
+    values: List[List[float]] = []
+    for name in ordered_names:
+        ids, diffs = estimands[name]
+        if [str(value) for value in ids] != reference_ids:
+            raise ValueError(f"max-T family item mismatch for {name}")
+        if len(diffs) != len(reference_ids):
+            raise ValueError(f"max-T family value count mismatch for {name}")
+        values.append([float(value) for value in diffs])
+    matrix = np.asarray(values, dtype=float).T
+    point = np.mean(matrix, axis=0)
+    rng = np.random.default_rng(seed)
+    sample_indices = rng.integers(
+        0,
+        len(reference_ids),
+        size=(int(bootstrap_b), len(reference_ids)),
+    )
+    boot = np.mean(matrix[sample_indices, :], axis=1)
+    centered = boot - point[None, :]
+    se = np.std(boot, axis=0, ddof=1)
+    standardized = np.zeros_like(centered)
+    nonzero_se = se > 0
+    standardized[:, nonzero_se] = (
+        np.abs(centered[:, nonzero_se]) / se[nonzero_se]
+    )
+    max_t = np.max(standardized, axis=1)
+    quantile = float(np.quantile(max_t, ci_level))
+    results: Dict[str, Dict[str, object]] = {}
+    for index, name in enumerate(ordered_names):
+        half_width = quantile * float(se[index])
+        if se[index] == 0:
+            adjusted_p = 0.0 if point[index] != 0 else 1.0
+        else:
+            observed_t = abs(float(point[index])) / float(se[index])
+            adjusted_p = float(
+                (1 + np.count_nonzero(max_t >= observed_t))
+                / (int(bootstrap_b) + 1)
+            )
+        results[name] = {
+            "point": float(point[index]),
+            "ci_lo": float(point[index] - half_width),
+            "ci_hi": float(point[index] + half_width),
+            "ci_level": float(ci_level),
+            "bootstrap_b": int(bootstrap_b),
+            "n_items": len(reference_ids),
+            "max_t_critical_value": quantile,
+            "bootstrap_se": float(se[index]),
+            "p_fwer_max_t": adjusted_p,
+            "multiplicity_method": "joint-item-cluster bootstrap max-T",
+            "family_size": len(ordered_names),
+            "familywise_alpha": 1.0 - float(ci_level),
+        }
+    return results
+
+
+def _build_primary_inference_family(
+    records: Sequence[Dict[str, object]],
+    *,
+    bootstrap_b: int,
+    seed: int,
+) -> Dict[str, Dict[str, object]]:
+    estimands: Dict[str, Tuple[Sequence[str], Sequence[float]]] = {}
+    for cell_key in FROZEN_CELL_KEYS:
+        cell_records = [
+            record for record in records if str(record["cell"]) == cell_key
+        ]
+        for long_cap in (128, 256):
+            effects: Dict[str, Tuple[List[str], List[float]]] = {}
+            for condition in ("prompt", "steer"):
+                ids, values = _paired_item_diffs(
+                    cell_records,
+                    a_filter=lambda record, c=condition, lc=long_cap: (
+                        record["condition"] == c
+                        and int(record["max_new_tokens"]) == lc
+                    ),
+                    b_filter=lambda record, c=condition: (
+                        record["condition"] == c
+                        and int(record["max_new_tokens"]) == 64
+                    ),
+                    field="correct",
+                )
+                name = f"{cell_key}|E_{condition}_{long_cap}"
+                estimands[name] = (ids, values)
+                effects[condition] = (ids, values)
+            if effects["prompt"][0] != effects["steer"][0]:
+                raise ValueError(f"{cell_key}: cap interaction item mismatch")
+            interaction = [
+                steer_value - prompt_value
+                for steer_value, prompt_value in zip(
+                    effects["steer"][1],
+                    effects["prompt"][1],
+                )
+            ]
+            estimands[f"{cell_key}|I_{long_cap}"] = (
+                effects["prompt"][0],
+                interaction,
+            )
+    return _max_t_simultaneous_cis(
+        estimands,
+        bootstrap_b=bootstrap_b,
+        seed=seed,
+        ci_level=0.95,
+    )
+
+
 def _item_cluster_metric_ci(
     records: Sequence[Dict[str, object]],
     value_fn,
@@ -1101,13 +1435,21 @@ def _condition_summary(
     )
     parser_failure_ci = _item_cluster_metric_ci(
         records,
-        lambda record: bool(record["parser_failed"]),
+        lambda record: bool(record["frozen_parser_failed"]),
         bootstrap_b=bootstrap_b,
         seed=seed,
     )
-    answer_present_ci = _item_cluster_metric_ci(
+    parser_number_present_ci = _item_cluster_metric_ci(
         records,
-        lambda record: bool(record["final_answer_present"]),
+        lambda record: bool(record["frozen_parser_number_present"]),
+        bootstrap_b=bootstrap_b,
+        seed=seed,
+    )
+    explicit_or_terminal_ci = _item_cluster_metric_ci(
+        records,
+        lambda record: bool(
+            record["explicit_or_terminal_final_answer_present"]
+        ),
         bootstrap_b=bootstrap_b,
         seed=seed,
     )
@@ -1150,23 +1492,61 @@ def _condition_summary(
                 "max_new_tokens; token count equal to cap alone is not sufficient"
             ),
         },
-        "parser": {
-            "n_final_answer_present": sum(
-                bool(record["final_answer_present"]) for record in records
+        "frozen_parser": {
+            "n_number_present": sum(
+                bool(record["frozen_parser_number_present"]) for record in records
             ),
-            "final_answer_present_rate": float(
-                np.mean([bool(record["final_answer_present"]) for record in records])
+            "number_present_rate": float(
+                np.mean(
+                    [
+                        bool(record["frozen_parser_number_present"])
+                        for record in records
+                    ]
+                )
             )
             if n
             else math.nan,
-            "final_answer_present_ci_95_item_cluster": answer_present_ci,
-            "n_failed": sum(bool(record["parser_failed"]) for record in records),
+            "number_present_ci_95_item_cluster": parser_number_present_ci,
+            "n_failed": sum(
+                bool(record["frozen_parser_failed"]) for record in records
+            ),
             "failure_rate": float(
-                np.mean([bool(record["parser_failed"]) for record in records])
+                np.mean(
+                    [bool(record["frozen_parser_failed"]) for record in records]
+                )
             )
             if n
             else math.nan,
             "failure_ci_95_item_cluster": parser_failure_ci,
+            "interpretation": (
+                "The frozen correctness parser may fall back to any last number. "
+                "Parser success is not labelled final-answer presence."
+            ),
+        },
+        "explicit_or_terminal_final_answer": {
+            "n_present": sum(
+                bool(record["explicit_or_terminal_final_answer_present"])
+                for record in records
+            ),
+            "present_rate": float(
+                np.mean(
+                    [
+                        bool(
+                            record[
+                                "explicit_or_terminal_final_answer_present"
+                            ]
+                        )
+                        for record in records
+                    ]
+                )
+            )
+            if n
+            else math.nan,
+            "present_ci_95_item_cluster": explicit_or_terminal_ci,
+            "definition": (
+                "numeric answer in an explicit answer cue/box or at the terminal "
+                "end of the decoded continuation; independent of the frozen parser"
+            ),
         },
         "accuracy": float(np.mean([int(record["correct"]) for record in records]))
         if n
@@ -1210,8 +1590,61 @@ def _sample_lookup(
     return lookup
 
 
+def _conditional_item_cluster_rate_ci(
+    numerators: Dict[str, int],
+    denominators: Dict[str, int],
+    *,
+    bootstrap_b: int,
+    seed: int,
+    ci_level: float = 0.95,
+) -> Dict[str, object]:
+    eligible_ids = [
+        item_id
+        for item_id in sorted(denominators)
+        if int(denominators[item_id]) > 0
+    ]
+    denominator_samples = sum(int(denominators[item_id]) for item_id in eligible_ids)
+    if not eligible_ids:
+        return {
+            "defined": False,
+            "point": None,
+            "ci_lo": None,
+            "ci_hi": None,
+            "ci_level": float(ci_level),
+            "bootstrap_b": int(bootstrap_b),
+            "n_eligible_items": 0,
+            "n_denominator_samples": 0,
+            "zero_denominator": True,
+        }
+    item_rates = [
+        float(numerators.get(item_id, 0)) / float(denominators[item_id])
+        for item_id in eligible_ids
+    ]
+    ci = _ci(
+        item_rates,
+        bootstrap_b=bootstrap_b,
+        ci_level=ci_level,
+        seed=seed,
+    )
+    return {
+        "defined": True,
+        **ci,
+        "n_eligible_items": len(eligible_ids),
+        "n_denominator_samples": int(denominator_samples),
+        "zero_denominator": False,
+        "estimand": (
+            "mean item-level conditional rate among items with at least one "
+            "64-token mechanical stop"
+        ),
+    }
+
+
 def _continuation_materiality(
-    cell_records: Sequence[Dict[str, object]], *, long_cap: int
+    cell_records: Sequence[Dict[str, object]],
+    *,
+    long_cap: int,
+    bootstrap_b: int,
+    seed: int,
 ) -> Dict[str, object]:
     lookup = _sample_lookup(cell_records)
     by_condition: Dict[str, Dict[str, object]] = {}
@@ -1223,6 +1656,19 @@ def _continuation_materiality(
         correctness_recovered = 0
         correctness_lost = 0
         materially_changed = 0
+        denominators: Dict[str, int] = {}
+        per_item: Dict[str, Dict[str, int]] = {
+            name: {}
+            for name in (
+                "prefix_match",
+                "explicit_or_terminal_answer_added",
+                "frozen_parser_number_added",
+                "frozen_parser_number_changed",
+                "correctness_recovered",
+                "correctness_lost",
+                "operational_semantic_evidence",
+            )
+        }
         for key, short in lookup.items():
             cond, cap, item_id, sample_index = key
             if cond != condition or cap != 64 or not bool(short["hit_max_new_tokens"]):
@@ -1231,9 +1677,11 @@ def _continuation_materiality(
             if long is None:
                 raise ValueError(f"missing paired long-cap sample for {key}")
             compared += 1
+            denominators[item_id] = denominators.get(item_id, 0) + 1
             short_ids = [int(value) for value in short["token_ids"]]
             long_ids = [int(value) for value in long["token_ids"]]
-            prefix_matches += int(long_ids[: len(short_ids)] == short_ids)
+            sample_prefix_match = int(long_ids[: len(short_ids)] == short_ids)
+            prefix_matches += sample_prefix_match
             short_answer = short.get("parsed_final_number")
             long_answer = long.get("parsed_final_number")
             sample_answer_changed = int(
@@ -1247,30 +1695,60 @@ def _continuation_materiality(
             sample_correctness_lost = int(
                 int(short["correct"]) == 1 and int(long["correct"]) == 0
             )
-            sample_added_answer = int(
-                not bool(short["final_answer_present"])
-                and bool(long["final_answer_present"])
+            sample_explicit_answer_added = int(
+                not bool(short["explicit_or_terminal_final_answer_present"])
+                and bool(long["explicit_or_terminal_final_answer_present"])
             )
-            added_answer += sample_added_answer
+            sample_parser_number_added = int(
+                not bool(short["frozen_parser_number_present"])
+                and bool(long["frozen_parser_number_present"])
+            )
+            added_answer += sample_explicit_answer_added
             answer_changed += sample_answer_changed
             correctness_recovered += sample_correctness_recovered
             correctness_lost += sample_correctness_lost
-            materially_changed += int(
+            sample_materially_changed = int(
                 any(
                     (
-                        sample_added_answer,
+                        sample_explicit_answer_added,
                         sample_answer_changed,
                         sample_correctness_recovered,
                         sample_correctness_lost,
                     )
                 )
             )
+            materially_changed += sample_materially_changed
+            sample_values = {
+                "prefix_match": sample_prefix_match,
+                "explicit_or_terminal_answer_added": sample_explicit_answer_added,
+                "frozen_parser_number_added": sample_parser_number_added,
+                "frozen_parser_number_changed": sample_answer_changed,
+                "correctness_recovered": sample_correctness_recovered,
+                "correctness_lost": sample_correctness_lost,
+                "operational_semantic_evidence": sample_materially_changed,
+            }
+            for name, value in sample_values.items():
+                per_item[name][item_id] = per_item[name].get(item_id, 0) + int(value)
+        rate_cis = {
+            name: _conditional_item_cluster_rate_ci(
+                values,
+                denominators,
+                bootstrap_b=bootstrap_b,
+                seed=seed,
+            )
+            for name, values in per_item.items()
+        }
         by_condition[condition] = {
             "n_64_cap_stops_compared": compared,
             "n_exact_token_prefix_matches": prefix_matches,
-            "all_prefixes_match": prefix_matches == compared,
-            "n_continuation_added_parseable_answer": added_answer,
-            "n_continuation_changed_parseable_answer": answer_changed,
+            "all_prefixes_match": (
+                prefix_matches == compared if compared else None
+            ),
+            "n_continuation_added_explicit_or_terminal_final_answer": added_answer,
+            "n_continuation_added_frozen_parser_number": sum(
+                per_item["frozen_parser_number_added"].values()
+            ),
+            "n_continuation_changed_frozen_parser_number": answer_changed,
             "n_correctness_recovered": correctness_recovered,
             "n_correctness_lost": correctness_lost,
             "n_operational_semantic_truncation_evidence": materially_changed,
@@ -1278,13 +1756,18 @@ def _continuation_materiality(
                 float(materially_changed / compared) if compared else None
             ),
             "operational_semantic_truncation_evidence_present": (
-                prefix_matches == compared and materially_changed > 0
+                compared > 0
+                and prefix_matches == compared
+                and materially_changed > 0
             ),
+            "conditional_rates_ci_95_item_cluster": rate_cis,
             "semantic_note": (
                 "A mechanical cap stop is not semantic truncation. Same-seed "
-                "exact-prefix continuation that adds/changes the parsed answer "
-                "or changes correctness is the predeclared operational evidence "
-                "that the 64-token cap was semantically material."
+                "exact-prefix continuation that adds an explicit/terminal final "
+                "answer, changes the frozen parser number, or changes correctness "
+                "is the predeclared operational evidence that the 64-token cap "
+                "was semantically material. Frozen parser success alone is not "
+                "labelled final-answer presence."
             ),
         }
     return by_condition
@@ -1334,6 +1817,11 @@ def analyse(
 ) -> Dict[str, object]:
     cells: Dict[str, Dict[str, object]] = {}
     overall_branches: List[str] = []
+    primary_family = _build_primary_inference_family(
+        records,
+        bootstrap_b=bootstrap_b,
+        seed=seed,
+    )
     for cell_key in FROZEN_CELL_KEYS:
         cfg = configs[cell_key]
         cell_records = [
@@ -1504,11 +1992,19 @@ def analyse(
                     ),
                     field="correct",
                 )
-                effect_ci = _ci(
+                unadjusted_effect_ci = _ci(
                     effect,
                     bootstrap_b=bootstrap_b,
                     ci_level=0.95,
                     seed=seed,
+                )
+                effect_ci = dict(
+                    primary_family[
+                        f"{cell_key}|E_{condition}_{long_cap}"
+                    ]
+                )
+                effect_ci["unadjusted_ci_95_item_cluster"] = (
+                    unadjusted_effect_ci
                 )
                 condition_effects[condition] = effect_ci
                 absolute_material |= _meaningful_nonzero(effect_ci)
@@ -1544,16 +2040,25 @@ def analyse(
                 steer_value - prompt_value
                 for steer_value, prompt_value in zip(steer_effect, prompt_effect)
             ]
-            interaction_ci = _ci(
+            unadjusted_interaction_ci = _ci(
                 interaction,
                 bootstrap_b=bootstrap_b,
-                ci_level=adj.BONFERRONI_CI_LEVEL,
+                ci_level=0.95,
                 seed=seed,
+            )
+            interaction_ci = dict(
+                primary_family[f"{cell_key}|I_{long_cap}"]
+            )
+            interaction_ci["unadjusted_ci_95_item_cluster"] = (
+                unadjusted_interaction_ci
             )
             affects_comparison |= _meaningful_nonzero(interaction_ci)
             all_interactions_equivalent &= _equivalent_within(interaction_ci)
             continuation = _continuation_materiality(
-                cell_records, long_cap=long_cap
+                cell_records,
+                long_cap=long_cap,
+                bootstrap_b=bootstrap_b,
+                seed=seed,
             )
             for condition, continuation_row in continuation.items():
                 if (
@@ -1582,7 +2087,6 @@ def analyse(
         pass_changed = any(
             pass_by_cap[long_cap] != pass_by_cap[64] for long_cap in (128, 256)
         )
-        affects_comparison |= pass_changed
         if not reproduced:
             branch = "INVALID_64_NONREPRODUCTION"
         elif affects_comparison:
@@ -1621,6 +2125,11 @@ def analyse(
             "operational_semantic_truncation_evidence_present": (
                 semantic_materiality_observed
             ),
+            "companion_pass_status_changed": pass_changed,
+            "companion_pass_status_branch_role": (
+                "reported diagnostic only; it does not trigger the frozen overall "
+                "branch outside the 24-estimand max-T family"
+            ),
             "outcome_branch": branch,
             "original_result_untouched": True,
         }
@@ -1651,7 +2160,15 @@ def analyse(
             "primary_contrast": "D_t=accuracy_steer,t-accuracy_prompt,t",
             "cap_effect": "E_c,t=accuracy_c,t-accuracy_c,64",
             "interaction": "I_t=E_steer,t-E_prompt,t=D_t-D_64",
-            "primary_ci_level": adj.BONFERRONI_CI_LEVEL,
+            "primary_family": (
+                "24 predeclared E_c,t and I_t estimands: four cells × "
+                "(four condition effects + two interactions)"
+            ),
+            "primary_ci_level": 0.95,
+            "primary_multiplicity_method": (
+                "joint item-cluster bootstrap max-T simultaneous confidence intervals"
+            ),
+            "primary_family_size": len(primary_family),
             "diagnostic_ci_level": 0.95,
             "bootstrap_b": bootstrap_b,
             "meaningful_margin": adj.DELTA,
@@ -1667,13 +2184,16 @@ def analyse(
             ),
             "operational_semantic_truncation": (
                 "a mechanically stopped 64-token sequence is an exact prefix of "
-                "its same-seed longer continuation and the continuation adds or "
-                "changes the parsed answer or changes correctness"
+                "its same-seed longer continuation and the continuation adds an "
+                "explicit/terminal final answer, changes the frozen parser number, "
+                "or changes correctness"
             ),
         },
+        "primary_multiplicity_family": primary_family,
         "scope": (
-            "TEST-only sensitivity companion for deliberation; never replaces or "
-            "edits the frozen E-0006 0/12 result"
+            "sensitivity companion on fingerprint-proven historical TEST index "
+            "IDs with a revision-pinned reconstructed payload; never replaces "
+            "or edits the frozen E-0006 0/12 result"
         ),
         "per_cell_branch_evaluation_order": [
             "INVALID_64_NONREPRODUCTION",
@@ -1699,7 +2219,7 @@ def _write_summary(path: Path, analysis: Dict[str, object]) -> None:
         "# E-0017 Deliberation Token-Cap Sensitivity",
         "",
         f"- outcome: **{analysis['overall_outcome_branch']}**",
-        "- scope: TEST-only companion; frozen E-0006 and its 0/12 result are unchanged.",
+        "- scope: recovered historical TEST index IDs on a pinned reconstructed payload; frozen E-0006 0/12 is unchanged.",
         "- mechanical cap stop is exact from generated token IDs and EOS; it is not, by itself, semantic truncation.",
         "",
         "| cell | 64 reproduction | 64/128/256 companion pass | branch |",
@@ -1730,56 +2250,637 @@ def _implementation_lineage() -> Dict[str, str]:
     return {_rel(path): _sha256_file(path) for path in paths}
 
 
-def _model_reference_identity(model_ref: str) -> Dict[str, object]:
-    path = Path(model_ref)
-    if not path.exists():
-        return {
-            "reference": str(model_ref),
-            "kind": "hub_or_external_reference",
-            "identity_limitation": (
-                "E-0006 retained model labels/local paths but no immutable weight "
-                "hash. The 64-token exact reproduction gate is therefore mandatory."
-            ),
-        }
-    resolved = path.resolve()
-    metadata_files = []
-    for name in (
+def _file_identity(path: Path, *, logical_name: Optional[str] = None) -> Dict[str, object]:
+    return {
+        "name": logical_name or path.name,
+        "size_bytes": path.stat().st_size,
+        "sha256": _sha256_file(path),
+    }
+
+
+def _hash_model_snapshot(
+    snapshot_path: Path,
+    *,
+    repo_id: str,
+    revision: str,
+) -> Dict[str, object]:
+    snapshot = Path(snapshot_path).resolve()
+    if not snapshot.is_dir() or snapshot.name != revision:
+        raise ValueError(
+            f"{repo_id}@{revision}: resolved snapshot path must end in the "
+            "full pinned revision"
+        )
+    required_metadata = (
         "config.json",
         "generation_config.json",
-        "tokenizer.json",
         "tokenizer_config.json",
-        "special_tokens_map.json",
-        "model.safetensors.index.json",
-    ):
-        candidate = resolved / name
-        if candidate.exists() and candidate.is_file():
-            metadata_files.append(
-                {
-                    "name": name,
-                    "size_bytes": candidate.stat().st_size,
-                    "sha256": _sha256_file(candidate),
-                }
-            )
-    weight_files = [
+    )
+    for name in required_metadata:
+        if not (snapshot / name).is_file():
+            raise ValueError(f"{repo_id}@{revision}: missing required {name}")
+    tokenizer_candidates = sorted(
         {
-            "name": candidate.name,
-            "size_bytes": candidate.stat().st_size,
+            path.name
+            for pattern in (
+                "tokenizer*",
+                "special_tokens_map.json",
+                "added_tokens.json",
+                "chat_template.jinja",
+            )
+            for path in snapshot.glob(pattern)
+            if path.is_file()
         }
-        for candidate in sorted(resolved.glob("*.safetensors"))
-        if candidate.is_file()
+    )
+    if not any(name in tokenizer_candidates for name in ("tokenizer.json", "tokenizer.model")):
+        raise ValueError(f"{repo_id}@{revision}: tokenizer payload is incomplete")
+    metadata_names = sorted(
+        set(required_metadata)
+        | set(tokenizer_candidates)
+        | {
+            name
+            for name in (
+                "special_tokens_map.json",
+                "added_tokens.json",
+                "chat_template.jinja",
+                "model.safetensors.index.json",
+            )
+            if (snapshot / name).is_file()
+        }
+    )
+    index_path = snapshot / "model.safetensors.index.json"
+    shard_names: List[str]
+    if index_path.is_file():
+        index = json.loads(index_path.read_text(encoding="utf-8"))
+        weight_map = dict(index.get("weight_map") or {})
+        if not weight_map:
+            raise ValueError(f"{index_path}: missing weight_map")
+        shard_names = sorted({str(value) for value in weight_map.values()})
+        if any(
+            Path(name).name != name
+            or "/" in name
+            or "\\" in name
+            or not name.endswith(".safetensors")
+            for name in shard_names
+        ):
+            raise ValueError(f"{index_path}: unsafe weight shard reference")
+    else:
+        shard_names = [
+            path.name
+            for path in sorted(snapshot.glob("*.safetensors"))
+            if path.is_file()
+        ]
+        if shard_names != ["model.safetensors"]:
+            raise ValueError(
+                f"{repo_id}@{revision}: unindexed snapshot must contain exactly "
+                "model.safetensors"
+            )
+    actual_shards = {
+        path.name
+        for path in snapshot.glob("*.safetensors")
+        if path.is_file()
+    }
+    if set(shard_names) != actual_shards:
+        raise ValueError(
+            f"{repo_id}@{revision}: weight index/shard set mismatch"
+        )
+    metadata = [
+        _file_identity(snapshot / name, logical_name=name)
+        for name in metadata_names
+    ]
+    weights = [
+        _file_identity(snapshot / name, logical_name=name)
+        for name in shard_names
     ]
     return {
-        "reference": str(model_ref),
-        "kind": "local_directory",
-        "resolved_path": str(resolved),
-        "metadata_files": metadata_files,
-        "weight_file_size_manifest": weight_files,
-        "weight_bytes": sum(int(row["size_bytes"]) for row in weight_files),
-        "identity_limitation": (
-            "Weight shard bytes are not re-hashed by this runner. Exact effective "
-            "compatibility is gated by the frozen 64-token reproduction."
+        "schema_version": MODEL_IDENTITY_SCHEMA_VERSION,
+        "repo_id": repo_id,
+        "revision": revision,
+        "snapshot_path": str(snapshot),
+        "metadata_files": metadata,
+        "weight_shards": weights,
+        "weight_bytes": sum(int(row["size_bytes"]) for row in weights),
+        "all_weight_shards_hashed": True,
+    }
+
+
+def _resolve_model_artifact(
+    *,
+    model_label: str,
+    repo_id: str,
+    revision: str,
+    hf_home: Optional[str],
+) -> ModelArtifact:
+    expected = MODEL_SPECS[model_label]
+    if repo_id != expected["repo_id"] or revision != expected["revision"]:
+        raise SystemExit(
+            f"{model_label}: only exact pinned identity "
+            f"{expected['repo_id']}@{expected['revision']} is accepted"
+        )
+    try:
+        from huggingface_hub import snapshot_download
+    except ImportError as exc:
+        raise SystemExit(
+            "E-0017 model identity resolution requires huggingface_hub"
+        ) from exc
+    snapshot = snapshot_download(
+        repo_id=repo_id,
+        revision=revision,
+        cache_dir=(str(Path(hf_home).resolve() / "hub") if hf_home else None),
+        local_files_only=True,
+    )
+    identity = _hash_model_snapshot(
+        Path(snapshot),
+        repo_id=repo_id,
+        revision=revision,
+    )
+    identity_sha256 = _canonical_json_hash(identity)
+    return ModelArtifact(
+        model_label=model_label,
+        repo_id=repo_id,
+        revision=revision,
+        snapshot_path=str(Path(snapshot).resolve()),
+        identity=identity,
+        identity_sha256=identity_sha256,
+    )
+
+
+def _parse_utc_timestamp(value: object, *, field: str) -> datetime:
+    if not isinstance(value, str) or not value.endswith("Z"):
+        raise ValueError(f"{field} must be an ISO-8601 UTC timestamp ending in Z")
+    try:
+        parsed = datetime.fromisoformat(value[:-1] + "+00:00")
+    except ValueError as exc:
+        raise ValueError(f"{field} is not a valid timestamp") from exc
+    return parsed.astimezone(timezone.utc)
+
+
+def _load_run_authorization(
+    path: Path,
+    *,
+    source_commit: str,
+    preregistration: Dict[str, object],
+    out_dir: Path,
+) -> Tuple[Dict[str, object], str]:
+    auth_path = Path(path).resolve()
+    if not auth_path.is_file():
+        raise SystemExit(f"E-0017 authorization file is missing: {auth_path}")
+    payload = json.loads(auth_path.read_text(encoding="utf-8"))
+    expected_top = {
+        "schema_version",
+        "experiment_id",
+        "status",
+        "issued_at",
+        "expires_at",
+        "protocol_freeze",
+        "independent_audit",
+        "owner_authorization",
+        "designated_host",
+        "model_pins",
+        "dataset_pin",
+    }
+    if not isinstance(payload, dict) or set(payload) != expected_top:
+        raise SystemExit("E-0017 authorization schema mismatch")
+    if (
+        payload["schema_version"] != AUTHORIZATION_SCHEMA_VERSION
+        or payload["experiment_id"] != EXPERIMENT_ID
+        or payload["status"] != "AUTHORIZED_FOR_ONE_CANONICAL_ATTEMPT"
+    ):
+        raise SystemExit("E-0017 authorization status mismatch")
+    issued_at = _parse_utc_timestamp(payload["issued_at"], field="issued_at")
+    expires_at = _parse_utc_timestamp(payload["expires_at"], field="expires_at")
+    now = datetime.now(timezone.utc)
+    if not issued_at <= now < expires_at:
+        raise SystemExit("E-0017 authorization is not currently valid")
+
+    freeze = dict(payload["protocol_freeze"])
+    if set(freeze) != {"prereg_path", "prereg_sha256", "status"}:
+        raise SystemExit("E-0017 protocol-freeze schema mismatch")
+    if (
+        freeze["prereg_path"] != _rel(PREREG_PATH)
+        or freeze["prereg_sha256"] != preregistration["sha256"]
+        or freeze["status"] != "FROZEN"
+        or preregistration["frozen"] is not True
+    ):
+        raise SystemExit("E-0017 protocol freeze does not bind the current preregistration")
+
+    audit = dict(payload["independent_audit"])
+    if set(audit) != {
+        "audit_record_id",
+        "auditor_id",
+        "auditor_role",
+        "verdict",
+        "audited_run_commit",
+    }:
+        raise SystemExit("E-0017 independent-audit schema mismatch")
+    if (
+        audit["auditor_role"] != "independent_hostile_auditor"
+        or audit["verdict"] != "FREEZE_RECOMMENDED"
+        or audit["audited_run_commit"] != source_commit
+        or not re.fullmatch(r"[0-9a-f]{40}", str(audit["audited_run_commit"]))
+    ):
+        raise SystemExit("E-0017 current run commit lacks an independent freeze recommendation")
+
+    owner = dict(payload["owner_authorization"])
+    if set(owner) != {
+        "authorization_id",
+        "authorized_by",
+        "authorized_at",
+        "audited_run_commit",
+        "max_gpu_hours",
+        "approved_gpu_uuid",
+        "approved_gpu_name",
+    }:
+        raise SystemExit("E-0017 owner-authorization schema mismatch")
+    _parse_utc_timestamp(owner["authorized_at"], field="authorized_at")
+    if (
+        owner["authorized_by"] != OWNER_IDENTITY
+        or owner["audited_run_commit"] != source_commit
+        or audit["auditor_id"] == owner["authorized_by"]
+        or not str(owner["authorization_id"]).strip()
+        or not (0.0 < float(owner["max_gpu_hours"]) <= 3.0)
+        or not re.fullmatch(r"GPU-[0-9A-Fa-f-]+", str(owner["approved_gpu_uuid"]))
+        or "A800" not in str(owner["approved_gpu_name"]).upper()
+    ):
+        raise SystemExit("E-0017 owner GPU/budget authorization mismatch")
+
+    designated = dict(payload["designated_host"])
+    if set(designated) != {
+        "hostname",
+        "canonical_out_dir",
+        "attempt_registry_path",
+    }:
+        raise SystemExit("E-0017 designated-host schema mismatch")
+    expected_out = Path(str(designated["canonical_out_dir"]))
+    registry_path = Path(str(designated["attempt_registry_path"]))
+    if (
+        not expected_out.is_absolute()
+        or expected_out.resolve() != out_dir.resolve()
+        or not registry_path.is_absolute()
+        or _is_relative_to(registry_path.resolve(), out_dir.resolve())
+        or str(designated["hostname"]) != socket.gethostname()
+    ):
+        raise SystemExit("E-0017 invocation is not on the authorized canonical host/path")
+
+    if payload["model_pins"] != MODEL_SPECS:
+        raise SystemExit("E-0017 authorization model pins mismatch")
+    if payload["dataset_pin"] != {
+        "repo_id": "openai/gsm8k",
+        "config": "main",
+        "split": "test",
+        "revision": GSM8K_REVISION,
+        "item_identity_sha256": _sha256_file(ITEM_IDENTITY_PATH),
+    }:
+        raise SystemExit("E-0017 authorization dataset/item identity mismatch")
+    return payload, _sha256_file(auth_path)
+
+
+def _run_nvidia_smi(*args: str) -> str:
+    completed = subprocess.run(
+        ["nvidia-smi", *args],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=30,
+    )
+    if completed.returncode != 0:
+        raise RuntimeError(
+            "nvidia-smi failed: "
+            + (completed.stderr.strip() or completed.stdout.strip())
+        )
+    return completed.stdout.strip()
+
+
+def _parse_gpu_inventory(text: str) -> List[Dict[str, object]]:
+    rows: List[Dict[str, object]] = []
+    for row in csv.reader(StringIO(text)):
+        if not row:
+            continue
+        if len(row) != 6:
+            raise ValueError("unexpected nvidia-smi GPU inventory row")
+        index, uuid, name, total, used, utilization = [value.strip() for value in row]
+        rows.append(
+            {
+                "index": int(index),
+                "uuid": uuid,
+                "name": name,
+                "memory_total_mib": int(total),
+                "memory_used_mib": int(used),
+                "utilization_gpu_pct": int(utilization),
+            }
+        )
+    return rows
+
+
+def _query_gpu_state() -> Tuple[List[Dict[str, object]], List[Dict[str, object]]]:
+    inventory = _parse_gpu_inventory(
+        _run_nvidia_smi(
+            "--query-gpu=index,uuid,name,memory.total,memory.used,utilization.gpu",
+            "--format=csv,noheader,nounits",
+        )
+    )
+    process_text = _run_nvidia_smi(
+        "--query-compute-apps=gpu_uuid,pid,process_name,used_gpu_memory",
+        "--format=csv,noheader,nounits",
+    )
+    processes: List[Dict[str, object]] = []
+    if process_text and "No running processes found" not in process_text:
+        for row in csv.reader(StringIO(process_text)):
+            if len(row) != 4:
+                raise ValueError("unexpected nvidia-smi compute-process row")
+            gpu_uuid, pid, process_name, used = [value.strip() for value in row]
+            processes.append(
+                {
+                    "gpu_uuid": gpu_uuid,
+                    "pid": int(pid),
+                    "process_name": process_name,
+                    "used_gpu_memory_mib": int(used),
+                }
+            )
+    return inventory, processes
+
+
+def _verify_idle_a800(authorization: Dict[str, object]) -> Dict[str, object]:
+    owner = dict(authorization["owner_authorization"])
+    expected_uuid = str(owner["approved_gpu_uuid"])
+    expected_name = str(owner["approved_gpu_name"])
+    if os.environ.get("CUDA_VISIBLE_DEVICES") != expected_uuid:
+        raise RuntimeError(
+            "CUDA_VISIBLE_DEVICES must be the single authorized GPU UUID, not an "
+            "index, list, or basename"
+        )
+    if os.environ.get("CUDA_DEVICE_ORDER") != "PCI_BUS_ID":
+        raise RuntimeError("CUDA_DEVICE_ORDER=PCI_BUS_ID is required")
+    if os.environ.get("TRANSFORMERS_OFFLINE", "").lower() not in {"1", "true"}:
+        raise RuntimeError("TRANSFORMERS_OFFLINE=1 is required for the pinned run")
+    observations: List[Dict[str, object]] = []
+    for check_index in range(2):
+        inventory, processes = _query_gpu_state()
+        matches = [gpu for gpu in inventory if gpu["uuid"] == expected_uuid]
+        if len(matches) != 1:
+            raise RuntimeError("authorized GPU UUID is not uniquely present")
+        gpu = matches[0]
+        active = [
+            process for process in processes
+            if process["gpu_uuid"] == expected_uuid
+        ]
+        if (
+            gpu["name"] != expected_name
+            or "A800" not in str(gpu["name"]).upper()
+            or active
+            or int(gpu["memory_used_mib"]) > GPU_IDLE_MAX_MEMORY_MIB
+            or int(gpu["utilization_gpu_pct"]) > GPU_IDLE_MAX_UTILIZATION_PCT
+        ):
+            raise RuntimeError(
+                "authorized A800 is not idle under the frozen threat model"
+            )
+        observations.append(
+            {
+                "checked_at": utcnow(),
+                "gpu": gpu,
+                "compute_processes": active,
+            }
+        )
+        if check_index == 0:
+            time.sleep(2.0)
+    try:
+        import torch
+    except ImportError as exc:
+        raise RuntimeError("E-0017 requires CUDA torch; CPU fallback is forbidden") from exc
+    if not torch.cuda.is_available() or torch.cuda.device_count() != 1:
+        raise RuntimeError("E-0017 requires exactly one visible CUDA device")
+    torch_name = str(torch.cuda.get_device_name(0))
+    if torch_name != expected_name or "A800" not in torch_name.upper():
+        raise RuntimeError("torch CUDA device does not match the authorized A800")
+    return {
+        "gpu_uuid": expected_uuid,
+        "gpu_name": expected_name,
+        "cuda_visible_devices": os.environ["CUDA_VISIBLE_DEVICES"],
+        "cuda_device_order": os.environ["CUDA_DEVICE_ORDER"],
+        "torch_device_count": int(torch.cuda.device_count()),
+        "torch_device_name": torch_name,
+        "required_dtype": "float16",
+        "idle_thresholds": {
+            "max_memory_used_mib": GPU_IDLE_MAX_MEMORY_MIB,
+            "max_utilization_gpu_pct": GPU_IDLE_MAX_UTILIZATION_PCT,
+            "compute_processes": 0,
+        },
+        "observations": observations,
+        "threat_model": (
+            "Enforces one UUID-selected A800, two idle observations, no visible "
+            "compute process, bounded memory/utilization, and a host-global lock. "
+            "It prevents cooperative cross-output retries and accidental CPU/GPU "
+            "fallback; it cannot stop a privileged external process from starting "
+            "after the final idle observation."
         ),
     }
+
+
+def _verify_backend_cuda_float16(backend) -> Dict[str, object]:
+    backend._ensure_loaded()
+    floating_dtypes = set()
+    devices = set()
+    parameter_count = 0
+    for parameter in backend._model.parameters():
+        parameter_count += int(parameter.numel())
+        devices.add(str(parameter.device))
+        if getattr(parameter, "is_floating_point", lambda: False)():
+            floating_dtypes.add(str(parameter.dtype))
+    if not devices or any(not device.startswith("cuda:0") for device in devices):
+        raise RuntimeError("model parameters are not exclusively on cuda:0")
+    if floating_dtypes != {"torch.float16"}:
+        raise RuntimeError(
+            f"model floating dtypes are not exclusively float16: {floating_dtypes}"
+        )
+    return {
+        "parameter_count": parameter_count,
+        "parameter_devices": sorted(devices),
+        "floating_parameter_dtypes": sorted(floating_dtypes),
+        "eval_mode": not bool(backend._model.training),
+    }
+
+
+class CanonicalAttemptRegistry:
+    def __init__(
+        self,
+        path: Path,
+        *,
+        authorization: Dict[str, object],
+        authorization_sha256: str,
+        source_commit: str,
+        out_dir: Path,
+    ) -> None:
+        self.path = Path(path).resolve()
+        self.lock_path = Path(str(self.path) + ".lock")
+        self.authorization = authorization
+        self.authorization_sha256 = authorization_sha256
+        self.source_commit = source_commit
+        self.out_dir = out_dir.resolve()
+        self._handle = None
+        self._active_invocation_id: Optional[str] = None
+        self.already_complete = False
+
+    def acquire(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._handle = open(self.lock_path, "a+b")
+        self._handle.seek(0, os.SEEK_END)
+        if self._handle.tell() == 0:
+            self._handle.write(b"\0")
+            self._handle.flush()
+        self._handle.seek(0)
+        try:
+            if os.name == "nt":
+                import msvcrt
+
+                msvcrt.locking(self._handle.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(self._handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except (OSError, ImportError) as exc:
+            self._handle.close()
+            self._handle = None
+            raise RuntimeError("another E-0017 canonical attempt is active") from exc
+
+    def release(self) -> None:
+        if self._handle is None:
+            return
+        try:
+            self._handle.seek(0)
+            if os.name == "nt":
+                import msvcrt
+
+                msvcrt.locking(self._handle.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(self._handle.fileno(), fcntl.LOCK_UN)
+        finally:
+            self._handle.close()
+            self._handle = None
+
+    def _identity(self) -> Dict[str, object]:
+        owner = dict(self.authorization["owner_authorization"])
+        designated = dict(self.authorization["designated_host"])
+        return {
+            "experiment_id": EXPERIMENT_ID,
+            "authorization_id": owner["authorization_id"],
+            "authorization_sha256": self.authorization_sha256,
+            "audited_run_commit": self.source_commit,
+            "designated_hostname": designated["hostname"],
+            "approved_gpu_uuid": owner["approved_gpu_uuid"],
+            "canonical_out_dir": str(self.out_dir),
+        }
+
+    def start(self) -> Dict[str, object]:
+        if self._handle is None:
+            raise RuntimeError("attempt registry lock is not held")
+        identity = self._identity()
+        if self.path.exists():
+            payload = json.loads(self.path.read_text(encoding="utf-8"))
+            if (
+                payload.get("schema_version") != ATTEMPT_REGISTRY_SCHEMA_VERSION
+                or payload.get("identity") != identity
+                or payload.get("valid_for_paper") is not False
+            ):
+                raise RuntimeError(
+                    "canonical attempt registry identity mismatch; cross-out-dir "
+                    "or reauthorized retries are forbidden"
+                )
+            if payload.get("status") == "COMPLETE":
+                self.already_complete = True
+                return payload
+            if payload.get("status") not in {"STARTED", "FAILED"}:
+                raise RuntimeError("canonical attempt registry has invalid status")
+        else:
+            payload = {
+                "schema_version": ATTEMPT_REGISTRY_SCHEMA_VERSION,
+                "identity": identity,
+                "status": None,
+                "first_started_at": utcnow(),
+                "invocations": [],
+                "failures": [],
+                "seal_binding": None,
+                "valid_for_paper": False,
+            }
+        invocation_id = f"{socket.gethostname()}:{os.getpid()}:{time.time_ns()}"
+        payload["status"] = "STARTED"
+        payload["last_started_at"] = utcnow()
+        payload["invocations"].append(
+            {
+                "invocation_id": invocation_id,
+                "pid": os.getpid(),
+                "started_at": payload["last_started_at"],
+            }
+        )
+        self._active_invocation_id = invocation_id
+        _write_json(self.path, payload)
+        return payload
+
+    def bind_run_config(self, run_config_sha256: str) -> None:
+        if self.already_complete:
+            return
+        payload = json.loads(self.path.read_text(encoding="utf-8"))
+        if payload.get("status") != "STARTED":
+            raise RuntimeError("attempt registry is not STARTED")
+        existing = payload.get("run_config_sha256")
+        if existing not in {None, run_config_sha256}:
+            raise RuntimeError("canonical attempt run-config drift")
+        payload["run_config_sha256"] = run_config_sha256
+        _write_json(self.path, payload)
+
+    def assert_budget(self) -> None:
+        payload = json.loads(self.path.read_text(encoding="utf-8"))
+        started = datetime.fromisoformat(str(payload["first_started_at"]))
+        if started.tzinfo is None:
+            started = started.replace(tzinfo=timezone.utc)
+        elapsed_hours = (
+            datetime.now(timezone.utc) - started.astimezone(timezone.utc)
+        ).total_seconds() / 3600.0
+        max_hours = float(
+            self.authorization["owner_authorization"]["max_gpu_hours"]
+        )
+        if elapsed_hours > max_hours:
+            raise RuntimeError(
+                f"E-0017 authorized GPU budget exceeded: "
+                f"{elapsed_hours:.3f}h > {max_hours:.3f}h"
+            )
+
+    def mark_failed(self, exc: BaseException) -> None:
+        if self.already_complete or not self.path.exists():
+            return
+        payload = json.loads(self.path.read_text(encoding="utf-8"))
+        if payload.get("status") != "STARTED":
+            return
+        payload["status"] = "FAILED"
+        payload["failed_at"] = utcnow()
+        failure = {
+            "invocation_id": self._active_invocation_id,
+            "type": type(exc).__name__,
+            "message": str(exc)[:2000],
+        }
+        payload["last_failure"] = failure
+        payload.setdefault("failures", []).append(
+            {**failure, "failed_at": payload["failed_at"]}
+        )
+        _write_json(self.path, payload)
+
+    def mark_complete(self, seal_binding: Dict[str, object]) -> None:
+        payload = json.loads(self.path.read_text(encoding="utf-8"))
+        if payload.get("status") == "COMPLETE":
+            if payload.get("seal_binding") != seal_binding:
+                raise RuntimeError("completed canonical attempt seal drift")
+            self.already_complete = True
+            return
+        if payload.get("status") != "STARTED":
+            raise RuntimeError("attempt registry must be STARTED before COMPLETE")
+        payload["status"] = "COMPLETE"
+        payload["completed_at"] = utcnow()
+        payload["seal_binding"] = seal_binding
+        _write_json(self.path, payload)
+        self.already_complete = True
+
+
+_ACTIVE_ATTEMPT_REGISTRY: Optional[CanonicalAttemptRegistry] = None
 
 
 def _raw_input_manifest(
@@ -1946,8 +3047,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--frozen-root", default=str(DEFAULT_FROZEN_ROOT))
     parser.add_argument("--out-dir", default=str(DEFAULT_OUT_DIR))
-    parser.add_argument("--qwen-model", default=None)
-    parser.add_argument("--llama-model", default=None)
+    parser.add_argument("--qwen-model", default=DEFAULT_QWEN_MODEL)
+    parser.add_argument("--qwen-revision", default=DEFAULT_QWEN_REVISION)
+    parser.add_argument("--llama-model", default=DEFAULT_LLAMA_MODEL)
+    parser.add_argument("--llama-revision", default=DEFAULT_LLAMA_REVISION)
     parser.add_argument("--caps", nargs="+", type=int, default=list(CAPS))
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     parser.add_argument("--temperature", type=float, default=DEFAULT_TEMPERATURE)
@@ -1961,6 +3064,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--disk-ceiling-gb", type=float, default=DEFAULT_DISK_CEILING_GB
     )
     parser.add_argument("--min-free-gb", type=float, default=DEFAULT_MIN_FREE_GB)
+    parser.add_argument("--authorization-file", default=None)
     parser.add_argument("--confirm-frozen-test-once", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     return parser
@@ -1994,40 +3098,44 @@ def _validate_args(args) -> None:
         mismatches.append("--disk-ceiling-gb must be >= --disk-budget-gb")
     if args.min_free_gb <= 0:
         mismatches.append("--min-free-gb must be positive")
+    if args.qwen_model != DEFAULT_QWEN_MODEL:
+        mismatches.append(
+            f"--qwen-model={args.qwen_model!r} expected {DEFAULT_QWEN_MODEL!r}"
+        )
+    if args.qwen_revision != DEFAULT_QWEN_REVISION:
+        mismatches.append(
+            "--qwen-revision must equal the preregistered full commit SHA"
+        )
+    if args.llama_model != DEFAULT_LLAMA_MODEL:
+        mismatches.append(
+            f"--llama-model={args.llama_model!r} expected {DEFAULT_LLAMA_MODEL!r}"
+        )
+    if args.llama_revision != DEFAULT_LLAMA_REVISION:
+        mismatches.append(
+            "--llama-revision must equal the preregistered full commit SHA"
+        )
     if not args.dry_run and not args.confirm_frozen_test_once:
         mismatches.append(
             "real run requires --confirm-frozen-test-once after protocol freeze/approval"
         )
+    if not args.dry_run and not args.authorization_file:
+        mismatches.append("real run requires --authorization-file")
     if mismatches:
         raise SystemExit("E-0017 frozen companion identity mismatch: " + ", ".join(mismatches))
 
 
-def _effective_model_ref(
-    cfg: FrozenCellConfig,
-    *,
-    qwen_model: Optional[str],
-    llama_model: Optional[str],
-    dry_run: bool,
-) -> str:
-    override = qwen_model if cfg.model_label == "qwen2.5-7b" else llama_model
-    effective = str(override or cfg.model_id)
-    if _model_identity_key(effective) != _model_identity_key(cfg.model_id):
-        raise SystemExit(
-            f"{cfg.cell_key}: model identity {_model_identity_key(effective)!r} "
-            f"does not match frozen {_model_identity_key(cfg.model_id)!r}"
-        )
-    if (
-        not dry_run
-        and override is None
-        and _looks_like_local_path(cfg.model_id)
-        and not Path(cfg.model_id).exists()
-    ):
-        flag = "--qwen-model" if cfg.model_label == "qwen2.5-7b" else "--llama-model"
-        raise SystemExit(
-            f"{cfg.cell_key}: frozen local model path {cfg.model_id!r} is absent; "
-            f"pass {flag} with the same checkpoint identity"
-        )
-    return effective
+def _requested_model_pin(args, model_label: str) -> Dict[str, str]:
+    if model_label == "qwen2.5-7b":
+        return {
+            "repo_id": str(args.qwen_model),
+            "revision": str(args.qwen_revision),
+        }
+    if model_label == "llama3-8b":
+        return {
+            "repo_id": str(args.llama_model),
+            "revision": str(args.llama_revision),
+        }
+    raise ValueError(f"unsupported model label: {model_label}")
 
 
 def _direction_manifest(
@@ -2093,7 +3201,9 @@ def _checkpoint_identity(
     }
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def _main(argv: Optional[List[str]] = None) -> int:
+    global _ACTIVE_ATTEMPT_REGISTRY
+
     args = build_parser().parse_args(argv)
     _validate_args(args)
     frozen_root = Path(args.frozen_root).resolve()
@@ -2107,26 +3217,26 @@ def main(argv: Optional[List[str]] = None) -> int:
     frozen_lineage = frozen_lineage_inventory(
         frozen_root, configs, seed=args.seed
     )
-    test_items = load_test_items(seed=args.seed)
+    test_items, item_identity = load_test_items(seed=args.seed)
     if len(test_items) != 40:
         raise SystemExit(f"E-0017 expected 40 TEST items, got {len(test_items)}")
-    model_refs = {
-        cell_key: _effective_model_ref(
-            cfg,
-            qwen_model=args.qwen_model,
-            llama_model=args.llama_model,
-            dry_run=args.dry_run,
-        )
-        for cell_key, cfg in configs.items()
+    requested_model_pins = {
+        label: _requested_model_pin(args, label)
+        for label in MODEL_SPECS
     }
+    model_artifacts: Dict[str, ModelArtifact] = {}
     inventory = {
         "experiment_id": EXPERIMENT_ID,
         "cells": {
             cell_key: {
-                "model": model_refs[cell_key],
-                "model_reference_identity": _model_reference_identity(
-                    model_refs[cell_key]
-                ),
+                "model": {
+                    **requested_model_pins[cfg.model_label],
+                    "canonical_id": (
+                        f"{requested_model_pins[cfg.model_label]['repo_id']}@"
+                        f"{requested_model_pins[cfg.model_label]['revision']}"
+                    ),
+                    "resolved_identity": None,
+                },
                 "layer": cfg.layer,
                 "frozen_alpha": cfg.frozen_alpha,
                 "effective_alpha": _condition_instruction_and_alpha(
@@ -2150,6 +3260,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         "test_items_sha256": _sha256_text(
             json.dumps(test_items, sort_keys=True, ensure_ascii=False)
         ),
+        "item_identity": {
+            "path": _rel(ITEM_IDENTITY_PATH),
+            "sha256": _sha256_file(ITEM_IDENTITY_PATH),
+            "status": item_identity["identity_status"],
+            "historical_ordered_ids_proven": True,
+            "historical_dataset_content_hash_recorded": False,
+            "reconstruction_revision": GSM8K_REVISION,
+        },
         "frozen_lineage": frozen_lineage,
         "preregistration": preregistration,
         "implementation_files_sha256": _implementation_lineage(),
@@ -2192,6 +3310,38 @@ def main(argv: Optional[List[str]] = None) -> int:
             "E-0017 real TEST run requires a clean committed tree; "
             f"untracked={source_state['untracked_paths']!r}"
         )
+    authorization, authorization_sha256 = _load_run_authorization(
+        Path(args.authorization_file),
+        source_commit=str(source_state["head"]),
+        preregistration=preregistration,
+        out_dir=out_dir,
+    )
+    designated = dict(authorization["designated_host"])
+    attempt_registry = CanonicalAttemptRegistry(
+        Path(str(designated["attempt_registry_path"])),
+        authorization=authorization,
+        authorization_sha256=authorization_sha256,
+        source_commit=str(source_state["head"]),
+        out_dir=out_dir,
+    )
+    attempt_registry.acquire()
+    _ACTIVE_ATTEMPT_REGISTRY = attempt_registry
+    attempt_registry.start()
+
+    for label, pin in requested_model_pins.items():
+        model_artifacts[label] = _resolve_model_artifact(
+            model_label=label,
+            repo_id=pin["repo_id"],
+            revision=pin["revision"],
+            hf_home=args.hf_home,
+        )
+    gpu_gate = _verify_idle_a800(authorization)
+    for cell_key, cfg in configs.items():
+        artifact = model_artifacts[cfg.model_label]
+        inventory["cells"][cell_key]["model"]["resolved_identity"] = artifact.identity
+        inventory["cells"][cell_key]["model"]["identity_sha256"] = (
+            artifact.identity_sha256
+        )
     out_dir.mkdir(parents=True, exist_ok=True)
     invocation_started_at = utcnow()
     t0 = time.time()
@@ -2217,6 +3367,28 @@ def main(argv: Optional[List[str]] = None) -> int:
         "code_commit": source_state["head"],
         "dirty_tree": False,
         "source_state": source_state,
+        "authorization": {
+            "authorization_sha256": authorization_sha256,
+            "authorization_id": authorization["owner_authorization"][
+                "authorization_id"
+            ],
+            "audit_record_id": authorization["independent_audit"][
+                "audit_record_id"
+            ],
+            "audited_run_commit": authorization["independent_audit"][
+                "audited_run_commit"
+            ],
+            "canonical_attempt_registry": str(attempt_registry.path),
+        },
+        "gpu_policy": {
+            "gpu_uuid": gpu_gate["gpu_uuid"],
+            "gpu_name": gpu_gate["gpu_name"],
+            "cuda_visible_devices": gpu_gate["cuda_visible_devices"],
+            "cuda_device_order": gpu_gate["cuda_device_order"],
+            "required_dtype": gpu_gate["required_dtype"],
+            "idle_thresholds": gpu_gate["idle_thresholds"],
+            "threat_model": gpu_gate["threat_model"],
+        },
         "disk_policy": {
             "hf_home": args.hf_home,
             "venv": args.venv,
@@ -2227,6 +3399,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         "test_once": True,
     }
     run_config_sha256 = _canonical_json_hash(run_config)
+    attempt_registry.bind_run_config(run_config_sha256)
     if run_config_path.exists():
         existing = json.loads(run_config_path.read_text(encoding="utf-8"))
         if existing != run_config:
@@ -2251,7 +3424,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             "first_started_at": invocation_started_at,
             "valid_for_paper": False,
         }
-        _write_json(run_state_path, run_state)
+    run_state.setdefault("gpu_idle_checks", []).append(gpu_gate)
+    _write_json(run_state_path, run_state)
 
     seal_path = out_dir / "test_once_analysis.json"
     if seal_path.exists():
@@ -2266,9 +3440,14 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     all_records: List[Dict[str, object]] = []
     direction_meta: Dict[str, object] = {}
+    backend_runtime_meta: Dict[str, object] = dict(
+        run_state.get("backend_runtime") or {}
+    )
     for cell_key in FROZEN_CELL_KEYS:
         cfg = configs[cell_key]
-        model_id = model_refs[cell_key]
+        model_artifact = model_artifacts[cfg.model_label]
+        model_id = model_artifact.canonical_id
+        model_load_path = model_artifact.snapshot_path
         expected_paths = [
             _records_path(out_dir, cell_key, cap, condition)
             for cap in CAPS
@@ -2379,13 +3558,15 @@ def main(argv: Optional[List[str]] = None) -> int:
                     all_records.extend(records)
             continue
 
+        attempt_registry.assert_budget()
         direction, derivation = _derive_hf_direction(
             cfg,
-            model_id=model_id,
+            model_load_path=model_load_path,
             out_dir=out_dir / f"cell_{cell_key}",
             n_extraction=args.n_extraction,
             seed=args.seed,
         )
+        attempt_registry.assert_budget()
         direction_payload = _direction_manifest(
             cfg=cfg,
             model_id=model_id,
@@ -2418,12 +3599,19 @@ def main(argv: Optional[List[str]] = None) -> int:
             )
         )
         backend = SteeredHFBackend(
-            model_id,
-            device=p0._pick_device(),
-            dtype=p0._pick_dtype(),
+            model_load_path,
+            device="cuda:0",
+            dtype="float16",
             seed=args.seed,
         )
         try:
+            backend_runtime_meta[cell_key] = {
+                "model_id": model_id,
+                "model_identity_sha256": model_artifact.identity_sha256,
+                **_verify_backend_cuda_float16(backend),
+            }
+            run_state["backend_runtime"] = backend_runtime_meta
+            _write_json(run_state_path, run_state)
             for cap in CAPS:
                 for condition in CONDITIONS:
                     path = _records_path(out_dir, cell_key, cap, condition)
@@ -2503,6 +3691,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                             batch_size=args.batch_size,
                             checkpoint_path=checkpoint_path,
                             checkpoint_identity=checkpoint_identity,
+                            budget_guard=attempt_registry.assert_budget,
                         )
                         _write_jsonl_atomic(path, records)
                     _validate_condition_records(
@@ -2548,6 +3737,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 label=f"post-cell-{cell_key}",
             )
         )
+        attempt_registry.assert_budget()
 
     expected_records = (
         len(FROZEN_CELL_KEYS)
@@ -2578,8 +3768,18 @@ def main(argv: Optional[List[str]] = None) -> int:
         "experiment_id": EXPERIMENT_ID,
         "bootstrap_b": args.bootstrap_b,
         "bootstrap_seed": args.seed,
-        "primary_ci_level": adj.BONFERRONI_CI_LEVEL,
+        "primary_ci_level": 0.95,
+        "primary_multiplicity_method": "joint-item-cluster-bootstrap-max-T",
+        "primary_family_size": 24,
+        "primary_family": (
+            "4 cells x (E_prompt_128,E_steer_128,I_128,"
+            "E_prompt_256,E_steer_256,I_256)"
+        ),
         "diagnostic_ci_level": 0.95,
+        "continuation_diagnostic_ci": (
+            "item-cluster bootstrap among items with >=1 64-token cap stop; "
+            "undefined with explicit zero-denominator metadata otherwise"
+        ),
         "meaningful_margin": adj.DELTA,
         "caps": list(CAPS),
         "conditions": list(CONDITIONS),
@@ -2597,6 +3797,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     if analysis is not None and json.loads(
         seal_path.read_text(encoding="utf-8")
     ).get("status") == "COMPLETE":
+        attempt_registry.mark_complete(
+            {
+                "test_once_seal_path": _rel(seal_path),
+                "test_once_seal_sha256": _sha256_file(seal_path),
+                "raw_inputs_sha256": _canonical_json_hash(raw_inputs),
+                "analysis_spec_sha256": _canonical_json_hash(analysis_spec),
+                "analysis_json_sha256": _sha256_file(analysis_path),
+                "run_manifest_sha256": _sha256_file(manifest_path),
+            }
+        )
         print(f"[E-0017] TEST-once analysis already complete: {_rel(analysis_path)}")
         print(f"[E-0017] outcome={analysis['overall_outcome_branch']}")
         return 0
@@ -2634,6 +3844,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         "run_config_sha256": run_config_sha256,
         "frozen_lineage": frozen_lineage_after,
         "direction_derivation": direction_meta,
+        "backend_runtime": backend_runtime_meta,
+        "canonical_attempt_registry": str(attempt_registry.path),
         "disk_checks": disk_checks,
         "test_once": {
             "seal": _rel(seal_path),
@@ -2668,9 +3880,34 @@ def main(argv: Optional[List[str]] = None) -> int:
         summary_path=summary_path,
         manifest_path=manifest_path,
     )
+    attempt_registry.mark_complete(
+        {
+            "test_once_seal_path": _rel(seal_path),
+            "test_once_seal_sha256": _sha256_file(seal_path),
+            "raw_inputs_sha256": _canonical_json_hash(raw_inputs),
+            "analysis_spec_sha256": _canonical_json_hash(analysis_spec),
+            "analysis_json_sha256": _sha256_file(analysis_path),
+            "run_manifest_sha256": _sha256_file(manifest_path),
+        }
+    )
     print(f"[E-0017] wrote {_rel(analysis_path)}")
     print(f"[E-0017] outcome={analysis['overall_outcome_branch']}")
     return 0
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    global _ACTIVE_ATTEMPT_REGISTRY
+
+    try:
+        return _main(argv)
+    except BaseException as exc:
+        if _ACTIVE_ATTEMPT_REGISTRY is not None:
+            _ACTIVE_ATTEMPT_REGISTRY.mark_failed(exc)
+        raise
+    finally:
+        if _ACTIVE_ATTEMPT_REGISTRY is not None:
+            _ACTIVE_ATTEMPT_REGISTRY.release()
+        _ACTIVE_ATTEMPT_REGISTRY = None
 
 
 if __name__ == "__main__":

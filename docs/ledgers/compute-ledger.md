@@ -16,5 +16,10 @@
 - E-0016 D-0095 authorized cap: 3 A800 GPU-hours; consumed upper bound 0.00722222 GPU-h before the valid pre-DEV failure. Retry is authorized under unchanged protocol/run commit `c094f07fa3592c2210f46caba9e69c49a5a92fad` with a remaining hard cap of 2.99277778 A800 GPU-hours; no retry has yet been performed.
 - E-0017 deliberation token-cap sensitivity is **planned, not run, and not
   authorized here**. Estimate: 7,200 continuations, at most 1,075,200
-  continuation-token slots, approximately 1–3 GPU-hours on one 7–8B-capable
-  GPU. A separate human GPU/budget decision is required before execution.
+  continuation-token slots, four direction/model passes, and full SHA-256 reads
+  of both pinned model snapshots before generation. Runtime is restricted to
+  exactly one owner-approved UUID-selected NVIDIA A800 in CUDA float16, with no
+  CPU fallback, and an authorization cap of at most 3 A800 GPU-hours enforced
+  at every fixed batch/milestone. **Authorized amount remains 0 GPU-hours**
+  until an independent re-audit recommends FREEZE and owner `EloiseJulia`
+  issues the commit/GPU-UUID/canonical-attempt authorization.

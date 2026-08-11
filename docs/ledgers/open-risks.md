@@ -45,3 +45,15 @@
     landing_fraction is silently biased by mis-estimated poles.
 
 13. **[MED-NEW] Registry auto-writer drops the schema comment block.** The experiment-registry.yaml Python writer re-serializes the YAML from data on each run and DELETES the leading commented schema block (the `# - experiment_id: ...` template that test_matches_ledger_schema parses). Silently broke the test during the A/D GPU runs (restored manually, commit bad1266). HARDEN: make the writer preserve/re-emit the schema comment header, or move the schema to a separate tracked file the test reads. Until fixed, every registry write re-breaks it.
+
+14. **[MED-NEW] Bilingual micro-study copy lacks human semantic review.**
+    Automated stable-ID/numeric/polarity/modality/scope checks cannot establish
+    that English and Simplified Chinese are pragmatically equivalent or equally
+    understandable. Human bilingual stable-ID review is a PRE-RECRUITMENT gate;
+    until then the implementation is owner-local preview only and not study
+    evidence.
+15. **[MED-NEW] Prior micro-study hostile audit does not cover bilingual commit
+    `786a6a8`.** Automated material/API/export/browser/security gates pass, but
+    the prior final audit was for monolingual commit `d17df47`. A fresh
+    independent hostile audit is required before any readiness claim beyond
+    `READY_FOR_OWNER_LOCAL_PREVIEW_NO_HUMAN_DATA`.

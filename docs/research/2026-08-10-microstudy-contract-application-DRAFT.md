@@ -7,7 +7,7 @@
 
 ## 1. Scope and design
 
-This exploratory formative within-participant study estimates whether a semantic-organization package changes technical GenAI users' structured application of a four-state contract to simulated records. Contract uses the exact semantic labels `READ`, `TRANSFER`, `BOUNDED PROMPT COMPARATOR`, `CALIBRATION WARNING`, and `EVIDENCE TIER` in fixed order; Flat uses exact neutral labels `Evidence A`–`Evidence E` and deterministic per-item row shuffles. Label word-count and visual differences are acknowledged parts of treatment; no filler padding is permitted. It does not test deep integration, transfer, benefit, trust, safety, productivity, deployment, or latent control.
+This exploratory formative within-participant study estimates whether a semantic-organization package changes technical GenAI users' structured application of a four-state contract to simulated records. Contract uses the exact English semantic labels `READ`, `TRANSFER`, `BOUNDED PROMPT COMPARATOR`, `CALIBRATION WARNING`, and `EVIDENCE TIER` (and stable-ID Simplified Chinese translations) only as formal Contract row labels in fixed order. Flat uses only neutral `Evidence A`–`Evidence E` / `证据 A`–`证据 E` labels with deterministic per-item row shuffles. Common onboarding and all shared formal body/question/option copy use neutral language. Label word-count and visual differences are acknowledged parts of treatment; no filler padding is permitted. It does not test deep integration, transfer, benefit, trust, safety, productivity, deployment, or latent control.
 
 There are ten formal trials, five per condition in two blocks, plus one different unscored practice. Q1 locks before Q2. The sole primary outcome is:
 
@@ -46,9 +46,24 @@ All no-evidence tests use inclusive exact upper tails with no tuning. Q2 reuse i
 
 The normative router defines TRANSFER pass as `tested && ci_low > 0 && estimate >= registered_margin`, followed by coherence pass→supported and coherence fail/unavailable→withheld. A CI crossing or touching zero is unresolved; resolved non-superiority and a positive-CI estimate below margin are withheld. Comparisons use exact JSON numbers without floating tolerance.
 
-## 3. Participant materials and manipulation diagnostic
+## 3. Participant materials, language, and manipulation diagnostic
 
-The exact common legend/tutorial explains the five inputs and ordered router in plain language without revealing trial answers. Practice and feedback are exact and common across conditions. The post-task format-recognition diagnostic is fixed, descriptive, and never excludes. Block ease uses `SEQ1`–`SEQ7`, appears after each block, is nullable, and is descriptive. There is no attention check and no free text.
+The initial page is a bilingual language gate with no default, fallback,
+auto-detection, URL parameter, cookie, or browser storage. English and
+Simplified Chinese are stable-ID locale bundles in the authoritative JSON.
+Welcome may switch language; `/api/start` requires and immutably locks exact
+`ui_language`. Common onboarding symmetrically introduces the four states and
+the five neutral information types without the complete router, threshold
+priority, or row-to-answer lookup.
+
+The one practice is the approved community activity-room booking narrative:
+Q1=`Q1_WITHHELD`; Q2 asks only how the locked Q1 behaves and has key `D`.
+It is not a formal five-row card and contains no Contract labels, Evidence A–E,
+formal numeric/interval/margin/tier/model/method/task content, quiz, or attention
+check. Feedback explains only that example and lock behavior. The post-task
+format-recognition diagnostic is fixed, descriptive, and never excludes. Block
+ease uses stable IDs `SEQ1`–`SEQ7`, appears after each block, is nullable, and is
+descriptive. There is no free text.
 
 The JSON `render_contract` is authoritative for DOM tags/classes/data attributes,
 the single `primitive_evidence` text binding, Contract fixed order, Flat per-item
@@ -84,8 +99,16 @@ has no authority. The preregistered first-complete/most-complete rule then appli
 assignment and other mechanical classification happen only afterward. Performance,
 RT, practice, manipulation-diagnostic, and ease responses never exclude. Raw
 attempts remain; missing-as-incorrect ITT omits only non-kept duplicates and
-technical-corrupt attempts. Completed exports are canonical server products signed
-with an owner-held HMAC-SHA256 key. No absolute timestamps, IP, UA, headers,
+technical-corrupt attempts. Complete and partial exports use strict signed
+`microstudy-export-v4-bilingual-signed` and include `ui_language`,
+`locale_bundle_version`, and canonical UTF-8 `locale_bundle_hash`. Missing,
+wrong, or tampered locale identity fails; V3 and V4 cannot be mixed. JSON is
+UTF-8; CSV includes a UTF-8 BOM and formula-injection defense. Locale is used
+only for descriptive QA counts and cross-locale duplicate-conflict metadata,
+never primary/sensitivity computation, bootstrap/sign flips, eligibility,
+exclusion, assignment, interaction, winner selection, or outcome
+stratification. Completed exports are canonical server products signed with an
+owner-held HMAC-SHA256 key. No absolute timestamps, IP, UA, headers,
 demographics, free text, or fingerprints are collected or persisted.
 
 ## 5. Allocation and statistics
@@ -98,6 +121,12 @@ The available sign-binomial simulation is sensitivity-only and does not match th
 primary paired sign-flip test. Primary-test MDE remains
 `UNVERIFIED_NOT_ESTIMATED` before protocol freeze.
 
-## 6. No-upgrade rule
+## 6. No-upgrade and human-gate rule
 
-This remains a DRAFT/materials-only protocol. It authorizes no recruitment, ethics activity, pilot, human data collection, public deployment, paper edit, or claim upgrade. Human evidence requires a separate owner decision and all applicable gates.
+This remains `DRAFT / NOT FROZEN`. Bilingual owner-local-preview engineering at
+commit `786a6a8` does not authorize recruitment, ethics activity, timing pilot,
+human data collection, public deployment, paper edit, or claim upgrade. Human
+English/Chinese stable-ID semantic review, manual screen-reader evaluation,
+ethics/recruitment approval, timing/MDE gates, Protocol Freeze, and fresh
+independent hostile re-audit remain required. Automated QA cannot close a human
+gate or turn this micro-study into paper evidence.

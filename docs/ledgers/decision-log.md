@@ -5,6 +5,27 @@
 
 ---
 
+## 2026-08-11 · D-0110 · Owner authorizes DRAFT bilingual owner-preview engineering only
+- The owner explicitly authorized Simplified Chinese and English onboarding for
+  the contract-application micro-study so unfamiliar users can understand the
+  task more easily. This decision authorizes stable-ID locale materials,
+  language selection before session creation, immutable `ui_language`, selected-
+  locale-only projections, V4 signed locale identity, descriptive locale QA,
+  accessibility/security validation, and owner-local preview engineering.
+- This revision does not change the research question, primary CCA outcome,
+  Contract-versus-Flat contrast, nonlocalized router, answer keys, sequence
+  assignment, eligibility, exclusion, duplicate winner rule, or inferential
+  analysis. The protocol remains `DRAFT / NOT FROZEN`.
+- Implementation commit `786a6a8` adds the bilingual materials/application/tests.
+  Its maximum state is `READY_FOR_OWNER_LOCAL_PREVIEW_NO_HUMAN_DATA`, but a fresh
+  independent hostile audit is still pending and the prior final audit is not
+  silently extended to this revision.
+- No recruitment, participant contact, human data, timing pilot, ethics action,
+  public deployment, recovery mechanism, paper/claim/evidence-validity change,
+  or human authorization is granted. Human bilingual stable-ID semantic review,
+  manual screen-reader review, ethics/recruitment, timing/MDE, and Protocol
+  Freeze remain `PRE-RECRUITMENT` gates.
+
 ## 2026-08-11 · D-0109 · Supersede D-0107 Manager-retirement timing; permit no-Manager gap, never dual Managers
 - This entry supersedes only D-0107's conflicting retirement-timing wording.
   The outgoing/current Manager becomes immediately read-only retired once the

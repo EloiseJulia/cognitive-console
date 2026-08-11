@@ -1393,10 +1393,14 @@ experiments:
   hypothesis_id: H-MICROSTUDY-CONTRACT-APPLICATION
   claim_ids: []
   type: exploratory_formative_human_protocol
-  status: ready_for_owner_preview_no_human_data
-  code_commit: d17df47
+  status: bilingual_implemented_pending_fresh_hostile_reaudit_nohuman
+  code_commit: 786a6a8d0f90060c58116138a2d186ac4c7cc115
   dirty_tree: null
-  data_hash: null
+  data_hash: >-
+    stimuli_sha256=7d4dc8c55e723a382dfb0d98d6dcc0c45f59c06019b531881acf8d7245e8bbf9;
+    sequences_sha256=a63492e2862dcef84fe0d57b3f3c4f3420582c9b988f081d4ca99ae2207e47a8;
+    locale_en=de2690eea13e64c2172341d25c9bd9c41787726119a0ade03565aca5c8f6c71d;
+    locale_zh-Hans=2508b0ed1d326e51feb72ad65f7e8417221abf165d90e194840384271db2e857
   env_hash: null
   config_hash: null
   model: null
@@ -1449,7 +1453,16 @@ experiments:
     irreversible Q1-to-Q2 flow, semantic-organization treatment declaration, balanced Flat
     shuffles, complete missingness truth table, blinded A1..D5 replacement, orthogonal
     r/r+2 rotations, and frozen bootstrap/sign-flip settings.
-    The local implementation now emits strict signed complete/partial v3 exports with
+    D-0110 records owner authorization for DRAFT bilingual owner-preview engineering
+    only. Implementation commit 786a6a8 upgrades the sole authoritative JSON to an
+    explicit nonlocalized plus en/zh-Hans stable-ID tree with fallback=null and
+    auto_detect=false. Canonical UTF-8 locale versions/hashes, completeness,
+    numeric/polarity/modality/scope parity, independent leakage heuristics, neutral-copy
+    Contract-token scans, and same-locale body parity are validated. Common onboarding
+    contains no Contract labels or full router; formal Contract labels remain visible
+    row labels only; Flat remains neutral. The one practice is the approved community
+    activity-room narrative with Q1 withheld and lock-only Q2 key D.
+    The local implementation now emits strict signed complete/partial v4 bilingual exports with
     random run_id and monotonic attempt_serial, requires an explicit global-order
     manifest for cross-run duplicates, deduplicates byte-identical repeated files
     by attempt_id, and hard-fails conflicting payload/signature reuse. Completion
@@ -1463,10 +1476,15 @@ experiments:
     and owned cleanup. The final read-only hostile audit of implementation commit
     d17df47 is persisted at
     reviews/2026-08-10-microstudy-web-final-audit/audit-summary.md and passed the
-    owner-local-preview gate after export retry, duplicate, browser-stability,
-    full-test, security, and privacy closure. The assumption-labelled DRAFT MDE
+    owner-local-preview gate for the prior monolingual commit after export retry,
+    duplicate, browser-stability, full-test, security, and privacy closure. That audit
+    is not silently extended: the bilingual revision is pending a fresh independent
+    hostile audit. Automated Chrome/Edge tests cover both locales, viewports, zoom
+    levels, keyboard selection, dynamic language/focus, selected-only projection,
+    refresh-to-gate, complete/partial export, and retry behavior. The assumption-labelled DRAFT MDE
     tool is not a recruitment/sample-size basis. Recruitment, ethics administration,
-    public deployment, owner pilot, and human data collection are not authorized;
+    public deployment, owner pilot, timing pilot, and human data collection are not authorized;
     human_collection is false. The preregistration remains DRAFT and not frozen;
-    this row records materials and implementation preparation only and must not be
-    represented as a run or paper evidence.
+    human bilingual stable-ID semantic review and manual screen-reader review remain
+    UNVERIFIED PRE-RECRUITMENT. This row records materials and implementation
+    preparation only and must not be represented as a run or paper evidence.

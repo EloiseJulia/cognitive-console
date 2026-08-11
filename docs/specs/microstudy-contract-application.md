@@ -1,9 +1,9 @@
 # Spec: Contract Legibility/Application Micro-Study
 
 - **Spec ID:** `microstudy-contract-application`
-- **Status:** `DRAFT / NOT FROZEN / materials-only / protocol-finalization revision`
+- **Status:** `DRAFT / NOT FROZEN / bilingual owner-local-preview engineering / no human data`
 - **Study class:** exploratory formative micro-study
-- **Authorized:** protocol, simulated materials, validators, and future loopback implementation
+- **Authorized:** DRAFT protocol, simulated bilingual materials, validators, and owner-local loopback implementation
 - **Not authorized:** recruitment, ethics administration, pilot/data collection, public deployment, or paper changes
 - **Preregistration:** [`../research/2026-08-10-microstudy-contract-application-DRAFT.md`](../research/2026-08-10-microstudy-contract-application-DRAFT.md)
 - **Implementation plan:** [`../plans/microstudy-contract-application-web.md`](../plans/microstudy-contract-application-web.md)
@@ -15,7 +15,13 @@ The sole source of truth for trial materials and exported material fields is:
 - [`../../data/microstudy_contract_application/stimuli.json`](../../data/microstudy_contract_application/stimuli.json)
 - [`../../data/microstudy_contract_application/sequences.json`](../../data/microstudy_contract_application/sequences.json)
 
-The JSON contains the exact ten records, proposition strings, Flat permutations, Q1 text/options, Q2 templates and assignments, structured router inputs, render contract, provenance, tutorial/legend, practice and feedback, post-task diagnostic, block-ease item, debrief, export fields, tokenization, heuristic definitions, and generated sequences. Documentation summarizes those records and must not become a second answer-key or stimulus source. A future website must consume these files and must not hardcode another materials copy.
+`stimuli.json` is a stable-ID tree with explicit `nonlocalized` and
+`locales.en` / `locales.zh-Hans` branches. `fallback=null` and
+`auto_detect=false`. The nonlocalized branch owns keys, routing inputs, sequence
+links, answer keys, condition assignment, export schema, and validation rules.
+Each locale branch owns every participant-facing string. The canonical UTF-8
+locale bundle version/hash is derived from that branch and validated. Markdown
+must not become a second copy, and JavaScript must not hardcode either locale.
 
 Run:
 
@@ -36,7 +42,20 @@ The treatment is a semantic-organization package:
 - **Flat:** exact neutral labels `Evidence A`–`Evidence E`, with per-item order read from `flat_order`.
 - Both consume the same canonical proposition map and use identical questions, options, dimensions, word limits, viewport, and no-scroll behavior.
 
-Every practice/formal card begins `Simulated evaluation record`. Q1 is persisted and irreversibly locked before Q2 appears. Formal trials show no correctness feedback. The primary outcome is:
+Common onboarding symmetrically explains only the four states and the five
+neutral information types: initial check, paired comparison, reference setup,
+consistency check, and applicable setting. It does not show Contract labels, the
+complete router, threshold priority, or a row-to-answer lookup. Contract labels
+appear only as visible row labels in formal Contract cards. Flat uses only the
+selected locale's neutral Evidence A–E labels. Formal body text, Q1, Q2, and
+options contain no Contract label tokens; router inputs and answer keys remain
+private and nonlocalized.
+
+Every formal card begins with the selected locale's translation of `Simulated
+evaluation record`. The one practice is a separate community activity-room
+booking narrative, not a five-row card. Q1 is persisted and irreversibly locked
+before Q2 appears. Formal trials show no correctness feedback. The primary
+outcome remains:
 
 ```text
 CCA = 1 iff Q1 is correct AND Q2 is correct
@@ -109,11 +128,30 @@ spacer glyphs, hidden text, and condition-specific padding remain forbidden.
 
 ## 5. Participant-facing materials
 
-The exact participant strings are in `participant_materials` in `stimuli.json`; A/B conditions use the same strings.
+All participant-facing strings are stable-ID entries in the selected locale:
+language gate, welcome, neutral glossary, steps, Contract/Flat visible labels,
+formal body/Q1/Q2/options, practice/feedback, buttons, progress, errors, ARIA,
+ease, diagnostic, export, and debrief. Keys, router, sequences, and option order
+are nonlocalized.
 
-The legend explains all inputs and the full routing priority in plain language without identifying trial answers. The tutorial explains the irreversible Q1→Q2 flow and conjunctive scoring. The single different practice record includes exact Q1/Q2 keys and feedback; formal trials do not.
+The initial document contains only a bilingual language gate, with no default
+and no browser/URL/storage detection. Welcome may switch locale. `/api/start`
+requires exact `ui_language ∈ {en, zh-Hans}` and locks it at session creation;
+there is no switch after start. Refresh or close returns to the language gate
+without a recovery token; an abandoned volatile server session remains only
+until its monotonic TTL.
 
-The post-task manipulation diagnostic has one fixed four-option question/key, is descriptive only, and is never an exclusion criterion. The block-ease item uses exact options `SEQ1`–`SEQ7`, appears once after each five-trial block, permits null, and exports `block_1_ease`/`block_2_ease`. Neither task has free text.
+The single unscored practice is the approved community activity-room booking
+narrative. It contains no five-row card, Contract labels, Evidence A–E, formal
+numbers, interval, margin, tier, model, method, or formal task content. Its Q1
+key is `Q1_WITHHELD`; Q2 asks only about Q1 lock behavior and has key `D`.
+Feedback explains only that example and the lock. There is one practice and no
+quiz or attention check.
+
+The post-task manipulation diagnostic has one fixed four-option question/key,
+is descriptive only, and is never an exclusion criterion. The block-ease item
+uses stable IDs `SEQ1`–`SEQ7`, appears once after each five-trial block, permits
+null, and exports `block_1_ease`/`block_2_ease`. Neither task has free text.
 
 There is no attention check or attention-check export field.
 
@@ -163,7 +201,12 @@ The exact session/trial fields and exclusion enum are normative in `export_schem
 
 Primary eligibility requires complete Contract `>=4`, complete Flat `>=4`, and complete total `>=8`. The primary uses complete trials only. The required ten-slot sensitivity treats a missing component as incorrect.
 
-Complete and partial JSON and CSV are canonical server products. JSON is HMAC-SHA256 signed
+Complete and partial JSON and CSV are canonical server products under
+`microstudy-export-v4-bilingual-signed`. Both include `ui_language`,
+`locale_bundle_version`, and `locale_bundle_hash`; missing, wrong, or tampered
+locale identity fails validation. V3 and V4 exports must never be mixed in one
+analysis. JSON is UTF-8 and HMAC-SHA256 signed; CSV begins with a UTF-8 BOM for
+Chinese compatibility and retains formula-injection protection. JSON is signed
 with an owner-held key generated at startup in an owner-selected file (default
 gitignored runtime path). The key is never sent to the browser or written into an
 export. Analysis requires the key and rejects unsigned, forged, tampered,
@@ -184,6 +227,12 @@ makes no promise to reconstruct silent/no-export dropouts.
 
 No absolute timestamp, IP, UA, headers, demographics, free text, or fingerprint is collected.
 
+Locale is descriptive QA metadata only. Analysis may report locale counts and
+cross-locale duplicate conflicts, but locale cannot affect primary or
+sensitivity outcomes, sign flips, bootstrap, eligibility, exclusion,
+assignment, interaction terms, duplicate winner selection, or outcome
+stratification.
+
 ## 8. Statistics
 
 The primary estimand is the mean eligible-participant paired difference in Contract versus Flat CCA.
@@ -203,8 +252,8 @@ sign-flip MDE remains `UNVERIFIED_NOT_ESTIMATED` before protocol freeze.
 
 The owner-run timing pilot is exactly three people and passes only if median completion is `<=10 min`, every participant is `<=12 min`, and forced timeouts equal zero. This DRAFT does not authorize that pilot.
 
-Automated keyboard, focus, screen-reader, contrast, reduced-motion, 200% zoom, and
-no-horizontal-scroll checks are separate. The implementation binds loopback only, checks the exact loopback Host/port,
+Automated keyboard, focus, screen-reader, contrast, reduced-motion, and 200% zoom
+checks are separate. The implementation binds loopback only, checks the exact loopback Host/port,
 rejects cross-origin and non-JSON POSTs, requires a same-origin bootstrap CSRF
 token plus per-session capability, limits request size, caps sessions (default
 100), expires them using monotonic TTL (default two hours), and serializes each
@@ -218,13 +267,32 @@ waits for readiness, and owns its shutdown; cases never share a server lifecycle
 Chrome and Edge exercise A1/D5, complete/partial paths, failed-download button
 retention, security probes, and a configurable repeated stress gate.
 
+The initial HTML has `lang=und`; selection sets the exact locale and each new
+stage focuses its `h1`. The Chinese stack includes common Simplified Chinese
+system fonts with safe line breaking and overflow. At 1440×900 and 1280×800,
+100% and 200% zoom may use page scrolling but must not clip or drop card
+content. Bootstrap contains no materials; welcome returns only selected-locale
+common copy; formal endpoints return only the selected visible card/question
+projection. Browser state, network payloads, DOM, and ARIA must not contain the
+other locale's formal bundle, router, correct keys, primitive-role IDs, or
+condition metadata. Opaque attempt/capability tokens remain unchanged.
+
+Automated locale completeness, hash, parity, leakage, browser, keyboard, and
+security checks are not substitutes for human bilingual stable-ID semantic
+review or manual screen-reader evaluation. Those, ethics/recruitment, the
+owner-run timing pilot, a defensible MDE/sample-size basis, and Protocol Freeze
+remain `PRE-RECRUITMENT` human gates.
+
 ## 10. Acceptance criteria
 
 1. JSON source/schema, router, Q2, parity, provenance, tutorial/practice, diagnostic/ease, export, and sequence validators pass.
 2. Validator metrics exactly match Section 4.
 3. P3-Y Q2 requests missing scope and Q1 remains withheld.
 4. No attention-check field, free text, duplicate materials source, or hardcoded website key exists.
-5. Registry and decision notes identify implementation pending hostile audit.
+5. Registry and decision notes identify bilingual implementation commit
+   `786a6a8` pending fresh hostile audit; no prior audit is silently extended.
 6. The website is loopback-only, memory-only, and consumes authoritative JSON.
 7. No recruitment, pilot, human data, public deployment, paper edit, or claim
    upgrade occurs in this revision.
+8. The maximum state is `READY_FOR_OWNER_LOCAL_PREVIEW_NO_HUMAN_DATA`; the
+   protocol remains `DRAFT / NOT FROZEN`.

@@ -24,6 +24,7 @@ import socket
 import subprocess
 import sys
 import time
+import unicodedata
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from io import StringIO
@@ -60,7 +61,12 @@ FROZEN_CELL_KEYS = (
     "iti__llama3-8b",
 )
 DEFAULT_FROZEN_ROOT = _REPO / "results" / "arm_full"
-DEFAULT_OUT_DIR = _REPO / "results" / "E-0017-deliberation-token-sensitivity"
+HOST_CONTROL_ROOT = (
+    Path(r"C:\ProgramData\cognitive-console\host-control")
+    if os.name == "nt"
+    else Path("/var/lib/cognitive-console/host-control")
+)
+DEFAULT_OUT_DIR = Path.home() / ".cognitive-console" / "runs" / EXPERIMENT_ID
 DEFAULT_SEED = 20260723
 DEFAULT_TEMPERATURE = 0.7
 DEFAULT_BATCH_SIZE = 16
@@ -187,15 +193,73 @@ def _is_relative_to(path: Path, parent: Path) -> bool:
         return False
 
 
-def _validate_output_path(out_dir: Path, frozen_root: Path) -> None:
-    out_dir = out_dir.resolve()
+def _contains_results_component(path: Path) -> bool:
+    return any(part.casefold() == "results" for part in path.parts)
+
+
+def _validate_external_control_path(
+    path: Path,
+    *,
+    label: str,
+    frozen_root: Path,
+) -> Path:
+    original = Path(path)
+    if not original.is_absolute():
+        raise SystemExit(f"E-0017 {label} must be an absolute path")
+    resolved = original.resolve()
+    if original != resolved:
+        raise SystemExit(f"E-0017 {label} must already be canonical")
     frozen_root = frozen_root.resolve()
-    if out_dir == frozen_root or _is_relative_to(out_dir, frozen_root):
+    if _is_relative_to(resolved, _REPO.resolve()):
+        raise SystemExit(f"E-0017 {label} must be outside the repository")
+    if _contains_results_component(resolved):
         raise SystemExit(
-            "E-0017 output must not be the frozen E-0006 tree or one of its children"
+            f"E-0017 {label} may not be inside any directory named results"
         )
-    if out_dir == _REPO.resolve():
-        raise SystemExit("E-0017 output must use a dedicated directory")
+    if resolved == frozen_root or _is_relative_to(resolved, frozen_root):
+        raise SystemExit(
+            f"E-0017 {label} must not be the frozen E-0006 tree or its child"
+        )
+    return resolved
+
+
+def _canonical_attempt_registry_path(source_commit: str) -> Path:
+    commit = str(source_commit)
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        raise ValueError("canonical attempt registry requires a full commit SHA")
+    return (
+        HOST_CONTROL_ROOT
+        / "attempts"
+        / EXPERIMENT_ID
+        / f"{commit}.json"
+    ).resolve()
+
+
+def _validate_control_paths(
+    *,
+    out_dir: Path,
+    registry_path: Path,
+    frozen_root: Path,
+) -> Tuple[Path, Path]:
+    out = _validate_external_control_path(
+        out_dir,
+        label="output directory",
+        frozen_root=frozen_root,
+    )
+    registry = _validate_external_control_path(
+        registry_path,
+        label="attempt registry",
+        frozen_root=frozen_root,
+    )
+    if (
+        out == registry
+        or _is_relative_to(out, registry)
+        or _is_relative_to(registry, out)
+    ):
+        raise SystemExit(
+            "E-0017 output directory and attempt registry must be disjoint"
+        )
+    return out, registry
 
 
 def _git_source_state(out_dir: Optional[Path] = None) -> Dict[str, object]:
@@ -236,13 +300,33 @@ def _git_source_state(out_dir: Optional[Path] = None) -> Dict[str, object]:
     }
 
 
+def _parse_prereg_status(text: str) -> Tuple[str, str]:
+    status_lines = [
+        line.strip()
+        for line in text.splitlines()
+        if line.strip().startswith("Status:")
+    ]
+    if len(status_lines) != 1:
+        raise ValueError("preregistration must contain exactly one Status line")
+    status_line = status_lines[0]
+    match = re.fullmatch(
+        r"Status:\s+\*\*(DRAFT|FROZEN)(?:\s+/\s+[A-Z0-9 -]+)*\*\*",
+        status_line,
+    )
+    if match is None:
+        raise ValueError(
+            "preregistration Status must start with the exact token DRAFT or FROZEN"
+        )
+    return match.group(1), status_line
+
+
 def _preregistration_identity(*, require_frozen: bool) -> Dict[str, object]:
     text = PREREG_PATH.read_text(encoding="utf-8")
-    first_status = next(
-        (line.strip() for line in text.splitlines() if line.startswith("Status:")),
-        "",
-    )
-    frozen = "FROZEN" in first_status and "NOT FROZEN" not in first_status
+    try:
+        status, status_line = _parse_prereg_status(text)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+    frozen = status == "FROZEN"
     if require_frozen and not frozen:
         raise SystemExit(
             f"{_rel(PREREG_PATH)} is not marked FROZEN; real TEST generation is blocked"
@@ -250,7 +334,8 @@ def _preregistration_identity(*, require_frozen: bool) -> Dict[str, object]:
     return {
         "path": _rel(PREREG_PATH),
         "sha256": _sha256_text(text),
-        "status_line": first_status,
+        "status": status,
+        "status_line": status_line,
         "frozen": frozen,
     }
 
@@ -1684,10 +1769,16 @@ def _continuation_materiality(
             prefix_matches += sample_prefix_match
             short_answer = short.get("parsed_final_number")
             long_answer = long.get("parsed_final_number")
+            sample_parser_number_added = int(
+                short_answer is None and long_answer is not None
+            )
             sample_answer_changed = int(
-                short_answer is not None
-                and long_answer is not None
-                and float(short_answer) != float(long_answer)
+                sample_parser_number_added
+                or (
+                    short_answer is not None
+                    and long_answer is not None
+                    and float(short_answer) != float(long_answer)
+                )
             )
             sample_correctness_recovered = int(
                 int(short["correct"]) == 0 and int(long["correct"]) == 1
@@ -1699,10 +1790,6 @@ def _continuation_materiality(
                 not bool(short["explicit_or_terminal_final_answer_present"])
                 and bool(long["explicit_or_terminal_final_answer_present"])
             )
-            sample_parser_number_added = int(
-                not bool(short["frozen_parser_number_present"])
-                and bool(long["frozen_parser_number_present"])
-            )
             added_answer += sample_explicit_answer_added
             answer_changed += sample_answer_changed
             correctness_recovered += sample_correctness_recovered
@@ -1711,6 +1798,7 @@ def _continuation_materiality(
                 any(
                     (
                         sample_explicit_answer_added,
+                        sample_parser_number_added,
                         sample_answer_changed,
                         sample_correctness_recovered,
                         sample_correctness_lost,
@@ -1764,10 +1852,10 @@ def _continuation_materiality(
             "semantic_note": (
                 "A mechanical cap stop is not semantic truncation. Same-seed "
                 "exact-prefix continuation that adds an explicit/terminal final "
-                "answer, changes the frozen parser number, or changes correctness "
-                "is the predeclared operational evidence that the 64-token cap "
-                "was semantically material. Frozen parser success alone is not "
-                "labelled final-answer presence."
+                "answer, changes the frozen parser number (including None-to-number), "
+                "or changes correctness is the predeclared operational evidence "
+                "that the 64-token cap was semantically material. Frozen parser "
+                "success alone is not labelled final-answer presence."
             ),
         }
     return by_condition
@@ -2414,12 +2502,27 @@ def _parse_utc_timestamp(value: object, *, field: str) -> datetime:
     return parsed.astimezone(timezone.utc)
 
 
+def _require_normalized_identifier(value: object, *, field: str) -> str:
+    if not isinstance(value, str):
+        raise SystemExit(f"{field} must be a string")
+    normalized = unicodedata.normalize("NFKC", value).strip()
+    if (
+        not normalized
+        or normalized != value
+        or any(unicodedata.category(char).startswith("C") for char in normalized)
+    ):
+        raise SystemExit(f"{field} must be non-empty and already normalized")
+    return normalized
+
+
 def _load_run_authorization(
     path: Path,
     *,
     source_commit: str,
     preregistration: Dict[str, object],
     out_dir: Path,
+    registry_path: Path,
+    frozen_root: Path,
 ) -> Tuple[Dict[str, object], str]:
     auth_path = Path(path).resolve()
     if not auth_path.is_file():
@@ -2472,11 +2575,20 @@ def _load_run_authorization(
         "audited_run_commit",
     }:
         raise SystemExit("E-0017 independent-audit schema mismatch")
+    _require_normalized_identifier(
+        audit["audit_record_id"],
+        field="independent_audit.audit_record_id",
+    )
+    auditor_id = _require_normalized_identifier(
+        audit["auditor_id"],
+        field="independent_audit.auditor_id",
+    )
     if (
         audit["auditor_role"] != "independent_hostile_auditor"
         or audit["verdict"] != "FREEZE_RECOMMENDED"
         or audit["audited_run_commit"] != source_commit
         or not re.fullmatch(r"[0-9a-f]{40}", str(audit["audited_run_commit"]))
+        or auditor_id.casefold() == OWNER_IDENTITY.casefold()
     ):
         raise SystemExit("E-0017 current run commit lacks an independent freeze recommendation")
 
@@ -2492,11 +2604,14 @@ def _load_run_authorization(
     }:
         raise SystemExit("E-0017 owner-authorization schema mismatch")
     _parse_utc_timestamp(owner["authorized_at"], field="authorized_at")
+    _require_normalized_identifier(
+        owner["authorization_id"],
+        field="owner_authorization.authorization_id",
+    )
     if (
         owner["authorized_by"] != OWNER_IDENTITY
         or owner["audited_run_commit"] != source_commit
-        or audit["auditor_id"] == owner["authorized_by"]
-        or not str(owner["authorization_id"]).strip()
+        or auditor_id.casefold() == str(owner["authorized_by"]).casefold()
         or not (0.0 < float(owner["max_gpu_hours"]) <= 3.0)
         or not re.fullmatch(r"GPU-[0-9A-Fa-f-]+", str(owner["approved_gpu_uuid"]))
         or "A800" not in str(owner["approved_gpu_name"]).upper()
@@ -2504,19 +2619,17 @@ def _load_run_authorization(
         raise SystemExit("E-0017 owner GPU/budget authorization mismatch")
 
     designated = dict(payload["designated_host"])
-    if set(designated) != {
-        "hostname",
-        "canonical_out_dir",
-        "attempt_registry_path",
-    }:
+    if set(designated) != {"hostname", "canonical_out_dir"}:
         raise SystemExit("E-0017 designated-host schema mismatch")
     expected_out = Path(str(designated["canonical_out_dir"]))
-    registry_path = Path(str(designated["attempt_registry_path"]))
+    validated_out, validated_registry = _validate_control_paths(
+        out_dir=expected_out,
+        registry_path=registry_path,
+        frozen_root=frozen_root,
+    )
     if (
-        not expected_out.is_absolute()
-        or expected_out.resolve() != out_dir.resolve()
-        or not registry_path.is_absolute()
-        or _is_relative_to(registry_path.resolve(), out_dir.resolve())
+        validated_out != out_dir.resolve()
+        or validated_registry != _canonical_attempt_registry_path(source_commit)
         or str(designated["hostname"]) != socket.gethostname()
     ):
         raise SystemExit("E-0017 invocation is not on the authorized canonical host/path")
@@ -2702,19 +2815,25 @@ def _verify_backend_cuda_float16(backend) -> Dict[str, object]:
 class CanonicalAttemptRegistry:
     def __init__(
         self,
-        path: Path,
         *,
         authorization: Dict[str, object],
         authorization_sha256: str,
         source_commit: str,
         out_dir: Path,
+        frozen_root: Path,
     ) -> None:
-        self.path = Path(path).resolve()
+        canonical_registry = _canonical_attempt_registry_path(source_commit)
+        validated_out, validated_registry = _validate_control_paths(
+            out_dir=out_dir,
+            registry_path=canonical_registry,
+            frozen_root=frozen_root,
+        )
+        self.path = validated_registry
         self.lock_path = Path(str(self.path) + ".lock")
         self.authorization = authorization
         self.authorization_sha256 = authorization_sha256
         self.source_commit = source_commit
-        self.out_dir = out_dir.resolve()
+        self.out_dir = validated_out
         self._handle = None
         self._active_invocation_id: Optional[str] = None
         self.already_complete = False
@@ -2769,6 +2888,7 @@ class CanonicalAttemptRegistry:
             "designated_hostname": designated["hostname"],
             "approved_gpu_uuid": owner["approved_gpu_uuid"],
             "canonical_out_dir": str(self.out_dir),
+            "canonical_registry_path": str(self.path),
         }
 
     def start(self) -> Dict[str, object]:
@@ -2989,14 +3109,11 @@ def _prepare_test_once_analysis(
     if status != "LOCKED":
         raise ValueError(f"unknown TEST-once seal status: {status!r}")
     if analysis_path.exists():
-        analysis = json.loads(analysis_path.read_text(encoding="utf-8"))
-        if analysis.get("experiment_id") != EXPERIMENT_ID:
-            raise ValueError("locked TEST analysis artifact has wrong experiment id")
-        seal["status"] = "ANALYZED"
-        seal["analysis_written_at"] = utcnow()
-        seal["analysis_json_sha256"] = _sha256_file(analysis_path)
-        _write_json(seal_path, seal)
-        return analysis
+        raise ValueError(
+            "LOCKED TEST-once seal cannot adopt an existing analysis.json; "
+            "the canonical attempt is invalidated rather than blessing an "
+            "unsealed analysis artifact"
+        )
     return None
 
 
@@ -3207,8 +3324,11 @@ def _main(argv: Optional[List[str]] = None) -> int:
     args = build_parser().parse_args(argv)
     _validate_args(args)
     frozen_root = Path(args.frozen_root).resolve()
-    out_dir = Path(args.out_dir).resolve()
-    _validate_output_path(out_dir, frozen_root)
+    out_dir = _validate_external_control_path(
+        Path(args.out_dir),
+        label="output directory",
+        frozen_root=frozen_root,
+    )
     preregistration = _preregistration_identity(require_frozen=not args.dry_run)
     configs = {
         cell_key: load_frozen_cell_config(frozen_root, cell_key)
@@ -3310,19 +3430,26 @@ def _main(argv: Optional[List[str]] = None) -> int:
             "E-0017 real TEST run requires a clean committed tree; "
             f"untracked={source_state['untracked_paths']!r}"
         )
+    registry_path = _canonical_attempt_registry_path(str(source_state["head"]))
+    out_dir, registry_path = _validate_control_paths(
+        out_dir=out_dir,
+        registry_path=registry_path,
+        frozen_root=frozen_root,
+    )
     authorization, authorization_sha256 = _load_run_authorization(
         Path(args.authorization_file),
         source_commit=str(source_state["head"]),
         preregistration=preregistration,
         out_dir=out_dir,
+        registry_path=registry_path,
+        frozen_root=frozen_root,
     )
-    designated = dict(authorization["designated_host"])
     attempt_registry = CanonicalAttemptRegistry(
-        Path(str(designated["attempt_registry_path"])),
         authorization=authorization,
         authorization_sha256=authorization_sha256,
         source_commit=str(source_state["head"]),
         out_dir=out_dir,
+        frozen_root=frozen_root,
     )
     attempt_registry.acquire()
     _ACTIVE_ATTEMPT_REGISTRY = attempt_registry

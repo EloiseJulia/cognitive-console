@@ -81,4 +81,10 @@ fixed-batch checkpoints, max-T familywise inference, item-cluster continuation
 CIs, and raw/spec/output seals fail closed. It does not reselect DEV settings
 or replace E-0006.
 
+The registry path is fixed under `/var/lib/cognitive-console/host-control` by
+E-0017 + audited commit, not by authorization or output path.
+Repository/results/frozen-tree redirection is forbidden. `LOCKED` seals never
+adopt an existing analysis artifact, and `None→number` frozen-parser
+transitions count as semantic materiality.
+
 Independent audit is required before any paper wording changes.

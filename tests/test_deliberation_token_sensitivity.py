@@ -4,6 +4,7 @@ import os
 import shutil
 import sys
 import types
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import numpy as np
@@ -216,6 +217,15 @@ def test_final_answer_diagnostic_is_independent_of_frozen_parser_fallback():
     assert explicit["explicit_or_terminal_final_answer_present"] is True
 
 
+def test_prereg_status_rejects_unfrozen_substring():
+    assert S._parse_prereg_status("Status: **FROZEN**") == (
+        "FROZEN",
+        "Status: **FROZEN**",
+    )
+    with pytest.raises(ValueError, match="exact token"):
+        S._parse_prereg_status("Status: **UNFROZEN**")
+
+
 def test_continuation_ci_handles_zero_cap_stop_denominator():
     cfg = _cfg(S.FROZEN_CELL_KEYS[0])
     records = []
@@ -248,6 +258,45 @@ def test_continuation_ci_handles_zero_cap_stop_denominator():
     assert rate["defined"] is False
     assert rate["zero_denominator"] is True
     assert rate["ci_lo"] is None
+
+
+def test_parser_number_addition_is_semantically_material():
+    cfg = _cfg(S.FROZEN_CELL_KEYS[0])
+    prefix = list(range(64))
+    records = [
+        _record(
+            cfg,
+            64,
+            "prompt",
+            "i1",
+            correct=0,
+            hit=True,
+            answer=None,
+            token_ids=prefix,
+            explicit_answer=False,
+        ),
+        _record(
+            cfg,
+            128,
+            "prompt",
+            "i1",
+            correct=0,
+            hit=False,
+            answer=7.0,
+            token_ids=prefix + [999, 2],
+            explicit_answer=False,
+        ),
+    ]
+    row = S._continuation_materiality(
+        records,
+        long_cap=128,
+        bootstrap_b=50,
+        seed=S.DEFAULT_SEED,
+    )["prompt"]
+    assert row["n_continuation_added_frozen_parser_number"] == 1
+    assert row["n_continuation_changed_frozen_parser_number"] == 1
+    assert row["n_operational_semantic_truncation_evidence"] == 1
+    assert row["operational_semantic_truncation_evidence_present"] is True
 
 
 def test_loads_all_frozen_deliberation_configs():
@@ -425,6 +474,49 @@ def test_test_once_seal_reuses_completed_analysis_and_detects_mutation():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def test_locked_seal_rejects_preexisting_analysis_instead_of_blessing_it():
+    root = _scratch_dir("locked-analysis")
+    seal = root / "test_once_analysis.json"
+    analysis_path = root / "analysis.json"
+    summary_path = root / "analysis.md"
+    manifest_path = root / "run_manifest.json"
+    raw_inputs = {"sample_files": [{"path": "samples/a.jsonl", "sha256": "abc"}]}
+    analysis_spec = {"bootstrap_b": 10000, "seed": S.DEFAULT_SEED}
+    try:
+        assert (
+            S._prepare_test_once_analysis(
+                seal_path=seal,
+                raw_inputs=raw_inputs,
+                analysis_spec=analysis_spec,
+                analysis_path=analysis_path,
+                summary_path=summary_path,
+                manifest_path=manifest_path,
+            )
+            is None
+        )
+        S._write_json(
+            analysis_path,
+            {
+                "experiment_id": S.EXPERIMENT_ID,
+                "tampered_before_seal_transition": True,
+            },
+        )
+        with pytest.raises(ValueError, match="cannot adopt"):
+            S._prepare_test_once_analysis(
+                seal_path=seal,
+                raw_inputs=raw_inputs,
+                analysis_spec=analysis_spec,
+                analysis_path=analysis_path,
+                summary_path=summary_path,
+                manifest_path=manifest_path,
+            )
+        locked = json.loads(seal.read_text(encoding="utf-8"))
+        assert locked["status"] == "LOCKED"
+        assert "analysis_json_sha256" not in locked
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
 def _write_model_metadata(snapshot):
     for name in (
         "config.json",
@@ -490,32 +582,35 @@ def test_cli_rejects_same_basename_model_attack():
         S._validate_args(args)
 
 
-def _authorization(out_dir, registry_path):
+def _authorization(out_dir, authorization_id="AUTH-1"):
     return {
         "owner_authorization": {
-            "authorization_id": "AUTH-1",
+            "authorization_id": authorization_id,
             "max_gpu_hours": 3.0,
             "approved_gpu_uuid": "GPU-1234",
         },
         "designated_host": {
             "hostname": "host",
             "canonical_out_dir": str(out_dir),
-            "attempt_registry_path": str(registry_path),
         },
     }
 
 
-def test_global_attempt_registry_rejects_cross_out_dir_retry():
+def test_global_attempt_registry_rejects_disjoint_authorization_bypass(monkeypatch):
     root = _scratch_dir("attempt-registry")
-    registry_path = root / "control" / "attempt.json"
+    monkeypatch.setattr(S, "_REPO", root / "repo-sentinel")
+    monkeypatch.setattr(S, "HOST_CONTROL_ROOT", root / "host-control")
+    frozen_root = root / "frozen-root"
     out_one = root / "out-one"
     out_two = root / "out-two"
+    source_commit = "a" * 40
+    registry_path = S._canonical_attempt_registry_path(source_commit)
     first = S.CanonicalAttemptRegistry(
-        registry_path,
-        authorization=_authorization(out_one, registry_path),
+        authorization=_authorization(out_one),
         authorization_sha256="auth-sha",
-        source_commit="a" * 40,
+        source_commit=source_commit,
         out_dir=out_one,
+        frozen_root=frozen_root,
     )
     try:
         first.acquire()
@@ -527,11 +622,11 @@ def test_global_attempt_registry_rejects_cross_out_dir_retry():
         first.release()
 
     resumed = S.CanonicalAttemptRegistry(
-        registry_path,
-        authorization=_authorization(out_one, registry_path),
+        authorization=_authorization(out_one),
         authorization_sha256="auth-sha",
-        source_commit="a" * 40,
+        source_commit=source_commit,
         out_dir=out_one,
+        frozen_root=frozen_root,
     )
     try:
         resumed.acquire()
@@ -542,11 +637,11 @@ def test_global_attempt_registry_rejects_cross_out_dir_retry():
         resumed.release()
 
     second = S.CanonicalAttemptRegistry(
-        registry_path,
-        authorization=_authorization(out_one, registry_path),
-        authorization_sha256="auth-sha",
-        source_commit="a" * 40,
+        authorization=_authorization(out_two, authorization_id="AUTH-2"),
+        authorization_sha256="other-auth-sha",
+        source_commit=source_commit,
         out_dir=out_two,
+        frozen_root=frozen_root,
     )
     try:
         second.acquire()
@@ -554,6 +649,148 @@ def test_global_attempt_registry_rejects_cross_out_dir_retry():
             second.start()
     finally:
         second.release()
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def _full_authorization(out_dir, *, auditor_id="audit-session-1"):
+    now = datetime.now(timezone.utc)
+    return {
+        "schema_version": S.AUTHORIZATION_SCHEMA_VERSION,
+        "experiment_id": S.EXPERIMENT_ID,
+        "status": "AUTHORIZED_FOR_ONE_CANONICAL_ATTEMPT",
+        "issued_at": (now - timedelta(minutes=1)).isoformat().replace("+00:00", "Z"),
+        "expires_at": (now + timedelta(hours=1)).isoformat().replace("+00:00", "Z"),
+        "protocol_freeze": {
+            "prereg_path": S._rel(S.PREREG_PATH),
+            "prereg_sha256": "prereg-sha",
+            "status": "FROZEN",
+        },
+        "independent_audit": {
+            "audit_record_id": "AUDIT-1",
+            "auditor_id": auditor_id,
+            "auditor_role": "independent_hostile_auditor",
+            "verdict": "FREEZE_RECOMMENDED",
+            "audited_run_commit": "a" * 40,
+        },
+        "owner_authorization": {
+            "authorization_id": "AUTH-1",
+            "authorized_by": S.OWNER_IDENTITY,
+            "authorized_at": now.isoformat().replace("+00:00", "Z"),
+            "audited_run_commit": "a" * 40,
+            "max_gpu_hours": 3.0,
+            "approved_gpu_uuid": "GPU-1234",
+            "approved_gpu_name": "NVIDIA A800 80GB PCIe",
+        },
+        "designated_host": {
+            "hostname": S.socket.gethostname(),
+            "canonical_out_dir": str(out_dir),
+        },
+        "model_pins": S.MODEL_SPECS,
+        "dataset_pin": {
+            "repo_id": "openai/gsm8k",
+            "config": "main",
+            "split": "test",
+            "revision": S.GSM8K_REVISION,
+            "item_identity_sha256": S._sha256_file(S.ITEM_IDENTITY_PATH),
+        },
+    }
+
+
+def test_authorization_rejects_blank_auditor_and_registry_redirection(monkeypatch):
+    root = _scratch_dir("authorization-adversarial")
+    monkeypatch.setattr(S, "_REPO", root / "repo-sentinel")
+    monkeypatch.setattr(S, "HOST_CONTROL_ROOT", root / "host-control")
+    frozen_root = root / "frozen-root"
+    out_dir = root / "run-output"
+    registry_path = S._canonical_attempt_registry_path("a" * 40)
+    auth_path = root / "authorization.json"
+    preregistration = {"sha256": "prereg-sha", "frozen": True}
+    try:
+        blank = _full_authorization(out_dir, auditor_id=" ")
+        S._write_json(auth_path, blank)
+        with pytest.raises(SystemExit, match="auditor_id"):
+            S._load_run_authorization(
+                auth_path,
+                source_commit="a" * 40,
+                preregistration=preregistration,
+                out_dir=out_dir,
+                registry_path=registry_path,
+                frozen_root=frozen_root,
+            )
+
+        blank_record = _full_authorization(out_dir)
+        blank_record["independent_audit"]["audit_record_id"] = ""
+        S._write_json(auth_path, blank_record)
+        with pytest.raises(SystemExit, match="audit_record_id"):
+            S._load_run_authorization(
+                auth_path,
+                source_commit="a" * 40,
+                preregistration=preregistration,
+                out_dir=out_dir,
+                registry_path=registry_path,
+                frozen_root=frozen_root,
+            )
+
+        redirected = _full_authorization(out_dir)
+        redirected["designated_host"]["attempt_registry_path"] = str(
+            root / "attacker-registry.json"
+        )
+        S._write_json(auth_path, redirected)
+        with pytest.raises(SystemExit, match="designated-host schema"):
+            S._load_run_authorization(
+                auth_path,
+                source_commit="a" * 40,
+                preregistration=preregistration,
+                out_dir=out_dir,
+                registry_path=registry_path,
+                frozen_root=frozen_root,
+            )
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+@pytest.mark.parametrize(
+    "redirected",
+    [
+        lambda root: root / "repo-sentinel" / "run",
+        lambda root: root / "results" / "run",
+        lambda root: root / "frozen-root" / "run",
+    ],
+)
+def test_control_paths_reject_repo_results_and_frozen_redirection(
+    monkeypatch,
+    redirected,
+):
+    root = _scratch_dir("path-redirection")
+    monkeypatch.setattr(S, "_REPO", root / "repo-sentinel")
+    monkeypatch.setattr(S, "HOST_CONTROL_ROOT", root / "host-control")
+    try:
+        with pytest.raises(SystemExit):
+            S._validate_control_paths(
+                out_dir=redirected(root),
+                registry_path=S._canonical_attempt_registry_path("a" * 40),
+                frozen_root=root / "frozen-root",
+            )
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
+
+
+def test_fixed_registry_root_rejects_repo_redirection(monkeypatch):
+    root = _scratch_dir("registry-root-redirection")
+    monkeypatch.setattr(S, "_REPO", root / "repo-sentinel")
+    monkeypatch.setattr(
+        S,
+        "HOST_CONTROL_ROOT",
+        root / "repo-sentinel" / "redirected-control",
+    )
+    try:
+        with pytest.raises(SystemExit, match="attempt registry.*outside"):
+            S._validate_control_paths(
+                out_dir=root / "safe-output",
+                registry_path=S._canonical_attempt_registry_path("a" * 40),
+                frozen_root=root / "frozen-root",
+            )
+    finally:
         shutil.rmtree(root, ignore_errors=True)
 
 

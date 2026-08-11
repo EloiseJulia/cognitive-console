@@ -137,7 +137,7 @@ For sample `(cell, cap, condition, item_id, sample_index)`, store:
    same-sample-seed 128/256 continuation, and the added continuation does at
    least one of:
    - adds an explicit-or-terminal final answer;
-   - changes the frozen parser number;
+   - changes the frozen parser number, explicitly including `None→number`;
    - changes correctness from 0→1 or 1→0.
 
 Mechanical stopping or count-at-cap alone is never called semantic truncation.
@@ -212,14 +212,14 @@ These are planning references only. No top-up is permitted.
 
 The runner must fail closed unless:
 
-1. this status line has been changed to `FROZEN` in a committed preregistration;
+1. this status line begins with the exact normalized token `FROZEN` in a
+   committed preregistration; substring forms such as `UNFROZEN` are rejected;
 2. an external structured authorization file records:
-   - an independent hostile auditor, distinct from the owner, with verdict
-     `FREEZE_RECOMMENDED`;
+   - non-empty normalized audit-record and auditor IDs, with the auditor
+     distinct from owner `EloiseJulia`, and verdict `FREEZE_RECOMMENDED`;
    - the exact 40-hex audited run commit equal to clean `HEAD`;
    - owner `EloiseJulia` authorization, expiry, a ≤3 A800-GPU-hour cap, exact
-     GPU UUID/name, designated hostname, canonical output directory, and
-     host-global attempt-registry path;
+     GPU UUID/name, designated hostname, and canonical output directory;
    - the current frozen prereg hash, item-identity hash, dataset revision, and
      exact model revisions;
    `authorization-template.json` is schema documentation only and is rejected
@@ -227,8 +227,9 @@ The runner must fail closed unless:
 3. the operator passes `--confirm-frozen-test-once`;
 4. all frozen result hashes are readable and the arm summary still encodes
    exactly `0/12`;
-5. the output directory is the sole authorized canonical directory, dedicated,
-   and not within `results/arm_full`;
+5. the output directory is the sole authorized canonical directory and both it
+   and the derived registry are outside the repository, every directory named
+   `results`, and `results/arm_full`;
 6. frozen caps, seed, temperature, batch size, extraction size, bootstrap count,
    prompts, layers, alphas, recovered index IDs, and scorer identities match;
 7. `CUDA_VISIBLE_DEVICES` contains exactly the authorized UUID,
@@ -262,11 +263,14 @@ cryptographically authenticate the human/auditor identities.
   records fail closed.
 - No checkpoint or partial outcome may guide a rerun, parameter change, or
   selective exclusion.
-- A host-global locked registry, outside every result directory, authorizes one
-  canonical attempt. It atomically transitions `STARTED → FAILED` or
-  `STARTED → COMPLETE`; same-directory crash resume is allowed under the same
-  authorization and run-config hash, while cross-output-directory retries and
-  reauthorization drift are rejected.
+- A host-global locked registry path is derived only from the fixed Linux
+  host-control root `/var/lib/cognitive-console/host-control` plus
+  `experiment_id` and audited commit; neither authorization nor
+  `out_dir` can select or redirect it. After first `STARTED`, any different
+  authorization ID/hash, output directory, or registry identity for that
+  experiment/commit is rejected globally. It atomically transitions
+  `STARTED → FAILED` or `STARTED → COMPLETE`; same-directory crash resume is
+  allowed only under the identical authorization and run-config hash.
 - The owner GPU-hour cap is checked before and after every fixed generation
   batch and direction/cell milestone.
 - Disk guards run before generation and after direction/cell milestones.
@@ -283,9 +287,11 @@ cryptographically authenticate the human/auditor identities.
    `run_manifest.json`.
 
 A crash after the seal may resume only against the identical sealed raw hash.
-If `analysis.json` already exists, post-processing resumes from it without
-recomputing or re-peeking. A completed seal is immutable; rerunning the command
-only verifies and reports the existing outputs.
+An `ANALYZED` seal may resume post-processing only when its recorded analysis
+hash matches. A `LOCKED` seal with a pre-existing `analysis.json` is rejected
+and the canonical attempt invalidated; it is never adopted by experiment ID.
+A completed seal is immutable; rerunning the command only verifies and reports
+the existing outputs.
 
 ### 6.4 Reproduction and completeness gates
 
@@ -367,7 +373,7 @@ python scripts/run_deliberation_token_sensitivity.py \
   --confirm-frozen-test-once \
   --authorization-file "$HOME/cc_l0/control/e0017-authorization.json" \
   --frozen-root results/arm_full \
-  --out-dir results/E-0017-deliberation-token-sensitivity \
+  --out-dir "$HOME/.cognitive-console/runs/E-0017" \
   --qwen-model Qwen/Qwen2.5-7B-Instruct \
   --qwen-revision a09a35458c702b33eeacc393d103063234e8bc28 \
   --llama-model NousResearch/Meta-Llama-3-8B-Instruct \

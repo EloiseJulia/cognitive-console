@@ -1581,8 +1581,10 @@ experiments:
     revisions plus config/tokenizer/generation-config/all-weight-shard hashes,
     structured independent-audit/owner/audited-commit authorization, one idle
     UUID-selected A800 float16 device, a global canonical-attempt
-    STARTED/FAILED/COMPLETE registry, fixed-batch checkpoints, exact 64
+    STARTED/FAILED/COMPLETE registry at a host-derived experiment/commit path
+    (authorization/out-dir cannot redirect it), fixed-batch checkpoints, exact 64
     reproduction, a 24-estimand joint item-cluster max-T family, zero-safe
-    continuation CIs, an explicit/terminal final-answer diagnostic, and a
-    sealed TEST-once analysis fail closed. E-0006 0/12 remains immutable. A
+    continuation CIs, explicit `None->number` parser-change materiality, an
+    explicit/terminal final-answer diagnostic, and a sealed TEST-once analysis
+    that rejects LOCKED pre-existing analysis fail closed. E-0006 0/12 remains immutable. A
     future run must undergo independent hostile results audit before paper use.

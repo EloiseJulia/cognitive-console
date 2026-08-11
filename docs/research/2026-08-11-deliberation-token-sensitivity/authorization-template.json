@@ -27,8 +27,7 @@
   },
   "designated_host": {
     "hostname": "<exact socket.gethostname()>",
-    "canonical_out_dir": "<absolute designated-host path>/results/E-0017-deliberation-token-sensitivity",
-    "attempt_registry_path": "<absolute path outside result dirs>/e0017-canonical-attempt.json"
+    "canonical_out_dir": "<absolute external path without a results component>/.cognitive-console/runs/E-0017"
   },
   "model_pins": {
     "qwen2.5-7b": {

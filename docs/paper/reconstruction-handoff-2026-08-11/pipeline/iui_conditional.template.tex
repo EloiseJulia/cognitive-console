@@ -1,0 +1,72 @@
+% Conditional IUI draft generated from pipeline/CONDITIONAL_PAPER.md.
+% Regenerate with the command documented in pipeline/BUILD.md.
+\documentclass[manuscript,review,anonymous]{acmart}
+
+\AtBeginDocument{\providecommand\BibTeX{{Bib\TeX}}}
+\setcopyright{none}
+\settopmatter{printacmref=true, printccs=true, printfolios=true}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+
+\usepackage{amsmath}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric}
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\newcommand{\Gap}[1]{\textcolor{red}{[MISSING FACT: #1]}}
+\newcommand{\TopRule}{\toprule}
+
+\begin{document}
+
+% TITLE PENDING FINAL STUDY INTEGRATION
+\title{When Does a Legible Latent Axis Earn a Control? A Comparator-Bound Qualification Procedure for Latent-Control Interfaces}
+\renewcommand{\shorttitle}{When Does a Legible Latent Axis Earn a Control?}
+
+\author{Anonymous Authors}
+\affiliation{%
+  \institution{Anonymous Institution}
+  \city{}
+  \country{}
+}
+
+\begin{abstract}
+% CONDITIONAL ABSTRACT: rewrite after human-study and prompt-plus-steer branch integration.
+Research prototypes expose latent steering as direct control, while Golden Gate Claude publicly demonstrated interaction with an internally modified model. These precedents make qualification a concrete interface problem: once a named direction becomes a control affordance, it makes a behavioral promise. Our comparator-bound procedure separates local READ evidence from behavioral TRANSFER evidence, reserves CONTROL for downstream interface permission, and carries comparator, calibration warning, and evidence tier into a five-field record. We apply the procedure using a DEV-selected prompt comparator drawn from a preregistered bounded candidate set. Across the Qwen and Llama model families, two methods (CAA and ITI), and three behavioral axes, 0 of 12 model--method--axis tests qualified under the reported rule; because no latent behavioral positive control passed, this is a scoped procedural classification rather than a validated assay or a general steering verdict. The shared headline conceals different design problems: skepticism needs more resolution, deliberation is mixed, and uncertainty needs comparator-specific interpretation and measurement repair. We then use a post hoc design mapping, separate from the reported qualification rule, to translate those profiles into four affordance states: \emph{Diagnostic-only}, \emph{Unresolved}, \emph{Unstable}, and \emph{Eligible}. Evaluating that mapping with people and under prompt-plus-steer composition remains future work; the present contribution is a specified procedure and worked account of how evidence changes an interface decision.
+\end{abstract}
+
+\begin{CCSXML}
+<ccs2012>
+ <concept><concept_id>10003120.10003121.10011748</concept_id>
+  <concept_desc>Human-centered computing~Empirical studies in HCI</concept_desc>
+  <concept_significance>500</concept_significance></concept>
+ <concept><concept_id>10003120.10003130.10011762</concept_id>
+  <concept_desc>Human-centered computing~Collaborative and social computing theory, concepts and paradigms</concept_desc>
+  <concept_significance>300</concept_significance></concept>
+ <concept><concept_id>10010147.10010178.10010179</concept_id>
+  <concept_desc>Computing methodologies~Natural language processing</concept_desc>
+  <concept_significance>300</concept_significance></concept>
+</ccs2012>
+\end{CCSXML}
+\ccsdesc[500]{Human-centered computing~Empirical studies in HCI}
+\ccsdesc[300]{Human-centered computing~Collaborative and social computing theory, concepts and paradigms}
+\ccsdesc[300]{Computing methodologies~Natural language processing}
+
+\keywords{latent steering, mechanistic interpretability, intelligent user interfaces,
+prompt comparator, evidence qualification, human--AI interaction}
+
+\maketitle
+
+$body$
+
+\begin{acks}
+Acknowledgements omitted for anonymous review.
+\end{acks}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{reframed-references}
+
+\end{document}

@@ -1,0 +1,135 @@
+- id: SRC-001
+  path: ../overview-zh.md
+  role: current_declared_project_account
+  owner: author_confirmation_pending
+  version: 2026-08-11
+  confidence: provisional
+  verification: author_supplied_not_primary_artifact_checked
+  may_supply_facts: provisional
+  may_supply_framing: provisional
+  notes: "Explicitly says it is internal navigation, not paper evidence."
+
+- id: SRC-002
+  path: ../NARRATIVE_BRIEF.md
+  role: prior_round_narrative_diagnosis
+  owner: author_confirmation_pending
+  version: 2026-08-10
+  confidence: stale_relative_to_SRC-001
+  verification: extracted
+  may_supply_facts: no_without_independent_confirmation
+  may_supply_framing: no_for_cold_architect
+  notes: "Seen by orchestrator before classification; clean cold architect must not receive it."
+
+- id: SRC-003
+  path: ../STYLE_GUIDE.md
+  role: exemplar_derived_rhetorical_mechanics
+  owner: author_confirmation_pending
+  version: 2026-08-10
+  confidence: supplied
+  verification: extracted
+  may_supply_facts: no
+  may_supply_framing: mechanics_only
+
+- id: SRC-004
+  path: ../CC main - Copy.tex
+  role: sealed_legacy_draft
+  owner: author_confirmation_pending
+  version: 2026-08-11
+  confidence: unknown_until_mined
+  verification: unseen_content
+  may_supply_facts: candidate_only
+  may_supply_framing: no
+
+- id: SRC-005
+  path: ../CC references - Copy.bib
+  role: sealed_citation_inventory
+  owner: author_confirmation_pending
+  version: 2026-08-11
+  confidence: unverified
+  verification: unseen_content
+  may_supply_facts: no
+  may_supply_framing: no
+
+- id: SRC-006
+  path: https://iui.acm.org/2027/call-for-papers/
+  role: official_venue_call
+  owner: ACM_IUI
+  version: accessed_2026-08-11
+  confidence: primary_public_source
+  verification: full_page_checked
+  may_supply_facts: venue_rules_only
+  may_supply_framing: venue_expectations_only
+
+- id: SRC-007
+  path: https://proceedings.mlr.press/v267/wu25a.html
+  role: direct_neighbor_axbench
+  owner: paper_authors_PMLR
+  version: ICML_2025
+  confidence: primary_public_source
+  verification: metadata_and_full_text_checked
+  may_supply_facts: source_claims_only
+  may_supply_framing: no
+
+- id: SRC-008
+  path: https://arxiv.org/html/2603.18353v1
+  role: direct_neighbor_basu
+  owner: paper_authors
+  version: v1_2026-03-18
+  confidence: primary_public_preprint
+  verification: metadata_and_full_text_checked
+  may_supply_facts: source_claims_only
+  may_supply_framing: no
+
+- id: SRC-009
+  path: https://arxiv.org/html/2505.04260v3
+  role: direct_neighbor_bo
+  owner: paper_authors
+  version: v3_2026-07-25
+  confidence: primary_public_source_with_UIST_metadata
+  verification: metadata_and_full_text_checked
+  may_supply_facts: source_claims_only
+  may_supply_framing: no
+
+- id: SRC-010
+  path: ../Karny et al. IUI 2026 Neural Transparency.pdf
+  role: closest_neighbor_karny_neural_transparency
+  owner: paper_authors_ACM
+  version: IUI_2026
+  confidence: supplied_full_text
+  verification: metadata_and_full_text_checked_2026-08-11
+  may_supply_facts: source_claims_only
+  may_supply_framing: no
+  notes: "Passive persona-prediction visualization; between-subjects N=80. Trust endpoint increased, but design behavior/outcomes and prediction-confidence effects were null. Active steering interfaces are future work; no comparator-bound permission gate found."
+
+- id: SRC-011
+  path: HUMAN_STUDY_PENDING.md
+  role: planned_human_study_integration_packet
+  owner: author_confirmation_pending
+  version: 2026-08-11
+  confidence: no_result_yet
+  verification: planned_completion_by_2026-08-20
+  may_supply_facts: no_until_frozen_results
+  may_supply_framing: branch_structure_only
+  notes: "Empty result slots are non-evidence; any outcome triggers final-lock re-evaluation."
+
+- id: SRC-012
+  path: AUTHOR_ADJUDICATION_2026-08-11.md
+  role: author_fact_and_scope_adjudication
+  owner: human_author
+  version: 2026-08-11
+  confidence: author_attested
+  verification: direct_author_decision
+  may_supply_facts: project_status_and_scope_only
+  may_supply_framing: allowed_for_claim_boundaries
+  notes: "Authorizes preregistered/DEV-selected/bounded wording; forbids blind/fair/global-best and assay/inter-rater validation claims."
+
+- id: SRC-013
+  path: PROMPT_STEER_PENDING.md
+  role: planned_prompt_steer_integration_packet
+  owner: author_confirmation_pending
+  version: 2026-08-11
+  confidence: no_result_yet
+  verification: planned_completion_by_2026-08-20
+  may_supply_facts: no_until_frozen_results
+  may_supply_framing: branch_structure_only
+  notes: "Empty result slots are non-evidence; any outcome triggers construct and final-lock re-evaluation."

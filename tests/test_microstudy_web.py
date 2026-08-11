@@ -324,10 +324,20 @@ def test_export_ready_is_frozen_retryable_and_retained(live_server):
     data = complete_attempt(base)
     attempt = data["attempt_id"]
     assert server.sessions[attempt]["phase"] == "export_ready"
+    now = [1_000.0]
+    server.clock = lambda: now[0]
     first = request_json(base, f"/api/export?attempt_id={attempt}&format=json")
+    assert server.sessions[attempt]["last_seen"] == 1_000.0
+    now[0] = 1_100.0
     second = request_json(base, f"/api/export?attempt_id={attempt}&format=json")
+    assert server.sessions[attempt]["last_seen"] == 1_100.0
     assert first == second == data
     assert server.sessions[attempt]["signed_export"] == data
+    now[0] = 1_200.0
+    with pytest.raises(urllib.error.HTTPError) as exc:
+        request_json(base, f"/api/export?attempt_id={attempt}&format=xml")
+    assert exc.value.code == 400
+    assert server.sessions[attempt]["last_seen"] == 1_100.0
 
 
 def test_duplicate_first_complete_then_assignment_and_itt(live_server):
@@ -410,6 +420,8 @@ def test_request_protection_idempotency_capacity_and_expiry():
     server = create_server(
         "127.0.0.1", 0, key_path, max_sessions=1, session_ttl_seconds=0.05
     )
+    now = [0.0]
+    server.clock = lambda: now[0]
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     base = f"http://127.0.0.1:{server.server_port}"
@@ -483,12 +495,112 @@ def test_request_protection_idempotency_capacity_and_expiry():
             request_json(base, "/api/start", {
                 "participant_code": "FLOOD", "sequence": "A2", "ui_language": "en",
             })
-        time.sleep(0.07)
+        now[0] = 0.06
         replacement = request_json(base, "/api/start", {
             "participant_code": "AFTER", "sequence": "A2", "ui_language": "zh-Hans",
         })
         assert replacement["attempt_id"] != attempt
         assert attempt not in server.sessions
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join()
+        CLIENTS.pop(base, None)
+        shutil.rmtree(RUNTIME, ignore_errors=True)
+
+
+def test_session_ttl_renews_only_after_successful_authenticated_requests():
+    RUNTIME.mkdir(parents=True, exist_ok=True)
+    key_path = RUNTIME / "ttl-touch.key"
+    key_path.write_bytes(TEST_KEY)
+    server = create_server(
+        "127.0.0.1", 0, key_path, session_ttl_seconds=1_000
+    )
+    now = [100.0]
+    server.clock = lambda: now[0]
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    base = f"http://127.0.0.1:{server.server_port}"
+
+    def rejected_post(path, body, *, headers=None, status):
+        request_headers = {
+            "Content-Type": "application/json",
+            "Origin": base,
+            "X-CSRF-Token": CLIENTS[base]["csrf"],
+            "X-Study-Capability": start["capability"],
+        }
+        request_headers.update(headers or {})
+        request = urllib.request.Request(
+            f"{base}{path}", data=json.dumps(body).encode(),
+            headers=request_headers, method="POST",
+        )
+        with pytest.raises(urllib.error.HTTPError) as exc:
+            urllib.request.urlopen(request)
+        assert exc.value.code == status
+
+    try:
+        request_json(base, "/api/bootstrap")
+        welcome = locale_materials(base)
+        start = request_json(base, "/api/start", {
+            "participant_code": "TTL", "sequence": "A1", "ui_language": "en",
+        })
+        attempt = start["attempt_id"]
+        session = server.sessions[attempt]
+        assert session["last_seen"] == 100.0
+
+        now[0] = 110.0
+        rejected_post("/api/practice", {
+            "attempt_id": attempt, "step": "q1",
+            "request_id": "invalidpayload001",
+        }, status=409)
+        assert session["last_seen"] == 100.0
+
+        now[0] = 120.0
+        rejected_post("/api/practice", {
+            "attempt_id": attempt, "step": "q2",
+            "answer": welcome["common"]["practice"]["q2"]["options"][0]["id"],
+            "request_id": "badtransition001",
+        }, status=409)
+        assert session["last_seen"] == 100.0
+
+        successful = {
+            "attempt_id": attempt, "step": "q1",
+            "answer": welcome["common"]["practice"]["q1"]["options"][0]["id"],
+            "request_id": "successfulreq001",
+        }
+        now[0] = 130.0
+        assert request_json(base, "/api/practice", successful)["phase"] == "practice_q2"
+        assert session["last_seen"] == 130.0
+
+        now[0] = 140.0
+        assert request_json(base, "/api/practice", successful)["phase"] == "practice_q2"
+        assert session["last_seen"] == 140.0
+
+        now[0] = 150.0
+        rejected_post("/api/practice", {
+            **successful, "answer": "different",
+        }, status=409)
+        assert session["last_seen"] == 140.0
+
+        next_step = {
+            "attempt_id": attempt, "step": "q2",
+            "answer": welcome["common"]["practice"]["q2"]["options"][0]["id"],
+            "request_id": "protectedrequest1",
+        }
+        for current_time, headers, status in (
+            (160.0, {"X-Study-Capability": "wrong"}, 409),
+            (170.0, {"X-CSRF-Token": "wrong"}, 403),
+            (180.0, {"Origin": "https://evil.invalid"}, 403),
+        ):
+            now[0] = current_time
+            rejected_post("/api/practice", next_step, headers=headers, status=status)
+            assert session["last_seen"] == 140.0
+
+        now[0] = 190.0
+        rejected_post("/api/unknown", {
+            "attempt_id": attempt, "request_id": "unknownendpoint01",
+        }, status=404)
+        assert session["last_seen"] == 140.0
     finally:
         server.shutdown()
         server.server_close()

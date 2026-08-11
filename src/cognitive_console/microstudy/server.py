@@ -131,6 +131,7 @@ class StudyServer(ThreadingHTTPServer):
         self.session_lock = threading.RLock()
         self.max_sessions = max_sessions
         self.session_ttl_seconds = session_ttl_seconds
+        self.clock = time.monotonic
         self.run_id = str(uuid.uuid4())
         self.attempt_serial = 0
         self.csrf_token = secrets.token_urlsafe(32)
@@ -145,7 +146,7 @@ class StudyServer(ThreadingHTTPServer):
         return f"{self.server_address[0]}:{self.server_port}"
 
     def cleanup_expired(self) -> None:
-        now = time.monotonic()
+        now = self.clock()
         with self.session_lock:
             expired = [
                 attempt for attempt, session in self.sessions.items()
@@ -238,7 +239,6 @@ class StudyHandler(BaseHTTPRequestHandler):
         capability = self.headers.get("X-Study-Capability", "")
         if not hmac.compare_digest(capability, session["capability"]):
             raise ValueError("invalid session capability")
-        session["last_seen"] = time.monotonic()
         return session
 
     def _trial_payload(self, session: dict[str, Any]) -> dict[str, Any]:
@@ -324,6 +324,9 @@ class StudyHandler(BaseHTTPRequestHandler):
                 ):
                     self._error(409, "export is not available")
                     return
+                if output_format not in {"json", "csv"}:
+                    self._error(400, "unsupported export format")
+                    return
                 export = session["signed_export"]
             if output_format == "json":
                 self._send(
@@ -335,8 +338,8 @@ class StudyHandler(BaseHTTPRequestHandler):
                     b"\xef\xbb\xbf" + self._csv(export).encode("utf-8"),
                     "text/csv; charset=utf-8",
                 )
-            else:
-                self._error(400, "unsupported export format")
+            with session["lock"]:
+                session["last_seen"] = self.server.clock()
             return
         relative = "index.html" if path in {"", "/"} else path.lstrip("/")
         candidate = (STATIC_DIR / relative).resolve()
@@ -394,10 +397,12 @@ class StudyHandler(BaseHTTPRequestHandler):
                     if cached is not None:
                         if cached[0] != request_bytes(body):
                             raise ValueError("request_id reuse with different payload")
+                        session["last_seen"] = self.server.clock()
                         self._json(cached[1])
                         return
                     result = handler(body, session=session)
                     session["requests"][(path, request_id)] = (request_bytes(body), result)
+                    session["last_seen"] = self.server.clock()
             self._json(result)
         except ValueError as exc:
             self._error(409, str(exc))
@@ -446,7 +451,7 @@ class StudyHandler(BaseHTTPRequestHandler):
             "diagnostic_submitted": False, "diagnostic_response": None,
             "material_schema_version": stimuli["schema_version"],
             "sequence_schema_version": sequences["schema_version"],
-            "last_seen": time.monotonic(),
+            "last_seen": self.server.clock(),
         }
         return {
             "attempt_id": attempt, "phase": "practice_q1",
@@ -590,7 +595,6 @@ class StudyHandler(BaseHTTPRequestHandler):
         export = self._canonical_export(session, complete=True)
         session["signed_export"] = sign_export(export, self.server.verification_key)
         session["phase"] = "export_ready"
-        session["last_seen"] = time.monotonic()
         return {
             "phase": "export_ready", "attempt_id": session["attempt_id"],
             "complete": True,
@@ -604,7 +608,6 @@ class StudyHandler(BaseHTTPRequestHandler):
         export = self._canonical_export(session, complete=False)
         session["signed_export"] = sign_export(export, self.server.verification_key)
         session["phase"] = "export_ready"
-        session["last_seen"] = time.monotonic()
         return {
             "phase": "export_ready", "attempt_id": session["attempt_id"],
             "complete": False,

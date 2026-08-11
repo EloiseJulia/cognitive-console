@@ -27,7 +27,7 @@ artifact_type: main table
 paper_location: "Interface-Evaluation Contract in Use (Table tab:failure-taxonomy)"
 supports_claims: ["C2", "C3"]
 aggregation_script: docs/paper/scripts/make_failure_taxonomy.py
-generator_commit: a688813bfc26ee7ddc995ebc608e99ae6b84b4fc
+generator_commit: 3250910d2b803df634a3869199dcf05216a0e4b5
 source_artifact_commits:
   "results/E-0013-uncertainty-recheck/reanalysis.json": 70af3996ddea4f881efbb4c0bff9241aad3849ce
 source_artifact_hashes:

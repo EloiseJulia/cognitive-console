@@ -100,8 +100,6 @@ def _build_cell_argv(
     llama_model: Optional[str],
     qwen_revision: Optional[str],
     llama_revision: Optional[str],
-    qwen_model_content_sha256: Optional[str],
-    llama_model_content_sha256: Optional[str],
     expected_code_commit: str,
     authorization: str,
     scratch_dir: Path,
@@ -153,18 +151,10 @@ def _build_cell_argv(
         argv.extend(["--qwen-model", qwen_model])
     if model_label == "qwen2.5-7b" and qwen_revision:
         argv.extend(["--qwen-revision", qwen_revision])
-    if model_label == "qwen2.5-7b" and qwen_model_content_sha256:
-        argv.extend(
-            ["--qwen-model-content-sha256", qwen_model_content_sha256]
-        )
     if model_label == "llama3-8b" and llama_model:
         argv.extend(["--llama-model", llama_model])
     if model_label == "llama3-8b" and llama_revision:
         argv.extend(["--llama-revision", llama_revision])
-    if model_label == "llama3-8b" and llama_model_content_sha256:
-        argv.extend(
-            ["--llama-model-content-sha256", llama_model_content_sha256]
-        )
     if hf_cache_dir is not None:
         argv.extend(["--hf-cache-dir", str(hf_cache_dir)])
     return argv
@@ -202,6 +192,7 @@ def _validate_recovered_source(
     items_by_id: Dict[str, Dict],
     test_ids: Sequence[str],
 ) -> Optional[Dict]:
+    recovered_policy = analysis._recovered_transcript_policy(protocol)
     candidates = [
         dict(source)
         for source in protocol["cells"][cell_key].get("sources", [])
@@ -216,6 +207,14 @@ def _validate_recovered_source(
                 f"{cell_key}: recovered transcript candidate is present but "
                 f"is not a directory: {path}"
             )
+        registered_inventory = analysis._validate_registered_transcript_source(
+            path,
+            candidate=candidate,
+            policy=recovered_policy,
+            cell_key=cell_key,
+        )
+        if registered_inventory is None:
+            continue
         records, source_meta = analysis._load_c2b_transcript_dir(
             path,
             cell_key=cell_key,
@@ -237,6 +236,8 @@ def _validate_recovered_source(
             "path": analysis._rel(path),
             "origin": candidate.get("origin"),
             "source_meta": source_meta,
+            "registered_file_inventory": registered_inventory,
+            "score_equivalence_establishes_provenance": False,
             "coverage": coverage,
             "gitignored_presence_was_validated": True,
         }
@@ -502,8 +503,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--llama-model", default=None)
     parser.add_argument("--qwen-revision", default=None)
     parser.add_argument("--llama-revision", default=None)
-    parser.add_argument("--qwen-model-content-sha256", default=None)
-    parser.add_argument("--llama-model-content-sha256", default=None)
     parser.add_argument("--expected-code-commit", default=None)
     parser.add_argument("--authorization", default=None)
     parser.add_argument("--scratch-root", default=None)
@@ -631,8 +630,6 @@ def main(argv: Optional[List[str]] = None) -> int:
             llama_model=llama_model,
             qwen_revision=qwen_revision,
             llama_revision=llama_revision,
-            qwen_model_content_sha256=args.qwen_model_content_sha256,
-            llama_model_content_sha256=args.llama_model_content_sha256,
             expected_code_commit=expected_code_commit,
             authorization=authorization,
             scratch_dir=scratch_dir,
@@ -704,14 +701,6 @@ def main(argv: Optional[List[str]] = None) -> int:
         command.extend(["--qwen-revision", qwen_revision])
     if llama_revision:
         command.extend(["--llama-revision", llama_revision])
-    if args.qwen_model_content_sha256:
-        command.extend(
-            ["--qwen-model-content-sha256", args.qwen_model_content_sha256]
-        )
-    if args.llama_model_content_sha256:
-        command.extend(
-            ["--llama-model-content-sha256", args.llama_model_content_sha256]
-        )
     executable_plans = [
         row for row in plan if row["action"] == "GENERATE_OR_RESUME"
     ]

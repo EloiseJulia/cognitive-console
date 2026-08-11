@@ -1,0 +1,221 @@
+{
+  "schema_version": "e0013-model-snapshot-sha256-v1",
+  "recorded_at": "2026-08-11",
+  "scope": "Model-file identity only; no model was loaded and no generation, replay, or TEST evaluation was performed.",
+  "aggregate_algorithm": "SHA-256 of canonical JSON (UTF-8, sorted keys, compact separators) over the path-sorted files array.",
+  "models": {
+    "qwen2.5-7b": {
+      "hf_repo_id": "Qwen/Qwen2.5-7B-Instruct",
+      "revision": "a09a35458c702b33eeacc393d103063234e8bc28",
+      "aggregate_sha256": "94e27571b6d46e0bcddf1769e5ed9c8f1b3abb77540d34aeb667cd0d3f5a5997",
+      "total_required_bytes": 15242788168,
+      "chat_template": {
+        "source": "tokenizer_config.json:chat_template",
+        "utf8_bytes": 2507,
+        "sha256": "cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f"
+      },
+      "files": [
+        {
+          "path": "config.json",
+          "category": "config",
+          "size_bytes": 663,
+          "sha256": "7463bb0ea78315365e6c6b74de4e73bbcc8359dfb0c5a737584e077d42c0b03c"
+        },
+        {
+          "path": "generation_config.json",
+          "category": "generation_config",
+          "size_bytes": 243,
+          "sha256": "3a8f9087e486054c8a4a08dae2e5a3ba62e23da212b5b8c08bc42cb983c3459f"
+        },
+        {
+          "path": "merges.txt",
+          "category": "tokenizer",
+          "size_bytes": 1671839,
+          "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3"
+        },
+        {
+          "path": "model-00001-of-00004.safetensors",
+          "category": "weights",
+          "size_bytes": 3945441440,
+          "sha256": "a1333e6293854747c481288ea83b348226af178dd565c49b6f9495ba1966aba7"
+        },
+        {
+          "path": "model-00002-of-00004.safetensors",
+          "category": "weights",
+          "size_bytes": 3864726352,
+          "sha256": "f5d25a2772cb825164a2a2c0fb6d51a87e282abf21e4dd75bc5cfb3cd0ea6185"
+        },
+        {
+          "path": "model-00003-of-00004.safetensors",
+          "category": "weights",
+          "size_bytes": 3864726424,
+          "sha256": "8efdec4c1bc12317ae1a38dc42b595ce777738a64deea3fcb8a0a91381bcdfd5"
+        },
+        {
+          "path": "model-00004-of-00004.safetensors",
+          "category": "weights",
+          "size_bytes": 3556377672,
+          "sha256": "1a72d403cdf0c1ec3cb7f289f17b394a01e64394c2e9b3c0f94dbce3faf879bd"
+        },
+        {
+          "path": "model.safetensors.index.json",
+          "category": "weights_index",
+          "size_bytes": 27752,
+          "sha256": "624bf7c47cd12468fdc16e38a47cf4f19e0415b859a223ba3c027eed2f0e1028"
+        },
+        {
+          "path": "tokenizer.json",
+          "category": "tokenizer",
+          "size_bytes": 7031645,
+          "sha256": "c0382117ea329cdf097041132f6d735924b697924d6f6fc3945713e96ce87539"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "category": "tokenizer",
+          "size_bytes": 7305,
+          "sha256": "5b5d4f65d0acd3b2d56a35b56d374a36cbc1c8fa5cf3b3febbbfabf22f359583"
+        },
+        {
+          "path": "vocab.json",
+          "category": "tokenizer",
+          "size_bytes": 2776833,
+          "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+        }
+      ],
+      "source": {
+        "canonical_api": "https://huggingface.co/api/models/Qwen/Qwen2.5-7B-Instruct/revision/a09a35458c702b33eeacc393d103063234e8bc28?blobs=true",
+        "byte_verification": "Every required file was present in the authorized A800 HF cache and SHA-256 hashed from existing bytes.",
+        "chat_template_jinja_present": false
+      }
+    },
+    "llama3-8b": {
+      "hf_repo_id": "meta-llama/Meta-Llama-3-8B-Instruct",
+      "revision": "8afb486c1db24fe5011ec46dfbe5b5dccdb575c2",
+      "aggregate_sha256": "dfbfb454047cacd028913f3c23bca28786013e0e0720e20fb0a5ef20aa3fdf5c",
+      "total_required_bytes": 32132519700,
+      "chat_template": {
+        "source": "tokenizer_config.json:chat_template",
+        "utf8_bytes": 389,
+        "sha256": "ba03a121d097859c7b5b9cd03af99aafe95275210d2876f642ad9929a150f122"
+      },
+      "files": [
+        {
+          "path": "config.json",
+          "category": "config",
+          "size_bytes": 654,
+          "sha256": "61f3de03a16ca8046b05dc777bce72717022bc8522152eee61a69072272ef54b"
+        },
+        {
+          "path": "generation_config.json",
+          "category": "generation_config",
+          "size_bytes": 187,
+          "sha256": "d1af74d8ba49428ab2faa65f7948165cc6bf52b740e57e840f8af772587c894c"
+        },
+        {
+          "path": "model-00001-of-00004.safetensors",
+          "category": "weights",
+          "size_bytes": 4976698672,
+          "sha256": "d8cf9c4d0dd972e1a2131bfe656235ee98221679711a3beef6d46dadf0f20b5c"
+        },
+        {
+          "path": "model-00002-of-00004.safetensors",
+          "category": "weights",
+          "size_bytes": 4999802720,
+          "sha256": "8d4782b4a69ef03845159ce1a15e272aadaaf134dc138d68f616098e8531729c"
+        },
+        {
+          "path": "model-00003-of-00004.safetensors",
+          "category": "weights",
+          "size_bytes": 4915916176,
+          "sha256": "3acdd690e65c24f42a24581b8467af98bd3ca357444580f8012aacd2bd607921"
+        },
+        {
+          "path": "model-00004-of-00004.safetensors",
+          "category": "weights",
+          "size_bytes": 1168138808,
+          "sha256": "67e9ad31c8c32abf3a55ee7fc7217b3ecb35fd3c74d98a5bd233e0e4d6964f46"
+        },
+        {
+          "path": "model.safetensors.index.json",
+          "category": "weights_index",
+          "size_bytes": 23950,
+          "sha256": "146776fce3f6db1103aa6f249e65ee5544c5923ce6f971b092eee79aa6e5d37b"
+        },
+        {
+          "path": "original/consolidated.00.pth",
+          "category": "weights",
+          "size_bytes": 16060617592,
+          "sha256": "be52262c9289304f3e8240e0749bf257bc04264405a86cd4de38efb9068724ee"
+        },
+        {
+          "path": "original/params.json",
+          "category": "config",
+          "size_bytes": 211,
+          "sha256": "1d705272c15ef86cbfc636c9129bb457a8bdb94354f38d9553598a28d4ad7879"
+        },
+        {
+          "path": "original/tokenizer.model",
+          "category": "tokenizer",
+          "size_bytes": 2183982,
+          "sha256": "82e9d31979e92ab929cd544440f129d9ecd797b69e327f80f17e1c50d5551b55"
+        },
+        {
+          "path": "special_tokens_map.json",
+          "category": "tokenizer",
+          "size_bytes": 73,
+          "sha256": "462d91939dbc37178aa5a3eae7068d1990ccc92e09f288cc71f42cdf139d69cc"
+        },
+        {
+          "path": "tokenizer.json",
+          "category": "tokenizer",
+          "size_bytes": 9085698,
+          "sha256": "e134af98b985517b4f068e3755ae90d4e9cd2d45d328325dc503f1c6b2d06cc7"
+        },
+        {
+          "path": "tokenizer_config.json",
+          "category": "tokenizer",
+          "size_bytes": 50977,
+          "sha256": "da0e3a7cce6e4d787e85eb1c24d548420e0d7fe2c7a214e192795c46e40d75bb"
+        }
+      ],
+      "source": {
+        "canonical_api": "https://huggingface.co/api/models/meta-llama/Meta-Llama-3-8B-Instruct/revision/8afb486c1db24fe5011ec46dfbe5b5dccdb575c2?blobs=true",
+        "large_file_hashes": "Canonical Hugging Face LFS SHA-256 values, including both Transformers and original-format weights/tokenizer.",
+        "small_file_byte_source": "NousResearch/Meta-Llama-3-8B-Instruct@53346005fb0ef11d3b6a83b12c895cca40156b6c",
+        "small_file_verification": "Each mirrored byte stream matched the canonical pinned repo's exact Git blob ID and size before SHA-256 was recorded. original/params.json was independently byte-verified through the public hf-models mirror against canonical Git blob 65f16bb074ab2ba456331a8ea3d50c3fdbf343bf.",
+        "chat_template_jinja_present": false
+      }
+    }
+  },
+  "authorized_a800_cache_observation": {
+    "host": "elzhang@10.172.211.158",
+    "cache_root": "~/cc_l0/hf_home/hub",
+    "qwen2.5-7b": {
+      "status": "EXACT_REQUIRED_FILES_VERIFIED",
+      "aggregate_sha256": "94e27571b6d46e0bcddf1769e5ed9c8f1b3abb77540d34aeb667cd0d3f5a5997"
+    },
+    "llama3-8b": {
+      "status": "FAIL_MISSING_REQUIRED_FILES",
+      "present_files": [
+        "LICENSE",
+        "README.md"
+      ],
+      "missing_required_files": [
+        "config.json",
+        "generation_config.json",
+        "model-00001-of-00004.safetensors",
+        "model-00002-of-00004.safetensors",
+        "model-00003-of-00004.safetensors",
+        "model-00004-of-00004.safetensors",
+        "model.safetensors.index.json",
+        "original/consolidated.00.pth",
+        "original/params.json",
+        "original/tokenizer.model",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer_config.json"
+      ],
+      "execution_rule": "Fail. Do not generate, replay, or substitute a different snapshot."
+    }
+  }
+}

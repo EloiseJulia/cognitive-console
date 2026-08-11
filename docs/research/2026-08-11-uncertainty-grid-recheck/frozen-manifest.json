@@ -8,7 +8,7 @@
   "frozen_at": "2026-08-11",
   "status": "FROZEN_REPLAY_PENDING_THREE_MISSING_CELLS",
   "generated_from": "checked-in E-0006/E-0013 artifacts by deterministic source extraction; no hand-entered result metrics",
-  "remote_inventory_note": "Read-only search on 2026-08-11 found no arm_full transcript files under the authorized ~/cc_l0 tree; the original /root/autodl-tmp/cc/repo paths were unavailable. Restored backups remain eligible through the transcript-directory source adapter.",
+  "remote_inventory_note": "Read-only search on 2026-08-11 found no trusted arm_full transcript files under the authorized ~/cc_l0 tree. No original E-0006 transcript hashes are registered, so any later discovered transcript directory is provenance-ineligible and hard-fails rather than skipping replay.",
   "evidence_scope": {
     "allowed": [
       "confidence-format presence/missingness",
@@ -40,13 +40,28 @@
         "hf_repo_id": "Qwen/Qwen2.5-7B-Instruct",
         "revision": "a09a35458c702b33eeacc393d103063234e8bc28",
         "revision_source": "Hugging Face model API resolved SHA, verified 2026-08-11",
-        "local_alternative": "Allowed only with an auditor-approved SHA-256 aggregate over weights, config.json, tokenizer artifacts, and generation_config.json."
+        "snapshot_manifest": {
+          "source_path": "docs/research/2026-08-11-uncertainty-grid-recheck/model-hash-source.json",
+          "source_sha256": "667a2d4876d5031691bf2a6f0219185b3364caf10680876f1bded1767c07226e",
+          "source_hash_mode": "utf8_lf_normalized",
+          "model_key": "qwen2.5-7b",
+          "aggregate_sha256": "94e27571b6d46e0bcddf1769e5ed9c8f1b3abb77540d34aeb667cd0d3f5a5997"
+        },
+        "local_alternative": "Allowed only when the exact mandatory per-file and aggregate SHA-256 manifest above matches; no caller-supplied substitute hash is accepted."
       },
       "llama3-8b": {
         "hf_repo_id": "meta-llama/Meta-Llama-3-8B-Instruct",
         "revision": "8afb486c1db24fe5011ec46dfbe5b5dccdb575c2",
         "revision_source": "Hugging Face model API resolved SHA, verified 2026-08-11",
-        "local_alternative": "Allowed only with an auditor-approved SHA-256 aggregate over weights, config.json, tokenizer artifacts, and generation_config.json."
+        "snapshot_manifest": {
+          "source_path": "docs/research/2026-08-11-uncertainty-grid-recheck/model-hash-source.json",
+          "source_sha256": "667a2d4876d5031691bf2a6f0219185b3364caf10680876f1bded1767c07226e",
+          "source_hash_mode": "utf8_lf_normalized",
+          "model_key": "llama3-8b",
+          "aggregate_sha256": "dfbfb454047cacd028913f3c23bca28786013e0e0720e20fb0a5ef20aa3fdf5c"
+        },
+        "authorized_cache_status": "FAIL_MISSING_REQUIRED_FILES",
+        "local_alternative": "Allowed only when the exact mandatory per-file and aggregate SHA-256 manifest above matches; the currently authorized A800 cache is incomplete and must fail."
       }
     },
     "resource_guards": {
@@ -100,19 +115,27 @@
     ],
     "sample_seed_algorithm": "BackendOutcomeSampler._call_seed(axis,item,effective_alpha,sample_index)",
     "test_use_policy": "FROZEN_TEST_ITEMS_EVALUATED_ONCE_WITH_NO_SELECTION_OR_TUNING",
+    "recovered_transcript_policy": {
+      "acceptance_mode": "exact_registered_file_manifest_only",
+      "score_equivalence_establishes_provenance": false,
+      "unregistered_present_action": "hard_fail",
+      "replay_mandatory": true,
+      "registration_status": "NO_TRUSTED_E0006_TRANSCRIPT_HASHES_AVAILABLE"
+    },
     "checkpoint_policy": {
       "unit": "fixed-composition generation batch",
       "identity_binds": [
         "audited code SHA and clean-tree state",
         "protocol manifest Git blob and SHA-256",
         "exact argv and explicit authorization",
-        "resolved model snapshot revision or verified local content hashes",
+        "mandatory audited model per-file/aggregate SHA-256 and effective chat-template hash",
         "CUDA/A800/float16 software and GPU identity",
         "protocol hash",
         "cell/method/model identity",
         "selected prompt hashes",
         "layer/requested alpha/frozen sigma/effective alpha",
         "direction hash",
+        "activation-cache key/path/size/SHA-256 inventory seal",
         "item and split hashes",
         "base and per-sample seeds",
         "generation settings and batch composition"
@@ -170,7 +193,9 @@
         {
           "kind": "c2b_transcript_dir_v1",
           "path": "results/arm_full/cell_caa__llama3-8b/transcripts",
-          "origin": "restored_immutable_e0006_if_recovered"
+          "origin": "unregistered_e0006_candidate",
+          "registered_files": [],
+          "if_present": "hard_fail_no_trusted_original_hashes"
         },
         {
           "kind": "e0013_samples_v1",
@@ -208,7 +233,9 @@
         {
           "kind": "c2b_transcript_dir_v1",
           "path": "results/arm_full/cell_caa__qwen2.5-7b/transcripts",
-          "origin": "restored_immutable_e0006_if_recovered"
+          "origin": "unregistered_e0006_candidate",
+          "registered_files": [],
+          "if_present": "hard_fail_no_trusted_original_hashes"
         }
       ]
     },
@@ -235,7 +262,9 @@
         {
           "kind": "c2b_transcript_dir_v1",
           "path": "results/arm_full/cell_iti__llama3-8b/transcripts",
-          "origin": "restored_immutable_e0006_if_recovered"
+          "origin": "unregistered_e0006_candidate",
+          "registered_files": [],
+          "if_present": "hard_fail_no_trusted_original_hashes"
         },
         {
           "kind": "e0013_samples_v1",
@@ -267,7 +296,9 @@
         {
           "kind": "c2b_transcript_dir_v1",
           "path": "results/arm_full/cell_iti__qwen2.5-7b/transcripts",
-          "origin": "restored_immutable_e0006_if_recovered"
+          "origin": "unregistered_e0006_candidate",
+          "registered_files": [],
+          "if_present": "hard_fail_no_trusted_original_hashes"
         },
         {
           "kind": "e0013_samples_v1",

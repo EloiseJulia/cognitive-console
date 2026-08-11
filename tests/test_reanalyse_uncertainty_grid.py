@@ -208,17 +208,24 @@ def test_transcript_directory_schema_recomputes_frozen_outcomes(tmp_path):
     assert meta["frozen_per_item_outcomes_reproduced"] is True
 
 
-def test_valid_gitignored_recovered_source_skips_replay(tmp_path):
+def test_exactly_registered_recovered_source_can_skip_replay(tmp_path):
     cfg, item, frozen_payload, transcript_dir = _write_recovered_source(tmp_path)
     protocol = {
-        "generation": {"seed": R.DEFAULT_SEED, "k_samples": 1},
+        "generation": {
+            "seed": R.DEFAULT_SEED,
+            "k_samples": 1,
+            "recovered_transcript_policy": _recovered_policy(),
+        },
         "cells": {
             cfg.cell_key: {
                 "sources": [
                     {
                         "kind": "c2b_transcript_dir_v1",
                         "path": str(transcript_dir),
-                        "origin": "restored_immutable_e0006_if_recovered",
+                        "origin": "registered_test_fixture",
+                        "registered_files": _transcript_file_manifest(
+                            transcript_dir
+                        ),
                     }
                 ]
             }
@@ -239,27 +246,79 @@ def test_valid_gitignored_recovered_source_skips_replay(tmp_path):
     )
 
 
-def test_present_invalid_recovered_source_hard_fails(tmp_path):
+def test_discovered_unregistered_recovered_source_hard_fails(tmp_path):
     cfg, item, frozen_payload, transcript_dir = _write_recovered_source(tmp_path)
-    prompt_file = next(transcript_dir.glob("*test_prompt*.jsonl"))
-    row = json.loads(prompt_file.read_text(encoding="utf-8"))
-    row["layer"] = 999
-    prompt_file.write_text(json.dumps(row) + "\n", encoding="utf-8")
     protocol = {
-        "generation": {"seed": R.DEFAULT_SEED, "k_samples": 1},
+        "generation": {
+            "seed": R.DEFAULT_SEED,
+            "k_samples": 1,
+            "recovered_transcript_policy": _recovered_policy(),
+        },
         "cells": {
             cfg.cell_key: {
                 "sources": [
                     {
                         "kind": "c2b_transcript_dir_v1",
                         "path": str(transcript_dir),
-                        "origin": "restored_immutable_e0006_if_recovered",
+                        "origin": "unregistered_e0006_candidate",
+                        "registered_files": [],
                     }
                 ]
             }
         },
     }
-    with pytest.raises(G.RecheckError, match="layer"):
+    with pytest.raises(G.RecheckError, match="discovered unregistered"):
+        P._validate_recovered_source(
+            protocol,
+            cell_key=cfg.cell_key,
+            cfg=cfg,
+            frozen_payload=frozen_payload,
+            items_by_id={item["id"]: item},
+            test_ids=[item["id"]],
+        )
+
+
+def test_adversarial_075_format_substitution_cannot_establish_provenance(
+    tmp_path,
+):
+    cfg, item, frozen_payload, transcript_dir = _write_recovered_source(
+        tmp_path,
+        text="Answer: Paris.",
+        parsed_confidence=None,
+    )
+    registered = _transcript_file_manifest(transcript_dir)
+    prompt_file = next(transcript_dir.glob("*test_prompt*.jsonl"))
+    row = json.loads(prompt_file.read_text(encoding="utf-8"))
+    assert row["sample_outcome"] == pytest.approx(0.75)
+    row["generation_text"] = "Answer: Paris. Confidence: 50%."
+    row["parse"] = {
+        "parsed_confidence": 0.5,
+        "correctness": 1,
+        "axis_parse_failed": False,
+    }
+    row["sample_outcome"] = scorers.per_item_brier(1, 0.5)
+    assert row["sample_outcome"] == pytest.approx(0.75)
+    prompt_file.write_text(json.dumps(row) + "\n", encoding="utf-8")
+    protocol = {
+        "generation": {
+            "seed": R.DEFAULT_SEED,
+            "k_samples": 1,
+            "recovered_transcript_policy": _recovered_policy(),
+        },
+        "cells": {
+            cfg.cell_key: {
+                "sources": [
+                    {
+                        "kind": "c2b_transcript_dir_v1",
+                        "path": str(transcript_dir),
+                        "origin": "registered_test_fixture",
+                        "registered_files": registered,
+                    }
+                ]
+            }
+        },
+    }
+    with pytest.raises(G.RecheckError, match="exact file manifest mismatch"):
         P._validate_recovered_source(
             protocol,
             cell_key=cfg.cell_key,
@@ -288,8 +347,6 @@ def test_replay_default_plan_excludes_immutable_existing_cell():
         llama_model="meta-llama/Meta-Llama-3-8B-Instruct",
         qwen_revision="a09a35458c702b33eeacc393d103063234e8bc28",
         llama_revision="8afb486c1db24fe5011ec46dfbe5b5dccdb575c2",
-        qwen_model_content_sha256=None,
-        llama_model_content_sha256=None,
         expected_code_commit="a" * 40,
         authorization=protocol["execution"]["authorization_id"],
         scratch_dir=Path("scratch"),
@@ -325,8 +382,6 @@ def test_cell_argv_binds_direct_hf_guard_identity(tmp_path):
         llama_model="meta-llama/Meta-Llama-3-8B-Instruct",
         qwen_revision="a" * 40,
         llama_revision="b" * 40,
-        qwen_model_content_sha256=None,
-        llama_model_content_sha256=None,
         expected_code_commit="c" * 40,
         authorization="approved",
         scratch_dir=tmp_path / "external-scratch",
@@ -381,7 +436,9 @@ def test_frozen_replay_source_requires_hashed_completion(tmp_path):
             "origin": "frozen_replay",
         }]
     }
-    selected, inventory = G._select_source(spec)
+    selected, inventory = G._select_source(
+        spec, recovered_policy=_recovered_policy()
+    )
     assert selected is None
     assert inventory[0]["raw_exists"] is True
     assert inventory[0]["completion_exists"] is False
@@ -443,7 +500,9 @@ def test_frozen_replay_source_requires_hashed_completion(tmp_path):
     (root / "completion.json").write_text(
         json.dumps(completion), encoding="utf-8"
     )
-    selected, _ = G._select_source(spec)
+    selected, _ = G._select_source(
+        spec, recovered_policy=_recovered_policy()
+    )
     assert selected is not None
     assert selected["completion_identity"]["completion_sha256"] == G.sha256_file(
         root / "completion.json"
@@ -494,7 +553,9 @@ def test_generation_runner_refuses_to_overwrite_completed_artifact(tmp_path):
         R.main(["--backend", "synthetic", "--out-dir", str(out_dir)])
 
 
-def _write_recovered_source(tmp_path):
+def _write_recovered_source(
+    tmp_path, *, text="Answer: Paris. Confidence: 80%.", parsed_confidence=0.8
+):
     item = {
         "id": "triviaqa-00001",
         "prompt": "Capital of France?",
@@ -518,8 +579,9 @@ def _write_recovered_source(tmp_path):
     )
     transcript_dir = tmp_path / "gitignored-transcripts"
     transcript_dir.mkdir()
-    text = "Answer: Paris. Confidence: 80%."
-    score = scorers.per_item_brier(1, 0.8)
+    score = scorers.per_item_brier(
+        1, 0.5 if parsed_confidence is None else parsed_confidence
+    )
     for condition, phase, cell_key in (
         ("prompt", R.adj.PHASE_TEST_PROMPT, "prompt=unc-test"),
         ("steer", R.adj.PHASE_TEST_STEER, "alpha=8.0"),
@@ -546,9 +608,9 @@ def _write_recovered_source(tmp_path):
             "sample_outcome": score,
             "sample_degeneracy": 0.0,
             "parse": {
-                "parsed_confidence": 0.8,
+                "parsed_confidence": parsed_confidence,
                 "correctness": 1,
-                "axis_parse_failed": False,
+                "axis_parse_failed": parsed_confidence is None,
             },
             "meta": {
                 "method": "caa",
@@ -571,3 +633,24 @@ def _write_recovered_source(tmp_path):
         ]
     }
     return cfg, item, frozen_payload, transcript_dir
+
+
+def _recovered_policy():
+    return {
+        "acceptance_mode": "exact_registered_file_manifest_only",
+        "score_equivalence_establishes_provenance": False,
+        "unregistered_present_action": "hard_fail",
+        "replay_mandatory": True,
+    }
+
+
+def _transcript_file_manifest(path):
+    return [
+        {
+            "path": file_path.relative_to(path).as_posix(),
+            "size_bytes": file_path.stat().st_size,
+            "sha256": G.sha256_file(file_path),
+        }
+        for file_path in sorted(path.rglob("*"), key=lambda value: str(value))
+        if file_path.is_file()
+    ]

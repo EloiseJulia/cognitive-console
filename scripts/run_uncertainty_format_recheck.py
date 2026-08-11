@@ -58,6 +58,8 @@ ITI_SIGMA_IDENTITY_REL_TOL = 5e-4
 ITI_SIGMA_IDENTITY_ABS_TOL = 5e-3
 CHECKPOINT_SCHEMA_VERSION = "e0013-format-replay-checkpoint-v2"
 EXECUTION_IDENTITY_SCHEMA_VERSION = "e0013-hf-execution-identity-v1"
+MODEL_SNAPSHOT_MANIFEST_SCHEMA_VERSION = "e0013-model-snapshot-sha256-v1"
+ACTIVATION_CACHE_SCHEMA_VERSION = "e0013-activation-cache-v2"
 TEST_USE_POLICY = "FROZEN_TEST_ITEMS_EVALUATED_ONCE_WITH_NO_SELECTION_OR_TUNING"
 _HF_REVISION_RE = re.compile(r"^[0-9a-f]{40}$")
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
@@ -351,86 +353,255 @@ def _stable_environment_identity(snapshot: Dict[str, object]) -> Dict[str, objec
     }
 
 
-def _model_files_by_category(root: Path) -> Dict[str, List[Path]]:
-    files = [path for path in Path(root).rglob("*") if path.is_file()]
-    by_name = {path.name: path for path in files}
-    weights = sorted(
-        [
-            path
-            for path in files
-            if path.name.endswith(".safetensors")
-            or (
-                path.name.endswith(".bin")
-                and (
-                    path.name.startswith("pytorch_model")
-                    or path.name.startswith("model")
-                )
+def _model_identity_category(name: str) -> Optional[str]:
+    normalized = Path(name).as_posix()
+    basename = Path(normalized).name
+    if normalized == "config.json" or normalized == "original/params.json":
+        return "config"
+    if normalized == "generation_config.json":
+        return "generation_config"
+    if normalized == "chat_template.jinja":
+        return "chat_template"
+    if basename.endswith((".safetensors.index.json", ".bin.index.json")):
+        return "weights_index"
+    if (
+        basename.endswith(".safetensors")
+        or (
+            basename.endswith(".bin")
+            and (
+                basename.startswith("pytorch_model")
+                or basename.startswith("model")
             )
-            or path.name.endswith(".safetensors.index.json")
-            or path.name.endswith(".bin.index.json")
-        ],
-        key=lambda path: path.relative_to(root).as_posix(),
-    )
-    tokenizer_names = {
-        "tokenizer.json",
-        "tokenizer.model",
-        "tokenizer_config.json",
-        "special_tokens_map.json",
-        "added_tokens.json",
-        "vocab.json",
-        "merges.txt",
-    }
-    tokenizer = sorted(
-        [path for path in files if path.name in tokenizer_names],
-        key=lambda path: path.relative_to(root).as_posix(),
-    )
-    return {
-        "weights": weights,
-        "config": [by_name["config.json"]] if "config.json" in by_name else [],
-        "tokenizer": tokenizer,
-        "generation_config": (
-            [by_name["generation_config.json"]]
-            if "generation_config.json" in by_name
-            else []
-        ),
-    }
-
-
-def _hash_model_snapshot(root: Path, *, model_label: str) -> Dict[str, object]:
-    root = Path(root).resolve()
-    categories = _model_files_by_category(root)
-    missing = [
-        category
-        for category in ("weights", "config", "tokenizer", "generation_config")
-        if not categories[category]
-    ]
-    if missing:
-        raise RuntimeError(
-            f"{root}: model snapshot lacks required identity categories: {missing}"
         )
-    config = json.loads(categories["config"][0].read_text(encoding="utf-8"))
+        or (
+            normalized.startswith("original/")
+            and basename.startswith("consolidated.")
+            and basename.endswith(".pth")
+        )
+    ):
+        return "weights"
+    if (
+        basename.startswith("tokenizer")
+        or basename
+        in {
+            "special_tokens_map.json",
+            "added_tokens.json",
+            "vocab.json",
+            "merges.txt",
+        }
+    ):
+        return "tokenizer"
+    return None
+
+
+def _load_model_snapshot_manifest(
+    model_policy: Dict[str, object], *, model_label: str
+) -> Dict[str, object]:
+    reference = dict(model_policy.get("snapshot_manifest") or {})
+    required_reference = {
+        "source_path",
+        "source_sha256",
+        "source_hash_mode",
+        "model_key",
+        "aggregate_sha256",
+    }
+    missing_reference = sorted(required_reference - set(reference))
+    if missing_reference:
+        raise RuntimeError(
+            f"{model_label}: frozen snapshot manifest reference missing "
+            f"{missing_reference}"
+        )
+    source_path = Path(str(reference["source_path"]))
+    if not source_path.is_absolute():
+        source_path = (_REPO / source_path).resolve()
+    try:
+        source_path.relative_to(_REPO)
+    except ValueError as exc:
+        raise RuntimeError(
+            f"{model_label}: model hash source must be tracked inside the repository"
+        ) from exc
+    expected_source_sha = str(reference["source_sha256"])
+    if not _SHA256_RE.fullmatch(expected_source_sha):
+        raise RuntimeError(f"{model_label}: invalid model hash source SHA-256")
+    if reference["source_hash_mode"] != "utf8_lf_normalized":
+        raise RuntimeError(f"{model_label}: unsupported model hash source mode")
+    if not source_path.is_file():
+        raise RuntimeError(f"{model_label}: model hash source record missing")
+    source_bytes = source_path.read_bytes().replace(b"\r\n", b"\n")
+    if b"\r" in source_bytes:
+        raise RuntimeError(f"{model_label}: invalid model hash source line endings")
+    if hashlib.sha256(source_bytes).hexdigest() != expected_source_sha:
+        raise RuntimeError(f"{model_label}: model hash source record mismatch")
+    source = json.loads(source_path.read_text(encoding="utf-8"))
+    if source.get("schema_version") != MODEL_SNAPSHOT_MANIFEST_SCHEMA_VERSION:
+        raise RuntimeError(f"{model_label}: unsupported model hash source schema")
+    model_key = str(reference["model_key"])
+    if model_key != model_label:
+        raise RuntimeError(f"{model_label}: model hash source key mismatch")
+    manifest = dict((source.get("models") or {}).get(model_key) or {})
+    if manifest.get("hf_repo_id") != model_policy.get("hf_repo_id"):
+        raise RuntimeError(f"{model_label}: source-record HF repo mismatch")
+    if manifest.get("revision") != model_policy.get("revision"):
+        raise RuntimeError(f"{model_label}: source-record revision mismatch")
+    rows = manifest.get("files")
+    if not isinstance(rows, list) or not rows:
+        raise RuntimeError(f"{model_label}: source record has no required files")
+    normalized: List[Dict[str, object]] = []
+    seen = set()
+    for row in rows:
+        row = dict(row)
+        path = str(row.get("path", ""))
+        category = str(row.get("category", ""))
+        sha256 = str(row.get("sha256", ""))
+        if (
+            not path
+            or Path(path).is_absolute()
+            or ".." in Path(path).parts
+            or path in seen
+            or _model_identity_category(path) != category
+            or not _SHA256_RE.fullmatch(sha256)
+            or int(row.get("size_bytes", -1)) < 0
+        ):
+            raise RuntimeError(
+                f"{model_label}: invalid frozen model file manifest row {row!r}"
+            )
+        seen.add(path)
+        normalized.append(
+            {
+                "path": path,
+                "category": category,
+                "size_bytes": int(row["size_bytes"]),
+                "sha256": sha256,
+            }
+        )
+    normalized.sort(key=lambda row: str(row["path"]))
+    categories = {str(row["category"]) for row in normalized}
+    mandatory = {
+        "weights",
+        "weights_index",
+        "config",
+        "generation_config",
+        "tokenizer",
+    }
+    if not mandatory.issubset(categories):
+        raise RuntimeError(
+            f"{model_label}: source record lacks required model categories "
+            f"{sorted(mandatory - categories)}"
+        )
+    aggregate = _canonical_hash(normalized)
+    if (
+        aggregate != manifest.get("aggregate_sha256")
+        or aggregate != reference["aggregate_sha256"]
+    ):
+        raise RuntimeError(f"{model_label}: frozen model aggregate mismatch")
+    chat_template = dict(manifest.get("chat_template") or {})
+    if (
+        chat_template.get("source")
+        not in {"chat_template.jinja", "tokenizer_config.json:chat_template"}
+        or not _SHA256_RE.fullmatch(str(chat_template.get("sha256", "")))
+        or int(chat_template.get("utf8_bytes", -1)) < 0
+    ):
+        raise RuntimeError(f"{model_label}: invalid frozen chat-template identity")
+    return {
+        "schema_version": MODEL_SNAPSHOT_MANIFEST_SCHEMA_VERSION,
+        "source_path": _rel(source_path),
+        "source_sha256": expected_source_sha,
+        "model_key": model_key,
+        "hf_repo_id": manifest["hf_repo_id"],
+        "revision": manifest["revision"],
+        "files": normalized,
+        "aggregate_sha256": aggregate,
+        "chat_template": chat_template,
+    }
+
+
+def _snapshot_chat_template_identity(
+    root: Path, expected: Dict[str, object]
+) -> Dict[str, object]:
+    source = str(expected["source"])
+    if source == "chat_template.jinja":
+        raw = (root / "chat_template.jinja").read_bytes()
+        raw.decode("utf-8")
+    else:
+        tokenizer_config = json.loads(
+            (root / "tokenizer_config.json").read_text(encoding="utf-8")
+        )
+        template = tokenizer_config.get("chat_template")
+        if not isinstance(template, str) or not template:
+            raise RuntimeError(
+                f"{root}: tokenizer_config.json lacks a string chat_template"
+            )
+        raw = template.encode("utf-8")
+    actual = {
+        "source": source,
+        "utf8_bytes": len(raw),
+        "sha256": hashlib.sha256(raw).hexdigest(),
+    }
+    if actual != expected:
+        raise RuntimeError(f"{root}: chat template identity mismatch")
+    return actual
+
+
+def _hash_model_snapshot(
+    root: Path, *, model_label: str, expected_manifest: Dict[str, object]
+) -> Dict[str, object]:
+    root = Path(root).resolve()
+    if not root.is_dir():
+        raise RuntimeError(f"{model_label}: model snapshot missing: {root}")
+    expected_rows = [
+        dict(row) for row in list(expected_manifest.get("files") or [])
+    ]
+    expected_names = {str(row["path"]) for row in expected_rows}
+    discovered_names = {
+        path.relative_to(root).as_posix()
+        for path in root.rglob("*")
+        if path.is_file()
+        and _model_identity_category(path.relative_to(root).as_posix())
+        is not None
+    }
+    if discovered_names != expected_names:
+        missing = sorted(expected_names - discovered_names)
+        extra = sorted(discovered_names - expected_names)
+        raise RuntimeError(
+            f"{model_label}: snapshot file set mismatch; missing={missing}, "
+            f"unexpected={extra}"
+        )
+    actual_rows: List[Dict[str, object]] = []
+    for expected in expected_rows:
+        path = root / str(expected["path"])
+        actual = {
+            "path": str(expected["path"]),
+            "category": str(expected["category"]),
+            "size_bytes": int(path.stat().st_size),
+            "sha256": _sha256_file(path),
+        }
+        if actual != expected:
+            raise RuntimeError(
+                f"{model_label}: snapshot file identity mismatch for "
+                f"{expected['path']}"
+            )
+        actual_rows.append(actual)
+    actual_rows.sort(key=lambda row: str(row["path"]))
+    aggregate = _canonical_hash(actual_rows)
+    if aggregate != expected_manifest.get("aggregate_sha256"):
+        raise RuntimeError(f"{model_label}: snapshot aggregate SHA-256 mismatch")
+    config = json.loads((root / "config.json").read_text(encoding="utf-8"))
     expected_model_type = _MODEL_TYPE_BY_LABEL[model_label]
     if str(config.get("model_type")) != expected_model_type:
         raise RuntimeError(
             f"{root}: config model_type={config.get('model_type')!r}, expected "
             f"{expected_model_type!r} for {model_label}"
         )
-    category_rows: Dict[str, List[Dict[str, object]]] = {}
-    for category, paths in categories.items():
-        category_rows[category] = [
-            {
-                "path": path.relative_to(root).as_posix(),
-                "size_bytes": int(path.stat().st_size),
-                "sha256": _sha256_file(path),
-            }
-            for path in paths
-        ]
     return {
         "root": str(root),
         "model_label": model_label,
         "model_type": expected_model_type,
-        "categories": category_rows,
-        "content_sha256": _canonical_hash(category_rows),
+        "files": actual_rows,
+        "content_sha256": aggregate,
+        "chat_template": _snapshot_chat_template_identity(
+            root, dict(expected_manifest["chat_template"])
+        ),
+        "audited_snapshot_manifest": expected_manifest,
     }
 
 
@@ -439,38 +610,29 @@ def _resolve_model_identity(
     model_ref: str,
     model_label: str,
     revision: Optional[str],
-    expected_content_sha256: Optional[str],
     model_policy: Dict[str, object],
     hf_cache_dir: Optional[Path],
 ) -> Tuple[str, Dict[str, object]]:
     ref = str(model_ref).strip()
+    expected_manifest = _load_model_snapshot_manifest(
+        model_policy, model_label=model_label
+    )
     local = _looks_like_local_path(ref) or Path(ref).expanduser().exists()
     if local:
         if revision:
             raise RuntimeError(
                 f"{model_label}: --revision is incompatible with a local snapshot"
             )
-        if not expected_content_sha256 or not _SHA256_RE.fullmatch(
-            expected_content_sha256
-        ):
-            raise RuntimeError(
-                f"{model_label}: local model snapshots require an audited "
-                "64-hex --model-content-sha256"
-            )
         root = Path(ref).expanduser().resolve()
-        if not root.is_dir():
-            raise RuntimeError(f"{model_label}: local model snapshot missing: {root}")
-        content = _hash_model_snapshot(root, model_label=model_label)
-        if content["content_sha256"] != expected_content_sha256:
-            raise RuntimeError(
-                f"{model_label}: local model content hash mismatch; expected "
-                f"{expected_content_sha256}, got {content['content_sha256']}"
-            )
+        content = _hash_model_snapshot(
+            root,
+            model_label=model_label,
+            expected_manifest=expected_manifest,
+        )
         identity = {
             "kind": "verified_local_snapshot",
             "configured_ref": ref,
             "resolved_path": str(root),
-            "expected_content_sha256": expected_content_sha256,
             **content,
         }
         return str(root), identity
@@ -501,17 +663,7 @@ def _resolve_model_identity(
             cache_dir=str(hf_cache_dir),
             local_files_only=True,
             allow_patterns=[
-                "*.safetensors",
-                "*.safetensors.index.json",
-                "pytorch_model*.bin",
-                "pytorch_model*.bin.index.json",
-                "config.json",
-                "generation_config.json",
-                "tokenizer*",
-                "special_tokens_map.json",
-                "added_tokens.json",
-                "vocab.json",
-                "merges.txt",
+                str(row["path"]) for row in expected_manifest["files"]
             ],
         )
     ).resolve()
@@ -520,14 +672,11 @@ def _resolve_model_identity(
             f"{model_label}: resolved HF snapshot {snapshot} does not end in "
             f"the pinned revision {revision}"
         )
-    content = _hash_model_snapshot(snapshot, model_label=model_label)
-    if expected_content_sha256:
-        if not _SHA256_RE.fullmatch(expected_content_sha256):
-            raise RuntimeError(f"{model_label}: invalid expected model content hash")
-        if content["content_sha256"] != expected_content_sha256:
-            raise RuntimeError(
-                f"{model_label}: pinned snapshot content hash mismatch"
-            )
+    content = _hash_model_snapshot(
+        snapshot,
+        model_label=model_label,
+        expected_manifest=expected_manifest,
+    )
     identity = {
         "kind": "pinned_hf_snapshot",
         "configured_ref": ref,
@@ -544,10 +693,15 @@ def _verify_model_identity(identity: Dict[str, object]) -> None:
     current = _hash_model_snapshot(
         Path(str(identity["resolved_path"])),
         model_label=str(identity["model_label"]),
+        expected_manifest=dict(identity["audited_snapshot_manifest"]),
     )
     if current["content_sha256"] != identity["content_sha256"]:
         raise RuntimeError(
             f"resolved model content changed: {identity['resolved_path']}"
+        )
+    if current["chat_template"] != identity["chat_template"]:
+        raise RuntimeError(
+            f"resolved model chat template changed: {identity['resolved_path']}"
         )
 
 
@@ -882,7 +1036,8 @@ def _truncate_raw(text: str, max_chars: int) -> Tuple[str, bool]:
 
 
 def _derive_hf_direction(cfg: FrozenCellConfig, model_id: str, activation_cache_dir: Path,
-                         n_extraction: int, seed: int) -> Tuple[np.ndarray, Dict[str, object]]:
+                         n_extraction: int, seed: int,
+                         model_identity: Dict[str, object]) -> Tuple[np.ndarray, Dict[str, object]]:
     from cognitive_console.activations.provider import HFActivationProvider
 
     device, dtype = p0._pick_device(), p0._pick_dtype()
@@ -892,9 +1047,24 @@ def _derive_hf_direction(cfg: FrozenCellConfig, model_id: str, activation_cache_
         dtype=dtype,
         cache_dir=str(activation_cache_dir),
     )
+    _, tokenizer, _ = provider.hf_handles()
+    runtime_template = getattr(tokenizer, "chat_template", None)
+    if not isinstance(runtime_template, str) or not runtime_template:
+        raise RuntimeError(
+            f"{cfg.cell_key}: runtime tokenizer has no string chat template"
+        )
+    runtime_chat_template_sha256 = _sha256_text(runtime_template)
+    expected_chat_template = dict(model_identity.get("chat_template") or {})
+    if runtime_chat_template_sha256 != expected_chat_template.get("sha256"):
+        raise RuntimeError(
+            f"{cfg.cell_key}: apply_chat_template runtime identity mismatch"
+        )
     if cfg.method == "caa":
         direction = p0._extract_direction(provider, AXIS, cfg.layer, n_extraction, seed)
-        return direction, {"direction_source": "caa_mean_difference_at_frozen_layer"}
+        return direction, {
+            "direction_source": "caa_mean_difference_at_frozen_layer",
+            "runtime_chat_template_sha256": runtime_chat_template_sha256,
+        }
 
     pairs = c1.load_axis_pairs(AXIS)
     split = c1.make_split(list(pairs.pos.keys()), n_extraction=n_extraction, seed=seed)
@@ -937,6 +1107,7 @@ def _derive_hf_direction(cfg: FrozenCellConfig, model_id: str, activation_cache_
         "sigma_identity_abs_diff": sigma_abs_diff,
         "sigma_identity_tolerance": sigma_limit,
         "rederived_probe_norm": float(np.linalg.norm(iti.vector)),
+        "runtime_chat_template_sha256": runtime_chat_template_sha256,
     }
 
 
@@ -1152,6 +1323,82 @@ def _write_or_verify_seal(path: Path, payload: Dict) -> None:
     _atomic_write_json(path, payload)
 
 
+def _activation_cache_inventory(cache_dir: Path) -> List[Dict[str, object]]:
+    cache_dir = Path(cache_dir).resolve()
+    if not cache_dir.exists():
+        return []
+    rows: List[Dict[str, object]] = []
+    for path in sorted(cache_dir.rglob("*"), key=lambda value: str(value)):
+        if not path.is_file():
+            continue
+        relative = path.relative_to(cache_dir).as_posix()
+        if "/" in relative or path.suffix != ".npy":
+            raise RuntimeError(
+                f"{cache_dir}: unexpected activation-cache file {relative}"
+            )
+        key = path.stem
+        if not _SHA256_RE.fullmatch(key):
+            raise RuntimeError(
+                f"{cache_dir}: invalid activation-cache key {key!r}"
+            )
+        try:
+            array = np.load(path, mmap_mode="r", allow_pickle=False)
+        except Exception as exc:
+            raise RuntimeError(f"{path}: invalid activation cache entry") from exc
+        if (
+            array.ndim != 1
+            or array.size == 0
+            or array.dtype.kind != "f"
+            or not np.isfinite(array).all()
+        ):
+            raise RuntimeError(f"{path}: invalid activation vector shape/content")
+        rows.append(
+            {
+                "key": key,
+                "path": relative,
+                "size_bytes": int(path.stat().st_size),
+                "sha256": _sha256_file(path),
+            }
+        )
+    return rows
+
+
+def _activation_cache_binding(
+    cache_dir: Path,
+    *,
+    model_identity: Dict[str, object],
+    execution_binding: Dict[str, object],
+) -> Dict[str, object]:
+    return {
+        "cache_dir": str(Path(cache_dir).resolve()),
+        "model_identity_sha256": _canonical_hash(model_identity),
+        "execution_identity_sha256": _canonical_hash(execution_binding),
+        "device": p0._pick_device(),
+        "dtype": p0._pick_dtype(),
+    }
+
+
+def _activation_cache_payload(
+    binding: Dict[str, object], inventory: List[Dict[str, object]]
+) -> Dict[str, object]:
+    return {
+        "schema_version": ACTIVATION_CACHE_SCHEMA_VERSION,
+        "binding": binding,
+        "inventory": inventory,
+        "inventory_sha256": _canonical_hash(inventory),
+    }
+
+
+def _activation_cache_identity(
+    payload: Dict[str, object], seal_path: Path
+) -> Dict[str, object]:
+    return {
+        **payload,
+        "seal_path": _rel(seal_path),
+        "seal_sha256": _sha256_file(seal_path),
+    }
+
+
 def _prepare_activation_cache(
     cache_dir: Path,
     *,
@@ -1168,39 +1415,74 @@ def _prepare_activation_cache(
     incomplete = [path for path in existing_files if path.name.endswith(".tmp")]
     for path in incomplete:
         path.unlink()
-    existing_files = [path for path in existing_files if path not in incomplete]
-    if existing_files and not seal_path.is_file():
+    binding = _activation_cache_binding(
+        cache_dir,
+        model_identity=model_identity,
+        execution_binding=execution_binding,
+    )
+    inventory = _activation_cache_inventory(cache_dir)
+    if inventory and not seal_path.is_file():
         raise RuntimeError(
             f"{cache_dir}: activation cache has data without an identity seal"
         )
-    identity = {
-        "schema_version": "e0013-activation-cache-v1",
-        "cache_dir": str(cache_dir),
-        "model_identity_sha256": _canonical_hash(model_identity),
-        "execution_identity_sha256": _canonical_hash(execution_binding),
-        "device": p0._pick_device(),
-        "dtype": p0._pick_dtype(),
-    }
-    _write_or_verify_seal(seal_path, identity)
-    for path in existing_files:
-        if path.suffix != ".npy":
-            raise RuntimeError(f"{cache_dir}: unexpected activation-cache file {path}")
-        try:
-            array = np.load(path, mmap_mode="r", allow_pickle=False)
-        except Exception as exc:
-            raise RuntimeError(f"{path}: invalid activation cache entry") from exc
+    expected = _activation_cache_payload(binding, inventory)
+    if seal_path.is_file():
+        sealed = json.loads(seal_path.read_text(encoding="utf-8"))
+        if sealed.get("schema_version") != ACTIVATION_CACHE_SCHEMA_VERSION:
+            raise RuntimeError(f"{seal_path}: unsupported activation-cache seal")
+        if sealed.get("binding") != binding:
+            raise RuntimeError(f"{seal_path}: activation-cache binding mismatch")
+        sealed_inventory = sealed.get("inventory")
         if (
-            array.ndim != 1
-            or array.size == 0
-            or array.dtype.kind != "f"
-            or not np.isfinite(array).all()
+            not isinstance(sealed_inventory, list)
+            or sealed.get("inventory_sha256")
+            != _canonical_hash(sealed_inventory)
+            or sealed_inventory != inventory
         ):
-            raise RuntimeError(f"{path}: invalid activation vector shape/content")
-    return {
-        **identity,
-        "seal_path": _rel(seal_path),
-        "seal_sha256": _sha256_file(seal_path),
+            raise RuntimeError(
+                f"{seal_path}: activation-cache content inventory mismatch"
+            )
+    else:
+        _atomic_write_json(seal_path, expected)
+    return _activation_cache_identity(expected, seal_path)
+
+
+def _finalize_activation_cache(
+    cache_dir: Path,
+    *,
+    prepared_identity: Dict[str, object],
+    model_identity: Dict[str, object],
+    execution_binding: Dict[str, object],
+) -> Dict[str, object]:
+    cache_dir = Path(cache_dir).resolve()
+    seal_path = cache_dir.parent / "activation_cache_identity.json"
+    binding = _activation_cache_binding(
+        cache_dir,
+        model_identity=model_identity,
+        execution_binding=execution_binding,
+    )
+    if prepared_identity.get("binding") != binding:
+        raise RuntimeError(f"{seal_path}: activation-cache binding changed")
+    before = {
+        str(row["path"]): dict(row)
+        for row in list(prepared_identity.get("inventory") or [])
     }
+    inventory = _activation_cache_inventory(cache_dir)
+    after = {str(row["path"]): dict(row) for row in inventory}
+    changed = [
+        path for path, row in before.items() if after.get(path) != row
+    ]
+    if changed:
+        raise RuntimeError(
+            "activation-cache entry changed during direction derivation: "
+            + ", ".join(sorted(changed))
+        )
+    payload = _activation_cache_payload(binding, inventory)
+    _atomic_write_json(seal_path, payload)
+    verified = json.loads(seal_path.read_text(encoding="utf-8"))
+    if verified != payload:
+        raise RuntimeError(f"{seal_path}: atomic activation-cache seal failed")
+    return _activation_cache_identity(payload, seal_path)
 
 
 def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id: str,
@@ -1218,10 +1500,11 @@ def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id:
     if resource_guard is not None:
         resource_guard("before_cell")
     activation_cache_identity: Optional[Dict[str, object]] = None
+    prepared_activation_cache_identity: Optional[Dict[str, object]] = None
     if backend_name == "hf":
         if activation_cache_dir is None:
             raise RuntimeError("HF replay requires an explicit activation cache directory")
-        activation_cache_identity = _prepare_activation_cache(
+        prepared_activation_cache_identity = _prepare_activation_cache(
             activation_cache_dir,
             model_identity=model_identity,
             execution_binding=execution_binding,
@@ -1234,7 +1517,19 @@ def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id:
     else:
         assert activation_cache_dir is not None
         direction, direction_meta = _derive_hf_direction(
-            cfg, model_id, activation_cache_dir, n_extraction, seed
+            cfg,
+            model_id,
+            activation_cache_dir,
+            n_extraction,
+            seed,
+            model_identity,
+        )
+        assert prepared_activation_cache_identity is not None
+        activation_cache_identity = _finalize_activation_cache(
+            activation_cache_dir,
+            prepared_identity=prepared_activation_cache_identity,
+            model_identity=model_identity,
+            execution_binding=execution_binding,
         )
 
     direction_sha256 = _array_sha256(direction)
@@ -1673,8 +1968,6 @@ def build_parser() -> argparse.ArgumentParser:
                     help="override Llama model path/id; default reuses frozen cell artifact model")
     ap.add_argument("--qwen-revision", default=None)
     ap.add_argument("--llama-revision", default=None)
-    ap.add_argument("--qwen-model-content-sha256", default=None)
-    ap.add_argument("--llama-model-content-sha256", default=None)
     ap.add_argument("--expected-code-commit", default=None)
     ap.add_argument("--authorization", default=None)
     ap.add_argument(
@@ -1981,18 +2274,15 @@ def main(argv: Optional[List[str]] = None) -> int:
                     execution["model_identity"][model_label]["hf_repo_id"]
                 )
                 revision = args.qwen_revision
-                expected_content = args.qwen_model_content_sha256
             else:
                 model_ref = args.llama_model or str(
                     execution["model_identity"][model_label]["hf_repo_id"]
                 )
                 revision = args.llama_revision
-                expected_content = args.llama_model_content_sha256
             load_path, resolved_identity = _resolve_model_identity(
                 model_ref=model_ref,
                 model_label=model_label,
                 revision=revision,
-                expected_content_sha256=expected_content,
                 model_policy=dict(execution["model_identity"][model_label]),
                 hf_cache_dir=hf_cache_dir,
             )

@@ -102,22 +102,59 @@ def test_local_model_identity_rejects_same_basename_different_content(tmp_path):
     attacker = _write_model_snapshot(
         tmp_path / "attacker" / "same-name", "qwen2", weight=b"attacker"
     )
-    approved_identity = R._hash_model_snapshot(
-        approved, model_label="qwen2.5-7b"
-    )
+    expected_manifest = _snapshot_manifest(approved)
 
-    with pytest.raises(RuntimeError, match="content hash mismatch"):
-        R._resolve_model_identity(
-            model_ref=str(attacker),
+    with pytest.raises(RuntimeError, match="snapshot file identity mismatch"):
+        R._hash_model_snapshot(
+            attacker,
             model_label="qwen2.5-7b",
-            revision=None,
-            expected_content_sha256=approved_identity["content_sha256"],
-            model_policy={
-                "hf_repo_id": "Qwen/Qwen2.5-7B-Instruct",
-                "revision": "a" * 40,
-            },
-            hf_cache_dir=None,
+            expected_manifest=expected_manifest,
         )
+
+
+def test_model_snapshot_missing_required_file_fails_closed(tmp_path):
+    snapshot = _write_model_snapshot(tmp_path / "snapshot", "qwen2")
+    expected_manifest = _snapshot_manifest(snapshot)
+    (snapshot / "generation_config.json").unlink()
+
+    with pytest.raises(RuntimeError, match="snapshot file set mismatch"):
+        R._hash_model_snapshot(
+            snapshot,
+            model_label="qwen2.5-7b",
+            expected_manifest=expected_manifest,
+        )
+
+
+def test_committed_model_manifests_bind_exact_files_and_chat_templates():
+    protocol = json.loads(
+        (
+            R._REPO
+            / "docs"
+            / "research"
+            / "2026-08-11-uncertainty-grid-recheck"
+            / "frozen-manifest.json"
+        ).read_text(encoding="utf-8")
+    )
+    policies = protocol["execution"]["model_identity"]
+    qwen = R._load_model_snapshot_manifest(
+        policies["qwen2.5-7b"], model_label="qwen2.5-7b"
+    )
+    llama = R._load_model_snapshot_manifest(
+        policies["llama3-8b"], model_label="llama3-8b"
+    )
+    assert qwen["aggregate_sha256"] == (
+        "94e27571b6d46e0bcddf1769e5ed9c8f1b3abb77540d34aeb667cd0d3f5a5997"
+    )
+    assert llama["aggregate_sha256"] == (
+        "dfbfb454047cacd028913f3c23bca28786013e0e0720e20fb0a5ef20aa3fdf5c"
+    )
+    assert qwen["chat_template"]["sha256"] == (
+        "cd8e9439f0570856fd70470bf8889ebd8b5d1107207f67a5efb46e342330527f"
+    )
+    assert llama["chat_template"]["sha256"] == (
+        "ba03a121d097859c7b5b9cd03af99aafe95275210d2876f642ad9929a150f122"
+    )
+    assert all(row["sha256"] for row in qwen["files"] + llama["files"])
 
 
 def test_hf_direct_runner_requires_manifest_audit_sha_and_authorization(
@@ -365,12 +402,15 @@ def test_resume_reuses_checkpoints_with_external_activation_cache(
             calls["generated"] += len(prompts)
             return ["Answer: Paris. Confidence: 80%."] * len(prompts)
 
-    def derive(cfg, model_id, cache_dir, n_extraction, seed):
+    def derive(cfg, model_id, cache_dir, n_extraction, seed, model_identity):
         cache_dir.mkdir(parents=True, exist_ok=True)
         marker = cache_dir.parent / "resume.marker"
         if marker.exists():
             calls["cache_seen"] += 1
         marker.write_text("stable", encoding="utf-8")
+        cache_path = cache_dir / f"{'a' * 64}.npy"
+        if not cache_path.exists():
+            R.np.save(cache_path, R.np.ones(8, dtype=R.np.float32))
         return R.np.ones(8), {"direction_source": "test"}
 
     monkeypatch.setattr(R, "_make_backend", lambda *args, **kwargs: Backend())
@@ -421,6 +461,94 @@ def test_resume_reuses_checkpoints_with_external_activation_cache(
     assert meta["checkpoint"]["records_reused"] == 15
     assert activation_cache.is_dir()
     assert not (out_dir / "activations").exists()
+
+
+def test_activation_cache_tamper_fails_before_direction_resume(
+    tmp_path, monkeypatch
+):
+    cfg = _frozen_cell("approved-model", "qwen2.5-7b")
+    item = {
+        "id": "u1",
+        "prompt": "Capital of France?",
+        "answer": "Paris",
+        "aliases": [],
+    }
+    out_dir = tmp_path / "out"
+    activation_cache = tmp_path / "external-scratch" / "activations"
+    calls = {"derive": 0}
+
+    class Backend:
+        def generate_batch(self, prompts, steer, **kwargs):
+            return ["Answer: Paris. Confidence: 80%."] * len(prompts)
+
+    def derive(cfg, model_id, cache_dir, n_extraction, seed, model_identity):
+        calls["derive"] += 1
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cache_path = cache_dir / f"{'b' * 64}.npy"
+        if not cache_path.exists():
+            R.np.save(cache_path, R.np.ones(8, dtype=R.np.float32))
+        return R.np.ones(8), {"direction_source": "test"}
+
+    monkeypatch.setattr(R, "_make_backend", lambda *args, **kwargs: Backend())
+    monkeypatch.setattr(R, "_derive_hf_direction", derive)
+    kwargs = {
+        "backend_name": "hf",
+        "model_id": "approved-model",
+        "items_by_split": {"test": [item]},
+        "splits": ["test"],
+        "out_dir": out_dir,
+        "max_new_tokens": 64,
+        "temperature": 0.7,
+        "seed": R.DEFAULT_SEED,
+        "batch_size": 16,
+        "raw_text_max_chars": 8000,
+        "n_extraction": R.DEFAULT_N_EXTRACTION,
+        "experiment_id": "E-0013-test",
+        "protocol_identity": {"sha256": "manifest"},
+        "item_identity": {"sha256": "items"},
+        "model_identity": {
+            "kind": "test",
+            "model_label": "qwen2.5-7b",
+            "resolved_path": "approved-model",
+            "content_sha256": "model",
+        },
+        "execution_binding": {"dirty_tree": False, "argv": ["same"]},
+        "activation_cache_dir": activation_cache,
+        "resource_guard": lambda stage: {"stage": stage},
+    }
+    R.generate_cell_samples(cfg, **kwargs)
+    assert calls["derive"] == 1
+    R.np.save(
+        activation_cache / f"{'b' * 64}.npy",
+        R.np.zeros(8, dtype=R.np.float32),
+    )
+
+    with pytest.raises(RuntimeError, match="content inventory mismatch"):
+        R.generate_cell_samples(cfg, **kwargs)
+    assert calls["derive"] == 1
+
+
+def test_activation_cache_added_file_tamper_fails_closed(tmp_path):
+    cache_dir = tmp_path / "scratch" / "cache"
+    model_identity = {"content_sha256": "model"}
+    execution_binding = {"argv": ["same"]}
+    prepared = R._prepare_activation_cache(
+        cache_dir,
+        model_identity=model_identity,
+        execution_binding=execution_binding,
+    )
+    assert prepared["inventory"] == []
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    R.np.save(
+        cache_dir / f"{'c' * 64}.npy",
+        R.np.ones(2, dtype=R.np.float32),
+    )
+    with pytest.raises(RuntimeError, match="content inventory mismatch"):
+        R._prepare_activation_cache(
+            cache_dir,
+            model_identity=model_identity,
+            execution_binding=execution_binding,
+        )
 
 
 def test_cuda_and_disk_cache_guards_fail_closed(tmp_path, monkeypatch):
@@ -549,10 +677,42 @@ def _write_minimal_frozen_root(root, model="frozen-qwen"):
 def _write_model_snapshot(root, model_type, weight=b"approved"):
     root.mkdir(parents=True)
     (root / "model.safetensors").write_bytes(weight)
+    (root / "model.safetensors.index.json").write_text("{}", encoding="utf-8")
     (root / "config.json").write_text(
         json.dumps({"model_type": model_type}), encoding="utf-8"
     )
     (root / "tokenizer.json").write_text("{}", encoding="utf-8")
-    (root / "tokenizer_config.json").write_text("{}", encoding="utf-8")
+    (root / "tokenizer_config.json").write_text(
+        json.dumps({"chat_template": "template {{ messages }}"}),
+        encoding="utf-8",
+    )
     (root / "generation_config.json").write_text("{}", encoding="utf-8")
     return root
+
+
+def _snapshot_manifest(root):
+    rows = []
+    for path in sorted(root.iterdir(), key=lambda value: value.name):
+        category = R._model_identity_category(path.name)
+        if category is None:
+            continue
+        rows.append(
+            {
+                "path": path.name,
+                "category": category,
+                "size_bytes": path.stat().st_size,
+                "sha256": R._sha256_file(path),
+            }
+        )
+    template = json.loads(
+        (root / "tokenizer_config.json").read_text(encoding="utf-8")
+    )["chat_template"]
+    return {
+        "files": rows,
+        "aggregate_sha256": R._canonical_hash(rows),
+        "chat_template": {
+            "source": "tokenizer_config.json:chat_template",
+            "utf8_bytes": len(template.encode("utf-8")),
+            "sha256": R._sha256_text(template),
+        },
+    }

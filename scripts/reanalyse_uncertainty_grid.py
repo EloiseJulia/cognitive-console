@@ -198,6 +198,8 @@ def load_protocol(path: Path) -> Dict:
         _assert_equal(
             spec.get("revision"), revision, f"manifest execution model revision {label}"
         )
+        base._load_model_snapshot_manifest(spec, model_label=label)
+    _recovered_transcript_policy(payload)
     resource_guards = dict(execution.get("resource_guards") or {})
     for key, expected in {
         "device": "cuda",
@@ -535,6 +537,91 @@ def _transcript_phase_files(path: Path) -> Dict[str, Path]:
     return files
 
 
+def _recovered_transcript_policy(protocol: Dict) -> Dict:
+    policy = dict(
+        (protocol.get("generation") or {}).get("recovered_transcript_policy")
+        or {}
+    )
+    expected = {
+        "acceptance_mode": "exact_registered_file_manifest_only",
+        "score_equivalence_establishes_provenance": False,
+    }
+    for key, value in expected.items():
+        if policy.get(key) != value:
+            raise RecheckError(
+                f"recovered transcript policy must freeze {key}={value!r}"
+            )
+    action = policy.get("unregistered_present_action")
+    if action not in {"hard_fail", "ignore_forced_replay"}:
+        raise RecheckError(
+            "recovered transcript policy has invalid unregistered-present action"
+        )
+    if action == "ignore_forced_replay" and not bool(
+        policy.get("replay_mandatory")
+    ):
+        raise RecheckError(
+            "unregistered transcripts may be ignored only when replay is mandatory"
+        )
+    return policy
+
+
+def _validate_registered_transcript_source(
+    path: Path,
+    *,
+    candidate: Dict,
+    policy: Dict,
+    cell_key: str,
+) -> Optional[List[Dict]]:
+    registered = candidate.get("registered_files")
+    if not isinstance(registered, list) or not registered:
+        if policy["unregistered_present_action"] == "ignore_forced_replay":
+            return None
+        raise RecheckError(
+            f"{cell_key}: discovered unregistered E-0006 transcript source "
+            f"{path}; no trusted original file hashes are frozen"
+        )
+    expected: List[Dict] = []
+    seen = set()
+    for row in registered:
+        row = dict(row)
+        relative = str(row.get("path", ""))
+        sha256 = str(row.get("sha256", ""))
+        if (
+            not relative
+            or Path(relative).is_absolute()
+            or ".." in Path(relative).parts
+            or relative in seen
+            or not base._SHA256_RE.fullmatch(sha256)
+            or int(row.get("size_bytes", -1)) < 0
+        ):
+            raise RecheckError(
+                f"{cell_key}: invalid registered transcript file row {row!r}"
+            )
+        seen.add(relative)
+        expected.append(
+            {
+                "path": Path(relative).as_posix(),
+                "size_bytes": int(row["size_bytes"]),
+                "sha256": sha256,
+            }
+        )
+    expected.sort(key=lambda row: str(row["path"]))
+    actual = [
+        {
+            "path": file_path.relative_to(path).as_posix(),
+            "size_bytes": int(file_path.stat().st_size),
+            "sha256": sha256_file(file_path),
+        }
+        for file_path in sorted(path.rglob("*"), key=lambda value: str(value))
+        if file_path.is_file()
+    ]
+    if actual != expected:
+        raise RecheckError(
+            f"{cell_key}: recovered transcript exact file manifest mismatch"
+        )
+    return actual
+
+
 def _load_c2b_transcript_dir(
     path: Path,
     *,
@@ -814,7 +901,9 @@ def analyse_cell(
     return base_analysis
 
 
-def _select_source(cell_spec: Dict) -> Tuple[Optional[Dict], List[Dict]]:
+def _select_source(
+    cell_spec: Dict, *, recovered_policy: Dict
+) -> Tuple[Optional[Dict], List[Dict]]:
     inventory: List[Dict] = []
     selected: Optional[Dict] = None
     for candidate in cell_spec.get("sources", []):
@@ -832,6 +921,20 @@ def _select_source(cell_spec: Dict) -> Tuple[Optional[Dict], List[Dict]]:
             "origin": candidate.get("origin"),
         }
         completion_identity = None
+        registered_inventory = None
+        if raw_exists and kind == "c2b_transcript_dir_v1":
+            registered_inventory = _validate_registered_transcript_source(
+                path,
+                candidate=candidate,
+                policy=recovered_policy,
+                cell_key=str(cell_spec.get("cell_key", "unknown-cell")),
+            )
+            if registered_inventory is None:
+                exists = False
+                row["exists"] = False
+                row["ignored_under_mandatory_replay"] = True
+            else:
+                row["registered_file_inventory"] = registered_inventory
         if candidate.get("origin") == "frozen_replay":
             completion_path = path.parent / "completion.json"
             row["raw_exists"] = raw_exists
@@ -976,6 +1079,7 @@ def _select_source(cell_spec: Dict) -> Tuple[Optional[Dict], List[Dict]]:
                 **candidate,
                 "resolved_path": path,
                 "completion_identity": completion_identity,
+                "registered_file_inventory": registered_inventory,
             }
     return selected, inventory
 
@@ -1043,6 +1147,7 @@ def run_analysis(protocol_path: Path, *, allow_incomplete: bool) -> Tuple[Dict, 
     test_ids = [str(item["id"]) for item in split["test"]]
     frozen_root = _resolve(protocol["generation"]["frozen_root"])
     generation = dict(protocol["generation"])
+    recovered_policy = _recovered_transcript_policy(protocol)
     analysis_spec = dict(protocol["analysis"])
     cells: Dict[str, Dict] = {}
     inventory: Dict[str, Dict] = {}
@@ -1078,7 +1183,10 @@ def run_analysis(protocol_path: Path, *, allow_incomplete: bool) -> Tuple[Dict, 
                 "sha256": frozen_identity["sha256"],
             }
         )
-        selected, source_inventory = _select_source(cell_spec)
+        selected, source_inventory = _select_source(
+            {**cell_spec, "cell_key": cell_key},
+            recovered_policy=recovered_policy,
+        )
         inventory[cell_key] = {
             "selected": (
                 {
@@ -1120,6 +1228,11 @@ def run_analysis(protocol_path: Path, *, allow_incomplete: bool) -> Tuple[Dict, 
                 f"{cell_key}: unsupported source kind {selected['kind']!r}"
             )
         source_meta["origin"] = selected.get("origin")
+        if selected.get("registered_file_inventory") is not None:
+            source_meta["registered_file_inventory"] = selected[
+                "registered_file_inventory"
+            ]
+            source_meta["score_equivalence_establishes_provenance"] = False
         source_meta["frozen_result"] = frozen_identity
         completion_identity = selected.get("completion_identity")
         if completion_identity:

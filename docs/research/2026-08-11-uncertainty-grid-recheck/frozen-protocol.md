@@ -14,9 +14,11 @@ The committed repository contains the audited CAA×Qwen E-0013
 three cells. The frozen arm summary records that E-0006 transcript directories
 existed at arm-run time, but they are absent from the committed tree, git
 history, the current authorized A800 checkout, the wider `~/cc_l0` tree, and
-the original `/root/autodl-tmp/cc/repo` path on that host. This inventory does
-not establish that no offline backup exists; the analyzer therefore retains a
-source adapter for restored E-0006 transcript directories.
+the original `/root/autodl-tmp/cc/repo` path on that host. No trusted original
+per-file transcript hashes exist. Therefore recovered transcripts are disabled
+by default: a discovered unregistered directory hard-fails and cannot skip
+replay. A future protocol may register a source only by freezing the exact
+relative path, size, and SHA-256 of every original transcript file.
 
 ## Frozen source identity
 
@@ -64,24 +66,34 @@ complete-case sign alone is not an all-generation sign.
 
 ## Missing-cell replay
 
-The plan stage validates every present recovered-transcript candidate before
-planning generation, including gitignored directories. A valid recovered
-source skips replay; a present but invalid candidate is a hard failure. Replay
-is allowed only when no recovered source is present. Each cell runs in its own
-new directory and must use the manifest-pinned items, exact DEV/TEST key sets,
-split, prompt, layer, alpha, seed, model identity, and generation settings.
+The plan stage inventories every declared recovered-transcript location before
+planning generation, including gitignored directories. A transcript source is
+eligible only when every original file path, size, and SHA-256 is predeclared
+in the protocol and matches exactly before semantic parsing. Score-only or
+per-item equivalence—including a format-present `confidence=0.5` substitution
+that preserves a `0.75` score—cannot establish provenance. Because this
+protocol has no trusted E-0006 transcript hashes, any discovered candidate is a
+hard failure; absence mandates replay. Each cell runs in its own new directory
+and must use the manifest-pinned items, exact DEV/TEST key sets, split, prompt,
+layer, alpha, seed, model identity, and generation settings.
 CAA/ITI directions are re-derived through the frozen C2 path. ITI uses the
 frozen sigma for the effective intervention; a small cross-environment
 re-derivation tolerance is an identity check only and cannot change alpha,
 selection, or scoring.
 
 The Qwen and Llama Hugging Face repositories are pinned to the exact revisions
-in `frozen-manifest.json`. A local snapshot is eligible only when the command
-contains an auditor-approved aggregate SHA-256 and the runner verifies all
-weight shards, `config.json`, tokenizer artifacts, and
-`generation_config.json`. Pinned HF snapshots must be pre-staged in the
-explicit cache; the replay runner is local-files-only and never downloads
-weights. A matching basename is never model identity.
+and mandatory audited model-hash source record in `frozen-manifest.json`.
+Caller-supplied or optional content hashes are forbidden. The runner requires
+the exact frozen path/size/SHA-256 inventory and aggregate for all root
+Transformers weight shards, weight index, `config.json`,
+`generation_config.json`, tokenizer files, and `chat_template.jinja` when
+present. Model identity also binds the exact effective chat-template bytes used
+by `apply_chat_template`. Pinned snapshots must be pre-staged in the explicit
+cache; the replay runner is local-files-only and never downloads weights. A
+matching basename, revision alone, or partial cache is never model identity.
+The authorized A800 Qwen cache matches. The pinned Llama cache currently holds
+only `LICENSE` and `README.md`, so every Llama replay must fail until the exact
+frozen required files are staged and independently re-verified.
 
 The replay produces raw generation text solely to measure confidence-format
 presence/missingness and the pre-specified sensitivities. It does not reselect
@@ -106,8 +118,12 @@ retained and no completed TEST batch is regenerated.
   model identity, scratch/cache paths, and CUDA/software/GPU identity. Older
   checkpoint schemas are rejected.
 - Activation cache is stored only in an explicit scratch directory outside the
-  repository. Resume uses that same command-bound cache; validation failures
-  are retained by the failure wrapper.
+  repository. Its atomic seal binds the command/model/device/dtype plus every
+  cache key, relative path, byte size, and SHA-256. The runner validates the
+  exact inventory before every direction derivation/resume, permits only new
+  entries created by that derivation, and reseals atomically before any
+  checkpoint reuse. Changed, deleted, injected, malformed, or unsealed entries
+  hard-fail and are retained by the failure wrapper.
 - Before and between cells/batches, execution hard-checks CUDA, float16, an
   A800 device name, free disk, scratch size, activation-cache size, and the
   explicit HF-cache budget. GPU/software/disk lineage is recorded.
@@ -136,8 +152,9 @@ From the audited commit at repository root:
 python scripts/run_uncertainty_grid_replay.py --execute --expected-code-commit <AUDITED_REPAIR_SHA> --authorization owner-2026-08-11-e0013-grid-recheck-after-hostile-audit --scratch-root <EXTERNAL_SCRATCH_ROOT> --hf-cache-dir <EXTERNAL_HF_CACHE> --qwen-model Qwen/Qwen2.5-7B-Instruct --qwen-revision a09a35458c702b33eeacc393d103063234e8bc28 --llama-model meta-llama/Meta-Llama-3-8B-Instruct --llama-revision 8afb486c1db24fe5011ec46dfbe5b5dccdb575c2
 ```
 
-The default plan generates only the three absent cells; CAA×Qwen remains the
+The default plan targets only the three absent cells; CAA×Qwen remains the
 immutable original E-0013 source. The plan is 3,600 generations in 234 fixed
-batches. At 2–4 seconds/batch plus model loading and direction derivation, the
-pre-run estimate is approximately 0.3–0.7 sequential A800 GPU-hours, excluding
-queue/download time.
+batches. Execution is presently blocked before model loading because the
+authorized pinned Llama cache is incomplete. After exact cache staging and a
+third hostile audit, the pre-run estimate remains approximately 0.3–0.7
+sequential A800 GPU-hours, excluding queue/download time.

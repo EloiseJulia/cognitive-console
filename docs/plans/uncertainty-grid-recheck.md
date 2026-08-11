@@ -9,7 +9,10 @@ the frozen E-0006 scorer results.
 ## Steps
 
 1. Inventory local, git-history, and authorized read-only remote transcript
-   locations. Reuse immutable transcripts before considering regeneration.
+   locations. Accept a recovered transcript only when its exact original
+   per-file path/size/SHA-256 inventory is frozen in advance; otherwise a
+   discovered directory hard-fails and score equivalence cannot establish
+   provenance.
 2. Freeze a machine-readable manifest containing the four cell identities,
    frozen result hashes, item/split identity, generation settings, source
    candidates, analysis rules, and claim guard.
@@ -22,16 +25,21 @@ the frozen E-0006 scorer results.
    isolated output directories; it must never overwrite the original E-0013
    or E-0006 artifacts. Seal a fixed TEST job plan, checkpoint complete
    fixed-composition batches, resume only exact identity matches, and forbid a
-   second TEST generation after the TEST-complete seal. Before planning replay,
-   validate any present recovered transcript source; valid recovery skips
-   generation and invalid recovery fails closed even when gitignored. Direct HF
+   second TEST generation after the TEST-complete seal. Direct HF
    execution binds the audited commit, clean tree, protocol blob/hash, exact
    argv, authorization, resolved model identity, external scratch cache, and
    A800/CUDA/float16 resource guards into the checkpoint identity.
-5. Run CPU-only validation against available immutable data. If fewer than four
+5. Freeze mandatory per-file and aggregate SHA-256 manifests for both pinned
+   model revisions, including the effective chat-template identity. Require the
+   exact manifest for repo-ID and local-path execution; reject optional
+   caller-supplied hashes and incomplete caches.
+6. Seal the activation cache with every key/path/size/SHA-256 and validate the
+   inventory before direction derivation and resume. Permit only newly created
+   entries during derivation, then atomically reseal before checkpoint reuse.
+7. Run CPU-only validation against available immutable data. If fewer than four
    cells are present, emit an explicitly incomplete artifact and no grid-level
    scientific claim.
-6. Add targeted tests, run the relevant suite, review the diff, and commit.
+8. Add targeted tests, run the relevant suite, review the diff, and commit.
 
 ## Non-goals
 

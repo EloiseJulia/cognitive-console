@@ -1,7 +1,8 @@
 # Implementation Plan: V9 Scenario Knob-Release Micro-Study
 
-- **Status:** DRAFT implementation authorized; no human data
+- **Status:** DRAFT / NOT FROZEN; implementation authorized; no human data
 - **Branch:** `feature/microstudy-v9-scenario`
+- **Governance:** D-0114; registry `microstudy-scenario-release-20260811-v9-draft`
 - **Scope:** owner-local loopback materials, generator, analysis, browser flow, tests, and governance only
 - **Non-goals:** recruitment, timing, ethics administration, public deployment, protocol freeze, paper edits, or evidence upgrades
 

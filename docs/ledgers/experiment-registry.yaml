@@ -1529,3 +1529,68 @@ experiments:
     human bilingual stable-ID semantic review and manual screen-reader review remain
     UNVERIFIED PRE-RECRUITMENT. This row records materials and implementation
     preparation only and must not be represented as a run or paper evidence.
+
+- experiment_id: microstudy-scenario-release-20260811-v9-draft
+  parent: microstudy-contract-application-20260810
+  hypothesis_id: H-MICROSTUDY-SCENARIO-APPLICATION
+  claim_ids: []
+  type: exploratory_formative_human_protocol
+  status: ready_for_owner_local_preview_no_human_data
+  code_commit: 3b8d429be058b38512604d287530b83068e79029
+  dirty_tree: false
+  data_hash: >-
+    materials_sha256=1b4bcb36f3e1e30ea2f00ad1e933184ec7f94dbb5b33f72ab5f95436326678d1;
+    sequences_sha256=b484a181b643c637bdd195627fd217ab98fd5614b96dc993db2e06a7850e49b1;
+    source_registry_sha256=aa26a6663509597cf190e326ef3dcf5888f8bdaeb01a3ded710d9fe93806e44f
+  env_hash: null
+  config_hash: null
+  model: null
+  dataset: six synthetic scenario tickets; no human data; no live model
+  material_schema_version: microstudy-scenario-v9-bilingual
+  materials_version: microstudy-scenario-release-20260811-v9-draft
+  sequence_schema_version: microstudy-scenario-sequences-v2-exact-cover
+  export_schema_version: microstudy-export-v5-scenario-bilingual-signed
+  seed: 20260811
+  hardware: owner-local Windows loopback preview only; no participant run authorized
+  started_at: null
+  ended_at: null
+  exit_code: null
+  raw_metrics: null
+  summary_metrics: null
+  artifacts:
+  - data/microstudy_scenario_v9/materials.json
+  - data/microstudy_scenario_v9/sequences.json
+  - data/microstudy_scenario_v9/source_registry.json
+  - scripts/generate_microstudy_v9.py
+  - src/cognitive_console/microstudy_materials.py
+  - src/cognitive_console/microstudy/materials.py
+  - src/cognitive_console/microstudy/server.py
+  - src/cognitive_console/microstudy/analysis.py
+  - src/cognitive_console/microstudy/static/index.html
+  - src/cognitive_console/microstudy/static/study.css
+  - src/cognitive_console/microstudy/static/study.js
+  - src/cognitive_console/microstudy/static/study_core.mjs
+  - tests/test_microstudy_materials.py
+  - tests/test_microstudy_web.py
+  - tests/microstudy_js_test.mjs
+  - docs/plans/microstudy-scenario-release-v9.md
+  - reviews/2026-08-11-microstudy-v9-scenario-audit/audit-summary.md
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    D-0114 authorizes a distinct V9 scenario-knob version break for owner-local
+    preview only. The immutable source registry pins canonical Git blobs for the
+    E-0003/C1, E-0006, E-0011, E-0013, E-0014, E-0015, and post-hoc E-0006
+    lineage; generated numbers are accepted only after those blobs match their
+    registered SHA-256 values. V8 remains historical and cannot be mixed with
+    V9. Implementation commit 3b8d429be058b38512604d287530b83068e79029
+    closes fail-closed Windows current-user-only ACL and POSIX 0600 key handling,
+    removes formal-route priming from practice feedback, and leaves verification
+    keys out of browser projections, exports, and logs. Generator check,
+    materials validator, Node checks, 30 targeted materials/web tests, the
+    838-test full collection (832 passed, 6 skipped), and isolated loopback HTTP
+    smoke passed with no runtime-key residue. This is synthetic design/audit
+    preparation, not a study run or paper evidence. The protocol remains DRAFT /
+    NOT FROZEN; recruitment, human data, ethics, timing, sample-size/MDE,
+    accessibility and bilingual human review, public deployment, Claim/result
+    upgrade, and Protocol Freeze remain unauthorized.

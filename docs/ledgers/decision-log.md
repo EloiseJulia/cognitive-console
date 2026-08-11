@@ -5,6 +5,27 @@
 
 ---
 
+## 2026-08-11 · D-0114 · Owner authorizes V9 scenario-knob version break for local preview only
+- The owner approved V9 as a distinct scenario-knob material, sequence, and
+  signed-export version break. The exact implementation commit is
+  `3b8d429be058b38512604d287530b83068e79029`; any later docs-only lineage
+  commit does not replace that code identity.
+- V9 is synthetic design and hostile-audit preparation only. Its six scenario
+  tickets and all tests are generated or simulated artifacts, not
+  human-subject data. The maximum status is
+  `ready_for_owner_local_preview_no_human_data`; `valid_for_paper=false`.
+- V8 remains preserved as historical material. V8 and V9 exports, materials,
+  sequences, or observations must not be pooled, relabeled, or analyzed as one
+  version.
+- The protocol remains `DRAFT / NOT FROZEN`. This decision authorizes only an
+  owner-local loopback preview; it authorizes no recruitment, participant
+  contact, human-data collection, timing pilot, ethics administration, public
+  deployment, paper evidence, Claim/result upgrade, or Protocol Freeze.
+- Human bilingual stable-ID semantic review, responsive/mobile design review,
+  manual screen-reader evaluation, ethics/recruitment authorization, owner
+  timing, defensible sample-size/MDE justification, and Protocol Freeze remain
+  open human gates.
+
 ## 2026-08-11 · D-0113 · Novice-friendly owner-local preview gate passes only
 - The final V8 novice-UX implementation commit is
   `131ff25611579d9ae6859ee0c90f0c9ef99ed248`. Any later docs-only commit that

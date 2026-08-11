@@ -7,7 +7,7 @@ This directory transfers the reconstructed manuscript and its evidence controls 
 - **Canonical prose source:** `pipeline/CONDITIONAL_PAPER.md`
 - **Front matter and ACM template:** `pipeline/iui_conditional.template.tex`
 - **Generated output:** `reframed.tex` (do not edit as the primary source)
-- **Current rendered baseline:** `reframed.pdf` (15 pages, 23 cited references, clean build on 2026-08-11)
+- **Current rendered baseline:** `reframed.pdf` (16 pages, 23 cited references, clean build on 2026-08-11)
 - **Bibliography used by the generated TeX:** `reframed-references.bib`
 - **Venue conflict requiring human adjudication:** this handoff uses an anonymous IUI-style `acmart` template, while the repository constitution currently names CHI as the target venue. Do not replace the repository's primary manuscript or change venue claims without the required human gate.
 

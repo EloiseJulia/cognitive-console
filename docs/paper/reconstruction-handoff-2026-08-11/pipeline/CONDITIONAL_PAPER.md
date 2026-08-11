@@ -1,11 +1,11 @@
 <!-- CONDITIONAL DRAFT — NOT FINAL NARRATIVE LOCK -->
-<!-- Title and Abstract must be written last, after 2026-08-20 pending-study integration or fallback adjudication. -->
+<!-- Human-study and prompt-plus-steer result slots remain empty and gated. -->
 
-# [TITLE PENDING]
+# When Does a Legible Latent Axis Earn a Control? A Comparator-Bound Evaluation Contract for Latent-Control Interfaces
 
 ## Abstract
 
-<!-- PENDING: Write after complete conditional body and both pending-study branch decisions. -->
+<!-- Provisional model-evidence abstract; revise only after a gated pending-study decision. -->
 
 ## Introduction
 
@@ -38,7 +38,7 @@ Together, these contributions turn a familiar interface question into a versione
 
 Representation-engineering methods identify and intervene on directions inside language models. Representation Engineering centers population-level representations as objects for monitoring and manipulation; Activation Addition derives lightweight vectors from contrasting prompt pairs. \cite{zou2023repe,turner2023actadd} CAA estimates directions from paired positive and negative examples, while ITI derives probe directions and modifies activations during generation. \cite{rimsky2024caa,li2023iti} Instruction-specific vectors further show positive cases in which steering improves constraint following with and without explicit instructions. \cite{stolfo2025instr} <!-- SOURCE_CHECKED 2026-08-11 --> Together, these methods establish that internal representations can be measured and manipulated under specified conventions. They do not by themselves determine what an interface label may promise. A direction can separate contrastive examples, move an activation, or alter tokens without reliably improving the behavioral outcome named by a control.
 
-Recent benchmarks make this distinction empirically consequential. AxBench evaluates prompting, finetuning, and several representation-level methods on common concepts and reports strong prompt baselines relative to existing steering approaches. \cite{wu2025axbench} <!-- SRC-007 --> Basu et al. examine the gap between internal representation and actionable output correction in clinical triage, including a safety-focused prompt-engineering arm; their parser analysis also shows that measured actionability depends on how behavior is operationalized. \cite{basu2026actionability} <!-- SRC-008 --> These studies compare channels or expose representation-to-output gaps. Our narrower target is the interface decision that follows: when may evidence about a specified latent intervention authorize an active latent control?
+Recent benchmarks make this distinction empirically consequential. AxBench evaluates prompting, finetuning, and several representation-level methods on common concepts; its official Table 2 reports a mean overall steering score of 0.894 for Prompt and 0.239 for DiffMean after factor selection, distinct from the mutable repository leaderboard. \cite{wu2025axbench} <!-- SRC-007 --> Basu et al. examine the gap between internal representation and actionable output correction in 400 clinical vignettes, including a safety-focused prompt-engineering condition in Arm 1; for Qwen, sensitivity changes from 0.451 under the original parser to 0.729 under the refined parser, showing that the measured gap is parser-sensitive. \cite{basu2026actionability} <!-- SRC-008 --> These studies compare channels or expose representation-to-output gaps. Our narrower target is the interface decision that follows: when may evidence about a specified latent intervention authorize an active latent control?
 
 This question cannot be answered by legibility alone. Work on metacognitive demands and human-centered transparency warns that information exposed by an AI system must be interpreted relative to a task and decision. \cite{tankelevitch2024metacog,liao2024transparency} <!-- SOURCE_CHECKED 2026-08-11 --> We operationalize the evidence boundary as READ versus TRANSFER and reserve CONTROL for interface permission. READ remains model-, method-, axis-, layer-, and protocol-specific. TRANSFER additionally requires a declared outcome, alternative, uncertainty rule, point-estimate floor, and coherence criterion. The distinction is part of the proposed qualification procedure, not a causal theorem or a validated human decision rule.
 
@@ -68,7 +68,7 @@ Together, prior work establishes the ingredients of the problem: methods can exp
 
 ### Evidence Status and Study Overview
 
-Unless otherwise noted, exact values and preregistration status are taken from the study record rather than independently recomputed because primary result directories, generated tables, frozen configurations, and audit records were unavailable. <!-- OI-001 --> We report the executable rule and the scope supported by that record.
+Exact values below trace to the committed result artifacts, preregistrations, analysis code, evidence ledger, and paper manifests in the repository. The core grid is stored under `results/arm_full/`; READ artifacts are stored under `results/gpu_7b_2026-07-23/c1/` and `results/llama_c1_facade_2026-07-24/`; and E-0011, E-0013, E-0014, and E-0015 retain their scoped roles in the evidence ledger. Generated paper tables and figures are rebuilt from these committed artifacts without manually editing their values. <!-- OI-001 -->
 
 The method has two levels. First, a control-affordance qualification record specifies what evidence a proposed active latent control would need to claim actionability. Second, a computational application fills the record for CAA and ITI relative to a DEV-selected prompt comparator drawn from a preregistered bounded candidate set. The application crosses two model families, two steering methods, and three behavioral TRANSFER axes. <!-- FL-002 --> READ is evaluated separately with exploratory CAA-style directions and includes a fourth, focus-related axis that is not part of the twelve-test TRANSFER denominator. <!-- FL-036 --><!-- FL-042 -->
 
@@ -135,9 +135,9 @@ The proposed vocabulary maps each record to exactly one of four formal affordanc
 
 ### Models, Methods, and Behavioral Axes
 
-The worked application reports Qwen2.5-7B-Instruct and Llama-3-8B-Instruct. <!-- FL-011 --> It evaluates CAA and ITI under method-specific single-layer additive interventions. The study record does not include exact checkpoint revisions, layer indices, hook locations, extraction positions, chat wrappers, or all generation defaults. <!-- FL-080 -->
+The worked application uses Qwen2.5-7B-Instruct and Meta-Llama-3-8B-Instruct, with the latter loaded from the NousResearch identical-weights mirror after gated access blocked the canonical repository. <!-- FL-011 --><!-- MODEL_IDS: Qwen/Qwen2.5-7B-Instruct; NousResearch/Meta-Llama-3-8B-Instruct --> Both run in CUDA float16. The committed artifacts record the selected hidden-state layers by deliberation/skepticism/uncertainty: Qwen–CAA uses 20/20/20, Qwen–ITI uses 20/19/17, Llama–CAA uses 12/14/10, and Llama–ITI uses 8/14/11. The intervention hooks the output of decoder block $L-1$, which corresponds to Hugging Face hidden state $L$, and adds the direction at every token position during prefill and generation. Activation extraction renders one user turn through the model chat template and pools the last non-padding token. Immutable upstream model revision hashes were not recorded.
 
-CAA uses a positive-minus-negative mean-difference direction that is unit-normalized before injection. <!-- FL-023 --><!-- FL-024 --> ITI uses a unit logistic-probe direction multiplied by a frozen projected-activation standard deviation. <!-- FL-025 --> Both methods select a coefficient from $\{2,4,6,8,12,16,24\}$ on DEV, but equal coefficients do not imply equal injected norms: ITI injects $\alpha\sigma_L$, so no common norm bound of 24 applies. <!-- FL-012 --><!-- FL-026 --> CAA/ITI extraction-set construction, probe fitting, and layer selection remain manuscript-described rather than artifact-verified.
+CAA uses a positive-minus-negative mean-difference direction that is unit-normalized before injection. <!-- FL-023 --><!-- FL-024 --> ITI fits a logistic probe to the same 28-pair extraction split, selects a nondegenerate layer no shallower than 20% of model depth, unit-normalizes the probe direction, and multiplies it by the frozen projected-activation sample standard deviation. <!-- FL-025 --> Both methods select a coefficient from $\{2,4,6,8,12,16,24\}$ on DEV, but equal coefficients do not imply equal injected norms: ITI injects $\alpha\sigma_L$, so no common norm bound of 24 applies. <!-- FL-012 --><!-- FL-026 -->
 
 The reported CAA convention is
 
@@ -161,7 +161,7 @@ s_{\mathrm{CAA},a,L}=1,\quad s_{\mathrm{ITI},a,L}=\sigma_{a,L}.
 
 Equations \ref{eq:caa-steering} and \ref{eq:method-scaling} make the method-specific scaling explicit; they do not supply the missing extraction, layer, or hook provenance.
 
-The three TRANSFER axes use task accuracy for deliberation, false-premise rejection for skepticism, and $1-\mathrm{Brier}$ for uncertainty awareness. <!-- FL-018 --> These operational outcomes do not exhaust the psychological constructs named by the axes. For uncertainty, both conditions request an answer and confidence. The reported parser accepts several confidence formats and maps percentages into $[0,1]$; missing confidence is imputed as 0.5, which makes $1-\mathrm{Brier}=0.75$ regardless of correctness. <!-- FL-019 --><!-- FL-022 --> Parser code and tests are not supplied.
+The three TRANSFER axes use task accuracy for deliberation, false-premise rejection for skepticism, and $1-\mathrm{Brier}$ for uncertainty awareness. <!-- FL-018 --> These operational outcomes do not exhaust the psychological constructs named by the axes. For uncertainty, both conditions request an answer and confidence. The deterministic parser accepts `Confidence:`/`conf` forms, interprets values above one as percentages, clamps them to $[0,1]$, and imputes missing confidence as 0.5, which makes $1-\mathrm{Brier}=0.75$ regardless of correctness. <!-- FL-019 --><!-- FL-022 --> The scorer and parser are implemented in `src/cognitive_console/eval/scorers.py` and exercised by the repository test suite.
 
 ### DEV-Selected Prompt Comparator and Substitution Design
 
@@ -171,7 +171,7 @@ The core experiment is a substitution design. The prompt condition uses the sele
 
 ### Generations, Outcomes, and Paired Estimand
 
-For each item and condition, the reported setup draws five generations at temperature 0.7 with a 64-new-token cap. <!-- FL-017 --> Outcomes are averaged over generations within item before computing paired steer-minus-prompt differences on TEST. <!-- FL-027 --> The exact TEST item counts, split-seed values, failed-generation handling, and exclusions are not reported in the supplied source. <!-- FL-080 --> The token cap may constrain deliberation, particularly multi-step reasoning. <!-- FL-079 -->
+For each item and condition, the setup draws five sampled generations at temperature 0.7 with a 64-new-token cap and batch size 16. <!-- FL-017 --> The frozen item pools contain 60 deliberation, 60 skepticism, and 80 uncertainty items; seed 20260723 yields DEV/TEST counts of 20/40, 20/40, and 27/53. Outcomes are averaged over generations within item before computing paired steer-minus-prompt differences on TEST. <!-- FL-027 --> No item is removed after the fixed split: parse failures score through the deterministic outcome rules, including the 0.5 confidence imputation, rather than being excluded. The token cap may constrain deliberation, particularly multi-step reasoning. <!-- FL-079 -->
 
 For item $i$, axis $a$, condition $s$, and generation $j$, the reported paired estimand is
 
@@ -183,7 +183,7 @@ d_{ia}=\bar y^{(\mathrm{steer})}_{ia}-\bar y^{(\mathrm{prompt})}_{ia}.
 
 <!-- FL-027 -->
 
-Equation \ref{eq:paired-estimand} makes item-level pairing explicit; exact denominators and exclusions remain unavailable.
+Equation \ref{eq:paired-estimand} makes item-level pairing explicit: the three TEST denominators are 40, 40, and 53 items, each carrying five generations, with no performance-based exclusions.
 
 The reported uncertainty analysis resamples TEST items rather than individual generations using 10,000 item-cluster bootstrap replicates. <!-- FL-028 --> A within-cell Bonferroni correction across three axes produces two-sided 98.33% intervals; it does not control familywise error over the full descriptive twelve-test grid. <!-- FL-029 --><!-- FL-034 -->
 
@@ -198,13 +198,13 @@ g_a^S\le\tau g_a^0+\epsilon.
 \label{eq:qualification-rule}
 \end{equation}
 
-with $\delta=0.05$, $\tau=1.5$, and $\epsilon=0.02$. <!-- FL-030 --><!-- FL-031 --> Equation \ref{eq:qualification-rule} requires an interval excluding zero and a point estimate at least $\delta$; it does **not** require the interval's lower bound to exceed $\delta$. These thresholds are reported as frozen and preregistered, but the dated protocol and executable implementation are unavailable. The study record also omits the degradation score's executable definition, scorer, and aggregation details.
+with $\delta=0.05$, $\tau=1.5$, and $\epsilon=0.02$. <!-- FL-030 --><!-- FL-031 --><!-- PREREG: docs/ledgers/prereg-c2b-adjudication.md; IMPLEMENTATION: src/cognitive_console/experiments/adjudicate_c2b.py --> Equation \ref{eq:qualification-rule} requires an interval excluding zero and a point estimate at least $\delta$; it does **not** require the interval's lower bound to exceed $\delta$. The protocol and executable adjudicator were frozen on 2026-07-23. The degradation score is one minus the distinct trigram ratio for each generation; scores are averaged within the steering and unsteered cells, and the steering mean must satisfy $g_a^S\le1.5g_a^0+0.02$. The implementation adds $10^{-12}$ only as floating-point comparison tolerance.
 
 The legacy procedure further labels a model–method cell positive when at least two axes pass, conditional when one passes, and negative when none pass. <!-- FL-033 --> This cell taxonomy is distinct from the proposed interface-state vocabulary: an underpowered no-pass maps to *Unresolved*, not automatically to *Diagnostic-only* or *Unstable*. No independent state assignment is available to test that translation.
 
 ### Exploratory READ Measurement
 
-READ uses contrastive CAA-style directions in both model families. <!-- FL-036 --> The reported facade compares strongest-prompt displacement from a neutral origin with same-origin positive-pole reach and requires the ratio and its interval to lie below one. <!-- FL-037 --> Each model contributes one exploratory run. <!-- FL-038 --> Aggregate summaries report three of four axes satisfying the facade criterion in each model, but the passing axes differ: deliberation and skepticism in both, uncertainty only in Qwen, focus only in Llama, with Qwen focus overshooting. <!-- FL-039 --><!-- FL-040 --> Exact ratios and interval construction live in absent generated assets. READ results therefore remain exploratory, CAA-specific, and non-transferable to ITI.
+READ uses contrastive CAA-style directions in both model families. <!-- FL-036 --> The facade compares strongest-prompt displacement from a neutral origin with same-origin positive-pole reach and requires the ratio and its 95% bootstrap interval to lie below one. <!-- FL-037 --> Each model contributes one exploratory run. <!-- FL-038 --> Qwen ratios are 0.583 [0.488, 0.680] for deliberation, 0.548 [0.434, 0.670] for skepticism, 0.713 [0.517, 0.910] for uncertainty, and 2.844 for focus (overshoot). Llama ratios are 0.872 [0.798, 0.937], 0.628 [0.581, 0.673], 1.000 [0.839, 1.147], and 0.471 [0.306, 0.630], respectively. Thus deliberation and skepticism satisfy the criterion in both models, uncertainty only in Qwen, and focus only in Llama. <!-- FL-039 --><!-- FL-040 --> READ results remain exploratory, CAA-specific, and non-transferable to ITI.
 
 The reported same-origin facade ratio is
 
@@ -268,7 +268,7 @@ Uncertainty & Frozen steer-minus-prompt contrasts negative; one-cell complete-ca
 
 In the Qwen–CAA format-and-missingness recheck, steering remained close to the unsteered baseline—about $+0.011$ in parseable-confidence rate and $+0.0008$ in $1-\mathrm{Brier}$—while the comparator scored higher under the reported outcome. <!-- FL-044 --><!-- BD-009 --> The three-way comparison therefore supports a comparator-relative warning, not a claim that steering directly harmed baseline calibration.
 
-The format-and-missingness recheck exposes a reporting confound: the parseable-confidence rate was 0.826 for steering and 0.445 for the prompt condition. <!-- FL-045 --> Among complete pairs, steer minus prompt was $-0.34$ with a 95% confidence interval of $[-0.51,-0.17]$, but this analysis conditions on post-generation parseability, its adversarial all-generation bound widens to $[-0.478,+0.250]$ and crosses zero, and the other three uncertainty cells did not receive this recheck. <!-- FL-046 --><!-- FL-047 --><!-- FL-048 --><!-- FL-049 --> The sign is therefore not identified under unrestricted missingness, and no grid-wide resolved uncertainty effect follows. <!-- C-005 -->
+The format-and-missingness recheck exposes a reporting confound: the parseable-confidence rate was 0.826 for steering and 0.445 for the prompt condition. <!-- FL-045 --> Among complete pairs, steer minus prompt was $-0.337$ with a 95% confidence interval of $[-0.508,-0.165]$, but this analysis conditions on post-generation parseability, its adversarial all-generation bound widens to $[-0.478,+0.250]$ and crosses zero, and the other three uncertainty cells did not receive this recheck. <!-- FL-046 --><!-- FL-047 --><!-- FL-048 --><!-- FL-049 --> The sign is therefore not identified under unrestricted missingness, and no grid-wide resolved uncertainty effect follows. <!-- C-005 -->
 
 \begin{table*}[t]
 \centering
@@ -282,7 +282,7 @@ Quantity & Reported value & Defensible interpretation \\
 Steer minus unsteered compliance & about $+0.011$ & Steering is near the unsteered baseline in this lineage. \\
 Steer minus unsteered $1-\mathrm{Brier}$ & about $+0.0008$ & The steer-versus-prompt gap cannot be described as direct baseline harm. \\
 Parseable-confidence rate & steer 0.826; prompt 0.445 & Conditions differ in confidence reporting. \\
-Complete-case steer minus prompt & $-0.34\ [-0.51,-0.17]$ & Negative only among pairs where both outputs are complete. \\
+Complete-case steer minus prompt & $-0.337\ [-0.508,-0.165]$ & Negative only among pairs where both outputs are complete. \\
 All-generation adversarial bound & $[-0.478,+0.250]$ & Sign is not identified under unrestricted missingness. \\
 Other uncertainty cells & not rechecked & No grid-wide format/missingness conclusion. \\
 \bottomrule
@@ -310,7 +310,7 @@ Scale and propagation checks sharpen that boundary rather than closing it. The n
 Check & Reported result & What it establishes / does not establish \\
 \midrule
 Random uncertainty direction & $-0.24\ [-0.36,-0.12]$ & Outcome pipeline registers perturbation; not target-specific validation. \\
-Direct refusal prompt & 95\% refusal & Endpoint is responsive to prompting; not a latent positive control. \\
+Direct refusal prompt & 95.5\% refusal & Endpoint is responsive to prompting; not a latent positive control. \\
 Bounded unit-direction CAA & 0\% refusal for all tested coefficients & Exposes scale/implementation concern; does not validate transfer. \\
 Natural versus injected CAA norm & about 216 versus at most 24 & Shows mismatch for bounded CAA; not a common ITI norm bound. \\
 Raw-magnitude Qwen--CAA & no qualifying pass in nondegenerate tested range & Weakens simple under-scaling; assay validity remains open. \\
@@ -352,7 +352,7 @@ READ & Exploratory CAA-style READ satisfies the reported facade criterion for un
 TRANSFER & No-pass relative to the DEV-selected prompt comparator; not evidence that latent steering generally fails. \\
 COMPARATOR & DEV-selected prompt from a preregistered bounded set of sixteen candidates; provenance limits follow the Method definition. \\
 CALIBRATION WARNING & Steering is near the unsteered baseline in the one rechecked lineage; complete-case steer-minus-prompt remains negative, but adversarial all-generation missingness bounds cross zero and three cells are unrechecked. \\
-EVIDENCE TIER & Qwen2.5-7B-Instruct, CAA-style single-layer additive intervention, uncertainty task/outcome, reported substitution protocol; exact checkpoint/layer/hook artifacts unavailable. \\
+EVIDENCE TIER & Qwen2.5-7B-Instruct, CAA single-layer additive intervention at hidden-state layer 20 (decoder-block-19 output hook at every token position), uncertainty task/outcome, seed 20260723, reported substitution protocol. \\
 \bottomrule
 \end{tabular}
 % FL-003, FL-008, FL-009, FL-011, FL-024, FL-036, FL-038, FL-040, FL-042, FL-044, FL-047, FL-048, FL-080, FL-081
@@ -402,9 +402,9 @@ The same principle applies to human evidence. The current study contains no huma
 
 ### Evidence Provenance and Reproducibility
 
-The available study record omits result directories, generated tables, frozen configurations, the preregistration file, exclusion logs, and audit reports. <!-- OI-001 --> Exact computational values and preregistration status are therefore manuscript- and author-attested, preventing independent regeneration of the grid, intervals, figures, and state assignments.
+The repository contains the core result directories, frozen preregistrations, executable adjudicator, evidence ledger, paper manifests, generated tables and figures, and independent audit summaries. <!-- OI-001 --> The committed JSON artifacts can regenerate the claim-bearing paper tables and figures without GPU access. The author-proposed affordance-state assignments remain non-generated judgments and have not been independently reproduced.
 
-Reproduction also requires exact model revisions, layers, hooks, contrast sets, prompt wrappers, generation defaults, TEST denominators, exclusions, split seeds, and the executable degradation score. <!-- FL-075 --><!-- FL-080 --> These records must accompany any reconstructability claim.
+The available lineage records exact layers, hook convention, contrast splits, prompt wrappers, generation defaults, TEST denominators, split seeds, and degradation scorer. <!-- FL-075 --><!-- FL-080 --> Remaining reproducibility limits include immutable upstream model revision hashes and incomplete environment/data hashes in the older E-0006 registry entries; reproducing raw generations therefore requires reconstructing those model snapshots and software environments, whereas regenerating the paper artifacts uses the committed result JSON and manifests.
 
 ### Assay Validity and Statistical Resolution
 

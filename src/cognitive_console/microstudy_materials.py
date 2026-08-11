@@ -24,6 +24,30 @@ STATE_WORDS = (
     "尚未确定", "仅供诊断", "暂不启用", "可在该设置下启用",
 )
 LOCALES = ("en", "zh-Hans")
+EXPECTED_Q1_KEYS = {
+    "MS-P1-X": "Q1_UNRESOLVED",
+    "MS-P1-Y": "Q1_UNRESOLVED",
+    "MS-P2-X": "Q1_DIAGNOSTIC",
+    "MS-P2-Y": "Q1_DIAGNOSTIC",
+    "MS-P3-X": "Q1_WITHHELD",
+    "MS-P3-Y": "Q1_WITHHELD",
+    "MS-P4-X": "Q1_UNRESOLVED",
+    "MS-P4-Y": "Q1_UNRESOLVED",
+    "MS-P5-X": "Q1_SUPPORTED",
+    "MS-P5-Y": "Q1_SUPPORTED",
+}
+EXPECTED_Q2_KEYS = {
+    "MS-P1-X": "D",
+    "MS-P1-Y": "A",
+    "MS-P2-X": "B",
+    "MS-P2-Y": "C",
+    "MS-P3-X": "C",
+    "MS-P3-Y": "C",
+    "MS-P4-X": "A",
+    "MS-P4-Y": "B",
+    "MS-P5-X": "D",
+    "MS-P5-Y": "D",
+}
 
 
 def load_sources(
@@ -160,7 +184,7 @@ def _majority_key(keys: list[str]) -> str:
 
 
 def _validate_source_schema(stimuli: dict[str, Any], sequences: dict[str, Any]) -> None:
-    assert stimuli["schema_version"] == "microstudy-stimuli-v7-bilingual"
+    assert stimuli["schema_version"] == "microstudy-stimuli-v8-bilingual-novice-ux"
     assert sequences["schema_version"] == "microstudy-sequences-v1"
     assert set(stimuli) == {
         "schema_version", "materials_version", "status", "locale_contract",
@@ -204,6 +228,10 @@ def _validate_source_schema(stimuli: dict[str, Any], sequences: dict[str, Any]) 
     expected_inputs = {"tier", "evaluation_tier", "read_status", "comparison", "coherence_status"}
     expected_comparison = {"tested", "estimate", "ci_low", "ci_high", "registered_margin"}
     primitive_ids = nonlocalized["primitive_ids"]
+    practice_fact_ids = nonlocalized["practice_fact_ids"]
+    assert len(practice_fact_ids) == 5
+    assert len(set(practice_fact_ids)) == 5
+    assert set(practice_fact_ids).isdisjoint(primitive_ids)
     for item in nonlocalized["items"]:
         assert set(item) == expected_item_fields
         assert sorted(item["flat_order"]) == sorted(primitive_ids)
@@ -214,6 +242,8 @@ def _validate_source_schema(stimuli: dict[str, Any], sequences: dict[str, Any]) 
         assert set(item["required_primitive_ids"]) <= set(primitive_ids)
         assert item["source_status"] in {"real_inspired_non_pass", "synthetic_rule_case"}
         assert item["source_note"]
+        assert item["expected_q1_key"] == EXPECTED_Q1_KEYS[item["stimulus_id"]]
+        assert item["q2"]["correct_key"] == EXPECTED_Q2_KEYS[item["stimulus_id"]]
     assert not any(
         "attention_check" in field
         for field in nonlocalized["export_schema"]["session_fields"]
@@ -246,7 +276,8 @@ def _validate_locales(stimuli: dict[str, Any]) -> None:
     option_ids = {"A", "B", "C", "D"}
     for locale, bundle in locales.items():
         assert bundle["language_name"]
-        assert len(bundle["onboarding"]["glossary"]) == 5
+        assert bundle["position_guard"]
+        assert len(bundle["onboarding"]["fact_guidance"]) == 5
         assert len(bundle["onboarding"]["states"]) == 4
         assert {
             row["id"] for row in bundle["onboarding"]["states"]
@@ -271,6 +302,9 @@ def _validate_locales(stimuli: dict[str, Any]) -> None:
         assert {
             row["id"] for row in bundle["practice"]["q2"]["options"]
         } == option_ids
+        assert [row["id"] for row in bundle["practice"]["facts"]] == (
+            nonlocalized["practice_fact_ids"]
+        )
         assert {
             row["id"] for row in bundle["diagnostic"]["options"]
         } == option_ids
@@ -296,27 +330,38 @@ def _validate_locales(stimuli: dict[str, Any]) -> None:
             assert not any("\u4e00" <= char <= "\u9fff" for char in encoded)
         else:
             assert any("\u4e00" <= char <= "\u9fff" for char in encoded)
+    academic_labels = {
+        "en": (
+            "READ", "TRANSFER", "BOUNDED PROMPT COMPARATOR",
+            "CALIBRATION WARNING", "EVIDENCE TIER",
+        ),
+        "zh-Hans": (
+            "初始读取", "迁移比较", "有界提示比较器", "校准警示", "证据层级",
+        ),
+    }
+    for locale, bundle in locales.items():
+        visible_strings = _participant_visible_strings(bundle)
+        visible_text = "\n".join(visible_strings)
+        assert not any(label in visible_text for label in academic_labels[locale])
+        assert not set(nonlocalized["primitive_ids"]).intersection(visible_strings)
+        common = json.loads(json.dumps(bundle))
+        formal = common.pop("formal")
+        common_text = "\n".join(_participant_visible_strings(common)).casefold()
+        assert not any(
+            label.casefold() in common_text
+            for label in formal["contract_labels"].values()
+        )
+        assert not _contains_identifier(common, set(nonlocalized["primitive_ids"]))
+
     english = locales["en"]
-    common_text = json.dumps(
-        {
-            "onboarding": english["onboarding"],
-            "practice": english["practice"],
-        }
-    ).lower()
-    common_tokens = set(tokens(common_text))
-    assert "read" not in common_tokens
-    for phrase in (
-        "transfer", "bounded prompt comparator", "calibration warning", "evidence tier",
-    ):
-        assert phrase not in common_text
     practice = english["practice"]
-    practice_text = json.dumps(practice).lower()
-    for token in (
-        "interval", "margin", "tier", "model", "method", "task",
-        "evidence a", "evidence b", "transfer",
+    practice_text = json.dumps(practice, ensure_ascii=False).lower()
+    for forbidden in (
+        "interval", "margin", "tier", "model", "method", "evidence a",
+        "transfer", "bounded prompt comparator", "calibration warning",
     ):
-        assert token not in practice_text
-    assert "read" not in set(tokens(practice_text))
+        assert forbidden not in practice_text
+    assert not re.search(r"\bS[12]\b|[+\u2212-]?\d+\.\d+", practice_text)
     assert nonlocalized["answer_keys"]["practice"] == {
         "q1": "Q1_WITHHELD", "q2": "D"
     }
@@ -355,6 +400,56 @@ def _validate_locales(stimuli: dict[str, Any]) -> None:
             assert _semantic_flags(
                 en_option["text"], "en"
             ) == _semantic_flags(zh_option["text"], "zh-Hans")
+
+    assert english["welcome"]["heading"] == "Five-fact decision task"
+    assert locales["zh-Hans"]["welcome"]["heading"] == "五条事实判断任务"
+    assert english["formal"]["contract_labels"] == {
+        "representation": "Initial check",
+        "comparison": "Paired comparison",
+        "comparator": "Reference setup",
+        "coherence": "Consistency check",
+        "scope": "Applicable setting",
+    }
+    assert locales["zh-Hans"]["formal"]["contract_labels"] == {
+        "representation": "初始检查",
+        "comparison": "配对比较",
+        "comparator": "参照设置",
+        "coherence": "一致性检查",
+        "scope": "适用情境",
+    }
+    assert english["formal"]["q2_templates"][2]["text"] == (
+        "Which checks have completed, usable results in this record?"
+    )
+    assert locales["zh-Hans"]["formal"]["q2_templates"][2]["text"] == (
+        "这条记录中，哪些检查已有完成且可用的结果？"
+    )
+
+
+def _participant_visible_strings(value: Any) -> list[str]:
+    if isinstance(value, dict):
+        return [
+            text
+            for child in value.values()
+            for text in _participant_visible_strings(child)
+        ]
+    if isinstance(value, list):
+        return [
+            text
+            for child in value
+            for text in _participant_visible_strings(child)
+        ]
+    return [value] if isinstance(value, str) else []
+
+
+def _contains_identifier(value: Any, identifiers: set[str]) -> bool:
+    if isinstance(value, dict):
+        return any(
+            key in identifiers or _contains_identifier(child, identifiers)
+            for key, child in value.items()
+        )
+    if isinstance(value, list):
+        return any(_contains_identifier(child, identifiers) for child in value)
+    return isinstance(value, str) and value in identifiers
 
 
 def _numeric_literals(text: str) -> list[str]:
@@ -476,7 +571,7 @@ def _validate_render_contract(stimuli: dict[str, Any]) -> None:
     nonlocalized = stimuli["nonlocalized"]
     render = nonlocalized["render_contract"]
     primitive_ids = nonlocalized["primitive_ids"]
-    assert render["version"] == "microstudy-render-contract-v2-bilingual"
+    assert render["version"] == "microstudy-render-contract-v3-bilingual-novice-ux"
     assert render["common_evidence_text_source"] == (
         "locales[ui_language].formal.items[*].primitive_evidence"
     )
@@ -574,14 +669,18 @@ def _validate_render_contract(stimuli: dict[str, Any]) -> None:
         "label_word_count_and_visual_difference"
     ]
     assert "Do not add filler words" in treatment["no_filler_padding"]
+    practice = render["practice_independence"]
+    assert practice["formal_role_mapping"] == "none"
+    assert practice["fact_ids"] == "nonlocalized.practice_fact_ids"
+    assert "disjoint" in practice["invariant"]
 
 
 def _validate_tutorial_and_post_task(stimuli: dict[str, Any]) -> None:
     for locale in LOCALES:
         materials = stimuli["locales"][locale]
-        assert len(materials["onboarding"]["glossary"]) == 5
-        assert len(materials["onboarding"]["steps"]) == 4
-        assert materials["practice"]["narrative"]
+        assert len(materials["onboarding"]["fact_guidance"]) == 5
+        assert len(materials["onboarding"]["steps"]) == 3
+        assert len(materials["practice"]["facts"]) == 5
         assert materials["practice"]["feedback"]
 
 

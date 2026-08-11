@@ -59,3 +59,9 @@
     rerun passed the validator, Node, HTTP TTL/idempotency/export, Chrome/Edge
     bilingual-flow, and full-pytest gates with no residue. The maximum state
     remains `READY_FOR_OWNER_LOCAL_PREVIEW_NO_HUMAN_DATA`.
+16. **[MED-NEW] Novice comprehension remains human-UNVERIFIED.** The V8 hostile
+    implementation audit is SOUND for owner-local preview, but the target of
+    understanding the task within ten seconds remains `UNVERIFIED` until an
+    authorized human evaluation. Synthetic novice-agent role-play can inform
+    design proposals only; it is not usability, accessibility, timing, or
+    treatment-validity evidence and cannot support a paper claim.

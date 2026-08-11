@@ -5,6 +5,59 @@
 
 ---
 
+## 2026-08-11 · D-0113 · Novice-friendly owner-local preview gate passes only
+- The final V8 novice-UX implementation commit is
+  `131ff25611579d9ae6859ee0c90f0c9ef99ed248`. Any later docs-only commit that
+  persists this audit and ledger lineage is not the implementation commit.
+- The hostile audit found two MAJOR issues in an intermediate V8 state: common
+  onboarding exposed Contract labels, and Edge could race session start before
+  CSRF bootstrap readiness. The final implementation closed both.
+- A fresh independent rerun returned `SOUND` for owner-local preview scope after
+  validator, Node, full-pytest, independent HTTP, Chrome and Edge A1/D5
+  English/Simplified-Chinese complete/partial/download-failure, zoom/stress,
+  TTL/privacy/governance, and diff-hygiene checks.
+- This passes only the novice-friendly owner-local preview gate. Synthetic
+  novice-agent feedback is AI role-play, not human data, and does not establish
+  ten-second comprehension, usability, accessibility, timing, or treatment
+  validity.
+- Human bilingual stable-ID semantic review, manual screen-reader evaluation,
+  ethics determination/administration, recruitment authorization, owner timing,
+  defensible primary-test MDE/sample-size work, and Protocol Freeze remain open.
+- The maximum state is `ready_for_owner_local_preview_no_human_data`;
+  `valid_for_paper=false`. No recruitment, participant contact, human-data
+  collection, public deployment, paper evidence, claim/result upgrade, or
+  protocol freeze is authorized.
+
+## 2026-08-11 · D-0112 · Owner authorizes synthetic-feedback novice-UX revision for local preview only
+- The owner authorized implementation of the fixed novice-UX proposal after
+  three zero-background synthetic novice-agent blind walkthroughs and an
+  independent proposal audit verdict of `APPROVE`. The revision clarifies the
+  five-fact → locked status → follow-up flow without teaching formal answers or
+  changing the experimental construct.
+- Authorized changes are participant-facing information architecture,
+  plain-language Contract labels, one neutral formal-like five-row safety
+  practice, record hierarchy, inline validation/focus, persistent Q1 lock
+  summary, Q2-COVERAGE wording/helper, accessible early-end confirmation, and
+  responsive bilingual accessibility/security tests.
+- The nonlocalized router, Q1/Q2 keys, Q2 option IDs/order, Flat orders,
+  A1..D5 sequences, CCA scoring, signed V4 export schema, duplicate policy,
+  missingness, and analysis remain unchanged. Materials advance to
+  `microstudy-stimuli-v8-bilingual-novice-ux` /
+  `microstudy-contract-application-20260811-v8-novice-ux-draft`; V7 and V8
+  previews must not be pooled as one material version.
+- The exact V8 implementation commit is
+  `12c46e1090fb2890ec03009b592dd3b9668340a6`. The follow-up governance commit
+  that records this hash does not replace the implementation identity.
+- The three walkthroughs are AI role-play, not human-subject data. They cannot
+  establish the target of ten-second task comprehension, usability, timing, or
+  accessibility. `valid_for_paper=false`; no paper Claim, result, or evidence
+  is changed.
+- V8 remains DRAFT, owner-local, no recruitment, no participant contact, no
+  human data, no timing pilot, no public deployment, and not frozen. Fresh
+  hostile implementation audit, human bilingual semantic review, manual
+  screen-reader review, ethics/recruitment authorization, timing/MDE work, and
+  Protocol Freeze remain open gates.
+
 ## 2026-08-11 · D-0111 · Final bilingual implementation and audit close owner-local-preview lineage only
 - The final audited bilingual implementation commit is
   `1702d7a4ae5132b09fd29d216502504c7afb493c`. The preceding hostile audit

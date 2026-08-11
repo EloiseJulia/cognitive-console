@@ -264,8 +264,8 @@ class StudyHandler(BaseHTTPRequestHandler):
         return {
             "phase": "q1", "trial_index": index, "slot_index": slot["slot_index"],
             "block": slot["block"], "position": slot["position"],
+            "context": formal["context"],
             "card": {
-                "notice": formal["notice"],
                 "aria_label": formal["evidence_panel_aria"],
                 "rows": [
                     {

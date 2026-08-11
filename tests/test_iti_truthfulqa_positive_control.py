@@ -17,9 +17,12 @@ from cognitive_console.eval.truthfulqa_positive_control import (
     PROMPT_BANK_SHA256,
     PINNED_SNAPSHOTS,
     TruthfulQAItem,
+    cached_pinned_snapshot_bytes,
+    download_pinned_snapshot,
     load_prompt_bank,
     official_twofold_splits,
     parse_binary_judge,
+    resolve_pinned_snapshot_path,
     verify_pinned_snapshot,
 )
 from cognitive_console.experiments.iti_positive_control import (
@@ -229,7 +232,7 @@ def test_real_judge_load_resolves_runtime_kind_to_pinned_snapshot_key(
     assert seen == [expected_snapshot_name]
 
 
-def test_judges_load_sequentially_and_retain_pinned_disk_caches(tmp_path, monkeypatch):
+def test_judges_load_sequentially_from_shared_hub_cache(tmp_path, monkeypatch):
     judge = LocalTruthInfoJudge.from_pretrained(
         device="cpu",
         dtype="float32",
@@ -269,18 +272,15 @@ def test_judges_load_sequentially_and_retain_pinned_disk_caches(tmp_path, monkey
     )
     assert scores[0].truth is True
     assert scores[0].informative is False
-    assert [row[4] for row in events] == ["truth", "info"]
-    assert {path.name for path in judge.cache_root.glob("*")} == {
-        "truth",
-        "info",
-    }
+    assert [row[4] for row in events] == ["judges", "judges"]
+    assert {path.name for path in judge.cache_root.glob("*")} == {"weight.bin"}
     resumed = judge.score_many(
         [("Question?", "Answer.")],
         identities=["job-1"],
         checkpoint_root=tmp_path / "judge-checkpoints",
     )
     assert resumed == scores
-    assert [row[4] for row in events] == ["truth", "info"]
+    assert [row[4] for row in events] == ["judges", "judges"]
     audited_snapshots = copy.deepcopy(judge.snapshot_identities)
     audited_runtimes = copy.deepcopy(judge.runtime_fingerprints)
     runtime_marker["value"] = "current-judge-drift"
@@ -291,7 +291,12 @@ def test_judges_load_sequentially_and_retain_pinned_disk_caches(tmp_path, monkey
         force_runtime_refresh=True,
     )
     assert forced == scores
-    assert [row[4] for row in events] == ["truth", "info", "truth", "info"]
+    assert [row[4] for row in events] == [
+        "judges",
+        "judges",
+        "judges",
+        "judges",
+    ]
     assert {
         row["implementation_marker"]
         for row in judge.runtime_fingerprints.values()
@@ -907,6 +912,53 @@ def test_pinned_snapshot_verifies_git_blob_lfs_and_all_file_sha256(
         ]
         == "a933e74dc87d5d5e5d8820a71f035c5ce3dac12f"
     )
+
+
+def test_pinned_download_populates_only_the_standard_hub_cache(
+    tmp_path, monkeypatch
+):
+    import huggingface_hub
+
+    revision = "b" * 40
+    monkeypatch.setitem(
+        PINNED_SNAPSHOTS,
+        "tiny-download",
+        {
+            "repo_id": "owner/tiny-download",
+            "repo_type": "model",
+            "revision": revision,
+            "files": {"config.json": {"size": 6}},
+        },
+    )
+    calls = []
+
+    def fake_hf_hub_download(**kwargs):
+        calls.append(kwargs)
+        snapshot = (
+            Path(kwargs["cache_dir"])
+            / "models--owner--tiny-download"
+            / "snapshots"
+            / revision
+        )
+        snapshot.mkdir(parents=True, exist_ok=True)
+        path = snapshot / kwargs["filename"]
+        path.write_bytes(b"pinned")
+        return str(path)
+
+    monkeypatch.setattr(huggingface_hub, "hf_hub_download", fake_hf_hub_download)
+    identity = download_pinned_snapshot("tiny-download", tmp_path)
+
+    assert identity["expected_snapshot_bytes"] == 6
+    assert calls == [
+        {
+            "repo_id": "owner/tiny-download",
+            "filename": "config.json",
+            "revision": revision,
+            "repo_type": "model",
+            "cache_dir": str(tmp_path / "hub"),
+        }
+    ]
+    assert not (tmp_path / "tiny-download").exists()
 
 
 def test_checkpoint_resume_rejects_unknown_and_preserves_order(tmp_path):
@@ -1671,6 +1723,92 @@ def test_disk_limits_and_backend_phase_are_not_cli_overridable(
         ]
     )
     assert parsed.hardware_profile == runner.AUTODL_HARDWARE_PROFILE
+
+
+def test_pinned_worst_case_uses_standard_hub_cache_and_remains_fail_closed(
+    tmp_path, monkeypatch
+):
+    revision = "a" * 40
+    tiny_specs = {}
+    for index, name in enumerate(
+        ("generator", "truth_judge", "info_judge", "truthfulqa")
+    ):
+        repo_type = "dataset" if name == "truthfulqa" else "model"
+        tiny_specs[name] = {
+            "repo_id": f"owner/repo-{index}",
+            "repo_type": repo_type,
+            "revision": revision,
+            "files": {"payload.bin": {"size": 10}},
+        }
+        monkeypatch.setitem(PINNED_SNAPSHOTS, name, tiny_specs[name])
+        repo_folder = (
+            f"{repo_type}s--"
+            + str(tiny_specs[name]["repo_id"]).replace("/", "--")
+        )
+        snapshot = tmp_path / "hub" / repo_folder / "snapshots" / revision
+        snapshot.mkdir(parents=True)
+        (snapshot / "payload.bin").write_bytes(b"x" * 10)
+
+    gib = 1024.0**3
+    profile = runner.HardwareProfile(
+        name="tiny-hub-cache",
+        authorization_date="2026-08-12",
+        activation_batch_size=1,
+        disk_budget_gib=15 / gib,
+        disk_ceiling_gib=100 / gib,
+        artifact_reserve_bytes=10,
+        require_dedicated_venv=False,
+    )
+    monkeypatch.setitem(runner.HARDWARE_PROFILES, profile.name, profile)
+    monkeypatch.setattr(
+        runner,
+        "_disk_monitor",
+        lambda *args, **kwargs: SimpleNamespace(total_gb=0.0),
+    )
+    monkeypatch.setattr(
+        runner.shutil,
+        "disk_usage",
+        lambda path: SimpleNamespace(free=100),
+    )
+
+    result = runner._assert_pinned_worst_case(
+        tmp_path, tmp_path, profile.name
+    )
+    assert result["existing_by_snapshot"] == {
+        name: 10 for name in tiny_specs
+    }
+    assert result["remaining_by_snapshot"] == {
+        name: 0 for name in tiny_specs
+    }
+    assert cached_pinned_snapshot_bytes("generator", tmp_path) == 10
+    assert resolve_pinned_snapshot_path("generator", tmp_path).name == revision
+
+    missing = resolve_pinned_snapshot_path("generator", tmp_path) / "payload.bin"
+    missing.unlink()
+    with pytest.raises(RuntimeError, match="planning budget"):
+        runner._assert_pinned_worst_case(tmp_path, tmp_path, profile.name)
+
+    physical_profile = runner.HardwareProfile(
+        name="tiny-physical-disk",
+        authorization_date="2026-08-12",
+        activation_batch_size=1,
+        disk_budget_gib=100 / gib,
+        disk_ceiling_gib=100 / gib,
+        artifact_reserve_bytes=10,
+        require_dedicated_venv=False,
+    )
+    monkeypatch.setitem(
+        runner.HARDWARE_PROFILES, physical_profile.name, physical_profile
+    )
+    monkeypatch.setattr(
+        runner.shutil,
+        "disk_usage",
+        lambda path: SimpleNamespace(free=19),
+    )
+    with pytest.raises(RuntimeError, match="data disk cannot fit"):
+        runner._assert_pinned_worst_case(
+            tmp_path, tmp_path, physical_profile.name
+        )
 
 
 def test_per_row_judge_exception_becomes_missing_and_next_row_continues(

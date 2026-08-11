@@ -55,12 +55,14 @@ from cognitive_console.eval.truthfulqa_positive_control import (
     LocalTruthInfoJudge,
     TruthfulQAItem,
     activation_examples,
+    cached_pinned_snapshot_bytes,
     download_pinned_snapshot,
     load_pinned_truthfulqa,
     load_prompt_bank,
     official_twofold_splits,
     pinned_snapshot_size_bytes,
     render_answer_prompt,
+    resolve_pinned_snapshot_path,
 )
 from cognitive_console.experiments.iti_positive_control import (
     EXPERIMENT_ID,
@@ -1052,14 +1054,8 @@ def _disk_monitor(
     )
 
 
-def _existing_pinned_bytes(snapshot_name: str, snapshot_dir: Path) -> int:
-    spec = PINNED_SNAPSHOTS[snapshot_name]
-    total = 0
-    for relative, row in spec["files"].items():
-        path = Path(snapshot_dir) / relative
-        if path.is_file():
-            total += min(path.stat().st_size, int(row["size"]))
-    return total
+def _existing_pinned_bytes(snapshot_name: str, cache_root: Path) -> int:
+    return cached_pinned_snapshot_bytes(snapshot_name, cache_root)
 
 
 def _assert_download_fits(
@@ -1068,7 +1064,7 @@ def _assert_download_fits(
     hardware_profile_name: str,
     snapshot_name: str,
     snapshot_bytes: int,
-    snapshot_dir: Path,
+    snapshot_cache_root: Path,
 ) -> None:
     profile = _hardware_profile(hardware_profile_name)
     if int(snapshot_bytes) != pinned_snapshot_size_bytes(snapshot_name):
@@ -1077,7 +1073,7 @@ def _assert_download_fits(
     remaining = max(
         0,
         int(snapshot_bytes)
-        - _existing_pinned_bytes(snapshot_name, snapshot_dir),
+        - _existing_pinned_bytes(snapshot_name, snapshot_cache_root),
     )
     projected = (
         usage.total_gb
@@ -1101,16 +1097,15 @@ def _assert_pinned_worst_case(
 ) -> Dict[str, object]:
     profile = _hardware_profile(hardware_profile_name)
     usage = _disk_monitor(out_dir, cache_root, hardware_profile_name)
-    snapshot_dirs = {
-        "generator": cache_root / "generator",
-        "truth_judge": cache_root / "judges" / "truth",
-        "info_judge": cache_root / "judges" / "info",
-        "truthfulqa": cache_root / "truthfulqa",
+    snapshot_names = ("generator", "truth_judge", "info_judge", "truthfulqa")
+    existing_by_snapshot = {
+        name: _existing_pinned_bytes(name, cache_root)
+        for name in snapshot_names
     }
     remaining_by_snapshot = {
         name: pinned_snapshot_size_bytes(name)
-        - _existing_pinned_bytes(name, snapshot_dir)
-        for name, snapshot_dir in snapshot_dirs.items()
+        - existing_by_snapshot[name]
+        for name in snapshot_names
     }
     additional_required = (
         sum(remaining_by_snapshot.values()) + profile.artifact_reserve_bytes
@@ -1133,6 +1128,7 @@ def _assert_pinned_worst_case(
         "truth_judge_bytes": pinned_snapshot_size_bytes("truth_judge"),
         "info_judge_bytes": pinned_snapshot_size_bytes("info_judge"),
         "dataset_bytes": pinned_snapshot_size_bytes("truthfulqa"),
+        "existing_by_snapshot": existing_by_snapshot,
         "remaining_by_snapshot": remaining_by_snapshot,
         "artifact_reserve_bytes": profile.artifact_reserve_bytes,
         "persistent_worst_case_bytes": profile.pinned_worst_case_bytes,
@@ -1756,7 +1752,7 @@ def run_hf_preflight(args: argparse.Namespace) -> Dict[str, object]:
     )
     dataset_snapshot_identity = download_pinned_snapshot(
         "truthfulqa",
-        cache_root / "truthfulqa",
+        cache_root,
         before_download=lambda name, size, snapshot_dir: _assert_download_fits(
             out_dir,
             cache_root,
@@ -1770,13 +1766,13 @@ def run_hf_preflight(args: argparse.Namespace) -> Dict[str, object]:
         ),
     )
     items = load_pinned_truthfulqa(
-        cache_root / "truthfulqa",
+        resolve_pinned_snapshot_path("truthfulqa", cache_root),
         cache_dir=cache_root / "datasets-processed",
     )
     data_identity = _truthfulqa_identity(items)
     generator_snapshot_identity = download_pinned_snapshot(
         "generator",
-        cache_root / "generator",
+        cache_root,
         before_download=lambda name, size, snapshot_dir: _assert_download_fits(
             out_dir,
             cache_root,
@@ -1792,7 +1788,7 @@ def run_hf_preflight(args: argparse.Namespace) -> Dict[str, object]:
     backend = OfficialITIHFBackend.from_pretrained(
         args.model_id,
         revision=args.model_revision,
-        snapshot_path=cache_root / "generator",
+        snapshot_path=resolve_pinned_snapshot_path("generator", cache_root),
         device="cuda",
         dtype="float16",
         max_length=MAX_LENGTH,
@@ -1827,7 +1823,7 @@ def run_hf_preflight(args: argparse.Namespace) -> Dict[str, object]:
     judge = LocalTruthInfoJudge.from_pretrained(
         device="cuda",
         dtype="float16",
-        cache_root=cache_root / "judges",
+        cache_root=cache_root,
         before_download=lambda name, size, snapshot_dir: _assert_download_fits(
             out_dir,
             cache_root,
@@ -1933,7 +1929,7 @@ def run_hf_dev(args: argparse.Namespace) -> Dict[str, object]:
     prompts = dict(prompts_list)
     dataset_snapshot_identity = download_pinned_snapshot(
         "truthfulqa",
-        cache_root / "truthfulqa",
+        cache_root,
         before_download=lambda name, size, snapshot_dir: _assert_download_fits(
             out_dir,
             cache_root,
@@ -1947,7 +1943,7 @@ def run_hf_dev(args: argparse.Namespace) -> Dict[str, object]:
         ),
     )
     items = load_pinned_truthfulqa(
-        cache_root / "truthfulqa",
+        resolve_pinned_snapshot_path("truthfulqa", cache_root),
         cache_dir=cache_root / "datasets-processed",
     )
     data_identity = _truthfulqa_identity(items)
@@ -1956,7 +1952,7 @@ def run_hf_dev(args: argparse.Namespace) -> Dict[str, object]:
     dtype = "float16"
     generator_snapshot_identity = download_pinned_snapshot(
         "generator",
-        cache_root / "generator",
+        cache_root,
         before_download=lambda name, size, snapshot_dir: _assert_download_fits(
             out_dir,
             cache_root,
@@ -1972,7 +1968,7 @@ def run_hf_dev(args: argparse.Namespace) -> Dict[str, object]:
     backend = OfficialITIHFBackend.from_pretrained(
         args.model_id,
         revision=args.model_revision,
-        snapshot_path=cache_root / "generator",
+        snapshot_path=resolve_pinned_snapshot_path("generator", cache_root),
         device=device,
         dtype=dtype,
         max_length=MAX_LENGTH,
@@ -2029,7 +2025,7 @@ def run_hf_dev(args: argparse.Namespace) -> Dict[str, object]:
     judge = LocalTruthInfoJudge.from_pretrained(
         device=device,
         dtype=dtype,
-        cache_root=cache_root / "judges",
+        cache_root=cache_root,
         before_download=lambda name, size, snapshot_dir: _assert_download_fits(
             out_dir,
             cache_root,
@@ -2193,7 +2189,7 @@ def run_hf_test(args: argparse.Namespace) -> Dict[str, object]:
     prompts = dict(prompts_list)
     dataset_snapshot_identity = download_pinned_snapshot(
         "truthfulqa",
-        cache_root / "truthfulqa",
+        cache_root,
         before_download=lambda name, size, snapshot_dir: _assert_download_fits(
             out_dir,
             cache_root,
@@ -2209,7 +2205,7 @@ def run_hf_test(args: argparse.Namespace) -> Dict[str, object]:
     if dataset_snapshot_identity != dev.get("dataset_snapshot_identity"):
         raise ValueError("dataset snapshot fingerprint changed between DEV and TEST")
     items = load_pinned_truthfulqa(
-        cache_root / "truthfulqa",
+        resolve_pinned_snapshot_path("truthfulqa", cache_root),
         cache_dir=cache_root / "datasets-processed",
     )
     data_identity = _truthfulqa_identity(items)
@@ -2238,7 +2234,7 @@ def run_hf_test(args: argparse.Namespace) -> Dict[str, object]:
     serialized_random_configs = _serialize_configs(random_configs)
     generator_snapshot_identity = download_pinned_snapshot(
         "generator",
-        cache_root / "generator",
+        cache_root,
         before_download=lambda name, size, snapshot_dir: _assert_download_fits(
             out_dir,
             cache_root,
@@ -2256,7 +2252,7 @@ def run_hf_test(args: argparse.Namespace) -> Dict[str, object]:
     backend = OfficialITIHFBackend.from_pretrained(
         args.model_id,
         revision=args.model_revision,
-        snapshot_path=cache_root / "generator",
+        snapshot_path=resolve_pinned_snapshot_path("generator", cache_root),
         device="cuda",
         dtype="float16",
         max_length=MAX_LENGTH,
@@ -2279,7 +2275,7 @@ def run_hf_test(args: argparse.Namespace) -> Dict[str, object]:
     judge = LocalTruthInfoJudge.from_pretrained(
         device="cuda",
         dtype="float16",
-        cache_root=cache_root / "judges",
+        cache_root=cache_root,
         before_download=lambda name, size, snapshot_dir: _assert_download_fits(
             out_dir,
             cache_root,
@@ -2318,7 +2314,7 @@ def run_hf_test(args: argparse.Namespace) -> Dict[str, object]:
     backend = OfficialITIHFBackend.from_pretrained(
         args.model_id,
         revision=args.model_revision,
-        snapshot_path=cache_root / "generator",
+        snapshot_path=resolve_pinned_snapshot_path("generator", cache_root),
         device="cuda",
         dtype="float16",
         max_length=MAX_LENGTH,

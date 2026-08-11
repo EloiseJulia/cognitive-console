@@ -168,6 +168,54 @@ def pinned_snapshot_size_bytes(name: str) -> int:
     )
 
 
+def _cached_pinned_file(
+    name: str,
+    relative: str,
+    cache_root: Path,
+) -> Optional[Path]:
+    from huggingface_hub import try_to_load_from_cache
+
+    spec = PINNED_SNAPSHOTS[name]
+    cached = try_to_load_from_cache(
+        repo_id=str(spec["repo_id"]),
+        filename=str(relative),
+        revision=str(spec["revision"]),
+        repo_type=str(spec["repo_type"]),
+        cache_dir=Path(cache_root) / "hub",
+    )
+    if not isinstance(cached, (str, os.PathLike)):
+        return None
+    path = Path(cached)
+    return path if path.is_file() else None
+
+
+def cached_pinned_snapshot_bytes(name: str, cache_root: Path) -> int:
+    total = 0
+    for relative, row in PINNED_SNAPSHOTS[name]["files"].items():
+        path = _cached_pinned_file(name, relative, cache_root)
+        if path is not None:
+            total += min(path.stat().st_size, int(row["size"]))
+    return total
+
+
+def resolve_pinned_snapshot_path(name: str, cache_root: Path) -> Path:
+    snapshot_root: Optional[Path] = None
+    for relative in PINNED_SNAPSHOTS[name]["files"]:
+        path = _cached_pinned_file(name, relative, cache_root)
+        if path is None:
+            raise FileNotFoundError(f"{name} snapshot is not fully cached: {relative}")
+        candidate = path
+        for _ in Path(relative).parts:
+            candidate = candidate.parent
+        if snapshot_root is None:
+            snapshot_root = candidate
+        elif candidate != snapshot_root:
+            raise RuntimeError(f"{name} pinned files resolved to multiple snapshots")
+    if snapshot_root is None:
+        raise RuntimeError(f"{name} pinned snapshot has no files")
+    return snapshot_root
+
+
 def verify_pinned_snapshot(name: str, snapshot_dir: Path) -> Dict[str, object]:
     spec = PINNED_SNAPSHOTS[name]
     snapshot_dir = Path(snapshot_dir)
@@ -217,30 +265,32 @@ def verify_pinned_snapshot(name: str, snapshot_dir: Path) -> Dict[str, object]:
 
 def download_pinned_snapshot(
     name: str,
-    snapshot_dir: Path,
+    cache_root: Path,
     *,
     before_download=None,
     monitor=None,
 ) -> Dict[str, object]:
-    """Download each pinned file separately so the disk guard runs per file."""
+    """Populate the standard Hub cache without creating a second local copy."""
 
     from huggingface_hub import hf_hub_download
 
     spec = PINNED_SNAPSHOTS[name]
-    snapshot_dir = Path(snapshot_dir)
-    snapshot_dir.mkdir(parents=True, exist_ok=True)
+    cache_root = Path(cache_root)
+    hub_cache = cache_root / "hub"
+    hub_cache.mkdir(parents=True, exist_ok=True)
     if before_download is not None:
-        before_download(name, pinned_snapshot_size_bytes(name), snapshot_dir)
+        before_download(name, pinned_snapshot_size_bytes(name), cache_root)
     for relative in spec["files"]:
         hf_hub_download(
             repo_id=str(spec["repo_id"]),
             filename=str(relative),
             revision=str(spec["revision"]),
             repo_type=str(spec["repo_type"]),
-            local_dir=str(snapshot_dir),
+            cache_dir=str(hub_cache),
         )
         if monitor is not None:
             monitor()
+    snapshot_dir = resolve_pinned_snapshot_path(name, cache_root)
     identity = verify_pinned_snapshot(name, snapshot_dir)
     if monitor is not None:
         monitor()
@@ -549,33 +599,33 @@ class LocalTruthInfoJudge:
             return {"cpu_only": True}
         return self.residency_guard()
 
-    def _load(self, kind: str, model_id: str, revision: str, cache_dir: Path):
+    def _load(self, kind: str, model_id: str, revision: str, cache_root: Path):
         import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
         assert_transformers_compatibility()
         if self._resident_kind != kind:
             raise RuntimeError("judge load bypassed the sequential residency guard")
-        cache_dir.mkdir(parents=True, exist_ok=True)
         try:
             snapshot_name = _JUDGE_SNAPSHOT_NAMES[kind]
         except KeyError as exc:
             raise ValueError(f"unknown judge kind {kind!r}") from exc
         snapshot_identity = download_pinned_snapshot(
             snapshot_name,
-            cache_dir,
+            cache_root,
             before_download=self.before_download,
             monitor=self.after_load,
         )
         self.snapshot_identities[kind] = snapshot_identity
+        snapshot_path = resolve_pinned_snapshot_path(snapshot_name, cache_root)
         torch_dtype = getattr(torch, self.dtype)
         tokenizer = AutoTokenizer.from_pretrained(
-            str(cache_dir), local_files_only=True
+            str(snapshot_path), local_files_only=True
         )
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
         model = AutoModelForCausalLM.from_pretrained(
-            str(cache_dir),
+            str(snapshot_path),
             local_files_only=True,
             attn_implementation="eager",
             torch_dtype=torch_dtype,
@@ -839,7 +889,7 @@ class LocalTruthInfoJudge:
             if checkpoint_manifest_path is not None:
                 _atomic_write_json(checkpoint_manifest_path, repaired_manifest)
             return [persisted[str(identity)] for identity in identities]
-        cache_dir = self.cache_root / kind
+        cache_dir = self.cache_root
         model = tokenizer = None
         if not self._residency_lock.acquire(blocking=False):
             raise RuntimeError("concurrent judge residency attempt rejected")

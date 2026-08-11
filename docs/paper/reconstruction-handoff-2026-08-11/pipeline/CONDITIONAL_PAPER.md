@@ -13,7 +13,7 @@ Alex is drafting a policy recommendation with an AI assistant and sees a slider 
 
 This is no longer a hypothetical interface pattern. Bo et al. expose activation steering through SELECT, CALIBRATE, and LEARN controls, while Anthropic's Golden Gate Claude made interaction with an internally modified Claude 3 Sonnet publicly visible for 24 hours. \cite{bo2026steerable,anthropic2024goldengate} <!-- SOURCE_CHECKED 2026-08-11 --> Karny et al. further show that a neural-transparency interface can change reported trust and perceived helpfulness without changing several behavioral outcomes. \cite{karny2026neural} These precedents make the evidence behind an active latent control an interface question, not only a model-analysis question.
 
-We ask: **what evidence should a latent-control interface require before a readable axis is presented as an actionable control?** We answer with a comparator-bound evaluation contract. READ records whether the label has local representational support. TRANSFER tests whether the intervention improves a declared behavioral outcome over a declared prompt comparator while satisfying an uncertainty rule, a 0.05 point-estimate floor, and coherence. The comparator, calibration warning, and evidence tier carry the result into the interface without transferring it across models, methods, axes, or tasks. <!-- C-001 --><!-- C-002 --><!-- C-006 -->
+We ask: **what evidence should a latent-control interface require before a readable axis is presented as an actionable control?** We answer with a comparator-bound evaluation contract. READ records whether the label has local representational support. TRANSFER tests whether the intervention improves a declared behavioral outcome while satisfying an uncertainty rule, a 0.05 point-estimate floor, and coherence. The BOUNDED PROMPT COMPARATOR, CALIBRATION WARNING, and EVIDENCE TIER carry the result into the interface without transferring it across models, methods, axes, or tasks. <!-- C-001 --><!-- C-002 --><!-- C-006 -->
 
 The worked application compares CAA and ITI on Qwen and Llama across deliberation, skepticism, and uncertainty awareness. The prompt comparator is selected on DEV from a preregistered bounded set of sixteen candidates; the latent coefficient is also selected on DEV, and the frozen settings enter paired TEST comparisons. <!-- FL-002 --><!-- FL-008 --><!-- FL-031 -->
 
@@ -28,7 +28,7 @@ This paper makes three contributions:
 
 1. **A comparator-bound qualification procedure for active latent controls.** It separates local READ evidence from behavioral TRANSFER evidence, reserves CONTROL for interface permission, and requires a declared alternative, outcome, uncertainty rule, point-estimate floor, coherence criterion, and evidence tier.
 2. **A five-field interface record and state vocabulary.** The record preserves comparator, calibration, and scope through the proposed states *Diagnostic-only*, *Unresolved*, *Unstable*, and *Eligible*.
-3. **A complete worked application.** The CAA/ITI by Qwen/Llama grid demonstrates how one procedural outcome separates into distinct interface decisions for limited resolution, mixed evidence, and comparator-relative calibration.
+3. **A scoped complete 2×2 worked boundary.** The CAA/ITI by Qwen/Llama grid demonstrates how one procedural outcome separates into distinct interface decisions for limited resolution, mixed evidence, and comparator-relative calibration.
 
 Together, these contributions turn a familiar interface question into a versioned decision record: evidence first, affordance second.
 
@@ -104,7 +104,7 @@ The record contains five fields.
 
 1. **READ** specifies the model, method, direction construction, layer, task, and measurement under which an internal axis is legible. READ is a diagnostic precondition, not behavioral evidence.
 2. **TRANSFER** records the behavioral outcome, intervention, estimand, uncertainty, point-estimate floor, and coherence result.
-3. **COMPARATOR** identifies the declared behavioral alternative, candidate set, and selection procedure. In this application it is a DEV-selected prompt drawn from a preregistered bounded set of sixteen candidates; the field preserves the provenance limits detailed below. <!-- BD-009 -->
+3. **BOUNDED PROMPT COMPARATOR** identifies the declared behavioral alternative, candidate set, and selection procedure. In this application it is a DEV-selected prompt drawn from a preregistered bounded set of sixteen candidates; the field preserves the provenance limits detailed below. <!-- BD-009 -->
 4. **CALIBRATION WARNING** states which contrast is being interpreted—for example, steer versus prompt rather than steer versus an unsteered baseline—and records missingness or scoring threats that can reverse the reading.
 5. **EVIDENCE TIER** binds the record to a model, method, axis, task, layer, protocol, and evidence status so that a result cannot silently transfer to another setting.
 
@@ -259,6 +259,14 @@ Across Qwen and Llama, CAA and ITI, and three behavioral axes, none of the twelv
 
 ### READ Is Model-, Axis-, and Method-Specific
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{../figures/c1-ratio-ci.pdf}
+\caption{Exploratory Qwen READ facade ratios and 95\% intervals across four axes.}
+\Description{Deliberation, skepticism, and uncertainty ratios lie below the ratio-one reference, while focus overshoots it. The companion text reports that the Llama result has the same aggregate count but a different axis composition.}
+\label{fig:c1-ratio-ci}
+\end{figure}
+
 The exploratory READ facade reports a three-of-four aggregate pattern in each model, but the composition differs. Deliberation and skepticism satisfy the reported facade criterion in both model families; uncertainty does so only in Qwen, while focus does so only in Llama and overshoots in Qwen. <!-- FL-039 --><!-- FL-040 --> These results come from one exploratory run per model using CAA-style directions. <!-- FL-036 --><!-- FL-038 --> The model-specific composition demonstrates why READ belongs in the evidence tier rather than in the axis label alone.
 
 This heterogeneity matters for the evidence record. An aggregate “three of four” label would hide which affordance is legible in which model, and a CAA READ result would silently grant evidence to a different construction method. We therefore keep READ tied to its model, direction family, axis, and measurement rather than treating it as an intrinsic property of an axis name. <!-- C-006 -->
@@ -328,7 +336,7 @@ Other uncertainty cells & not rechecked & No grid-wide format/missingness conclu
 
 ### The Verdict Persists Across Five Split Seeds
 
-The reported no-pass verdict recurred over five split seeds. <!-- FL-007 --> The original split had already been observed before four additional splits were prospectively frozen, and all splits reused the same item pool. <!-- FL-035 --> The consistent outcome shows that the decision is not tied to one DEV/TEST partition.
+The reported no-pass verdict recurred over five split seeds. <!-- FL-007 --> The original split had already been observed before four additional splits were prospectively frozen, and all splits reused the same item pool. <!-- FL-035 --> The consistent outcome shows that the decision is not tied to one DEV/TEST partition; it is split sensitivity over the same item pool, not new-item replication.
 
 <!-- PENDING HUMAN RESULTS: populate H-F rows only from a frozen HUMAN_STUDY_PENDING.md packet. -->
 <!-- PENDING COMPOSITION RESULTS: populate P-F rows only from a frozen PROMPT_STEER_PENDING.md packet. -->
@@ -354,7 +362,7 @@ Field & Worked entry \\
 \midrule
 READ & Exploratory CAA-style READ satisfies the reported facade criterion for uncertainty on Qwen; one run, no ITI transfer. \\
 TRANSFER & No-pass relative to the DEV-selected prompt comparator. \\
-COMPARATOR & DEV-selected prompt from a preregistered bounded set of sixteen candidates; provenance limits follow the Method definition. \\
+BOUNDED PROMPT COMPARATOR & DEV-selected prompt from a preregistered bounded set of sixteen candidates; provenance limits follow the Method definition. \\
 CALIBRATION WARNING & Steering is near the unsteered baseline in the one rechecked lineage; complete-case steer-minus-prompt remains negative, but adversarial all-generation missingness bounds cross zero and three cells are unrechecked. \\
 EVIDENCE TIER & Qwen2.5-7B-Instruct, CAA single-layer additive intervention at hidden-state layer 20 (decoder-block-19 output hook at every token position), uncertainty task/outcome, seed 20260723, reported substitution protocol. \\
 \bottomrule
@@ -420,7 +428,7 @@ The available lineage records exact layers, hook convention, contrast splits, pr
 
 Because no latent behavioral positive control passes, the no-pass grid cannot distinguish a true absence of actionability from limitations in direction construction, scale, hook/layer selection, normalization, generation, outcome, or scoring. <!-- FL-057 --> Prompt endpoint liveness and random-direction sensitivity show that parts of the pipeline respond; they do not validate the target intervention. The raw-magnitude follow-up narrows simple under-scaling only for Qwen single-layer CAA, and CAA/ITI coefficients do not imply a common injected norm. <!-- FL-026 --><!-- FL-054 --><!-- FL-078 -->
 
-The diagnostic studies provide supporting context: a direct refusal prompt reaches 95.5%, a random uncertainty direction shifts the measured outcome by $-0.24$ with 95% CI $[-0.36,-0.12]$, bounded CAA produces 0% refusal, and the raw-magnitude Qwen–CAA sweep produces no qualifying nondegenerate pass. <!-- FL-051 --><!-- FL-052 --><!-- FL-055 --> The preregistered whitened-Mahalanobis analysis also returns no support for the tested off-manifold mechanism. <!-- FL-050 --> The first-token logit analysis remains non-claim-bearing appendix context.
+The diagnostic studies provide supporting context: a direct refusal prompt reaches 95.5%, a random uncertainty direction shifts the measured outcome by $-0.24$ with 95% CI $[-0.36,-0.12]$, and bounded CAA produces 0% refusal. <!-- FL-051 --><!-- FL-052 --> In the raw-magnitude Qwen–CAA sweep, coherent perturbations reach about $0.5$--$0.66\times\lVert h\rVert$ without a qualifying pass; the point near $1.05\times\lVert h\rVert$ is degenerate, and null resolution is limited by an MDE near 0.19. <!-- FL-055 --><!-- FL-056 --><!-- FL-057 --> The preregistered whitened-Mahalanobis analysis also returns no support for the tested off-manifold mechanism. <!-- FL-050 --> The first-token logit analysis remains non-claim-bearing appendix context.
 
 Resolution also differs by claim. READ is exploratory, single-run, and CAA-specific. <!-- FL-036 --><!-- FL-038 --> Skepticism is underpowered relative to the point-estimate floor, deliberation's equivalence descriptions are post hoc, and uncertainty remains format- and missingness-sensitive. <!-- FL-041 --><!-- FL-043 --><!-- FL-047 --><!-- FL-048 --> Five split seeds over one item pool address partition sensitivity rather than replication, and within-cell correction does not establish a familywise global null across the grid. <!-- FL-034 --><!-- FL-035 -->
 

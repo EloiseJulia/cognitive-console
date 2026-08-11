@@ -38,7 +38,7 @@ source_experiment_roles:
   E-0008: Llama CAA-style READ context.
   E-0013: Narrow CAA×Qwen direct-baseline, complete-case, and missingness caveats only; no support for the other three cells.
 aggregation_script: docs/paper/scripts/plot_console_ui_contract.py
-generator_commit: f0c4396b5e6ad18a64052508ad8b9023d817a5fc
+generator_commit: 9f64d48e3d7b676276564615ffb84e53411679a4
 source_artifact_commits:
   "results/gpu_7b_2026-07-23/c1/c1_facade_results.json": 05b33ede9c4d9677d4a32c4d74766933d96d563d
   "results/llama_c1_facade_2026-07-24/c1_facade_results.json": 31678173e83f01c2de2b8775b2f87f068fbc190e

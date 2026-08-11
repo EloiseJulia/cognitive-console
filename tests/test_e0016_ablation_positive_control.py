@@ -392,6 +392,43 @@ def test_disk_guard_hard_fails_at_profile_ceiling(tmp_path, monkeypatch):
         )
 
 
+def test_disk_guard_normal_path_reports_managed_and_free_space(
+    tmp_path, monkeypatch
+):
+    profile = e0016.HardwareProfile(
+        profile_id="test-disk-normal",
+        accepted_name_fragments=("GPU",),
+        min_total_vram_gib=1.0,
+        max_total_vram_gib=None,
+        min_free_before_load_gib=1.0,
+        min_free_after_load_gib=1.0,
+        managed_disk_ceiling_gib=45.0,
+        filesystem_free_reserve_gib=5.0,
+    )
+    hf_home = tmp_path / "hf"
+    hf_home.mkdir()
+    out_dir = tmp_path / "E-0016-run"
+    monkeypatch.setattr(e0016, "dir_size_bytes", lambda path: 1024**3)
+    monkeypatch.setattr(
+        e0016.shutil,
+        "disk_usage",
+        lambda path: SimpleNamespace(
+            total=50 * 1024**3,
+            used=30 * 1024**3,
+            free=20 * 1024**3,
+        ),
+    )
+    result = e0016.check_managed_disk_guard(
+        profile,
+        {"hf_home": str(hf_home)},
+        out_dir,
+        stage="after_model_load",
+    )
+    assert result["managed_total_gib"] == 2.0
+    assert result["filesystem_free_gib"] == 20.0
+    assert result["filesystem_required_free_gib"] == 5.0
+
+
 def test_frozen_snapshot_revision_and_shard_hashes_are_verified(
     tmp_path, monkeypatch
 ):

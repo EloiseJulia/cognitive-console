@@ -1,0 +1,98 @@
+{
+  "experiment_id": "E-0013-grid-recheck",
+  "checked_at": "2026-08-11T13:36:09.763091+00:00",
+  "grid_complete": false,
+  "available_cells": [
+    "caa__qwen2.5-7b"
+  ],
+  "missing_cells": [
+    "caa__llama3-8b",
+    "iti__llama3-8b",
+    "iti__qwen2.5-7b"
+  ],
+  "inventory": {
+    "caa__llama3-8b": {
+      "selected": null,
+      "candidates": [
+        {
+          "kind": "c2b_transcript_dir_v1",
+          "path": "results/arm_full/cell_caa__llama3-8b/transcripts",
+          "exists": false,
+          "origin": "restored_immutable_e0006_if_recovered"
+        },
+        {
+          "kind": "e0013_samples_v1",
+          "path": "results/E-0013-uncertainty-grid-recheck/generated/cell_caa__llama3-8b/samples.jsonl",
+          "exists": false,
+          "origin": "frozen_replay",
+          "raw_exists": false,
+          "completion_path": "results/E-0013-uncertainty-grid-recheck/generated/cell_caa__llama3-8b/completion.json",
+          "completion_exists": false
+        }
+      ]
+    },
+    "caa__qwen2.5-7b": {
+      "selected": {
+        "kind": "e0013_samples_v1",
+        "path": "results/E-0013-uncertainty-recheck/samples.jsonl",
+        "origin": "immutable_existing_e0013"
+      },
+      "candidates": [
+        {
+          "kind": "e0013_samples_v1",
+          "path": "results/E-0013-uncertainty-recheck/samples.jsonl",
+          "exists": true,
+          "origin": "immutable_existing_e0013",
+          "sha256": "5c6c8f4c0f9b4bc6268d5674ad5d0cb0d663ed78ef5ab97ba31c54987f879ff2"
+        },
+        {
+          "kind": "c2b_transcript_dir_v1",
+          "path": "results/arm_full/cell_caa__qwen2.5-7b/transcripts",
+          "exists": false,
+          "origin": "restored_immutable_e0006_if_recovered"
+        }
+      ]
+    },
+    "iti__llama3-8b": {
+      "selected": null,
+      "candidates": [
+        {
+          "kind": "c2b_transcript_dir_v1",
+          "path": "results/arm_full/cell_iti__llama3-8b/transcripts",
+          "exists": false,
+          "origin": "restored_immutable_e0006_if_recovered"
+        },
+        {
+          "kind": "e0013_samples_v1",
+          "path": "results/E-0013-uncertainty-grid-recheck/generated/cell_iti__llama3-8b/samples.jsonl",
+          "exists": false,
+          "origin": "frozen_replay",
+          "raw_exists": false,
+          "completion_path": "results/E-0013-uncertainty-grid-recheck/generated/cell_iti__llama3-8b/completion.json",
+          "completion_exists": false
+        }
+      ]
+    },
+    "iti__qwen2.5-7b": {
+      "selected": null,
+      "candidates": [
+        {
+          "kind": "c2b_transcript_dir_v1",
+          "path": "results/arm_full/cell_iti__qwen2.5-7b/transcripts",
+          "exists": false,
+          "origin": "restored_immutable_e0006_if_recovered"
+        },
+        {
+          "kind": "e0013_samples_v1",
+          "path": "results/E-0013-uncertainty-grid-recheck/generated/cell_iti__qwen2.5-7b/samples.jsonl",
+          "exists": false,
+          "origin": "frozen_replay",
+          "raw_exists": false,
+          "completion_path": "results/E-0013-uncertainty-grid-recheck/generated/cell_iti__qwen2.5-7b/completion.json",
+          "completion_exists": false
+        }
+      ]
+    }
+  },
+  "remote_inventory_note": "Read-only search on 2026-08-11 found no arm_full transcript files under the authorized ~/cc_l0 tree; the original /root/autodl-tmp/cc/repo paths were unavailable. Restored backups remain eligible through the transcript-directory source adapter."
+}

@@ -1,0 +1,203 @@
+{
+  "experiment_id": "E-0013-grid-recheck",
+  "generated_at": "2026-08-11T13:36:09.763091+00:00",
+  "grid_complete": false,
+  "valid_for_paper": false,
+  "analysis_status": "INCOMPLETE_MISSING_TRANSCRIPTS_NO_GRID_CLAIM",
+  "scientific_result_status": "no new four-cell scientific result; GPU replay remains required",
+  "frozen_results_replaced": false,
+  "missing_cells": [
+    "caa__llama3-8b",
+    "iti__llama3-8b",
+    "iti__qwen2.5-7b"
+  ],
+  "item_identity": {
+    "path": "data/e0006_uncertainty_baseline/e0006_uncertainty_baseline.jsonl",
+    "sha256": "732689114b64a9007c4cd4bf1941b4cfc716a1920523b2a7e35dd209e2ba2658",
+    "canonical_items_sha256": "6321f3cfbb1f50888576f1c80976a8547f41af47d4e26ac10916b59af880c425",
+    "splits": {
+      "dev": {
+        "count": 27,
+        "ids_sha256": "47d1badddc2e21dfcc1503fc58e086caae391c10d0720a3f6910c4ba44e06023"
+      },
+      "test": {
+        "count": 53,
+        "ids_sha256": "771097fd6dda1ad0e4dca334c7f16b47c5fda563688f1164c28dd8913b39183d"
+      }
+    }
+  },
+  "cells": {
+    "caa__qwen2.5-7b": {
+      "conditions": {
+        "prompt": {
+          "n_samples": 265,
+          "n_format_compliant": 118,
+          "format_compliance_rate": 0.44528301886792454,
+          "n_format_dropped": 147,
+          "format_dropped_rate": 0.5547169811320755,
+          "mean_frozen_imputed_1minus_brier": 0.8308988679245283,
+          "format_compliance_exact": {
+            "numerator": 118,
+            "denominator": 265,
+            "fraction": "118/265"
+          }
+        },
+        "steer": {
+          "n_samples": 265,
+          "n_format_compliant": 219,
+          "format_compliance_rate": 0.8264150943396227,
+          "n_format_dropped": 46,
+          "format_dropped_rate": 0.17358490566037735,
+          "mean_frozen_imputed_1minus_brier": 0.6214105660377359,
+          "format_compliance_exact": {
+            "numerator": 219,
+            "denominator": 265,
+            "fraction": "219/265"
+          }
+        },
+        "baseline": {
+          "n_samples": 265,
+          "n_format_compliant": 216,
+          "format_compliance_rate": 0.8150943396226416,
+          "n_format_dropped": 49,
+          "format_dropped_rate": 0.18490566037735848,
+          "mean_frozen_imputed_1minus_brier": 0.6205920754716981,
+          "format_compliance_exact": {
+            "numerator": 216,
+            "denominator": 265,
+            "fraction": "216/265"
+          }
+        }
+      },
+      "frozen_uncertainty_delta_steer_minus_prompt_as_run_imputed": {
+        "point": -0.20948830188679243,
+        "n_items": 53
+      },
+      "format_compliant_only_delta_steer_minus_prompt": {
+        "point": -0.3366781481481482,
+        "ci_lo": -0.5075485879629629,
+        "ci_hi": -0.16516796759259258,
+        "ci_level": 0.95,
+        "bootstrap_b": 10000,
+        "n_items": 36,
+        "n_compliant_sample_pairs": 110,
+        "restriction": "paired item/sample rows where both steer and prompt parsed confidence"
+      },
+      "sensitivity": {
+        "drop_imputed": {
+          "point": -0.3366781481481482,
+          "ci_lo": -0.5075485879629629,
+          "ci_hi": -0.16516796759259258,
+          "ci_level": 0.95,
+          "bootstrap_b": 10000,
+          "n_items": 36,
+          "equivalent_to": "format_compliant_only_delta_steer_minus_prompt"
+        },
+        "worst_case_imputation_bounds": {
+          "bounds": [
+            {
+              "variant": "least_favorable_to_steer",
+              "delta": -0.4783562264150944,
+              "n_items": 53
+            },
+            {
+              "variant": "most_favorable_to_steer",
+              "delta": 0.2499456603773585,
+              "n_items": 53
+            }
+          ]
+        }
+      },
+      "sample_accounting": {
+        "source_rows_total": 1200,
+        "test_rows_used": 795,
+        "dev_rows_explicitly_not_in_headline": 405,
+        "other_rows_rejected": 0,
+        "expected_test_rows": 795,
+        "test_grid_complete": true,
+        "test_items": 53,
+        "samples_per_item_condition": 5,
+        "complete_case": {
+          "total_prompt_steer_sample_pairs": 265,
+          "both_compliant": 110,
+          "prompt_noncompliant_only": 109,
+          "steer_noncompliant_only": 8,
+          "both_noncompliant": 38,
+          "items_with_at_least_one_complete_pair": 36,
+          "items_with_zero_complete_pairs": 17
+        },
+        "no_silent_exclusions": true
+      },
+      "adversarial_missingness_guard": {
+        "lower": -0.4783562264150944,
+        "upper": 0.2499456603773585,
+        "spans_zero": true,
+        "supports_strict_negative_sign": false,
+        "supports_strict_positive_sign": false,
+        "all_generation_sign_claim_allowed": false,
+        "guard": "No all-generation sign claim unless both adversarial endpoints have the same strict sign."
+      },
+      "frozen_reference": {
+        "source_mean_diff_steer_minus_prompt": -0.22767283018867926,
+        "replacement_policy": "Reference only. This recheck does not replace or rescore E-0006."
+      },
+      "source": {
+        "schema": "e0013_samples_v1",
+        "source_rows_total": 1200,
+        "source_rows_by_split": {
+          "dev": 405,
+          "test": 795
+        },
+        "files": [
+          {
+            "path": "results/E-0013-uncertainty-recheck/samples.jsonl",
+            "sha256": "5c6c8f4c0f9b4bc6268d5674ad5d0cb0d663ed78ef5ab97ba31c54987f879ff2",
+            "rows": 1200
+          }
+        ],
+        "origin": "immutable_existing_e0013",
+        "frozen_result": {
+          "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+          "sha256": "33f242faf921f4a5de49b9620b6a5507415a157d21f9688dce6616d32cda1800",
+          "config_fingerprint": "433c5772c8ede7f8"
+        },
+        "identity": {
+          "cell": "caa__qwen2.5-7b",
+          "method": "caa",
+          "model_label": "qwen2.5-7b",
+          "model_identity_key": "qwen2.5-7b-instruct",
+          "layer": 20,
+          "frozen_alpha": 8.0,
+          "best_prompt_id": "unc-strong-01",
+          "source_config_fingerprint": "433c5772c8ede7f8"
+        }
+      }
+    }
+  },
+  "grid_summary": {
+    "complete_case_ci_strictly_negative_by_available_cell": {
+      "caa__qwen2.5-7b": true
+    },
+    "adversarial_bounds_strictly_negative_by_available_cell": {
+      "caa__qwen2.5-7b": false
+    },
+    "all_four_complete_case_cis_strictly_negative": null,
+    "all_four_adversarial_bounds_strictly_negative": null,
+    "all_generation_grid_sign_claim_allowed": false
+  },
+  "claim_guard": "Complete-case estimates are post-generation conditioned. No all-generation sign is claimable for a cell unless its adversarial missingness interval has one strict sign. No grid claim is permitted unless all four cells are present and independently audited.",
+  "legacy_e0013_reproduction": {
+    "matches_original_one_cell_result": true,
+    "original_path": "results/E-0013-uncertainty-recheck/reanalysis.json",
+    "original_sha256": "ea91f10cce1de06f9c38c4777064e85b7fcf44f295f7ef983092ca0843edfd01",
+    "fields_checked": [
+      "as_run_point",
+      "baseline_compliance",
+      "complete_case_ci_hi",
+      "complete_case_ci_lo",
+      "complete_case_point",
+      "prompt_compliance",
+      "steer_compliance"
+    ]
+  }
+}

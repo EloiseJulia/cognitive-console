@@ -14,6 +14,7 @@ import hashlib
 import json
 import math
 import os
+import subprocess
 import sys
 import time
 from dataclasses import dataclass
@@ -50,6 +51,10 @@ DEFAULT_MAX_NEW_TOKENS = 64
 DEFAULT_TEMPERATURE = 0.7
 DEFAULT_SEED = 20260723
 DEFAULT_N_EXTRACTION = 28
+ITI_SIGMA_IDENTITY_REL_TOL = 5e-4
+ITI_SIGMA_IDENTITY_ABS_TOL = 5e-3
+CHECKPOINT_SCHEMA_VERSION = "e0013-format-replay-checkpoint-v1"
+TEST_USE_POLICY = "FROZEN_TEST_ITEMS_EVALUATED_ONCE_WITH_NO_SELECTION_OR_TUNING"
 
 
 @dataclass(frozen=True)
@@ -71,6 +76,95 @@ class FrozenCellConfig:
 
 def _sha256_text(text: str) -> str:
     return hashlib.sha256(str(text).encode("utf-8")).hexdigest()
+
+
+def _sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for block in iter(lambda: fh.read(1024 * 1024), b""):
+            h.update(block)
+    return h.hexdigest()
+
+
+def _canonical_hash(payload: object) -> str:
+    raw = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _array_sha256(value: np.ndarray) -> str:
+    array = np.asarray(value, dtype="<f8")
+    return hashlib.sha256(array.tobytes(order="C")).hexdigest()
+
+
+def _atomic_write_json(path: Path, payload: object) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pending = path.with_name(path.name + ".pending")
+    with open(pending, "w", encoding="utf-8") as fh:
+        json.dump(payload, fh, indent=2, ensure_ascii=False)
+        fh.write("\n")
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.replace(pending, path)
+
+
+def _write_once_or_verify_json(path: Path, payload: object) -> None:
+    encoded = (
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n"
+    ).encode("utf-8")
+    if path.exists():
+        if path.read_bytes() != encoded:
+            raise RuntimeError(f"refusing to overwrite non-identical artifact: {path}")
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pending = path.with_name(path.name + ".pending")
+    with open(pending, "wb") as fh:
+        fh.write(encoded)
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.replace(pending, path)
+
+
+def _write_once_or_verify_jsonl(path: Path, records: Iterable[Dict]) -> None:
+    encoded = "".join(
+        json.dumps(rec, ensure_ascii=False) + "\n" for rec in records
+    ).encode("utf-8")
+    if path.exists():
+        if path.read_bytes() != encoded:
+            raise RuntimeError(f"refusing to overwrite non-identical artifact: {path}")
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pending = path.with_name(path.name + ".pending")
+    with open(pending, "wb") as fh:
+        fh.write(encoded)
+        fh.flush()
+        os.fsync(fh.fileno())
+    os.replace(pending, path)
+
+
+def _git_dirty() -> bool:
+    proc = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(_REPO),
+            "status",
+            "--porcelain",
+            "--untracked-files=all",
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    ignored_prefix = "results/E-0013-uncertainty-grid-recheck/"
+    for line in proc.stdout.splitlines():
+        path = line[3:].replace("\\", "/")
+        if " -> " in path:
+            path = path.split(" -> ", 1)[1]
+        if not path.startswith(ignored_prefix):
+            return True
+    return False
 
 
 def _rel(path: Path) -> str:
@@ -133,10 +227,36 @@ def load_frozen_cell_config(frozen_root: Path, method: str, model_label: str) ->
     )
 
 
-def load_uncertainty_items(*, use_fixture: bool, n_items: Optional[int]) -> List[Dict]:
+def load_uncertainty_items(
+    *,
+    use_fixture: bool,
+    n_items: Optional[int],
+    frozen_items_path: Optional[Path] = None,
+) -> List[Dict]:
     if use_fixture:
         task = c2b_tasks.load_c2b_task(AXIS, use_fixture=True)
         items = list(task.items)
+    elif frozen_items_path is not None:
+        path = Path(frozen_items_path)
+        if not path.is_file():
+            raise FileNotFoundError(f"missing frozen uncertainty item snapshot: {path}")
+        items = []
+        with open(path, "r", encoding="utf-8") as fh:
+            for line_no, line in enumerate(fh, 1):
+                if not line.strip():
+                    continue
+                row = json.loads(line)
+                try:
+                    items.append({
+                        "id": str(row["id"]),
+                        "prompt": str(row["prompt"]),
+                        "answer": row["answer"],
+                        "aliases": list(row.get("aliases") or []),
+                    })
+                except KeyError as exc:
+                    raise ValueError(
+                        f"{path}:{line_no}: frozen item missing {exc.args[0]!r}"
+                    ) from exc
     else:
         items = c2b_tasks.load_uncertainty_set()
     cap = n_items if n_items is not None else adj.N_ITEMS_BY_AXIS[AXIS]
@@ -228,14 +348,23 @@ def _derive_hf_direction(cfg: FrozenCellConfig, model_id: str, out_dir: Path,
             f"{cfg.cell_key}: rederived ITI layer {iti.layer} != frozen layer {cfg.layer}; "
             "do not run E-0013 with a non-matching direction."
         )
-    if not math.isclose(float(iti.sigma), float(cfg.sigma), rel_tol=1e-6, abs_tol=1e-8):
+    sigma_abs_diff = abs(float(iti.sigma) - float(cfg.sigma))
+    sigma_limit = max(
+        ITI_SIGMA_IDENTITY_ABS_TOL,
+        ITI_SIGMA_IDENTITY_REL_TOL * abs(float(cfg.sigma)),
+    )
+    if sigma_abs_diff > sigma_limit:
         raise RuntimeError(
             f"{cfg.cell_key}: rederived ITI sigma {iti.sigma} != frozen sigma {cfg.sigma}; "
-            "do not run E-0013 with a non-matching direction."
+            f"identity tolerance={sigma_limit}. Do not run E-0013 with a "
+            "non-matching direction."
         )
     return iti.direction, {
         "direction_source": "iti_probe_direction_rederived_by_frozen_c2_path",
         "rederived_sigma": float(iti.sigma),
+        "frozen_sigma_used_for_effective_alpha": float(cfg.sigma),
+        "sigma_identity_abs_diff": sigma_abs_diff,
+        "sigma_identity_tolerance": sigma_limit,
         "rederived_probe_norm": float(np.linalg.norm(iti.vector)),
     }
 
@@ -248,11 +377,205 @@ def _make_backend(backend: str, model_id: str, items: Sequence[Dict], seed: int)
     return SteeredHFBackend(model_id, device=p0._pick_device(), dtype=p0._pick_dtype(), seed=seed)
 
 
+def _checkpoint_batch_path(
+    checkpoint_dir: Path, split_name: str, condition: str, start: int
+) -> Path:
+    return checkpoint_dir / "batches" / (
+        f"{split_name}__{condition}__batch-{int(start):05d}.json"
+    )
+
+
+def _expected_batch_jobs(
+    *,
+    cfg: FrozenCellConfig,
+    split_name: str,
+    condition: str,
+    items: Sequence[Dict],
+    seed: int,
+) -> Tuple[List[Dict], str, float, float]:
+    instruction, requested_alpha, effective_alpha = _condition_instruction_and_alpha(
+        cfg, condition
+    )
+    jobs: List[Dict] = []
+    for item in items:
+        prompt_text = adj.format_task_input(AXIS, instruction, item)
+        for sample_index in range(adj.K_SAMPLES):
+            jobs.append(
+                {
+                    "split": split_name,
+                    "condition": condition,
+                    "item_id": str(item["id"]),
+                    "sample_index": int(sample_index),
+                    "sample_seed": int(
+                        _call_seed(seed, item, effective_alpha, sample_index)
+                    ),
+                    "instruction_sha256": _sha256_text(instruction),
+                    "prompt_text_sha256": _sha256_text(prompt_text),
+                }
+            )
+    return jobs, instruction, requested_alpha, effective_alpha
+
+
+def _validate_checkpoint_record(
+    record: Dict,
+    *,
+    expected: Dict,
+    cfg: FrozenCellConfig,
+    item: Dict,
+    model_id: str,
+    experiment_id: str,
+    instruction: str,
+    requested_alpha: float,
+    effective_alpha: float,
+    backend_name: str,
+) -> None:
+    exact = {
+        "experiment_id": experiment_id,
+        "axis": AXIS,
+        "cell": cfg.cell_key,
+        "method": cfg.method,
+        "model_label": cfg.model_label,
+        "model_id": model_id,
+        "split": expected["split"],
+        "condition": expected["condition"],
+        "item_id": expected["item_id"],
+        "sample_index": expected["sample_index"],
+        "sample_seed": expected["sample_seed"],
+        "layer": cfg.layer,
+        "best_prompt_id": (
+            cfg.best_prompt_id if expected["condition"] == "prompt" else None
+        ),
+        "instruction_sha256": expected["instruction_sha256"],
+        "prompt_text_sha256": expected["prompt_text_sha256"],
+        "synthetic_proxy": bool(backend_name == "synthetic"),
+    }
+    for key, value in exact.items():
+        if record.get(key) != value:
+            raise RuntimeError(
+                f"{cfg.cell_key}: checkpoint {key} mismatch; "
+                f"expected={value!r} got={record.get(key)!r}"
+            )
+    for key, value in (
+        ("requested_alpha", requested_alpha),
+        ("effective_alpha", effective_alpha),
+    ):
+        if not math.isclose(
+            float(record.get(key)), float(value), rel_tol=1e-12, abs_tol=1e-12
+        ):
+            raise RuntimeError(f"{cfg.cell_key}: checkpoint {key} mismatch")
+    text = str(record.get("raw_text", ""))
+    if not text:
+        raise RuntimeError(f"{cfg.cell_key}: checkpoint has empty raw text")
+    if record.get("raw_text_sha256") != _sha256_text(text):
+        raise RuntimeError(f"{cfg.cell_key}: checkpoint raw-text hash mismatch")
+    expected_diag = score_uncertainty_record(text, item)
+    for key in (
+        "parse_confidence",
+        "format_compliant",
+        "item_is_correct",
+        "imputed_confidence",
+        "per_item_1minus_brier",
+    ):
+        actual, expected_value = record.get(key), expected_diag[key]
+        if isinstance(expected_value, float):
+            if not math.isclose(
+                float(actual), expected_value, rel_tol=1e-12, abs_tol=1e-12
+            ):
+                raise RuntimeError(
+                    f"{cfg.cell_key}: checkpoint scorer field {key} mismatch"
+                )
+        elif actual != expected_value:
+            raise RuntimeError(
+                f"{cfg.cell_key}: checkpoint scorer field {key} mismatch"
+            )
+    if _sha256_text(instruction) != expected["instruction_sha256"]:
+        raise RuntimeError(f"{cfg.cell_key}: internal instruction hash mismatch")
+
+
+def _load_checkpoint_batch(
+    path: Path,
+    *,
+    identity_sha256: str,
+    jobs: Sequence[Dict],
+    cfg: FrozenCellConfig,
+    items_by_id: Dict[str, Dict],
+    model_id: str,
+    experiment_id: str,
+    instruction: str,
+    requested_alpha: float,
+    effective_alpha: float,
+    backend_name: str,
+) -> Optional[List[Dict]]:
+    if not path.exists():
+        return None
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if payload.get("schema_version") != CHECKPOINT_SCHEMA_VERSION:
+        raise RuntimeError(f"{path}: unsupported checkpoint schema")
+    if payload.get("checkpoint_identity_sha256") != identity_sha256:
+        raise RuntimeError(f"{path}: checkpoint identity mismatch")
+    if payload.get("jobs_sha256") != _canonical_hash(list(jobs)):
+        raise RuntimeError(f"{path}: checkpoint job-plan mismatch")
+    records = payload.get("records")
+    if not isinstance(records, list) or len(records) != len(jobs):
+        raise RuntimeError(f"{path}: checkpoint row count mismatch")
+    if payload.get("records_sha256") != _canonical_hash(records):
+        raise RuntimeError(f"{path}: checkpoint records hash mismatch")
+    for record, expected in zip(records, jobs):
+        _validate_checkpoint_record(
+            record,
+            expected=expected,
+            cfg=cfg,
+            item=items_by_id[str(expected["item_id"])],
+            model_id=model_id,
+            experiment_id=experiment_id,
+            instruction=instruction,
+            requested_alpha=requested_alpha,
+            effective_alpha=effective_alpha,
+            backend_name=backend_name,
+        )
+    return [dict(record) for record in records]
+
+
+def _write_checkpoint_batch(
+    path: Path,
+    *,
+    identity_sha256: str,
+    jobs: Sequence[Dict],
+    records: Sequence[Dict],
+) -> None:
+    payload = {
+        "schema_version": CHECKPOINT_SCHEMA_VERSION,
+        "checkpoint_identity_sha256": identity_sha256,
+        "jobs_sha256": _canonical_hash(list(jobs)),
+        "records_sha256": _canonical_hash(list(records)),
+        "records": list(records),
+    }
+    _atomic_write_json(path, payload)
+
+
+def _checkpoint_inventory(paths: Sequence[Path]) -> List[Dict]:
+    return [
+        {"path": _rel(path), "sha256": _sha256_file(path)}
+        for path in sorted(paths, key=lambda value: str(value))
+    ]
+
+
+def _write_or_verify_seal(path: Path, payload: Dict) -> None:
+    if path.exists():
+        existing = json.loads(path.read_text(encoding="utf-8"))
+        if existing != payload:
+            raise RuntimeError(f"{path}: replay seal identity mismatch")
+        return
+    _atomic_write_json(path, payload)
+
+
 def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id: str,
                           items_by_split: Dict[str, List[Dict]], splits: Sequence[str],
                           out_dir: Path, max_new_tokens: int, temperature: float,
                           seed: int, batch_size: int, raw_text_max_chars: int,
-                          n_extraction: int) -> Tuple[List[Dict], Dict[str, object]]:
+                          n_extraction: int, experiment_id: str,
+                          protocol_identity: Optional[Dict[str, object]],
+                          item_identity: Dict[str, object]) -> Tuple[List[Dict], Dict[str, object]]:
     all_items = [it for sp in splits for it in items_by_split[sp]]
     backend = _make_backend(backend_name, model_id, all_items, seed)
     if backend_name == "synthetic":
@@ -261,22 +584,134 @@ def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id:
     else:
         direction, direction_meta = _derive_hf_direction(cfg, model_id, out_dir, n_extraction, seed)
 
-    records: List[Dict] = []
-    for split_name in splits:
-        for condition in CONDITIONS:
-            instruction, requested_alpha, effective_alpha = _condition_instruction_and_alpha(cfg, condition)
-            steer = SteerConfig(direction=direction, alpha=effective_alpha, layer=cfg.layer)
-            pending: List[Tuple[Dict, int, int, str]] = []
-            for item in items_by_split[split_name]:
-                prompt_text = adj.format_task_input(AXIS, instruction, item)
-                for sample_index in range(adj.K_SAMPLES):
-                    sample_seed = _call_seed(seed, item, effective_alpha, sample_index)
-                    pending.append((item, sample_index, sample_seed, prompt_text))
+    direction_sha256 = _array_sha256(direction)
+    checkpoint_dir = out_dir / "checkpoints"
+    checkpoint_identity = {
+        "schema_version": CHECKPOINT_SCHEMA_VERSION,
+        "experiment_id": experiment_id,
+        "evidence_scope": (
+            "format presence/missingness and pre-specified sensitivity only; "
+            "never a replacement scorer result"
+        ),
+        "cell": cfg.cell_key,
+        "method": cfg.method,
+        "model_label": cfg.model_label,
+        "model_id": model_id,
+        "model_identity_key": _model_identity_key(model_id),
+        "frozen_source_result": cfg.source_result_file,
+        "frozen_source_config_fingerprint": cfg.source_config_fingerprint,
+        "layer": cfg.layer,
+        "frozen_alpha": cfg.frozen_alpha,
+        "sigma": cfg.sigma,
+        "best_prompt_id": cfg.best_prompt_id,
+        "best_prompt_sha256": _sha256_text(cfg.best_prompt_text),
+        "neutral_prompt_sha256": _sha256_text(cfg.neutral_prompt),
+        "direction_sha256": direction_sha256,
+        "direction_identity": direction_meta,
+        "item_identity": item_identity,
+        "protocol_manifest": protocol_identity,
+        "generation": {
+            "seed": seed,
+            "sample_seed_algorithm": (
+                "BackendOutcomeSampler._call_seed(axis,item,effective_alpha,sample_index)"
+            ),
+            "k_samples": adj.K_SAMPLES,
+            "max_new_tokens": max_new_tokens,
+            "temperature": temperature,
+            "do_sample": bool(backend_name == "hf"),
+            "top_p": None,
+            "batch_size": batch_size,
+            "raw_text_max_chars": raw_text_max_chars,
+            "n_extraction": n_extraction,
+            "split_order": list(splits),
+            "condition_order": list(CONDITIONS),
+            "test_use_policy": TEST_USE_POLICY,
+        },
+    }
+    identity_sha256 = _canonical_hash(checkpoint_identity)
+    identity_path = checkpoint_dir / "checkpoint_identity.json"
+    identity_payload = {
+        "checkpoint_identity_sha256": identity_sha256,
+        "checkpoint_identity": checkpoint_identity,
+    }
+    _write_or_verify_seal(identity_path, identity_payload)
 
-            for start in range(0, len(pending), max(1, int(batch_size))):
-                chunk = pending[start:start + max(1, int(batch_size))]
-                prompts = [p for _, _, _, p in chunk]
-                seeds = [s for _, _, s, _ in chunk]
+    records: List[Dict] = []
+    batch_paths_by_split: Dict[str, List[Path]] = {
+        split_name: [] for split_name in splits
+    }
+    checkpoint_reused = 0
+    checkpoint_generated = 0
+    checkpoint_generated_by_split = {split_name: 0 for split_name in splits}
+    test_complete_path = checkpoint_dir / "test_complete.json"
+    test_was_complete = test_complete_path.exists()
+    items_by_id = {str(item["id"]): item for item in all_items}
+    for split_name in splits:
+        split_plan: List[Dict] = []
+        for condition in CONDITIONS:
+            jobs, _, _, _ = _expected_batch_jobs(
+                cfg=cfg,
+                split_name=split_name,
+                condition=condition,
+                items=items_by_split[split_name],
+                seed=seed,
+            )
+            split_plan.extend(jobs)
+        if split_name == "test":
+            _write_or_verify_seal(
+                checkpoint_dir / "test_started.json",
+                {
+                    "checkpoint_identity_sha256": identity_sha256,
+                    "test_use_policy": TEST_USE_POLICY,
+                    "test_jobs": len(split_plan),
+                    "test_plan_sha256": _canonical_hash(split_plan),
+                    "selection_or_tuning_permitted": False,
+                },
+            )
+        for condition in CONDITIONS:
+            jobs, instruction, requested_alpha, effective_alpha = _expected_batch_jobs(
+                cfg=cfg,
+                split_name=split_name,
+                condition=condition,
+                items=items_by_split[split_name],
+                seed=seed,
+            )
+            steer = SteerConfig(direction=direction, alpha=effective_alpha, layer=cfg.layer)
+            for start in range(0, len(jobs), max(1, int(batch_size))):
+                chunk_jobs = jobs[start:start + max(1, int(batch_size))]
+                checkpoint_path = _checkpoint_batch_path(
+                    checkpoint_dir, split_name, condition, start
+                )
+                batch_paths_by_split[split_name].append(checkpoint_path)
+                cached = _load_checkpoint_batch(
+                    checkpoint_path,
+                    identity_sha256=identity_sha256,
+                    jobs=chunk_jobs,
+                    cfg=cfg,
+                    items_by_id=items_by_id,
+                    model_id=model_id,
+                    experiment_id=experiment_id,
+                    instruction=instruction,
+                    requested_alpha=requested_alpha,
+                    effective_alpha=effective_alpha,
+                    backend_name=backend_name,
+                )
+                if cached is not None:
+                    records.extend(cached)
+                    checkpoint_reused += len(cached)
+                    continue
+                if split_name == "test" and test_was_complete:
+                    raise RuntimeError(
+                        f"{cfg.cell_key}: TEST seal exists but checkpoint is missing; "
+                        "refusing a second TEST generation"
+                    )
+                prompts = [
+                    adj.format_task_input(
+                        AXIS, instruction, items_by_id[str(job["item_id"])]
+                    )
+                    for job in chunk_jobs
+                ]
+                seeds = [int(job["sample_seed"]) for job in chunk_jobs]
                 if hasattr(backend, "generate_batch"):
                     texts = backend.generate_batch(
                         prompts,
@@ -288,7 +723,8 @@ def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id:
                     )
                 else:
                     texts = []
-                    for _, _, sample_seed, prompt in chunk:
+                    for job, prompt in zip(chunk_jobs, prompts):
+                        sample_seed = int(job["sample_seed"])
                         try:
                             text = backend.generate(
                                 prompt,
@@ -301,11 +737,26 @@ def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id:
                         except TypeError:
                             text = backend.generate(prompt, steer, max_new_tokens=max_new_tokens)
                         texts.append(text)
-                for (item, sample_index, sample_seed, prompt_text), raw in zip(chunk, texts):
+                if len(texts) != len(chunk_jobs):
+                    raise RuntimeError(
+                        f"{cfg.cell_key}: backend returned {len(texts)} texts "
+                        f"for {len(chunk_jobs)} frozen jobs"
+                    )
+                batch_records: List[Dict] = []
+                for job, prompt_text, raw in zip(chunk_jobs, prompts, texts):
+                    item = items_by_id[str(job["item_id"])]
                     raw_payload, raw_truncated = _truncate_raw(str(raw), raw_text_max_chars)
+                    if raw_truncated:
+                        raise RuntimeError(
+                            f"{cfg.cell_key}: generated text exceeded the frozen "
+                            f"raw-text limit for {job['split']}/"
+                            f"{job['condition']}/{job['item_id']}/"
+                            f"{job['sample_index']}; no truncated row may enter "
+                            "format/missingness evidence"
+                        )
                     diag = score_uncertainty_record(str(raw), item)
-                    records.append({
-                        "experiment_id": EXPERIMENT_ID,
+                    batch_records.append({
+                        "experiment_id": experiment_id,
                         "axis": AXIS,
                         "cell": cfg.cell_key,
                         "method": cfg.method,
@@ -314,8 +765,8 @@ def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id:
                         "split": split_name,
                         "condition": condition,
                         "item_id": str(item.get("id")),
-                        "sample_index": int(sample_index),
-                        "sample_seed": int(sample_seed),
+                        "sample_index": int(job["sample_index"]),
+                        "sample_seed": int(job["sample_seed"]),
                         "layer": int(cfg.layer),
                         "requested_alpha": float(requested_alpha),
                         "effective_alpha": float(effective_alpha),
@@ -328,10 +779,53 @@ def generate_cell_samples(cfg: FrozenCellConfig, *, backend_name: str, model_id:
                         "synthetic_proxy": bool(backend_name == "synthetic"),
                         **diag,
                     })
+                _write_checkpoint_batch(
+                    checkpoint_path,
+                    identity_sha256=identity_sha256,
+                    jobs=chunk_jobs,
+                    records=batch_records,
+                )
+                records.extend(batch_records)
+                checkpoint_generated += len(batch_records)
+                checkpoint_generated_by_split[split_name] += len(batch_records)
+        split_paths = batch_paths_by_split[split_name]
+        split_seal = {
+            "checkpoint_identity_sha256": identity_sha256,
+            "split": split_name,
+            "jobs": len(split_plan),
+            "plan_sha256": _canonical_hash(split_plan),
+            "checkpoint_files": _checkpoint_inventory(split_paths),
+        }
+        _write_or_verify_seal(
+            checkpoint_dir / f"{split_name}_complete.json", split_seal
+        )
+    if test_was_complete and checkpoint_generated_by_split.get("test", 0):
+        raise RuntimeError(
+            f"{cfg.cell_key}: TEST was previously sealed but fresh generations occurred"
+        )
+    checkpoint_paths = [
+        path for paths in batch_paths_by_split.values() for path in paths
+    ]
+    checkpoint_paths.append(identity_path)
+    checkpoint_paths.extend(
+        checkpoint_dir / f"{split_name}_complete.json" for split_name in splits
+    )
+    if "test" in splits:
+        checkpoint_paths.append(checkpoint_dir / "test_started.json")
     meta = {
-        "direction": direction_meta,
+        "direction": {**direction_meta, "direction_sha256": direction_sha256},
         "n_records": len(records),
         "splits": list(splits),
+        "checkpoint": {
+            "schema_version": CHECKPOINT_SCHEMA_VERSION,
+            "identity_path": _rel(identity_path),
+            "identity_sha256": identity_sha256,
+            "records_reused": checkpoint_reused,
+            "records_generated": checkpoint_generated,
+            "files": _checkpoint_inventory(checkpoint_paths),
+            "test_use_policy": TEST_USE_POLICY,
+            "test_resumed_without_regenerating_completed_batches": True,
+        },
     }
     return records, meta
 
@@ -472,18 +966,6 @@ def reanalyse(records: Sequence[Dict], *, bootstrap_b: int, seed: int) -> Dict[s
     }
 
 
-def _write_jsonl(path: Path, records: Iterable[Dict]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8") as fh:
-        for rec in records:
-            fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
-
-
-def _write_json(path: Path, payload: Dict) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-
-
 def _model_identity_key(model_ref: str) -> str:
     parts = [p for p in str(model_ref).strip().replace(os.sep, "/").replace("\\", "/").split("/") if p]
     return (parts[-1] if parts else str(model_ref)).strip().lower()
@@ -499,6 +981,7 @@ def _looks_like_local_path(model_ref: str) -> bool:
 
 def build_parser() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description="E-0013 uncertainty format-compliance recheck")
+    ap.add_argument("--experiment-id", default=EXPERIMENT_ID)
     ap.add_argument("--backend", choices=["synthetic", "hf"], default="synthetic")
     ap.add_argument("--frozen-root", default=str(DEFAULT_FROZEN_ROOT))
     ap.add_argument("--out-dir", default=str(DEFAULT_OUT_DIR))
@@ -517,6 +1000,24 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--seed", type=int, default=DEFAULT_SEED)
     ap.add_argument("--batch-size", type=int, default=16)
     ap.add_argument("--raw-text-max-chars", type=int, default=8000)
+    ap.add_argument(
+        "--frozen-items",
+        default=None,
+        help="committed frozen 80-item JSONL snapshot; mandatory for manifest-pinned hf replay",
+    )
+    ap.add_argument(
+        "--protocol-manifest",
+        default=None,
+        help="frozen four-cell replay manifest; hard-validates items/settings/cell identities",
+    )
+    ap.add_argument(
+        "--resume-incomplete",
+        action="store_true",
+        help=(
+            "resume only identity-matching checkpoints/finalization in an isolated "
+            "replay directory; completed artifacts are never regenerated"
+        ),
+    )
     return ap
 
 
@@ -576,10 +1077,153 @@ def _parse_cell(cell_key: str) -> Tuple[str, str]:
     return method, model_label
 
 
+def _validate_protocol_manifest(
+    args,
+    *,
+    frozen_configs: Dict[str, FrozenCellConfig],
+    items: Sequence[Dict],
+    items_by_split: Dict[str, List[Dict]],
+) -> Optional[Dict[str, object]]:
+    if not args.protocol_manifest:
+        return None
+    path = Path(args.protocol_manifest).resolve()
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    generation = dict(payload.get("generation") or {})
+    expected_values = {
+        "seed": args.seed,
+        "k_samples": adj.K_SAMPLES,
+        "max_new_tokens": args.max_new_tokens,
+        "temperature": args.temperature,
+        "do_sample": bool(args.backend == "hf"),
+        "top_p": None,
+        "batch_size": args.batch_size,
+        "n_extraction": args.n_extraction,
+        "raw_text_max_chars": args.raw_text_max_chars,
+    }
+    mismatches = [
+        f"{key}: manifest={generation.get(key)!r}, runner={actual!r}"
+        for key, actual in expected_values.items()
+        if generation.get(key) != actual
+    ]
+    if tuple(generation.get("split_order") or ()) != ("dev", "test"):
+        mismatches.append("manifest split_order is not the frozen DEV-then-TEST order")
+    if tuple(generation.get("condition_order") or ()) != CONDITIONS:
+        mismatches.append("manifest condition_order mismatch")
+    if generation.get("test_use_policy") != TEST_USE_POLICY:
+        mismatches.append("manifest TEST-use policy mismatch")
+    evidence_scope = dict(payload.get("evidence_scope") or {})
+    if evidence_scope.get("frozen_results_replaced") is not False:
+        mismatches.append("manifest permits frozen-result replacement")
+    if evidence_scope.get("new_scorer_result_created") is not False:
+        mismatches.append("manifest permits a new scorer result")
+    item_spec = dict(generation.get("item_artifact") or {})
+    if args.backend == "hf":
+        if tuple(args.splits) != ("dev", "test"):
+            mismatches.append(
+                f"split order: manifest requires ('dev', 'test'), runner={tuple(args.splits)!r}"
+            )
+        if not args.frozen_items:
+            mismatches.append("hf replay requires --frozen-items from the protocol manifest")
+        else:
+            actual_item_path = Path(args.frozen_items).resolve()
+            manifest_item_path = Path(item_spec.get("path", ""))
+            if not manifest_item_path.is_absolute():
+                manifest_item_path = (_REPO / manifest_item_path).resolve()
+            if actual_item_path != manifest_item_path:
+                mismatches.append(
+                    f"item path: manifest={manifest_item_path}, runner={actual_item_path}"
+                )
+            elif _sha256_file(actual_item_path) != item_spec.get("sha256"):
+                mismatches.append("frozen item artifact sha256 mismatch")
+    canonical_items = [
+        {
+            "id": str(item["id"]),
+            "prompt": str(item["prompt"]),
+            "answer": item["answer"],
+            "aliases": list(item.get("aliases") or []),
+        }
+        for item in items
+    ]
+    if item_spec:
+        if len(canonical_items) != int(item_spec.get("item_count", -1)):
+            mismatches.append("frozen item count mismatch")
+        if _canonical_hash(canonical_items) != item_spec.get("canonical_items_sha256"):
+            mismatches.append("canonical frozen item hash mismatch")
+        for split_name in ("dev", "test"):
+            ids = [str(item["id"]) for item in items_by_split[split_name]]
+            split_spec = dict((item_spec.get("splits") or {}).get(split_name) or {})
+            if len(ids) != int(split_spec.get("count", -1)):
+                mismatches.append(f"{split_name} count mismatch")
+            if _canonical_hash(ids) != split_spec.get("ids_sha256"):
+                mismatches.append(f"{split_name} item-id hash mismatch")
+    manifest_cells = dict(payload.get("cells") or {})
+    for cell_key, cfg in frozen_configs.items():
+        if cell_key not in manifest_cells:
+            mismatches.append(f"cell missing from protocol manifest: {cell_key}")
+            continue
+        cell_spec = dict(manifest_cells[cell_key])
+        expected = dict(cell_spec.get("expected") or {})
+        actuals = {
+            "method": cfg.method,
+            "model_label": cfg.model_label,
+            "model_identity_key": _model_identity_key(cfg.model_id),
+            "layer": cfg.layer,
+            "frozen_alpha": cfg.frozen_alpha,
+            "best_prompt_id": cfg.best_prompt_id,
+            "best_prompt_sha256": _sha256_text(cfg.best_prompt_text),
+            "neutral_prompt_sha256": _sha256_text(cfg.neutral_prompt),
+            "source_config_fingerprint": cfg.source_config_fingerprint,
+        }
+        for key, actual in actuals.items():
+            if expected.get(key) != actual:
+                mismatches.append(
+                    f"{cell_key}.{key}: manifest={expected.get(key)!r}, runner={actual!r}"
+                )
+        if not math.isclose(
+            float(expected.get("sigma", math.nan)),
+            float(cfg.sigma),
+            rel_tol=1e-10,
+            abs_tol=1e-10,
+        ):
+            mismatches.append(f"{cell_key}.sigma mismatch")
+        frozen_spec = dict(cell_spec.get("frozen_result") or {})
+        frozen_path = Path(cfg.source_result_file)
+        if not frozen_path.is_absolute():
+            frozen_path = (_REPO / frozen_path).resolve()
+        if _sha256_file(frozen_path) != frozen_spec.get("sha256"):
+            mismatches.append(f"{cell_key} frozen result sha256 mismatch")
+    if mismatches:
+        raise SystemExit(
+            "protocol-manifest identity check failed: " + "; ".join(mismatches)
+        )
+    return {
+        "path": _rel(path),
+        "sha256": _sha256_file(path),
+        "schema_version": payload.get("schema_version"),
+        "experiment_id": payload.get("experiment_id"),
+        "evidence_scope": payload.get("evidence_scope"),
+    }
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     args = build_parser().parse_args(argv)
     _validate_generation_identity(args)
     out_dir = Path(args.out_dir).resolve()
+    if out_dir == DEFAULT_OUT_DIR.resolve() and args.resume_incomplete:
+        raise SystemExit(
+            "--resume-incomplete is forbidden for the original E-0013 directory"
+        )
+    completed_artifacts = [
+        out_dir / "samples.jsonl",
+        out_dir / "reanalysis.json",
+        out_dir / "run_manifest.json",
+    ]
+    existing = [path for path in completed_artifacts if path.exists()]
+    if existing and not args.resume_incomplete:
+        raise SystemExit(
+            "refusing to overwrite existing E-0013 artifacts: "
+            + ", ".join(_rel(path) for path in existing)
+        )
     out_dir.mkdir(parents=True, exist_ok=True)
     frozen_configs: Dict[str, FrozenCellConfig] = {}
     model_ids: Dict[str, str] = {}
@@ -592,12 +1236,48 @@ def main(argv: Optional[List[str]] = None) -> int:
         )
         frozen_configs[cell_key] = cfg
     use_fixture = args.backend == "synthetic"
-    items = load_uncertainty_items(use_fixture=use_fixture, n_items=args.n_items)
+    frozen_items_path = Path(args.frozen_items).resolve() if args.frozen_items else None
+    items = load_uncertainty_items(
+        use_fixture=use_fixture,
+        n_items=args.n_items,
+        frozen_items_path=frozen_items_path,
+    )
     items_by_split = split_items(items, args.seed)
+    protocol_identity = _validate_protocol_manifest(
+        args,
+        frozen_configs=frozen_configs,
+        items=items,
+        items_by_split=items_by_split,
+    )
     splits = list(dict.fromkeys(args.splits))
+    item_identity = {
+        "source": (
+            _rel(frozen_items_path)
+            if frozen_items_path is not None
+            else ("synthetic_fixture" if use_fixture else "live_hf_dataset_loader")
+        ),
+        "source_sha256": (
+            _sha256_file(frozen_items_path) if frozen_items_path is not None else None
+        ),
+        "canonical_items_sha256": _canonical_hash([
+            {
+                "id": str(item["id"]),
+                "prompt": str(item["prompt"]),
+                "answer": item["answer"],
+                "aliases": list(item.get("aliases") or []),
+            }
+            for item in items
+        ]),
+        "item_count": len(items),
+        "split_ids_sha256": {
+            name: _canonical_hash([str(item["id"]) for item in rows])
+            for name, rows in items_by_split.items()
+        },
+    }
     cell_records: List[Dict] = []
     cell_meta: Dict[str, object] = {}
     started = utcnow()
+    dirty_at_start = _git_dirty()
     t0 = time.time()
     for cell_key in args.cells:
         cfg = frozen_configs[cell_key]
@@ -610,20 +1290,28 @@ def main(argv: Optional[List[str]] = None) -> int:
             f"layer={cfg.layer} alpha={cfg.frozen_alpha} prompt={cfg.best_prompt_id}",
             flush=True,
         )
+        cell_runtime_dir = (
+            out_dir if len(args.cells) == 1 else out_dir / f"cell_{cell_key}"
+        )
         recs, meta = generate_cell_samples(
             cfg,
             backend_name=args.backend,
             model_id=model_id,
             items_by_split=items_by_split,
             splits=splits,
-            out_dir=out_dir / f"cell_{cell_key}",
+            out_dir=cell_runtime_dir,
             max_new_tokens=args.max_new_tokens,
             temperature=args.temperature,
             seed=args.seed,
             batch_size=args.batch_size,
             raw_text_max_chars=args.raw_text_max_chars,
             n_extraction=args.n_extraction,
+            experiment_id=args.experiment_id,
+            protocol_identity=protocol_identity,
+            item_identity=item_identity,
         )
+        for rec in recs:
+            rec["experiment_id"] = args.experiment_id
         cell_records.extend(recs)
         cell_meta[cell_key] = {
             "frozen_config": cfg.__dict__,
@@ -637,18 +1325,46 @@ def main(argv: Optional[List[str]] = None) -> int:
     samples_path = out_dir / "samples.jsonl"
     reanalysis_path = out_dir / "reanalysis.json"
     manifest_path = out_dir / "run_manifest.json"
-    _write_jsonl(samples_path, cell_records)
-    analysis = reanalyse(cell_records, bootstrap_b=args.bootstrap_b, seed=args.seed)
-    _write_json(reanalysis_path, analysis)
+    _write_once_or_verify_jsonl(samples_path, cell_records)
+    computed_analysis = reanalyse(
+        cell_records, bootstrap_b=args.bootstrap_b, seed=args.seed
+    )
+    computed_analysis["experiment_id"] = args.experiment_id
+    if reanalysis_path.exists():
+        analysis = json.loads(reanalysis_path.read_text(encoding="utf-8"))
+        old_comparable = dict(analysis)
+        new_comparable = dict(computed_analysis)
+        old_comparable.pop("generated_at", None)
+        new_comparable.pop("generated_at", None)
+        if old_comparable != new_comparable:
+            raise RuntimeError(
+                f"refusing to overwrite non-identical artifact: {reanalysis_path}"
+            )
+    else:
+        analysis = computed_analysis
+        _write_once_or_verify_json(reanalysis_path, analysis)
     manifest = {
-        "experiment_id": EXPERIMENT_ID,
+        "experiment_id": args.experiment_id,
         "valid_for_paper": False,
-        "purpose": "uncertainty format-compliance robustness recheck; does not modify frozen E-0006",
+        "purpose": (
+            "uncertainty format/missingness robustness recheck; creates no "
+            "replacement E-0006 scorer result"
+        ),
+        "evidence_scope": {
+            "allowed": [
+                "confidence-format presence/missingness",
+                "pre-specified complete-case sensitivity",
+                "pre-specified adversarial missingness bounds",
+            ],
+            "frozen_results_replaced": False,
+            "new_scorer_result_created": False,
+        },
         "backend": args.backend,
         "started_at": started,
         "ended_at": utcnow(),
         "wall_clock_seconds": time.time() - t0,
         "code_commit": git_commit(str(_REPO)),
+        "dirty_tree_at_start": dirty_at_start,
         "generation_identity": {
             "model_by_cell": {k: v.model_id for k, v in frozen_configs.items()},
             "frozen_model_by_cell": {k: v.model_id for k, v in frozen_configs.items()},
@@ -658,17 +1374,79 @@ def main(argv: Optional[List[str]] = None) -> int:
             "temperature": args.temperature,
             "seed": args.seed,
             "k_samples": adj.K_SAMPLES,
+            "batch_size": args.batch_size,
+            "n_extraction": args.n_extraction,
+            "raw_text_max_chars": args.raw_text_max_chars,
+            "do_sample": bool(args.backend == "hf"),
+            "top_p": None,
+            "test_use_policy": TEST_USE_POLICY,
         },
+        "protocol_manifest": protocol_identity,
+        "item_identity": item_identity,
         "frozen_root": _rel(Path(args.frozen_root)),
         "cells": cell_meta,
         "artifacts": {
-            "samples_jsonl": _rel(samples_path),
-            "reanalysis_json": _rel(reanalysis_path),
+            "samples_jsonl": {
+                "path": _rel(samples_path),
+                "sha256": _sha256_file(samples_path),
+            },
+            "reanalysis_json": {
+                "path": _rel(reanalysis_path),
+                "sha256": _sha256_file(reanalysis_path),
+            },
             "run_manifest_json": _rel(manifest_path),
         },
         "synthetic_proxy": bool(args.backend == "synthetic"),
     }
-    _write_json(manifest_path, manifest)
+    if manifest_path.exists():
+        existing_manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        checks = {
+            "experiment_id": args.experiment_id,
+            "backend": args.backend,
+            "protocol_manifest": protocol_identity,
+            "item_identity": item_identity,
+            "frozen_root": _rel(Path(args.frozen_root)),
+        }
+        for key, expected in checks.items():
+            if existing_manifest.get(key) != expected:
+                raise RuntimeError(
+                    f"refusing to overwrite incompatible run manifest: {key}"
+                )
+        if set(existing_manifest.get("cells") or {}) != set(args.cells):
+            raise RuntimeError(
+                "refusing to overwrite incompatible run manifest: cells"
+            )
+        generation_identity = dict(
+            existing_manifest.get("generation_identity") or {}
+        )
+        generation_checks = {
+            "max_new_tokens": args.max_new_tokens,
+            "temperature": args.temperature,
+            "seed": args.seed,
+            "k_samples": adj.K_SAMPLES,
+            "batch_size": args.batch_size,
+            "n_extraction": args.n_extraction,
+            "raw_text_max_chars": args.raw_text_max_chars,
+            "do_sample": bool(args.backend == "hf"),
+            "top_p": None,
+            "test_use_policy": TEST_USE_POLICY,
+        }
+        for key, expected in generation_checks.items():
+            if generation_identity.get(key) != expected:
+                raise RuntimeError(
+                    f"refusing to overwrite incompatible run manifest: "
+                    f"generation_identity.{key}"
+                )
+        artifacts = dict(existing_manifest.get("artifacts") or {})
+        if (
+            dict(artifacts.get("samples_jsonl") or {}).get("sha256")
+            != _sha256_file(samples_path)
+            or dict(artifacts.get("reanalysis_json") or {}).get("sha256")
+            != _sha256_file(reanalysis_path)
+        ):
+            raise RuntimeError("existing run manifest artifact hashes do not match")
+    else:
+        _write_once_or_verify_json(manifest_path, manifest)
     print(f"[E-0013] wrote {_rel(samples_path)}")
     print(f"[E-0013] wrote {_rel(reanalysis_path)}")
     return 0

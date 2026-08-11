@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 
@@ -146,6 +147,84 @@ def test_manifest_records_frozen_effective_and_identity_key_for_override(tmp_pat
     assert cell["frozen_model_id"] == frozen_model
     assert cell["effective_model_ref"] == effective_model
     assert cell["model_identity_key"] == "qwen2.5-7b-instruct"
+
+
+def test_checkpoint_resume_reuses_completed_test_without_generation(
+    tmp_path, monkeypatch
+):
+    frozen_root = _write_minimal_frozen_root(tmp_path / "frozen")
+    out_dir = tmp_path / "e0013"
+    argv = [
+        "--backend", "synthetic",
+        "--frozen-root", str(frozen_root),
+        "--out-dir", str(out_dir),
+        "--cells", "caa__qwen2.5-7b",
+        "--splits", "dev", "test",
+        "--n-items", "4",
+        "--bootstrap-b", "200",
+        "--allow-underpowered",
+    ]
+    assert R.main(argv) == 0
+    original_samples_sha = R._sha256_file(out_dir / "samples.jsonl")
+    test_seal = json.loads(
+        (out_dir / "checkpoints" / "test_complete.json")
+        .read_text(encoding="utf-8")
+    )
+    assert test_seal["jobs"] == 45
+    assert len(test_seal["checkpoint_files"]) == 3
+
+    for name in ("samples.jsonl", "reanalysis.json", "run_manifest.json"):
+        (out_dir / name).unlink()
+
+    def fail_if_generated(*args, **kwargs):
+        raise AssertionError("completed checkpoint batch was regenerated")
+
+    monkeypatch.setattr(
+        R.SyntheticC2bTaskBackend, "generate", fail_if_generated
+    )
+    assert R.main([*argv, "--resume-incomplete"]) == 0
+    assert R._sha256_file(out_dir / "samples.jsonl") == original_samples_sha
+    manifest = json.loads(
+        (out_dir / "run_manifest.json").read_text(encoding="utf-8")
+    )
+    checkpoint = manifest["cells"]["caa__qwen2.5-7b"]["checkpoint"]
+    assert checkpoint["records_generated"] == 0
+    assert checkpoint["records_reused"] == 60
+    assert checkpoint["test_use_policy"] == R.TEST_USE_POLICY
+
+
+def test_test_complete_seal_refuses_missing_test_checkpoint(tmp_path):
+    frozen_root = _write_minimal_frozen_root(tmp_path / "frozen")
+    out_dir = tmp_path / "e0013"
+    argv = [
+        "--backend", "synthetic",
+        "--frozen-root", str(frozen_root),
+        "--out-dir", str(out_dir),
+        "--cells", "caa__qwen2.5-7b",
+        "--splits", "dev", "test",
+        "--n-items", "4",
+        "--bootstrap-b", "200",
+        "--allow-underpowered",
+    ]
+    assert R.main(argv) == 0
+    checkpoint_dir = out_dir / "checkpoints"
+    test_seal = json.loads(
+        (checkpoint_dir / "test_complete.json").read_text(encoding="utf-8")
+    )
+    missing = tmp_path / "unused"
+    for row in test_seal["checkpoint_files"]:
+        candidate = Path(row["path"])
+        if not candidate.is_absolute():
+            candidate = R._REPO / candidate
+        if candidate.exists():
+            missing = candidate
+            break
+    assert missing.exists()
+    missing.unlink()
+    for name in ("samples.jsonl", "reanalysis.json", "run_manifest.json"):
+        (out_dir / name).unlink()
+    with pytest.raises(RuntimeError, match="TEST seal exists"):
+        R.main([*argv, "--resume-incomplete"])
 
 
 def test_model_identity_mismatch_raises_before_generation(tmp_path):

@@ -18,6 +18,8 @@ from ..randomness import pcg64_rng
 from .generate import SteeredHFBackend, unit_vector
 
 _EPS = 1e-12
+FROZEN_EOS_TOKEN_IDS = (128001, 128009)
+FROZEN_EOS_TOKEN_STRINGS = ("<|end_of_text|>", "<|eot_id|>")
 FROZEN_SAMPLING_CONFIG = {
     "max_length": None,
     "min_length": 0,
@@ -87,6 +89,47 @@ FROZEN_SAMPLING_CONFIG = {
     "decoder_start_token_id": None,
 }
 _GENERATION_CONFIG_METADATA_KEYS = {"_from_model_config", "transformers_version"}
+
+
+def validate_frozen_eos_mapping(tokenizer) -> Dict[str, object]:
+    """Verify the pinned Llama-3 tokenizer's two generation stop tokens."""
+
+    try:
+        token_strings = tuple(
+            str(value)
+            for value in tokenizer.convert_ids_to_tokens(
+                list(FROZEN_EOS_TOKEN_IDS)
+            )
+        )
+    except Exception as exc:
+        raise RuntimeError("tokenizer cannot resolve frozen EOS token IDs") from exc
+    if token_strings != FROZEN_EOS_TOKEN_STRINGS:
+        raise RuntimeError(
+            "pinned tokenizer EOS mapping mismatch: "
+            f"{token_strings} != {FROZEN_EOS_TOKEN_STRINGS}"
+        )
+    eos_token_id = getattr(tokenizer, "eos_token_id", None)
+    if eos_token_id is not None and int(eos_token_id) not in FROZEN_EOS_TOKEN_IDS:
+        raise RuntimeError(
+            f"tokenizer primary EOS id {eos_token_id} is outside the frozen set"
+        )
+    return {
+        "eos_token_ids": list(FROZEN_EOS_TOKEN_IDS),
+        "eos_token_strings": list(token_strings),
+        "primary_eos_token_id": (
+            None if eos_token_id is None else int(eos_token_id)
+        ),
+    }
+
+
+def generation_was_truncated(
+    generated_token_ids: Sequence[int], *, max_new_tokens: int
+) -> bool:
+    token_ids = [int(value) for value in generated_token_ids]
+    ended_with_eos = bool(
+        token_ids and token_ids[-1] in set(FROZEN_EOS_TOKEN_IDS)
+    )
+    return bool(len(token_ids) >= int(max_new_tokens) and not ended_with_eos)
 
 
 def _array_sha256(array: np.ndarray) -> str:
@@ -394,6 +437,7 @@ class OfficialITIHFBackend(SteeredHFBackend):
         snapshot_path = str(snapshot_path)
         config = AutoConfig.from_pretrained(snapshot_path, local_files_only=True)
         tokenizer = AutoTokenizer.from_pretrained(snapshot_path, local_files_only=True)
+        validate_frozen_eos_mapping(tokenizer)
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
         try:
@@ -442,6 +486,7 @@ class OfficialITIHFBackend(SteeredHFBackend):
             "do_sample": bool(do_sample),
             "temperature": float(temperature),
         }
+        validate_frozen_eos_mapping(self._tokenizer)
         expected_requested = {
             "do_sample": FROZEN_SAMPLING_CONFIG["do_sample"],
             "temperature": FROZEN_SAMPLING_CONFIG["temperature"],
@@ -480,7 +525,7 @@ class OfficialITIHFBackend(SteeredHFBackend):
             {
                 "max_new_tokens": 64,
                 "pad_token_id": self._tokenizer.pad_token_id,
-                "eos_token_id": self._tokenizer.eos_token_id,
+                "eos_token_id": list(FROZEN_EOS_TOKEN_IDS),
                 "bos_token_id": self._tokenizer.bos_token_id,
             }
         )
@@ -766,9 +811,7 @@ class OfficialITIHFBackend(SteeredHFBackend):
         generated = output[0][input_len:]
         token_count = int(generated.shape[0])
         text = self._tokenizer.decode(generated, skip_special_tokens=True).strip()
-        eos_id = getattr(self._tokenizer, "eos_token_id", None)
-        ended_with_eos = bool(
-            token_count and eos_id is not None and int(generated[-1]) == int(eos_id)
+        truncated = generation_was_truncated(
+            generated.tolist(), max_new_tokens=max_new_tokens
         )
-        truncated = bool(token_count >= int(max_new_tokens) and not ended_with_eos)
         return text, token_count, truncated

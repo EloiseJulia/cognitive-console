@@ -6,6 +6,7 @@ import hashlib
 import hmac
 import json
 import os
+import platform
 import re
 import time
 from dataclasses import asdict, dataclass
@@ -32,13 +33,14 @@ BOOTSTRAP_PERCENTILE_METHOD = "linear"
 RANDOM_DIRECTION_SEED_OFFSET = 909
 PRIMARY_BOOTSTRAP_SEED = 20260811
 RANDOM_BOOTSTRAP_SEED = 20260812
-AUTHORIZATION_SCHEMA_VERSION = 2
+AUTHORIZATION_SCHEMA_VERSION = 3
 AUTHORIZATION_KEY_ENV = "COGNITIVE_CONSOLE_TEST_AUTH_HMAC_KEY"
-GLOBAL_ATTEMPT_REGISTRY_RELATIVE = (
-    Path(".cognitive-console")
-    / "iti-truthfulqa-positive-control"
-    / "test-attempts.jsonl"
+GLOBAL_ATTEMPT_REGISTRY_PATH_TEXT = (
+    "/var/lib/cognitive-console/iti-truthfulqa-positive-control/"
+    "test-attempts.jsonl"
 )
+GLOBAL_ATTEMPT_REGISTRY_PATH = Path(GLOBAL_ATTEMPT_REGISTRY_PATH_TEXT)
+REGISTRY_RECORD_SCHEMA_VERSION = 2
 
 
 def sha_text(text: str) -> str:
@@ -787,17 +789,95 @@ def adjudicate_test(
 
 
 def global_attempt_registry_path() -> Path:
-    return Path.home() / GLOBAL_ATTEMPT_REGISTRY_RELATIVE
+    return GLOBAL_ATTEMPT_REGISTRY_PATH
+
+
+def designated_host_profile() -> Dict[str, object]:
+    """Return the fixed Linux host/profile identity authorized for TEST."""
+
+    if os.name != "posix":
+        raise RuntimeError("real TEST authorization is restricted to the Linux A800 host")
+    machine_id_path = Path("/etc/machine-id")
+    if not machine_id_path.is_file():
+        raise RuntimeError("designated host fingerprint requires /etc/machine-id")
+    machine_id = machine_id_path.read_text(encoding="utf-8").strip()
+    if not machine_id:
+        raise RuntimeError("designated host machine-id is empty")
+    try:
+        import pwd
+
+        effective_user = pwd.getpwuid(os.geteuid()).pw_name
+    except (ImportError, KeyError):
+        effective_user = None
+    registry = global_attempt_registry_path()
+    payload = {
+        "schema_version": 1,
+        "hostname": platform.node(),
+        "system": platform.system(),
+        "release": platform.release(),
+        "machine": platform.machine(),
+        "machine_id_sha256": sha_text(machine_id),
+        "effective_uid": os.geteuid(),
+        "effective_user": effective_user,
+        "registry_path": str(registry),
+    }
+    payload["fingerprint_hash"] = config_hash(payload)
+    return payload
+
+
+def _assert_registry_storage_profile(path: Path) -> None:
+    path = Path(path)
+    if not path.is_absolute():
+        raise RuntimeError("TEST attempt registry path must be absolute")
+    if path.is_symlink():
+        raise RuntimeError("TEST attempt registry must not be a symlink")
+    parent = path.parent
+    if not parent.is_dir():
+        raise RuntimeError(
+            f"TEST attempt registry directory must be pre-provisioned: {parent}"
+        )
+    if parent.is_symlink():
+        raise RuntimeError("TEST attempt registry directory must not be a symlink")
+    if not os.access(parent, os.R_OK | os.W_OK | os.X_OK):
+        raise RuntimeError("TEST attempt registry directory is not owner-writable")
+    if os.name == "posix":
+        parent_stat = parent.stat()
+        if parent_stat.st_uid != os.geteuid():
+            raise RuntimeError("TEST attempt registry directory owner drift")
+        if parent_stat.st_mode & 0o077:
+            raise RuntimeError("TEST attempt registry directory must have mode 0700")
+        if path.exists():
+            registry_stat = path.stat()
+            if registry_stat.st_uid != os.geteuid():
+                raise RuntimeError("TEST attempt registry file owner drift")
+            if registry_stat.st_mode & 0o077:
+                raise RuntimeError("TEST attempt registry file must be owner-only")
+
+
+def test_attempt_registry_profile() -> Dict[str, object]:
+    registry = global_attempt_registry_path()
+    _assert_registry_storage_profile(registry)
+    profile = designated_host_profile()
+    unhashed = dict(profile)
+    persisted_hash = unhashed.pop("fingerprint_hash", None)
+    if persisted_hash != config_hash(unhashed):
+        raise RuntimeError("designated host profile fingerprint is internally invalid")
+    if profile.get("registry_path") != str(registry):
+        raise PermissionError("designated host registry path/profile drift")
+    return profile
 
 
 def authorization_signing_bytes(manifest: Dict[str, object]) -> bytes:
     required = {
         "schema_version",
-        "authorization_id",
+        "authorization_nonce",
         "experiment_id",
         "code_commit",
         "audited_dev_artifact_sha256",
         "audited_dev_artifact_manifest_sha256",
+        "audited_execution_fingerprint_hash",
+        "designated_host_fingerprint",
+        "registry_path",
         "issued_at",
         "key_id",
     }
@@ -817,6 +897,9 @@ def verify_signed_authorization_manifest(
     code_commit: str,
     audited_dev_artifact_sha256: str,
     audited_dev_artifact_manifest_sha256: str,
+    audited_execution_fingerprint_hash: str,
+    designated_host_fingerprint: str,
+    registry_path: str,
 ) -> Dict[str, object]:
     if manifest.get("schema_version") != AUTHORIZATION_SCHEMA_VERSION:
         raise PermissionError("authorization schema mismatch")
@@ -831,8 +914,17 @@ def verify_signed_authorization_manifest(
         != audited_dev_artifact_manifest_sha256
     ):
         raise PermissionError("authorization audited DEV artifact-manifest hash mismatch")
-    if not str(manifest.get("authorization_id", "")).strip():
-        raise PermissionError("authorization id is empty")
+    if (
+        manifest.get("audited_execution_fingerprint_hash")
+        != audited_execution_fingerprint_hash
+    ):
+        raise PermissionError("authorization audited execution fingerprint mismatch")
+    if manifest.get("designated_host_fingerprint") != designated_host_fingerprint:
+        raise PermissionError("authorization designated host fingerprint mismatch")
+    if manifest.get("registry_path") != registry_path:
+        raise PermissionError("authorization registry path mismatch")
+    if re.fullmatch(r"[0-9a-f]{64}", str(manifest.get("authorization_nonce", ""))) is None:
+        raise PermissionError("authorization nonce must be 32 random bytes in hex")
     if not str(manifest.get("key_id", "")).strip():
         raise PermissionError("authorization key id is empty")
     for label, value in (
@@ -843,6 +935,12 @@ def verify_signed_authorization_manifest(
             raise PermissionError(
                 f"{label} SHA-256 must be 64 lowercase hexadecimal characters"
             )
+    for label, value in (
+        ("audited execution fingerprint", audited_execution_fingerprint_hash),
+        ("designated host fingerprint", designated_host_fingerprint),
+    ):
+        if re.fullmatch(r"sha256:[0-9a-f]{64}", str(value)) is None:
+            raise PermissionError(f"{label} must be a canonical config hash")
     try:
         issued = datetime.fromisoformat(str(manifest.get("issued_at")))
     except ValueError as exc:
@@ -865,11 +963,62 @@ def verify_signed_authorization_manifest(
     return manifest
 
 
+def _registry_genesis_hash(
+    *, registry_path: Path, designated_host_fingerprint: str
+) -> str:
+    return config_hash(
+        {
+            "schema_version": REGISTRY_RECORD_SCHEMA_VERSION,
+            "experiment_id": EXPERIMENT_ID,
+            "registry_path": str(registry_path),
+            "designated_host_fingerprint": designated_host_fingerprint,
+        }
+    )
+
+
+def _read_and_verify_registry(
+    path: Path, *, designated_host_fingerprint: str
+) -> List[Dict[str, object]]:
+    if not path.exists():
+        return []
+    rows: List[Dict[str, object]] = []
+    previous = _registry_genesis_hash(
+        registry_path=path,
+        designated_host_fingerprint=designated_host_fingerprint,
+    )
+    for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+        if not line.strip():
+            raise ValueError(f"blank global attempt registry line {lineno}")
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise ValueError(
+                f"malformed global attempt registry line {lineno}"
+            ) from exc
+        record_hash = row.get("record_hash")
+        material = dict(row)
+        material.pop("record_hash", None)
+        if row.get("schema_version") != REGISTRY_RECORD_SCHEMA_VERSION:
+            raise ValueError(f"global attempt registry schema drift at line {lineno}")
+        if row.get("sequence") != lineno:
+            raise ValueError(f"global attempt registry sequence drift at line {lineno}")
+        if row.get("previous_record_hash") != previous:
+            raise ValueError(f"global attempt registry hash-chain break at line {lineno}")
+        if record_hash != config_hash(material):
+            raise ValueError(f"global attempt registry record hash mismatch at line {lineno}")
+        if row.get("registry_path") != str(path):
+            raise PermissionError("global attempt registry path drift")
+        if row.get("designated_host_fingerprint") != designated_host_fingerprint:
+            raise PermissionError("global attempt registry host/profile drift")
+        rows.append(row)
+        previous = str(record_hash)
+    return rows
+
+
 def _attempt_registry_lock(path: Path, timeout: float = 30.0):
     class _Lock:
         def __enter__(self):
             self.lock_path = path.with_suffix(path.suffix + ".lock")
-            self.lock_path.parent.mkdir(parents=True, exist_ok=True)
             deadline = time.monotonic() + timeout
             while True:
                 try:
@@ -896,12 +1045,22 @@ def consume_signed_test_authorization(
     code_commit: str,
     audited_dev_artifact_sha256: str,
     audited_dev_artifact_manifest_sha256: str,
+    audited_execution_fingerprint_hash: str,
     out_dir: Path,
 ) -> Dict[str, object]:
-    """Atomically consume one externally signed authorization globally."""
+    """Consume one authorization on the designated host exactly once.
+
+    The enforceable threat model is accidental, concurrent, or repeated
+    execution by the designated host profile. A malicious root/owner can delete
+    or rewrite host-local state; cross-machine uniqueness requires an external
+    coordination service or an explicit human authorization gate.
+    """
 
     manifest_raw = Path(authorization_manifest).read_bytes()
     manifest = json.loads(manifest_raw.decode("utf-8"))
+    registry = global_attempt_registry_path()
+    host_profile = test_attempt_registry_profile()
+    designated_host_fingerprint = str(host_profile["fingerprint_hash"])
     verify_signed_authorization_manifest(
         manifest,
         code_commit=code_commit,
@@ -909,18 +1068,24 @@ def consume_signed_test_authorization(
         audited_dev_artifact_manifest_sha256=(
             audited_dev_artifact_manifest_sha256
         ),
+        audited_execution_fingerprint_hash=audited_execution_fingerprint_hash,
+        designated_host_fingerprint=designated_host_fingerprint,
+        registry_path=str(registry),
     )
-    registry = global_attempt_registry_path()
-    registry.parent.mkdir(parents=True, exist_ok=True)
     identity = {
-        "schema_version": 1,
+        "schema_version": REGISTRY_RECORD_SCHEMA_VERSION,
+        "sequence": 1,
         "experiment_id": EXPERIMENT_ID,
-        "authorization_id": manifest["authorization_id"],
+        "authorization_nonce": manifest["authorization_nonce"],
         "code_commit": code_commit,
         "audited_dev_artifact_sha256": audited_dev_artifact_sha256,
         "audited_dev_artifact_manifest_sha256": (
             audited_dev_artifact_manifest_sha256
         ),
+        "audited_execution_fingerprint_hash": audited_execution_fingerprint_hash,
+        "designated_host_fingerprint": designated_host_fingerprint,
+        "host_profile": host_profile,
+        "registry_path": str(registry),
         "authorization_manifest_sha256": hashlib.sha256(manifest_raw).hexdigest(),
         "authorization_signature_hmac_sha256": manifest[
             "signature_hmac_sha256"
@@ -928,37 +1093,43 @@ def consume_signed_test_authorization(
         "authorization_key_id": manifest["key_id"],
         "authorization_issued_at": manifest["issued_at"],
         "out_dir_sha256": sha_text(str(Path(out_dir).resolve())),
+        "previous_record_hash": _registry_genesis_hash(
+            registry_path=registry,
+            designated_host_fingerprint=designated_host_fingerprint,
+        ),
     }
     with _attempt_registry_lock(registry):
-        rows = []
-        if registry.exists():
-            for lineno, line in enumerate(
-                registry.read_text(encoding="utf-8").splitlines(), 1
-            ):
-                if not line.strip():
-                    continue
-                try:
-                    rows.append(json.loads(line))
-                except json.JSONDecodeError as exc:
-                    raise ValueError(
-                        f"malformed global attempt registry line {lineno}"
-                    ) from exc
+        rows = _read_and_verify_registry(
+            registry,
+            designated_host_fingerprint=designated_host_fingerprint,
+        )
         same_experiment = [
             row for row in rows if row.get("experiment_id") == EXPERIMENT_ID
         ]
-        for row in same_experiment:
-            comparable = {key: row.get(key) for key in identity}
-            if comparable == identity:
-                return row
         if same_experiment:
             raise PermissionError(
                 "a TEST attempt for this experiment was already consumed globally"
             )
         row = {**identity, "consumed_at": time.time(), "status": "CONSUMED"}
-        with registry.open("a", encoding="utf-8", newline="\n") as handle:
-            handle.write(
-                json.dumps(row, sort_keys=True, ensure_ascii=False) + "\n"
+        row["record_hash"] = config_hash(row)
+        encoded = (
+            json.dumps(row, sort_keys=True, ensure_ascii=False) + "\n"
+        ).encode("utf-8")
+        try:
+            fd = os.open(
+                registry,
+                os.O_CREAT | os.O_EXCL | os.O_APPEND | os.O_WRONLY,
+                0o600,
             )
-            handle.flush()
-            os.fsync(handle.fileno())
+        except FileExistsError as exc:
+            raise PermissionError(
+                "a TEST attempt registry appeared during exclusive consumption"
+            ) from exc
+        try:
+            os.write(fd, encoded)
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+        if os.name == "posix":
+            os.chmod(registry, 0o400)
         return row

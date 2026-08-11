@@ -1,7 +1,7 @@
 # PRE-REGISTRATION — Official-style multi-head ITI × TruthfulQA positive control
 
 - **Experiment ID:** `iti-truthfulqa-positive-control-20260811`
-- **Status:** **FROZEN 2026-08-11 — audit-repaired implementation pending fresh independent hostile re-audit**
+- **Status:** **FROZEN 2026-08-11 — third targeted audit repair pending fresh independent hostile re-audit**
 - **Purpose:** determine whether the comparator-bound qualification pipeline can
   register a coherent, specific, real latent behavioral advantage in at least one
   published-effect setting.
@@ -46,6 +46,8 @@ renormalize, hide, or relabel 0/12 as 1/13.
 | Info judge | `allenai/truthfulqa-info-judge-llama2-7B@72601eff294cbf7e8d7188ae82397e19cb9bb9bd` |
 | Prompt bank | `data/strongest_prompts/truthfulness_positive_control.jsonl` |
 | Prompt-bank SHA-256 | `597d5ea1dc07d1169912978ca3ef35a2d4f6cf185270eb0994ebf76c872b122c` |
+| Generator EOS IDs | exact ordered list `[128001, 128009]` |
+| Generator EOS mapping | `128001=<|end_of_text|>`, `128009=<|eot_id|>` |
 
 Public metadata reported all four repositories ungated on 2026-08-11.
 TruthfulQA and the two judge cards declare Apache-2.0; the generator remains
@@ -159,6 +161,7 @@ TEST path. Thus random direction seeds are exactly `20261720` and `20261721`.
 | Generation batch | 1 |
 | Input max length | 512 |
 | Tokenization | official plain text prefix and `Q: ... A:` format; no chat template |
+| Stop/truncation | pass exact `eos_token_id=[128001,128009]`; validate both pinned tokenizer mappings; a generation ending in either ID is stopped, not truncated |
 
 Each judge also receives every runtime `GenerationConfig` field explicitly,
 overriding repository defaults, with greedy decoding, one beam/return, and
@@ -210,24 +213,41 @@ TEST requires all of:
 - eligible immutable `dev_manifest.json`;
 - exact config and DEV-manifest hashes;
 - clean audited source commit supplied through `--expected-code-commit`;
-- an externally generated schema-v2 signed JSON authorization manifest
-  containing a unique authorization ID, experiment ID, exact audited commit,
-  raw SHA-256 of the independently audited `dev_manifest.json`, raw SHA-256 of
-  `dev_artifact_manifest.json`, issue time, key ID, and HMAC-SHA256 signature;
+- an externally generated schema-v3 signed JSON authorization manifest
+  containing a fresh 32-byte hexadecimal nonce, experiment ID, exact audited
+  commit, raw SHA-256 of the independently audited `dev_manifest.json`, raw
+  SHA-256 of `dev_artifact_manifest.json`, audited execution-fingerprint hash,
+  designated-host fingerprint, exact registry path, issue time, key ID, and
+  HMAC-SHA256 signature;
 - an external secret of at least 32 bytes supplied only through
   `COGNITIVE_CONSOLE_TEST_AUTH_HMAC_KEY`;
-- atomic consumption in the fixed non-overridable append-only global registry
-  `~/.cognitive-console/iti-truthfulqa-positive-control/test-attempts.jsonl`.
+- atomic exclusive consumption in the fixed absolute host registry
+  `/var/lib/cognitive-console/iti-truthfulqa-positive-control/test-attempts.jsonl`.
 
-The global registry is independent of output directory and uses an exclusive
-sidecar lock around read/check/append. Any different previously consumed TEST
-attempt for this experiment blocks all later directories and authorizations. A
-matching interrupted attempt may resume only when authorization ID/signature,
-commit, raw audited DEV and artifact-manifest hashes, and canonical
-output-directory hash all match.
-Before consumption, TEST re-verifies the complete DEV artifact-hash manifest
-and reruns only non-TEST mechanical preflight. Atomic global consumption occurs
-immediately before the TEST run identity/jobs can be created.
+The registry path is independent of `HOME`, `USERPROFILE`, and output directory.
+Its pre-provisioned parent must be an owner-only, non-symlink directory. Every
+record is bound to the designated Linux host profile (`/etc/machine-id` hash,
+hostname, OS/release/machine, effective UID/user, and exact registry path) and
+forms an append-only SHA-256 integrity chain from a host/profile-bound genesis
+hash. An exclusive sidecar lock plus exclusive registry creation permits one
+consumer under accidental, concurrent, or repeated execution. Once consumed,
+the authorization cannot be replayed even in the same output directory; an
+interrupted TEST is still consumed.
+
+This is an explicitly host-local enforceable threat model. It does not defend
+against malicious root or the registry owner deleting/rewriting host state.
+Without an external coordination service, the code does not claim
+cross-machine uniqueness. Immediately before issuing schema-v3 TEST
+authorization, a human operational gate must verify that no TEST was consumed
+or authorized on any other machine and must sign only the fingerprint emitted
+by the designated A800 host.
+
+Before consumption or TEST execution-identity hashing, TEST re-verifies the
+complete DEV artifact-hash manifest and requires exact equality to audited DEV
+for the generator snapshot/config/tokenizer/multi-EOS mapping/effective
+generation config, GPU identity, eager-attention implementation and source
+hashes, Python/dependency environment, and both judge snapshot/runtime
+fingerprints. Any mismatch stops before authorization consumption.
 
 For outer TEST item `i`:
 
@@ -328,8 +348,9 @@ All outcomes are reportable. No outcome authorizes parameter tuning or rerun.
   truncation, strict judge outputs, missingness, outcome, and degeneracy.
 - Runtime fingerprints include Python, PyTorch/CUDA/cuDNN, Transformers,
   datasets, accelerate, NumPy, **scikit-learn**, GPU identity/memory/capability
-  and driver, model config, tokenizer class/vocabulary, eager-attention and
-  o-projection implementation classes, and forward-source hashes.
+  and UUID/driver, model config, tokenizer class/vocabulary, exact two-EOS
+  mapping, eager-attention and o-projection implementation classes, and
+  forward-source hashes.
 - Raw generation, checkpoint metadata, both judge checkpoints, scored records,
   resolved identities, and DEV/TEST result files receive artifact SHA-256
   manifests. TEST requires the exact complete DEV artifact inventory and
@@ -338,9 +359,10 @@ All outcomes are reportable. No outcome authorizes parameter tuning or rerun.
   `failure_record.json` with status `INVALID_MECHANICS`; it is not a result.
 - The DEV manifest stores source commit, resolved config hash, splits, persisted
   fold-config identity, hook-bites, prompt evaluations/winners, and eligibility.
-- TEST stores the globally consumed signed authorization identity, raw audited
-  DEV SHA-256, full matched-random configs/direction hashes and their exact
-  PCG64 seeds, all raw/scored records, and reconstructable adjudication.
+- TEST stores the host-locally consumed signed nonce identity, registry hash
+  chain record, raw audited DEV SHA-256, audited execution fingerprint, full
+  matched-random configs/direction hashes and their exact PCG64 seeds, all
+  raw/scored records, and reconstructable adjudication.
 - A dedicated virtualenv is mandatory. HF Home, both Hub cache variable names,
   Hub assets, Xet, Transformers, datasets/modules, XDG, Torch, generator, and
   sequential judge caches are forced and runtime-verified under
@@ -360,7 +382,8 @@ Before real DEV, code must assert: CUDA available; device name contains
 `A800`; total memory at least 75 GiB; 32 decoder layers; hidden size 4096; 32
 query heads; head dimension 128; eager attention; all pinned snapshot hashes;
 the complete effective generator and judge decoding configs including
-generator `top_p=1.0/top_k=0`; model, tokenizer, environment, GPU, attention,
+generator `top_p=1.0/top_k=0` and exact EOS list `[128001,128009]`; pinned
+tokenizer mappings for both EOS IDs; model, tokenizer, environment, GPU, attention,
 and o-projection fingerprints with required non-null source hashes; a
 two-layer/two-head synthetic real-model hook-bite; and strict yes/no output from
 both sequential pinned judges on fixed non-DEV/TEST self-test strings. The
@@ -368,45 +391,62 @@ preflight phase performs no real DEV/TEST generation and supports no claim.
 
 ## 13. Commands after independent audit
 
+Provision and verify the fixed host-local registry directory once on the
+designated A800 host:
+
+```bash
+sudo install -d -m 0700 -o "$(id -un)" -g "$(id -gn)" \
+  /var/lib/cognitive-console/iti-truthfulqa-positive-control
+test "$(stat -c '%U:%G:%a' \
+  /var/lib/cognitive-console/iti-truthfulqa-positive-control)" = \
+  "$(id -un):$(id -gn):700"
+```
+
 GPU preflight only (no real DEV/TEST generation):
 
-```powershell
-python scripts\run_iti_truthfulqa_positive_control.py `
-  --backend hf --phase preflight `
-  --model-id NousResearch/Meta-Llama-3-8B-Instruct `
-  --model-revision 53346005fb0ef11d3b6a83b12c895cca40156b6c `
-  --expected-code-commit <AUDITED_COMMIT_SHA> `
-  --out-dir <DEDICATED_EXTERNAL_OUTPUT_DIR> `
-  --seed 20260811 --k 5 --max-new-tokens 64 `
+```bash
+export CUDA_VISIBLE_DEVICES=1
+export OUT_DIR=/home/elzhang/cognitive-console-runs/iti-truthfulqa-positive-control-20260811
+python scripts/run_iti_truthfulqa_positive_control.py \
+  --backend hf --phase preflight \
+  --model-id NousResearch/Meta-Llama-3-8B-Instruct \
+  --model-revision 53346005fb0ef11d3b6a83b12c895cca40156b6c \
+  --expected-code-commit <AUDITED_COMMIT_SHA> \
+  --out-dir "$OUT_DIR" \
+  --seed 20260811 --k 5 --max-new-tokens 64 \
   --activation-batch-size 8
 ```
 
 DEV only; it repeats the pinned snapshot, CUDA/A800, eager-attention,
 effective-generation, tokenizer, and hook assertions:
 
-```powershell
-python scripts\run_iti_truthfulqa_positive_control.py `
-  --backend hf --phase dev `
-  --model-id NousResearch/Meta-Llama-3-8B-Instruct `
-  --model-revision 53346005fb0ef11d3b6a83b12c895cca40156b6c `
-  --expected-code-commit <AUDITED_COMMIT_SHA> `
-  --out-dir <DEDICATED_EXTERNAL_OUTPUT_DIR> `
-  --seed 20260811 --k 5 --max-new-tokens 64 `
+```bash
+export CUDA_VISIBLE_DEVICES=1
+export OUT_DIR=/home/elzhang/cognitive-console-runs/iti-truthfulqa-positive-control-20260811
+python scripts/run_iti_truthfulqa_positive_control.py \
+  --backend hf --phase dev \
+  --model-id NousResearch/Meta-Llama-3-8B-Instruct \
+  --model-revision 53346005fb0ef11d3b6a83b12c895cca40156b6c \
+  --expected-code-commit <AUDITED_COMMIT_SHA> \
+  --out-dir "$OUT_DIR" \
+  --seed 20260811 --k 5 --max-new-tokens 64 \
   --activation-batch-size 8
 ```
 
 Only if DEV returns `ELIGIBLE`, and after the independent audit authorizes the
 same commit and manifest, TEST once:
 
-```powershell
-python scripts\run_iti_truthfulqa_positive_control.py `
-  --backend hf --phase test `
-  --model-id NousResearch/Meta-Llama-3-8B-Instruct `
-  --model-revision 53346005fb0ef11d3b6a83b12c895cca40156b6c `
-  --expected-code-commit <AUDITED_COMMIT_SHA> `
-  --out-dir <SAME_DEDICATED_EXTERNAL_OUTPUT_DIR> `
-  --seed 20260811 --k 5 --max-new-tokens 64 `
-  --activation-batch-size 8 `
+```bash
+export CUDA_VISIBLE_DEVICES=1
+export OUT_DIR=/home/elzhang/cognitive-console-runs/iti-truthfulqa-positive-control-20260811
+python scripts/run_iti_truthfulqa_positive_control.py \
+  --backend hf --phase test \
+  --model-id NousResearch/Meta-Llama-3-8B-Instruct \
+  --model-revision 53346005fb0ef11d3b6a83b12c895cca40156b6c \
+  --expected-code-commit <AUDITED_COMMIT_SHA> \
+  --out-dir "$OUT_DIR" \
+  --seed 20260811 --k 5 --max-new-tokens 64 \
+  --activation-batch-size 8 \
   --test-authorization-manifest <EXTERNALLY_SIGNED_AUTHORIZATION_JSON>
 ```
 
@@ -415,11 +455,12 @@ python scripts\run_iti_truthfulqa_positive_control.py `
 Protocol/implementation parity was checked on 2026-08-11 without downloading
 large weights or touching a GPU:
 
-- 65 targeted tests passed across
+- 74 targeted CPU tests passed across
   `test_iti_truthfulqa_positive_control.py`, `test_iti.py`, and
   `test_adjudicate_c2b.py`;
-- the separate synthetic schema returned only
-  `SMOKE_PASS_PATH_EXERCISED`, with no `FULL_PC_PASS` result and
+- the separate synthetic schema and every run/final/checkpoint manifest are
+  explicitly `backend=synthetic, phase=smoke`, use no DEV/TEST partition labels
+  or scientific verdict names, return only `SMOKE_PASS_PATH_EXERCISED`, and are
   `valid_for_paper=false`;
 - the tiny in-memory two-layer attention model verified last-token/head slicing
   and hook cleanup;
@@ -427,13 +468,16 @@ large weights or touching a GPU:
   `git diff --check` passed;
 - adversarial probes covered generator and judge model-default overrides, exact
   PCG64 split/bootstrap/random algorithms, full fold-config resume mismatch,
-  partial-final-checkpoint judge identity stability, signed global authorization
-  cross-directory replay, fixed disk limits, pinned file/LFS hashes, row-level
-  judge failure, model-load failure records, explicit CLI backend/phase, and
-  no-CUDA preflight rejection;
+  partial-final-checkpoint judge identity stability, both frozen EOS stop IDs,
+  cross-HOME/cross-output/concurrent authorization replay, registry hash-chain
+  tampering, all five TEST execution-fingerprint dimensions, fixed disk limits,
+  pinned file/LFS hashes, row-level judge failure, model-load failure records,
+  explicit CLI backend/phase, and no-CUDA preflight rejection;
 - one earlier transient local NumPy 22.9 MiB allocation failure was rerun alone
   and the complete selection subsequently passed. It produced no experiment
   artifact or protocol change.
 
-The protocol is therefore FROZEN. This freeze does not authorize real DEV before
-independent hostile audit, and it never authorizes TEST except through §§7–8.
+Commit `68bd1cf3595f7a53061a8acb45a8c6baadf7e580` was rejected on re-audit
+before GPU/preflight/DEV/TEST. This third repair contains no scientific result.
+The protocol remains FROZEN, does not authorize real DEV before a fresh
+independent hostile re-audit, and never authorizes TEST except through §§7–8.

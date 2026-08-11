@@ -5,6 +5,29 @@
 
 ---
 
+## 2026-08-11 · D-0116 · 68bd1cf re-audit rejected; third targeted repair remains non-evidence
+- Re-audit rejected `68bd1cf3595f7a53061a8acb45a8c6baadf7e580`
+  before GPU, preflight, real DEV, or TEST. It is not execution-authorized and
+  produced no scientific result. Existing 0/12 remains unchanged.
+- The third repair freezes the pinned generator's exact multi-EOS list
+  `[128001,128009]`, validates `end_of_text`/`eot_id` tokenizer mappings, passes
+  both IDs to generation, and treats either terminal ID as non-truncated.
+- TEST-once enforcement is explicitly limited to accidental, concurrent, and
+  repeated execution on the designated A800 host. Schema-v3 authorization signs
+  a fresh nonce, experiment/commit, both audited DEV roots, audited execution
+  fingerprint, designated-host fingerprint, and fixed absolute registry path.
+  Exclusive consumption writes an owner-local host/profile-bound integrity
+  chain at `/var/lib/cognitive-console/iti-truthfulqa-positive-control/`.
+  Malicious root/owner deletion is out of scope; cross-machine uniqueness
+  remains an operational human gate unless an external service is introduced.
+- TEST must exactly match audited DEV generator, GPU, attention, dependency, and
+  judge fingerprints before authorization consumption or execution hash.
+  Synthetic run/final/checkpoints are exclusively
+  `backend=synthetic, phase=smoke` and contain no DEV/TEST partition labels or
+  scientific verdict names.
+- This is code/protocol repair only. Fresh independent hostile re-audit and
+  exact repaired-commit pinning remain mandatory before A800 preflight or DEV.
+
 ## 2026-08-11 · D-0115 · d63c5d3 hostile audit rejected; all identity, authorization, disk, sampling, and provenance blockers repaired locally
 - Independent hostile audit rejected implementation commit `d63c5d3` before any
   GPU, real DEV, or TEST access. Therefore `d63c5d3` is not execution-authorized

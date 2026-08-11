@@ -44,3 +44,24 @@ forces/monitors dedicated caches under non-overridable disk limits, records and
 re-verifies complete runtime/artifact provenance, stabilizes judge resume
 identity, isolates synthetic smoke status, freezes exact PCG64 algorithms, and
 adds adversarial tests plus code-only GPU preflight assertions.
+
+## Third targeted repair after re-audit
+
+Commit `68bd1cf3595f7a53061a8acb45a8c6baadf7e580` was rejected before
+GPU/preflight/DEV/TEST. The bounded third repair:
+
+1. freezes and validates exact generator EOS IDs `[128001,128009]`, including
+   adversarial second-EOS truncation tests;
+2. replaces profile-relative TEST state with a fixed absolute designated-host
+   registry, schema-v3 signed nonce/commit/DEV/execution/host binding, exclusive
+   one-time consumption, and an integrity hash chain under the explicit
+   accidental/concurrent/repeated-execution threat model;
+3. gates authorization consumption and TEST execution hashing on exact audited
+   DEV generator/GPU/attention/dependency/judge fingerprints;
+4. restricts all synthetic run/final/checkpoint identities to
+   `backend=synthetic, phase=smoke`, without scientific partition labels or
+   verdict names; and
+5. updates protocol records and CPU adversarial tests only.
+
+Cross-machine uniqueness remains a human operational gate without an external
+coordination service. No scientific result is created, and 0/12 is immutable.

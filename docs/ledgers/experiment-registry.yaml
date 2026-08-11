@@ -1394,8 +1394,8 @@ experiments:
   claim_ids:
   - C2b
   type: confirmatory_positive_control
-  status: audit_repair_frozen_pending_fresh_independent_reaudit
-  code_commit: d63c5d3_rejected; repaired_commit_pending
+  status: third_targeted_repair_pending_fresh_independent_reaudit
+  code_commit: d63c5d3_rejected; 68bd1cf3595f7a53061a8acb45a8c6baadf7e580_rejected; third_repair_commit_pending
   dirty_tree: null
   data_hash: truthfulqa_revision=741b8276f2d1982aa3d5b832d3ee81ed3b896490;prompt_bank_sha256=597d5ea1dc07d1169912978ca3ef35a2d4f6cf185270eb0994ebf76c872b122c
   env_hash: null
@@ -1419,7 +1419,8 @@ experiments:
   failure_reason: null
   valid_for_paper: false
   validation_notes: >-
-    D-0114 authorizes implementation and future A800 use. The protocol uses a
+    D-0114 authorizes implementation and future A800 use. No preflight, GPU,
+    DEV, TEST, or scientific result exists for this repair. The protocol uses a
     real free-form Truthful AND Informative endpoint, official-style top-48
     attention-head ITI at alpha=15, a DEV-selected fixed 16-prompt comparator,
     matched random control, strict missingness/truncation/coherence gates, and a
@@ -1431,10 +1432,17 @@ experiments:
     disk/cache controls, complete snapshot/environment/GPU/attention/artifact
     fingerprints, row-level judge failure handling, stable judge-checkpoint
     resume identity, synthetic isolation, and exact PCG64 seed algorithms.
-    Fresh hostile re-audit and repaired-commit pinning remain
-    required before preflight or real DEV; TEST additionally requires eligible
-    audited DEV plus a schema-v2 authorization signing both DEV-manifest roots,
-    consumed in the fixed global registry. Existing 0/12 is immutable.
+    Re-audit rejected 68bd1cf3595f7a53061a8acb45a8c6baadf7e580 before
+    execution. D-0116's third repair freezes exact EOS IDs [128001,128009],
+    schema-v3 host-bound signed authorization, the fixed absolute host registry
+    with exclusive hash-chained consumption, exact DEV-to-TEST
+    generator/GPU/attention/dependency/judge fingerprint equality, and
+    synthetic-only backend=synthetic/phase=smoke artifacts. The enforceable
+    TEST threat model is accidental/concurrent/repeated execution on the
+    designated A800 host; malicious root/owner deletion is out of scope, and
+    cross-machine uniqueness is a human operational gate without an external
+    service. Fresh hostile re-audit and repaired-commit pinning remain required
+    before preflight or real DEV. Existing 0/12 is immutable.
 
 - experiment_id: microstudy-contract-application-20260810
   parent: null

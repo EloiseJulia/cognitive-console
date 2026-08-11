@@ -1,3 +1,5 @@
+import copy
+from concurrent.futures import ThreadPoolExecutor
 import json
 import hashlib
 import hmac
@@ -38,13 +40,17 @@ from cognitive_console.experiments.iti_positive_control import (
     deterministic_sample_seed,
 )
 from cognitive_console.steering.official_iti import (
+    FROZEN_EOS_TOKEN_IDS,
+    FROZEN_EOS_TOKEN_STRINGS,
     FROZEN_SAMPLING_CONFIG,
     ITIHeadSpec,
     OfficialITIConfig,
     OfficialITIHFBackend,
     fit_official_iti,
+    generation_was_truncated,
     hook_bite_metrics,
     matched_random_config,
+    validate_frozen_eos_mapping,
 )
 from cognitive_console.randomness import NUMPY_RNG_ALGORITHM, pcg64_rng
 from scripts import run_iti_truthfulqa_positive_control as runner
@@ -78,7 +84,12 @@ def test_frozen_runner_config_matches_preregistered_identities():
     assert frozen["generation"]["k"] == 5
     assert frozen["generation"]["top_p"] == 1.0
     assert frozen["generation"]["top_k"] == 0
+    assert frozen["generation"]["eos_token_ids"] == [128001, 128009]
     assert frozen["disk"]["overridable"] is False
+    assert frozen["test_once"]["global_registry"] == (
+        "/var/lib/cognitive-console/iti-truthfulqa-positive-control/"
+        "test-attempts.jsonl"
+    )
     assert frozen["statistics"]["ci_level"] == pytest.approx(1.0 - 0.05 / 3.0)
     assert frozen["current_grid_preservation"].endswith("0/12")
     assert "scikit-learn" in runner._runtime_environment()["packages"]
@@ -349,11 +360,19 @@ def test_effective_generation_config_overrides_model_top_p_and_top_k():
 
     class TinyTokenizer:
         pad_token = "<pad>"
-        eos_token = "</s>"
+        eos_token = "<|eot_id|>"
         padding_side = "left"
-        pad_token_id = 0
-        eos_token_id = 1
-        bos_token_id = 2
+        pad_token_id = 128009
+        eos_token_id = 128009
+        bos_token_id = 128000
+
+        @staticmethod
+        def convert_ids_to_tokens(token_ids):
+            mapping = {
+                128001: "<|end_of_text|>",
+                128009: "<|eot_id|>",
+            }
+            return [mapping[token_id] for token_id in token_ids]
 
     backend = OfficialITIHFBackend(
         "tiny",
@@ -373,6 +392,7 @@ def test_effective_generation_config_overrides_model_top_p_and_top_k():
     assert effective["top_p"] == 1.0
     assert effective["top_k"] == 0
     assert effective["temperature"] == 0.7
+    assert effective["eos_token_id"] == [128001, 128009]
     assert {
         key: effective[key] for key in FROZEN_SAMPLING_CONFIG
     } == FROZEN_SAMPLING_CONFIG
@@ -382,6 +402,38 @@ def test_effective_generation_config_overrides_model_top_p_and_top_k():
     }
     assert set(generation_kwargs) == runtime_fields
     assert generation_kwargs == effective
+
+
+def test_frozen_multi_eos_mapping_and_second_eos_stops_without_truncation():
+    class PinnedTokenizer:
+        eos_token_id = 128009
+
+        @staticmethod
+        def convert_ids_to_tokens(token_ids):
+            mapping = {
+                128001: "<|end_of_text|>",
+                128009: "<|eot_id|>",
+            }
+            return [mapping[token_id] for token_id in token_ids]
+
+    mapping = validate_frozen_eos_mapping(PinnedTokenizer())
+    assert tuple(mapping["eos_token_ids"]) == FROZEN_EOS_TOKEN_IDS
+    assert tuple(mapping["eos_token_strings"]) == FROZEN_EOS_TOKEN_STRINGS
+    assert generation_was_truncated(
+        [7] * 63 + [128009], max_new_tokens=64
+    ) is False
+    assert generation_was_truncated(
+        [7] * 63 + [128001], max_new_tokens=64
+    ) is False
+    assert generation_was_truncated([7] * 64, max_new_tokens=64) is True
+
+    class SwappedTokenizer(PinnedTokenizer):
+        @staticmethod
+        def convert_ids_to_tokens(token_ids):
+            return ["<|eot_id|>", "<|end_of_text|>"]
+
+    with pytest.raises(RuntimeError, match="EOS mapping mismatch"):
+        validate_frozen_eos_mapping(SwappedTokenizer())
 
 
 def test_judge_effective_generation_config_overrides_model_defaults():
@@ -612,21 +664,43 @@ def test_common_random_seed_is_condition_independent():
     assert type(pcg64_rng(1).bit_generator).__name__ == "PCG64"
 
 
-def test_signed_global_test_authorization_is_atomic_and_cross_outdir(monkeypatch, tmp_path):
+def _authorization_fixture(monkeypatch, tmp_path):
     key = "k" * 40
     monkeypatch.setenv(AUTHORIZATION_KEY_ENV, key)
     registry = tmp_path / "global" / "attempts.jsonl"
+    registry.parent.mkdir(parents=True)
+    if os.name == "posix":
+        registry.parent.chmod(0o700)
     monkeypatch.setattr(
         "cognitive_console.experiments.iti_positive_control.global_attempt_registry_path",
         lambda: registry,
     )
+    profile = {
+        "schema_version": 1,
+        "hostname": "designated-a800",
+        "system": "Linux",
+        "release": "test",
+        "machine": "x86_64",
+        "machine_id_sha256": "a" * 64,
+        "effective_uid": 1000,
+        "effective_user": "runner",
+        "registry_path": str(registry),
+    }
+    profile["fingerprint_hash"] = config_hash(profile)
+    monkeypatch.setattr(
+        "cognitive_console.experiments.iti_positive_control.designated_host_profile",
+        lambda: profile,
+    )
     manifest = {
-        "schema_version": 2,
-        "authorization_id": "auth-1",
+        "schema_version": 3,
+        "authorization_nonce": "b" * 64,
         "experiment_id": EXPERIMENT_ID,
         "code_commit": "abc",
         "audited_dev_artifact_sha256": "d" * 64,
         "audited_dev_artifact_manifest_sha256": "e" * 64,
+        "audited_execution_fingerprint_hash": "sha256:" + "f" * 64,
+        "designated_host_fingerprint": profile["fingerprint_hash"],
+        "registry_path": str(registry),
         "issued_at": "2026-08-11T19:00:00+08:00",
         "key_id": "owner-local-v1",
     }
@@ -637,36 +711,162 @@ def test_signed_global_test_authorization_is_atomic_and_cross_outdir(monkeypatch
     ).hexdigest()
     path = tmp_path / "authorization.json"
     path.write_text(json.dumps(manifest), encoding="utf-8")
+    return path, registry
+
+
+def _consume_authorization(path, out_dir):
+    return consume_signed_test_authorization(
+        authorization_manifest=path,
+        code_commit="abc",
+        audited_dev_artifact_sha256="d" * 64,
+        audited_dev_artifact_manifest_sha256="e" * 64,
+        audited_execution_fingerprint_hash="sha256:" + "f" * 64,
+        out_dir=out_dir,
+    )
+
+
+def test_signed_host_registry_is_atomic_and_cross_home_cross_outdir(
+    monkeypatch, tmp_path
+):
+    path, registry = _authorization_fixture(monkeypatch, tmp_path)
     with pytest.raises(PermissionError, match="commit mismatch"):
         consume_signed_test_authorization(
             authorization_manifest=path,
             code_commit="wrong",
             audited_dev_artifact_sha256="d" * 64,
             audited_dev_artifact_manifest_sha256="e" * 64,
+            audited_execution_fingerprint_hash="sha256:" + "f" * 64,
             out_dir=tmp_path / "run-a",
         )
-    first = consume_signed_test_authorization(
-        authorization_manifest=path,
-        code_commit="abc",
-        audited_dev_artifact_sha256="d" * 64,
-        audited_dev_artifact_manifest_sha256="e" * 64,
-        out_dir=tmp_path / "run-a",
-    )
+    first = _consume_authorization(path, tmp_path / "run-a")
     assert first["status"] == "CONSUMED"
-    assert consume_signed_test_authorization(
-        authorization_manifest=path,
-        code_commit="abc",
-        audited_dev_artifact_sha256="d" * 64,
-        audited_dev_artifact_manifest_sha256="e" * 64,
-        out_dir=tmp_path / "run-a",
-    ) == first
+    assert first["sequence"] == 1
+    assert first["previous_record_hash"]
+    assert first["record_hash"] == config_hash(
+        {key: value for key, value in first.items() if key != "record_hash"}
+    )
+    monkeypatch.setenv("HOME", str(tmp_path / "other-home"))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path / "other-profile"))
     with pytest.raises(PermissionError, match="already consumed globally"):
-        consume_signed_test_authorization(
-            authorization_manifest=path,
-            code_commit="abc",
-            audited_dev_artifact_sha256="d" * 64,
-            audited_dev_artifact_manifest_sha256="e" * 64,
-            out_dir=tmp_path / "run-b",
+        _consume_authorization(path, tmp_path / "run-a")
+    with pytest.raises(PermissionError, match="already consumed globally"):
+        _consume_authorization(path, tmp_path / "run-b")
+    assert registry.is_file()
+    assert len(registry.read_text(encoding="utf-8").splitlines()) == 1
+
+
+def test_signed_host_registry_concurrent_consumption_has_one_winner(
+    monkeypatch, tmp_path
+):
+    path, registry = _authorization_fixture(monkeypatch, tmp_path)
+
+    def attempt(index):
+        try:
+            return _consume_authorization(path, tmp_path / f"run-{index}")
+        except PermissionError as exc:
+            return exc
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = list(pool.map(attempt, range(2)))
+    assert sum(isinstance(result, dict) for result in results) == 1
+    assert sum(isinstance(result, PermissionError) for result in results) == 1
+    assert len(registry.read_text(encoding="utf-8").splitlines()) == 1
+
+
+def test_signed_host_registry_rejects_hash_chain_tampering(monkeypatch, tmp_path):
+    path, registry = _authorization_fixture(monkeypatch, tmp_path)
+    _consume_authorization(path, tmp_path / "run-a")
+    if os.name == "posix":
+        registry.chmod(0o600)
+    row = json.loads(registry.read_text(encoding="utf-8"))
+    row["out_dir_sha256"] = "0" * 64
+    registry.write_text(json.dumps(row) + "\n", encoding="utf-8")
+    if os.name == "posix":
+        registry.chmod(0o400)
+    with pytest.raises(ValueError, match="record hash mismatch"):
+        _consume_authorization(path, tmp_path / "run-b")
+
+
+def test_signed_authorization_refuses_host_path_and_profile_drift(
+    monkeypatch, tmp_path
+):
+    path, registry = _authorization_fixture(monkeypatch, tmp_path)
+    key = os.environ[AUTHORIZATION_KEY_ENV]
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    manifest["registry_path"] = str(tmp_path / "alternate" / "attempts.jsonl")
+    manifest["signature_hmac_sha256"] = hmac.new(
+        key.encode(),
+        authorization_signing_bytes(manifest),
+        hashlib.sha256,
+    ).hexdigest()
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(PermissionError, match="registry path mismatch"):
+        _consume_authorization(path, tmp_path / "run-a")
+
+    manifest["registry_path"] = str(registry)
+    manifest["signature_hmac_sha256"] = hmac.new(
+        key.encode(),
+        authorization_signing_bytes(manifest),
+        hashlib.sha256,
+    ).hexdigest()
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    drifted_profile = {
+        "schema_version": 1,
+        "hostname": "different-a800-host",
+        "system": "Linux",
+        "release": "test",
+        "machine": "x86_64",
+        "machine_id_sha256": "a" * 64,
+        "effective_uid": 1000,
+        "effective_user": "runner",
+        "registry_path": str(registry),
+    }
+    drifted_profile["fingerprint_hash"] = config_hash(drifted_profile)
+    monkeypatch.setattr(
+        "cognitive_console.experiments.iti_positive_control.designated_host_profile",
+        lambda: drifted_profile,
+    )
+    with pytest.raises(PermissionError, match="host fingerprint mismatch"):
+        _consume_authorization(path, tmp_path / "run-a")
+
+
+@pytest.mark.parametrize(
+    "section",
+    ["generator", "gpu", "attention", "dependencies", "judges"],
+)
+def test_test_execution_fingerprint_rejects_every_audited_dimension(section):
+    preflight = {
+        "generator_snapshot_identity": {"snapshot_hash": "a" * 64},
+        "model_config_hash": "b" * 64,
+        "tokenizer_class": "PinnedTokenizer",
+        "tokenizer_vocab_size": 128256,
+        "eos_token_mapping": {
+            "eos_token_ids": [128001, 128009],
+            "eos_token_strings": ["<|end_of_text|>", "<|eot_id|>"],
+            "primary_eos_token_id": 128009,
+        },
+        "effective_generation_config": {"eos_token_id": [128001, 128009]},
+        "gpu": {"uuid": "GPU-A800"},
+        "attention_implementation": "eager",
+        "attention_layers": [{"layer": 0, "source_sha256": "c" * 64}],
+        "environment": {"packages": {"transformers": "x"}},
+    }
+    current = runner._execution_fingerprint(
+        preflight=preflight,
+        judge_snapshot_identities={"truth": {"snapshot_hash": "d" * 64}},
+        judge_runtime_fingerprints={"truth": {"source_sha256": "e" * 64}},
+    )
+    runner._assert_execution_fingerprint_matches_dev(
+        {"execution_fingerprint": current}, current
+    )
+    drifted = copy.deepcopy(current)
+    drifted[section]["adversarial_drift"] = True
+    unhashed = dict(drifted)
+    unhashed.pop("fingerprint_hash")
+    drifted["fingerprint_hash"] = config_hash(unhashed)
+    with pytest.raises(ValueError, match="fingerprint mismatch"):
+        runner._assert_execution_fingerprint_matches_dev(
+            {"execution_fingerprint": current}, drifted
         )
 
 
@@ -1081,6 +1281,31 @@ def test_synthetic_end_to_end_smoke_is_non_evidence(tmp_path):
     assert payload["valid_for_paper"] is False
     assert payload["status"] == "SMOKE_PASS_PATH_EXERCISED"
     assert payload["experiment_id"] != EXPERIMENT_ID
+    assert payload["backend"] == "synthetic"
+    assert payload["phase"] == "smoke"
     assert "FULL_PC_PASS" not in json.dumps(payload)
     assert "ELIGIBLE" not in json.dumps(payload)
     assert payload["path_checks"]["current_grid_preserved"] is True
+    for path in (tmp_path / "smoke").glob("synthetic_smoke_stage*.jsonl"):
+        rows = [
+            json.loads(line)
+            for line in path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        if path.name.endswith("_raw.jsonl"):
+            continue
+        assert {row["phase"] for row in rows} == {"smoke"}
+    for path in (tmp_path / "smoke").glob("synthetic_smoke_stage*.manifest.json"):
+        manifest = json.loads(path.read_text(encoding="utf-8"))
+        binding = manifest["checkpoint_binding"]
+        assert binding["backend"] == "synthetic"
+        assert binding["phase"] == "smoke"
+    artifact_text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in (tmp_path / "smoke").iterdir()
+        if path.is_file()
+    )
+    assert '"phase": "dev"' not in artifact_text
+    assert '"phase": "test"' not in artifact_text
+    assert "FULL_PC_" not in artifact_text
+    assert "ELIGIBLE" not in artifact_text

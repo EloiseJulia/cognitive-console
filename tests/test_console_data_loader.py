@@ -88,6 +88,7 @@ def test_axis_card_requires_complete_matched_tier_before_active_control():
         "model",
         "method",
         "direction",
+        "axis",
         "layer",
         "task",
         "outcome",
@@ -96,6 +97,7 @@ def test_axis_card_requires_complete_matched_tier_before_active_control():
         "comparator",
     ):
         assert identity[field] not in (None, "", {})
+    assert identity["version"] == "frozen-2026-07-23"
     assert identity["complete"] is True
     assert card["interface_action"]["read_only_diagnostic"]["eligibility"] == "candidate"
     assert card["interface_action"]["active_control"]["eligibility"] == "withheld"
@@ -339,15 +341,19 @@ def test_console_ui_contract_figure_script_runs():
                 "READ STATUS",
                 "TRANSFER STATUS",
                 "BLOCKING REASON",
+                "GRID SCOPE NOTE",
                 "INTERFACE ACTION",
                 "Read-only diagnostic candidate within this evidence tier; active control withheld.",
+                "QWEN-CAA / DELIBERATION",
+                "QWEN-CAA / UNCERTAINTY-AWARENESS",
                 "qwen2.5-7b; CAA:deliberation@L20;",
                 "deliberation/binary; C2b-v2026-07-23; DEV-selected prompt.",
                 "qwen2.5-7b; CAA:uncertainty@L20;",
                 "confidence/1-Brier; C2b-v2026-07-23; DEV-selected prompt.",
-                "Mixed resolution: ITI exploratory equivalence; CAA underpowered.",
+                "Interval includes zero; incremental gain is not established.",
+                "ITI exploratory equivalence; CAA cells are underpowered.",
                 "Missingness-limited: complete-case support in one cell; bounds cross zero.",
-                "Near-baseline only in CAA x Qwen; other 3 cells unrechecked.",
+                "4/4 comparator-negative; Qwen-CAA near baseline; 3 rechecks absent.",
             ):
                 assert expected in normalized_content
             font_sizes = [

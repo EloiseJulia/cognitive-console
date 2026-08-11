@@ -21,6 +21,7 @@ HANDOFF_SOURCE = (
 )
 HANDOFF_GENERATED = PAPER.parent / "reconstruction-handoff-2026-08-11" / "reframed.tex"
 ROOT = PAPER.parents[2]
+CONSOLE_SERVER = ROOT / "src" / "cognitive_console" / "console" / "server.py"
 RESULT_TERMS = re.compile(
     r"\b(no .*pass|failed-superiority|null|no method-model cell)\b", re.I
 )
@@ -215,7 +216,14 @@ def checklist_mapping(text: str) -> dict[str, bool]:
 
 def stale_taxonomy_hits() -> dict[str, list[str]]:
     hits = {}
-    for path in (PAPER, CONCEPT_FIGURE, OUTLINE, HANDOFF_SOURCE, HANDOFF_GENERATED):
+    for path in (
+        PAPER,
+        CONCEPT_FIGURE,
+        OUTLINE,
+        HANDOFF_SOURCE,
+        HANDOFF_GENERATED,
+        CONSOLE_SERVER,
+    ):
         text = path.read_text(encoding="utf-8")
         matches = sorted({match.group(0) for match in STALE_TAXONOMY.finditer(text)})
         if matches:

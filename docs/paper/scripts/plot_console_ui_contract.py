@@ -109,15 +109,17 @@ def _action_summary(card: dict) -> str:
     return f"{read_text}; {active_text}."
 
 
+def _card_title(card: dict) -> str:
+    method = str(card["evidence_tier"]["transfer_identity"].get("method")).upper()
+    return f"QWEN-{method} / {card['label'].upper()}"
+
+
 def _transfer_summary(card: dict) -> str:
     transfer = card["transfer_verdict"]
-    if card["axis"] == "deliberation":
-        return f"{transfer.get('verdict')}; full-grid resolution is mixed."
-    replications = card["calibration_harm"].get("arm_replications", [])
-    if card["axis"] == "uncertainty_awareness" and replications:
-        negative = sum(1 for row in replications if row.get("robust_harm"))
-        return f"{negative}/{len(replications)} frozen contrasts comparator-negative."
-    return f"{transfer.get('verdict')}; {transfer.get('summary', '')}"
+    return (
+        f"{transfer.get('verdict')}; delta={_fmt(transfer.get('delta'))}, "
+        f"CI=[{_fmt(transfer.get('ci_lo'))}, {_fmt(transfer.get('ci_hi'))}]."
+    )
 
 
 def _load_e0013() -> dict:
@@ -131,10 +133,14 @@ def _card_lines(card: dict, e0013: dict, grid_size: int) -> list[tuple[str, str]
     if card["axis"] == "deliberation":
         return [
             _signal_line("READ STATUS", f"{read.get('status')}; local CAA evidence only."),
-            _signal_line("TRANSFER STATUS", "NO-PASS in the tested cells."),
+            _signal_line("TRANSFER STATUS", _transfer_summary(card)),
             _signal_line(
                 "BLOCKING REASON",
-                "Mixed resolution: ITI exploratory equivalence; CAA underpowered.",
+                "Interval includes zero; incremental gain is not established.",
+            ),
+            _signal_line(
+                "GRID SCOPE NOTE",
+                "ITI exploratory equivalence; CAA cells are underpowered.",
             ),
             _signal_line("BOUNDED PROMPT COMPARATOR", ceiling.get("summary", "n/a")),
             _signal_line(
@@ -165,14 +171,15 @@ def _card_lines(card: dict, e0013: dict, grid_size: int) -> list[tuple[str, str]
     assert rechecked == 1 and grid_size >= rechecked
     return [
         _signal_line("READ STATUS", f"{read.get('status')}; local CAA evidence only."),
-        _signal_line("TRANSFER STATUS", f"NO-PASS; {_transfer_summary(card)}"),
+        _signal_line("TRANSFER STATUS", _transfer_summary(card)),
         _signal_line(
             "BLOCKING REASON",
             "Missingness-limited: complete-case support in one cell; bounds cross zero.",
         ),
         _signal_line(
-            "SCOPE",
-            f"Near-baseline only in CAA x Qwen; other {grid_size - rechecked} cells unrechecked.",
+            "GRID SCOPE NOTE",
+            f"{grid_size}/{grid_size} comparator-negative; Qwen-CAA near baseline; "
+            f"{grid_size - rechecked} rechecks absent.",
         ),
         _signal_line(
             "EXACT EVIDENCE TIER",
@@ -233,7 +240,7 @@ def write_pdf(payload: dict, out_path: Path) -> None:
         ax.text(
             x + 8,
             y0 + h - 14,
-            _reader_text(card["label"].upper()),
+            _reader_text(_card_title(card)),
             fontsize=9.5,
             fontweight="bold",
             va="baseline",
@@ -246,14 +253,13 @@ def write_pdf(payload: dict, out_path: Path) -> None:
             fontweight="bold",
             va="baseline",
         )
-        y = y0 + h - 55
+        y = y0 + h - 52
         for label, body in _card_lines(card, e0013, grid_size):
             ax.text(x + 8, y, label, fontsize=7, fontweight="bold", va="baseline")
             y -= 9
             for line in _wrap(body, width=54):
                 ax.text(x + 8, y, _reader_text(line), fontsize=7, va="baseline")
                 y -= 8
-            y -= 2
     out_path.parent.mkdir(parents=True, exist_ok=True)
     artifact_time = datetime.fromisoformat(e0013["generated_at"])
     fig.savefig(

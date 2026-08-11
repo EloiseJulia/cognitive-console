@@ -32,7 +32,15 @@ AXIS_TASK_OUTCOMES = {
     },
 }
 
-_TIER_MATCH_FIELDS = ("model", "method", "direction", "layer", "task", "outcome")
+_TIER_MATCH_FIELDS = (
+    "model",
+    "method",
+    "direction",
+    "axis",
+    "layer",
+    "task",
+    "outcome",
+)
 
 C1_RESULTS_REL = Path("results") / "gpu_7b_2026-07-23" / "c1" / "c1_facade_results.json"
 C2B_RESULTS_REL = Path("results") / "c2b_adjudication_hf_2026-07-24" / "c2b_adjudication_results.json"
@@ -108,6 +116,7 @@ def _tier_identity(
                 else None
             )
         ),
+        "axis": axis if axis else None,
         "layer": int(layer) if isinstance(layer, (int, float)) else None,
         "task": task,
         "outcome": outcome,
@@ -120,6 +129,7 @@ def _tier_identity(
         "model",
         "method",
         "direction",
+        "axis",
         "layer",
         "protocol",
         "version",
@@ -170,7 +180,7 @@ def _compare_tier_identities(read_identity: Dict, transfer_identity: Dict) -> Di
         reason = f"READ and TRANSFER belong to different evidence tiers: {details}."
     else:
         status = "MATCH"
-        reason = "READ and TRANSFER share the same model, method, direction, layer, task, and outcome."
+        reason = "READ and TRANSFER share the same model, method, direction, axis, layer, task, and outcome."
     return {
         "status": status,
         "matched": status == "MATCH",
@@ -211,10 +221,24 @@ def _direction_identity(data: Dict, row: Dict, method: object, axis: str) -> Opt
     return None
 
 
+def _protocol_version(data: Dict, protocol: object, fallback: object) -> object:
+    explicit = (
+        data.get("protocol_version")
+        or data.get("schema_version")
+        or data.get("config_fingerprint")
+    )
+    if explicit not in (None, ""):
+        return explicit
+    frozen = re.search(r"FROZEN\s+(\d{4}-\d{2}-\d{2})", str(protocol))
+    if frozen:
+        return f"frozen-{frozen.group(1)}"
+    return fallback
+
+
 def _load_c1_from_results(c1_path: Path) -> List[Dict]:
     data = _load_json(c1_path)
     method = _c1_method(data)
-    version = data.get("generated_at") or data.get("type")
+    version = _protocol_version(data, data.get("kind"), data.get("generated_at") or data.get("type"))
     rows: List[Dict] = []
     for axis_row in data.get("axes", []):
         axis = str(axis_row.get("axis"))
@@ -392,7 +416,7 @@ def _load_c2_data(c2b_path: Path, evidence_ledger_path: Path) -> Tuple[Dict, str
 def _build_c2_rows(c2b_data: Dict, source_mode: str) -> List[Dict]:
     method = _c2_method(c2b_data, source_mode)
     protocol = c2b_data.get("prereg") or c2b_data.get("frozen_params", {}).get("prereg")
-    version = c2b_data.get("config_fingerprint") or c2b_data.get("generated_at")
+    version = _protocol_version(c2b_data, protocol, c2b_data.get("generated_at"))
     rows: List[Dict] = []
     for axis_row in c2b_data.get("axes", []):
         axis = str(axis_row.get("axis"))
@@ -635,7 +659,7 @@ def _interface_mapping(
 
     if not read_signal.get("tier_identity", {}).get("complete", False):
         code = "READ_TIER_INCOMPLETE"
-        reason = "READ evidence lacks a complete model, method, direction/layer, protocol/version identity."
+        reason = "READ evidence lacks a complete model, method, direction/axis/layer, task/outcome, or protocol/version identity."
     elif not transfer_signal.get("tier_identity", {}).get("complete", False):
         code = "TRANSFER_TIER_INCOMPLETE"
         reason = "TRANSFER evidence lacks a complete task/outcome, protocol/version, or comparator identity."

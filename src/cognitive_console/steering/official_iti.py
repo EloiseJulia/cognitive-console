@@ -9,7 +9,7 @@ head outputs immediately before ``self_attn.o_proj``.
 from __future__ import annotations
 
 import gc
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple
 
@@ -259,7 +259,7 @@ def fit_official_iti(
     validation_labels: Sequence[int],
     *,
     top_k: int = 48,
-    alpha: float = 15.0,
+    alpha: float = 1.0,
 ) -> OfficialITIConfig:
     """Fit per-head probes, select top heads, and derive COM directions.
 
@@ -307,8 +307,7 @@ def fit_official_iti(
                 combined_y == 0
             ].mean(axis=0)
             direction = unit_vector(com)
-            projections = all_head @ direction
-            sigma = float(np.std(projections, ddof=1))
+            sigma = projection_standard_deviation(all_head, direction)
             candidates.append((accuracy, layer, head, direction, sigma))
 
     if not (1 <= int(top_k) <= len(candidates)):
@@ -330,6 +329,107 @@ def fit_official_iti(
         num_attention_heads=int(n_heads),
         head_dim=int(head_dim),
     )
+
+
+def projection_standard_deviation(
+    head_activations: np.ndarray,
+    unit_direction: np.ndarray,
+) -> float:
+    """Li et al. ITI scale: sample std of scalar direction projections."""
+
+    activations = np.asarray(head_activations, dtype=np.float64)
+    direction = np.asarray(unit_direction, dtype=np.float64).ravel()
+    if activations.ndim != 2 or activations.shape[1] != direction.size:
+        raise ValueError("projection std requires [examples, head_dim] activations")
+    if len(activations) < 2:
+        raise ValueError("projection std requires at least two examples")
+    if abs(float(np.linalg.norm(direction)) - 1.0) > 1e-6:
+        raise ValueError("projection std direction must be unit-normalized")
+    projections = activations @ direction
+    return float(np.std(projections, ddof=1))
+
+
+def calibrate_alpha_grid(
+    base_config: OfficialITIConfig,
+    activations: np.ndarray,
+    target_fractions: Sequence[float],
+) -> Tuple[Dict[str, OfficialITIConfig], Dict[str, object]]:
+    """Derive an outcome-independent grid bounded at the intervention site.
+
+    For each selected layer, the alpha=1 aggregate delta norm is compared with
+    the median norm of that layer's natural ``o_proj`` input. Each target
+    fraction is converted to the largest global alpha whose worst selected
+    layer has exactly that relative perturbation.
+    """
+
+    values = np.asarray(activations, dtype=np.float64)
+    if values.ndim != 4:
+        raise ValueError("alpha calibration requires [examples,layers,heads,dim]")
+    if values.shape[2:] != (
+        base_config.num_attention_heads,
+        base_config.head_dim,
+    ):
+        raise ValueError("alpha calibration activation geometry mismatch")
+    fractions = tuple(float(value) for value in target_fractions)
+    if (
+        not fractions
+        or any(not np.isfinite(value) or value <= 0.0 for value in fractions)
+        or tuple(sorted(set(fractions))) != fractions
+    ):
+        raise ValueError("target fractions must be finite, positive, unique, sorted")
+
+    unit_config = replace(base_config, alpha=1.0)
+    layer_rows: Dict[str, object] = {}
+    worst_unit_fraction = 0.0
+    limiting_layer = None
+    for layer in sorted(base_config.by_layer()):
+        natural = values[:, layer, :, :].reshape(len(values), -1)
+        typical_norm = float(np.median(np.linalg.norm(natural, axis=1)))
+        unit_delta_norm = float(np.linalg.norm(expected_layer_delta(unit_config, layer)))
+        if not np.isfinite(typical_norm) or typical_norm <= _EPS:
+            raise ValueError("alpha calibration natural activation norm is degenerate")
+        if not np.isfinite(unit_delta_norm) or unit_delta_norm <= _EPS:
+            raise ValueError("alpha calibration unit delta norm is degenerate")
+        unit_fraction = unit_delta_norm / typical_norm
+        if unit_fraction > worst_unit_fraction:
+            worst_unit_fraction = unit_fraction
+            limiting_layer = int(layer)
+        layer_rows[str(layer)] = {
+            "typical_o_proj_input_norm": typical_norm,
+            "alpha_1_aggregate_delta_norm": unit_delta_norm,
+            "alpha_1_relative_perturbation": unit_fraction,
+        }
+    if limiting_layer is None or worst_unit_fraction <= _EPS:
+        raise ValueError("alpha calibration found no selected layers")
+
+    configs: Dict[str, OfficialITIConfig] = {}
+    grid_rows = []
+    for fraction in fractions:
+        alpha = fraction / worst_unit_fraction
+        condition = f"iti-ratio-{fraction:.3f}".replace(".", "p")
+        configs[condition] = replace(base_config, alpha=float(alpha))
+        grid_rows.append(
+            {
+                "condition": condition,
+                "target_fraction": fraction,
+                "alpha": float(alpha),
+                "worst_layer_relative_perturbation": float(
+                    alpha * worst_unit_fraction
+                ),
+            }
+        )
+    return configs, {
+        "definition": (
+            "alpha(rho)=rho/max_layer(||delta_layer(alpha=1)||_2/"
+            "median_examples(||o_proj_input_layer||_2))"
+        ),
+        "outcome_independent": True,
+        "target_fractions": list(fractions),
+        "limiting_layer": limiting_layer,
+        "worst_alpha_1_relative_perturbation": worst_unit_fraction,
+        "layers": layer_rows,
+        "grid": grid_rows,
+    }
 
 
 def matched_random_config(config: OfficialITIConfig, seed: int) -> OfficialITIConfig:

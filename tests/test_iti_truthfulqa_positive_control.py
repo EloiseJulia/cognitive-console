@@ -44,6 +44,7 @@ from cognitive_console.experiments.iti_positive_control import (
     consume_signed_test_authorization,
     dev_eligibility,
     deterministic_sample_seed,
+    select_best_iti_alpha,
 )
 from cognitive_console.ops.transformers_compat import (
     REQUIRED_TRANSFORMERS_VERSION,
@@ -58,10 +59,12 @@ from cognitive_console.steering.official_iti import (
     MAX_POST_UNLOAD_CUDA_BYTES,
     OfficialITIConfig,
     OfficialITIHFBackend,
+    calibrate_alpha_grid,
     fit_official_iti,
     generation_was_truncated,
     hook_bite_metrics,
     matched_random_config,
+    projection_standard_deviation,
     validate_frozen_eos_mapping,
 )
 from cognitive_console.randomness import NUMPY_RNG_ALGORITHM, pcg64_rng
@@ -127,7 +130,14 @@ def test_frozen_runner_config_matches_preregistered_identities():
     assert frozen["dataset"]["revision"] == runner.TRUTHFULQA_REVISION
     assert frozen["dataset"]["canonical_order_config"] == "multiple_choice"
     assert frozen["method"]["top_k_heads"] == 48
-    assert frozen["method"]["alpha"] == 15.0
+    assert frozen["method"]["alpha_target_fractions"] == [
+        0.025,
+        0.05,
+        0.075,
+        0.10,
+        0.125,
+    ]
+    assert frozen["method"]["max_aggregate_perturbation_fraction"] == 0.125
     assert frozen["generation"]["k"] == 5
     assert frozen["generation"]["top_p"] == 1.0
     assert frozen["generation"]["top_k"] == 0
@@ -139,7 +149,8 @@ def test_frozen_runner_config_matches_preregistered_identities():
         == REQUIRED_TRANSFORMERS_VERSION
     )
     assert frozen["test_once"]["global_registry"] == (
-        "/var/lib/cognitive-console/iti-truthfulqa-positive-control/"
+        "/var/lib/cognitive-console/"
+        "iti-truthfulqa-calibrated-positive-control-20260812/"
         "test-attempts.jsonl"
     )
     assert frozen["statistics"]["ci_level"] == pytest.approx(1.0 - 0.05 / 3.0)
@@ -155,6 +166,20 @@ def test_frozen_runner_config_matches_preregistered_identities():
     assert autodl["statistics"] == frozen["statistics"]
     assert autodl["disk"]["budget_gib"] == 44.0
     assert autodl["disk"]["ceiling_gib"] == 47.0
+
+
+def test_test_attempt_registry_supports_owner_authorized_root_override(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("CC_TEST_ATTEMPT_ROOT", str(tmp_path))
+    expected = tmp_path / EXPERIMENT_ID / "test-attempts.jsonl"
+    assert runner.global_attempt_registry_path() == expected
+    assert runner.frozen_config(code_commit="abc")["test_once"][
+        "global_registry"
+    ] == str(expected)
+    monkeypatch.setenv("CC_TEST_ATTEMPT_ROOT", "relative/state")
+    with pytest.raises(ValueError, match="must be an absolute path"):
+        runner.global_attempt_registry_path()
 
 
 def test_official_twofold_is_deterministic_disjoint_and_covers_all_items():
@@ -501,12 +526,68 @@ def test_official_iti_recovers_planted_attention_head():
     )
     assert (config.specs[0].layer, config.specs[0].head) == (1, 2)
     assert float(np.dot(config.specs[0].direction, planted)) > 0.95
-    assert config.specs[0].sigma > 0.0
+    selected = config.specs[0]
+    combined_head = np.concatenate(
+        [
+            train[:, selected.layer, selected.head, :],
+            valid[:, selected.layer, selected.head, :],
+        ],
+        axis=0,
+    )
+    assert selected.sigma == pytest.approx(
+        float(np.std(combined_head @ selected.direction, ddof=1))
+    )
     random = matched_random_config(config, seed=9)
     assert random.method == "matched_random_attention_head_control"
     assert [(x.layer, x.head, x.sigma) for x in random.specs] == [
         (x.layer, x.head, x.sigma) for x in config.specs
     ]
+
+
+def test_official_iti_sigma_is_projection_std_not_activation_norm():
+    direction = np.asarray([1.0, 0.0], dtype=np.float64)
+    activations = np.asarray(
+        [
+            [1.0, 100.0],
+            [2.0, -100.0],
+            [4.0, 100.0],
+            [8.0, -100.0],
+        ],
+        dtype=np.float64,
+    )
+    expected = float(np.std(activations @ direction, ddof=1))
+    sigma = projection_standard_deviation(activations, direction)
+    assert sigma == pytest.approx(expected)
+    assert sigma != pytest.approx(
+        float(np.std(np.linalg.norm(activations, axis=1), ddof=1))
+    )
+
+
+def test_alpha_grid_is_bounded_by_intervention_site_activation_statistics():
+    config = OfficialITIConfig(
+        specs=(
+            ITIHeadSpec(0, 0, np.asarray([1.0, 0.0]), 2.0, 1.0),
+            ITIHeadSpec(0, 1, np.asarray([0.0, 1.0]), 1.0, 1.0),
+            ITIHeadSpec(1, 0, np.asarray([1.0, 0.0]), 3.0, 1.0),
+        ),
+        alpha=1.0,
+        num_attention_heads=2,
+        head_dim=2,
+    )
+    activations = np.zeros((4, 2, 2, 2), dtype=np.float64)
+    activations[:, 0, :, :] = np.asarray([[6.0, 8.0], [0.0, 0.0]])
+    activations[:, 1, :, :] = np.asarray([[0.0, 12.0], [5.0, 0.0]])
+    grid, report = calibrate_alpha_grid(
+        config, activations, (0.05, 0.10, 0.125)
+    )
+    assert report["outcome_independent"] is True
+    assert report["target_fractions"] == [0.05, 0.10, 0.125]
+    for row in report["grid"]:
+        assert row["worst_layer_relative_perturbation"] == pytest.approx(
+            row["target_fraction"]
+        )
+        assert grid[row["condition"]].alpha == pytest.approx(row["alpha"])
+    assert max(row["target_fraction"] for row in report["grid"]) == 0.125
 
 
 def _simple_config():
@@ -851,7 +932,7 @@ def test_fold_configs_are_atomic_full_identity_bound_and_resume_rejects_mismatch
         runner,
         "_fit_fold_configs",
         lambda items, splits, backend, *, activation_batch_size: (
-            {0: config},
+            {0: {"iti-ratio-0p125": config}},
             {
                 "0": {
                     "hook_bites": {"passed": True},
@@ -880,8 +961,10 @@ def test_fold_configs_are_atomic_full_identity_bound_and_resume_rejects_mismatch
         backend=Backend(),
         activation_batch_size=1,
     )
-    assert configs[0].to_dict() == config.to_dict()
-    assert payload["fold_configs_hash"] == config_hash(payload["fold_configs"])
+    assert configs[0]["iti-ratio-0p125"].to_dict() == config.to_dict()
+    assert payload["fold_config_grid_hash"] == config_hash(
+        payload["fold_config_grid"]
+    )
     resumed, _ = runner._load_or_create_fold_config_manifest(
         path=path,
         identity=identity,
@@ -890,7 +973,7 @@ def test_fold_configs_are_atomic_full_identity_bound_and_resume_rejects_mismatch
         backend=Backend(),
         activation_batch_size=1,
     )
-    assert resumed[0].to_dict() == config.to_dict()
+    assert resumed[0]["iti-ratio-0p125"].to_dict() == config.to_dict()
     with pytest.raises(ValueError, match="data/model/environment"):
         runner._load_or_create_fold_config_manifest(
             path=path,
@@ -1727,6 +1810,7 @@ def _record(
     outcome,
     missing=False,
     truncated=False,
+    output_text="ok",
 ):
     job = GenerationJob(
         fold,
@@ -1741,7 +1825,7 @@ def _record(
     return GenerationRecord.build(
         job,
         run_config_hash="cfg",
-        output_text="ok",
+        output_text=output_text,
         token_count=1,
         truncated=truncated,
         truth=bool(outcome) if not missing else None,
@@ -1864,6 +1948,66 @@ def test_dev_eligibility_fails_without_published_effect():
     assert result["test_accessed"] is False
 
 
+def test_coherence_aware_alpha_selection_rejects_overlarge_best_outcome():
+    records = []
+    for index in range(6):
+        records.extend(
+            [
+                _record(
+                    fold=0,
+                    condition="baseline",
+                    prompt_id=OFFICIAL_BASE_PROMPT_ID,
+                    item_index=index,
+                    outcome=0,
+                    output_text="A short coherent factual answer.",
+                ),
+                _record(
+                    fold=0,
+                    condition="iti-ratio-0p050",
+                    prompt_id=OFFICIAL_BASE_PROMPT_ID,
+                    item_index=index,
+                    outcome=int(index < 3),
+                    output_text="A different coherent factual answer.",
+                ),
+                _record(
+                    fold=0,
+                    condition="iti-ratio-0p500",
+                    prompt_id=OFFICIAL_BASE_PROMPT_ID,
+                    item_index=index,
+                    outcome=1,
+                    output_text=(
+                        "the common the common the common the common the common "
+                        "the common the common the common"
+                    ),
+                ),
+            ]
+        )
+    selection = select_best_iti_alpha(
+        records,
+        fold=0,
+        alpha_candidates=(
+            ("iti-ratio-0p050", 0.5),
+            ("iti-ratio-0p500", 5.0),
+        ),
+        k=1,
+    )
+    assert selection["status"] == "SELECTED"
+    assert selection["winner"]["condition"] == "iti-ratio-0p050"
+    rejected = {
+        row["condition"]: row for row in selection["all_candidates"]
+    }["iti-ratio-0p500"]
+    assert rejected["mean_outcome"] == 1.0
+    assert rejected["coherence_ok"] is False
+    none_coherent = select_best_iti_alpha(
+        records,
+        fold=0,
+        alpha_candidates=(("iti-ratio-0p500", 5.0),),
+        k=1,
+    )
+    assert none_coherent["status"] == "INVALID_SETUP"
+    assert none_coherent["winner"] is None
+
+
 def test_hf_output_must_be_outside_source_repository(tmp_path):
     with pytest.raises(ValueError, match="outside the source repository"):
         runner._assert_external_hf_output(REPO / "results" / "bad")
@@ -1892,11 +2036,22 @@ def test_disk_limits_and_backend_phase_are_not_cli_overridable(
         "XDG_CACHE_HOME",
         "TORCH_HOME",
     )
+    hf_root = tmp_path / "shared-hf"
     for name in cache_variables:
-        monkeypatch.setenv(name, "restore-after-test")
+        monkeypatch.setenv(name, str(tmp_path / "restore-after-test"))
+    monkeypatch.setenv("HF_HOME", str(hf_root))
+    monkeypatch.setenv("HF_DATASETS_CACHE", str(hf_root / "datasets"))
     cache_root = runner._configure_dedicated_caches(tmp_path / "external")
+    assert cache_root == hf_root.resolve()
+    assert Path(os.environ["HF_HOME"]).resolve() == hf_root.resolve()
+    assert Path(os.environ["HF_DATASETS_CACHE"]).resolve() == (
+        hf_root / "datasets"
+    ).resolve()
     for name in cache_variables:
         Path(os.environ[name]).resolve().relative_to(cache_root.resolve())
+    monkeypatch.setenv("HF_DATASETS_CACHE", str(tmp_path / "wrong-datasets"))
+    with pytest.raises(RuntimeError, match="HF_HOME/datasets"):
+        runner._configure_dedicated_caches(tmp_path / "external")
     parser = runner.build_parser()
     with pytest.raises(SystemExit):
         parser.parse_args([])

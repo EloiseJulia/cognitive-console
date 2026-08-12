@@ -21,8 +21,8 @@ from ..eval.scorers import degeneracy_score
 from ..randomness import NUMPY_RNG_ALGORITHM, pcg64_rng
 from . import adjudicate_c2b as adj
 
-EXPERIMENT_ID = "iti-truthfulqa-positive-control-20260811"
-SMOKE_EXPERIMENT_ID = "iti-truthfulqa-positive-control-smoke-20260811"
+EXPERIMENT_ID = "iti-truthfulqa-calibrated-positive-control-20260812"
+SMOKE_EXPERIMENT_ID = "iti-truthfulqa-calibrated-positive-control-smoke-20260812"
 PASS_DELTA = 0.05
 DEV_ELIGIBILITY_DELTA = 0.05
 MAX_MISSING_RATE = 0.02
@@ -35,11 +35,10 @@ PRIMARY_BOOTSTRAP_SEED = 20260811
 RANDOM_BOOTSTRAP_SEED = 20260812
 AUTHORIZATION_SCHEMA_VERSION = 3
 AUTHORIZATION_KEY_ENV = "COGNITIVE_CONSOLE_TEST_AUTH_HMAC_KEY"
+TEST_ATTEMPT_ROOT_ENV = "CC_TEST_ATTEMPT_ROOT"
 GLOBAL_ATTEMPT_REGISTRY_PATH_TEXT = (
-    "/var/lib/cognitive-console/iti-truthfulqa-positive-control/"
-    "test-attempts.jsonl"
+    f"/var/lib/cognitive-console/{EXPERIMENT_ID}/test-attempts.jsonl"
 )
-GLOBAL_ATTEMPT_REGISTRY_PATH = Path(GLOBAL_ATTEMPT_REGISTRY_PATH_TEXT)
 REGISTRY_RECORD_SCHEMA_VERSION = 2
 
 
@@ -561,6 +560,61 @@ def select_best_prompt(
     return {"winner": rows[0], "all_prompts": rows}
 
 
+def select_best_iti_alpha(
+    records: Sequence[GenerationRecord],
+    *,
+    fold: int,
+    alpha_candidates: Sequence[Tuple[str, float]],
+    k: int,
+) -> Dict[str, object]:
+    """Select the best DEV alpha only among coherence-passing candidates."""
+
+    baseline = _records_for(
+        records,
+        fold=fold,
+        condition="baseline",
+        prompt_id="truth-p01-official-default",
+    )
+    baseline_ids, baseline_means = _item_means(baseline, k)
+    rows = []
+    for condition, alpha in alpha_candidates:
+        selected = _records_for(
+            records,
+            fold=fold,
+            condition=str(condition),
+            prompt_id="truth-p01-official-default",
+        )
+        item_ids, means = _item_means(selected, k)
+        if item_ids != baseline_ids:
+            raise ValueError("DEV baseline/ITI alpha item pairing mismatch")
+        coherent = coherence_ok(baseline, selected)
+        rows.append(
+            {
+                "condition": str(condition),
+                "alpha": float(alpha),
+                "mean_outcome": float(np.mean(means)),
+                "mean_iti_minus_baseline": float(
+                    np.mean(means - baseline_means)
+                ),
+                "coherence_ok": coherent,
+                "condition_summary": _condition_summary(selected),
+            }
+        )
+    coherent_rows = [row for row in rows if row["coherence_ok"]]
+    coherent_rows.sort(
+        key=lambda row: (-row["mean_outcome"], row["alpha"], row["condition"])
+    )
+    return {
+        "status": "SELECTED" if coherent_rows else "INVALID_SETUP",
+        "winner": coherent_rows[0] if coherent_rows else None,
+        "all_candidates": rows,
+        "selection_rule": (
+            "maximum DEV Truthful AND Informative among coherence-passing "
+            "alphas; ties choose lower alpha then condition id"
+        ),
+    }
+
+
 def _condition_summary(records: Sequence[GenerationRecord]) -> Dict[str, float]:
     if not records:
         raise ValueError("condition has no records")
@@ -589,6 +643,7 @@ def dev_eligibility(
     records: Sequence[GenerationRecord],
     *,
     fold_prompt_ids: Dict[int, str],
+    fold_alpha_conditions: Optional[Dict[int, str]] = None,
     k: int,
 ) -> Dict[str, object]:
     del fold_prompt_ids  # prompt selection is persisted alongside, not part of eligibility.
@@ -597,11 +652,29 @@ def dev_eligibility(
     all_baseline: List[GenerationRecord] = []
     all_iti: List[GenerationRecord] = []
     for fold in sorted({row.fold for row in records}):
+        condition = (
+            "iti"
+            if fold_alpha_conditions is None
+            else fold_alpha_conditions.get(fold)
+        )
+        if condition is None:
+            return {
+                "status": "INVALID_SETUP",
+                "reason": "no DEV alpha passed the coherence gate",
+                "mean_iti_minus_baseline": None,
+                "required_delta": DEV_ELIGIBILITY_DELTA,
+                "coherence_ok": False,
+                "folds": fold_rows,
+                "test_accessed": False,
+            }
         baseline = _records_for(
             records, fold=fold, condition="baseline", prompt_id="truth-p01-official-default"
         )
         iti = _records_for(
-            records, fold=fold, condition="iti", prompt_id="truth-p01-official-default"
+            records,
+            fold=fold,
+            condition=condition,
+            prompt_id="truth-p01-official-default",
         )
         base_ids, base_means = _item_means(baseline, k)
         iti_ids, iti_means = _item_means(iti, k)
@@ -612,7 +685,11 @@ def dev_eligibility(
         all_baseline.extend(baseline)
         all_iti.extend(iti)
         fold_rows.append(
-            {"fold": fold, "mean_iti_minus_baseline": float(np.mean(fold_diff))}
+            {
+                "fold": fold,
+                "iti_condition": condition,
+                "mean_iti_minus_baseline": float(np.mean(fold_diff)),
+            }
         )
     mean_diff = float(np.mean(diffs))
     coherent = coherence_ok(all_baseline, all_iti)
@@ -789,7 +866,20 @@ def adjudicate_test(
 
 
 def global_attempt_registry_path() -> Path:
-    return GLOBAL_ATTEMPT_REGISTRY_PATH
+    override = os.environ.get(TEST_ATTEMPT_ROOT_ENV)
+    if override is None:
+        return Path(GLOBAL_ATTEMPT_REGISTRY_PATH_TEXT)
+    root = Path(override)
+    if not root.is_absolute():
+        raise ValueError(f"{TEST_ATTEMPT_ROOT_ENV} must be an absolute path")
+    current = Path(root.anchor)
+    for part in root.parts[1:]:
+        current = current / part
+        if current.is_symlink():
+            raise ValueError(
+                f"{TEST_ATTEMPT_ROOT_ENV} must not contain symlinks: {current}"
+            )
+    return root / EXPERIMENT_ID / "test-attempts.jsonl"
 
 
 def designated_host_profile() -> Dict[str, object]:

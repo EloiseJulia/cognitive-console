@@ -1743,3 +1743,85 @@ experiments:
     test_c2b_tasks.py::test_real_loader_is_deferred_offline failure, reproduced
     unchanged on clean main; the other 856 selected tests complete with 850
     passes and 6 skips.
+
+- experiment_id: microstudy-button-board-stepwise-20260812-v11-draft
+  parent: microstudy-button-board-20260812-v10-draft
+  hypothesis_id: H-MICROSTUDY-STEPWISE-GATE-APPLICATION
+  claim_ids: []
+  type: exploratory_formative_human_protocol
+  status: ready_for_owner_local_preview_no_human_data
+  code_commit: d1e5c86f0978f421985d5ff9378b53cd7e989b1f
+  dirty_tree: false
+  data_hash: >-
+    canonical_materials_hash=212b2006bbfe4a57cef4496913f8a13f302f1a28bc8f341cb517515d3c43df0b;
+    sequences_hash=8aaff27969a4c26baa23f8736aa0bbf73e1275e37a5ee071f53f4cb1d9ba8f34;
+    derived_keys_hash=1410ea94ae9725528ab62a0aa855c121643006a67e84fd31edbca1ee5e259934;
+    ab_invariance_hash=deed6497ee1bd3156d2a0428d6606affb2d2a884e63807ac620e116e294c98d4;
+    locale_en=10dd55bbf9e157a2f241c898ea61405bedd4559d87e0c2719e92c0a75f2d10ca;
+    locale_zh-Hans=06eda5c2331be582f496bd716bd69e2588f67b1614c4fad97b7665f372e9a26c
+  env_hash: null
+  config_hash: null
+  model: null
+  dataset: six fictional V11 stepwise cards per attempt; no human data; no live product
+  material_schema_version: microstudy-button-board-stepwise-v11-bilingual
+  materials_version: v11-stepwise-20260812-draft
+  sequence_schema_version: microstudy-button-board-stepwise-sequences-v1
+  export_schema_version: microstudy-export-v7-stepwise-bilingual-signed
+  analysis_version: button-board-stepwise-gaa-v1
+  seed: 20260812
+  hardware: owner-local Windows loopback preview only; no participant run authorized
+  started_at: null
+  ended_at: null
+  exit_code: null
+  raw_metrics: null
+  summary_metrics: null
+  artifacts:
+  - data/button_board_stepwise_v11/materials.json
+  - data/button_board_stepwise_v11/sequences.json
+  - data/button_board_stepwise_v11/derived_keys.json
+  - scripts/generate_microstudy_v11_stepwise.py
+  - scripts/validate_button_board_stepwise_materials.py
+  - src/cognitive_console/button_board_stepwise_materials.py
+  - src/cognitive_console/button_board_stepwise/materials.py
+  - src/cognitive_console/button_board_stepwise/server.py
+  - src/cognitive_console/button_board_stepwise/analysis.py
+  - src/cognitive_console/button_board_stepwise/static/index.html
+  - src/cognitive_console/button_board_stepwise/static/study.css
+  - src/cognitive_console/button_board_stepwise/static/study.js
+  - src/cognitive_console/button_board_stepwise/static/study_core.mjs
+  - tests/test_button_board_stepwise_materials.py
+  - tests/test_button_board_stepwise_web.py
+  - tests/button_board_stepwise_js_test.mjs
+  - docs/specs/microstudy-button-board-stepwise-v3.md
+  - docs/research/2026-08-12-microstudy-button-board-stepwise-v3-DRAFT.md
+  - docs/plans/microstudy-button-board-stepwise-v3.md
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    D-0117 authorizes an independent V3/V11 stepwise open-book fictional
+    button-board preview. A typed fact registry renders participant cards,
+    unified existing/new method maps, scope values, and bilingual scope options.
+    The generator derives compared/better/harm/scope completeness, every
+    expected step, exit answer, decisive step, and state; public materials,
+    participant payloads, DOM/ARIA, and raw signed exports omit those private
+    fields. F4 uses the same method-map schema with 0 existing and 10 new-item
+    rounds. AB1 variants differ only in target counts and each allocation has
+    all four states. Step 6 distractors differ from the faithful vector by one
+    dimension, have equal dimension counts, matched English word counts, and
+    normalized Chinese lengths within one character. V9/V10/V11 materials,
+    entry points, exports, and analyses remain independent and mixed inputs fail
+    closed. The loopback server retains Host/origin, CSRF, capability,
+    request-ID idempotency, success-only TTL, capacity, volatile memory, no
+    access logs, no browser storage, and private-key isolation. Generator
+    --check, material validator, Node checks, all 23 V3 material/web tests,
+    Chrome/Edge English/Simplified-Chinese 100%/200% keyboard/focus/layout/
+    complete/partial gates, all 51 V9/V2 coexistence tests, and isolated
+    port-8894/8895/8896 HTTP smoke passed. The full repository command has one
+    environment-dependent
+    test_c2b_tasks.py::test_real_loader_is_deferred_offline failure reproduced
+    unchanged by the same full command on clean base 961b58a. Runtime keys,
+    browser profiles, baseline worktree, and smoke processes were removed.
+    This is synthetic implementation preparation, not a study run or paper
+    evidence. Human data, recruitment, ethics, timing, public deployment,
+    claim/result changes, exploratory-to-confirmatory upgrade, and Protocol
+    Freeze remain unauthorized.

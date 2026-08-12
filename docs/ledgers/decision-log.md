@@ -5,6 +5,36 @@
 
 ---
 
+## 2026-08-12 · D-0117 · Owner authorizes V3 stepwise open-book button board for local preview only
+- The owner approved V3 as a distinct one-question-at-a-time, open-book,
+  fictional button-board material, sequence, signed-export, and analysis
+  version. The exact implementation commit is
+  `d1e5c86f0978f421985d5ff9378b53cd7e989b1f`; this docs-only lineage update
+  does not replace that code identity.
+- V3 uses synthetic household/phone trial cards and a continuously visible
+  reference panel. This authorization covers design implementation and local
+  verification only; it collects no human data and establishes no empirical
+  interface result.
+- V1/V9, V2/V10, and V3/V11 coexist. Their entry points, material directories,
+  schemas, exports, analyses, and any future observations are independent and
+  must not be pooled, relabeled, backfilled, or treated as repeated versions of
+  one sample.
+- The only permitted future descriptive target is accuracy under short
+  teaching and continuously visible reference material when applying frozen
+  evidence thresholds one question at a time. V3 cannot support benefit,
+  trust, safety, control, efficiency, real-product, latent-mechanism,
+  Contract/Flat, interface-superiority, or population-generalization claims.
+- The maximum status is `ready_for_owner_local_preview_no_human_data`;
+  `valid_for_paper=false`. This decision authorizes no recruitment, participant
+  contact, human-data collection, timing pilot, ethics administration, public
+  deployment, paper/claim/result change, exploratory-to-confirmatory upgrade,
+  or Protocol Freeze.
+- Human bilingual semantic review, two independent structural reviews,
+  cognitive/usability interviews, matched-condition/priority-contact/scope
+  comprehension checks, manual accessibility, ethics and recruitment approval,
+  privacy/retention approval, timing and sample-size/MDE work, preregistration
+  freeze, and Protocol Freeze remain open human gates.
+
 ## 2026-08-12 · D-0115 · Owner approves plain-language V9.1 evidence with no measurement fold
 - The owner approved replacing every participant-visible V9 evidence fact with
   a bilingual, decision-relevant plain-language summary. The default and only

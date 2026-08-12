@@ -129,7 +129,6 @@ summary:focus-visible, #stage:focus-visible, .button-link:focus-visible {
 }
 .evidence-label { font-weight: 750; }
 .evidence-body { margin: 0; line-height: 1.5; }
-.source-details code { white-space: normal; word-break: break-all; }
 fieldset { margin: 14px 0; padding: 0; border: 0; }
 legend { margin-bottom: 8px; font-weight: 750; }
 .choice { margin: 0; padding: 7px; font-weight: 400; }

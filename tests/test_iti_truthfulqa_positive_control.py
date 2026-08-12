@@ -2017,8 +2017,8 @@ def test_hf_output_must_be_outside_source_repository(tmp_path):
 def test_disk_limits_and_backend_phase_are_not_cli_overridable(
     tmp_path, monkeypatch
 ):
-    assert runner.DISK_BUDGET_GB == 60.0
-    assert runner.DISK_CEILING_GB == 70.0
+    assert runner.DISK_BUDGET_GB == 100.0
+    assert runner.DISK_CEILING_GB == 110.0
     assert runner.PINNED_CONCURRENT_WORST_CASE_BYTES == 51615163245
     autodl = runner.HARDWARE_PROFILES[runner.AUTODL_HARDWARE_PROFILE]
     assert autodl.disk_budget_gib == 44.0

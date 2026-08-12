@@ -146,11 +146,15 @@ attempt; it does not authorize changing the rule.
 
 The run sequence is **preflight → DEV → TEST exactly once**. DEV is sealed by
 hashes. Immediately before first TEST generation, the runner exclusively creates
-the host-global marker
-`/var/lib/cognitive-console/c2b-resolution-refinement/test-attempts/c2b-resolution-caa-qwen-test-20260812.json`
-with `O_CREAT|O_EXCL`. This canonical path is keyed by experiment ID and is
-independent of `--out-dir`, so a concurrent invocation or a later invocation
-using another artifact directory fails closed. The per-output
+a host-global marker keyed by experiment ID with `O_CREAT|O_EXCL`. Its default
+path is
+`/var/lib/cognitive-console/c2b-resolution-refinement/test-attempts/c2b-resolution-caa-qwen-test-20260812.json`.
+On an owner-authorized non-root host, `CC_TEST_ATTEMPT_ROOT=/absolute/path`
+resolves it instead under
+`<absolute-path>/c2b-resolution-refinement/test-attempts/`. The override must be
+absolute, non-symlinked, owner-writable, and is recorded explicitly in the marker
+and TEST result. The marker remains independent of `--out-dir`, so a concurrent
+invocation or later invocation using another artifact directory fails closed. The per-output
 `test/TEST_STARTED.json` records the canonical marker but is not the uniqueness
 authority. TEST results are sealed separately.
 
@@ -183,6 +187,7 @@ On the rented Linux A800, from a clean checkout of the committed branch:
 export CUDA_DEVICE_ORDER=PCI_BUS_ID
 export CUDA_VISIBLE_DEVICES=0
 export HF_HOME=/workspace/hf
+export CC_TEST_ATTEMPT_ROOT=/home/elzhang/.local/state/cognitive-console
 export PYTHONPATH="$PWD/src:$PWD"
 export OUT_DIR=/workspace/cognitive-console-runs/resolution-refinement
 export EXPECTED_CODE_COMMIT="$(git rev-parse HEAD)"

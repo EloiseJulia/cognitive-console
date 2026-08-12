@@ -159,9 +159,17 @@ def test_synthetic_preflight_wires_power_and_sampling(tmp_path):
     assert payload["power"]["primary"]["uncertainty_awareness"]["achieved_mde"] <= 0.05
 
 
-def test_test_attempt_is_global_across_out_dirs(tmp_path, monkeypatch):
-    registry = tmp_path / "global-attempt-registry"
-    monkeypatch.setattr(runner, "GLOBAL_TEST_ATTEMPT_ROOT", registry)
+def test_test_attempt_registry_defaults_to_var_lib(monkeypatch):
+    monkeypatch.delenv(runner.TEST_ATTEMPT_ROOT_ENV, raising=False)
+    profile = runner.resolve_test_attempt_registry()
+    assert profile["registry_root"] == str(runner.DEFAULT_TEST_ATTEMPT_ROOT)
+    assert profile["registry_root_overridden"] is False
+
+
+def test_test_attempt_override_is_global_across_out_dirs(tmp_path, monkeypatch):
+    owner_root = tmp_path / "owner-state"
+    owner_root.mkdir()
+    monkeypatch.setenv(runner.TEST_ATTEMPT_ROOT_ENV, str(owner_root))
     identity = {"code_commit": "abc123", "dirty_tree": False}
 
     marker = runner.claim_test_attempt(
@@ -170,10 +178,13 @@ def test_test_attempt_is_global_across_out_dirs(tmp_path, monkeypatch):
         dev_selection_sha256="sha256:dev",
         out_dir=tmp_path / "out-a",
     )
+    registry = owner_root / "c2b-resolution-refinement" / "test-attempts"
     assert marker == registry / f"{rr.TEST_EXPERIMENT_ID}.json"
     payload = json.loads(marker.read_text(encoding="utf-8"))
     assert payload["experiment_id"] == rr.TEST_EXPERIMENT_ID
     assert payload["artifact_out_dir"] == str((tmp_path / "out-a").resolve())
+    assert payload["registry_root"] == str(registry)
+    assert payload["registry_root_overridden"] is True
 
     with pytest.raises(PermissionError, match="already has a host-global"):
         runner.claim_test_attempt(
@@ -185,8 +196,10 @@ def test_test_attempt_is_global_across_out_dirs(tmp_path, monkeypatch):
 
 
 def test_concurrent_test_attempt_claim_is_exclusive(tmp_path, monkeypatch):
-    registry = tmp_path / "global-attempt-registry"
-    monkeypatch.setattr(runner, "GLOBAL_TEST_ATTEMPT_ROOT", registry)
+    owner_root = tmp_path / "owner-state"
+    owner_root.mkdir()
+    monkeypatch.setenv(runner.TEST_ATTEMPT_ROOT_ENV, str(owner_root))
+    registry = owner_root / "c2b-resolution-refinement" / "test-attempts"
     identity = {"code_commit": "abc123", "dirty_tree": False}
 
     def attempt(index):
@@ -207,3 +220,28 @@ def test_concurrent_test_attempt_claim_is_exclusive(tmp_path, monkeypatch):
     assert sorted(outcomes) == ["claimed", "rejected"]
     markers = list(registry.glob("*.json"))
     assert markers == [registry / f"{rr.TEST_EXPERIMENT_ID}.json"]
+
+
+def test_test_attempt_override_rejects_relative_and_symlink_roots(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv(runner.TEST_ATTEMPT_ROOT_ENV, "relative/state")
+    with pytest.raises(ValueError, match="must be an absolute path"):
+        runner.resolve_test_attempt_registry()
+
+    target = tmp_path / "target"
+    target.mkdir()
+    link = tmp_path / "state-link"
+    try:
+        link.symlink_to(target, target_is_directory=True)
+    except OSError:
+        monkeypatch.setattr(
+            runner,
+            "_reject_symlink_components",
+            lambda path: (_ for _ in ()).throw(
+                ValueError("TEST attempt registry path must not contain symlinks")
+            ),
+        )
+    monkeypatch.setenv(runner.TEST_ATTEMPT_ROOT_ENV, str(link))
+    with pytest.raises(ValueError, match="must not contain symlinks"):
+        runner.resolve_test_attempt_registry()

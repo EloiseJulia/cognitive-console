@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 import platform
+import stat
 import subprocess
 import sys
 from dataclasses import asdict
@@ -39,7 +40,8 @@ MAX_NEW_TOKENS = 64
 TEMPERATURE = 0.7
 N_EXTRACTION = 28
 N_STRONG = 16
-GLOBAL_TEST_ATTEMPT_ROOT = Path(
+TEST_ATTEMPT_ROOT_ENV = "CC_TEST_ATTEMPT_ROOT"
+DEFAULT_TEST_ATTEMPT_ROOT = Path(
     "/var/lib/cognitive-console/c2b-resolution-refinement/test-attempts"
 )
 
@@ -62,7 +64,69 @@ def _atomic_json(path: Path, payload: Dict) -> None:
     os.replace(pending, path)
 
 
-def test_attempt_marker_path(experiment_id: str) -> Path:
+def _reject_symlink_components(path: Path) -> None:
+    current = Path(path.anchor)
+    for part in path.parts[1:]:
+        current = current / part
+        if current.is_symlink():
+            raise ValueError(
+                f"TEST attempt registry path must not contain symlinks: {current}"
+            )
+
+
+def _assert_owner_writable_directory(path: Path) -> None:
+    mode = path.stat()
+    if os.name == "posix":
+        if mode.st_uid != os.geteuid():
+            raise PermissionError(
+                f"TEST attempt registry path is not owned by the current user: {path}"
+            )
+        if not mode.st_mode & stat.S_IWUSR:
+            raise PermissionError(
+                f"TEST attempt registry path is not owner-writable: {path}"
+            )
+    if not os.access(path, os.W_OK):
+        raise PermissionError(f"TEST attempt registry path is not writable: {path}")
+
+
+def resolve_test_attempt_registry(*, prepare: bool = False) -> Dict[str, object]:
+    """Resolve and optionally prepare the owner-authorized TEST registry root."""
+    raw_override = os.environ.get(TEST_ATTEMPT_ROOT_ENV)
+    overridden = raw_override is not None
+    if overridden:
+        owner_root = Path(str(raw_override))
+        if not owner_root.is_absolute():
+            raise ValueError(
+                f"{TEST_ATTEMPT_ROOT_ENV} must be an absolute path"
+            )
+        registry_root = (
+            owner_root / "c2b-resolution-refinement" / "test-attempts"
+        )
+    else:
+        owner_root = DEFAULT_TEST_ATTEMPT_ROOT.parents[1]
+        registry_root = DEFAULT_TEST_ATTEMPT_ROOT
+
+    _reject_symlink_components(owner_root)
+    _reject_symlink_components(registry_root)
+    if prepare:
+        registry_root.mkdir(parents=True, exist_ok=True)
+        _reject_symlink_components(owner_root)
+        _reject_symlink_components(registry_root)
+        _assert_owner_writable_directory(owner_root)
+        _assert_owner_writable_directory(registry_root)
+    return {
+        "registry_root": str(registry_root),
+        "registry_root_overridden": overridden,
+        "registry_owner_root": str(owner_root),
+        "registry_root_env": TEST_ATTEMPT_ROOT_ENV,
+    }
+
+
+def test_attempt_marker_path(
+    experiment_id: str,
+    *,
+    registry_profile: Optional[Dict[str, object]] = None,
+) -> Path:
     """Canonical host-local TEST marker, independent of any artifact out-dir."""
     experiment_id = str(experiment_id)
     if not experiment_id or any(
@@ -70,7 +134,8 @@ def test_attempt_marker_path(experiment_id: str) -> Path:
         for char in experiment_id
     ):
         raise ValueError(f"unsafe experiment_id for TEST registry: {experiment_id!r}")
-    return GLOBAL_TEST_ATTEMPT_ROOT / f"{experiment_id}.json"
+    profile = registry_profile or resolve_test_attempt_registry()
+    return Path(str(profile["registry_root"])) / f"{experiment_id}.json"
 
 
 def claim_test_attempt(
@@ -79,16 +144,23 @@ def claim_test_attempt(
     code_identity: Dict[str, object],
     dev_selection_sha256: str,
     out_dir: Path,
+    registry_profile: Optional[Dict[str, object]] = None,
 ) -> Path:
     """Exclusively consume TEST once for an experiment on this execution host."""
-    marker = test_attempt_marker_path(experiment_id)
-    marker.parent.mkdir(parents=True, exist_ok=True)
+    profile = registry_profile or resolve_test_attempt_registry(prepare=True)
+    marker = test_attempt_marker_path(
+        experiment_id, registry_profile=profile
+    )
     payload = {
         "protocol_id": rr.PROTOCOL_ID,
         "experiment_id": experiment_id,
         "code_identity": code_identity,
         "dev_selection_sha256": str(dev_selection_sha256),
         "artifact_out_dir": str(Path(out_dir).resolve()),
+        "registry_root": profile["registry_root"],
+        "registry_root_overridden": profile["registry_root_overridden"],
+        "registry_owner_root": profile["registry_owner_root"],
+        "registry_root_env": profile["registry_root_env"],
         "meaning": "TEST generation is authorized to begin exactly once",
     }
     encoded = (
@@ -428,11 +500,13 @@ def _test(args) -> int:
     sampler_for_axis, collector = _sampler(
         frozen["hf_meta"], out_dir / "test" / "work"
     )
+    registry_profile = resolve_test_attempt_registry(prepare=True)
     global_marker = claim_test_attempt(
         experiment_id=rr.TEST_EXPERIMENT_ID,
         code_identity=identity,
         dev_selection_sha256=seal["dev_selection_sha256"],
         out_dir=out_dir,
+        registry_profile=registry_profile,
     )
     _atomic_json(
         started,
@@ -440,6 +514,10 @@ def _test(args) -> int:
             "protocol_id": rr.PROTOCOL_ID,
             "experiment_id": rr.TEST_EXPERIMENT_ID,
             "global_attempt_marker": str(global_marker),
+            "registry_root": registry_profile["registry_root"],
+            "registry_root_overridden": registry_profile[
+                "registry_root_overridden"
+            ],
             "code_identity": identity,
         },
     )
@@ -490,6 +568,10 @@ def _test(args) -> int:
         "must_not_overwrite": "E-0005/E-0006/E-0011 frozen artifacts and verdicts",
         "code_identity": identity,
         "hardware": hardware,
+        "test_attempt_registry": {
+            **registry_profile,
+            "marker_path": str(global_marker),
+        },
         "power": rr.power_manifest(),
         "sampling": frozen["sampling"],
         "frozen_params": adj.frozen_params_dict(),

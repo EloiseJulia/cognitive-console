@@ -1601,7 +1601,7 @@ experiments:
   claim_ids: []
   type: exploratory_formative_human_protocol
   status: ready_for_owner_local_preview_no_human_data
-  code_commit: PENDING_BRANCH_IMPLEMENTATION_COMMIT
+  code_commit: 6258c303e6739b4fe4374c63732df72b2a38e090
   dirty_tree: false
   data_hash: >-
     canonical_materials_hash=e0714ffbb4702a5d8ca0856ebfa03e0eb426e9bf54e049607cd96e0dd65e3cef;
@@ -1664,3 +1664,12 @@ experiments:
     implementation preparation, not a study run or paper evidence. Human data,
     recruitment, ethics, timing, public deployment, claim/result changes,
     exploratory-to-confirmatory upgrade, and Protocol Freeze remain unauthorized.
+    Exact implementation commit 6258c303e6739b4fe4374c63732df72b2a38e090
+    passed generator --check, the material validator, Node checks, all 19 V2
+    material/web tests, repeated Chrome/Edge English/Simplified-Chinese
+    100%/200% keyboard gates, and an isolated port-8893 HTTP flow whose PID,
+    key, and runtime directory were removed. The complete repository collection
+    has 857 tests. The raw full command has one environment-dependent
+    test_c2b_tasks.py::test_real_loader_is_deferred_offline failure, reproduced
+    unchanged on clean main; the other 856 selected tests complete with 850
+    passes and 6 skips.

@@ -7,8 +7,9 @@
 
 ## 2026-08-12 · D-0116 · Owner authorizes V2 fictional button-board version for local preview only
 - The owner approved V2 as a distinct single-presentation button-board material,
-  sequence, signed-export, and analysis version. The implementation commit will
-  be pinned by the immediate branch lineage update after implementation commit.
+  sequence, signed-export, and analysis version. The exact implementation commit
+  is `6258c303e6739b4fe4374c63732df72b2a38e090`; this immediate
+  docs-only lineage update does not replace that code identity.
 - V2 uses only fictional household/phone items and neutral illustrative trial
   records. It collects no human data in this authorization and does not require
   paper artifact lineage for its fictional counts.

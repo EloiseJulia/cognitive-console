@@ -1,0 +1,821 @@
+{
+  "schema_version": "uncertainty-grid-no-impute-extension-v1",
+  "experiment_id": "E-0017-uncertainty-grid-no-impute-extension",
+  "generated_at": "2026-08-12T01:54:22.394647+00:00",
+  "experiment_type": "exploratory_robustness_extension",
+  "valid_for_paper": false,
+  "code_commit": "d516ff199c68a205d8f77e56083d560bb58788e0",
+  "dirty_tree_at_run": false,
+  "hardware": "CPU-only rescoring; no model inference",
+  "metric": "1_minus_Brier",
+  "bootstrap": {
+    "B": 10000,
+    "seed": 20260723,
+    "ci_level": 0.95,
+    "unit": "item",
+    "method": "percentile item-cluster bootstrap"
+  },
+  "relationship_to_frozen_e0013": {
+    "frozen_confirmatory_scope": "CAA×Qwen only",
+    "extension_scope": "cached E-0006 TEST transcripts across available four-grid cells",
+    "replacement": false,
+    "guard": "This artifact does not overwrite or re-authorize E-0013. Recovered transcript hashes were not frozen before recovery; frozen-score reproduction establishes internal consistency, not original-source provenance. All new cell results remain exploratory pending independent audit."
+  },
+  "input_lineage": {
+    "protocol_path": "docs/research/2026-08-11-uncertainty-grid-recheck/frozen-manifest.json",
+    "protocol_sha256": "ab4faa7856500d2487dc9b632f6d228b8696b9cf3a8a9fdfa3d6f689ebb8897f",
+    "item_artifact": {
+      "path": "data/e0006_uncertainty_baseline/e0006_uncertainty_baseline.jsonl",
+      "sha256": "732689114b64a9007c4cd4bf1941b4cfc716a1920523b2a7e35dd209e2ba2658",
+      "canonical_items_sha256": "6321f3cfbb1f50888576f1c80976a8547f41af47d4e26ac10916b59af880c425",
+      "splits": {
+        "dev": {
+          "count": 27,
+          "ids_sha256": "47d1badddc2e21dfcc1503fc58e086caae391c10d0720a3f6910c4ba44e06023"
+        },
+        "test": {
+          "count": 53,
+          "ids_sha256": "771097fd6dda1ad0e4dca334c7f16b47c5fda563688f1164c28dd8913b39183d"
+        }
+      }
+    },
+    "runtime_cache_root": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\results\\arm_full"
+  },
+  "available_cells": [
+    "caa__llama3-8b",
+    "caa__qwen2.5-7b",
+    "iti__llama3-8b",
+    "iti__qwen2.5-7b"
+  ],
+  "unavailable_cells": [],
+  "cells": {
+    "caa__llama3-8b": {
+      "availability": {
+        "worktree_snapshot_path": "results/arm_full/cell_caa__llama3-8b/transcripts",
+        "worktree_snapshot_exists": false,
+        "cache_path_relative_to_cache_root": "cell_caa__llama3-8b/transcripts",
+        "cache_snapshot_exists": true,
+        "status": "PRESENT_VALIDATED_EXPLORATORY_CACHE",
+        "transcript_directory_inventory": {
+          "file_count": 88,
+          "total_bytes": 18084957,
+          "manifest_sha256": "90e90141cb036d727d771fb83de5e5d11cd85953b0aba17d4bfeabb315a4b726"
+        },
+        "used_test_files": [
+          {
+            "path_relative_to_cache_root": "cell_caa__llama3-8b/transcripts/uncertainty_awareness__test_baseline__alpha=0.jsonl",
+            "size_bytes": 274440,
+            "sha256": "2b13454df62550a88a82b7c48264068255735f3be71a35ccf7f070cdb691a9f7",
+            "rows": 265
+          },
+          {
+            "path_relative_to_cache_root": "cell_caa__llama3-8b/transcripts/uncertainty_awareness__test_prompt__prompt=unc-strong-09_alpha=0.jsonl",
+            "size_bytes": 350095,
+            "sha256": "09bb9e8ab7b31f0438cd1f077205f72ced30ee5df64d209eef0992e2102f3065",
+            "rows": 265
+          },
+          {
+            "path_relative_to_cache_root": "cell_caa__llama3-8b/transcripts/uncertainty_awareness__test_steer__alpha=8.0.jsonl",
+            "size_bytes": 295228,
+            "sha256": "e9639a9cdfd219a9f48386792403e7b259eaa79e25dd8967f2071ee3bbd39787",
+            "rows": 265
+          }
+        ],
+        "used_test_files_manifest_sha256": "63b34c868d4bc3be08c6f72fda16c40604758189389be0b972555523c9117e93",
+        "source_rows": 795,
+        "frozen_per_item_outcomes_reproduced": true,
+        "coverage": {
+          "source_rows_total": 795,
+          "test_rows_used": 795,
+          "dev_rows_explicitly_not_in_headline": 0,
+          "other_rows_rejected": 0,
+          "expected_test_rows": 795,
+          "expected_dev_rows": null,
+          "dev_grid_complete": false,
+          "test_grid_complete": true,
+          "test_items": 53,
+          "samples_per_item_condition": 5
+        }
+      },
+      "frozen_identity": {
+        "method": "caa",
+        "model_label": "llama3-8b",
+        "layer": 10,
+        "requested_alpha": 8.0,
+        "frozen_result": {
+          "path": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
+          "sha256": "d301bacf70744406356fd2e1a597c01b8738c10d392a9901feae461bebfa0f42",
+          "config_fingerprint": "861d5b5f8773c6f0"
+        }
+      },
+      "analysis": {
+        "conditions": {
+          "prompt": {
+            "generation_quality": {
+              "n_samples": 265,
+              "n_format_compliant": 134,
+              "n_parse_failures": 131,
+              "format_compliance_rate": 0.5056603773584906,
+              "format_compliance_exact": "134/265"
+            },
+            "calibration_among_parsable_only": {
+              "estimand_available": true,
+              "point": 0.8993541836734694,
+              "ci_lo": 0.8471680280612246,
+              "ci_hi": 0.9428703477891157,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 49,
+              "metric": "1_minus_Brier",
+              "n_observed_samples": 134,
+              "conditioning_warning": "Post-generation conditional calibration; parse failures are not assigned confidence=0.5 or any calibration score."
+            }
+          },
+          "steer": {
+            "generation_quality": {
+              "n_samples": 265,
+              "n_format_compliant": 0,
+              "n_parse_failures": 265,
+              "format_compliance_rate": 0.0,
+              "format_compliance_exact": "0/265"
+            },
+            "calibration_among_parsable_only": {
+              "estimand_available": false,
+              "point": null,
+              "ci_lo": null,
+              "ci_hi": null,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 0,
+              "unavailable_reason": "No parsable confidence values in this condition.",
+              "metric": "1_minus_Brier",
+              "n_observed_samples": 0,
+              "conditioning_warning": "Post-generation conditional calibration; parse failures are not assigned confidence=0.5 or any calibration score."
+            }
+          },
+          "baseline": {
+            "generation_quality": {
+              "n_samples": 265,
+              "n_format_compliant": 249,
+              "n_parse_failures": 16,
+              "format_compliance_rate": 0.939622641509434,
+              "format_compliance_exact": "249/265"
+            },
+            "calibration_among_parsable_only": {
+              "estimand_available": true,
+              "point": 0.6611682075471699,
+              "ci_lo": 0.5485199363207548,
+              "ci_hi": 0.7683320566037735,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 53,
+              "metric": "1_minus_Brier",
+              "n_observed_samples": 249,
+              "conditioning_warning": "Post-generation conditional calibration; parse failures are not assigned confidence=0.5 or any calibration score."
+            }
+          }
+        },
+        "steer_minus_prompt": {
+          "metric": "1_minus_Brier",
+          "paired_sample_complete_case": {
+            "estimand_available": false,
+            "point": null,
+            "ci_lo": null,
+            "ci_hi": null,
+            "ci_level": 0.95,
+            "bootstrap_b": 10000,
+            "n_items": 0,
+            "total_sample_pairs": 265,
+            "retained_sample_pairs": 0,
+            "dropped_sample_pairs": 265,
+            "retained_items": 0,
+            "dropped_items_zero_complete_pairs": 53,
+            "policy": "Retain an (item_id, sample_index) pair only when both prompt and steer confidence parse; average retained pair differences within item, then bootstrap items."
+          },
+          "no_impute_drop_missing_item": {
+            "estimand_available": false,
+            "point": null,
+            "ci_lo": null,
+            "ci_hi": null,
+            "ci_level": 0.95,
+            "bootstrap_b": 10000,
+            "n_items": 0,
+            "observed_prompt_samples": 134,
+            "observed_steer_samples": 0,
+            "retained_items": 0,
+            "dropped_items_without_observed_prompt_or_steer": 53,
+            "policy": "Within each condition, average only parsable samples. Drop an item if either prompt or steer has zero parsable samples; never fill a missing confidence."
+          },
+          "adversarial_missingness_bounds": {
+            "least_favorable_to_steer": {
+              "estimand_available": true,
+              "point": -0.9451128301886794,
+              "ci_lo": -0.9698124999999997,
+              "ci_hi": -0.9155444150943396,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 53,
+              "missing_steer_1minus_Brier": 0.0,
+              "missing_prompt_1minus_Brier": 1.0
+            },
+            "most_favorable_to_steer": {
+              "estimand_available": true,
+              "point": 0.5492267924528302,
+              "ci_lo": 0.47612247169811317,
+              "ci_hi": 0.6211110849056602,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 53,
+              "missing_steer_1minus_Brier": 1.0,
+              "missing_prompt_1minus_Brier": 0.0
+            },
+            "point_identification_interval": [
+              -0.9451128301886794,
+              0.5492267924528302
+            ],
+            "spans_zero": true,
+            "strict_negative_sign_stable": false,
+            "strict_positive_sign_stable": false,
+            "policy": "Use every generated sample. Assign missing 1-Brier to the [0,1] endpoints that respectively minimize and maximize steer-minus-prompt, then bootstrap items at each endpoint."
+          }
+        }
+      }
+    },
+    "caa__qwen2.5-7b": {
+      "availability": {
+        "worktree_snapshot_path": "results/arm_full/cell_caa__qwen2.5-7b/transcripts",
+        "worktree_snapshot_exists": false,
+        "cache_path_relative_to_cache_root": "cell_caa__qwen2.5-7b/transcripts",
+        "cache_snapshot_exists": true,
+        "status": "PRESENT_VALIDATED_EXPLORATORY_CACHE",
+        "transcript_directory_inventory": {
+          "file_count": 88,
+          "total_bytes": 17833056,
+          "manifest_sha256": "90b83256dc23d32503b14ec1a3b72f912eb0f4ad8cc4f55fa1a999bad64ea03c"
+        },
+        "used_test_files": [
+          {
+            "path_relative_to_cache_root": "cell_caa__qwen2.5-7b/transcripts/uncertainty_awareness__test_baseline__alpha=0.jsonl",
+            "size_bytes": 299132,
+            "sha256": "1534890a1bc69c170a691cc9fae3711ab16f497a7f769b52f73e3a782229bff2",
+            "rows": 265
+          },
+          {
+            "path_relative_to_cache_root": "cell_caa__qwen2.5-7b/transcripts/uncertainty_awareness__test_prompt__prompt=unc-strong-01_alpha=0.jsonl",
+            "size_bytes": 371394,
+            "sha256": "784c07f55848afe11bcdea26ded6d1e1225f52c8a44427069152bf0a01edf117",
+            "rows": 265
+          },
+          {
+            "path_relative_to_cache_root": "cell_caa__qwen2.5-7b/transcripts/uncertainty_awareness__test_steer__alpha=8.0.jsonl",
+            "size_bytes": 300871,
+            "sha256": "ce51ca4efe215317b6085e367bbd8ac2001d460c59b93908a5bad6ce71e4f908",
+            "rows": 265
+          }
+        ],
+        "used_test_files_manifest_sha256": "fe955cd1ae9fd3179046a9b3144d3573621c7df48182aca1ebfa16d88cd5d552",
+        "source_rows": 795,
+        "frozen_per_item_outcomes_reproduced": true,
+        "coverage": {
+          "source_rows_total": 795,
+          "test_rows_used": 795,
+          "dev_rows_explicitly_not_in_headline": 0,
+          "other_rows_rejected": 0,
+          "expected_test_rows": 795,
+          "expected_dev_rows": null,
+          "dev_grid_complete": false,
+          "test_grid_complete": true,
+          "test_items": 53,
+          "samples_per_item_condition": 5
+        }
+      },
+      "frozen_identity": {
+        "method": "caa",
+        "model_label": "qwen2.5-7b",
+        "layer": 20,
+        "requested_alpha": 8.0,
+        "frozen_result": {
+          "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+          "sha256": "33f242faf921f4a5de49b9620b6a5507415a157d21f9688dce6616d32cda1800",
+          "config_fingerprint": "433c5772c8ede7f8"
+        }
+      },
+      "analysis": {
+        "conditions": {
+          "prompt": {
+            "generation_quality": {
+              "n_samples": 265,
+              "n_format_compliant": 116,
+              "n_parse_failures": 149,
+              "format_compliance_rate": 0.4377358490566038,
+              "format_compliance_exact": "116/265"
+            },
+            "calibration_among_parsable_only": {
+              "estimand_available": true,
+              "point": 0.9587238738738738,
+              "ci_lo": 0.9079032207207207,
+              "ci_hi": 0.9887015822072069,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 37,
+              "metric": "1_minus_Brier",
+              "n_observed_samples": 116,
+              "conditioning_warning": "Post-generation conditional calibration; parse failures are not assigned confidence=0.5 or any calibration score."
+            }
+          },
+          "steer": {
+            "generation_quality": {
+              "n_samples": 265,
+              "n_format_compliant": 216,
+              "n_parse_failures": 49,
+              "format_compliance_rate": 0.8150943396226416,
+              "format_compliance_exact": "216/265"
+            },
+            "calibration_among_parsable_only": {
+              "estimand_available": true,
+              "point": 0.5733586111111112,
+              "ci_lo": 0.44273053385416666,
+              "ci_hi": 0.7019554401041667,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 48,
+              "metric": "1_minus_Brier",
+              "n_observed_samples": 216,
+              "conditioning_warning": "Post-generation conditional calibration; parse failures are not assigned confidence=0.5 or any calibration score."
+            }
+          },
+          "baseline": {
+            "generation_quality": {
+              "n_samples": 265,
+              "n_format_compliant": 215,
+              "n_parse_failures": 50,
+              "format_compliance_rate": 0.8113207547169812,
+              "format_compliance_exact": "215/265"
+            },
+            "calibration_among_parsable_only": {
+              "estimand_available": true,
+              "point": 0.5949852430555556,
+              "ci_lo": 0.46503368055555566,
+              "ci_hi": 0.7245426432291666,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 48,
+              "metric": "1_minus_Brier",
+              "n_observed_samples": 215,
+              "conditioning_warning": "Post-generation conditional calibration; parse failures are not assigned confidence=0.5 or any calibration score."
+            }
+          }
+        },
+        "steer_minus_prompt": {
+          "metric": "1_minus_Brier",
+          "paired_sample_complete_case": {
+            "estimand_available": true,
+            "point": -0.4432434343434343,
+            "ci_lo": -0.6154215719696968,
+            "ci_hi": -0.26033774621212125,
+            "ci_level": 0.95,
+            "bootstrap_b": 10000,
+            "n_items": 33,
+            "total_sample_pairs": 265,
+            "retained_sample_pairs": 109,
+            "dropped_sample_pairs": 156,
+            "retained_items": 33,
+            "dropped_items_zero_complete_pairs": 20,
+            "policy": "Retain an (item_id, sample_index) pair only when both prompt and steer confidence parse; average retained pair differences within item, then bootstrap items."
+          },
+          "no_impute_drop_missing_item": {
+            "estimand_available": true,
+            "point": -0.4267507657657657,
+            "ci_lo": -0.5901851328828829,
+            "ci_hi": -0.25722819144144143,
+            "ci_level": 0.95,
+            "bootstrap_b": 10000,
+            "n_items": 37,
+            "observed_prompt_samples": 116,
+            "observed_steer_samples": 216,
+            "retained_items": 37,
+            "dropped_items_without_observed_prompt_or_steer": 16,
+            "policy": "Within each condition, average only parsable samples. Drop an item if either prompt or steer has zero parsable samples; never fill a missing confidence."
+          },
+          "adversarial_missingness_bounds": {
+            "least_favorable_to_steer": {
+              "estimand_available": true,
+              "point": -0.5069181132075472,
+              "ci_lo": -0.6303195660377359,
+              "ci_hi": -0.38276682075471713,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 53,
+              "missing_steer_1minus_Brier": 0.0,
+              "missing_prompt_1minus_Brier": 1.0
+            },
+            "most_favorable_to_steer": {
+              "estimand_available": true,
+              "point": 0.24025169811320754,
+              "ci_lo": 0.0662032358490566,
+              "ci_hi": 0.409713716981132,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 53,
+              "missing_steer_1minus_Brier": 1.0,
+              "missing_prompt_1minus_Brier": 0.0
+            },
+            "point_identification_interval": [
+              -0.5069181132075472,
+              0.24025169811320754
+            ],
+            "spans_zero": true,
+            "strict_negative_sign_stable": false,
+            "strict_positive_sign_stable": false,
+            "policy": "Use every generated sample. Assign missing 1-Brier to the [0,1] endpoints that respectively minimize and maximize steer-minus-prompt, then bootstrap items at each endpoint."
+          }
+        }
+      }
+    },
+    "iti__llama3-8b": {
+      "availability": {
+        "worktree_snapshot_path": "results/arm_full/cell_iti__llama3-8b/transcripts",
+        "worktree_snapshot_exists": false,
+        "cache_path_relative_to_cache_root": "cell_iti__llama3-8b/transcripts",
+        "cache_snapshot_exists": true,
+        "status": "PRESENT_VALIDATED_EXPLORATORY_CACHE",
+        "transcript_directory_inventory": {
+          "file_count": 88,
+          "total_bytes": 18161811,
+          "manifest_sha256": "2311b61ed0c48b813a57be41aa9f75c532218535ca68e38ae1e1913a3d946b7f"
+        },
+        "used_test_files": [
+          {
+            "path_relative_to_cache_root": "cell_iti__llama3-8b/transcripts/uncertainty_awareness__test_baseline__alpha=0.jsonl",
+            "size_bytes": 274440,
+            "sha256": "5f666a9c4cfa06eb0cf88746a674f3636822df899244dd1963a4827d7a32b8ef",
+            "rows": 265
+          },
+          {
+            "path_relative_to_cache_root": "cell_iti__llama3-8b/transcripts/uncertainty_awareness__test_prompt__prompt=unc-strong-09_alpha=0.jsonl",
+            "size_bytes": 350095,
+            "sha256": "12261c192ec54a16385aea72cd2c17e422e74b037bef6c5c8b218db058527bc7",
+            "rows": 265
+          },
+          {
+            "path_relative_to_cache_root": "cell_iti__llama3-8b/transcripts/uncertainty_awareness__test_steer__alpha=6.0.jsonl",
+            "size_bytes": 308622,
+            "sha256": "829472ab473291f9e754af6e9feecfbdceb8793722a66acb4d9fdf746c141f86",
+            "rows": 265
+          }
+        ],
+        "used_test_files_manifest_sha256": "5c5d24afe14965c11de6b0b1dba807d52e959f8f44bffac66c0c8374153d25d2",
+        "source_rows": 795,
+        "frozen_per_item_outcomes_reproduced": true,
+        "coverage": {
+          "source_rows_total": 795,
+          "test_rows_used": 795,
+          "dev_rows_explicitly_not_in_headline": 0,
+          "other_rows_rejected": 0,
+          "expected_test_rows": 795,
+          "expected_dev_rows": null,
+          "dev_grid_complete": false,
+          "test_grid_complete": true,
+          "test_items": 53,
+          "samples_per_item_condition": 5
+        }
+      },
+      "frozen_identity": {
+        "method": "iti",
+        "model_label": "llama3-8b",
+        "layer": 11,
+        "requested_alpha": 6.0,
+        "frozen_result": {
+          "path": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
+          "sha256": "ac9d18aa67a5e2afe9b37441fa08c008cfad139a557f323fa5052d8c38f85282",
+          "config_fingerprint": "d39efbeac006dac5"
+        }
+      },
+      "analysis": {
+        "conditions": {
+          "prompt": {
+            "generation_quality": {
+              "n_samples": 265,
+              "n_format_compliant": 134,
+              "n_parse_failures": 131,
+              "format_compliance_rate": 0.5056603773584906,
+              "format_compliance_exact": "134/265"
+            },
+            "calibration_among_parsable_only": {
+              "estimand_available": true,
+              "point": 0.8993541836734694,
+              "ci_lo": 0.8471680280612246,
+              "ci_hi": 0.9428703477891157,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 49,
+              "metric": "1_minus_Brier",
+              "n_observed_samples": 134,
+              "conditioning_warning": "Post-generation conditional calibration; parse failures are not assigned confidence=0.5 or any calibration score."
+            }
+          },
+          "steer": {
+            "generation_quality": {
+              "n_samples": 265,
+              "n_format_compliant": 41,
+              "n_parse_failures": 224,
+              "format_compliance_rate": 0.15471698113207547,
+              "format_compliance_exact": "41/265"
+            },
+            "calibration_among_parsable_only": {
+              "estimand_available": true,
+              "point": 0.6937037037037037,
+              "ci_lo": 0.5803703703703702,
+              "ci_hi": 0.8046296296296296,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 27,
+              "metric": "1_minus_Brier",
+              "n_observed_samples": 41,
+              "conditioning_warning": "Post-generation conditional calibration; parse failures are not assigned confidence=0.5 or any calibration score."
+            }
+          },
+          "baseline": {
+            "generation_quality": {
+              "n_samples": 265,
+              "n_format_compliant": 249,
+              "n_parse_failures": 16,
+              "format_compliance_rate": 0.939622641509434,
+              "format_compliance_exact": "249/265"
+            },
+            "calibration_among_parsable_only": {
+              "estimand_available": true,
+              "point": 0.6611682075471699,
+              "ci_lo": 0.5485199363207548,
+              "ci_hi": 0.7683320566037735,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 53,
+              "metric": "1_minus_Brier",
+              "n_observed_samples": 249,
+              "conditioning_warning": "Post-generation conditional calibration; parse failures are not assigned confidence=0.5 or any calibration score."
+            }
+          }
+        },
+        "steer_minus_prompt": {
+          "metric": "1_minus_Brier",
+          "paired_sample_complete_case": {
+            "estimand_available": true,
+            "point": -0.02592843137254903,
+            "ci_lo": -0.20166495098039217,
+            "ci_hi": 0.14541796568627452,
+            "ci_level": 0.95,
+            "bootstrap_b": 10000,
+            "n_items": 17,
+            "total_sample_pairs": 265,
+            "retained_sample_pairs": 23,
+            "dropped_sample_pairs": 242,
+            "retained_items": 17,
+            "dropped_items_zero_complete_pairs": 36,
+            "policy": "Retain an (item_id, sample_index) pair only when both prompt and steer confidence parse; average retained pair differences within item, then bootstrap items."
+          },
+          "no_impute_drop_missing_item": {
+            "estimand_available": true,
+            "point": -0.15731653846153854,
+            "ci_lo": -0.2712034262820513,
+            "ci_hi": -0.04359781730769234,
+            "ci_level": 0.95,
+            "bootstrap_b": 10000,
+            "n_items": 26,
+            "observed_prompt_samples": 134,
+            "observed_steer_samples": 41,
+            "retained_items": 26,
+            "dropped_items_without_observed_prompt_or_steer": 27,
+            "policy": "Within each condition, average only parsable samples. Drop an item if either prompt or steer has zero parsable samples; never fill a missing confidence."
+          },
+          "adversarial_missingness_bounds": {
+            "least_favorable_to_steer": {
+              "estimand_available": true,
+              "point": -0.8415656603773586,
+              "ci_lo": -0.8862181603773586,
+              "ci_hi": -0.792018141509434,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 53,
+              "missing_steer_1minus_Brier": 0.0,
+              "missing_prompt_1minus_Brier": 1.0
+            },
+            "most_favorable_to_steer": {
+              "estimand_available": true,
+              "point": 0.4980569811320754,
+              "ci_lo": 0.42480216981132074,
+              "ci_hi": 0.5710968396226415,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 53,
+              "missing_steer_1minus_Brier": 1.0,
+              "missing_prompt_1minus_Brier": 0.0
+            },
+            "point_identification_interval": [
+              -0.8415656603773586,
+              0.4980569811320754
+            ],
+            "spans_zero": true,
+            "strict_negative_sign_stable": false,
+            "strict_positive_sign_stable": false,
+            "policy": "Use every generated sample. Assign missing 1-Brier to the [0,1] endpoints that respectively minimize and maximize steer-minus-prompt, then bootstrap items at each endpoint."
+          }
+        }
+      }
+    },
+    "iti__qwen2.5-7b": {
+      "availability": {
+        "worktree_snapshot_path": "results/arm_full/cell_iti__qwen2.5-7b/transcripts",
+        "worktree_snapshot_exists": false,
+        "cache_path_relative_to_cache_root": "cell_iti__qwen2.5-7b/transcripts",
+        "cache_snapshot_exists": true,
+        "status": "PRESENT_VALIDATED_EXPLORATORY_CACHE",
+        "transcript_directory_inventory": {
+          "file_count": 88,
+          "total_bytes": 18169712,
+          "manifest_sha256": "45a5a0a74ddc49cf3e29548816734befc43de21130fc96d1d7bc6ec462a31ab9"
+        },
+        "used_test_files": [
+          {
+            "path_relative_to_cache_root": "cell_iti__qwen2.5-7b/transcripts/uncertainty_awareness__test_baseline__alpha=0.jsonl",
+            "size_bytes": 299132,
+            "sha256": "2f1d43d03450401d8d08d239a070fdad6b558d25bd287412b9b4926630e98814",
+            "rows": 265
+          },
+          {
+            "path_relative_to_cache_root": "cell_iti__qwen2.5-7b/transcripts/uncertainty_awareness__test_prompt__prompt=unc-strong-01_alpha=0.jsonl",
+            "size_bytes": 371394,
+            "sha256": "c1ed6e295afe7533b9fa9fb47ee689490d36f1dbacf2ed2e39a37388bfa28703",
+            "rows": 265
+          },
+          {
+            "path_relative_to_cache_root": "cell_iti__qwen2.5-7b/transcripts/uncertainty_awareness__test_steer__alpha=12.0.jsonl",
+            "size_bytes": 338533,
+            "sha256": "6505b6ff817cd96493919302ba993dbe9165bf547474f86b01bdc544c37375fe",
+            "rows": 265
+          }
+        ],
+        "used_test_files_manifest_sha256": "83ca698049cdc27b65d1bece6e9afcc967a97c4db5255d900c9b57771e031a04",
+        "source_rows": 795,
+        "frozen_per_item_outcomes_reproduced": true,
+        "coverage": {
+          "source_rows_total": 795,
+          "test_rows_used": 795,
+          "dev_rows_explicitly_not_in_headline": 0,
+          "other_rows_rejected": 0,
+          "expected_test_rows": 795,
+          "expected_dev_rows": null,
+          "dev_grid_complete": false,
+          "test_grid_complete": true,
+          "test_items": 53,
+          "samples_per_item_condition": 5
+        }
+      },
+      "frozen_identity": {
+        "method": "iti",
+        "model_label": "qwen2.5-7b",
+        "layer": 17,
+        "requested_alpha": 12.0,
+        "frozen_result": {
+          "path": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
+          "sha256": "e168392f4c44d29467791883da122d27b470ce0770bc81c8b5d705119bc6647e",
+          "config_fingerprint": "2d1749bdc7089f83"
+        }
+      },
+      "analysis": {
+        "conditions": {
+          "prompt": {
+            "generation_quality": {
+              "n_samples": 265,
+              "n_format_compliant": 116,
+              "n_parse_failures": 149,
+              "format_compliance_rate": 0.4377358490566038,
+              "format_compliance_exact": "116/265"
+            },
+            "calibration_among_parsable_only": {
+              "estimand_available": true,
+              "point": 0.9587238738738738,
+              "ci_lo": 0.9079032207207207,
+              "ci_hi": 0.9887015822072069,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 37,
+              "metric": "1_minus_Brier",
+              "n_observed_samples": 116,
+              "conditioning_warning": "Post-generation conditional calibration; parse failures are not assigned confidence=0.5 or any calibration score."
+            }
+          },
+          "steer": {
+            "generation_quality": {
+              "n_samples": 265,
+              "n_format_compliant": 12,
+              "n_parse_failures": 253,
+              "format_compliance_rate": 0.045283018867924525,
+              "format_compliance_exact": "12/265"
+            },
+            "calibration_among_parsable_only": {
+              "estimand_available": true,
+              "point": 0.639,
+              "ci_lo": 0.4589999999999999,
+              "ci_hi": 0.819,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 10,
+              "metric": "1_minus_Brier",
+              "n_observed_samples": 12,
+              "conditioning_warning": "Post-generation conditional calibration; parse failures are not assigned confidence=0.5 or any calibration score."
+            }
+          },
+          "baseline": {
+            "generation_quality": {
+              "n_samples": 265,
+              "n_format_compliant": 215,
+              "n_parse_failures": 50,
+              "format_compliance_rate": 0.8113207547169812,
+              "format_compliance_exact": "215/265"
+            },
+            "calibration_among_parsable_only": {
+              "estimand_available": true,
+              "point": 0.5949852430555556,
+              "ci_lo": 0.46503368055555566,
+              "ci_hi": 0.7245426432291666,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 48,
+              "metric": "1_minus_Brier",
+              "n_observed_samples": 215,
+              "conditioning_warning": "Post-generation conditional calibration; parse failures are not assigned confidence=0.5 or any calibration score."
+            }
+          }
+        },
+        "steer_minus_prompt": {
+          "metric": "1_minus_Brier",
+          "paired_sample_complete_case": {
+            "estimand_available": true,
+            "point": -0.34875,
+            "ci_lo": -0.5750000000000001,
+            "ci_hi": -0.1225,
+            "ci_level": 0.95,
+            "bootstrap_b": 10000,
+            "n_items": 4,
+            "total_sample_pairs": 265,
+            "retained_sample_pairs": 6,
+            "dropped_sample_pairs": 259,
+            "retained_items": 4,
+            "dropped_items_zero_complete_pairs": 49,
+            "policy": "Retain an (item_id, sample_index) pair only when both prompt and steer confidence parse; average retained pair differences within item, then bootstrap items."
+          },
+          "no_impute_drop_missing_item": {
+            "estimand_available": true,
+            "point": -0.3920678571428572,
+            "ci_lo": -0.5760285714285714,
+            "ci_hi": -0.1950821428571429,
+            "ci_level": 0.95,
+            "bootstrap_b": 10000,
+            "n_items": 7,
+            "observed_prompt_samples": 116,
+            "observed_steer_samples": 12,
+            "retained_items": 7,
+            "dropped_items_without_observed_prompt_or_steer": 46,
+            "policy": "Within each condition, average only parsable samples. Drop an item if either prompt or steer has zero parsable samples; never fill a missing confidence."
+          },
+          "adversarial_missingness_bounds": {
+            "least_favorable_to_steer": {
+              "estimand_available": true,
+              "point": -0.9593592452830189,
+              "ci_lo": -0.9784530660377356,
+              "ci_hi": -0.9367066603773585,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 53,
+              "missing_steer_1minus_Brier": 0.0,
+              "missing_prompt_1minus_Brier": 1.0
+            },
+            "most_favorable_to_steer": {
+              "estimand_available": true,
+              "point": 0.5576218867924528,
+              "ci_lo": 0.451722641509434,
+              "ci_hi": 0.6654547924528301,
+              "ci_level": 0.95,
+              "bootstrap_b": 10000,
+              "n_items": 53,
+              "missing_steer_1minus_Brier": 1.0,
+              "missing_prompt_1minus_Brier": 0.0
+            },
+            "point_identification_interval": [
+              -0.9593592452830189,
+              0.5576218867924528
+            ],
+            "spans_zero": true,
+            "strict_negative_sign_stable": false,
+            "strict_positive_sign_stable": false,
+            "policy": "Use every generated sample. Assign missing 1-Brier to the [0,1] endpoints that respectively minimize and maximize steer-minus-prompt, then bootstrap items at each endpoint."
+          }
+        }
+      }
+    }
+  },
+  "unavailable": {},
+  "grid_complete_in_local_cache": true,
+  "claim_guard": "Compliance and parsability are generation-quality outcomes. Calibration is reported only among observed confidences or under explicit [0,1] adversarial bounds; confidence=0.5 is never used in a reported E-0017 estimand."
+}

@@ -1529,3 +1529,128 @@ experiments:
     human bilingual stable-ID semantic review and manual screen-reader review remain
     UNVERIFIED PRE-RECRUITMENT. This row records materials and implementation
     preparation only and must not be represented as a run or paper evidence.
+
+- experiment_id: E-0017-uncertainty-grid-no-impute-extension
+  parent: E-0013
+  hypothesis_id: H-FORMAT-CONFOUND
+  claim_ids:
+  - C2
+  type: exploratory_robustness_extension
+  status: cpu_rescore_complete_pending_independent_audit
+  code_commit: d516ff199c68a205d8f77e56083d560bb58788e0
+  run_commit: d516ff199c68a205d8f77e56083d560bb58788e0
+  dirty_tree: false
+  data_hash:
+    frozen_item_snapshot_sha256: sha256:732689114b64a9007c4cd4bf1941b4cfc716a1920523b2a7e35dd209e2ba2658
+    protocol_sha256: sha256:ab4faa7856500d2487dc9b632f6d228b8696b9cf3a8a9fdfa3d6f689ebb8897f
+    used_test_transcript_manifest_sha256:
+      caa__llama3-8b: sha256:63b34c868d4bc3be08c6f72fda16c40604758189389be0b972555523c9117e93
+      caa__qwen2.5-7b: sha256:fe955cd1ae9fd3179046a9b3144d3573621c7df48182aca1ebfa16d88cd5d552
+      iti__llama3-8b: sha256:5c5d24afe14965c11de6b0b1dba807d52e959f8f44bffac66c0c8374153d25d2
+      iti__qwen2.5-7b: sha256:83ca698049cdc27b65d1bece6e9afcc967a97c4db5255d900c9b57771e031a04
+  env_hash: null
+  config_hash:
+    analysis_protocol_sha256: sha256:ab4faa7856500d2487dc9b632f6d228b8696b9cf3a8a9fdfa3d6f689ebb8897f
+  model: Qwen2.5-7B-Instruct and Llama-3-8B-Instruct cached E-0006 generations
+  dataset: Frozen E-0006 uncertainty TEST split; 53 items × 5 samples × prompt/steer/baseline per cell
+  seed: 20260723
+  hardware: CPU-only rescoring; no model inference
+  started_at: '2026-08-12T01:54:22.394647+00:00'
+  ended_at: '2026-08-12T01:54:22.394647+00:00'
+  exit_code: 0
+  summary_metrics:
+    available_cells:
+    - caa__llama3-8b
+    - caa__qwen2.5-7b
+    - iti__llama3-8b
+    - iti__qwen2.5-7b
+    unavailable_cells: []
+    bootstrap_b: 10000
+    ci_level: 0.95
+    per_cell:
+      caa__llama3-8b:
+        compliance:
+          prompt: 134/265
+          steer: 0/265
+          baseline: 249/265
+        paired_sample_complete_case:
+          point: null
+          ci_lo: null
+          ci_hi: null
+          n_items: 0
+        no_impute_drop_missing_item:
+          point: null
+          ci_lo: null
+          ci_hi: null
+          n_items: 0
+        adversarial_point_bounds:
+        - -0.9451128301886794
+        - 0.5492267924528302
+        adversarial_spans_zero: true
+      caa__qwen2.5-7b:
+        compliance:
+          prompt: 116/265
+          steer: 216/265
+          baseline: 215/265
+        paired_sample_complete_case:
+          point: -0.4432434343434343
+          ci_lo: -0.6154215719696968
+          ci_hi: -0.26033774621212125
+          n_items: 33
+        no_impute_drop_missing_item:
+          point: -0.4267507657657657
+          ci_lo: -0.5901851328828829
+          ci_hi: -0.25722819144144143
+          n_items: 37
+        adversarial_point_bounds:
+        - -0.5069181132075472
+        - 0.24025169811320754
+        adversarial_spans_zero: true
+      iti__llama3-8b:
+        compliance:
+          prompt: 134/265
+          steer: 41/265
+          baseline: 249/265
+        paired_sample_complete_case:
+          point: -0.02592843137254903
+          ci_lo: -0.20166495098039217
+          ci_hi: 0.14541796568627452
+          n_items: 17
+        no_impute_drop_missing_item:
+          point: -0.15731653846153854
+          ci_lo: -0.2712034262820513
+          ci_hi: -0.04359781730769234
+          n_items: 26
+        adversarial_point_bounds:
+        - -0.8415656603773586
+        - 0.4980569811320754
+        adversarial_spans_zero: true
+      iti__qwen2.5-7b:
+        compliance:
+          prompt: 116/265
+          steer: 12/265
+          baseline: 215/265
+        paired_sample_complete_case:
+          point: -0.34875
+          ci_lo: -0.5750000000000001
+          ci_hi: -0.1225
+          n_items: 4
+        no_impute_drop_missing_item:
+          point: -0.3920678571428572
+          ci_lo: -0.5760285714285714
+          ci_hi: -0.1950821428571429
+          n_items: 7
+        adversarial_point_bounds:
+        - -0.9593592452830189
+        - 0.5576218867924528
+        adversarial_spans_zero: true
+  artifacts:
+  - path: results/E-0017-uncertainty-grid-no-impute-extension/missingness_rescore.json
+    sha256: bf86fc0c41859e13061b059767a2c80c43c80ef76ee98422452982f44170c562
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: This artifact does not overwrite or re-authorize E-0013. Recovered transcript hashes were not frozen before
+    recovery; frozen-score reproduction establishes internal consistency, not original-source provenance. All new cell results
+    remain exploratory pending independent audit. Compliance and parsability are generation-quality outcomes. Calibration
+    is reported only among observed confidences or under explicit [0,1] adversarial bounds; confidence=0.5 is never used in
+    a reported E-0017 estimand.

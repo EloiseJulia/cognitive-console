@@ -34,9 +34,12 @@ def test_skepticism_items_are_mc_keyed():
         assert it["answer_letter"] in it["choices"]
 
 
-def test_real_loader_is_deferred_offline():
-    # datasets may be absent OR present-but-offline; both must not silently fetch.
-    with pytest.raises((NotImplementedError, Exception)):
+def test_real_loader_is_deferred_offline(monkeypatch):
+    def unavailable():
+        raise NotImplementedError("offline test")
+
+    monkeypatch.setattr(c2b_tasks, "_require_datasets", unavailable)
+    with pytest.raises(NotImplementedError, match="offline test"):
         c2b_tasks.load_c2b_task("skepticism", use_fixture=False)
 
 
@@ -98,4 +101,3 @@ def test_parse_uncertainty_rows_real_answer_schema():
     # alias/case/punctuation-insensitive correctness for the scorer.
     assert scorers.item_is_correct(it, "I think it's the State of Kansas!") == 1
     assert scorers.item_is_correct(it, "definitely nebraska") == 0
-

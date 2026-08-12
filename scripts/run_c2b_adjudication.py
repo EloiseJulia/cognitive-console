@@ -398,10 +398,21 @@ class TranscriptCollector:
     def write_all(self, out_dir: Path, report: adj.AdjudicationReport) -> Optional[Path]:
         root = Path(out_dir) / "transcripts"
         root.mkdir(parents=True, exist_ok=True)
+        self.write_raw(root)
         final_lookup = self._final_outcome_lookup(report)
         self._write_cell_files(root, final_lookup)
         self._write_paired_test_file(root, report)
         return root
+
+    def write_raw(self, root: Path) -> Path:
+        """Persist observational generation records without requiring TEST results."""
+        root = Path(root)
+        root.mkdir(parents=True, exist_ok=True)
+        path = root / "all_generations.jsonl"
+        with open(path, "w", encoding="utf-8") as fh:
+            for row in self._all_records:
+                fh.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+        return path
 
 
 class TranscriptCheckpointStore(CheckpointStore):
@@ -733,7 +744,9 @@ def optimize_specs_with_stronger_prompt_baseline(
 
 def build_specs_hf(axes: List[str], model: str, use_fixture: bool,
                    n_items: Optional[int], n_strong: int, n_extraction: int,
-                   seed: int, out_dir: Path, steering_method: str = DEFAULT_STEERING_METHOD
+                   seed: int, out_dir: Path, steering_method: str = DEFAULT_STEERING_METHOD,
+                   items_by_axis: Optional[Dict[str, List[Dict]]] = None,
+                   model_revision: Optional[str] = None,
                    ) -> (List[AxisAdjSpec], Dict):  # noqa
     """Real specs: derive per-axis steering direction on THIS model.
 
@@ -745,14 +758,20 @@ def build_specs_hf(axes: List[str], model: str, use_fixture: bool,
 
     device, dtype = p0._pick_device(), p0._pick_dtype()
     c1_out = out_dir / "c1"
+    provider = HFActivationProvider(
+        model,
+        device=device,
+        dtype=dtype,
+        cache_dir=str(c1_out / "activations" / "cache"),
+        model_revision=model_revision,
+    )
     c1_payload = c1.run(
         model=model, axes=axes, scan_step=2, n_extraction=n_extraction, seed=seed,
         n_null=2000, out_dir=c1_out, ram_floor_mb=0.0, device=device, dtype=dtype,
+        activation_provider=provider,
     )
     c1_by_axis = {r["axis"]: r for r in c1_payload["axes"]}
 
-    provider = HFActivationProvider(model, device=device, dtype=dtype,
-                                    cache_dir=str(c1_out / "activations" / "cache"))
     neutral = c1.load_neutral_prompts()[0]
     neutral_all = c1.load_neutral_prompts()
     specs = []
@@ -799,7 +818,11 @@ def build_specs_hf(axes: List[str], model: str, use_fixture: bool,
             raise ValueError(f"unsupported steering method: {steering_method!r}")
 
         alpha_scale_by_axis[axis] = sigma
-        items = load_axis_items(axis, use_fixture, n_items)
+        items = (
+            list(items_by_axis[axis])
+            if items_by_axis is not None
+            else load_axis_items(axis, use_fixture, n_items)
+        )
         specs.append(AxisAdjSpec(
             axis=axis, items=items, strong_prompts=build_strong_prompts(axis, n_strong),
             neutral_prompt=neutral, direction=direction, layer=layer,
@@ -810,6 +833,7 @@ def build_specs_hf(axes: List[str], model: str, use_fixture: bool,
     return specs, {
         "c1_layer_info": layer_info,
         "model": model,
+        "model_revision": model_revision,
         "steering_method": steering_method,
         "alpha_scale_by_axis": alpha_scale_by_axis,
     }
@@ -833,10 +857,17 @@ def synthetic_sampler_factory(use_fixture: bool, n_items: Optional[int],
 def hf_sampler_factory(model: str, max_new_tokens: int, temperature: float,
                        seed: int, batch_size: int,
                        transcript_collector: Optional[TranscriptCollector] = None,
-                       alpha_scale_by_axis: Optional[Dict[str, float]] = None):
+                       alpha_scale_by_axis: Optional[Dict[str, float]] = None,
+                       model_revision: Optional[str] = None):
     from cognitive_console.steering.generate import SteeredHFBackend
     device, dtype = p0._pick_device(), p0._pick_dtype()
-    backend = SteeredHFBackend(model, device=device, dtype=dtype, seed=seed)
+    backend = SteeredHFBackend(
+        model,
+        device=device,
+        dtype=dtype,
+        seed=seed,
+        model_revision=model_revision,
+    )
 
     def factory(axis: str):
         sampler_cls = TranscriptScaledBackendOutcomeSampler if transcript_collector else ScaledBackendOutcomeSampler
@@ -851,6 +882,7 @@ def hf_sampler_factory(model: str, max_new_tokens: int, temperature: float,
             alpha_scale_by_axis=alpha_scale_by_axis,
             **kwargs,
         )
+    factory.backend = backend
     return factory
 
 

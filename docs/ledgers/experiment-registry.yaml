@@ -1594,3 +1594,60 @@ experiments:
     NOT FROZEN; recruitment, human data, ethics, timing, sample-size/MDE,
     accessibility and bilingual human review, public deployment, Claim/result
     upgrade, and Protocol Freeze remain unauthorized.
+
+- experiment_id: c2b-resolution-caa-qwen-dev-20260812
+  parent: E-0005
+  hypothesis_id: H2-resolution-refinement
+  claim_ids: [C2]
+  type: confirmatory_preparation
+  status: planned
+  code_commit: null
+  dirty_tree: null
+  data_hash: null
+  env_hash: null
+  config_hash: null
+  model: Qwen/Qwen2.5-7B-Instruct@a09a35458c702b33eeacc393d103063234e8bc28
+  dataset: pinned TruthfulQA multiple_choice validation + TriviaQA rc.nocontext validation;
+    frozen-item-disjoint DEV only
+  seed: 20260812
+  hardware: authorized NVIDIA A800 80GB profile
+  started_at: null
+  ended_at: null
+  exit_code: null
+  raw_metrics: null
+  summary_metrics: null
+  artifacts: []
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    UNRUN frozen DEV selection for docs/specs/resolution-refinement-prereg.md.
+    Selects prompt and alpha only; creates no TEST estimate and cannot overwrite
+    E-0005/E-0006/E-0011.
+
+- experiment_id: c2b-resolution-caa-qwen-test-20260812
+  parent: c2b-resolution-caa-qwen-dev-20260812
+  hypothesis_id: H2-resolution-refinement
+  claim_ids: [C2]
+  type: confirmatory
+  status: planned
+  code_commit: null
+  dirty_tree: null
+  data_hash: null
+  env_hash: null
+  config_hash: null
+  model: Qwen/Qwen2.5-7B-Instruct@a09a35458c702b33eeacc393d103063234e8bc28
+  dataset: pinned frozen-item-disjoint skepticism N=757 total/505 TEST and
+    uncertainty N=1219 total/813 TEST
+  seed: 20260812
+  hardware: authorized NVIDIA A800 80GB profile
+  started_at: null
+  ended_at: null
+  exit_code: null
+  raw_metrics: null
+  summary_metrics: null
+  artifacts: []
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    UNRUN TEST-once additive resolution refinement. It reports whatever occurs,
+    never stops on significance, and never replaces the frozen 0/12 grid.

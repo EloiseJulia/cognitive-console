@@ -29,6 +29,8 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 AXES = ["deliberation", "skepticism", "uncertainty_awareness"]
+TRUTHFULQA_REVISION = "741b8276f2d1982aa3d5b832d3ee81ed3b896490"
+TRIVIAQA_REVISION = "0f7faf33a3908546c6fd5b73a660e0f8ff173c2f"
 
 # Fixture stem per axis (uncertainty_awareness fixture file is 'uncertainty.jsonl').
 _FIXTURE_STEM = {
@@ -264,7 +266,11 @@ def parse_uncertainty_rows(rows: Any) -> List[Dict[str, Any]]:
     return items
 
 
-def load_skepticism_set(n: Optional[int] = None, seed: int = 0) -> List[Dict[str, Any]]:
+def load_skepticism_set(
+    n: Optional[int] = None,
+    seed: int = 0,
+    revision: str = TRUTHFULQA_REVISION,
+) -> List[Dict[str, Any]]:
     """Load the real false-premise skepticism set from TruthfulQA (A800 only).
 
     Dataset: ``truthfulqa/truthful_qa`` config ``multiple_choice`` (Apache-2.0). TruthfulQA
@@ -278,12 +284,21 @@ def load_skepticism_set(n: Optional[int] = None, seed: int = 0) -> List[Dict[str
     always in the same position (TruthfulQA lists the correct answer first).
     Offline this raises (datasets/network deferred)."""
     datasets = _require_datasets()
-    ds = datasets.load_dataset("truthfulqa/truthful_qa", "multiple_choice", split="validation")
+    ds = datasets.load_dataset(
+        "truthfulqa/truthful_qa",
+        "multiple_choice",
+        split="validation",
+        revision=revision,
+    )
     items = parse_skepticism_rows(ds, seed=seed)
     return _subsample(items, n, seed)
 
 
-def load_uncertainty_set(n: Optional[int] = None, seed: int = 0) -> List[Dict[str, Any]]:
+def load_uncertainty_set(
+    n: Optional[int] = None,
+    seed: int = 0,
+    revision: str = TRIVIAQA_REVISION,
+) -> List[Dict[str, Any]]:
     """Load the real calibration/uncertainty factual-QA set from TriviaQA (A800).
 
     Dataset: ``mandarjoshi/trivia_qa`` config ``rc.nocontext`` (Apache-2.0) — factual
@@ -296,7 +311,12 @@ def load_uncertainty_set(n: Optional[int] = None, seed: int = 0) -> List[Dict[st
     PROPER ``1 - Brier`` over the elicited answer + verbalized confidence (decision
     D-0025). Offline this raises."""
     datasets = _require_datasets()
-    ds = datasets.load_dataset("mandarjoshi/trivia_qa", "rc.nocontext", split="validation")
+    ds = datasets.load_dataset(
+        "mandarjoshi/trivia_qa",
+        "rc.nocontext",
+        split="validation",
+        revision=revision,
+    )
     items = parse_uncertainty_rows(ds)
     return _subsample(items, n, seed)
 

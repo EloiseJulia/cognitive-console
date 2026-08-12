@@ -792,6 +792,44 @@ def adjudicate_axis(
     dev_sel = select_on_dev(sampler, spec, dev_items, k=k, alpha_grid=alpha_grid,
                             coherence_max_ratio=coherence_max_ratio, ctx=ctx)
 
+    return adjudicate_axis_test(
+        sampler,
+        spec,
+        dev_items=dev_items,
+        test_items=test_items,
+        dev_selection=dev_sel,
+        k=k,
+        bootstrap_b=bootstrap_b,
+        ci_level=ci_level,
+        delta=delta,
+        coherence_max_ratio=coherence_max_ratio,
+        seed=seed,
+        ctx=ctx,
+    )
+
+
+def adjudicate_axis_test(
+    sampler: OutcomeSampler,
+    spec: AxisAdjSpec,
+    *,
+    dev_items: Sequence[Dict],
+    test_items: Sequence[Dict],
+    dev_selection: DevSelection | Dict[str, object],
+    k: int = K_SAMPLES,
+    bootstrap_b: int = BOOTSTRAP_B,
+    ci_level: float = BONFERRONI_CI_LEVEL,
+    delta: float = DELTA,
+    coherence_max_ratio: float = COHERENCE_MAX_RATIO,
+    seed: int = 0,
+    ctx: Optional[RunContext] = None,
+) -> AxisAdjResult:
+    """Run TEST from a previously frozen DEV selection without touching DEV."""
+    dev_sel = (
+        dev_selection
+        if isinstance(dev_selection, DevSelection)
+        else DevSelection(**dev_selection)
+    )
+
     frozen_alpha = dev_sel.frozen_alpha
     prompt_cell = f"prompt={dev_sel.best_prompt_id}|alpha=0"
     # If NO α cleared the DEV coherence gate, the axis has no valid steer cell:

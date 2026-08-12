@@ -5,6 +5,35 @@
 
 ---
 
+## 2026-08-12 · D-0115 · Owner approves plain-language V9.1 evidence with no measurement fold
+- The owner approved replacing every participant-visible V9 evidence fact with
+  a bilingual, decision-relevant plain-language summary. The default and only
+  participant evidence view is the summary; there is no “view underlying
+  measurement,” numeric disclosure, or other folded source-detail layer.
+- Exact source-derived measurements, confidence bounds, source IDs, commits,
+  paths, and canonical hashes remain in authoritative nonlocalized evidence
+  lineage for audit only. Participant material endpoints, trial payloads,
+  browser state, DOM, and ARIA do not receive those fields.
+- Contract and Flat use the same six summaries per ticket. Contract retains the
+  `1+2+2+1` grouping and Flat retains the neutral A–F permutation. The
+  structured policy inputs, Q1/Q2 IDs and keys, router, CCA definition,
+  sequences, signed V5 export contract, and analysis are unchanged.
+- The distinct material identity is
+  `microstudy-scenario-v9.1-bilingual-plain-evidence` /
+  `microstudy-scenario-release-20260812-v9.1-plain-evidence-draft`. The exact
+  implementation commit is `51e0307ea13e408a971204f61ace26936a8c5fdd`;
+  this later governance commit records lineage and does not replace that code
+  identity. V8, V9, and V9.1 must not be pooled or relabeled as one version.
+- This remains owner-local preview preparation only:
+  `ready_for_owner_local_preview_no_human_data`, `valid_for_paper=false`, and
+  `DRAFT / NOT FROZEN`. No recruitment, participant contact, human data,
+  timing, ethics activity, public deployment, paper change, Claim/result
+  upgrade, or Protocol Freeze is authorized.
+- Human bilingual semantic review, responsive/mobile design review, manual
+  screen-reader evaluation, ethics/recruitment authorization, owner timing,
+  defensible sample-size/MDE justification, and Protocol Freeze remain open
+  human gates.
+
 ## 2026-08-11 · D-0114 · Owner authorizes V9 scenario-knob version break for local preview only
 - The owner approved V9 as a distinct scenario-knob material, sequence, and
   signed-export version break. The exact implementation commit is

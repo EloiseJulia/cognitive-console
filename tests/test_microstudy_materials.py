@@ -16,6 +16,8 @@ from cognitive_console.microstudy_materials import (
     SOURCE_REGISTRY_PATH,
     TICKET_CODES,
     TICKET_STATE_BY_CODE,
+    PARTICIPANT_FORBIDDEN_EVIDENCE_PATTERNS,
+    PARTICIPANT_FORBIDDEN_EVIDENCE_TERMS,
     _ticket_definitions,
     canonical_locale_bytes,
     derive_policy_state,
@@ -88,6 +90,9 @@ def test_source_registry_verifies_exact_canonical_git_blobs():
     assert "EVIDENCE_LEDGER" not in rows
     assert "64171bfa860495b5be3151848c808af1deb70edab4afed1bdd93c9294677f669" not in (
         SOURCE_REGISTRY_PATH.read_text(encoding="utf-8")
+    )
+    assert hashlib.sha256(SOURCE_REGISTRY_PATH.read_bytes()).hexdigest() == (
+        "aa26a6663509597cf190e326ef3dcf5888f8bdaeb01a3ded710d9fe93806e44f"
     )
     payloads, lineage = verified_source_payloads()
     assert set(payloads) == set(rows)
@@ -203,7 +208,7 @@ def test_answer_derivation_is_invariant_to_every_nonkey_field():
 def test_bilingual_contract_flat_parity_and_visible_policy():
     materials, _ = load_sources()
     assert materials["locale_contract"] == {
-        "version": "microstudy-v9-locale-contract-v1",
+        "version": "microstudy-v9.1-locale-contract-v2",
         "supported": ["en", "zh-Hans"],
         "fallback": None,
         "auto_detect": False,
@@ -211,12 +216,23 @@ def test_bilingual_contract_flat_parity_and_visible_policy():
         "human_semantic_review": "UNVERIFIED_PRE_RECRUITMENT",
     }
     manifest = locale_manifest(materials)
+    fact_bundle_hashes = {
+        "en": "b44d99f90ac51842aeae41a75bef980f3f20659b47b474664716e885b9bb9320",
+        "zh-Hans": "51888ab1ecdf7d644fc6cb6aff76decb02d0f9f0be893912585c221cfae73c15",
+    }
     for locale in ("en", "zh-Hans"):
         assert manifest[locale]["locale_bundle_hash"] == hashlib.sha256(
             canonical_locale_bytes(materials["locales"][locale])
         ).hexdigest()
         bundle = materials["locales"][locale]
         assert len(bundle["contract_headings"]) == 4
+        facts = {
+            ticket["ticket_code"]: ticket["facts"]
+            for ticket in bundle["tickets"]
+        }
+        assert hashlib.sha256(canonical_locale_bytes(facts)).hexdigest() == (
+            fact_bundle_hashes[locale]
+        )
         assert [row["id"] for row in bundle["q1"]["options"]] == list("ABCD")
         assert [row["id"] for row in bundle["q2"]["options"]] == list("ABCDEF")
         assert len(bundle["tickets"]) == 6
@@ -225,15 +241,55 @@ def test_bilingual_contract_flat_parity_and_visible_policy():
             assert len(ticket["outputs"]) == 2
             assert sorted(ticket["flat_order"]) == list(range(6))
             assert ticket["source_badge"] in {"SOURCE-BACKED", "SIMULATED"}
+            assert set(ticket) == {
+                "ticket_code", "source_badge", "title", "context", "knob",
+                "outputs", "facts", "flat_order",
+            }
+            assert not any(character.isdigit() for fact in ticket["facts"] for character in fact)
+            evidence_text = "\n".join(ticket["facts"])
+            for term in PARTICIPANT_FORBIDDEN_EVIDENCE_TERMS:
+                if term.isascii():
+                    assert term.casefold() not in evidence_text.casefold().split()
+                else:
+                    assert term not in evidence_text
+            assert not any(
+                pattern.search(evidence_text)
+                for pattern in PARTICIPANT_FORBIDDEN_EVIDENCE_PATTERNS
+            )
+        if locale == "en":
+            assert bundle["contract_headings"] == [
+                "Can the behavior be identified?",
+                "How does the knob compare with direct prompting?",
+                "What could weaken or limit the result?",
+                "Where does this evidence apply?",
+            ]
+            assert "machine-learning or statistics knowledge" in bundle["briefing"]["role"]
+            assert bundle["q1"]["text"].startswith("Q1. Considering all six facts")
+            assert bundle["q2"]["text"] == (
+                "Q2. Which evidence issue should carry the most weight in this ticket?"
+            )
+        else:
+            assert bundle["contract_headings"] == [
+                "能否识别这种行为？", "旋钮与直接提示相比如何？",
+                "哪些因素可能削弱或限制结果？", "这些证据适用于哪里？",
+            ]
+            assert "不需要机器学习或统计学知识" in bundle["briefing"]["role"]
+            assert bundle["q1"]["text"].startswith("问题 1：综合六条事实")
+            assert bundle["q2"]["text"] == (
+                "问题 2：这张工单中，哪项证据问题应占最大权重？"
+            )
     assert manifest["en"]["locale_bundle_hash"] != manifest["zh-Hans"]["locale_bundle_hash"]
     render = materials["nonlocalized"]["render_contract"]
     assert render["contract_group_sizes"] == [1, 2, 2, 1]
+    assert render["participant_evidence_projection"] == (
+        "summary_only_no_measurement_fold"
+    )
     assert render["only_badges"] == [
         "SOURCE-BACKED", "SIMULATED", "ILLUSTRATIVE OUTPUT"
     ]
 
 
-def test_required_ticket_caveats_and_audio_practice_are_visible():
+def test_plain_language_ticket_caveats_and_audio_practice_are_visible():
     materials, _ = load_sources()
     for locale in ("en", "zh-Hans"):
         tickets = {
@@ -242,26 +298,30 @@ def test_required_ticket_caveats_and_audio_practice_are_visible():
         }
         if locale == "en":
             assert all(marker in tickets["UNC-R"] for marker in (
-                "4 had no passing axis", "approximately baseline", "complete-case",
-                "bounds cross zero", "other 3 cells are unrechecked",
-                "latent arms still had no pass",
+                "failed to outperform the best direct prompt",
+                "direction of the difference becomes uncertain",
+                "study could also miss small improvements",
+                "other three did not",
             ))
             assert all(marker in tickets["SKEP-R"] for marker in (
-                "underpowered", "MDEs", "target effect",
+                "not strong enough to reliably detect",
+                "does not show that a useful skepticism effect is absent",
             ))
             assert all(marker in tickets["DELIB-R"] for marker in (
-                "mixed near zero", "64-token cap", "decisive paired test",
+                "small and inconsistent", "short answers",
+                "under realistic answer length is still missing",
             ))
         else:
             assert all(marker in tickets["UNC-R"] for marker in (
-                "没有任何轴通过", "基本相当", "完整案例", "边界跨过零",
-                "其余 3 个单元尚未复查", "仍没有潜在干预通过",
+                "没有优于最佳直接提示", "差异方向变得不确定",
+                "也可能漏掉较小的改善", "另外三种没有",
             ))
             assert all(marker in tickets["SKEP-R"] for marker in (
-                "检验力不足", "MDE", "目标效应",
+                "无法可靠发现", "不能证明有用的怀疑性效果不存在",
             ))
             assert all(marker in tickets["DELIB-R"] for marker in (
-                "零附近呈混合结果", "64 个 token", "有判定力的配对检验",
+                "差异都很小且并不一致", "较短回答",
+                "真实回答长度下进行的同条件比较",
             ))
         practice = materials["locales"][locale]["practice"]
         assert len(practice["facts"]) == 6
@@ -281,6 +341,53 @@ def test_required_ticket_caveats_and_audio_practice_are_visible():
     assert "changed preview" in english["feedback"]
     assert "beats the existing preset" in english["feedback"]
     assert "speech-quality check failed" in english["feedback"]
+
+
+def test_exact_measurements_and_source_details_are_nonlocalized_lineage_only():
+    materials, _ = load_sources()
+    lineage = materials["nonlocalized"]["evidence_lineage"]
+    assert lineage["participant_projection"].startswith("plain-language summaries only")
+    exact = lineage["exact_measurements"]
+    assert exact["format"]["complete_case_ci_high"] < 0
+    assert exact["format"]["missingness_low"] < 0 < exact["format"]["missingness_high"]
+    assert exact["scale"]["mde"] > 0
+    ticket_lineage = {row["ticket_code"]: row for row in lineage["tickets"]}
+    assert len(ticket_lineage["UNC-R"]["source_details"]) == 10
+    assert ticket_lineage["UNC-S"]["source_details"] == []
+    assert ticket_lineage["UNC-R"]["fact_source_ids"][2] == ["E0013_FORMAT"]
+    for locale in ("en", "zh-Hans"):
+        encoded = json.dumps(materials["locales"][locale], ensure_ascii=False)
+        for forbidden in (
+            "source_details", "source_id", "canonical_sha256", "hash_basis",
+            "commit", "E0013_FORMAT",
+        ):
+            assert forbidden not in encoded
+
+
+def test_keys_sequences_router_and_v5_export_contract_are_unchanged():
+    keys_hash = hashlib.sha256(
+        json.dumps(
+            private_answer_keys(),
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    sequences_hash = hashlib.sha256(
+        json.dumps(
+            generate_sequences(),
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    assert keys_hash == "99fe747b7f584737f90d55a39c4765bdb9a2c13b5c12e41240902abe60117be6"
+    assert sequences_hash == "c00c507048809df1d8df73be9c55d205a5e67ddd59084cdbd1979ab08188cfb3"
+    assert EXPORT_SCHEMA_VERSION == "microstudy-export-v5-scenario-bilingual-signed"
+    assert TICKET_STATE_BY_CODE == {
+        "UNC-R": "W", "UNC-S": "S", "SKEP-R": "U",
+        "SKEP-S": "D", "DELIB-R": "U", "DELIB-S": "W",
+    }
 
 
 def test_twelve_sequences_are_deterministic_exact_cover_and_complemented():

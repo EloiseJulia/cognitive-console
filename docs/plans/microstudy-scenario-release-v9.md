@@ -1,15 +1,16 @@
-# Implementation Plan: V9 Scenario Knob-Release Micro-Study
+# Implementation Plan: V9.1 Plain-Evidence Scenario Knob-Release Micro-Study
 
 - **Status:** DRAFT / NOT FROZEN; implementation authorized; no human data
-- **Branch:** `feature/microstudy-v9-scenario`
-- **Governance:** D-0114; registry `microstudy-scenario-release-20260811-v9-draft`
+- **Branch:** `feature/microstudy-v9-plain-evidence`
+- **Governance:** D-0114 + D-0115; registry `microstudy-scenario-plain-evidence-20260812-v9.1-draft`
 - **Scope:** owner-local loopback materials, generator, analysis, browser flow, tests, and governance only
 - **Non-goals:** recruitment, timing, ethics administration, public deployment, protocol freeze, paper edits, or evidence upgrades
 
 ## Dependency order
 
 1. Pin immutable Git-blob source registry and implement fail-closed evidence extraction.
-2. Generate six scenario tickets, private answer derivation, bilingual public materials, and twelve exact-cover sequences.
+2. Generate six scenario tickets, private answer derivation, bilingual
+   decision-relevant plain-language summaries, and twelve exact-cover sequences.
 3. Replace the active local preview with the V9 six-slot staged flow while retaining V8 data as historical material.
 4. Introduce signed V5 complete/partial exports and V9-only analysis/duplicate/allocation rules.
 5. Add material, leakage, security, browser, export, and analysis regression tests.
@@ -19,9 +20,13 @@
 ## Implementation constraints
 
 - Public materials, browser state, endpoint projections, DOM/ARIA, and exports contain no expected answer keys.
-- Contract and Flat use the same six localized fact bodies, product context, source badge, illustrative outputs, Q1, and Q2.
+- Contract and Flat use the same six localized plain-language summaries,
+  product context, source badge, illustrative outputs, Q1, and Q2.
 - Only headings/order/neutral labels differ. No condition, group, or semantic role identifiers enter participant projections.
-- Real numbers are formatted only from verified canonical Git blob bytes.
+- Exact measurements and source details remain only in authoritative
+  nonlocalized lineage. Participant endpoints and DOM/ARIA receive summaries
+  only, with no measurement fold, exact statistics, hashes, commits, or source IDs.
+- Exact lineage values are extracted only from verified canonical Git blob bytes.
 - E-0014/E-0015 cannot generate a positive latent pass.
 - Source/product/output display fields are excluded from answer derivation.
 - The server remains loopback-only, volatile, no-log, origin/CSRF/capability protected, size/capacity/TTL bounded, per-session locked, and request-id idempotent.

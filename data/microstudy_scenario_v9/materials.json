@@ -1,9 +1,9 @@
 {
-  "schema_version": "microstudy-scenario-v9-bilingual",
-  "materials_version": "microstudy-scenario-release-20260811-v9-draft",
+  "schema_version": "microstudy-scenario-v9.1-bilingual-plain-evidence",
+  "materials_version": "microstudy-scenario-release-20260812-v9.1-plain-evidence-draft",
   "status": "DRAFT_NOT_FROZEN_OWNER_LOCAL_PREVIEW_NO_HUMAN_DATA",
   "locale_contract": {
-    "version": "microstudy-v9-locale-contract-v1",
+    "version": "microstudy-v9.1-locale-contract-v2",
     "supported": [
       "en",
       "zh-Hans"
@@ -129,8 +129,457 @@
         "hash_basis": "git_blob_bytes"
       }
     ],
+    "evidence_lineage": {
+      "version": "microstudy-v9.1-evidence-lineage-v1",
+      "participant_projection": "plain-language summaries only; exact measurements and source details are never sent to participant clients",
+      "exact_measurements": {
+        "read": {
+          "qwen": {
+            "deliberation": 0.582751249943177,
+            "skepticism": 0.5476263933060945,
+            "uncertainty_awareness": 0.7131063428339024,
+            "focus": 2.844174957484932
+          },
+          "llama": {
+            "deliberation": 0.87195069394943,
+            "skepticism": 0.6280003813018664,
+            "uncertainty_awareness": 1.0001801614484258,
+            "focus": 0.4710552448720493
+          }
+        },
+        "arm": {
+          "n_cells": 4,
+          "zero_pass_cells": 4
+        },
+        "multiseed": {
+          "n_seeds": 5,
+          "same_pool": true
+        },
+        "format": {
+          "steer_compliance": 0.8264150943396227,
+          "prompt_compliance": 0.44528301886792454,
+          "baseline_compliance": 0.8150943396226416,
+          "compliance_delta_vs_baseline": 0.01132075471698113,
+          "brier_delta_vs_baseline": 0.0008184905660377773,
+          "complete_case_point": -0.3366781481481482,
+          "complete_case_ci_low": -0.5075485879629629,
+          "complete_case_ci_high": -0.16516796759259258,
+          "missingness_low": -0.4783562264150944,
+          "missingness_high": 0.2499456603773585,
+          "other_cells_rechecked": 0,
+          "other_cells_unrechecked": 3
+        },
+        "endpoint": {
+          "prompt_refusal": 0.9550000000000001,
+          "unit_caa_refusal": 0.0
+        },
+        "scale": {
+          "coherent_ratio_low": 0.5256245111027591,
+          "coherent_ratio_high": 0.6567594919932767,
+          "degenerate_ratio": 1.0512490222055182,
+          "mde": 0.1892607209965111,
+          "any_latent_pass": false
+        },
+        "skepticism": {
+          "mdes": [
+            0.188,
+            0.2683,
+            0.2247,
+            0.279
+          ],
+          "sesoi": 0.05,
+          "same_pool": true
+        },
+        "deliberation": {
+          "cells": [
+            {
+              "method": "caa",
+              "model": "qwen2.5-7b",
+              "point": 0.015,
+              "ci_low": -0.04,
+              "ci_high": 0.07,
+              "posthoc_verdict": "UNDERPOWERED",
+              "mde": 0.0747
+            },
+            {
+              "method": "caa",
+              "model": "meta-llama-3-8b",
+              "point": 0.025,
+              "ci_low": -0.03,
+              "ci_high": 0.075,
+              "posthoc_verdict": "UNDERPOWERED",
+              "mde": 0.0702
+            },
+            {
+              "method": "iti",
+              "model": "qwen2.5-7b",
+              "point": 0.02,
+              "ci_low": 0.0,
+              "ci_high": 0.055,
+              "posthoc_verdict": "EQUIVALENT",
+              "mde": 0.0388
+            },
+            {
+              "method": "iti",
+              "model": "meta-llama-3-8b",
+              "point": 0.015,
+              "ci_low": -0.04,
+              "ci_high": 0.06,
+              "posthoc_verdict": "EQUIVALENT",
+              "mde": 0.0671
+            }
+          ],
+          "token_cap": 64
+        }
+      },
+      "tickets": [
+        {
+          "ticket_code": "UNC-R",
+          "source_details": [
+            {
+              "source_id": "C1_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/gpu_7b_2026-07-23/c1/c1_facade_results.json",
+              "canonical_sha256": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "C1_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/llama_c1_facade_2026-07-24/c1_facade_results.json",
+              "canonical_sha256": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ARM",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/arm_matrix_summary.json",
+              "canonical_sha256": "4614ff8277f3f6eed485169b0b4a00d4bf3978d487976318416692689cc32d19",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_CAA_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+              "canonical_sha256": "bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_CAA_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
+              "canonical_sha256": "7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ITI_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
+              "canonical_sha256": "8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ITI_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
+              "canonical_sha256": "46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0013_FORMAT",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/E-0013-uncertainty-recheck/reanalysis.json",
+              "canonical_sha256": "6554565952f1b5f0334b37f1e78f9c2af66d951c380dc9f3c86f312f0f028884",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0014_ENDPOINT",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/E-0014-positive-control/positive_control_results.json",
+              "canonical_sha256": "8c0b9b65e872a888bcb8c62cac39515a8741a25634e7cec58f5d3dce901f445f",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0015_SCALE",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/E-0015-scale-corrected-positive-control/positive_control_scale_corrected_results.json",
+              "canonical_sha256": "9bc450a4184aa9bdc617953dba8acdd3c9e0ef25883f706d31142d9665fb89ec",
+              "hash_basis": "git_blob_bytes"
+            }
+          ],
+          "fact_source_ids": [
+            [
+              "C1_QWEN",
+              "C1_LLAMA"
+            ],
+            [
+              "E0006_ARM",
+              "E0006_CAA_QWEN",
+              "E0006_CAA_LLAMA",
+              "E0006_ITI_QWEN",
+              "E0006_ITI_LLAMA"
+            ],
+            [
+              "E0013_FORMAT"
+            ],
+            [
+              "E0013_FORMAT"
+            ],
+            [
+              "E0014_ENDPOINT",
+              "E0015_SCALE"
+            ],
+            [
+              "E0013_FORMAT",
+              "E0006_ARM",
+              "E0006_CAA_QWEN",
+              "E0006_CAA_LLAMA",
+              "E0006_ITI_QWEN",
+              "E0006_ITI_LLAMA"
+            ]
+          ]
+        },
+        {
+          "ticket_code": "UNC-S",
+          "source_details": [],
+          "fact_source_ids": [
+            [],
+            [],
+            [],
+            [],
+            [],
+            []
+          ]
+        },
+        {
+          "ticket_code": "SKEP-R",
+          "source_details": [
+            {
+              "source_id": "C1_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/gpu_7b_2026-07-23/c1/c1_facade_results.json",
+              "canonical_sha256": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "C1_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/llama_c1_facade_2026-07-24/c1_facade_results.json",
+              "canonical_sha256": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ARM",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/arm_matrix_summary.json",
+              "canonical_sha256": "4614ff8277f3f6eed485169b0b4a00d4bf3978d487976318416692689cc32d19",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_CAA_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+              "canonical_sha256": "bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_CAA_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
+              "canonical_sha256": "7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ITI_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
+              "canonical_sha256": "8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ITI_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
+              "canonical_sha256": "46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0011_MULTI",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/E-0011/multiseed_c2_aggregate.json",
+              "canonical_sha256": "edcc3f4ce770bb10264e670b04afde9f84a2068e94a31c49a4c16bf382cc0927",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "POSTHOC_E0006",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/posthoc_equivalence/posthoc_equivalence_e0006.json",
+              "canonical_sha256": "c350701885626854889416a0ba0f8a2f07e25287b40ee6821fb1fdf0eaa47e4f",
+              "hash_basis": "git_blob_bytes"
+            }
+          ],
+          "fact_source_ids": [
+            [
+              "C1_QWEN",
+              "C1_LLAMA"
+            ],
+            [
+              "E0006_ARM",
+              "E0006_CAA_QWEN",
+              "E0006_CAA_LLAMA",
+              "E0006_ITI_QWEN",
+              "E0006_ITI_LLAMA"
+            ],
+            [
+              "POSTHOC_E0006"
+            ],
+            [
+              "E0011_MULTI"
+            ],
+            [
+              "POSTHOC_E0006"
+            ],
+            [
+              "C1_QWEN",
+              "C1_LLAMA",
+              "E0006_ARM",
+              "E0006_CAA_QWEN",
+              "E0006_CAA_LLAMA",
+              "E0006_ITI_QWEN",
+              "E0006_ITI_LLAMA",
+              "POSTHOC_E0006"
+            ]
+          ]
+        },
+        {
+          "ticket_code": "SKEP-S",
+          "source_details": [],
+          "fact_source_ids": [
+            [],
+            [],
+            [],
+            [],
+            [],
+            []
+          ]
+        },
+        {
+          "ticket_code": "DELIB-R",
+          "source_details": [
+            {
+              "source_id": "C1_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/gpu_7b_2026-07-23/c1/c1_facade_results.json",
+              "canonical_sha256": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "C1_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/llama_c1_facade_2026-07-24/c1_facade_results.json",
+              "canonical_sha256": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ARM",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/arm_matrix_summary.json",
+              "canonical_sha256": "4614ff8277f3f6eed485169b0b4a00d4bf3978d487976318416692689cc32d19",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_CAA_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+              "canonical_sha256": "bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_CAA_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
+              "canonical_sha256": "7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ITI_QWEN",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
+              "canonical_sha256": "8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_ITI_LLAMA",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
+              "canonical_sha256": "46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "E0006_PREREG",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "docs/ledgers/prereg-c2b-adjudication.md",
+              "canonical_sha256": "6fc28d3e9eb6516c201d088e7ed850a95bd9e1bef0c4fda21d312f3db2209755",
+              "hash_basis": "git_blob_bytes"
+            },
+            {
+              "source_id": "POSTHOC_E0006",
+              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
+              "path": "results/posthoc_equivalence/posthoc_equivalence_e0006.json",
+              "canonical_sha256": "c350701885626854889416a0ba0f8a2f07e25287b40ee6821fb1fdf0eaa47e4f",
+              "hash_basis": "git_blob_bytes"
+            }
+          ],
+          "fact_source_ids": [
+            [
+              "C1_QWEN",
+              "C1_LLAMA"
+            ],
+            [
+              "E0006_ARM",
+              "E0006_CAA_QWEN",
+              "E0006_CAA_LLAMA",
+              "E0006_ITI_QWEN",
+              "E0006_ITI_LLAMA",
+              "POSTHOC_E0006"
+            ],
+            [
+              "POSTHOC_E0006"
+            ],
+            [
+              "POSTHOC_E0006",
+              "E0006_PREREG"
+            ],
+            [
+              "E0006_PREREG"
+            ],
+            [
+              "E0006_ARM",
+              "E0006_CAA_QWEN",
+              "E0006_CAA_LLAMA",
+              "E0006_ITI_QWEN",
+              "E0006_ITI_LLAMA",
+              "POSTHOC_E0006",
+              "E0006_PREREG"
+            ]
+          ]
+        },
+        {
+          "ticket_code": "DELIB-S",
+          "source_details": [],
+          "fact_source_ids": [
+            [],
+            [],
+            [],
+            [],
+            [],
+            []
+          ]
+        }
+      ]
+    },
     "render_contract": {
-      "version": "microstudy-v9-render-contract-v1",
+      "version": "microstudy-v9.1-render-contract-v2",
       "contract_group_sizes": [
         1,
         2,
@@ -138,7 +587,8 @@
         1
       ],
       "flat_labels": "neutral Latin Evidence A-F permutation",
-      "body_parity": "same six localized fact strings in both conditions",
+      "body_parity": "same six localized plain-language summaries in both conditions",
+      "participant_evidence_projection": "summary_only_no_measurement_fold",
       "only_badges": [
         "SOURCE-BACKED",
         "SIMULATED",
@@ -347,28 +797,28 @@
       },
       "briefing": {
         "heading": "Release-review briefing",
-        "role": "Role: AI product release reviewer. You do not need to know latent mechanisms.",
+        "role": "Role: You are reviewing whether a candidate AI control has enough evidence to be offered to users. You do not need machine-learning or statistics knowledge.",
         "policy_heading": "Visible release policy",
         "policy": [
           {
             "id": "A",
-            "text": "U — Pending; do not offer a user knob yet."
+            "text": "U — More evidence is needed; do not offer the knob yet."
           },
           {
             "id": "B",
-            "text": "D — Read-only diagnostic; no user adjustment."
+            "text": "D — Show the behavior as information only; users cannot adjust it."
           },
           {
             "id": "C",
-            "text": "W — Hide; do not offer the knob."
+            "text": "W — Do not offer this knob."
           },
           {
             "id": "D",
-            "text": "S — Adjustable only in the exact stated scope."
+            "text": "S — Offer the knob only in the exact tested setting."
           }
         ],
         "flow": [
-          "Read the product context, neutral prototype, illustrative outputs, and six evidence facts.",
+          "Read the product context, neutral prototype, illustrative outputs, and six plain-language evidence facts.",
           "Q1 decides how the next release should present the knob under the visible policy.",
           "After Q1 locks, Q2 asks which evidence most directly decides the ticket."
         ],
@@ -376,10 +826,10 @@
         "continue_practice": "Continue to audio practice"
       },
       "contract_headings": [
-        "What evidence is named?",
-        "How relative to prompt?",
-        "What risk or measurement limit?",
-        "Where applies?"
+        "Can the behavior be identified?",
+        "How does the knob compare with direct prompting?",
+        "What could weaken or limit the result?",
+        "Where does this evidence apply?"
       ],
       "flat_labels": [
         "Evidence A",
@@ -389,54 +839,53 @@
         "Evidence E",
         "Evidence F"
       ],
-      "source_details": "Method and source hash details",
       "q1": {
-        "text": "Q1. Under the visible policy, how should the next release present this knob?",
+        "text": "Q1. Considering all six facts, what should the next release do with this knob under the visible policy?",
         "options": [
           {
             "id": "A",
-            "text": "U — Pending; do not offer a user knob yet."
+            "text": "U — More evidence is needed; do not offer the knob yet."
           },
           {
             "id": "B",
-            "text": "D — Read-only diagnostic; no user adjustment."
+            "text": "D — Show the behavior as information only; users cannot adjust it."
           },
           {
             "id": "C",
-            "text": "W — Hide; do not offer the knob."
+            "text": "W — Do not offer this knob."
           },
           {
             "id": "D",
-            "text": "S — Adjustable only in the exact stated scope."
+            "text": "S — Offer the knob only in the exact tested setting."
           }
         ]
       },
       "q2": {
-        "text": "Q2. Which evidence most directly decides this release ticket?",
+        "text": "Q2. Which evidence issue should carry the most weight in this ticket?",
         "options": [
           {
             "id": "A",
-            "text": "Comparator and missingness evidence."
+            "text": "What the knob was compared with, including what missing results could change."
           },
           {
             "id": "B",
-            "text": "The exact applicability boundary."
+            "text": "The exact setting where the result applies."
           },
           {
             "id": "C",
-            "text": "Whether the comparison is underpowered."
+            "text": "Whether the test was strong enough to detect a worthwhile difference."
           },
           {
             "id": "D",
-            "text": "A missing matched comparison."
+            "text": "The absence of a like-for-like comparison with the current preset."
           },
           {
             "id": "E",
-            "text": "A decisive paired release test."
+            "text": "The need for a clear like-for-like test under realistic release conditions."
           },
           {
             "id": "F",
-            "text": "The failed quality or coherence gate."
+            "text": "The failed output-quality or coherence check."
           }
         ]
       },
@@ -454,11 +903,11 @@
         "preset": "Play existing preset",
         "candidate": "Play candidate",
         "facts": [
-          "The existing preset is the release comparator.",
-          "The candidate changes the listening preview.",
-          "The candidate has not beaten the existing preset.",
-          "The speech-quality check fails.",
-          "The comparison and quality result apply to this audio workflow.",
+          "The current preset is the standard the candidate must beat.",
+          "The candidate changes what the audio sounds like.",
+          "In the comparison, the candidate did not perform better than the current preset.",
+          "The candidate did not meet the required speech-quality check.",
+          "These results apply only to this audio workflow.",
           "After practice Q1 is locked, it cannot be changed before Q2."
         ],
         "q1": "How should the candidate knob be presented?",
@@ -540,12 +989,12 @@
             "Reference: “The available record supports the following answer.”"
           ],
           "facts": [
-            "READ is heterogeneous across models: Qwen/Llama facade ratios are 0.713/1.000 for uncertainty and 2.844/0.471 for focus; deliberation and skepticism show the gap in both.",
-            "Across 4 CAA/ITI × Qwen/Llama cells, 4 had no passing axis against the bounded best-prompt comparison.",
-            "For Qwen CAA uncertainty, steering was approximately baseline: +0.011 format compliance and +0.0008 in 1−Brier.",
-            "The E-0013 format-compliant complete-case paired estimate was -0.337 with 95% CI [-0.508, -0.165], but adversarial missingness bounds cross zero and span [-0.478, +0.250].",
-            "Prompt refusal was 0.955, while unit-direction CAA refusal was 0.000; scale-corrected latent arms still had no pass. Coherent perturbations reached about 0.53–0.66× residual norm; about 1.05× was degenerate and MDE was about 0.19.",
-            "The E-0013 recheck covers only Qwen CAA; the other 3 cells are unrechecked. Illustrative outputs and missingness do not make this knob adjustable."
+            "The intended behavior can be recognized in some tested settings, but the readout changes across models; a recognizable label alone does not show that the knob reliably controls it.",
+            "In all four tested model-and-method setups, the knob failed to outperform the best direct prompt on every behavior tested.",
+            "In the most closely rechecked setup, the knob behaved almost the same as leaving the model unadjusted on answer format and uncertainty quality.",
+            "Among complete usable answers, direct prompting performed better; once missing answers are handled in the most unfavorable plausible ways, the direction of the difference becomes uncertain.",
+            "The checks could distinguish the prompt route from the knob route, but increasing knob strength still produced no usable win before outputs became unstable; the study could also miss small improvements.",
+            "Only one model-and-method setup received the extra missing-data recheck; the other three did not, so this record must remain limited to the tested setup."
           ],
           "flat_order": [
             0,
@@ -554,78 +1003,6 @@
             3,
             4,
             5
-          ],
-          "source_details": [
-            {
-              "source_id": "C1_QWEN",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/gpu_7b_2026-07-23/c1/c1_facade_results.json",
-              "canonical_sha256": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "C1_LLAMA",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/llama_c1_facade_2026-07-24/c1_facade_results.json",
-              "canonical_sha256": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_ARM",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/arm_matrix_summary.json",
-              "canonical_sha256": "4614ff8277f3f6eed485169b0b4a00d4bf3978d487976318416692689cc32d19",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_CAA_QWEN",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
-              "canonical_sha256": "bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_CAA_LLAMA",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
-              "canonical_sha256": "7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_ITI_QWEN",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
-              "canonical_sha256": "8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_ITI_LLAMA",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
-              "canonical_sha256": "46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0013_FORMAT",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/E-0013-uncertainty-recheck/reanalysis.json",
-              "canonical_sha256": "6554565952f1b5f0334b37f1e78f9c2af66d951c380dc9f3c86f312f0f028884",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0014_ENDPOINT",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/E-0014-positive-control/positive_control_results.json",
-              "canonical_sha256": "8c0b9b65e872a888bcb8c62cac39515a8741a25634e7cec58f5d3dce901f445f",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0015_SCALE",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/E-0015-scale-corrected-positive-control/positive_control_scale_corrected_results.json",
-              "canonical_sha256": "9bc450a4184aa9bdc617953dba8acdd3c9e0ef25883f706d31142d9665fb89ec",
-              "hash_basis": "git_blob_bytes"
-            }
           ]
         },
         {
@@ -639,12 +1016,12 @@
             "Reference: “The answer is provided without a confidence note.”"
           ],
           "facts": [
-            "A completed readout names the uncertainty-awareness behavior.",
-            "A matched comparison beats the existing preset in the stated workflow.",
-            "The comparator uses the same task, response budget, and scoring rule.",
-            "Speech/text quality and coherence checks pass.",
-            "The evidence does not cover other models, tasks, or response budgets.",
-            "Adjustment is supported only for the named support-triage workflow and preset range."
+            "A completed check can identify the intended uncertainty-aware behavior in this case.",
+            "In the named workflow, the candidate knob performed better than the current preset in a like-for-like test.",
+            "Both sides used the same task, answer-length allowance, and scoring rules.",
+            "The candidate’s output remained clear and coherent in the required quality checks.",
+            "Nothing here shows that the same result holds for other models, tasks, or answer-length limits.",
+            "The evidence reaches only the named support-triage workflow and the tested preset range."
           ],
           "flat_order": [
             1,
@@ -653,8 +1030,7 @@
             4,
             5,
             0
-          ],
-          "source_details": []
+          ]
         },
         {
           "ticket_code": "SKEP-R",
@@ -667,12 +1043,12 @@
             "Reference: “The claim is accepted as written.”"
           ],
           "facts": [
-            "READ is available for skepticism in both models: facade ratios are 0.548 for Qwen and 0.628 for Llama.",
-            "All 4 steering cells failed the preregistered superiority rule against the bounded prompt.",
-            "The four skepticism comparisons are underpowered: their MDEs are 0.188/0.268/0.225/0.279, all above the 0.05 target effect.",
-            "The uncertainty negative is robust across split seeds, but those 5 seeds reuse the same item pool.",
-            "A non-detection with these MDEs is not evidence that meaningful skepticism effects are absent.",
-            "This release judgment is limited to the tested Qwen/Llama, CAA/ITI, bounded-prompt setup."
+            "Both tested models contain a recognizable pattern related to checking claims rather than immediately accepting them.",
+            "Across all four tested knob setups, none clearly beat the best direct prompt under the release rule set in advance.",
+            "These tests were not strong enough to reliably detect the smallest improvement the team had said would matter.",
+            "A separate uncertainty result repeated across five data splits, but every split reused the same question pool; that does not settle this skepticism ticket.",
+            "Because the tests were weak, finding no clear win does not show that a useful skepticism effect is absent.",
+            "This judgment applies only to the two tested models, the two tested knob methods, and this specific direct-prompt comparison."
           ],
           "flat_order": [
             2,
@@ -681,71 +1057,6 @@
             5,
             0,
             1
-          ],
-          "source_details": [
-            {
-              "source_id": "C1_QWEN",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/gpu_7b_2026-07-23/c1/c1_facade_results.json",
-              "canonical_sha256": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "C1_LLAMA",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/llama_c1_facade_2026-07-24/c1_facade_results.json",
-              "canonical_sha256": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_ARM",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/arm_matrix_summary.json",
-              "canonical_sha256": "4614ff8277f3f6eed485169b0b4a00d4bf3978d487976318416692689cc32d19",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_CAA_QWEN",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
-              "canonical_sha256": "bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_CAA_LLAMA",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
-              "canonical_sha256": "7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_ITI_QWEN",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
-              "canonical_sha256": "8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_ITI_LLAMA",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
-              "canonical_sha256": "46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0011_MULTI",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/E-0011/multiseed_c2_aggregate.json",
-              "canonical_sha256": "edcc3f4ce770bb10264e670b04afde9f84a2068e94a31c49a4c16bf382cc0927",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "POSTHOC_E0006",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/posthoc_equivalence/posthoc_equivalence_e0006.json",
-              "canonical_sha256": "c350701885626854889416a0ba0f8a2f07e25287b40ee6821fb1fdf0eaa47e4f",
-              "hash_basis": "git_blob_bytes"
-            }
           ]
         },
         {
@@ -759,12 +1070,12 @@
             "Reference: “The cited evidence is accepted.”"
           ],
           "facts": [
-            "A completed readout names a skepticism-related behavior.",
-            "The prototype changes diagnostic examples.",
-            "No matched comparison against the existing preset has been run.",
-            "A quality failure has not been observed, but quality is not release evidence here.",
-            "The diagnostic uses one fixed support workflow.",
-            "The record supports read-only diagnosis, not a user adjustment."
+            "A completed check can identify behavior related to questioning cited evidence.",
+            "The prototype changes the example outputs used for inspection.",
+            "No like-for-like test has compared the prototype with the current preset.",
+            "No output-quality problem has appeared so far, but that alone does not show that the prototype improves the product.",
+            "All observations come from one fixed customer-support workflow.",
+            "The evidence stops at observing the behavior in that workflow; it does not test whether user control improves results."
           ],
           "flat_order": [
             3,
@@ -773,8 +1084,7 @@
             0,
             1,
             2
-          ],
-          "source_details": []
+          ]
         },
         {
           "ticket_code": "DELIB-R",
@@ -787,12 +1097,12 @@
             "Reference: “Use the first feasible solution.”"
           ],
           "facts": [
-            "READ is available for deliberation in both models: facade ratios are 0.583 for Qwen and 0.872 for Llama.",
-            "The four deliberation cells are mixed near zero: CAA qwen2.5-7b +0.015 [-0.040, +0.070]; CAA meta-llama-3-8b +0.025 [-0.030, +0.075]; ITI qwen2.5-7b +0.020 [+0.000, +0.055]; ITI meta-llama-3-8b +0.015 [-0.040, +0.060].",
-            "Both CAA deliberation comparisons are underpowered in the post-hoc characterization.",
-            "ITI equivalence labels are post-hoc only; they were not the preregistered superiority decision.",
-            "Generation used a 64-token cap, so longer deliberative behavior was not tested.",
-            "A decisive paired test under a release-relevant response budget is still required for this knob."
+            "Both tested models contain a recognizable pattern related to comparing options before deciding.",
+            "Across four tested setups, the knob’s differences from direct prompting were small and inconsistent; the results did not establish a clear win.",
+            "Two of the comparisons were too weak to reliably detect a worthwhile improvement.",
+            "Two “about the same” interpretations were added after the results and cannot replace the release rule set in advance.",
+            "The tests allowed only short answers, so they did not cover longer step-by-step reasoning.",
+            "The current record covers only short responses; a like-for-like test under realistic answer length is still missing."
           ],
           "flat_order": [
             4,
@@ -801,71 +1111,6 @@
             1,
             2,
             3
-          ],
-          "source_details": [
-            {
-              "source_id": "C1_QWEN",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/gpu_7b_2026-07-23/c1/c1_facade_results.json",
-              "canonical_sha256": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "C1_LLAMA",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/llama_c1_facade_2026-07-24/c1_facade_results.json",
-              "canonical_sha256": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_ARM",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/arm_matrix_summary.json",
-              "canonical_sha256": "4614ff8277f3f6eed485169b0b4a00d4bf3978d487976318416692689cc32d19",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_CAA_QWEN",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
-              "canonical_sha256": "bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_CAA_LLAMA",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
-              "canonical_sha256": "7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_ITI_QWEN",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
-              "canonical_sha256": "8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_ITI_LLAMA",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
-              "canonical_sha256": "46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_PREREG",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "docs/ledgers/prereg-c2b-adjudication.md",
-              "canonical_sha256": "6fc28d3e9eb6516c201d088e7ed850a95bd9e1bef0c4fda21d312f3db2209755",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "POSTHOC_E0006",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/posthoc_equivalence/posthoc_equivalence_e0006.json",
-              "canonical_sha256": "c350701885626854889416a0ba0f8a2f07e25287b40ee6821fb1fdf0eaa47e4f",
-              "hash_basis": "git_blob_bytes"
-            }
           ]
         },
         {
@@ -879,12 +1124,12 @@
             "Reference: “Compare the two options, then decide.”"
           ],
           "facts": [
-            "A completed readout names a deliberation-related behavior.",
-            "A matched comparison improves the task score over the existing preset.",
-            "The comparator uses the same workflow and response budget.",
-            "The candidate repeats phrases and loses speech/text coherence.",
-            "The registered quality gate fails.",
-            "The result applies only to the named planning workflow, where the failed quality gate blocks release."
+            "A completed check can identify behavior related to comparing options before deciding.",
+            "In a like-for-like test, the candidate scored better on the task than the current preset.",
+            "Both sides used the same workflow and answer-length allowance.",
+            "The candidate repeated phrases and became difficult to follow.",
+            "The candidate did not meet the output-quality requirement set before testing.",
+            "This evidence comes only from the named planning workflow, where the task gain and the quality problem occurred together."
           ],
           "flat_order": [
             5,
@@ -893,8 +1138,7 @@
             2,
             3,
             4
-          ],
-          "source_details": []
+          ]
         }
       ]
     },
@@ -933,24 +1177,24 @@
       },
       "briefing": {
         "heading": "发布审核说明",
-        "role": "角色：AI 产品发布审核员。你不需要了解潜在机制。",
+        "role": "角色：你需要审核一个候选 AI 控件是否有足够证据提供给用户。你不需要机器学习或统计学知识。",
         "policy_heading": "可见发布政策",
         "policy": [
           {
             "id": "A",
-            "text": "U — 待定；暂不向用户提供旋钮。"
+            "text": "U — 还需要更多证据；暂不提供该旋钮。"
           },
           {
             "id": "B",
-            "text": "D — 只读诊断；用户不可调节。"
+            "text": "D — 只把这种行为作为信息展示；用户不能调节。"
           },
           {
             "id": "C",
-            "text": "W — 隐藏；不提供该旋钮。"
+            "text": "W — 不提供该旋钮。"
           },
           {
             "id": "D",
-            "text": "S — 仅在明确写出的范围内可调。"
+            "text": "S — 仅在明确测试过的设置中提供该旋钮。"
           }
         ],
         "flow": [
@@ -962,10 +1206,10 @@
         "continue_practice": "继续音频练习"
       },
       "contract_headings": [
-        "证据是什么？",
-        "与提示相比如何？",
-        "有哪些风险或测量限制？",
-        "适用于哪里？"
+        "能否识别这种行为？",
+        "旋钮与直接提示相比如何？",
+        "哪些因素可能削弱或限制结果？",
+        "这些证据适用于哪里？"
       ],
       "flat_labels": [
         "证据 A",
@@ -975,54 +1219,53 @@
         "证据 E",
         "证据 F"
       ],
-      "source_details": "方法与来源哈希详情",
       "q1": {
-        "text": "问题 1：按可见政策，下一版应如何呈现该旋钮？",
+        "text": "问题 1：综合六条事实，按可见政策，下一版应如何处理该旋钮？",
         "options": [
           {
             "id": "A",
-            "text": "U — 待定；暂不向用户提供旋钮。"
+            "text": "U — 还需要更多证据；暂不提供该旋钮。"
           },
           {
             "id": "B",
-            "text": "D — 只读诊断；用户不可调节。"
+            "text": "D — 只把这种行为作为信息展示；用户不能调节。"
           },
           {
             "id": "C",
-            "text": "W — 隐藏；不提供该旋钮。"
+            "text": "W — 不提供该旋钮。"
           },
           {
             "id": "D",
-            "text": "S — 仅在明确写出的范围内可调。"
+            "text": "S — 仅在明确测试过的设置中提供该旋钮。"
           }
         ]
       },
       "q2": {
-        "text": "问题 2：哪项证据最直接决定这张发布工单？",
+        "text": "问题 2：这张工单中，哪项证据问题应占最大权重？",
         "options": [
           {
             "id": "A",
-            "text": "比较器与缺失值证据。"
+            "text": "旋钮与什么比较，以及缺失结果可能改变什么。"
           },
           {
             "id": "B",
-            "text": "明确的适用边界。"
+            "text": "结果适用的确切设置。"
           },
           {
             "id": "C",
-            "text": "比较是否检验力不足。"
+            "text": "测试是否足以发现有实际意义的差异。"
           },
           {
             "id": "D",
-            "text": "缺失的匹配比较。"
+            "text": "缺少与当前预设的同条件比较。"
           },
           {
             "id": "E",
-            "text": "有判定力的配对发布检验。"
+            "text": "需要在真实发布条件下进行明确的同条件比较。"
           },
           {
             "id": "F",
-            "text": "失败的质量或连贯性门。"
+            "text": "未通过的输出质量或连贯性检查。"
           }
         ]
       },
@@ -1040,11 +1283,11 @@
         "preset": "播放现有预设",
         "candidate": "播放候选",
         "facts": [
-          "现有预设是发布比较器。",
-          "候选设置会改变试听结果。",
-          "候选设置尚未优于现有预设。",
-          "语音质量检查未通过。",
-          "比较与质量结果适用于该音频工作流。",
+          "当前预设是候选设置需要超过的标准。",
+          "候选设置会改变音频听感。",
+          "在比较中，候选设置没有优于当前预设。",
+          "候选设置没有达到要求的语音质量标准。",
+          "这些结果只适用于该音频工作流。",
           "练习问题 1 锁定后，在问题 2 前不能更改。"
         ],
         "q1": "应如何呈现该候选旋钮？",
@@ -1126,12 +1369,12 @@
             "参照输出：“现有记录支持以下回答。”"
           ],
           "facts": [
-            "不同模型的 READ 结果存在异质性：Qwen/Llama 在不确定性上的表征比为 0.713/1.000，在聚焦上的表征比为 2.844/0.471；审慎思考和怀疑性在两个模型中都显示出差距。",
-            "在 4 个 CAA/ITI × Qwen/Llama 单元中，4 个单元相对有界最优提示都没有任何轴通过。",
-            "对于 Qwen CAA 不确定性，steering 与 baseline 基本相当：格式合规率差 +0.011，1−Brier 差 +0.0008。",
-            "E-0013 仅看格式合规完整案例配对时，估计值为 -0.337，95% CI 为 [-0.508, -0.165]；但对缺失值作对抗性处理后边界跨过零，范围为 [-0.478, +0.250]。",
-            "直接提示的拒答率为 0.955，单位方向 CAA 的拒答率为 0.000；按原始幅度校正后仍没有潜在干预通过。保持连贯的扰动约为残差范数的 0.53–0.66 倍；约 1.05 倍时退化，MDE 约为 0.19。",
-            "E-0013 只复查了 Qwen CAA；其余 3 个单元尚未复查。示意输出和缺失值分析都不能让该旋钮变成可调。"
+            "在部分已测设置中可以识别出目标行为，但不同模型的读出并不一致；能给行为命名，本身不等于旋钮能可靠控制它。",
+            "在四种已测模型与方法组合中，该旋钮在所有测试行为上都没有优于最佳直接提示。",
+            "在复查最充分的设置中，该旋钮在回答格式和不确定性表达质量上，几乎没有改变模型原本的表现。",
+            "只看完整且格式可用的回答时，直接提示表现更好；但以最不利的合理方式处理缺失回答后，差异方向变得不确定。",
+            "检查能够区分直接提示和旋钮两条路径，但增强旋钮后，在输出开始失稳前仍没有得到可用优势；本测试也可能漏掉较小的改善。",
+            "只有一种模型与方法组合接受了额外的缺失数据复查，另外三种没有；因此这份证据只能用于已测试的设置。"
           ],
           "flat_order": [
             0,
@@ -1140,78 +1383,6 @@
             3,
             4,
             5
-          ],
-          "source_details": [
-            {
-              "source_id": "C1_QWEN",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/gpu_7b_2026-07-23/c1/c1_facade_results.json",
-              "canonical_sha256": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "C1_LLAMA",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/llama_c1_facade_2026-07-24/c1_facade_results.json",
-              "canonical_sha256": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_ARM",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/arm_matrix_summary.json",
-              "canonical_sha256": "4614ff8277f3f6eed485169b0b4a00d4bf3978d487976318416692689cc32d19",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_CAA_QWEN",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
-              "canonical_sha256": "bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_CAA_LLAMA",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
-              "canonical_sha256": "7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_ITI_QWEN",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
-              "canonical_sha256": "8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_ITI_LLAMA",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
-              "canonical_sha256": "46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0013_FORMAT",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/E-0013-uncertainty-recheck/reanalysis.json",
-              "canonical_sha256": "6554565952f1b5f0334b37f1e78f9c2af66d951c380dc9f3c86f312f0f028884",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0014_ENDPOINT",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/E-0014-positive-control/positive_control_results.json",
-              "canonical_sha256": "8c0b9b65e872a888bcb8c62cac39515a8741a25634e7cec58f5d3dce901f445f",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0015_SCALE",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/E-0015-scale-corrected-positive-control/positive_control_scale_corrected_results.json",
-              "canonical_sha256": "9bc450a4184aa9bdc617953dba8acdd3c9e0ef25883f706d31142d9665fb89ec",
-              "hash_basis": "git_blob_bytes"
-            }
           ]
         },
         {
@@ -1225,12 +1396,12 @@
             "参照输出：“给出答案，但不附置信度说明。”"
           ],
           "facts": [
-            "已完成的读出明确对应不确定性感知行为。",
-            "在所述工作流中，匹配比较优于现有预设。",
-            "比较器使用相同任务、响应预算和评分规则。",
-            "语音/文本质量与连贯性检查均通过。",
-            "证据不覆盖其他模型、任务或响应预算。",
-            "仅支持在已命名的支持分诊工作流和预设范围内调节。"
+            "在这个案例中，已完成的检查能够识别预期的不确定性感知行为。",
+            "在该工作流的同条件比较中，候选旋钮表现优于当前预设。",
+            "比较双方使用了相同任务、回答长度额度和评分规则。",
+            "在要求的质量检查中，候选输出保持清晰、连贯。",
+            "现有证据没有说明同样结果适用于其他模型、任务或回答长度限制。",
+            "证据范围仅到已命名的支持分诊工作流和测试过的预设范围为止。"
           ],
           "flat_order": [
             1,
@@ -1239,8 +1410,7 @@
             4,
             5,
             0
-          ],
-          "source_details": []
+          ]
         },
         {
           "ticket_code": "SKEP-R",
@@ -1253,12 +1423,12 @@
             "参照输出：“按原文接受该主张。”"
           ],
           "facts": [
-            "两个模型的怀疑性 READ 都可用：Qwen 的表征比为 0.548，Llama 为 0.628。",
-            "全部 4 个 steering 单元相对有界提示都未通过预先登记的优越性规则。",
-            "四个怀疑性比较检验力不足：其 MDE 为 0.188/0.268/0.225/0.279，均高于 0.05 的目标效应。",
-            "不确定性负结果跨 5 个划分种子保持一致，但这些种子复用了同一项目池。",
-            "在这些 MDE 下未检出差异，不能证明有意义的怀疑性效应不存在。",
-            "该发布判断仅适用于已测试的 Qwen/Llama、CAA/ITI 与有界提示设置。"
+            "两个已测模型中都能识别出一种“先核查主张、而非立即接受”的相关行为模式。",
+            "按照事先设定的发布规则，四种已测旋钮设置都没有明确优于最佳直接提示。",
+            "这些测试不够敏感，无法可靠发现团队事先认定有实际意义的最小改善。",
+            "另一项不确定性结果在五种数据划分中重复出现，但所有划分都复用了同一批问题；这不能解决当前的怀疑性工单。",
+            "由于测试能力不足，没有发现明确优势并不能证明有用的怀疑性效果不存在。",
+            "这一判断仅适用于两个已测模型、两种已测旋钮方法以及当前这套直接提示比较。"
           ],
           "flat_order": [
             2,
@@ -1267,71 +1437,6 @@
             5,
             0,
             1
-          ],
-          "source_details": [
-            {
-              "source_id": "C1_QWEN",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/gpu_7b_2026-07-23/c1/c1_facade_results.json",
-              "canonical_sha256": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "C1_LLAMA",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/llama_c1_facade_2026-07-24/c1_facade_results.json",
-              "canonical_sha256": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_ARM",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/arm_matrix_summary.json",
-              "canonical_sha256": "4614ff8277f3f6eed485169b0b4a00d4bf3978d487976318416692689cc32d19",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_CAA_QWEN",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
-              "canonical_sha256": "bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_CAA_LLAMA",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
-              "canonical_sha256": "7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_ITI_QWEN",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
-              "canonical_sha256": "8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_ITI_LLAMA",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
-              "canonical_sha256": "46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0011_MULTI",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/E-0011/multiseed_c2_aggregate.json",
-              "canonical_sha256": "edcc3f4ce770bb10264e670b04afde9f84a2068e94a31c49a4c16bf382cc0927",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "POSTHOC_E0006",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/posthoc_equivalence/posthoc_equivalence_e0006.json",
-              "canonical_sha256": "c350701885626854889416a0ba0f8a2f07e25287b40ee6821fb1fdf0eaa47e4f",
-              "hash_basis": "git_blob_bytes"
-            }
           ]
         },
         {
@@ -1345,12 +1450,12 @@
             "参照输出：“接受所引用的证据。”"
           ],
           "facts": [
-            "已完成的读出明确对应一种怀疑性相关行为。",
-            "原型会改变诊断示例。",
-            "尚未完成与现有预设的匹配比较。",
-            "目前未观察到质量失败，但质量本身不能构成这里的发布证据。",
-            "诊断仅使用一个固定的支持工作流。",
-            "该记录支持只读诊断，不支持用户调节。"
+            "已完成的检查能够识别与质疑引用证据有关的行为。",
+            "原型会改变供审核人员查看的示例输出。",
+            "尚未在相同条件下把该原型与当前预设进行比较。",
+            "目前没有发现输出质量问题，但仅凭这一点不能说明该原型改善了产品。",
+            "所有观察都来自一个固定的客户支持工作流。",
+            "现有证据只说明能在该工作流中观察到这种行为；它没有测试用户控制是否能改善结果。"
           ],
           "flat_order": [
             3,
@@ -1359,8 +1464,7 @@
             0,
             1,
             2
-          ],
-          "source_details": []
+          ]
         },
         {
           "ticket_code": "DELIB-R",
@@ -1373,12 +1477,12 @@
             "参照输出：“采用第一个可行方案。”"
           ],
           "facts": [
-            "两个模型的审慎思考 READ 都可用：Qwen 的表征比为 0.583，Llama 为 0.872。",
-            "四个审慎思考单元在零附近呈混合结果：CAA qwen2.5-7b +0.015 [-0.040, +0.070]；CAA meta-llama-3-8b +0.025 [-0.030, +0.075]；ITI qwen2.5-7b +0.020 [+0.000, +0.055]；ITI meta-llama-3-8b +0.015 [-0.040, +0.060]。",
-            "事后刻画显示，两个 CAA 审慎思考比较都检验力不足。",
-            "ITI 的等效标签仅来自事后分析，并不是预先登记的优越性判定。",
-            "生成上限为 64 个 token，因此没有测试更长的审慎思考行为。",
-            "该旋钮仍需要在符合发布场景的响应预算下完成有判定力的配对检验。"
+            "两个已测模型中都能识别出一种“决定前先比较方案”的相关行为模式。",
+            "在四种已测设置中，旋钮与直接提示的差异都很小且并不一致；结果没有确立明确优势。",
+            "其中两项比较不够敏感，无法可靠发现有实际意义的改善。",
+            "两项“表现大致相同”的解释是在看到结果后才加入的，不能替代事先设定的发布规则。",
+            "测试只允许较短回答，因此没有覆盖更长的分步思考过程。",
+            "当前记录只覆盖短回答；仍缺少一次在真实回答长度下进行的同条件比较。"
           ],
           "flat_order": [
             4,
@@ -1387,71 +1491,6 @@
             1,
             2,
             3
-          ],
-          "source_details": [
-            {
-              "source_id": "C1_QWEN",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/gpu_7b_2026-07-23/c1/c1_facade_results.json",
-              "canonical_sha256": "23dd0d3d58d9d47a9204a1d4226335232769b4669006f001c11bd8126a03b76e",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "C1_LLAMA",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/llama_c1_facade_2026-07-24/c1_facade_results.json",
-              "canonical_sha256": "64a4a1d9cc4312ade3a9c231348403c7608d00eb942431d33286bf80cf52de46",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_ARM",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/arm_matrix_summary.json",
-              "canonical_sha256": "4614ff8277f3f6eed485169b0b4a00d4bf3978d487976318416692689cc32d19",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_CAA_QWEN",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
-              "canonical_sha256": "bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_CAA_LLAMA",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
-              "canonical_sha256": "7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_ITI_QWEN",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
-              "canonical_sha256": "8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_ITI_LLAMA",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
-              "canonical_sha256": "46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "E0006_PREREG",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "docs/ledgers/prereg-c2b-adjudication.md",
-              "canonical_sha256": "6fc28d3e9eb6516c201d088e7ed850a95bd9e1bef0c4fda21d312f3db2209755",
-              "hash_basis": "git_blob_bytes"
-            },
-            {
-              "source_id": "POSTHOC_E0006",
-              "commit": "22a248abe6dfc429fc5d2979a99d2d204d697db9",
-              "path": "results/posthoc_equivalence/posthoc_equivalence_e0006.json",
-              "canonical_sha256": "c350701885626854889416a0ba0f8a2f07e25287b40ee6821fb1fdf0eaa47e4f",
-              "hash_basis": "git_blob_bytes"
-            }
           ]
         },
         {
@@ -1465,12 +1504,12 @@
             "参照输出：“比较两个方案，然后决定。”"
           ],
           "facts": [
-            "已完成的读出明确对应一种审慎思考相关行为。",
-            "匹配比较中的任务得分优于现有预设。",
-            "比较器使用相同工作流和响应预算。",
-            "候选输出出现重复措辞，并失去语音/文本连贯性。",
-            "预先登记的质量门未通过。",
-            "结果仅适用于已命名的规划工作流；失败的质量门阻止发布。"
+            "已完成的检查能够识别与决定前比较方案有关的行为。",
+            "在同条件比较中，候选设置的任务得分高于当前预设。",
+            "比较双方使用了相同工作流和回答长度额度。",
+            "候选输出重复措辞，并变得难以理解。",
+            "候选设置没有达到测试前规定的输出质量要求。",
+            "这些证据只来自已命名的规划工作流；任务得分改善与质量问题在该工作流中同时出现。"
           ],
           "flat_order": [
             5,
@@ -1479,8 +1518,7 @@
             2,
             3,
             4
-          ],
-          "source_details": []
+          ]
         }
       ]
     }

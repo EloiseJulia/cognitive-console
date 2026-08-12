@@ -1594,3 +1594,72 @@ experiments:
     NOT FROZEN; recruitment, human data, ethics, timing, sample-size/MDE,
     accessibility and bilingual human review, public deployment, Claim/result
     upgrade, and Protocol Freeze remain unauthorized.
+
+- experiment_id: microstudy-scenario-plain-evidence-20260812-v9.1-draft
+  parent: microstudy-scenario-release-20260811-v9-draft
+  hypothesis_id: H-MICROSTUDY-SCENARIO-APPLICATION
+  claim_ids: []
+  type: exploratory_formative_human_protocol
+  status: ready_for_owner_local_preview_no_human_data
+  code_commit: 51e0307ea13e408a971204f61ace26936a8c5fdd
+  dirty_tree: false
+  data_hash: >-
+    materials_sha256=2b9e089c4fab607fef1396c23775c24cadd5c0601d9953ae46a54ad6fcf59c6c;
+    sequences_sha256=b484a181b643c637bdd195627fd217ab98fd5614b96dc993db2e06a7850e49b1;
+    source_registry_sha256=aa26a6663509597cf190e326ef3dcf5888f8bdaeb01a3ded710d9fe93806e44f
+  env_hash: null
+  config_hash: null
+  model: null
+  dataset: six synthetic scenario tickets; no human data; no live model
+  material_schema_version: microstudy-scenario-v9.1-bilingual-plain-evidence
+  materials_version: microstudy-scenario-release-20260812-v9.1-plain-evidence-draft
+  sequence_schema_version: microstudy-scenario-sequences-v2-exact-cover
+  export_schema_version: microstudy-export-v5-scenario-bilingual-signed
+  seed: 20260811
+  hardware: owner-local Windows loopback preview only; no participant run authorized
+  started_at: null
+  ended_at: null
+  exit_code: null
+  raw_metrics: null
+  summary_metrics: null
+  artifacts:
+  - data/microstudy_scenario_v9/materials.json
+  - data/microstudy_scenario_v9/sequences.json
+  - data/microstudy_scenario_v9/source_registry.json
+  - scripts/generate_microstudy_v9.py
+  - src/cognitive_console/microstudy_materials.py
+  - src/cognitive_console/microstudy/materials.py
+  - src/cognitive_console/microstudy/server.py
+  - src/cognitive_console/microstudy/analysis.py
+  - src/cognitive_console/microstudy/static/index.html
+  - src/cognitive_console/microstudy/static/study.css
+  - src/cognitive_console/microstudy/static/study.js
+  - src/cognitive_console/microstudy/static/study_core.mjs
+  - tests/test_microstudy_materials.py
+  - tests/test_microstudy_web.py
+  - tests/microstudy_js_test.mjs
+  - docs/specs/microstudy-contract-application.md
+  - docs/research/2026-08-10-microstudy-contract-application-DRAFT.md
+  - docs/plans/microstudy-scenario-release-v9.md
+  - docs/ledgers/decision-log.md
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    D-0115 authorizes a participant-copy-only V9.1 material break. All six
+    UNC-R/UNC-S/SKEP-R/SKEP-S/DELIB-R/DELIB-S tickets expose bilingual
+    decision-relevant summaries only; exact measurements and fact-level
+    source mappings remain in nonlocalized evidence lineage and are excluded
+    from participant material/trial projections and DOM/ARIA. Contract and
+    Flat share identical summary bodies, while their existing grouping/order
+    treatment remains intact. Key, router, state, sequence, planned-trial, CCA,
+    signed V5 export, and analysis contracts are unchanged. Generator check,
+    material validator, Node checks, targeted materials/web tests, Chrome/Edge
+    English/Simplified-Chinese keyboard/zoom/complete/partial browser gates,
+    and isolated HTTP smoke passed. The full suite reached one unrelated
+    test_c2b_tasks offline-loader failure that reproduces on clean
+    ddf8fff1e6c2ee08079d1e218d346b33d43d7ef9. No runtime key, PID, browser
+    profile, human data, DOCX, paper, or source-registry change remains. This is
+    synthetic design preparation, not a study run or paper evidence. The
+    protocol remains DRAFT / NOT FROZEN; recruitment, human data, ethics,
+    timing, sample-size/MDE, accessibility and bilingual human review, public
+    deployment, Claim/result upgrade, and Protocol Freeze remain unauthorized.

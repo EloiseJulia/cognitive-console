@@ -5,6 +5,23 @@
 - **Protocol:** [`../specs/microstudy-contract-application.md`](../specs/microstudy-contract-application.md)
 - **Normative materials:** [`../../data/microstudy_contract_application/stimuli.json`](../../data/microstudy_contract_application/stimuli.json), [`../../data/microstudy_contract_application/sequences.json`](../../data/microstudy_contract_application/sequences.json)
 
+## 2026-08-12 DRAFT V9.1 scenario-copy amendment
+
+The separate six-ticket scenario preview now uses decision-relevant
+plain-language evidence summaries as the only participant-visible evidence.
+Contract and Flat read the same six bilingual summaries; only the preregistered
+grouping and neutral A–F order differ. Exact source-derived measurements and
+fact-to-source mappings remain in nonlocalized authoritative lineage and are
+not sent through participant endpoints or rendered in DOM/ARIA. There is no
+“view underlying measurement” disclosure layer.
+
+This wording/material-version amendment does not change the structured policy
+inputs, Q1/Q2 keys or option order, router, CCA definition, sequences, signed
+V5 export schema, exclusions, missingness, duplicate handling, or analysis.
+V8, V9, and V9.1 remain distinct and must not be mixed. The amendment remains
+`DRAFT — NOT FROZEN — NOT AUTHORIZED FOR HUMAN DATA`; it authorizes no
+recruitment, timing, public deployment, paper use, or protocol freeze.
+
 ## 1. Scope and design
 
 This exploratory formative within-participant study estimates whether a semantic-organization package changes technical GenAI users' structured application of a four-state contract to simulated records. Contract uses the participant-visible labels `Initial check`, `Paired comparison`, `Reference setup`, `Consistency check`, and `Applicable setting` (and stable-ID Simplified Chinese equivalents) only as formal Contract row labels in fixed order. Internal primitive IDs and the older academic labels remain implementation/documentation concepts and never enter participant common/Flat copy, DOM, ARIA, or endpoint projections. Flat uses only neutral `Evidence A`–`Evidence E` / `证据 A`–`证据 E` labels with deterministic per-item row shuffles. Common onboarding and all shared formal body/question/option copy use neutral language. Label word-count and visual differences are acknowledged parts of treatment; no filler padding is permitted. It does not test deep integration, transfer, benefit, trust, safety, productivity, deployment, or latent control.

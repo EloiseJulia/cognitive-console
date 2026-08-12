@@ -235,8 +235,6 @@ def common_materials(locale: str) -> dict[str, Any]:
     bundle.pop("contract_headings")
     return {
         "ui_language": locale,
-        "materials_version": materials["materials_version"],
-        **locale_bundle_metadata(locale),
         "common": bundle,
         "sequence_codes": [row["code"] for row in sequences["sequences"]],
     }
@@ -465,8 +463,6 @@ class StudyHandler(BaseHTTPRequestHandler):
                 }
                 for text in ticket["outputs"]
             ],
-            "source_details_label": common["source_details"],
-            "source_details": ticket["source_details"],
             "card": card,
             "q1": common["q1"],
         }

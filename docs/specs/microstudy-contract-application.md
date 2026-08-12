@@ -8,6 +8,26 @@
 - **Preregistration:** [`../research/2026-08-10-microstudy-contract-application-DRAFT.md`](../research/2026-08-10-microstudy-contract-application-DRAFT.md)
 - **Implementation plan:** [`../plans/microstudy-contract-application-web.md`](../plans/microstudy-contract-application-web.md)
 
+## 2026-08-12 V9.1 scenario-material addendum
+
+D-0115 authorizes a participant-copy-only revision of the separate six-ticket
+V9 scenario preview. In V9.1, each ticket exposes six bilingual,
+decision-relevant plain-language evidence summaries. Contract and Flat consume
+the same summaries byte-for-byte; Contract groups them `1+2+2+1`, while Flat
+uses its existing neutral A–F permutation. No participant endpoint, browser
+state, DOM, or ARIA projection contains exact measurements, confidence
+intervals, hashes, commits, source IDs, or a folded “underlying measurement”
+view. Exact source-derived values and fact-level source mappings remain in the
+authoritative material's nonlocalized evidence-lineage registry and are never
+projected to participants.
+
+The V9.1 wording revision changes no structured policy input, Q1/Q2 option ID or
+key, router rule, CCA definition, sequence, signed V5 export contract,
+duplicate/missingness rule, or analysis. V8 remains historical, and V8, V9,
+and V9.1 materials/exports must not be pooled or relabeled as one version.
+V9.1 remains `DRAFT / NOT FROZEN`, owner-local only, with no human data and
+`valid_for_paper=false`.
+
 ## 1. Normative machine-readable materials
 
 The sole source of truth for trial materials and exported material fields is:

@@ -252,21 +252,6 @@ function renderCard(cardData) {
   return card;
 }
 
-function sourceDetails(label, rows) {
-  if (!rows.length) return null;
-  const details = el("details", {class: "source-details"});
-  details.append(el("summary", {}, label));
-  for (const row of rows) {
-    const paragraph = el("p");
-    paragraph.append(
-      document.createTextNode(`${row.source_id} · ${row.commit} · ${row.path} · `),
-      el("code", {}, `${row.hash_basis}:${row.canonical_sha256}`),
-    );
-    details.append(paragraph);
-  }
-  return details;
-}
-
 function applyChrome() {
   const chrome = app.common.chrome;
   document.documentElement.lang = app.locale;
@@ -511,8 +496,6 @@ function showTrial() {
     renderOutputs(trial.outputs),
     renderCard(trial.card),
   );
-  const details = sourceDetails(trial.source_details_label, trial.source_details);
-  if (details) shell.append(details);
   shell.append(el("div", {id: "q1-area"}), el("div", {id: "q2-area"}));
   replaceStage(
     el("h1", {}, format(app.common.progress.ticket, {

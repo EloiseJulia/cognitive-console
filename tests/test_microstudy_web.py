@@ -4,6 +4,7 @@ import copy
 import io
 import json
 import os
+import re
 import shutil
 import socket
 import struct
@@ -316,17 +317,20 @@ def test_server_material_privacy_headers_common_policy_and_no_logging(live_serve
     assert bootstrap["auto_detect"] is False
     assert bootstrap["minimum_width_px"] == 1280
     assert set(english) == {
-        "ui_language", "materials_version", "locale_bundle_version",
-        "locale_bundle_hash", "common", "sequence_codes",
+        "ui_language", "common", "sequence_codes",
     }
-    assert english["materials_version"] == MATERIALS_VERSION
     assert english["sequence_codes"] == [f"V9-{index:02d}" for index in range(1, 13)]
     for projected, headings in (
         (english, (
-            "What evidence is named?", "How relative to prompt?",
-            "What risk or measurement limit?", "Where applies?",
+            "Can the behavior be identified?",
+            "How does the knob compare with direct prompting?",
+            "What could weaken or limit the result?",
+            "Where does this evidence apply?",
         )),
-        (chinese, ("证据是什么？", "与提示相比如何？", "有哪些风险或测量限制？", "适用于哪里？")),
+        (chinese, (
+            "能否识别这种行为？", "旋钮与直接提示相比如何？",
+            "哪些因素可能削弱或限制结果？", "这些证据适用于哪里？",
+        )),
     ):
         encoded = json.dumps(projected, ensure_ascii=False)
         assert "contract_headings" not in encoded
@@ -334,7 +338,9 @@ def test_server_material_privacy_headers_common_policy_and_no_logging(live_serve
         for forbidden in (
             "policy_inputs", "decisive_issue", "expected_q1", "expected_q2",
             "correct_key", "q1_key", "q2_key", "flat_order", "tickets",
-            "render_contract", "export_schema",
+            "render_contract", "export_schema", "locale_bundle_hash",
+            "locale_bundle_version", "materials_version", "source_details",
+            "source_id", "canonical_sha256", "hash_basis", "commit",
         ):
             assert f'"{forbidden}":' not in encoded
     with pytest.raises(urllib.error.HTTPError):
@@ -382,10 +388,7 @@ def test_locale_locked_formal_projection_and_contract_flat_parity(live_server):
     ]
     flat_bodies = [row["body"] for row in flat["card"]["rows"]]
     assert sorted(contract_bodies) == sorted(flat_bodies)
-    for field in (
-        "product", "source_badge", "outputs", "source_details_label",
-        "source_details", "q1",
-    ):
+    for field in ("product", "source_badge", "outputs", "q1"):
         assert contract[field] == flat[field]
     assert [len(group["facts"]) for group in contract["card"]["groups"]] == [1, 2, 2, 1]
     assert [row["label"] for row in flat["card"]["rows"]] == [
@@ -399,8 +402,17 @@ def test_locale_locked_formal_projection_and_contract_flat_parity(live_server):
         for forbidden in (
             "policy_inputs", "decisive_issue", "correct_key", "q1_key", "q2_key",
             "expected_q1", "expected_q2", "Q2_DECISIVE_PAIRED_TEST",
+            "source_details", "source_id", "canonical_sha256", "hash_basis",
+            "commit", "locale_bundle_hash",
         ):
             assert forbidden not in encoded
+        assert not re.search(
+            r"\b(?:CAA|ITI|CI|MDE|Brier|Qwen|Llama)\b|"
+            r"1[−-]Brier|facade ratio|residual norm|残差范数|表征比|"
+            r"(?<![\w.])[+-]?\d+\.\d+",
+            encoded,
+            flags=re.IGNORECASE,
+        )
 
 
 def test_signed_v5_export_validation_tamper_wrong_key_and_csv(live_server):
@@ -1209,10 +1221,13 @@ def test_real_chrome_edge_v9_complete_partial_download_zoom_and_stress():
         assert cdp.eval("document.querySelectorAll('.policy-list li').length") == 4
         briefing = cdp.eval("document.querySelector('#stage').innerText")
         contract_headings = (
-            ["What evidence is named?", "How relative to prompt?",
-             "What risk or measurement limit?", "Where applies?"]
+            ["Can the behavior be identified?",
+             "How does the knob compare with direct prompting?",
+             "What could weaken or limit the result?",
+             "Where does this evidence apply?"]
             if locale == "en"
-            else ["证据是什么？", "与提示相比如何？", "有哪些风险或测量限制？", "适用于哪里？"]
+            else ["能否识别这种行为？", "旋钮与直接提示相比如何？",
+                  "哪些因素可能削弱或限制结果？", "这些证据适用于哪里？"]
         )
         assert not any(value in briefing for value in contract_headings)
         if server is not None:
@@ -1257,7 +1272,12 @@ def test_real_chrome_edge_v9_complete_partial_download_zoom_and_stress():
                     outputs:document.querySelectorAll('.output-card').length,
                     knobDisabled:document.querySelector('#ticket-knob').disabled,
                     knobFilter:getComputedStyle(document.querySelector('#ticket-knob')).filter,
-                    sourceOpen:document.querySelector('.source-details')?.open ?? false,
+                    sourceDetailsCount:document.querySelectorAll('.source-details').length,
+                    sourceFields:[...document.querySelectorAll('*')].flatMap(node =>
+                      [...node.attributes].map(a=>`${a.name}=${a.value}`)).filter(value =>
+                      /source_id|canonical_sha256|hash_basis|commit|source-details/i.test(value)),
+                    stageText:document.querySelector('#stage').innerText,
+                    stageHtml:document.querySelector('#stage').innerHTML,
                     attrs,classes,
                     horizontalOverflow:document.documentElement.scrollWidth>
                       document.documentElement.clientWidth,
@@ -1282,7 +1302,20 @@ def test_real_chrome_edge_v9_complete_partial_download_zoom_and_stress():
                 assert audit["badges"][0] in {"SOURCE-BACKED", "SIMULATED"}
                 assert audit["badges"][1:] == ["ILLUSTRATIVE OUTPUT"] * 2
                 assert audit["knobDisabled"] and audit["knobFilter"] != "none"
-                assert not audit["sourceOpen"]
+                assert audit["sourceDetailsCount"] == 0
+                assert not audit["sourceFields"]
+                assert not re.search(
+                    r"\b(?:CAA|ITI|CI|MDE|Brier|Qwen|Llama)\b|"
+                    r"1[−-]Brier|facade ratio|residual norm|残差范数|表征比|"
+                    r"(?<![\w.])[+-]?\d+\.\d+",
+                    audit["stageText"],
+                    flags=re.IGNORECASE,
+                )
+                assert not re.search(
+                    r"source_id|canonical_sha256|hash_basis|commit|source-details",
+                    audit["stageHtml"],
+                    flags=re.IGNORECASE,
+                )
                 assert not audit["attrs"] and not audit["classes"]
                 assert not audit["horizontalOverflow"] and not audit["cardOverflow"]
                 assert not audit["clipped"], (

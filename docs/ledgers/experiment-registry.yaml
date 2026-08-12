@@ -1663,3 +1663,83 @@ experiments:
     protocol remains DRAFT / NOT FROZEN; recruitment, human data, ethics,
     timing, sample-size/MDE, accessibility and bilingual human review, public
     deployment, Claim/result upgrade, and Protocol Freeze remain unauthorized.
+
+- experiment_id: microstudy-button-board-20260812-v10-draft
+  parent: microstudy-scenario-release-20260811-v9-draft
+  hypothesis_id: H-MICROSTUDY-BUTTON-BOARD-APPLICATION
+  claim_ids: []
+  type: exploratory_formative_human_protocol
+  status: ready_for_owner_local_preview_no_human_data
+  code_commit: 6258c303e6739b4fe4374c63732df72b2a38e090
+  dirty_tree: false
+  data_hash: >-
+    canonical_materials_hash=e0714ffbb4702a5d8ca0856ebfa03e0eb426e9bf54e049607cd96e0dd65e3cef;
+    sequences_hash=e60d9655aaa860f63469b4f9c044c60cfd3af78f8f4ba0e30f017f94c3278ef9;
+    derived_keys_hash=035638725c9b11d5748806c5d05d4247e24bc52e402484c0c4716237cb10cb15;
+    ab_invariance_hash=bf1d1157e7134d5cabacc71000a432f9caa749305f5108274fcaf9106bf9a523;
+    locale_en=5f4191a4bb324e1f6ee08f405e1c4c2bf8f526d461eb89c0b86e621e7db825e8;
+    locale_zh-Hans=1cf0d97abee9024141ecd2263c888506f9278ae0ed33e6ed6d08a93fb5beb2f7
+  env_hash: null
+  config_hash: null
+  model: null
+  dataset: six fictional button-board records per attempt; no human data; no live product
+  material_schema_version: microstudy-button-board-v10-bilingual
+  materials_version: v10-button-board-20260812-draft
+  sequence_schema_version: microstudy-button-board-sequences-v1
+  export_schema_version: microstudy-export-v7-button-board-raw-signed
+  analysis_version: button-board-gaa-v2
+  seed: 20260812
+  hardware: owner-local Windows loopback preview only; no participant run authorized
+  started_at: null
+  ended_at: null
+  exit_code: null
+  raw_metrics: null
+  summary_metrics: null
+  artifacts:
+  - data/microstudy_button_board_v10/materials.json
+  - data/microstudy_button_board_v10/sequences.json
+  - data/microstudy_button_board_v10/derived_keys.json
+  - scripts/generate_microstudy_v10.py
+  - scripts/validate_button_board_materials.py
+  - src/cognitive_console/button_board_materials.py
+  - src/cognitive_console/button_board/materials.py
+  - src/cognitive_console/button_board/server.py
+  - src/cognitive_console/button_board/analysis.py
+  - src/cognitive_console/button_board/static/index.html
+  - src/cognitive_console/button_board/static/study.css
+  - src/cognitive_console/button_board/static/study.js
+  - src/cognitive_console/button_board/static/study_core.mjs
+  - tests/test_button_board_materials.py
+  - tests/test_button_board_web.py
+  - tests/button_board_js_test.mjs
+  - docs/specs/microstudy-button-board-v2.md
+  - docs/research/2026-08-12-microstudy-button-board-v2-DRAFT.md
+  - docs/plans/microstudy-button-board-v2.md
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    D-0116 authorizes a distinct V2/V10 fictional button-board version for
+    owner-local preview only. V2 is a single-presentation application task and
+    does not retain the V9 Contract/Flat contrast. Structured paired records
+    automatically derive comparison class, four-state route, reason class,
+    reason option, boundary option, and scope gate. F1/F2 are mutually exclusive
+    and differ only in paired raw counts; their non-manipulated canonical hash
+    must match. F1, F6, and F7 boundary choices enter Strict GAA. Public
+    materials, browser payloads, DOM, ARIA, and signed V7 exports contain no
+    expected or score-derived keys. V5/V6/V7 and V9/V10 mixing fail closed.
+    The separate V2 server retains loopback Host/origin, CSRF, capability,
+    request-ID idempotency,
+    success-only TTL, capacity, volatile memory, no access logs, no PII, and
+    fail-closed owner-only verification-key handling. This row records synthetic
+    implementation preparation, not a study run or paper evidence. Human data,
+    recruitment, ethics, timing, public deployment, claim/result changes,
+    exploratory-to-confirmatory upgrade, and Protocol Freeze remain unauthorized.
+    Exact implementation commit 6258c303e6739b4fe4374c63732df72b2a38e090
+    passed generator --check, the material validator, Node checks, all 19 V2
+    material/web tests, repeated Chrome/Edge English/Simplified-Chinese
+    100%/200% keyboard gates, and an isolated port-8893 HTTP flow whose PID,
+    key, and runtime directory were removed. The complete repository collection
+    has 857 tests. The raw full command has one environment-dependent
+    test_c2b_tasks.py::test_real_loader_is_deferred_offline failure, reproduced
+    unchanged on clean main; the other 856 selected tests complete with 850
+    passes and 6 skips.

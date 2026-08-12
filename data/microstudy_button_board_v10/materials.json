@@ -1,0 +1,1282 @@
+{
+  "schema_version": "microstudy-button-board-v10-bilingual",
+  "source_schema_version": "microstudy-button-board-source-v1",
+  "materials_version": "v10-button-board-20260812-draft",
+  "export_schema_version": "microstudy-export-v7-button-board-raw-signed",
+  "analysis_version": "button-board-gaa-v2",
+  "ab_invariance_hash": "bf1d1157e7134d5cabacc71000a432f9caa749305f5108274fcaf9106bf9a523",
+  "locale_contract": {
+    "version": "button-board-locale-contract-v1",
+    "supported": [
+      "en",
+      "zh-Hans"
+    ],
+    "fallback": null,
+    "auto_detect": false,
+    "selected_locale_locked": true,
+    "human_semantic_review": "UNVERIFIED_PRE_RECRUITMENT"
+  },
+  "render_contract": {
+    "desktop_minimum_width_px": 1280,
+    "desktop_viewports": [
+      [
+        1280,
+        800
+      ],
+      [
+        1440,
+        900
+      ]
+    ],
+    "zoom_levels": [
+      1,
+      2
+    ],
+    "equal_q1_cells": true,
+    "color_or_checkmark_cues": false,
+    "formal_feedback": false
+  },
+  "formal_scene_ids": [
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "F6",
+    "F7"
+  ],
+  "locales": {
+    "en": {
+      "language_name": "English",
+      "common": {
+        "language_name": "English",
+        "title": "My fictional button board",
+        "draft": "DRAFT — owner-local preview only — not open for recruitment",
+        "privacy_short": "Local, anonymous code, no free text",
+        "welcome": {
+          "heading": "Sort your button board",
+          "goal": "Use only each fictional trial card to decide where the new item belongs on the button board.",
+          "steps": "1 practice card, 6 formal cards, and 1 read-the-instruction check.",
+          "fiction_note": "There are no real product tests here, and you should not guess from everyday experience.",
+          "local_note": "This page runs locally. It uses an anonymous code, asks no free-text questions, and cannot resume after closing.",
+          "participant_label": "Anonymous code",
+          "participant_help": "Use 1–64 letters, numbers, dots, underscores, or hyphens.",
+          "start": "Start"
+        },
+        "tutorial": {
+          "heading": "One idea and how to use the board",
+          "frame_1_heading": "One idea",
+          "frame_1": "A button responding does not mean it works better than your existing simple method.",
+          "frame_1_demo": "Example display only: the new button lights on several rounds, while two side-by-side columns show raw completion counts.",
+          "frame_2_heading": "Board actions",
+          "frame_2": "Stamp one equal-sized place. The stamp then locks. Next choose an “Only when…” label and the statement that mattered most. Moving on prevents changes.",
+          "frame_3_heading": "Static alternative",
+          "frame_3": "Static sequence: read the card → stamp one place → lock → attach one boundary label → choose one reason → continue.",
+          "show_practice": "Open the practice card"
+        },
+        "formal_intro": {
+          "heading": "Formal cards",
+          "guard": "Even if a record differs from your own experience, use only the trial cards shown here. Do not add information that is not on the cards.",
+          "notes": "All four placements may appear. Formal cards give no correctness feedback. Similar raw counts still require a card-based choice. Stamp first; after it locks, choose a boundary label and the most important statement. You cannot go back after continuing.",
+          "begin": "Begin formal cards"
+        },
+        "record_labels": {
+          "situation": "Everyday situation",
+          "goal": "What you want to do",
+          "existing": "Existing simple method",
+          "new_item": "New item",
+          "respond": "Did it respond?",
+          "comparison": "Side-by-side under the same conditions",
+          "amount": "Days and trials recorded",
+          "effects": "Any other effects?",
+          "conditions": "Conditions in which it was tried"
+        },
+        "questions": {
+          "q1": "Where should this new item go on your button board?",
+          "scope": "Which “Only when…” label best matches the trial card? Do not add conditions not shown on the card.",
+          "reason": "Which statement matters most for the choice you just made?",
+          "stamp": "Stamp and lock",
+          "submit_scope": "Attach this label",
+          "submit_reason": "Submit and continue",
+          "locked": "Your stamp is locked. It cannot be changed.",
+          "choice_required": "Choose one option before continuing."
+        },
+        "progress": {
+          "practice": "Practice card",
+          "formal": "Formal card {current} of 6",
+          "attention": "Read-the-instruction check",
+          "reflection": "Optional reflection"
+        },
+        "attention": {
+          "heading": "Read-the-instruction check",
+          "instruction": "This item only checks whether you read the instruction. Stamp “Check again” and choose “The card directly asks for this.”",
+          "reason_prompt": "Why did you use that stamp?",
+          "submit_q1": "Lock this stamp",
+          "submit_reason": "Submit check",
+          "reason_options": [
+            {
+              "id": "AC1-R-A",
+              "text": "Because the button responded."
+            },
+            {
+              "id": "AC1-R-B",
+              "text": "Because this card directly asks for it."
+            },
+            {
+              "id": "AC1-R-C",
+              "text": "Because it changed the record."
+            },
+            {
+              "id": "AC1-R-D",
+              "text": "Because it displayed a status."
+            }
+          ]
+        },
+        "reflection": {
+          "heading": "Optional reflection",
+          "helpful": "Which kind of record most often helped you decide?",
+          "confusing": "Which two places were easiest to confuse?",
+          "amount": "How was the amount of page text?",
+          "skip": "Prefer not to answer",
+          "submit": "Finish",
+          "options": {
+            "helpful": [
+              {
+                "id": "paired_counts",
+                "text": "Side-by-side completion counts"
+              },
+              {
+                "id": "other_effects",
+                "text": "Other effects"
+              },
+              {
+                "id": "conditions",
+                "text": "Trial conditions"
+              },
+              {
+                "id": "response",
+                "text": "Whether it responded"
+              },
+              {
+                "id": "skip",
+                "text": "Prefer not to answer"
+              }
+            ],
+            "confusing": [
+              {
+                "id": "use_info",
+                "text": "Use area and Info card"
+              },
+              {
+                "id": "use_check",
+                "text": "Use area and Check again"
+              },
+              {
+                "id": "off_check",
+                "text": "Leave it off and Check again"
+              },
+              {
+                "id": "info_check",
+                "text": "Info card and Check again"
+              },
+              {
+                "id": "skip",
+                "text": "Prefer not to answer"
+              }
+            ],
+            "amount": [
+              {
+                "id": "too_little",
+                "text": "Too little"
+              },
+              {
+                "id": "about_right",
+                "text": "About right"
+              },
+              {
+                "id": "too_much",
+                "text": "Too much"
+              },
+              {
+                "id": "skip",
+                "text": "Prefer not to answer"
+              }
+            ]
+          }
+        },
+        "export": {
+          "heading": "Activity complete",
+          "debrief": "You did not test real products. This activity records how you sort fictional trial cards; it does not measure whether products improve people’s lives.",
+          "download_json": "Download signed JSON",
+          "download_csv": "Download signed CSV",
+          "finish": "Clear this page",
+          "manual": "Downloads are manual. No performance feedback is shown.",
+          "complete_product": "Complete signed export",
+          "partial_product": "Partial signed export"
+        },
+        "save_exit": {
+          "button": "End and prepare partial export",
+          "heading": "End this local activity?",
+          "body": "This session cannot resume. Submitted choices will be frozen in a signed partial export; unfinished choices stay missing. Nothing downloads automatically.",
+          "cancel": "Cancel",
+          "confirm": "Prepare partial export"
+        },
+        "errors": {
+          "generic": "The local request failed. Please try again.",
+          "download": "Download failed. Both download buttons remain available.",
+          "desktop": "Desktop preview required. This DRAFT is blocked below 1280 CSS pixels until a responsive human review is completed."
+        },
+        "disclaimer": "All products, buttons, and trial records shown here are fictional examples for this activity only. They do not represent real product effects or benefits.",
+        "q1_options": [
+          {
+            "id": "board-use",
+            "label": "Use area",
+            "description": "Put it here and attach the “Only when…” label supported by the card."
+          },
+          {
+            "id": "board-info",
+            "label": "Info card",
+            "description": "Keep it for checking what is happening, not as a button that changes the result."
+          },
+          {
+            "id": "board-off",
+            "label": "Leave it off",
+            "description": "Do not put this item on the board."
+          },
+          {
+            "id": "board-check",
+            "label": "Check again",
+            "description": "Put it in the waiting box until the records are clearer."
+          }
+        ]
+      },
+      "practice": {
+        "display_id": "P1",
+        "title": "Wardrobe dampness card",
+        "record": {
+          "situation": "A wardrobe sometimes becomes damp.",
+          "goal": "Know whether the wardrobe is currently damp or normal.",
+          "existing": "Open the door and check with a separate humidity strip.",
+          "new_item": "Dampness card.",
+          "respond": "It displayed a label on all six checks across six days.",
+          "comparison": "It matched the separate strip on five of six checks; no trial tested it changing wardrobe dampness.",
+          "amount": "Six checks across six days.",
+          "effects": "It did not block the door in any check.",
+          "conditions": "This wardrobe, the same shelf and this card."
+        },
+        "scope_options": [
+          {
+            "id": "P1-S-A",
+            "text": "Only in this wardrobe, on the same shelf, using this card."
+          },
+          {
+            "id": "P1-S-B",
+            "text": "Only in every wardrobe at home and in every season."
+          },
+          {
+            "id": "P1-S-C",
+            "text": "Only in this wardrobe, regardless of shelf or dampness card."
+          },
+          {
+            "id": "P1-S-D",
+            "text": "The record is too incomplete to name any wardrobe trial boundary."
+          }
+        ],
+        "reason_options": [
+          {
+            "id": "P1-R-A",
+            "text": "Six displays appeared, so the card must already have changed the wardrobe dampness."
+          },
+          {
+            "id": "P1-R-B",
+            "text": "Five displays matched the strip, but the record did not test changing wardrobe dampness."
+          },
+          {
+            "id": "P1-R-C",
+            "text": "The record used one wardrobe, so none of the display observations should be read at all."
+          },
+          {
+            "id": "P1-R-D",
+            "text": "Wardrobes often need airing, so everyday experience should replace the entire trial card."
+          }
+        ],
+        "feedback": "This practice card recorded whether the display matched a humidity strip, but it did not test the card changing wardrobe dampness."
+      },
+      "scenes": {
+        "F1": {
+          "display_id": "FAB",
+          "title": "Receipt-folder page-finder tab",
+          "record": {
+            "situation": "Find a named receipt in a household receipt folder.",
+            "goal": "Find the named receipt within 30 seconds.",
+            "existing": "Use month dividers and then turn pages.",
+            "new_item": "Page-finder tab; after entering a receipt code, it lights beside a candidate page.",
+            "respond": "It lit beside a candidate page in eight of ten rounds.",
+            "comparison": "Each round used two replica folders with identical contents and page order, the same target, lighting and 30-second limit; left and right positions alternated. Across ten rounds, the month dividers completed the task within 30 seconds in 5 rounds, and the tab did so in 8. The first five rounds were 3 and 4; the last five were 2 and 4.",
+            "amount": "Ten paired rounds using two replica folders.",
+            "effects": "It did not cover a month divider or move or omit a receipt in any round.",
+            "conditions": "This 40-page folder, receipts from the last 30 days, desk light on and the same user."
+          },
+          "scope_options": [
+            {
+              "id": "FAB-S-A",
+              "text": "Only with this folder and last-30-day receipts, regardless of lighting or user."
+            },
+            {
+              "id": "FAB-S-B",
+              "text": "Only with every folder at home, last-30-day receipts and the desk light on."
+            },
+            {
+              "id": "FAB-S-C",
+              "text": "Only with this 40-page folder, last-30-day receipts, desk light on and the same user."
+            },
+            {
+              "id": "FAB-S-D",
+              "text": "The record does not identify the folder, receipt, lighting or user boundary."
+            }
+          ],
+          "reason_options": [
+            {
+              "id": "FAB-R-A",
+              "text": "Under the same conditions, the tab completed more rounds, with effects and trial boundaries recorded."
+            },
+            {
+              "id": "FAB-R-B",
+              "text": "Under the same conditions, the tab did not complete more rounds than the month-divider method."
+            },
+            {
+              "id": "FAB-R-C",
+              "text": "The tab lit in eight rounds, so the paired completion counts do not need to be considered."
+            },
+            {
+              "id": "FAB-R-D",
+              "text": "Month dividers are familiar, so everyday preference should replace the paired record shown on the card."
+            }
+          ]
+        },
+        "F2": {
+          "display_id": "FAB",
+          "title": "Receipt-folder page-finder tab",
+          "record": {
+            "situation": "Find a named receipt in a household receipt folder.",
+            "goal": "Find the named receipt within 30 seconds.",
+            "existing": "Use month dividers and then turn pages.",
+            "new_item": "Page-finder tab; after entering a receipt code, it lights beside a candidate page.",
+            "respond": "It lit beside a candidate page in eight of ten rounds.",
+            "comparison": "Each round used two replica folders with identical contents and page order, the same target, lighting and 30-second limit; left and right positions alternated. Across ten rounds, the month dividers completed the task within 30 seconds in 8 rounds, and the tab did so in 7. The first five rounds were 4 and 4; the last five were 4 and 3.",
+            "amount": "Ten paired rounds using two replica folders.",
+            "effects": "It did not cover a month divider or move or omit a receipt in any round.",
+            "conditions": "This 40-page folder, receipts from the last 30 days, desk light on and the same user."
+          },
+          "scope_options": [
+            {
+              "id": "FAB-S-A",
+              "text": "Only with this folder and last-30-day receipts, regardless of lighting or user."
+            },
+            {
+              "id": "FAB-S-B",
+              "text": "Only with every folder at home, last-30-day receipts and the desk light on."
+            },
+            {
+              "id": "FAB-S-C",
+              "text": "Only with this 40-page folder, last-30-day receipts, desk light on and the same user."
+            },
+            {
+              "id": "FAB-S-D",
+              "text": "The record does not identify the folder, receipt, lighting or user boundary."
+            }
+          ],
+          "reason_options": [
+            {
+              "id": "FAB-R-A",
+              "text": "Under the same conditions, the tab completed more rounds, with effects and trial boundaries recorded."
+            },
+            {
+              "id": "FAB-R-B",
+              "text": "Under the same conditions, the tab did not complete more rounds than the month-divider method."
+            },
+            {
+              "id": "FAB-R-C",
+              "text": "The tab lit in eight rounds, so the paired completion counts do not need to be considered."
+            },
+            {
+              "id": "FAB-R-D",
+              "text": "Month dividers are familiar, so everyday preference should replace the paired record shown on the card."
+            }
+          ]
+        },
+        "F3": {
+          "display_id": "F3",
+          "title": "Soil-status tile",
+          "record": {
+            "situation": "Check whether soil in a windowsill pot is currently dry or damp.",
+            "goal": "See the soil’s current condition.",
+            "existing": "Touch the topsoil at the same location.",
+            "new_item": "Soil-status tile.",
+            "respond": "It displayed text on all 14 checks across seven days.",
+            "comparison": "Twelve displays matched the touch record; no trial used each method to guide watering and then compared outcomes.",
+            "amount": "Fourteen checks across seven days.",
+            "effects": "It did not block drainage or touch leaves in any check.",
+            "conditions": "This pot, this windowsill position and the same soil type."
+          },
+          "scope_options": [
+            {
+              "id": "F3-S-A",
+              "text": "Only with every pot and every soil type at home."
+            },
+            {
+              "id": "F3-S-B",
+              "text": "Only with this pot, regardless of position or soil type."
+            },
+            {
+              "id": "F3-S-C",
+              "text": "The record does not identify the pot, position or soil boundary."
+            },
+            {
+              "id": "F3-S-D",
+              "text": "Only with this pot, this windowsill position and this soil type."
+            }
+          ],
+          "reason_options": [
+            {
+              "id": "F3-R-A",
+              "text": "Twelve displays matched, so the tile must already have changed later watering outcomes."
+            },
+            {
+              "id": "F3-R-B",
+              "text": "The record covers one pot, so none of the display observations should be used at all."
+            },
+            {
+              "id": "F3-R-C",
+              "text": "No other effect appeared, so the tile has already improved every later watering result."
+            },
+            {
+              "id": "F3-R-D",
+              "text": "The record shows moisture displays, but it does not compare changed watering outcomes."
+            }
+          ]
+        },
+        "F4": {
+          "display_id": "F4",
+          "title": "Quiet-reading notification tab",
+          "record": {
+            "situation": "Read continuously on a phone for 20 minutes at night.",
+            "goal": "Avoid interruption by ordinary app pop-ups for 20 minutes.",
+            "existing": "Turn off notifications for three ordinary apps before reading.",
+            "new_item": "Quiet-reading notification tab.",
+            "respond": "It changed notification settings on all ten nights.",
+            "comparison": "The existing method completed 20 minutes on six nights; the tab did so on nine.",
+            "amount": "Ten matched nights.",
+            "effects": "A pre-marked priority-contact test call was scheduled each night; with the tab, three calls produced neither a ring nor an on-screen indicator.",
+            "conditions": "The same phone and reading app, home Wi-Fi and 21:00–23:00."
+          },
+          "scope_options": [
+            {
+              "id": "F4-S-A",
+              "text": "Only on this phone at night, regardless of app or network."
+            },
+            {
+              "id": "F4-S-B",
+              "text": "Only on this phone and reading app, home Wi-Fi and 21:00–23:00."
+            },
+            {
+              "id": "F4-S-C",
+              "text": "Only on every phone, this reading app, home Wi-Fi and 21:00–23:00."
+            },
+            {
+              "id": "F4-S-D",
+              "text": "The record does not identify the phone, app, network or time."
+            }
+          ],
+          "reason_options": [
+            {
+              "id": "F4-R-A",
+              "text": "The tab completed nine nights, so the target count is enough to ignore every other record."
+            },
+            {
+              "id": "F4-R-B",
+              "text": "In the same record, three priority calls had no alert, affecting another important task."
+            },
+            {
+              "id": "F4-R-C",
+              "text": "Once the phone and nighttime are named, missing priority calls no longer count as an effect."
+            },
+            {
+              "id": "F4-R-D",
+              "text": "The setting changed every night, so only the response count should replace all paired and effect records."
+            }
+          ]
+        },
+        "F5": {
+          "display_id": "F5",
+          "title": "Mirror-clearing tile",
+          "record": {
+            "situation": "See a marked central area of a bathroom mirror after washing.",
+            "goal": "Become clear within 60 seconds and remain clear for five minutes.",
+            "existing": "Wipe the marked area with a dry microfiber cloth.",
+            "new_item": "Mirror-clearing tile.",
+            "respond": "Airflow appeared in all four rounds across two days.",
+            "comparison": "In two sunny midday rounds, the tile met the target twice and the cloth zero times; in two humid evening rounds, the tile did so once and the cloth twice.",
+            "amount": "Four paired rounds across two days.",
+            "effects": "It left no water marks and did not move the frame.",
+            "conditions": "This mirror and marked area, at sunny midday and humid evening."
+          },
+          "scope_options": [
+            {
+              "id": "F5-S-A",
+              "text": "Only on the marked area of this mirror, at sunny midday and humid evening."
+            },
+            {
+              "id": "F5-S-B",
+              "text": "Only on every mirror at home, at sunny midday and humid evening."
+            },
+            {
+              "id": "F5-S-C",
+              "text": "Only in this bathroom, regardless of mirror, area or time."
+            },
+            {
+              "id": "F5-S-D",
+              "text": "The record does not identify the mirror, area or time boundary."
+            }
+          ],
+          "reason_options": [
+            {
+              "id": "F5-R-A",
+              "text": "There are four pairs and the direction changes by time, so the current record is insufficient."
+            },
+            {
+              "id": "F5-R-B",
+              "text": "The tile completed three of four rounds, so it must be stable across every time condition."
+            },
+            {
+              "id": "F5-R-C",
+              "text": "No other effect was recorded, so the small time-dependent direction change can be ignored."
+            },
+            {
+              "id": "F5-R-D",
+              "text": "The trial boundary is specific, so the boundary text can replace more paired observations across both times."
+            }
+          ]
+        },
+        "F6": {
+          "display_id": "F6",
+          "title": "Anti-static clothing clip",
+          "record": {
+            "situation": "Reduce static cling on clothing before dressing.",
+            "goal": "Avoid cling to the arm within one minute of dressing.",
+            "existing": "Wipe the inside once with a slightly damp cotton cloth.",
+            "new_item": "Anti-static clothing clip.",
+            "respond": "It produced a short vibration in all 12 rounds.",
+            "comparison": "Across 12 pairs, the cloth met the target in seven and the clip in ten; the first six were four and five, and the last six three and five.",
+            "amount": "Twelve paired rounds at home.",
+            "effects": "It caused no water mark, pulled thread or skin redness.",
+            "conditions": "The record only says “12 rounds at home”; it does not identify fabric, humidity, clothing type or clip position."
+          },
+          "scope_options": [
+            {
+              "id": "F6-S-A",
+              "text": "Only on cotton tops, in low humidity and inside the cuff."
+            },
+            {
+              "id": "F6-S-B",
+              "text": "Only on all clothing and in every humidity condition at home."
+            },
+            {
+              "id": "F6-S-C",
+              "text": "The record is insufficient to specify fabric, humidity, clothing type and clip position."
+            },
+            {
+              "id": "F6-S-D",
+              "text": "Only on sweaters and synthetic clothing, with the clip at the collar in dry rooms."
+            }
+          ],
+          "reason_options": [
+            {
+              "id": "F6-R-A",
+              "text": "Twelve pairs were ten versus seven, so the result can be used on every unrecorded kind of clothing."
+            },
+            {
+              "id": "F6-R-B",
+              "text": "No marks or redness appeared, so the conditions of the trial no longer need to be known."
+            },
+            {
+              "id": "F6-R-C",
+              "text": "The paired direction is clear, but key trial conditions are missing from the boundary."
+            },
+            {
+              "id": "F6-R-D",
+              "text": "All twelve rounds produced vibration, so the missing fabric, humidity, clothing and position details do not matter."
+            }
+          ]
+        },
+        "F7": {
+          "display_id": "F7",
+          "title": "Meal-box reheating tab",
+          "record": {
+            "situation": "Reheat a refrigerated rice-and-vegetable meal box.",
+            "goal": "Reach the marked centre temperature without drying the edges.",
+            "existing": "Use a two-minute timer, pausing once to stir.",
+            "new_item": "Meal-box reheating tab.",
+            "respond": "It adjusted the pause timing on all 14 meals.",
+            "comparison": "Across 14 matched boxes and portions, the existing method met the target in eight and the tab in 13; two family members each ran seven pairs, with tab counts of six and seven and existing-method counts of four and four.",
+            "amount": "Fourteen paired meals.",
+            "effects": "No pair caused a trip, overflow, burnt edge or missed completion alert.",
+            "conditions": "This microwave, this 650 mL glass box, refrigerated rice with vegetables, 300–350 g and medium power."
+          },
+          "scope_options": [
+            {
+              "id": "F7-S-A",
+              "text": "Only with this microwave and glass box, regardless of food, portion or power."
+            },
+            {
+              "id": "F7-S-B",
+              "text": "Only with every microwave, a 650 mL box and 300–350 g of food."
+            },
+            {
+              "id": "F7-S-C",
+              "text": "The record does not identify the device, box, food, portion or power boundary."
+            },
+            {
+              "id": "F7-S-D",
+              "text": "Only with this microwave and box, refrigerated rice with vegetables, 300–350 g and medium power."
+            }
+          ],
+          "reason_options": [
+            {
+              "id": "F7-R-A",
+              "text": "The timing changed in all 14 meals, so the two completion counts do not need to be read."
+            },
+            {
+              "id": "F7-R-B",
+              "text": "Under the same conditions it was 13 versus eight, with effects and trial boundaries recorded."
+            },
+            {
+              "id": "F7-R-C",
+              "text": "Two family members ran the pairs, so the record applies to every device, food, portion and power setting."
+            },
+            {
+              "id": "F7-R-D",
+              "text": "One meal-box content was tested, so none of the paired observations can support any card-based judgment."
+            }
+          ]
+        }
+      }
+    },
+    "zh-Hans": {
+      "language_name": "简体中文",
+      "common": {
+        "language_name": "简体中文",
+        "title": "我的虚构按钮板",
+        "draft": "DRAFT — 仅供所有者本地预览 — 尚未开放招募",
+        "privacy_short": "本地运行、匿名代码、无自由文本",
+        "welcome": {
+          "heading": "整理你的按钮板",
+          "goal": "请只看每张虚构试用卡，决定新东西应该放进按钮板的哪一格。",
+          "steps": "1 个练习、6 个正式场景、1 个看说明检查。",
+          "fiction_note": "这里没有真实产品测试，也不要求按生活经验猜测。",
+          "local_note": "页面在本地运行，使用匿名代码，不收自由文本，关闭后不能继续作答。",
+          "participant_label": "匿名代码",
+          "participant_help": "请输入 1–64 个字母、数字、点、下划线或连字符。",
+          "start": "开始"
+        },
+        "tutorial": {
+          "heading": "一个直觉和按钮板操作",
+          "frame_1_heading": "一个直觉",
+          "frame_1": "按钮有反应，不等于它比你原来的简单办法更好。",
+          "frame_1_demo": "仅作操作示意：新按钮在若干轮亮起，旁边两列只显示两种办法的原始完成次数。",
+          "frame_2_heading": "按钮板操作",
+          "frame_2": "给一个等大的格子盖章，盖章后锁定；接着选择“仅在……”标签和最关键的理由；进入下一张卡后不能修改。",
+          "frame_3_heading": "静态替代",
+          "frame_3": "静态顺序：读卡片 → 给一格盖章 → 锁定 → 贴一张范围标签 → 选择一条理由 → 继续。",
+          "show_practice": "打开练习卡"
+        },
+        "formal_intro": {
+          "heading": "正式卡片",
+          "guard": "即使这些记录和你的生活经验不同，也只能按页面上的试用卡判断。不要补充卡片外的信息。",
+          "notes": "四种放法都可能出现。正式题不告知对错。原始次数相近时也只能按卡片判断。先盖章；锁定后选择范围标签和最关键理由；继续后不能返回。",
+          "begin": "开始正式卡片"
+        },
+        "record_labels": {
+          "situation": "日常情境",
+          "goal": "想完成什么",
+          "existing": "原来的简单办法",
+          "new_item": "新东西",
+          "respond": "有反应吗？",
+          "comparison": "相同条件下并排比较",
+          "amount": "记录了多少天、多少次",
+          "effects": "有没有别的影响",
+          "conditions": "试用发生在哪些情况"
+        },
+        "questions": {
+          "q1": "这个新东西应该放进按钮板的哪一格？",
+          "scope": "哪张“仅在……”标签最贴合试用卡？不要补充卡片外的条件。",
+          "reason": "哪一条最能决定你刚才的选择？",
+          "stamp": "盖章并锁定",
+          "submit_scope": "贴上这张标签",
+          "submit_reason": "提交并继续",
+          "locked": "你的盖章已锁定，不能修改。",
+          "choice_required": "继续前请选择一项。"
+        },
+        "progress": {
+          "practice": "练习卡",
+          "formal": "正式卡片 {current}/6",
+          "attention": "看说明检查",
+          "reflection": "可选反思"
+        },
+        "attention": {
+          "heading": "看说明检查",
+          "instruction": "这题只检查你有没有读到这里。请给“再看看”盖章，并选择“卡片直接要求这样做”。",
+          "reason_prompt": "为什么这样盖章？",
+          "submit_q1": "锁定盖章",
+          "submit_reason": "提交检查",
+          "reason_options": [
+            {
+              "id": "AC1-R-A",
+              "text": "因为按钮有反应。"
+            },
+            {
+              "id": "AC1-R-B",
+              "text": "因为本卡直接要求这样做。"
+            },
+            {
+              "id": "AC1-R-C",
+              "text": "因为它改变了记录。"
+            },
+            {
+              "id": "AC1-R-D",
+              "text": "因为它显示了状态。"
+            }
+          ]
+        },
+        "reflection": {
+          "heading": "可选反思",
+          "helpful": "哪类记录最常帮助你决定？",
+          "confusing": "哪两个位置最容易混淆？",
+          "amount": "页面文字量如何？",
+          "skip": "不回答",
+          "submit": "完成",
+          "options": {
+            "helpful": [
+              {
+                "id": "paired_counts",
+                "text": "并排完成次数"
+              },
+              {
+                "id": "other_effects",
+                "text": "其他影响"
+              },
+              {
+                "id": "conditions",
+                "text": "试用情况"
+              },
+              {
+                "id": "response",
+                "text": "是否有反应"
+              },
+              {
+                "id": "skip",
+                "text": "不回答"
+              }
+            ],
+            "confusing": [
+              {
+                "id": "use_info",
+                "text": "常用区和信息牌"
+              },
+              {
+                "id": "use_check",
+                "text": "常用区和再看看"
+              },
+              {
+                "id": "off_check",
+                "text": "不装和再看看"
+              },
+              {
+                "id": "info_check",
+                "text": "信息牌和再看看"
+              },
+              {
+                "id": "skip",
+                "text": "不回答"
+              }
+            ],
+            "amount": [
+              {
+                "id": "too_little",
+                "text": "太少"
+              },
+              {
+                "id": "about_right",
+                "text": "正好"
+              },
+              {
+                "id": "too_much",
+                "text": "太多"
+              },
+              {
+                "id": "skip",
+                "text": "不回答"
+              }
+            ]
+          }
+        },
+        "export": {
+          "heading": "活动结束",
+          "debrief": "你刚才没有测试真实产品。本活动只记录你如何整理虚构试用卡，不测量这些产品是否真的改善生活。",
+          "download_json": "下载签名 JSON",
+          "download_csv": "下载签名 CSV",
+          "finish": "清除此页面",
+          "manual": "下载需手动操作，页面不显示表现反馈。",
+          "complete_product": "完整签名导出",
+          "partial_product": "部分签名导出"
+        },
+        "save_exit": {
+          "button": "结束并准备部分导出",
+          "heading": "结束本地活动？",
+          "body": "本次活动不能继续。已提交选择会冻结在签名部分导出中，未完成选择保持缺失；页面不会自动下载。",
+          "cancel": "取消",
+          "confirm": "准备部分导出"
+        },
+        "errors": {
+          "generic": "本地请求失败，请重试。",
+          "download": "下载失败，两个下载按钮仍可使用。",
+          "desktop": "需要桌面预览。在完成人工响应式审核前，本 DRAFT 会阻止宽度低于 1280 CSS 像素的设备。"
+        },
+        "disclaimer": "本页所有产品、按钮和试用记录均为虚构示意，仅用于本次判断，不代表任何真实产品功效，也不说明这些按钮真的有用。",
+        "q1_options": [
+          {
+            "id": "board-use",
+            "label": "常用区",
+            "description": "放进这里，并贴上卡片支持的“仅在……”标签。"
+          },
+          {
+            "id": "board-info",
+            "label": "信息牌",
+            "description": "留作查看情况，不把它当成改变结果的按钮。"
+          },
+          {
+            "id": "board-off",
+            "label": "不装",
+            "description": "这块按钮板上不装这个东西。"
+          },
+          {
+            "id": "board-check",
+            "label": "再看看",
+            "description": "先放进待定盒，等记录更清楚再决定。"
+          }
+        ]
+      },
+      "practice": {
+        "display_id": "P1",
+        "title": "衣柜潮气提示牌",
+        "record": {
+          "situation": "衣柜有时返潮。",
+          "goal": "知道衣柜里现在偏潮还是正常。",
+          "existing": "打开柜门，用独立湿度纸查看。",
+          "new_item": "潮气提示牌。",
+          "respond": "六天查看六次，提示牌六次都显示了文字。",
+          "comparison": "六次中有五次与独立湿度纸的“偏潮/正常”一致；没有安排它改变衣柜潮气的试用。",
+          "amount": "六天共查看六次。",
+          "effects": "六次均未挡住柜门。",
+          "conditions": "该衣柜、同一层搁板、这张提示牌。"
+        },
+        "scope_options": [
+          {
+            "id": "P1-S-A",
+            "text": "仅在该衣柜、同一层搁板、使用这张提示牌。"
+          },
+          {
+            "id": "P1-S-B",
+            "text": "仅在家中所有衣柜和所有季节。"
+          },
+          {
+            "id": "P1-S-C",
+            "text": "仅在该衣柜，不限制搁板或提示牌。"
+          },
+          {
+            "id": "P1-S-D",
+            "text": "记录不足以写出任何衣柜试用范围。"
+          }
+        ],
+        "reason_options": [
+          {
+            "id": "P1-R-A",
+            "text": "六次都有文字显示，因此它已经改变了衣柜里的潮气。"
+          },
+          {
+            "id": "P1-R-B",
+            "text": "五次显示与湿度纸一致，但记录没有测试它改变潮气。"
+          },
+          {
+            "id": "P1-R-C",
+            "text": "记录只来自一个衣柜，因此所有显示观察都不应该读取。"
+          },
+          {
+            "id": "P1-R-D",
+            "text": "家中衣柜通常需要通风，因此应让生活经验替代整张试用卡。"
+          }
+        ],
+        "feedback": "这张练习卡记录了提示牌与湿度纸的显示是否一致，但没有安排它改变衣柜潮气的试用。"
+      },
+      "scenes": {
+        "F1": {
+          "display_id": "FAB",
+          "title": "票夹寻页扣",
+          "record": {
+            "situation": "从一本家庭票夹中找指定票据。",
+            "goal": "三十秒内找到指定票据。",
+            "existing": "使用月份分隔签后逐页翻找。",
+            "new_item": "票夹寻页扣；键入票据编号后在候选页旁亮灯。",
+            "respond": "十轮中有八轮亮起候选页灯。",
+            "comparison": "每轮使用内容和页序相同的两本复刻票夹，相同票据、相同照明、相同三十秒限制；左右位置轮换。 十轮中，月份分隔签在 5 轮于三十秒内找到票据；寻页扣在 8 轮于三十秒内找到票据。前五轮分别为 3 次和 4 次，后五轮分别为 2 次和 4 次。",
+            "amount": "使用两本复刻票夹完成十组配对。",
+            "effects": "十轮均未遮住原月份签，也未移动或遗漏票据。",
+            "conditions": "这本四十页票夹、近三十天票据、桌面灯开启、本人操作。"
+          },
+          "scope_options": [
+            {
+              "id": "FAB-S-A",
+              "text": "仅在这本票夹和近三十天票据，不限制照明或操作者。"
+            },
+            {
+              "id": "FAB-S-B",
+              "text": "仅在家中所有票夹、近三十天票据、桌面灯开启。"
+            },
+            {
+              "id": "FAB-S-C",
+              "text": "仅在这本四十页票夹、近三十天票据、桌面灯开启、本人操作。"
+            },
+            {
+              "id": "FAB-S-D",
+              "text": "记录不足以写出设备、票据、照明和操作者范围。"
+            }
+          ],
+          "reason_options": [
+            {
+              "id": "FAB-R-A",
+              "text": "相同条件下新扣完成次数更高，其他影响和试用边界也有记录。"
+            },
+            {
+              "id": "FAB-R-B",
+              "text": "相同条件下新扣完成次数没有高于月份分隔签的完成次数。"
+            },
+            {
+              "id": "FAB-R-C",
+              "text": "寻页扣有八轮亮灯，因此不需要再读取两种办法的完成次数。"
+            },
+            {
+              "id": "FAB-R-D",
+              "text": "月份分隔签是常见做法，因此应让日常偏好替代卡片上的配对记录。"
+            }
+          ]
+        },
+        "F2": {
+          "display_id": "FAB",
+          "title": "票夹寻页扣",
+          "record": {
+            "situation": "从一本家庭票夹中找指定票据。",
+            "goal": "三十秒内找到指定票据。",
+            "existing": "使用月份分隔签后逐页翻找。",
+            "new_item": "票夹寻页扣；键入票据编号后在候选页旁亮灯。",
+            "respond": "十轮中有八轮亮起候选页灯。",
+            "comparison": "每轮使用内容和页序相同的两本复刻票夹，相同票据、相同照明、相同三十秒限制；左右位置轮换。 十轮中，月份分隔签在 8 轮于三十秒内找到票据；寻页扣在 7 轮于三十秒内找到票据。前五轮分别为 4 次和 4 次，后五轮分别为 4 次和 3 次。",
+            "amount": "使用两本复刻票夹完成十组配对。",
+            "effects": "十轮均未遮住原月份签，也未移动或遗漏票据。",
+            "conditions": "这本四十页票夹、近三十天票据、桌面灯开启、本人操作。"
+          },
+          "scope_options": [
+            {
+              "id": "FAB-S-A",
+              "text": "仅在这本票夹和近三十天票据，不限制照明或操作者。"
+            },
+            {
+              "id": "FAB-S-B",
+              "text": "仅在家中所有票夹、近三十天票据、桌面灯开启。"
+            },
+            {
+              "id": "FAB-S-C",
+              "text": "仅在这本四十页票夹、近三十天票据、桌面灯开启、本人操作。"
+            },
+            {
+              "id": "FAB-S-D",
+              "text": "记录不足以写出设备、票据、照明和操作者范围。"
+            }
+          ],
+          "reason_options": [
+            {
+              "id": "FAB-R-A",
+              "text": "相同条件下新扣完成次数更高，其他影响和试用边界也有记录。"
+            },
+            {
+              "id": "FAB-R-B",
+              "text": "相同条件下新扣完成次数没有高于月份分隔签的完成次数。"
+            },
+            {
+              "id": "FAB-R-C",
+              "text": "寻页扣有八轮亮灯，因此不需要再读取两种办法的完成次数。"
+            },
+            {
+              "id": "FAB-R-D",
+              "text": "月份分隔签是常见做法，因此应让日常偏好替代卡片上的配对记录。"
+            }
+          ]
+        },
+        "F3": {
+          "display_id": "F3",
+          "title": "盆土状态片",
+          "record": {
+            "situation": "查看窗台花盆里的土现在偏干还是偏湿。",
+            "goal": "看见当前土壤状态。",
+            "existing": "用手指碰同一位置的表土。",
+            "new_item": "盆土状态片。",
+            "respond": "七天查看十四次，状态片十四次均显示文字。",
+            "comparison": "十二次显示与当时的手指触土记录一致；没有安排两种办法分别指导浇水后再比较结果。",
+            "amount": "七天共查看十四次。",
+            "effects": "十四次均未挡住排水孔或碰到叶片。",
+            "conditions": "该花盆、该窗台位置、同一种盆土。"
+          },
+          "scope_options": [
+            {
+              "id": "F3-S-A",
+              "text": "仅在家中所有花盆和所有盆土。"
+            },
+            {
+              "id": "F3-S-B",
+              "text": "仅在该花盆，不限制位置或盆土。"
+            },
+            {
+              "id": "F3-S-C",
+              "text": "记录不足以写出花盆、位置或盆土范围。"
+            },
+            {
+              "id": "F3-S-D",
+              "text": "仅在该花盆、该窗台位置、同一种盆土。"
+            }
+          ],
+          "reason_options": [
+            {
+              "id": "F3-R-A",
+              "text": "十二次显示一致，因此状态片已经改变了后续浇水结果。"
+            },
+            {
+              "id": "F3-R-B",
+              "text": "记录只覆盖一个花盆，因此所有显示观察都不应该使用。"
+            },
+            {
+              "id": "F3-R-C",
+              "text": "没有发现其他影响，因此已经说明它改善了之后的每次浇水结果。"
+            },
+            {
+              "id": "F3-R-D",
+              "text": "记录说明它能显示干湿，但没有比较它能否改变浇水结果。"
+            }
+          ]
+        },
+        "F4": {
+          "display_id": "F4",
+          "title": "静读通知扣",
+          "record": {
+            "situation": "晚上在手机上连续阅读二十分钟。",
+            "goal": "二十分钟内不被普通应用弹窗打断。",
+            "existing": "开始前逐个关闭三个普通应用的通知。",
+            "new_item": "静读通知扣。",
+            "respond": "十晚中十晚都改变了通知设置。",
+            "comparison": "原办法有六晚完成二十分钟；新扣有九晚完成二十分钟。",
+            "amount": "十个配对夜晚。",
+            "effects": "十晚均安排一通预先标记的优先联系人测试来电；使用新扣时有三晚没有铃声，也没有屏幕提示点。",
+            "conditions": "本人手机、当前阅读应用、家中 Wi-Fi、21:00–23:00。"
+          },
+          "scope_options": [
+            {
+              "id": "F4-S-A",
+              "text": "仅在本人手机和夜间，不限制应用或网络。"
+            },
+            {
+              "id": "F4-S-B",
+              "text": "仅在本人手机、当前阅读应用、家中 Wi-Fi、21:00–23:00。"
+            },
+            {
+              "id": "F4-S-C",
+              "text": "仅在所有手机、当前阅读应用、家中 Wi-Fi、21:00–23:00。"
+            },
+            {
+              "id": "F4-S-D",
+              "text": "记录不足以写出手机、应用、网络或时间范围。"
+            }
+          ],
+          "reason_options": [
+            {
+              "id": "F4-R-A",
+              "text": "新扣有九晚完成目标，因此只看目标次数便可忽略其他记录。"
+            },
+            {
+              "id": "F4-R-B",
+              "text": "同一批记录中三次优先来电没有提示，另一件重要事情受到影响。"
+            },
+            {
+              "id": "F4-R-C",
+              "text": "写明本人手机和夜间后，漏掉优先来电便不再属于其他影响。"
+            },
+            {
+              "id": "F4-R-D",
+              "text": "每晚都改变通知设置，因此反应次数应替代全部配对记录和影响记录。"
+            }
+          ]
+        },
+        "F5": {
+          "display_id": "F5",
+          "title": "镜面清雾片",
+          "record": {
+            "situation": "洗漱后看清浴室镜面中央的标记区域。",
+            "goal": "六十秒内清楚，并保持五分钟。",
+            "existing": "用干燥超细纤维布擦拭标记区域。",
+            "new_item": "镜面清雾片。",
+            "respond": "两天共四轮，四轮都出现了气流。",
+            "comparison": "晴天中午两轮，新片达到目标两次、布达到零次；潮湿晚间两轮，新片达到目标一次、布达到两次。",
+            "amount": "两天共四组配对。",
+            "effects": "四轮均未留下水痕或移动镜框。",
+            "conditions": "该镜子、标记区域、晴天中午和潮湿晚间。"
+          },
+          "scope_options": [
+            {
+              "id": "F5-S-A",
+              "text": "仅在该镜子的标记区域、晴天中午和潮湿晚间。"
+            },
+            {
+              "id": "F5-S-B",
+              "text": "仅在家中所有镜子、晴天中午和潮湿晚间。"
+            },
+            {
+              "id": "F5-S-C",
+              "text": "仅在该浴室，不限制镜子、区域或时段。"
+            },
+            {
+              "id": "F5-S-D",
+              "text": "记录不足以写出镜子、区域或时段范围。"
+            }
+          ],
+          "reason_options": [
+            {
+              "id": "F5-R-A",
+              "text": "只有四组且两个时段方向不同，因此现有记录仍然不足。"
+            },
+            {
+              "id": "F5-R-B",
+              "text": "新片四次完成三次，因此已经说明它在每个时段都很稳定。"
+            },
+            {
+              "id": "F5-R-C",
+              "text": "没有记录其他影响，因此可以忽略少量且随时段变化的方向。"
+            },
+            {
+              "id": "F5-R-D",
+              "text": "试用范围写得具体，因此范围文字可以替代两个时段的更多配对观察。"
+            }
+          ]
+        },
+        "F6": {
+          "display_id": "F6",
+          "title": "衣物除静电夹",
+          "record": {
+            "situation": "穿衣前减少衣物贴在手臂上的静电。",
+            "goal": "穿上后一分钟内不再贴住手臂。",
+            "existing": "用微湿的棉布在衣物内侧擦一次。",
+            "new_item": "衣物除静电夹。",
+            "respond": "十二轮中十二轮都发出一次短振动。",
+            "comparison": "十二组配对中，棉布有七组达到目标，新夹有十组达到目标；前六组分别为四次和五次，后六组分别为三次和五次。",
+            "amount": "在家中完成十二组配对。",
+            "effects": "十二轮均未留下水痕、拉线或皮肤红印。",
+            "conditions": "记录只写“在家中试了十二轮”；没有记录衣物材质、湿度、衣物类型或夹放位置。"
+          },
+          "scope_options": [
+            {
+              "id": "F6-S-A",
+              "text": "仅在纯棉上衣、低湿度、袖口内侧使用。"
+            },
+            {
+              "id": "F6-S-B",
+              "text": "仅在家中所有衣物和所有湿度条件下使用。"
+            },
+            {
+              "id": "F6-S-C",
+              "text": "记录不足以写出材质、湿度、衣物类型和夹放位置的完整标签。"
+            },
+            {
+              "id": "F6-S-D",
+              "text": "仅在毛衣和化纤衣物上、干燥房间内夹在衣领位置使用。"
+            }
+          ],
+          "reason_options": [
+            {
+              "id": "F6-R-A",
+              "text": "十二组是十次对七次，因此可直接用于各种未记录的衣物。"
+            },
+            {
+              "id": "F6-R-B",
+              "text": "没有发现水痕或红印，因此无需知道试用发生在哪些条件。"
+            },
+            {
+              "id": "F6-R-C",
+              "text": "配对结果方向清楚，但关键试用条件缺失，无法写出完整边界。"
+            },
+            {
+              "id": "F6-R-D",
+              "text": "十二次都出现短振动，因此缺少材质、湿度、衣物类型和夹放位置都不重要。"
+            }
+          ]
+        },
+        "F7": {
+          "display_id": "F7",
+          "title": "饭盒回温扣",
+          "record": {
+            "situation": "给冷藏米饭和蔬菜饭盒回温。",
+            "goal": "中心达到标记温度，同时边缘不变干。",
+            "existing": "普通两分钟计时，中途暂停并搅拌一次。",
+            "new_item": "饭盒回温扣。",
+            "respond": "十四顿饭中十四次都调整了暂停时间。",
+            "comparison": "十四组相同饭盒和份量中，原办法八组达到目标，新扣十三组达到目标；两位家人各做七组，新扣分别为六次和七次，原办法均为四次。",
+            "amount": "十四组配对饭盒。",
+            "effects": "十四组均未跳闸、溢出、出现焦边或漏掉结束提醒。",
+            "conditions": "该微波炉、该 650 mL 玻璃饭盒、冷藏米饭加蔬菜、300–350 g、中档。"
+          },
+          "scope_options": [
+            {
+              "id": "F7-S-A",
+              "text": "仅在该微波炉和玻璃饭盒，不限制食物、份量或档位。"
+            },
+            {
+              "id": "F7-S-B",
+              "text": "仅在所有微波炉、650 mL 饭盒、300–350 g 食物上。"
+            },
+            {
+              "id": "F7-S-C",
+              "text": "记录不足以写出设备、容器、食物、份量或档位范围。"
+            },
+            {
+              "id": "F7-S-D",
+              "text": "仅在该微波炉、该饭盒、冷藏米饭加蔬菜、300–350 g、中档。"
+            }
+          ],
+          "reason_options": [
+            {
+              "id": "F7-R-A",
+              "text": "十四次都调整暂停时间，因此不需要读取两种办法的完成次数。"
+            },
+            {
+              "id": "F7-R-B",
+              "text": "相同条件下是十三次对八次，其他影响和试用边界也有记录。"
+            },
+            {
+              "id": "F7-R-C",
+              "text": "两位家人都参加了试用，因此记录适用于所有设备、食物、份量和档位。"
+            },
+            {
+              "id": "F7-R-D",
+              "text": "只测试一种饭盒内容，因此全部配对观察都不能支持任何卡片判断。"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

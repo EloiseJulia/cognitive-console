@@ -34,6 +34,31 @@
   defensible sample-size/MDE justification, and Protocol Freeze remain open
   human gates.
 
+## 2026-08-12 · D-0116 · Owner authorizes V2 fictional button-board version for local preview only
+- The owner approved V2 as a distinct single-presentation button-board material,
+  sequence, signed-export, and analysis version. The exact implementation commit
+  is `6258c303e6739b4fe4374c63732df72b2a38e090`; this immediate
+  docs-only lineage update does not replace that code identity.
+- V2 uses only fictional household/phone items and neutral illustrative trial
+  records. It collects no human data in this authorization and does not require
+  paper artifact lineage for its fictional counts.
+- V2 and V1/V9 coexist. Their material directories, entry points, export
+  schemas, and analysis are independent; they must not be pooled or used to
+  backfill one another.
+- V2 removes Contract/Flat comparison. It may eventually describe immediate
+  comprehension/application of placement gates only. It cannot support benefit,
+  trust, safety, productivity, control, real-product, deployment, latent-
+  mechanism, interface-superiority, or population-generalization claims.
+- The maximum status is `ready_for_owner_local_preview_no_human_data`;
+  `valid_for_paper=false`. This decision authorizes no recruitment, participant
+  contact, human-data collection, timing work, ethics administration, public
+  deployment, paper/claim/result change, exploratory-to-confirmatory upgrade,
+  or Protocol Freeze.
+- Human bilingual semantic review, hostile leakage review, manual screen-reader
+  and responsive/mobile review, cognitive interviews/usability work, ethics and
+  recruitment approval, privacy/retention approval, sample-size/MDE work, and
+  Protocol Freeze remain open human gates.
+
 ## 2026-08-11 · D-0114 · Owner authorizes V9 scenario-knob version break for local preview only
 - The owner approved V9 as a distinct scenario-knob material, sequence, and
   signed-export version break. The exact implementation commit is

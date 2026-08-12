@@ -568,7 +568,16 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
     }
     browsers = {name: path for name, path in candidates.items() if path.exists()}
     assert set(browsers) == {"chrome", "edge"}, "Chrome and Edge are required"
-    shutil.rmtree(RUNTIME, ignore_errors=True)
+
+    def remove_tree(path):
+        for _ in range(40):
+            shutil.rmtree(path, ignore_errors=True)
+            if not path.exists():
+                return
+            time.sleep(0.1)
+        raise AssertionError(f"browser profile cleanup failed: {path}")
+
+    remove_tree(RUNTIME)
     RUNTIME.mkdir(parents=True, exist_ok=True)
 
     @contextlib.contextmanager
@@ -585,6 +594,7 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
                 "--disable-extensions",
                 "--disable-component-update",
                 "--disable-background-networking",
+                "--disable-background-mode",
                 "--no-first-run",
                 "--disable-features=msEdgeFirstRunExperience",
                 "--no-default-browser-check",
@@ -617,7 +627,7 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
                     process.terminate()
             if process.poll() is None:
                 process.wait(timeout=10)
-            shutil.rmtree(profile, ignore_errors=True)
+            remove_tree(profile)
 
     @contextlib.contextmanager
     def isolated_server(label):
@@ -831,4 +841,4 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
                     finally:
                         cdp.close()
     finally:
-        shutil.rmtree(RUNTIME, ignore_errors=True)
+        remove_tree(RUNTIME)

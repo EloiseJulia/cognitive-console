@@ -37,6 +37,7 @@ cognitive_console = [
     "social/data/*.json",
     "microstudy/static/*",
     "button_board/static/*",
+    "button_board_stepwise/static/*",
 ]
 
 [tool.pytest.ini_options]

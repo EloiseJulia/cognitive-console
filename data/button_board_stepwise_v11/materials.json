@@ -1,0 +1,1954 @@
+{
+  "schema_version": "microstudy-button-board-stepwise-v11-bilingual",
+  "source_schema_version": "microstudy-button-board-stepwise-source-v1",
+  "materials_version": "v11-stepwise-20260812-draft",
+  "export_schema_version": "microstudy-export-v7-stepwise-bilingual-signed",
+  "analysis_version": "button-board-stepwise-gaa-v1",
+  "ab_invariance_hash": "deed6497ee1bd3156d2a0428d6606affb2d2a884e63807ac620e116e294c98d4",
+  "formal_scene_ids": [
+    "AB1-A",
+    "AB1-B",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "F6"
+  ],
+  "locale_contract": {
+    "version": "button-board-stepwise-locale-contract-v1",
+    "supported": [
+      "en",
+      "zh-Hans"
+    ],
+    "fallback": null,
+    "auto_detect": false,
+    "selected_locale_locked": true,
+    "human_semantic_review": "UNVERIFIED_PRE_RECRUITMENT"
+  },
+  "render_contract": {
+    "desktop_minimum_width_px": 1024,
+    "desktop_viewports": [
+      [
+        1280,
+        800
+      ],
+      [
+        1440,
+        900
+      ]
+    ],
+    "zoom_levels": [
+      1,
+      2
+    ],
+    "sticky_reference_width_px": 300,
+    "one_question_at_a_time": true,
+    "formal_correctness_feedback": false
+  },
+  "locales": {
+    "en": {
+      "language_name": "English",
+      "common": {
+        "language_name": "English",
+        "title": "Stepwise fictional button board",
+        "draft": "DRAFT — owner-local preview only — not open for recruitment",
+        "welcome": {
+          "heading": "Sort fictional trial cards one step at a time",
+          "goal": "Use an always-visible fictional trial card and answer one small question at a time to place each item where its evidence supports.",
+          "steps": "1 practice, 6 formal scenarios, and 1 read-the-instruction check.",
+          "open_book": "You do not need to memorize rules. The card and reference panel stay visible.",
+          "card_only": "Use only the page record; do not add everyday experience.",
+          "privacy": "Use an anonymous code. There is no free text and submitted answers cannot be recovered.",
+          "participant_label": "Anonymous code",
+          "participant_help": "Use 1–64 letters, numbers, dots, underscores, or hyphens.",
+          "start": "Start"
+        },
+        "tutorial": {
+          "heading": "One idea and the stepwise controls",
+          "intuition": "A button responding does not mean it meets the stated goal more often than the existing method.",
+          "operation": "Read the card, choose one answer, and the next applicable question will appear. A branch may end early.",
+          "show_practice": "Open the practice card"
+        },
+        "formal_intro": {
+          "heading": "Formal scenarios",
+          "guard": "Use only the record shown. Do not add information from the item name, everyday knowledge, or personal preference.",
+          "feedback": "Formal trials do not show correctness. Any of the four destinations may apply.",
+          "begin": "Begin formal scenarios"
+        },
+        "labels": {
+          "situation": "Situation",
+          "goal": "Target",
+          "existing": "What you originally did",
+          "new_item": "New item",
+          "record": "Trial record",
+          "reference_destinations": "Four destinations",
+          "reference_checklist": "How to think",
+          "path": "Your reasoning path",
+          "result": "Based on your answers, place it in:"
+        },
+        "actions": {
+          "submit": "Choose and continue",
+          "continue": "Continue",
+          "choice_required": "Choose one answer before continuing."
+        },
+        "progress": {
+          "practice": "Practice",
+          "formal": "Formal scenario {current} of 6",
+          "attention": "Read-the-instruction check",
+          "reflection": "Optional reflection"
+        },
+        "attention": {
+          "heading": "Read-the-instruction check",
+          "instruction": "This item only checks whether you read the instruction. For the first question, select “Shows or reports the current condition.”"
+        },
+        "reflection": {
+          "heading": "Optional structured reflection",
+          "hardest": "Which step was hardest to read?",
+          "confusing": "Which destinations were easiest to confuse?",
+          "amount": "How was the amount of page text?",
+          "pace": "How was the one-question-at-a-time pace?",
+          "submit": "Finish",
+          "options": {
+            "hardest": [
+              {
+                "id": "step-1",
+                "text": "Step 1"
+              },
+              {
+                "id": "step-2",
+                "text": "Step 2"
+              },
+              {
+                "id": "step-3",
+                "text": "Step 3"
+              },
+              {
+                "id": "step-4",
+                "text": "Step 4"
+              },
+              {
+                "id": "step-5",
+                "text": "Step 5"
+              },
+              {
+                "id": "step-6",
+                "text": "Step 6"
+              },
+              {
+                "id": "skip",
+                "text": "Prefer not to answer"
+              }
+            ],
+            "confusing": [
+              {
+                "id": "use-info",
+                "text": "Use area and Info card"
+              },
+              {
+                "id": "use-check",
+                "text": "Use area and Check again"
+              },
+              {
+                "id": "off-check",
+                "text": "Leave it off and Check again"
+              },
+              {
+                "id": "info-check",
+                "text": "Info card and Check again"
+              },
+              {
+                "id": "skip",
+                "text": "Prefer not to answer"
+              }
+            ],
+            "amount": [
+              {
+                "id": "too-little",
+                "text": "Too little"
+              },
+              {
+                "id": "about-right",
+                "text": "About right"
+              },
+              {
+                "id": "too-much",
+                "text": "Too much"
+              },
+              {
+                "id": "skip",
+                "text": "Prefer not to answer"
+              }
+            ],
+            "pace": [
+              {
+                "id": "too-slow",
+                "text": "Too slow"
+              },
+              {
+                "id": "about-right",
+                "text": "About right"
+              },
+              {
+                "id": "too-fast",
+                "text": "Too fast"
+              },
+              {
+                "id": "skip",
+                "text": "Prefer not to answer"
+              }
+            ]
+          }
+        },
+        "export": {
+          "heading": "Activity complete",
+          "debrief": "You did not test real products. This activity records how you apply evidence thresholds to fictional cards; it does not measure real-world benefit.",
+          "download_json": "Download signed JSON",
+          "download_csv": "Download signed CSV",
+          "finish": "Clear this page",
+          "manual": "Downloads are manual. No score is shown."
+        },
+        "save_exit": {
+          "button": "End and prepare partial export",
+          "heading": "End this local activity?",
+          "body": "The session cannot resume. Submitted choices will be frozen in a signed partial export; nothing downloads automatically.",
+          "cancel": "Cancel",
+          "confirm": "Prepare partial export"
+        },
+        "errors": {
+          "generic": "The local request failed. Please try again.",
+          "download": "Download failed. Both buttons remain available.",
+          "desktop": "Desktop preview required below 1024 CSS pixels."
+        },
+        "disclaimer": "All products, buttons, and trial records are fictional examples and do not represent real product effects.",
+        "destinations": [
+          {
+            "id": "dest-use",
+            "label": "Use area",
+            "description": "It may be used only with an exact “Only when…” label."
+          },
+          {
+            "id": "dest-info",
+            "label": "Info card",
+            "description": "Use it to view a condition, not as a button that changes the outcome."
+          },
+          {
+            "id": "dest-off",
+            "label": "Leave it off",
+            "description": "Do not place it on this button board."
+          },
+          {
+            "id": "dest-check",
+            "label": "Check again",
+            "description": "Keep it pending until the record contains what is needed."
+          }
+        ],
+        "checklist": [
+          "Does it show a condition, or perform an action intended to change the target outcome?",
+          "Were both methods compared under the stated matched conditions?",
+          "With equal denominators, did the new method meet the goal more often?",
+          "Did it impair another explicitly stated important outcome?",
+          "Are all required scope dimensions stated?",
+          "Does the “Only when…” label match every recorded dimension?"
+        ],
+        "questions": {
+          "1": {
+            "prompt": "Does the new item show a condition, or perform an action intended to change the stated target outcome?",
+            "options": [
+              {
+                "id": "INFO",
+                "text": "Shows or reports the current condition"
+              },
+              {
+                "id": "CONTROL",
+                "text": "Performs an action intended to change the outcome"
+              }
+            ]
+          },
+          "2": {
+            "prompt": "Did the card test both methods for the stated number of rounds under the listed matched conditions?",
+            "options": [
+              {
+                "id": "COMPARED",
+                "text": "Both methods were tested as stated"
+              },
+              {
+                "id": "NOT_COMPARED",
+                "text": "No / the card does not show that"
+              }
+            ]
+          },
+          "3": {
+            "prompt": "Using only the defined goal and equal denominators, did the new item meet the goal more often, or equally/less often?",
+            "options": [
+              {
+                "id": "BETTER",
+                "text": "The new item met the goal more often"
+              },
+              {
+                "id": "NOT_BETTER",
+                "text": "The count was equal or lower"
+              }
+            ]
+          },
+          "4": {
+            "prompt": "While using the new item, did another explicitly stated important outcome become impaired?",
+            "options": [
+              {
+                "id": "HARM",
+                "text": "Yes, the stated other outcome was impaired"
+              },
+              {
+                "id": "NO_HARM",
+                "text": "No stated impairment occurred"
+              }
+            ]
+          },
+          "5": {
+            "prompt": "Does every required scope dimension have a concrete recorded value?",
+            "options": [
+              {
+                "id": "SCOPE_WRITTEN",
+                "text": "Every required dimension has a value"
+              },
+              {
+                "id": "SCOPE_MISSING",
+                "text": "At least one required value is unstated"
+              }
+            ]
+          },
+          "6": {
+            "prompt": "Which “Only when…” label matches the card dimension by dimension? Every option is equally detailed; do not invent unstated conditions.",
+            "options": []
+          }
+        }
+      },
+      "practice": {
+        "display_id": "P1",
+        "variant_id": null,
+        "title": "Sock-drawer retrieval key",
+        "card": {
+          "situation": "Retrieve a pair of socks in a specified color from a divided drawer.",
+          "goal": "“Correct within 20 seconds” means both socks match the specified color.",
+          "existing": "Read the front color labels and search compartment by compartment.",
+          "new_item": "Pressing a color key moves one candidate compartment to the front.",
+          "facts": [
+            "The new key moved one compartment to the front in 10 of 10 rounds.",
+            "10 paired rounds used matched drawer contents, sock placement, target color, 20-second limit; method order or side alternated.",
+            "The existing method and new item each had 10 rounds.",
+            "The existing method met the stated goal in 8/10 rounds; the new item did so in 6/10.",
+            "a sock was caught: 0/10; a sock left the drawer: 0/10.",
+            "Recorded scope | drawer=trial drawer | labels=current six | operator=self only."
+          ]
+        },
+        "scope_options": [
+          {
+            "id": "p1-s-q7",
+            "text": "Only when | drawer=trial drawer | labels=current six | operator=self only",
+            "segments": [
+              {
+                "label": "drawer",
+                "value": "trial drawer"
+              },
+              {
+                "label": "labels",
+                "value": "current six"
+              },
+              {
+                "label": "operator",
+                "value": "self only"
+              }
+            ]
+          },
+          {
+            "id": "p1-s-k2",
+            "text": "Only when | drawer=home drawer | labels=current six | operator=self only",
+            "segments": [
+              {
+                "label": "drawer",
+                "value": "home drawer"
+              },
+              {
+                "label": "labels",
+                "value": "current six"
+              },
+              {
+                "label": "operator",
+                "value": "self only"
+              }
+            ]
+          },
+          {
+            "id": "p1-s-m8",
+            "text": "Only when | drawer=trial drawer | labels=any six | operator=self only",
+            "segments": [
+              {
+                "label": "drawer",
+                "value": "trial drawer"
+              },
+              {
+                "label": "labels",
+                "value": "any six"
+              },
+              {
+                "label": "operator",
+                "value": "self only"
+              }
+            ]
+          }
+        ],
+        "feedback": "The new item acted in all ten rounds, while the stated goal occurred in 6/10 rounds versus 8/10 with the existing method. This feedback applies only to this practice card."
+      },
+      "scenes": {
+        "AB1-A": {
+          "display_id": "AB1",
+          "variant_id": "A",
+          "title": "Receipt-folder page finder",
+          "card": {
+            "situation": "Retrieve a receipt with an exact number from a household folder.",
+            "goal": "“Found within 30 seconds” means retrieving the receipt with the exact number.",
+            "existing": "Read month dividers, then turn pages.",
+            "new_item": "Entering a number pushes one candidate page edge out by 2 cm.",
+            "facts": [
+              "The new item pushed one candidate page in 10 of 10 rounds.",
+              "10 paired rounds used matched receipt contents, page order, target receipt, desk lamp, 30-second limit; method order or side alternated.",
+              "The existing method and new item each had 10 rounds.",
+              "The existing method met the stated goal in 5/10 rounds; the new item did so in 8/10.",
+              "receipt tear: 0/10; month divider covered: 0/10; receipt fell out: 0/10.",
+              "Recorded scope | folder=tested folder | receipts=past 30 days | light=desk lamp on | operator=self only."
+            ]
+          },
+          "scope_options": [
+            {
+              "id": "ab1-s-m4",
+              "text": "Only when | folder=tested folder | receipts=past 30 days | light=desk lamp on | operator=self only",
+              "segments": [
+                {
+                  "label": "folder",
+                  "value": "tested folder"
+                },
+                {
+                  "label": "receipts",
+                  "value": "past 30 days"
+                },
+                {
+                  "label": "light",
+                  "value": "desk lamp on"
+                },
+                {
+                  "label": "operator",
+                  "value": "self only"
+                }
+              ]
+            },
+            {
+              "id": "ab1-s-r9",
+              "text": "Only when | folder=home folder | receipts=past 30 days | light=desk lamp on | operator=self only",
+              "segments": [
+                {
+                  "label": "folder",
+                  "value": "home folder"
+                },
+                {
+                  "label": "receipts",
+                  "value": "past 30 days"
+                },
+                {
+                  "label": "light",
+                  "value": "desk lamp on"
+                },
+                {
+                  "label": "operator",
+                  "value": "self only"
+                }
+              ]
+            },
+            {
+              "id": "ab1-s-k2",
+              "text": "Only when | folder=tested folder | receipts=past 90 days | light=desk lamp on | operator=self only",
+              "segments": [
+                {
+                  "label": "folder",
+                  "value": "tested folder"
+                },
+                {
+                  "label": "receipts",
+                  "value": "past 90 days"
+                },
+                {
+                  "label": "light",
+                  "value": "desk lamp on"
+                },
+                {
+                  "label": "operator",
+                  "value": "self only"
+                }
+              ]
+            }
+          ]
+        },
+        "AB1-B": {
+          "display_id": "AB1",
+          "variant_id": "B",
+          "title": "Receipt-folder page finder",
+          "card": {
+            "situation": "Retrieve a receipt with an exact number from a household folder.",
+            "goal": "“Found within 30 seconds” means retrieving the receipt with the exact number.",
+            "existing": "Read month dividers, then turn pages.",
+            "new_item": "Entering a number pushes one candidate page edge out by 2 cm.",
+            "facts": [
+              "The new item pushed one candidate page in 10 of 10 rounds.",
+              "10 paired rounds used matched receipt contents, page order, target receipt, desk lamp, 30-second limit; method order or side alternated.",
+              "The existing method and new item each had 10 rounds.",
+              "The existing method met the stated goal in 8/10 rounds; the new item did so in 7/10.",
+              "receipt tear: 0/10; month divider covered: 0/10; receipt fell out: 0/10.",
+              "Recorded scope | folder=tested folder | receipts=past 30 days | light=desk lamp on | operator=self only."
+            ]
+          },
+          "scope_options": [
+            {
+              "id": "ab1-s-m4",
+              "text": "Only when | folder=tested folder | receipts=past 30 days | light=desk lamp on | operator=self only",
+              "segments": [
+                {
+                  "label": "folder",
+                  "value": "tested folder"
+                },
+                {
+                  "label": "receipts",
+                  "value": "past 30 days"
+                },
+                {
+                  "label": "light",
+                  "value": "desk lamp on"
+                },
+                {
+                  "label": "operator",
+                  "value": "self only"
+                }
+              ]
+            },
+            {
+              "id": "ab1-s-r9",
+              "text": "Only when | folder=home folder | receipts=past 30 days | light=desk lamp on | operator=self only",
+              "segments": [
+                {
+                  "label": "folder",
+                  "value": "home folder"
+                },
+                {
+                  "label": "receipts",
+                  "value": "past 30 days"
+                },
+                {
+                  "label": "light",
+                  "value": "desk lamp on"
+                },
+                {
+                  "label": "operator",
+                  "value": "self only"
+                }
+              ]
+            },
+            {
+              "id": "ab1-s-k2",
+              "text": "Only when | folder=tested folder | receipts=past 90 days | light=desk lamp on | operator=self only",
+              "segments": [
+                {
+                  "label": "folder",
+                  "value": "tested folder"
+                },
+                {
+                  "label": "receipts",
+                  "value": "past 90 days"
+                },
+                {
+                  "label": "light",
+                  "value": "desk lamp on"
+                },
+                {
+                  "label": "operator",
+                  "value": "self only"
+                }
+              ]
+            }
+          ]
+        },
+        "F2": {
+          "display_id": "F2",
+          "variant_id": null,
+          "title": "Pot-soil status tile",
+          "card": {
+            "situation": "View whether the topsoil in a windowsill pot is currently dry or wet.",
+            "goal": "Use the words on an independent strip at a fixed marked position as the reference.",
+            "existing": "Insert and read the independent strip.",
+            "new_item": "A tile displays “dry” or “wet”; its back has only a clip and screen, with no pump, valve, or fan connection.",
+            "facts": [
+              "The tile displayed text on all 14 checks and had no actuator connection.",
+              "Across 7 days, 12 of 14 displays matched the independent strip.",
+              "drainage hole covered: 0/14; leaf touched: 0/14.",
+              "Recorded scope | pot=trial pot | location=this sill | soil=same soil."
+            ]
+          },
+          "scope_options": [
+            {
+              "id": "f2-s-v6",
+              "text": "Only when | pot=trial pot | location=this sill | soil=same soil",
+              "segments": [
+                {
+                  "label": "pot",
+                  "value": "trial pot"
+                },
+                {
+                  "label": "location",
+                  "value": "this sill"
+                },
+                {
+                  "label": "soil",
+                  "value": "same soil"
+                }
+              ]
+            },
+            {
+              "id": "f2-s-a3",
+              "text": "Only when | pot=home pot | location=this sill | soil=same soil",
+              "segments": [
+                {
+                  "label": "pot",
+                  "value": "home pot"
+                },
+                {
+                  "label": "location",
+                  "value": "this sill"
+                },
+                {
+                  "label": "soil",
+                  "value": "same soil"
+                }
+              ]
+            },
+            {
+              "id": "f2-s-n8",
+              "text": "Only when | pot=trial pot | location=any sill | soil=same soil",
+              "segments": [
+                {
+                  "label": "pot",
+                  "value": "trial pot"
+                },
+                {
+                  "label": "location",
+                  "value": "any sill"
+                },
+                {
+                  "label": "soil",
+                  "value": "same soil"
+                }
+              ]
+            }
+          ]
+        },
+        "F3": {
+          "display_id": "F3",
+          "variant_id": null,
+          "title": "Quiet-reading notification key",
+          "card": {
+            "situation": "Read continuously on a phone for 20 minutes at night.",
+            "goal": "No pop-up from three named ordinary apps appears within 20 minutes.",
+            "existing": "Turn off notifications for the three apps one by one before reading.",
+            "new_item": "Pressing once changes the notification settings for those three apps.",
+            "facts": [
+              "The new item wrote the three app settings in 10 of 10 rounds.",
+              "10 paired rounds used matched saved article, initial app settings, Wi-Fi, 20-minute limit, scheduled call minute; method order or side alternated.",
+              "The existing method and new item each had 10 rounds.",
+              "The existing method met the stated goal in 6/10 rounds; the new item did so in 9/10.",
+              "scheduled P-01 call had neither ring nor screen indicator: 3/10.",
+              "Before the trial, P-01 was fixed as the test contact whose scheduled call had to produce a ring or screen indicator.",
+              "Recorded scope | device=own phone | application=current app | network=home Wi-Fi | time=21 to 23."
+            ]
+          },
+          "scope_options": [
+            {
+              "id": "f3-s-p5",
+              "text": "Only when | device=own phone | application=current app | network=home Wi-Fi | time=21 to 23",
+              "segments": [
+                {
+                  "label": "device",
+                  "value": "own phone"
+                },
+                {
+                  "label": "application",
+                  "value": "current app"
+                },
+                {
+                  "label": "network",
+                  "value": "home Wi-Fi"
+                },
+                {
+                  "label": "time",
+                  "value": "21 to 23"
+                }
+              ]
+            },
+            {
+              "id": "f3-s-c2",
+              "text": "Only when | device=any phone | application=current app | network=home Wi-Fi | time=21 to 23",
+              "segments": [
+                {
+                  "label": "device",
+                  "value": "any phone"
+                },
+                {
+                  "label": "application",
+                  "value": "current app"
+                },
+                {
+                  "label": "network",
+                  "value": "home Wi-Fi"
+                },
+                {
+                  "label": "time",
+                  "value": "21 to 23"
+                }
+              ]
+            },
+            {
+              "id": "f3-s-t8",
+              "text": "Only when | device=own phone | application=current app | network=home Wi-Fi | time=19 to 23",
+              "segments": [
+                {
+                  "label": "device",
+                  "value": "own phone"
+                },
+                {
+                  "label": "application",
+                  "value": "current app"
+                },
+                {
+                  "label": "network",
+                  "value": "home Wi-Fi"
+                },
+                {
+                  "label": "time",
+                  "value": "19 to 23"
+                }
+              ]
+            }
+          ]
+        },
+        "F4": {
+          "display_id": "F4",
+          "variant_id": null,
+          "title": "Insole drying key",
+          "card": {
+            "situation": "Treat a wet marked region of an insole after rain.",
+            "goal": "After 30 minutes, a new white tissue pressed for 5 seconds has no visible water mark.",
+            "existing": "Remove the insole and place it before a table fan for 30 minutes.",
+            "new_item": "Pressing sends air to the marked region for 30 minutes.",
+            "facts": [
+              "The new item sent air for 30 minutes in 10 of 10 rounds.",
+              "The record table contains separate columns for the existing method and new item.",
+              "The existing-method column has 0 rounds; the new-item column has 10 rounds.",
+              "The new item met the tissue criterion in 8/10 rounds.",
+              "scorch mark: 0/10; deformation: 0/10; upper color loss: 0/10.",
+              "Both process images came from new-item rounds at minute 0 and minute 30.",
+              "Recorded scope | shoes=tested pair | insole=tested insole | region=marked region."
+            ]
+          },
+          "scope_options": [
+            {
+              "id": "f4-s-h7",
+              "text": "Only when | shoes=tested pair | insole=tested insole | region=marked region",
+              "segments": [
+                {
+                  "label": "shoes",
+                  "value": "tested pair"
+                },
+                {
+                  "label": "insole",
+                  "value": "tested insole"
+                },
+                {
+                  "label": "region",
+                  "value": "marked region"
+                }
+              ]
+            },
+            {
+              "id": "f4-s-b3",
+              "text": "Only when | shoes=any pair | insole=tested insole | region=marked region",
+              "segments": [
+                {
+                  "label": "shoes",
+                  "value": "any pair"
+                },
+                {
+                  "label": "insole",
+                  "value": "tested insole"
+                },
+                {
+                  "label": "region",
+                  "value": "marked region"
+                }
+              ]
+            },
+            {
+              "id": "f4-s-z6",
+              "text": "Only when | shoes=tested pair | insole=tested insole | region=any region",
+              "segments": [
+                {
+                  "label": "shoes",
+                  "value": "tested pair"
+                },
+                {
+                  "label": "insole",
+                  "value": "tested insole"
+                },
+                {
+                  "label": "region",
+                  "value": "any region"
+                }
+              ]
+            }
+          ]
+        },
+        "F5": {
+          "display_id": "F5",
+          "variant_id": null,
+          "title": "Garment static-release clip",
+          "card": {
+            "situation": "Reduce clothing contact with the arm before dressing.",
+            "goal": "One minute after dressing, a flat paper card can pass between the sleeve and bare arm.",
+            "existing": "Wipe the garment inside once with a damp cotton cloth.",
+            "new_item": "Pressing releases one pulse at the clip position.",
+            "facts": [
+              "The new clip released one pulse in 12 of 12 rounds.",
+              "12 paired rounds used matched material within pair, garment type within pair, pretreatment, placement, wearing method, test timing; method order or side alternated.",
+              "The existing method and new item each had 12 rounds.",
+              "The existing method met the stated goal in 7/12 rounds; the new item did so in 10/12.",
+              "water mark: 0/12; pulled thread: 0/12; skin red mark: 0/12.",
+              "Recorded scope | place=at home | material=not stated | type=not stated | humidity=not stated | clip=not stated."
+            ]
+          },
+          "scope_options": [
+            {
+              "id": "f5-s-u4",
+              "text": "Only when | place=at home | material=not stated | type=not stated | humidity=not stated | clip=not stated",
+              "segments": [
+                {
+                  "label": "place",
+                  "value": "at home"
+                },
+                {
+                  "label": "material",
+                  "value": "not stated"
+                },
+                {
+                  "label": "type",
+                  "value": "not stated"
+                },
+                {
+                  "label": "humidity",
+                  "value": "not stated"
+                },
+                {
+                  "label": "clip",
+                  "value": "not stated"
+                }
+              ]
+            },
+            {
+              "id": "f5-s-c8",
+              "text": "Only when | place=at home | material=cotton item | type=not stated | humidity=not stated | clip=not stated",
+              "segments": [
+                {
+                  "label": "place",
+                  "value": "at home"
+                },
+                {
+                  "label": "material",
+                  "value": "cotton item"
+                },
+                {
+                  "label": "type",
+                  "value": "not stated"
+                },
+                {
+                  "label": "humidity",
+                  "value": "not stated"
+                },
+                {
+                  "label": "clip",
+                  "value": "not stated"
+                }
+              ]
+            },
+            {
+              "id": "f5-s-l2",
+              "text": "Only when | place=at home | material=not stated | type=long sleeve | humidity=not stated | clip=not stated",
+              "segments": [
+                {
+                  "label": "place",
+                  "value": "at home"
+                },
+                {
+                  "label": "material",
+                  "value": "not stated"
+                },
+                {
+                  "label": "type",
+                  "value": "long sleeve"
+                },
+                {
+                  "label": "humidity",
+                  "value": "not stated"
+                },
+                {
+                  "label": "clip",
+                  "value": "not stated"
+                }
+              ]
+            }
+          ]
+        },
+        "F6": {
+          "display_id": "F6",
+          "variant_id": null,
+          "title": "Mirror clearing tile",
+          "card": {
+            "situation": "View a marked central mirror region after washing.",
+            "goal": "Within 60 seconds, read four 12 mm characters from 1 metre away and still read all four at minute 5.",
+            "existing": "Wipe the marked region once with a dry microfibre cloth.",
+            "new_item": "Pressing sends air to the marked region for 5 minutes.",
+            "facts": [
+              "The new tile sent air for 5 minutes in 14 of 14 rounds.",
+              "14 paired rounds used matched mirror identity, central 20 by 20 cm region, characters, 38 to 40 C water, fogging procedure, exhaust fan off, observation times; method order or side alternated.",
+              "The existing method and new item each had 14 rounds.",
+              "The existing method met the stated goal in 8/14 rounds; the new item did so in 13/14.",
+              "water mark: 0/14; mirror frame moved: 0/14; character covered: 0/14.",
+              "Recorded scope | mirror=tested mirror | region=central 20x20 | water=38 to 40 C | fan=fan is off."
+            ]
+          },
+          "scope_options": [
+            {
+              "id": "f6-s-r6",
+              "text": "Only when | mirror=tested mirror | region=central 20x20 | water=38 to 40 C | fan=fan is off",
+              "segments": [
+                {
+                  "label": "mirror",
+                  "value": "tested mirror"
+                },
+                {
+                  "label": "region",
+                  "value": "central 20x20"
+                },
+                {
+                  "label": "water",
+                  "value": "38 to 40 C"
+                },
+                {
+                  "label": "fan",
+                  "value": "fan is off"
+                }
+              ]
+            },
+            {
+              "id": "f6-s-m1",
+              "text": "Only when | mirror=any mirror | region=central 20x20 | water=38 to 40 C | fan=fan is off",
+              "segments": [
+                {
+                  "label": "mirror",
+                  "value": "any mirror"
+                },
+                {
+                  "label": "region",
+                  "value": "central 20x20"
+                },
+                {
+                  "label": "water",
+                  "value": "38 to 40 C"
+                },
+                {
+                  "label": "fan",
+                  "value": "fan is off"
+                }
+              ]
+            },
+            {
+              "id": "f6-s-t9",
+              "text": "Only when | mirror=tested mirror | region=central 20x20 | water=35 to 40 C | fan=fan is off",
+              "segments": [
+                {
+                  "label": "mirror",
+                  "value": "tested mirror"
+                },
+                {
+                  "label": "region",
+                  "value": "central 20x20"
+                },
+                {
+                  "label": "water",
+                  "value": "35 to 40 C"
+                },
+                {
+                  "label": "fan",
+                  "value": "fan is off"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "zh-Hans": {
+      "language_name": "简体中文",
+      "common": {
+        "language_name": "简体中文",
+        "title": "一步一问虚构按钮板",
+        "draft": "DRAFT — 仅供所有者本地预览 — 尚未开放招募",
+        "welcome": {
+          "heading": "一步一步整理虚构试用卡",
+          "goal": "看着始终显示的虚构试用卡，一次回答一个小问题，把新东西整理到证据支持的去处。",
+          "steps": "1 个练习、6 个正式场景、1 个阅读检查。",
+          "open_book": "不用记规则，卡片和参考区会一直显示。",
+          "card_only": "只按卡片，不补充生活经验。",
+          "privacy": "使用匿名代码，不收自由文本，提交后不能恢复作答。",
+          "participant_label": "匿名代码",
+          "participant_help": "请输入 1–64 个字母、数字、点、下划线或连字符。",
+          "start": "开始"
+        },
+        "tutorial": {
+          "heading": "一条直觉和一步一问操作",
+          "intuition": "按钮会动或有反应，不等于它比原来的做法更常达到明确目标。",
+          "operation": "读卡后选择一个答案，页面只显示下一个适用问题；有些分支会提前结束。",
+          "show_practice": "打开练习卡"
+        },
+        "formal_intro": {
+          "heading": "正式场景",
+          "guard": "请只读页面上的记录。不要根据产品名称、生活常识或个人偏好补充信息。",
+          "feedback": "正式题不会告诉你答得对不对，四个去处都可能正确。",
+          "begin": "开始正式场景"
+        },
+        "labels": {
+          "situation": "情境",
+          "goal": "目标",
+          "existing": "你原来怎么做",
+          "new_item": "新东西",
+          "record": "试用记录",
+          "reference_destinations": "四个去处",
+          "reference_checklist": "怎么想",
+          "path": "你的推理路径",
+          "result": "根据你的回答放进："
+        },
+        "actions": {
+          "submit": "选择并继续",
+          "continue": "继续",
+          "choice_required": "继续前请选择一项。"
+        },
+        "progress": {
+          "practice": "练习",
+          "formal": "正式场景 {current}/6",
+          "attention": "阅读检查",
+          "reflection": "可选反思"
+        },
+        "attention": {
+          "heading": "阅读检查",
+          "instruction": "这题只检查你有没有读到说明。第一个问题请选择“只显示或告诉当前情况”。"
+        },
+        "reflection": {
+          "heading": "可选结构化反思",
+          "hardest": "哪一步最难读准？",
+          "confusing": "哪两个去处最易混淆？",
+          "amount": "页面文字如何？",
+          "pace": "一次一问的速度如何？",
+          "submit": "完成",
+          "options": {
+            "hardest": [
+              {
+                "id": "step-1",
+                "text": "第 1 步"
+              },
+              {
+                "id": "step-2",
+                "text": "第 2 步"
+              },
+              {
+                "id": "step-3",
+                "text": "第 3 步"
+              },
+              {
+                "id": "step-4",
+                "text": "第 4 步"
+              },
+              {
+                "id": "step-5",
+                "text": "第 5 步"
+              },
+              {
+                "id": "step-6",
+                "text": "第 6 步"
+              },
+              {
+                "id": "skip",
+                "text": "不回答"
+              }
+            ],
+            "confusing": [
+              {
+                "id": "use-info",
+                "text": "常用区和信息牌"
+              },
+              {
+                "id": "use-check",
+                "text": "常用区和再看看"
+              },
+              {
+                "id": "off-check",
+                "text": "不装和再看看"
+              },
+              {
+                "id": "info-check",
+                "text": "信息牌和再看看"
+              },
+              {
+                "id": "skip",
+                "text": "不回答"
+              }
+            ],
+            "amount": [
+              {
+                "id": "too-little",
+                "text": "太少"
+              },
+              {
+                "id": "about-right",
+                "text": "正好"
+              },
+              {
+                "id": "too-much",
+                "text": "太多"
+              },
+              {
+                "id": "skip",
+                "text": "不回答"
+              }
+            ],
+            "pace": [
+              {
+                "id": "too-slow",
+                "text": "太慢"
+              },
+              {
+                "id": "about-right",
+                "text": "正好"
+              },
+              {
+                "id": "too-fast",
+                "text": "太快"
+              },
+              {
+                "id": "skip",
+                "text": "不回答"
+              }
+            ]
+          }
+        },
+        "export": {
+          "heading": "活动结束",
+          "debrief": "你没有测试真实产品。本活动只记录你如何按虚构证据门槛整理卡片，不测量产品是否改善生活。",
+          "download_json": "下载签名 JSON",
+          "download_csv": "下载签名 CSV",
+          "finish": "清除此页面",
+          "manual": "下载需手动操作，页面不显示成绩。"
+        },
+        "save_exit": {
+          "button": "结束并准备部分导出",
+          "heading": "结束本地活动？",
+          "body": "本次活动不能继续。已提交选择会冻结在签名部分导出中；页面不会自动下载。",
+          "cancel": "取消",
+          "confirm": "准备部分导出"
+        },
+        "errors": {
+          "generic": "本地请求失败，请重试。",
+          "download": "下载失败，两个按钮仍可使用。",
+          "desktop": "宽度低于 1024 CSS 像素时需要桌面预览。"
+        },
+        "disclaimer": "所有产品、按钮和试用记录均为虚构示意，不代表真实产品功效。",
+        "destinations": [
+          {
+            "id": "dest-use",
+            "label": "常用区",
+            "description": "能用，但必须贴准确的“仅在……”标签。"
+          },
+          {
+            "id": "dest-info",
+            "label": "信息牌",
+            "description": "只用来看情况，不当成改变结果的按钮。"
+          },
+          {
+            "id": "dest-off",
+            "label": "不装",
+            "description": "不放到这块按钮板上。"
+          },
+          {
+            "id": "dest-check",
+            "label": "再看看",
+            "description": "记录还不够，先放待定盒。"
+          }
+        ],
+        "checklist": [
+          "它只是显示情况，还是会执行动作来改变目标结果？",
+          "有没有按卡片写出的相同条件比较两种做法？",
+          "在相同分母中，新做法达到目标的次数更多吗？",
+          "有没有损坏另一件卡片明确写出的重要事情？",
+          "卡片要求的关键范围维度是否全部写出？",
+          "“仅在……”是否与卡片逐维一致？"
+        ],
+        "questions": {
+          "1": {
+            "prompt": "这张卡里的新东西，是用来【看情况】，还是按下后会【执行一个动作，目的是改变上面的目标结果】？",
+            "options": [
+              {
+                "id": "INFO",
+                "text": "只显示或告诉当前情况"
+              },
+              {
+                "id": "CONTROL",
+                "text": "执行一个动作，目的是改变目标结果"
+              }
+            ]
+          },
+          "2": {
+            "prompt": "卡片有没有按上面写出的相同条件，让两种做法各做规定轮次？",
+            "options": [
+              {
+                "id": "COMPARED",
+                "text": "两种做法按记录比较过"
+              },
+              {
+                "id": "NOT_COMPARED",
+                "text": "没有／卡片看不出来"
+              }
+            ]
+          },
+          "3": {
+            "prompt": "只看定义的目标和相同分母：新东西达到目标的次数更多，还是一样／更少？",
+            "options": [
+              {
+                "id": "BETTER",
+                "text": "新东西达到目标的次数更多"
+              },
+              {
+                "id": "NOT_BETTER",
+                "text": "次数一样或更少"
+              }
+            ]
+          },
+          "4": {
+            "prompt": "使用新东西时，是否出现卡片明确写出的另一重要事情受损？",
+            "options": [
+              {
+                "id": "HARM",
+                "text": "是，卡片写出的另一件事受损"
+              },
+              {
+                "id": "NO_HARM",
+                "text": "没有出现卡片写出的受损"
+              }
+            ]
+          },
+          "5": {
+            "prompt": "卡片为这题规定的关键范围维度，是否每一项都有具体值？",
+            "options": [
+              {
+                "id": "SCOPE_WRITTEN",
+                "text": "每个要求维度都有具体值"
+              },
+              {
+                "id": "SCOPE_MISSING",
+                "text": "至少一个要求值未注明"
+              }
+            ]
+          },
+          "6": {
+            "prompt": "哪条“仅在……”与卡片逐维一致？每项同样详细；卡片未写的内容不能自行补上。",
+            "options": []
+          }
+        }
+      },
+      "practice": {
+        "display_id": "P1",
+        "variant_id": null,
+        "title": "抽屉取袜扣",
+        "card": {
+          "situation": "从分格抽屉中取出指定颜色的一双袜子。",
+          "goal": "“20 秒内取对”指两只袜子都与指定颜色相同。",
+          "existing": "看抽屉前的颜色标签后逐格寻找。",
+          "new_item": "按颜色键后，一个候选分格被推到前沿。",
+          "facts": [
+            "新扣 10/10 轮都把一个分格推到前沿。",
+            "共 10 个配对轮；每轮对齐抽屉内容、袜子摆放、指定颜色、20 秒限制，做法顺序或左右位置轮换。",
+            "原办法和新东西各做 10 轮。",
+            "原办法 8/10 轮达到目标；新东西 6/10 轮达到目标。",
+            "夹袜 0/10；袜子被推出抽屉 0/10。",
+            "范围记录｜抽屉=此次抽屉｜标签=当前六码｜操作者=仅限本人。"
+          ]
+        },
+        "scope_options": [
+          {
+            "id": "p1-s-q7",
+            "text": "仅在｜抽屉=此次抽屉 | 标签=当前六码 | 操作者=仅限本人",
+            "segments": [
+              {
+                "label": "抽屉",
+                "value": "此次抽屉"
+              },
+              {
+                "label": "标签",
+                "value": "当前六码"
+              },
+              {
+                "label": "操作者",
+                "value": "仅限本人"
+              }
+            ]
+          },
+          {
+            "id": "p1-s-k2",
+            "text": "仅在｜抽屉=家中抽屉 | 标签=当前六码 | 操作者=仅限本人",
+            "segments": [
+              {
+                "label": "抽屉",
+                "value": "家中抽屉"
+              },
+              {
+                "label": "标签",
+                "value": "当前六码"
+              },
+              {
+                "label": "操作者",
+                "value": "仅限本人"
+              }
+            ]
+          },
+          {
+            "id": "p1-s-m8",
+            "text": "仅在｜抽屉=此次抽屉 | 标签=任意六码 | 操作者=仅限本人",
+            "segments": [
+              {
+                "label": "抽屉",
+                "value": "此次抽屉"
+              },
+              {
+                "label": "标签",
+                "value": "任意六码"
+              },
+              {
+                "label": "操作者",
+                "value": "仅限本人"
+              }
+            ]
+          }
+        ],
+        "feedback": "新扣十次都执行了动作，但“20 秒内取对”为 6/10，原办法为 8/10。本反馈只针对这张练习卡。"
+      },
+      "scenes": {
+        "AB1-A": {
+          "display_id": "AB1",
+          "variant_id": "A",
+          "title": "票夹寻页扣",
+          "card": {
+            "situation": "从一本家庭票夹中找出指定编号的票据。",
+            "goal": "“30 秒内找到”指取出编号完全相同的票据。",
+            "existing": "先看月份分隔签，再逐页翻找。",
+            "new_item": "输入编号后，一个候选页边缘被推出 2 厘米。",
+            "facts": [
+              "新扣 10/10 轮都推出一个候选页。",
+              "共 10 个配对轮；每轮对齐票据内容、页序、目标票据、桌面灯、30 秒限制，做法顺序或左右位置轮换。",
+              "原办法和新东西各做 10 轮。",
+              "原办法 5/10 轮达到目标；新东西 8/10 轮达到目标。",
+              "票据撕裂 0/10；月份签被遮 0/10；票据掉出 0/10。",
+              "范围记录｜票夹=此次票夹｜票据=近30天｜照明=桌灯开启｜操作者=仅限本人。"
+            ]
+          },
+          "scope_options": [
+            {
+              "id": "ab1-s-m4",
+              "text": "仅在｜票夹=此次票夹 | 票据=近30天 | 照明=桌灯开启 | 操作者=仅限本人",
+              "segments": [
+                {
+                  "label": "票夹",
+                  "value": "此次票夹"
+                },
+                {
+                  "label": "票据",
+                  "value": "近30天"
+                },
+                {
+                  "label": "照明",
+                  "value": "桌灯开启"
+                },
+                {
+                  "label": "操作者",
+                  "value": "仅限本人"
+                }
+              ]
+            },
+            {
+              "id": "ab1-s-r9",
+              "text": "仅在｜票夹=家中票夹 | 票据=近30天 | 照明=桌灯开启 | 操作者=仅限本人",
+              "segments": [
+                {
+                  "label": "票夹",
+                  "value": "家中票夹"
+                },
+                {
+                  "label": "票据",
+                  "value": "近30天"
+                },
+                {
+                  "label": "照明",
+                  "value": "桌灯开启"
+                },
+                {
+                  "label": "操作者",
+                  "value": "仅限本人"
+                }
+              ]
+            },
+            {
+              "id": "ab1-s-k2",
+              "text": "仅在｜票夹=此次票夹 | 票据=近90天 | 照明=桌灯开启 | 操作者=仅限本人",
+              "segments": [
+                {
+                  "label": "票夹",
+                  "value": "此次票夹"
+                },
+                {
+                  "label": "票据",
+                  "value": "近90天"
+                },
+                {
+                  "label": "照明",
+                  "value": "桌灯开启"
+                },
+                {
+                  "label": "操作者",
+                  "value": "仅限本人"
+                }
+              ]
+            }
+          ]
+        },
+        "AB1-B": {
+          "display_id": "AB1",
+          "variant_id": "B",
+          "title": "票夹寻页扣",
+          "card": {
+            "situation": "从一本家庭票夹中找出指定编号的票据。",
+            "goal": "“30 秒内找到”指取出编号完全相同的票据。",
+            "existing": "先看月份分隔签，再逐页翻找。",
+            "new_item": "输入编号后，一个候选页边缘被推出 2 厘米。",
+            "facts": [
+              "新扣 10/10 轮都推出一个候选页。",
+              "共 10 个配对轮；每轮对齐票据内容、页序、目标票据、桌面灯、30 秒限制，做法顺序或左右位置轮换。",
+              "原办法和新东西各做 10 轮。",
+              "原办法 8/10 轮达到目标；新东西 7/10 轮达到目标。",
+              "票据撕裂 0/10；月份签被遮 0/10；票据掉出 0/10。",
+              "范围记录｜票夹=此次票夹｜票据=近30天｜照明=桌灯开启｜操作者=仅限本人。"
+            ]
+          },
+          "scope_options": [
+            {
+              "id": "ab1-s-m4",
+              "text": "仅在｜票夹=此次票夹 | 票据=近30天 | 照明=桌灯开启 | 操作者=仅限本人",
+              "segments": [
+                {
+                  "label": "票夹",
+                  "value": "此次票夹"
+                },
+                {
+                  "label": "票据",
+                  "value": "近30天"
+                },
+                {
+                  "label": "照明",
+                  "value": "桌灯开启"
+                },
+                {
+                  "label": "操作者",
+                  "value": "仅限本人"
+                }
+              ]
+            },
+            {
+              "id": "ab1-s-r9",
+              "text": "仅在｜票夹=家中票夹 | 票据=近30天 | 照明=桌灯开启 | 操作者=仅限本人",
+              "segments": [
+                {
+                  "label": "票夹",
+                  "value": "家中票夹"
+                },
+                {
+                  "label": "票据",
+                  "value": "近30天"
+                },
+                {
+                  "label": "照明",
+                  "value": "桌灯开启"
+                },
+                {
+                  "label": "操作者",
+                  "value": "仅限本人"
+                }
+              ]
+            },
+            {
+              "id": "ab1-s-k2",
+              "text": "仅在｜票夹=此次票夹 | 票据=近90天 | 照明=桌灯开启 | 操作者=仅限本人",
+              "segments": [
+                {
+                  "label": "票夹",
+                  "value": "此次票夹"
+                },
+                {
+                  "label": "票据",
+                  "value": "近90天"
+                },
+                {
+                  "label": "照明",
+                  "value": "桌灯开启"
+                },
+                {
+                  "label": "操作者",
+                  "value": "仅限本人"
+                }
+              ]
+            }
+          ]
+        },
+        "F2": {
+          "display_id": "F2",
+          "variant_id": null,
+          "title": "盆土状态片",
+          "card": {
+            "situation": "查看窗台花盆表土当前偏干还是偏湿。",
+            "goal": "当前状态以插在固定标记位置的独立湿度条文字为参照。",
+            "existing": "插入独立湿度条并读取文字。",
+            "new_item": "状态片屏面出现“偏干”或“偏湿”；背面只有固定夹和显示屏，没有连接水泵、排水阀或风扇。",
+            "facts": [
+              "状态片 14 次都显示文字，且没有执行装置连接。",
+              "七天共查看 14 次，其中 12 次与独立湿度条文字相同。",
+              "遮挡排水孔 0/14；碰到叶片 0/14。",
+              "范围记录｜花盆=此次花盆｜位置=这个窗台｜盆土=同种盆土。"
+            ]
+          },
+          "scope_options": [
+            {
+              "id": "f2-s-v6",
+              "text": "仅在｜花盆=此次花盆 | 位置=这个窗台 | 盆土=同种盆土",
+              "segments": [
+                {
+                  "label": "花盆",
+                  "value": "此次花盆"
+                },
+                {
+                  "label": "位置",
+                  "value": "这个窗台"
+                },
+                {
+                  "label": "盆土",
+                  "value": "同种盆土"
+                }
+              ]
+            },
+            {
+              "id": "f2-s-a3",
+              "text": "仅在｜花盆=家中花盆 | 位置=这个窗台 | 盆土=同种盆土",
+              "segments": [
+                {
+                  "label": "花盆",
+                  "value": "家中花盆"
+                },
+                {
+                  "label": "位置",
+                  "value": "这个窗台"
+                },
+                {
+                  "label": "盆土",
+                  "value": "同种盆土"
+                }
+              ]
+            },
+            {
+              "id": "f2-s-n8",
+              "text": "仅在｜花盆=此次花盆 | 位置=任一窗台 | 盆土=同种盆土",
+              "segments": [
+                {
+                  "label": "花盆",
+                  "value": "此次花盆"
+                },
+                {
+                  "label": "位置",
+                  "value": "任一窗台"
+                },
+                {
+                  "label": "盆土",
+                  "value": "同种盆土"
+                }
+              ]
+            }
+          ]
+        },
+        "F3": {
+          "display_id": "F3",
+          "variant_id": null,
+          "title": "静读通知扣",
+          "card": {
+            "situation": "晚上在手机上连续阅读 20 分钟。",
+            "goal": "20 分钟内屏幕不出现三个指定普通应用的弹窗。",
+            "existing": "阅读前逐个关闭三个普通应用的通知。",
+            "new_item": "按下后一次修改这三个应用的通知设置。",
+            "facts": [
+              "新扣 10/10 轮都写入三个应用的设置。",
+              "共 10 个配对轮；每轮对齐保存文章、应用初始设置、Wi‑Fi、20 分钟时限、测试来电分钟点，做法顺序或左右位置轮换。",
+              "原办法和新东西各做 10 轮。",
+              "原办法 6/10 轮达到目标；新东西 9/10 轮达到目标。",
+              "P-01 安排来电既无铃声也无屏幕提示点 3/10。",
+              "试用前固定测试联系人代码 P-01；其安排来电必须产生铃声或屏幕提示点。",
+              "范围记录｜设备=本人手机｜应用=当前应用｜网络=家中Wi‑Fi｜时间=21–23时。"
+            ]
+          },
+          "scope_options": [
+            {
+              "id": "f3-s-p5",
+              "text": "仅在｜设备=本人手机 | 应用=当前应用 | 网络=家中Wi‑Fi | 时间=21–23时",
+              "segments": [
+                {
+                  "label": "设备",
+                  "value": "本人手机"
+                },
+                {
+                  "label": "应用",
+                  "value": "当前应用"
+                },
+                {
+                  "label": "网络",
+                  "value": "家中Wi‑Fi"
+                },
+                {
+                  "label": "时间",
+                  "value": "21–23时"
+                }
+              ]
+            },
+            {
+              "id": "f3-s-c2",
+              "text": "仅在｜设备=任意手机 | 应用=当前应用 | 网络=家中Wi‑Fi | 时间=21–23时",
+              "segments": [
+                {
+                  "label": "设备",
+                  "value": "任意手机"
+                },
+                {
+                  "label": "应用",
+                  "value": "当前应用"
+                },
+                {
+                  "label": "网络",
+                  "value": "家中Wi‑Fi"
+                },
+                {
+                  "label": "时间",
+                  "value": "21–23时"
+                }
+              ]
+            },
+            {
+              "id": "f3-s-t8",
+              "text": "仅在｜设备=本人手机 | 应用=当前应用 | 网络=家中Wi‑Fi | 时间=19–23时",
+              "segments": [
+                {
+                  "label": "设备",
+                  "value": "本人手机"
+                },
+                {
+                  "label": "应用",
+                  "value": "当前应用"
+                },
+                {
+                  "label": "网络",
+                  "value": "家中Wi‑Fi"
+                },
+                {
+                  "label": "时间",
+                  "value": "19–23时"
+                }
+              ]
+            }
+          ]
+        },
+        "F4": {
+          "display_id": "F4",
+          "variant_id": null,
+          "title": "鞋垫干燥扣",
+          "card": {
+            "situation": "雨后处理鞋内一块标记区域的潮湿鞋垫。",
+            "goal": "30 分钟后用新白纸巾按压标记区域 5 秒，纸巾无可见水印。",
+            "existing": "取出鞋垫，在桌面风扇前吹 30 分钟。",
+            "new_item": "按下后向标记区域送风 30 分钟。",
+            "facts": [
+              "新扣 10/10 轮都送风 30 分钟。",
+              "记录表分别列出“原办法”和“新扣”两栏。",
+              "“原办法”栏为 0 轮；“新扣”栏为 10 轮。",
+              "新扣 8/10 轮达到纸巾标准。",
+              "焦痕 0/10；变形 0/10；鞋面褪色 0/10。",
+              "两张过程图均来自新扣轮次，分别拍摄于第 0 分钟和第 30 分钟。",
+              "范围记录｜鞋=这双鞋｜鞋垫=这鞋垫｜区域=该标区。"
+            ]
+          },
+          "scope_options": [
+            {
+              "id": "f4-s-h7",
+              "text": "仅在｜鞋=这双鞋 | 鞋垫=这鞋垫 | 区域=该标区",
+              "segments": [
+                {
+                  "label": "鞋",
+                  "value": "这双鞋"
+                },
+                {
+                  "label": "鞋垫",
+                  "value": "这鞋垫"
+                },
+                {
+                  "label": "区域",
+                  "value": "该标区"
+                }
+              ]
+            },
+            {
+              "id": "f4-s-b3",
+              "text": "仅在｜鞋=任双鞋 | 鞋垫=这鞋垫 | 区域=该标区",
+              "segments": [
+                {
+                  "label": "鞋",
+                  "value": "任双鞋"
+                },
+                {
+                  "label": "鞋垫",
+                  "value": "这鞋垫"
+                },
+                {
+                  "label": "区域",
+                  "value": "该标区"
+                }
+              ]
+            },
+            {
+              "id": "f4-s-z6",
+              "text": "仅在｜鞋=这双鞋 | 鞋垫=这鞋垫 | 区域=任标区",
+              "segments": [
+                {
+                  "label": "鞋",
+                  "value": "这双鞋"
+                },
+                {
+                  "label": "鞋垫",
+                  "value": "这鞋垫"
+                },
+                {
+                  "label": "区域",
+                  "value": "任标区"
+                }
+              ]
+            }
+          ]
+        },
+        "F5": {
+          "display_id": "F5",
+          "variant_id": null,
+          "title": "衣物除静电夹",
+          "card": {
+            "situation": "穿衣前减少衣物贴在手臂上的静电。",
+            "goal": "穿上后 1 分钟，袖子与裸露手臂之间可插入一张平直纸片。",
+            "existing": "用微湿棉布在衣物内侧擦一次。",
+            "new_item": "按下后，在夹放位置释放一次脉冲。",
+            "facts": [
+              "新夹 12/12 轮都释放一次脉冲。",
+              "共 12 个配对轮；每轮对齐配对内材质、配对内衣物类型、预处理、摆放、穿着方式、测试时间，做法顺序或左右位置轮换。",
+              "原办法和新东西各做 12 轮。",
+              "原办法 7/12 轮达到目标；新东西 10/12 轮达到目标。",
+              "水痕 0/12；拉线 0/12；皮肤红印 0/12。",
+              "范围记录｜地点=仅在家中｜材质=未注明｜类型=未注明｜湿度=未注明｜夹位=未注明。"
+            ]
+          },
+          "scope_options": [
+            {
+              "id": "f5-s-u4",
+              "text": "仅在｜地点=仅在家中 | 材质=未注明 | 类型=未注明 | 湿度=未注明 | 夹位=未注明",
+              "segments": [
+                {
+                  "label": "地点",
+                  "value": "仅在家中"
+                },
+                {
+                  "label": "材质",
+                  "value": "未注明"
+                },
+                {
+                  "label": "类型",
+                  "value": "未注明"
+                },
+                {
+                  "label": "湿度",
+                  "value": "未注明"
+                },
+                {
+                  "label": "夹位",
+                  "value": "未注明"
+                }
+              ]
+            },
+            {
+              "id": "f5-s-c8",
+              "text": "仅在｜地点=仅在家中 | 材质=棉质衣 | 类型=未注明 | 湿度=未注明 | 夹位=未注明",
+              "segments": [
+                {
+                  "label": "地点",
+                  "value": "仅在家中"
+                },
+                {
+                  "label": "材质",
+                  "value": "棉质衣"
+                },
+                {
+                  "label": "类型",
+                  "value": "未注明"
+                },
+                {
+                  "label": "湿度",
+                  "value": "未注明"
+                },
+                {
+                  "label": "夹位",
+                  "value": "未注明"
+                }
+              ]
+            },
+            {
+              "id": "f5-s-l2",
+              "text": "仅在｜地点=仅在家中 | 材质=未注明 | 类型=长袖衫 | 湿度=未注明 | 夹位=未注明",
+              "segments": [
+                {
+                  "label": "地点",
+                  "value": "仅在家中"
+                },
+                {
+                  "label": "材质",
+                  "value": "未注明"
+                },
+                {
+                  "label": "类型",
+                  "value": "长袖衫"
+                },
+                {
+                  "label": "湿度",
+                  "value": "未注明"
+                },
+                {
+                  "label": "夹位",
+                  "value": "未注明"
+                }
+              ]
+            }
+          ]
+        },
+        "F6": {
+          "display_id": "F6",
+          "variant_id": null,
+          "title": "镜面清雾片",
+          "card": {
+            "situation": "洗漱后看清浴室镜面中央标记区域。",
+            "goal": "启动后 60 秒内，从 1 米外读出标记区后的四个 12 mm 字符，并在第 5 分钟仍全部读出。",
+            "existing": "用干燥超细纤维布擦拭标记区域一次。",
+            "new_item": "按下后向标记区域送风 5 分钟。",
+            "facts": [
+              "新片 14/14 轮都送风 5 分钟。",
+              "共 14 个配对轮；每轮对齐镜面、中央 20×20 cm 区域、字符、38–40°C 用水、起始雾化步骤、排风扇关闭、计时点，做法顺序或左右位置轮换。",
+              "原办法和新东西各做 14 轮。",
+              "原办法 8/14 轮达到目标；新东西 13/14 轮达到目标。",
+              "水痕 0/14；镜框移动 0/14；字符遮挡 0/14。",
+              "范围记录｜镜面=此次镜面｜区域=中央20×20｜水温=38–40°C｜排风=排风关闭。"
+            ]
+          },
+          "scope_options": [
+            {
+              "id": "f6-s-r6",
+              "text": "仅在｜镜面=此次镜面 | 区域=中央20×20 | 水温=38–40°C | 排风=排风关闭",
+              "segments": [
+                {
+                  "label": "镜面",
+                  "value": "此次镜面"
+                },
+                {
+                  "label": "区域",
+                  "value": "中央20×20"
+                },
+                {
+                  "label": "水温",
+                  "value": "38–40°C"
+                },
+                {
+                  "label": "排风",
+                  "value": "排风关闭"
+                }
+              ]
+            },
+            {
+              "id": "f6-s-m1",
+              "text": "仅在｜镜面=任意镜面 | 区域=中央20×20 | 水温=38–40°C | 排风=排风关闭",
+              "segments": [
+                {
+                  "label": "镜面",
+                  "value": "任意镜面"
+                },
+                {
+                  "label": "区域",
+                  "value": "中央20×20"
+                },
+                {
+                  "label": "水温",
+                  "value": "38–40°C"
+                },
+                {
+                  "label": "排风",
+                  "value": "排风关闭"
+                }
+              ]
+            },
+            {
+              "id": "f6-s-t9",
+              "text": "仅在｜镜面=此次镜面 | 区域=中央20×20 | 水温=35–40°C | 排风=排风关闭",
+              "segments": [
+                {
+                  "label": "镜面",
+                  "value": "此次镜面"
+                },
+                {
+                  "label": "区域",
+                  "value": "中央20×20"
+                },
+                {
+                  "label": "水温",
+                  "value": "35–40°C"
+                },
+                {
+                  "label": "排风",
+                  "value": "排风关闭"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

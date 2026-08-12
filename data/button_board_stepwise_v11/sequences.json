@@ -1,0 +1,363 @@
+{
+  "schema_version": "microstudy-button-board-stepwise-sequences-v1",
+  "materials_version": "v11-stepwise-20260812-draft",
+  "allocation_cycle": {
+    "cells_per_locale": 24,
+    "sequence_count": 12,
+    "ab_variants": [
+      "A",
+      "B"
+    ],
+    "rule": "paired cells per sequence; A then B; successful starts only"
+  },
+  "sequences": [
+    {
+      "sequence_id": "BBS11-01",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "AB1"
+        },
+        {
+          "position": 2,
+          "scene_slot": "F2"
+        },
+        {
+          "position": 3,
+          "scene_slot": "F6"
+        },
+        {
+          "position": 4,
+          "scene_slot": "F3"
+        },
+        {
+          "position": 5,
+          "scene_slot": "F5"
+        },
+        {
+          "position": 6,
+          "scene_slot": "F4"
+        }
+      ]
+    },
+    {
+      "sequence_id": "BBS11-02",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F2"
+        },
+        {
+          "position": 2,
+          "scene_slot": "F3"
+        },
+        {
+          "position": 3,
+          "scene_slot": "AB1"
+        },
+        {
+          "position": 4,
+          "scene_slot": "F4"
+        },
+        {
+          "position": 5,
+          "scene_slot": "F6"
+        },
+        {
+          "position": 6,
+          "scene_slot": "F5"
+        }
+      ]
+    },
+    {
+      "sequence_id": "BBS11-03",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F3"
+        },
+        {
+          "position": 2,
+          "scene_slot": "F4"
+        },
+        {
+          "position": 3,
+          "scene_slot": "F2"
+        },
+        {
+          "position": 4,
+          "scene_slot": "F5"
+        },
+        {
+          "position": 5,
+          "scene_slot": "AB1"
+        },
+        {
+          "position": 6,
+          "scene_slot": "F6"
+        }
+      ]
+    },
+    {
+      "sequence_id": "BBS11-04",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F4"
+        },
+        {
+          "position": 2,
+          "scene_slot": "F5"
+        },
+        {
+          "position": 3,
+          "scene_slot": "F3"
+        },
+        {
+          "position": 4,
+          "scene_slot": "F6"
+        },
+        {
+          "position": 5,
+          "scene_slot": "F2"
+        },
+        {
+          "position": 6,
+          "scene_slot": "AB1"
+        }
+      ]
+    },
+    {
+      "sequence_id": "BBS11-05",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F5"
+        },
+        {
+          "position": 2,
+          "scene_slot": "F6"
+        },
+        {
+          "position": 3,
+          "scene_slot": "F4"
+        },
+        {
+          "position": 4,
+          "scene_slot": "AB1"
+        },
+        {
+          "position": 5,
+          "scene_slot": "F3"
+        },
+        {
+          "position": 6,
+          "scene_slot": "F2"
+        }
+      ]
+    },
+    {
+      "sequence_id": "BBS11-06",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F6"
+        },
+        {
+          "position": 2,
+          "scene_slot": "AB1"
+        },
+        {
+          "position": 3,
+          "scene_slot": "F5"
+        },
+        {
+          "position": 4,
+          "scene_slot": "F2"
+        },
+        {
+          "position": 5,
+          "scene_slot": "F4"
+        },
+        {
+          "position": 6,
+          "scene_slot": "F3"
+        }
+      ]
+    },
+    {
+      "sequence_id": "BBS11-07",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F4"
+        },
+        {
+          "position": 2,
+          "scene_slot": "F5"
+        },
+        {
+          "position": 3,
+          "scene_slot": "F3"
+        },
+        {
+          "position": 4,
+          "scene_slot": "F6"
+        },
+        {
+          "position": 5,
+          "scene_slot": "F2"
+        },
+        {
+          "position": 6,
+          "scene_slot": "AB1"
+        }
+      ]
+    },
+    {
+      "sequence_id": "BBS11-08",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F5"
+        },
+        {
+          "position": 2,
+          "scene_slot": "F6"
+        },
+        {
+          "position": 3,
+          "scene_slot": "F4"
+        },
+        {
+          "position": 4,
+          "scene_slot": "AB1"
+        },
+        {
+          "position": 5,
+          "scene_slot": "F3"
+        },
+        {
+          "position": 6,
+          "scene_slot": "F2"
+        }
+      ]
+    },
+    {
+      "sequence_id": "BBS11-09",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F6"
+        },
+        {
+          "position": 2,
+          "scene_slot": "AB1"
+        },
+        {
+          "position": 3,
+          "scene_slot": "F5"
+        },
+        {
+          "position": 4,
+          "scene_slot": "F2"
+        },
+        {
+          "position": 5,
+          "scene_slot": "F4"
+        },
+        {
+          "position": 6,
+          "scene_slot": "F3"
+        }
+      ]
+    },
+    {
+      "sequence_id": "BBS11-10",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "AB1"
+        },
+        {
+          "position": 2,
+          "scene_slot": "F2"
+        },
+        {
+          "position": 3,
+          "scene_slot": "F6"
+        },
+        {
+          "position": 4,
+          "scene_slot": "F3"
+        },
+        {
+          "position": 5,
+          "scene_slot": "F5"
+        },
+        {
+          "position": 6,
+          "scene_slot": "F4"
+        }
+      ]
+    },
+    {
+      "sequence_id": "BBS11-11",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F2"
+        },
+        {
+          "position": 2,
+          "scene_slot": "F3"
+        },
+        {
+          "position": 3,
+          "scene_slot": "AB1"
+        },
+        {
+          "position": 4,
+          "scene_slot": "F4"
+        },
+        {
+          "position": 5,
+          "scene_slot": "F6"
+        },
+        {
+          "position": 6,
+          "scene_slot": "F5"
+        }
+      ]
+    },
+    {
+      "sequence_id": "BBS11-12",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F3"
+        },
+        {
+          "position": 2,
+          "scene_slot": "F4"
+        },
+        {
+          "position": 3,
+          "scene_slot": "F2"
+        },
+        {
+          "position": 4,
+          "scene_slot": "F5"
+        },
+        {
+          "position": 5,
+          "scene_slot": "AB1"
+        },
+        {
+          "position": 6,
+          "scene_slot": "F6"
+        }
+      ]
+    }
+  ]
+}

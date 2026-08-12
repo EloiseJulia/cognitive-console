@@ -569,13 +569,47 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
     browsers = {name: path for name, path in candidates.items() if path.exists()}
     assert set(browsers) == {"chrome", "edge"}, "Chrome and Edge are required"
 
-    def remove_tree(path):
-        for _ in range(40):
-            shutil.rmtree(path, ignore_errors=True)
+    def wait_for_exit(process, timeout):
+        deadline = time.monotonic() + timeout
+        while process.poll() is None and time.monotonic() < deadline:
+            time.sleep(0.05)
+        return process.poll() is not None
+
+    def stop_browser_process(process):
+        if process.poll() is not None:
+            return
+        process.terminate()
+        if not wait_for_exit(process, 5):
+            process.kill()
+            assert wait_for_exit(process, 5), (
+                f"browser PID {process.pid} did not exit"
+            )
+
+    def remove_tree(path, timeout=15):
+        def handle_remove_error(_, __, error):
+            if isinstance(error[1], FileNotFoundError):
+                return
+            raise error[1]
+
+        remove_path = (
+            rf"\\?\{path.resolve()}" if os.name == "nt" else path
+        )
+        deadline = time.monotonic() + timeout
+        delay = 0.05
+        last_error = None
+        while path.exists():
+            try:
+                shutil.rmtree(remove_path, onerror=handle_remove_error)
+            except OSError as error:
+                last_error = error
             if not path.exists():
                 return
-            time.sleep(0.1)
-        raise AssertionError(f"browser profile cleanup failed: {path}")
+            if time.monotonic() >= deadline:
+                raise AssertionError(
+                    f"browser profile cleanup failed: {path}: {last_error}"
+                )
+            time.sleep(delay)
+            delay = min(delay * 1.5, 0.5)
 
     remove_tree(RUNTIME)
     RUNTIME.mkdir(parents=True, exist_ok=True)
@@ -606,28 +640,41 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        deadline = time.time() + 15
-        while True:
-            try:
-                urllib.request.urlopen(f"http://127.0.0.1:{port}/json/version").close()
-                break
-            except OSError:
-                if time.time() > deadline:
-                    pytest.fail(f"{name} CDP startup failed")
-                time.sleep(0.1)
+        cdp_ready = False
         try:
+            deadline = time.monotonic() + 15
+            while True:
+                try:
+                    urllib.request.urlopen(
+                        f"http://127.0.0.1:{port}/json/version"
+                    ).close()
+                    break
+                except OSError:
+                    if time.monotonic() > deadline:
+                        pytest.fail(f"{name} CDP startup failed")
+                    time.sleep(0.1)
+            cdp_ready = True
             yield port
         finally:
+            control = None
+            if cdp_ready:
+                try:
+                    control = CDP.new_page(port, "about:blank")
+                    control.call("Browser.close")
+                except Exception:
+                    pass
+                finally:
+                    if control is not None:
+                        control.socket.close()
+            if not wait_for_exit(process, 10):
+                stop_browser_process(process)
             try:
-                control = CDP.new_page(port, "about:blank")
-                control.call("Browser.close")
-                control.socket.close()
-            except Exception:
-                if process.poll() is None:
-                    process.terminate()
-            if process.poll() is None:
-                process.wait(timeout=10)
-            remove_tree(profile)
+                remove_tree(profile)
+            except AssertionError:
+                stop_browser_process(process)
+                remove_tree(profile, timeout=10)
+            assert process.poll() is not None
+            assert not profile.exists()
 
     @contextlib.contextmanager
     def isolated_server(label):
@@ -665,7 +712,11 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
         cdp.wait(f'document.querySelector(\'input[name="step-answer"][value="{value}"]\')')
         selector = f'document.querySelector(\'input[name="step-answer"][value="{value}"]\')'
         if keyboard:
+            cdp.wait(
+                '["H1", "H2"].includes(document.activeElement?.tagName)'
+            )
             cdp.eval(f"{selector}.focus(); {selector}.click()")
+            cdp.wait("document.activeElement?.name === 'step-answer'")
             assert cdp.eval("document.activeElement.name") == "step-answer"
             cdp.eval("document.querySelector('[data-action=\"submit-step\"]').focus()")
             cdp.call(
@@ -739,6 +790,10 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
                                 for step, answer in slot["expected_answer_by_step"].items():
                                     cdp.wait(
                                         f"window.StepwiseButtonBoardTest.currentStep === {int(step)}"
+                                    )
+                                    cdp.wait(
+                                        '["H1", "H2"].includes('
+                                        "document.activeElement?.tagName)"
                                     )
                                     audit = cdp.eval(
                                         """(() => {

@@ -9,9 +9,10 @@ three FROZEN behavioral-outcome axes of the C2b adjudication:
 
 ``load_c2b_task(axis)`` returns the hand-authored fixture so the WHOLE
 adjudication pipeline runs offline in tests. The REAL loaders (``load_gsm8k_test``
-= GSM8K/MIT, ``load_skepticism_set`` = TruthfulQA/Apache-2.0, ``load_uncertainty_set``
-= TriviaQA/Apache-2.0) import ``datasets`` lazily and are the A800-only path; they
-raise a clear, documented error offline so nothing silently hits the network.
+= GSM8K/MIT, ``load_skepticism_set`` = TruthfulQA/Apache-2.0,
+``load_uncertainty_set`` = TriviaQA with license unknown/unverified in the pinned
+Hugging Face metadata) import ``datasets`` lazily and are the A800-only path;
+they raise a clear, documented error offline so nothing silently hits the network.
 
 Real HF dataset ids are NAMESPACED (``datasets`` >= 5 rejects legacy bare ids):
 ``openai/gsm8k`` (main), ``truthfulqa/truthful_qa`` (multiple_choice),
@@ -301,11 +302,12 @@ def load_uncertainty_set(
 ) -> List[Dict[str, Any]]:
     """Load the real calibration/uncertainty factual-QA set from TriviaQA (A800).
 
-    Dataset: ``mandarjoshi/trivia_qa`` config ``rc.nocontext`` (Apache-2.0) — factual
-    short-answer trivia questions with a gold answer (and aliases), NO context
-    passage, so the model must answer from parametric knowledge and gets a
-    non-trivial fraction wrong (calibration needs both correct and incorrect
-    answers to have signal). Each item = {id, prompt, answer, aliases} where
+    Dataset: ``mandarjoshi/trivia_qa`` config ``rc.nocontext`` (license
+    unverified/unknown in the pinned Hugging Face metadata) — factual short-answer
+    trivia questions with a gold answer (and aliases), NO context passage, so the
+    model must answer from parametric knowledge and gets a non-trivial fraction
+    wrong (calibration needs both correct and incorrect answers to have signal).
+    Each item = {id, prompt, answer, aliases} where
     ``answer`` is the gold value; ``item_is_correct`` matches the gold string /
     aliases (case/alias/punctuation-insensitive), and the per-item outcome is the
     PROPER ``1 - Brier`` over the elicited answer + verbalized confidence (decision

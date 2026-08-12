@@ -39,6 +39,9 @@ MAX_NEW_TOKENS = 64
 TEMPERATURE = 0.7
 N_EXTRACTION = 28
 N_STRONG = 16
+GLOBAL_TEST_ATTEMPT_ROOT = Path(
+    "/var/lib/cognitive-console/c2b-resolution-refinement/test-attempts"
+)
 
 
 def _sha256_bytes(payload: bytes) -> str:
@@ -57,6 +60,52 @@ def _atomic_json(path: Path, payload: Dict) -> None:
         encoding="utf-8",
     )
     os.replace(pending, path)
+
+
+def test_attempt_marker_path(experiment_id: str) -> Path:
+    """Canonical host-local TEST marker, independent of any artifact out-dir."""
+    experiment_id = str(experiment_id)
+    if not experiment_id or any(
+        char not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+        for char in experiment_id
+    ):
+        raise ValueError(f"unsafe experiment_id for TEST registry: {experiment_id!r}")
+    return GLOBAL_TEST_ATTEMPT_ROOT / f"{experiment_id}.json"
+
+
+def claim_test_attempt(
+    *,
+    experiment_id: str,
+    code_identity: Dict[str, object],
+    dev_selection_sha256: str,
+    out_dir: Path,
+) -> Path:
+    """Exclusively consume TEST once for an experiment on this execution host."""
+    marker = test_attempt_marker_path(experiment_id)
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "protocol_id": rr.PROTOCOL_ID,
+        "experiment_id": experiment_id,
+        "code_identity": code_identity,
+        "dev_selection_sha256": str(dev_selection_sha256),
+        "artifact_out_dir": str(Path(out_dir).resolve()),
+        "meaning": "TEST generation is authorized to begin exactly once",
+    }
+    encoded = (
+        json.dumps(payload, indent=2, sort_keys=True) + "\n"
+    ).encode("utf-8")
+    try:
+        fd = os.open(marker, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    except FileExistsError as exc:
+        raise PermissionError(
+            f"TEST-once guard: experiment {experiment_id!r} already has a "
+            f"host-global attempt marker at {marker}"
+        ) from exc
+    with os.fdopen(fd, "wb") as handle:
+        handle.write(encoded)
+        handle.flush()
+        os.fsync(handle.fileno())
+    return marker
 
 
 def _git_identity(expected_commit: Optional[str], require_clean: bool) -> Dict[str, object]:
@@ -344,6 +393,12 @@ def _test(args) -> int:
     if started.exists():
         raise ValueError("TEST-once guard: this output directory already started TEST")
     frozen = json.loads(selection_path.read_text(encoding="utf-8"))
+    if (
+        frozen.get("protocol_id") != rr.PROTOCOL_ID
+        or frozen.get("experiment_id") != rr.DEV_EXPERIMENT_ID
+        or frozen.get("phase") != "DEV"
+    ):
+        raise ValueError("sealed DEV identity does not match the frozen protocol")
     if frozen["code_identity"] != identity:
         raise ValueError("TEST code identity differs from sealed DEV")
     hardware = _capture_hardware(args.hardware_profile)
@@ -373,13 +428,19 @@ def _test(args) -> int:
     sampler_for_axis, collector = _sampler(
         frozen["hf_meta"], out_dir / "test" / "work"
     )
+    global_marker = claim_test_attempt(
+        experiment_id=rr.TEST_EXPERIMENT_ID,
+        code_identity=identity,
+        dev_selection_sha256=seal["dev_selection_sha256"],
+        out_dir=out_dir,
+    )
     _atomic_json(
         started,
         {
             "protocol_id": rr.PROTOCOL_ID,
             "experiment_id": rr.TEST_EXPERIMENT_ID,
+            "global_attempt_marker": str(global_marker),
             "code_identity": identity,
-            "meaning": "TEST generation is now authorized to begin exactly once",
         },
     )
     axis_results = []

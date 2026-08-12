@@ -1,5 +1,6 @@
 import json
 import math
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
@@ -156,3 +157,53 @@ def test_synthetic_preflight_wires_power_and_sampling(tmp_path):
     assert payload["sampling"]["axes"]["uncertainty_awareness"]["n_test"] == 813
     assert payload["power"]["primary"]["skepticism"]["achieved_mde"] > 0.05
     assert payload["power"]["primary"]["uncertainty_awareness"]["achieved_mde"] <= 0.05
+
+
+def test_test_attempt_is_global_across_out_dirs(tmp_path, monkeypatch):
+    registry = tmp_path / "global-attempt-registry"
+    monkeypatch.setattr(runner, "GLOBAL_TEST_ATTEMPT_ROOT", registry)
+    identity = {"code_commit": "abc123", "dirty_tree": False}
+
+    marker = runner.claim_test_attempt(
+        experiment_id=rr.TEST_EXPERIMENT_ID,
+        code_identity=identity,
+        dev_selection_sha256="sha256:dev",
+        out_dir=tmp_path / "out-a",
+    )
+    assert marker == registry / f"{rr.TEST_EXPERIMENT_ID}.json"
+    payload = json.loads(marker.read_text(encoding="utf-8"))
+    assert payload["experiment_id"] == rr.TEST_EXPERIMENT_ID
+    assert payload["artifact_out_dir"] == str((tmp_path / "out-a").resolve())
+
+    with pytest.raises(PermissionError, match="already has a host-global"):
+        runner.claim_test_attempt(
+            experiment_id=rr.TEST_EXPERIMENT_ID,
+            code_identity=identity,
+            dev_selection_sha256="sha256:dev",
+            out_dir=tmp_path / "out-b",
+        )
+
+
+def test_concurrent_test_attempt_claim_is_exclusive(tmp_path, monkeypatch):
+    registry = tmp_path / "global-attempt-registry"
+    monkeypatch.setattr(runner, "GLOBAL_TEST_ATTEMPT_ROOT", registry)
+    identity = {"code_commit": "abc123", "dirty_tree": False}
+
+    def attempt(index):
+        try:
+            runner.claim_test_attempt(
+                experiment_id=rr.TEST_EXPERIMENT_ID,
+                code_identity=identity,
+                dev_selection_sha256="sha256:dev",
+                out_dir=tmp_path / f"out-{index}",
+            )
+            return "claimed"
+        except PermissionError:
+            return "rejected"
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        outcomes = list(pool.map(attempt, range(2)))
+
+    assert sorted(outcomes) == ["claimed", "rejected"]
+    markers = list(registry.glob("*.json"))
+    assert markers == [registry / f"{rr.TEST_EXPERIMENT_ID}.json"]

@@ -144,10 +144,15 @@ attempt; it does not authorize changing the rule.
 
 ## 7. TEST-once, immutability, and additive lineage
 
-The run sequence is **preflight → DEV → TEST exactly once** in a new external
-output directory. DEV is sealed by hashes. Immediately before first TEST
-generation, the runner writes `test/TEST_STARTED.json`; its existence blocks all
-later TEST attempts in that directory. TEST results are sealed separately.
+The run sequence is **preflight → DEV → TEST exactly once**. DEV is sealed by
+hashes. Immediately before first TEST generation, the runner exclusively creates
+the host-global marker
+`/var/lib/cognitive-console/c2b-resolution-refinement/test-attempts/c2b-resolution-caa-qwen-test-20260812.json`
+with `O_CREAT|O_EXCL`. This canonical path is keyed by experiment ID and is
+independent of `--out-dir`, so a concurrent invocation or a later invocation
+using another artifact directory fails closed. The per-output
+`test/TEST_STARTED.json` records the canonical marker but is not the uniqueness
+authority. TEST results are sealed separately.
 
 Do not use `--fresh`, delete the marker, reuse the output directory, or rerun
 because of significance. An operational failure after TEST starts is reported as

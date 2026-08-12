@@ -7,7 +7,7 @@ export function csvEscape(value) {
 
 export function noPrivateKeys(value) {
   const text = JSON.stringify(value);
-  return !/(expected|correct_reason_id|correct_scope_id|q1_state|paper_state|reason_class|scope_gate_required|decisive_positive|decisive_negative)/i.test(text);
+  return !/(expected|correct_reason_id|correct_scope_id|q1_state|paper_state|reason_class|scope_gate_required|q1_correct|scope_choice_correct|reason_choice_correct|reason_correct|gaa_trial|decisive_positive|decisive_negative)/i.test(text);
 }
 
 export function strictGaa(q1Correct, reasonChoiceCorrect, scopeGateRequired, scopeChoiceCorrect) {

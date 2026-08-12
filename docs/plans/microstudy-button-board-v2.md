@@ -12,7 +12,7 @@
 2. Add independent structured V10 fictional source and automatic router/reason/
    boundary key derivation.
 3. Generate public materials, private derived keys, and balanced sequences.
-4. Add an independent V2 server, button-board UI, signed V6 export, and
+4. Add an independent V2 server, button-board UI, signed V7 raw export, and
    V2-only analysis while leaving the V9 entry point and artifacts unchanged.
 5. Add generator, material, router, leakage, A/B, boundary-scoring, bilingual,
    export, analysis, HTTP security, privacy, Node, and real-browser tests.

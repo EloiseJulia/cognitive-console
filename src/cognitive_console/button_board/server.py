@@ -52,8 +52,31 @@ DEFAULT_KEY_FILE = Path(".runtime") / "button-board-v10-verification.key"
 PARTICIPANT_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 PRIVATE_FIELD_RE = re.compile(
     r"(expected|correct_reason|correct_scope|q1_state|paper_state|reason_class|"
-    r"scope_gate|quality_status|read_status|decisive_)",
+    r"scope_gate|quality_status|read_status|decisive_|q1_correct|"
+    r"scope_choice_correct|reason_choice_correct|reason_correct|gaa_trial)",
     re.IGNORECASE,
+)
+EXPORTED_TRIAL_FIELDS = (
+    "slot_index",
+    "scene_id",
+    "position",
+    "planned",
+    "presented",
+    "q1_selected",
+    "q1_locked_at",
+    "scope_selected",
+    "reason_selected",
+    "q1_submitted",
+    "scope_submitted",
+    "reason_submitted",
+    "complete",
+    "presented_q1_order",
+    "presented_scope_order",
+    "presented_reason_order",
+    "relative_rt_q1",
+    "relative_rt_scope",
+    "relative_rt_reason",
+    "materials_version",
 )
 
 
@@ -76,7 +99,6 @@ def _empty_trial(slot: dict[str, Any]) -> dict[str, Any]:
         "q1_locked_at": None,
         "scope_selected": None,
         "scope_choice_correct": None,
-        "scope_gate_required": slot["scope_gate_required"],
         "reason_selected": None,
         "reason_choice_correct": None,
         "reason_correct": None,
@@ -800,6 +822,13 @@ class ButtonBoardHandler(BaseHTTPRequestHandler):
     def _canonical_export(
         self, session: dict[str, Any], *, complete: bool
     ) -> dict[str, Any]:
+        trials = [
+            {
+                field: json.loads(json.dumps(trial[field]))
+                for field in EXPORTED_TRIAL_FIELDS
+            }
+            for trial in session["trials"]
+        ]
         return {
             "schema_version": MATERIAL_SCHEMA_VERSION,
             "export_schema_version": EXPORT_SCHEMA_VERSION,
@@ -822,9 +851,12 @@ class ButtonBoardHandler(BaseHTTPRequestHandler):
             "completion_status": "complete" if complete else "partial",
             "complete": complete,
             "practice_status": json.loads(json.dumps(session["practice_status"])),
-            "attention_check": json.loads(json.dumps(session["attention"])),
+            "attention_check": {
+                "q1_selected": session["attention"]["q1_selected"],
+                "reason_selected": session["attention"]["reason_selected"],
+            },
             "reflection": json.loads(json.dumps(session["reflection"])),
-            "trials": json.loads(json.dumps(session["trials"])),
+            "trials": trials,
         }
 
     @staticmethod

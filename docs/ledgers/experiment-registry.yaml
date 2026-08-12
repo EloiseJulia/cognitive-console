@@ -1617,7 +1617,7 @@ experiments:
   material_schema_version: microstudy-button-board-v10-bilingual
   materials_version: v10-button-board-20260812-draft
   sequence_schema_version: microstudy-button-board-sequences-v1
-  export_schema_version: microstudy-export-v6-button-board-bilingual-signed
+  export_schema_version: microstudy-export-v7-button-board-raw-signed
   analysis_version: button-board-gaa-v2
   seed: 20260812
   hardware: owner-local Windows loopback preview only; no participant run authorized
@@ -1656,9 +1656,10 @@ experiments:
     reason option, boundary option, and scope gate. F1/F2 are mutually exclusive
     and differ only in paired raw counts; their non-manipulated canonical hash
     must match. F1, F6, and F7 boundary choices enter Strict GAA. Public
-    materials, browser payloads, DOM, ARIA, and signed V6 exports contain no
-    expected keys. V5/V6 and V9/V10 mixing fail closed. The separate V2 server
-    retains loopback Host/origin, CSRF, capability, request-ID idempotency,
+    materials, browser payloads, DOM, ARIA, and signed V7 exports contain no
+    expected or score-derived keys. V5/V6/V7 and V9/V10 mixing fail closed.
+    The separate V2 server retains loopback Host/origin, CSRF, capability,
+    request-ID idempotency,
     success-only TTL, capacity, volatile memory, no access logs, no PII, and
     fail-closed owner-only verification-key handling. This row records synthetic
     implementation preparation, not a study run or paper evidence. Human data,

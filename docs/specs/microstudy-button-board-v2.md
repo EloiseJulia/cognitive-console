@@ -159,13 +159,19 @@ Identity is independent of V9:
 ```text
 schema_version: microstudy-button-board-v10-bilingual
 materials_version: v10-button-board-20260812-draft
-export_schema: microstudy-export-v6-button-board-bilingual-signed
+export_schema: microstudy-export-v7-button-board-raw-signed
 analysis_version: button-board-gaa-v2
 ```
 
-V5/V6 or V9/V10 mixtures fail closed. V2 uses
+V5/V6/V7 or V9/V10 mixtures fail closed. V2 uses
 `cognitive_console.button_board`; the existing `cognitive_console.microstudy`
 V9 entry point and default remain unchanged.
+
+Signed V7 JSON and CSV exports contain only raw selections, presentation
+orders, completion state, and relative timing. They must not contain
+`scope_gate_required`, correctness flags, GAA scores, attention-pass flags, or
+other answer-derived scoring keys. Validation and analysis recompute all scores
+privately from the structured materials and raw responses.
 
 `q1_locked_at` is an integer number of milliseconds relative to local session
 start, not an absolute timestamp. Q1, boundary, and reason response times are

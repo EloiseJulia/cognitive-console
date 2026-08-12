@@ -64,16 +64,9 @@ TRIAL_FIELDS = {
     "planned",
     "presented",
     "q1_selected",
-    "q1_correct",
     "q1_locked_at",
     "scope_selected",
-    "scope_choice_correct",
-    "scope_gate_required",
     "reason_selected",
-    "reason_choice_correct",
-    "reason_correct",
-    "gaa_trial",
-    "strict_gaa_trial",
     "q1_submitted",
     "scope_submitted",
     "reason_submitted",
@@ -86,6 +79,16 @@ TRIAL_FIELDS = {
     "relative_rt_reason",
     "materials_version",
 }
+DERIVED_SCORE_FIELDS = {
+    "q1_correct",
+    "scope_choice_correct",
+    "scope_gate_required",
+    "reason_choice_correct",
+    "reason_correct",
+    "gaa_trial",
+    "strict_gaa_trial",
+    "pass",
+}
 
 
 def _require(condition: bool, message: str) -> None:
@@ -97,7 +100,7 @@ def _is_nonnegative_int_or_none(value: Any) -> bool:
     return value is None or (type(value) is int and value >= 0)
 
 
-def _assert_no_expected_keys(value: Any, path: str = "$") -> None:
+def _assert_no_private_keys(value: Any, path: str = "$") -> None:
     if isinstance(value, dict):
         for key, item in value.items():
             lowered = key.lower()
@@ -106,25 +109,82 @@ def _assert_no_expected_keys(value: Any, path: str = "$") -> None:
                 or "correct_reason_id" in lowered
                 or "correct_scope_id" in lowered
                 or lowered in {"paper_state", "reason_class"}
+                or lowered in DERIVED_SCORE_FIELDS
             ):
-                raise ExportError(f"private expected key in export at {path}.{key}")
-            _assert_no_expected_keys(item, f"{path}.{key}")
+                raise ExportError(f"private or derived key in export at {path}.{key}")
+            _assert_no_private_keys(item, f"{path}.{key}")
     elif isinstance(value, list):
         for index, item in enumerate(value):
-            _assert_no_expected_keys(item, f"{path}[{index}]")
+            _assert_no_private_keys(item, f"{path}[{index}]")
+
+
+def _trial_scores(
+    trial: dict[str, Any], slot: dict[str, Any]
+) -> dict[str, bool | None]:
+    q1_correct = (
+        trial["q1_selected"] == slot["q1_state"]
+        if trial["q1_submitted"]
+        else None
+    )
+    scope_choice_correct = (
+        trial["scope_selected"] == slot["correct_scope_id"]
+        if trial["scope_submitted"]
+        else None
+    )
+    reason_choice_correct = (
+        trial["reason_selected"] == slot["correct_reason_id"]
+        if trial["reason_submitted"]
+        else None
+    )
+    reason_correct = (
+        bool(reason_choice_correct)
+        and (
+            bool(scope_choice_correct)
+            if slot["scope_gate_required"]
+            else True
+        )
+        if trial["reason_submitted"]
+        else None
+    )
+    return {
+        "q1_correct": q1_correct,
+        "scope_choice_correct": scope_choice_correct,
+        "reason_choice_correct": reason_choice_correct,
+        "reason_correct": reason_correct,
+        "gaa_trial": q1_correct,
+        "strict_gaa_trial": (
+            bool(q1_correct) and bool(reason_correct)
+            if trial["reason_submitted"]
+            else None
+        ),
+    }
+
+
+def _attention_pass(attention: dict[str, Any]) -> bool | None:
+    if (
+        attention["q1_selected"] is None
+        or attention["reason_selected"] is None
+    ):
+        return None
+    _, _, keys = validated_sources()
+    return (
+        attention["q1_selected"] == keys["attention"]["q1_state"]
+        and attention["reason_selected"]
+        == keys["attention"]["correct_reason_id"]
+    )
 
 
 def validate_export(data: dict[str, Any], key: bytes) -> dict[str, Any]:
     _require(isinstance(data, dict), "export must be an object")
     _require(set(data) == SESSION_FIELDS, "unexpected or missing session fields")
-    _assert_no_expected_keys(data)
+    _assert_no_private_keys(data)
     _require(
         data["schema_version"] == MATERIAL_SCHEMA_VERSION,
         "wrong material schema; V9/V10 mixing is forbidden",
     )
     _require(
         data["export_schema_version"] == EXPORT_SCHEMA_VERSION,
-        "wrong export schema; V5/V6 mixing is forbidden",
+        "wrong export schema; V5/V6/V7 mixing is forbidden",
     )
     _require(
         data["sequence_schema_version"] == SEQUENCE_SCHEMA_VERSION,
@@ -248,18 +308,10 @@ def validate_export(data: dict[str, Any], key: bytes) -> dict[str, Any]:
             _require(_is_nonnegative_int_or_none(trial[field]), f"invalid {field}")
         if trial["q1_submitted"]:
             _require(trial["q1_selected"] in Q1_STATES, "invalid Q1 selection")
-            q1_correct = trial["q1_selected"] == slot["q1_state"]
-            _require(
-                trial["q1_correct"] is q1_correct
-                and trial["gaa_trial"] is q1_correct,
-                "Q1 score does not match derived router key",
-            )
         else:
             _require(
-                trial["q1_selected"] is None
-                and trial["q1_correct"] is None
-                and trial["gaa_trial"] is None,
-                "missing Q1 has populated score",
+                trial["q1_selected"] is None,
+                "missing Q1 has populated selection",
             )
         if trial["scope_submitted"]:
             _require(
@@ -274,25 +326,15 @@ def validate_export(data: dict[str, Any], key: bytes) -> dict[str, Any]:
                 trial["scope_selected"] in slot["scope_order_ids"],
                 "invalid scope selection",
             )
-            scope_correct = trial["scope_selected"] == slot["correct_scope_id"]
-            _require(
-                trial["scope_choice_correct"] is scope_correct,
-                "scope score does not match derived key",
-            )
         else:
             _require(
-                trial["scope_selected"] is None
-                and trial["scope_choice_correct"] is None,
-                "missing scope has populated fields",
+                trial["scope_selected"] is None,
+                "missing scope has populated selection",
             )
             _require(
                 trial["presented_scope_order"] in ([], slot["scope_order_ids"]),
                 "invalid unsubmitted scope order",
             )
-        _require(
-            trial["scope_gate_required"] is slot["scope_gate_required"],
-            "scope gate mismatch",
-        )
         if trial["reason_submitted"]:
             _require(
                 trial["presented_reason_order"] == slot["reason_order_ids"],
@@ -302,31 +344,11 @@ def validate_export(data: dict[str, Any], key: bytes) -> dict[str, Any]:
                 trial["reason_selected"] in slot["reason_order_ids"],
                 "invalid reason selection",
             )
-            reason_choice_correct = (
-                trial["reason_selected"] == slot["correct_reason_id"]
-            )
-            reason_correct = reason_choice_correct and (
-                bool(trial["scope_choice_correct"])
-                if slot["scope_gate_required"]
-                else True
-            )
-            strict = bool(trial["q1_correct"]) and reason_correct
-            _require(
-                trial["reason_choice_correct"] is reason_choice_correct,
-                "reason-choice score mismatch",
-            )
-            _require(trial["reason_correct"] is reason_correct, "reason score mismatch")
-            _require(
-                trial["strict_gaa_trial"] is strict,
-                "Strict GAA score mismatch",
-            )
+            _trial_scores(trial, slot)
         else:
             _require(
-                trial["reason_selected"] is None
-                and trial["reason_choice_correct"] is None
-                and trial["reason_correct"] is None
-                and trial["strict_gaa_trial"] is None,
-                "missing reason has populated fields",
+                trial["reason_selected"] is None,
+                "missing reason has populated selection",
             )
             _require(
                 trial["presented_reason_order"] in ([], slot["reason_order_ids"]),
@@ -343,13 +365,6 @@ def validate_export(data: dict[str, Any], key: bytes) -> dict[str, Any]:
         not ({"F1", "F2"} <= {trial["scene_id"] for trial in trials}),
         "one participant cannot receive both A/B variants",
     )
-    if data["complete"]:
-        _require(all(trial["complete"] for trial in trials), "complete export has gaps")
-        _require(data["attention_check"]["pass"] in {True, False}, "attention missing")
-        _require(
-            all(value is not None for value in data["reflection"].values()),
-            "complete export has missing reflection response",
-        )
     _require(
         set(data["practice_status"])
         == {"q1_selected", "scope_selected", "reason_selected", "complete"},
@@ -357,9 +372,24 @@ def validate_export(data: dict[str, Any], key: bytes) -> dict[str, Any]:
     )
     _require(
         set(data["attention_check"])
-        == {"q1_selected", "reason_selected", "pass"},
+        == {"q1_selected", "reason_selected"},
         "invalid attention status",
     )
+    _require(
+        data["attention_check"]["q1_selected"] in {*Q1_STATES, None}
+        and (
+            data["attention_check"]["reason_selected"] is None
+            or isinstance(data["attention_check"]["reason_selected"], str)
+        ),
+        "invalid attention response",
+    )
+    if data["complete"]:
+        _require(all(trial["complete"] for trial in trials), "complete export has gaps")
+        _require(_attention_pass(data["attention_check"]) is not None, "attention missing")
+        _require(
+            all(value is not None for value in data["reflection"].values()),
+            "complete export has missing reflection response",
+        )
     _require(
         set(data["reflection"]) == {"helpful", "confusing", "amount"},
         "invalid reflection",
@@ -399,24 +429,44 @@ def _mean(values: list[int | float]) -> float | None:
 
 def v9_compat_trial(trial: dict[str, Any]) -> dict[str, bool | None]:
     """Expose the documented score aliases without reusing the V9 schema."""
+    _, _, keys = validated_sources()
+    scores = _trial_scores(trial, keys["scenes"][trial["scene_id"]])
     return {
-        "q1_correct": trial["gaa_trial"],
-        "q2_correct": trial["reason_correct"],
-        "cca_correct": trial["strict_gaa_trial"],
+        "q1_correct": scores["gaa_trial"],
+        "q2_correct": scores["reason_correct"],
+        "cca_correct": scores["strict_gaa_trial"],
     }
 
 
 def analyze(exports: list[dict[str, Any]]) -> dict[str, Any]:
+    _, _, keys = validated_sources()
     complete = [row for row in exports if row["complete"]]
-    primary = [row for row in complete if row["attention_check"]["pass"] is True]
+    primary = [
+        row for row in complete if _attention_pass(row["attention_check"]) is True
+    ]
     sensitivity = complete
 
     def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
         gaa_counts = [
-            sum(bool(trial["gaa_trial"]) for trial in row["trials"]) for row in rows
+            sum(
+                bool(
+                    _trial_scores(
+                        trial, keys["scenes"][trial["scene_id"]]
+                    )["gaa_trial"]
+                )
+                for trial in row["trials"]
+            )
+            for row in rows
         ]
         strict_counts = [
-            sum(bool(trial["strict_gaa_trial"]) for trial in row["trials"])
+            sum(
+                bool(
+                    _trial_scores(
+                        trial, keys["scenes"][trial["scene_id"]]
+                    )["strict_gaa_trial"]
+                )
+                for trial in row["trials"]
+            )
             for row in rows
         ]
         confusion: Counter[tuple[str, str]] = Counter()
@@ -429,30 +479,30 @@ def analyze(exports: list[dict[str, Any]]) -> dict[str, Any]:
         rt_q1: list[int] = []
         rt_scope: list[int] = []
         rt_reason: list[int] = []
-        _, _, keys = validated_sources()
         source_scenes = {scene["scene_id"]: scene for scene in FORMAL_SCENES}
         for row in rows:
             for trial in row["trials"]:
                 expected = keys["scenes"][trial["scene_id"]]
+                scores = _trial_scores(trial, expected)
                 confusion[expected["q1_state"], trial["q1_selected"]] += 1
                 reason_accuracy[expected["reason_class"]].append(
-                    int(bool(trial["reason_choice_correct"]))
+                    int(bool(scores["reason_choice_correct"]))
                 )
                 cell = (
                     "state_correct_reason_correct"
-                    if trial["q1_correct"] and trial["reason_correct"]
+                    if scores["q1_correct"] and scores["reason_correct"]
                     else "state_correct_reason_wrong"
-                    if trial["q1_correct"]
+                    if scores["q1_correct"]
                     else "state_wrong_reason_correct"
-                    if trial["reason_correct"]
+                    if scores["reason_correct"]
                     else "state_wrong_reason_wrong"
                 )
                 state_reason_cells[cell] += 1
                 if trial["scene_id"] in {"F1", "F6", "F7"}:
                     scope_accuracy[trial["scene_id"]].append(
-                        int(bool(trial["scope_choice_correct"]))
+                        int(bool(scores["scope_choice_correct"]))
                     )
-                if not trial["scope_choice_correct"]:
+                if not scores["scope_choice_correct"]:
                     selected = next(
                         option
                         for option in source_scenes[trial["scene_id"]]["scope_options"]
@@ -461,7 +511,7 @@ def analyze(exports: list[dict[str, Any]]) -> dict[str, Any]:
                     scope_error_types[selected["tag"]] += 1
                 if trial["scene_id"] in {"F1", "F2"}:
                     ab_accuracy[row["ab_variant"]].append(
-                        int(bool(trial["q1_correct"]))
+                        int(bool(scores["q1_correct"]))
                     )
                     ab_selected[row["ab_variant"]][trial["q1_selected"]] += 1
                 rt_q1.append(trial["relative_rt_q1"])
@@ -528,7 +578,9 @@ def analyze(exports: list[dict[str, Any]]) -> dict[str, Any]:
         "materials_version": MATERIALS_VERSION,
         "completed_exports": len(complete),
         "attention_pass_rate": (
-            _mean([int(row["attention_check"]["pass"]) for row in complete])
+            _mean(
+                [int(bool(_attention_pass(row["attention_check"]))) for row in complete]
+            )
             if complete
             else None
         ),
@@ -538,9 +590,9 @@ def analyze(exports: list[dict[str, Any]]) -> dict[str, Any]:
         "completion_rate_among_exports": len(complete) / len(exports) if exports else None,
         "reflection_distribution": reflection,
         "v9_compatibility_aliases": {
-            "q1_correct": "gaa_trial",
-            "q2_correct": "reason_correct",
-            "cca_correct": "strict_gaa_trial",
+            "q1_correct": "recomputed_gaa_trial",
+            "q2_correct": "recomputed_reason_correct",
+            "cca_correct": "recomputed_strict_gaa_trial",
             "schema_reused": False,
         },
         "claim_boundary": (

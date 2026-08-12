@@ -1,5 +1,6 @@
 import contextlib
 import copy
+import csv
 import io
 import json
 import os
@@ -43,6 +44,39 @@ ROOT = Path(__file__).resolve().parents[1]
 RUNTIME = ROOT / ".runtime" / "tests-button-board-v10"
 TEST_KEY = b"button-board-test-key-32-bytes!!"
 CLIENTS: dict[str, dict] = {}
+DERIVED_SCORE_KEYS = {
+    "q1_correct",
+    "scope_choice_correct",
+    "scope_gate_required",
+    "reason_choice_correct",
+    "reason_correct",
+    "gaa_trial",
+    "strict_gaa_trial",
+    "pass",
+}
+PRIVATE_PARTICIPANT_KEYS = DERIVED_SCORE_KEYS | {
+    "correct_reason_id",
+    "correct_scope_id",
+    "q1_state",
+    "paper_state",
+    "reason_class",
+    "quality_status",
+    "read_status",
+}
+
+
+def nested_keys(value):
+    if isinstance(value, dict):
+        for key, item in value.items():
+            yield key
+            yield from nested_keys(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from nested_keys(item)
+
+
+def assert_no_participant_private_keys(value):
+    assert PRIVATE_PARTICIPANT_KEYS.isdisjoint(nested_keys(value))
 
 
 def request_json(base, path, body=None, *, headers=None, request_id=None):
@@ -234,6 +268,7 @@ def test_server_headers_selected_locale_projection_and_no_private_keys(live_serv
     assert chinese["selected_locale"] == "zh-Hans"
     assert english["sequence_count"] == 12
     for projection in (bootstrap, english, chinese):
+        assert_no_participant_private_keys(projection)
         text = json.dumps(projection, ensure_ascii=False)
         for forbidden in (
             "correct_reason_id",
@@ -249,6 +284,29 @@ def test_server_headers_selected_locale_projection_and_no_private_keys(live_serv
         assert "F1-R-A" not in text and "F2-R-A" not in text
     assert "All products, buttons" in english["common"]["disclaimer"]
     assert "本页所有产品" in chinese["common"]["disclaimer"]
+    created = start(base, "PAYLOAD-PRIVACY")
+    assert_no_participant_private_keys(created)
+    formal = advance_practice(base, created["attempt_id"], english["common"])
+    assert_no_participant_private_keys(formal)
+    slot = live_server[1].sessions[created["attempt_id"]]["plan"][0]
+    scope = request_json(
+        base,
+        "/api/q1",
+        {
+            "attempt_id": created["attempt_id"],
+            "answer": q1_state_to_public(slot["q1_state"]),
+        },
+    )
+    assert_no_participant_private_keys(scope)
+    reason = request_json(
+        base,
+        "/api/scope",
+        {
+            "attempt_id": created["attempt_id"],
+            "answer": slot["correct_scope_id"],
+        },
+    )
+    assert_no_participant_private_keys(reason)
     assert output.getvalue() == ""
 
 
@@ -281,7 +339,7 @@ def test_success_only_allocation_balances_sequence_and_ab_within_locale(live_ser
     assert zh_session["allocation_cell"] == 0
 
 
-def test_complete_signed_v6_export_strict_scope_scoring_and_analysis(live_server):
+def test_complete_signed_v7_raw_export_strict_scope_scoring_and_analysis(live_server):
     base, server = live_server
     data = complete_attempt(base, server)
     assert validate_export(data, TEST_KEY) is data
@@ -289,14 +347,12 @@ def test_complete_signed_v6_export_strict_scope_scoring_and_analysis(live_server
     assert data["export_schema_version"] == EXPORT_SCHEMA_VERSION
     assert data["materials_version"] == MATERIALS_VERSION
     assert data["analysis_version"] == ANALYSIS_VERSION
-    assert data["attention_check"]["pass"] is True
-    assert all(trial["gaa_trial"] for trial in data["trials"])
-    assert all(trial["strict_gaa_trial"] for trial in data["trials"])
-    assert {
-        trial["scene_id"]
+    assert DERIVED_SCORE_KEYS.isdisjoint(nested_keys(data))
+    assert set(data["attention_check"]) == {"q1_selected", "reason_selected"}
+    assert all(
+        DERIVED_SCORE_KEYS.isdisjoint(trial)
         for trial in data["trials"]
-        if trial["scope_gate_required"]
-    } == {"F1", "F6", "F7"}
+    )
     text = json.dumps(data, ensure_ascii=False)
     for forbidden in (
         "correct_reason_id",
@@ -304,8 +360,16 @@ def test_complete_signed_v6_export_strict_scope_scoring_and_analysis(live_server
         "reason_class",
         "paper_state",
         "expected",
+        *DERIVED_SCORE_KEYS,
     ):
         assert forbidden not in text
+    csv_rows = list(csv.DictReader(io.StringIO(ButtonBoardHandler._csv(data))))
+    assert len(csv_rows) == 6
+    assert DERIVED_SCORE_KEYS.isdisjoint(csv_rows[0])
+    assert set(json.loads(csv_rows[0]["attention_check"])) == {
+        "q1_selected",
+        "reason_selected",
+    }
     summary = analyze([data])
     assert summary["primary_attention_pass"]["mean_gaa_rate"] == 1.0
     assert summary["primary_attention_pass"]["mean_strict_gaa_rate"] == 1.0
@@ -317,6 +381,20 @@ def test_complete_signed_v6_export_strict_scope_scoring_and_analysis(live_server
     }
     assert summary["v9_compatibility_aliases"]["schema_reused"] is False
     assert "does not test benefit" in summary["claim_boundary"]
+
+    wrong_scopes = copy.deepcopy(data)
+    plan = server.sessions[data["attempt_id"]]["plan"]
+    for trial, slot in zip(wrong_scopes["trials"], plan):
+        trial["scope_selected"] = next(
+            option_id
+            for option_id in slot["scope_order_ids"]
+            if option_id != slot["correct_scope_id"]
+        )
+    wrong_scopes = sign_export(wrong_scopes, TEST_KEY)
+    assert validate_export(wrong_scopes, TEST_KEY)
+    wrong_summary = analyze([wrong_scopes])
+    assert wrong_summary["primary_attention_pass"]["mean_gaa_rate"] == 1.0
+    assert wrong_summary["primary_attention_pass"]["mean_strict_gaa_rate"] == 0.5
 
 
 def test_wrong_scope_removes_strict_credit_only_on_frozen_scope_gate(live_server):
@@ -351,13 +429,17 @@ def test_wrong_scope_removes_strict_credit_only_on_frozen_scope_gate(live_server
             "/api/reason",
             {"attempt_id": attempt, "answer": slot["correct_reason_id"]},
         )
+    trials = server.sessions[attempt]["trials"]
+    plan = server.sessions[attempt]["plan"]
     gated = [
-        trial for trial in server.sessions[attempt]["trials"]
-        if trial["scope_gate_required"]
+        trial
+        for trial, slot in zip(trials, plan)
+        if slot["scope_gate_required"]
     ]
     nongated = [
-        trial for trial in server.sessions[attempt]["trials"]
-        if not trial["scope_gate_required"]
+        trial
+        for trial, slot in zip(trials, plan)
+        if not slot["scope_gate_required"]
     ]
     assert all(trial["gaa_trial"] for trial in gated + nongated)
     assert all(not trial["strict_gaa_trial"] for trial in gated)
@@ -365,7 +447,7 @@ def test_wrong_scope_removes_strict_credit_only_on_frozen_scope_gate(live_server
     assert all(not trial["scope_choice_correct"] for trial in gated + nongated)
 
 
-def test_partial_export_signature_tamper_wrong_key_and_v5_hardfail(live_server):
+def test_partial_export_signature_tamper_wrong_key_and_old_schema_hardfail(live_server):
     base, server = live_server
     materials = welcome(base)
     created = start(base, "PARTIAL")
@@ -383,11 +465,20 @@ def test_partial_export_signature_tamper_wrong_key_and_v5_hardfail(live_server):
         validate_export(tampered, TEST_KEY)
     with pytest.raises(ExportError, match="wrong verification key"):
         validate_export(partial, b"another-key-that-is-long-enough!!")
-    v5 = copy.deepcopy(partial)
-    v5["export_schema_version"] = "microstudy-export-v5-scenario-bilingual-signed"
-    v5 = sign_export(v5, TEST_KEY)
-    with pytest.raises(ExportError, match="V5/V6"):
-        validate_export(v5, TEST_KEY)
+    for old_version in (
+        "microstudy-export-v5-scenario-bilingual-signed",
+        "microstudy-export-v6-button-board-bilingual-signed",
+    ):
+        old = copy.deepcopy(partial)
+        old["export_schema_version"] = old_version
+        old = sign_export(old, TEST_KEY)
+        with pytest.raises(ExportError, match="V5/V6/V7"):
+            validate_export(old, TEST_KEY)
+    leaked = copy.deepcopy(partial)
+    leaked["trials"][0]["scope_gate_required"] = False
+    leaked = sign_export(leaked, TEST_KEY)
+    with pytest.raises(ExportError, match="private or derived"):
+        validate_export(leaked, TEST_KEY)
 
 
 def test_request_security_idempotency_capacity_ttl_and_memory_only(live_server):
@@ -517,10 +608,10 @@ def test_load_exports_rejects_duplicates_and_mixed_schema(live_server):
     with pytest.raises(ExportError, match="duplicate export"):
         load_exports([first, second], TEST_KEY)
     mixed = copy.deepcopy(data)
-    mixed["export_schema_version"] = "microstudy-export-v5-scenario-bilingual-signed"
+    mixed["export_schema_version"] = "microstudy-export-v6-button-board-bilingual-signed"
     mixed = sign_export(mixed, TEST_KEY)
     second.write_text(json.dumps(mixed), encoding="utf-8")
-    with pytest.raises(ExportError, match="V5/V6"):
+    with pytest.raises(ExportError, match="V5/V6/V7"):
         load_exports([first, second], TEST_KEY)
 
 
@@ -546,6 +637,12 @@ def test_static_dom_aria_privacy_keyboard_and_desktop_contract():
         "paper_state",
         "reason_class",
         "scope_gate_required",
+        "q1_correct",
+        "scope_choice_correct",
+        "reason_choice_correct",
+        "reason_correct",
+        "gaa_trial",
+        "strict_gaa_trial",
     ):
         assert forbidden not in html
 
@@ -760,7 +857,9 @@ def test_real_chrome_edge_button_board_en_zh_zoom_keyboard_and_desktop_gate():
                                         h1:document.querySelectorAll('#stage h1').length,
                                         private:new RegExp(
                                           'expected|correct_reason_id|correct_scope_id|q1_state|'
-                                          +'paper_state|reason_class|scope_gate_required','i'
+                                          +'paper_state|reason_class|scope_gate_required|q1_correct|'
+                                          +'scope_choice_correct|reason_choice_correct|reason_correct|'
+                                          +'gaa_trial','i'
                                         ).test(html),
                                         aria:[...document.querySelectorAll('#stage [aria-label]')]
                                           .map(n=>n.getAttribute('aria-label')).join(' ')

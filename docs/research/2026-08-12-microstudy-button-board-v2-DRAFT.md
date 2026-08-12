@@ -64,13 +64,16 @@ owner/human approval before data collection.
 ## Export and analysis identity
 
 Only signed
-`microstudy-export-v6-button-board-bilingual-signed` products with material
+`microstudy-export-v7-button-board-raw-signed` products with material
 schema `microstudy-button-board-v10-bilingual`, material version
 `v10-button-board-20260812-draft`, and analysis version `button-board-gaa-v2`
 are valid. Signature, locale hash, canonical material hash, sequence hash,
 private-derivation hash, invariance hash, allocation cell, sequence, variant,
 trial identity, presentation order, state transitions, and recomputed scores
-must all validate. V9/V10 and V5/V6 mixtures fail closed.
+must all validate. V9/V10 and V5/V6/V7 mixtures fail closed.
+The signed participant artifact contains raw responses and timing only; scope
+gates, correctness flags, attention-pass flags, and GAA scores are recomputed
+privately during validation and analysis.
 
 ## Claim boundary
 

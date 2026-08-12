@@ -26,7 +26,7 @@ def test_v10_generator_validator_and_versions_are_exact():
     assert report["materials_version"] == "v10-button-board-20260812-draft"
     assert (
         report["export_schema_version"]
-        == "microstudy-export-v6-button-board-bilingual-signed"
+        == "microstudy-export-v7-button-board-raw-signed"
     )
     assert report["analysis_version"] == "button-board-gaa-v2"
     assert report["formal_scene_count"] == 6

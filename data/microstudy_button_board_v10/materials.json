@@ -2,7 +2,7 @@
   "schema_version": "microstudy-button-board-v10-bilingual",
   "source_schema_version": "microstudy-button-board-source-v1",
   "materials_version": "v10-button-board-20260812-draft",
-  "export_schema_version": "microstudy-export-v6-button-board-bilingual-signed",
+  "export_schema_version": "microstudy-export-v7-button-board-raw-signed",
   "analysis_version": "button-board-gaa-v2",
   "ab_invariance_hash": "bf1d1157e7134d5cabacc71000a432f9caa749305f5108274fcaf9106bf9a523",
   "locale_contract": {

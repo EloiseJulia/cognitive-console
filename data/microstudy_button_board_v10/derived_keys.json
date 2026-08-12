@@ -1,0 +1,108 @@
+{
+  "schema_version": "microstudy-button-board-derived-keys-v1",
+  "materials_version": "v10-button-board-20260812-draft",
+  "source_schema_version": "microstudy-button-board-source-v1",
+  "ab_invariance_hash": "bf1d1157e7134d5cabacc71000a432f9caa749305f5108274fcaf9106bf9a523",
+  "practice": {
+    "read_status": "usable",
+    "comparison": "missing",
+    "quality_status": "pass",
+    "scope_status": "exact",
+    "q1_state": "Q1_DIAGNOSTIC",
+    "paper_state": "D",
+    "reason_class": "READ_WITHOUT_CONTROL_COMPARISON",
+    "correct_reason_id": "P1-R-B",
+    "correct_scope_id": "P1-S-A",
+    "scope_gate_required": false
+  },
+  "scenes": {
+    "F1": {
+      "read_status": "usable",
+      "comparison": "decisive_positive",
+      "quality_status": "pass",
+      "scope_status": "exact",
+      "q1_state": "Q1_SUPPORTED",
+      "paper_state": "S",
+      "reason_class": "POSITIVE_SAFE_SCOPED",
+      "correct_reason_id": "FAB-R-A",
+      "correct_scope_id": "FAB-S-C",
+      "scope_gate_required": true
+    },
+    "F2": {
+      "read_status": "usable",
+      "comparison": "decisive_negative",
+      "quality_status": "pass",
+      "scope_status": "exact",
+      "q1_state": "Q1_WITHHELD",
+      "paper_state": "W",
+      "reason_class": "RESOLVED_NO_SUPERIORITY",
+      "correct_reason_id": "FAB-R-B",
+      "correct_scope_id": "FAB-S-C",
+      "scope_gate_required": false
+    },
+    "F3": {
+      "read_status": "usable",
+      "comparison": "missing",
+      "quality_status": "pass",
+      "scope_status": "exact",
+      "q1_state": "Q1_DIAGNOSTIC",
+      "paper_state": "D",
+      "reason_class": "READ_WITHOUT_CONTROL_COMPARISON",
+      "correct_reason_id": "F3-R-D",
+      "correct_scope_id": "F3-S-D",
+      "scope_gate_required": false
+    },
+    "F4": {
+      "read_status": "usable",
+      "comparison": "decisive_positive",
+      "quality_status": "fail",
+      "scope_status": "exact",
+      "q1_state": "Q1_WITHHELD",
+      "paper_state": "W",
+      "reason_class": "COHERENCE_FAIL",
+      "correct_reason_id": "F4-R-B",
+      "correct_scope_id": "F4-S-B",
+      "scope_gate_required": false
+    },
+    "F5": {
+      "read_status": "usable",
+      "comparison": "mixed",
+      "quality_status": "pass",
+      "scope_status": "exact",
+      "q1_state": "Q1_UNRESOLVED",
+      "paper_state": "U",
+      "reason_class": "COMPARISON_UNCLEAR",
+      "correct_reason_id": "F5-R-A",
+      "correct_scope_id": "F5-S-A",
+      "scope_gate_required": false
+    },
+    "F6": {
+      "read_status": "usable",
+      "comparison": "decisive_positive",
+      "quality_status": "pass",
+      "scope_status": "scope_missing",
+      "q1_state": "Q1_UNRESOLVED",
+      "paper_state": "U",
+      "reason_class": "POSITIVE_SCOPE_UNSPECIFIED",
+      "correct_reason_id": "F6-R-C",
+      "correct_scope_id": "F6-S-C",
+      "scope_gate_required": true
+    },
+    "F7": {
+      "read_status": "usable",
+      "comparison": "decisive_positive",
+      "quality_status": "pass",
+      "scope_status": "exact",
+      "q1_state": "Q1_SUPPORTED",
+      "paper_state": "S",
+      "reason_class": "POSITIVE_SAFE_SCOPED",
+      "correct_reason_id": "F7-R-B",
+      "correct_scope_id": "F7-S-D",
+      "scope_gate_required": true
+    }
+  },
+  "attention": {
+    "q1_state": "Q1_UNRESOLVED",
+    "correct_reason_id": "AC1-R-B"
+  }
+}

@@ -1,0 +1,795 @@
+{
+  "schema_version": "microstudy-button-board-sequences-v1",
+  "materials_version": "v10-button-board-20260812-draft",
+  "allocation_cycle": {
+    "cells_per_locale": 24,
+    "sequence_count": 12,
+    "ab_variants": [
+      "F1",
+      "F2"
+    ],
+    "rule": "paired cells per sequence; F1 then F2; success-only"
+  },
+  "sequences": [
+    {
+      "sequence_id": "BB10-01",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "FAB",
+          "q1_order": [
+            "board-use",
+            "board-info",
+            "board-off",
+            "board-check"
+          ]
+        },
+        {
+          "position": 2,
+          "scene_slot": "F3",
+          "q1_order": [
+            "board-info",
+            "board-off",
+            "board-check",
+            "board-use"
+          ]
+        },
+        {
+          "position": 3,
+          "scene_slot": "F7",
+          "q1_order": [
+            "board-off",
+            "board-check",
+            "board-use",
+            "board-info"
+          ]
+        },
+        {
+          "position": 4,
+          "scene_slot": "F4",
+          "q1_order": [
+            "board-check",
+            "board-use",
+            "board-info",
+            "board-off"
+          ]
+        },
+        {
+          "position": 5,
+          "scene_slot": "F6",
+          "q1_order": [
+            "board-use",
+            "board-info",
+            "board-off",
+            "board-check"
+          ]
+        },
+        {
+          "position": 6,
+          "scene_slot": "F5",
+          "q1_order": [
+            "board-check",
+            "board-off",
+            "board-info",
+            "board-use"
+          ]
+        }
+      ]
+    },
+    {
+      "sequence_id": "BB10-02",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F3",
+          "q1_order": [
+            "board-use",
+            "board-info",
+            "board-off",
+            "board-check"
+          ]
+        },
+        {
+          "position": 2,
+          "scene_slot": "F4",
+          "q1_order": [
+            "board-info",
+            "board-off",
+            "board-check",
+            "board-use"
+          ]
+        },
+        {
+          "position": 3,
+          "scene_slot": "FAB",
+          "q1_order": [
+            "board-off",
+            "board-check",
+            "board-use",
+            "board-info"
+          ]
+        },
+        {
+          "position": 4,
+          "scene_slot": "F5",
+          "q1_order": [
+            "board-check",
+            "board-use",
+            "board-info",
+            "board-off"
+          ]
+        },
+        {
+          "position": 5,
+          "scene_slot": "F7",
+          "q1_order": [
+            "board-info",
+            "board-off",
+            "board-check",
+            "board-use"
+          ]
+        },
+        {
+          "position": 6,
+          "scene_slot": "F6",
+          "q1_order": [
+            "board-off",
+            "board-info",
+            "board-use",
+            "board-check"
+          ]
+        }
+      ]
+    },
+    {
+      "sequence_id": "BB10-03",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F4",
+          "q1_order": [
+            "board-use",
+            "board-info",
+            "board-off",
+            "board-check"
+          ]
+        },
+        {
+          "position": 2,
+          "scene_slot": "F5",
+          "q1_order": [
+            "board-info",
+            "board-off",
+            "board-check",
+            "board-use"
+          ]
+        },
+        {
+          "position": 3,
+          "scene_slot": "F3",
+          "q1_order": [
+            "board-off",
+            "board-check",
+            "board-use",
+            "board-info"
+          ]
+        },
+        {
+          "position": 4,
+          "scene_slot": "F6",
+          "q1_order": [
+            "board-check",
+            "board-use",
+            "board-info",
+            "board-off"
+          ]
+        },
+        {
+          "position": 5,
+          "scene_slot": "FAB",
+          "q1_order": [
+            "board-off",
+            "board-check",
+            "board-use",
+            "board-info"
+          ]
+        },
+        {
+          "position": 6,
+          "scene_slot": "F7",
+          "q1_order": [
+            "board-info",
+            "board-use",
+            "board-check",
+            "board-off"
+          ]
+        }
+      ]
+    },
+    {
+      "sequence_id": "BB10-04",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F5",
+          "q1_order": [
+            "board-use",
+            "board-info",
+            "board-off",
+            "board-check"
+          ]
+        },
+        {
+          "position": 2,
+          "scene_slot": "F6",
+          "q1_order": [
+            "board-info",
+            "board-off",
+            "board-check",
+            "board-use"
+          ]
+        },
+        {
+          "position": 3,
+          "scene_slot": "F4",
+          "q1_order": [
+            "board-off",
+            "board-check",
+            "board-use",
+            "board-info"
+          ]
+        },
+        {
+          "position": 4,
+          "scene_slot": "F7",
+          "q1_order": [
+            "board-check",
+            "board-use",
+            "board-info",
+            "board-off"
+          ]
+        },
+        {
+          "position": 5,
+          "scene_slot": "F3",
+          "q1_order": [
+            "board-check",
+            "board-use",
+            "board-info",
+            "board-off"
+          ]
+        },
+        {
+          "position": 6,
+          "scene_slot": "FAB",
+          "q1_order": [
+            "board-use",
+            "board-check",
+            "board-off",
+            "board-info"
+          ]
+        }
+      ]
+    },
+    {
+      "sequence_id": "BB10-05",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F6",
+          "q1_order": [
+            "board-use",
+            "board-info",
+            "board-off",
+            "board-check"
+          ]
+        },
+        {
+          "position": 2,
+          "scene_slot": "F7",
+          "q1_order": [
+            "board-info",
+            "board-off",
+            "board-check",
+            "board-use"
+          ]
+        },
+        {
+          "position": 3,
+          "scene_slot": "F5",
+          "q1_order": [
+            "board-off",
+            "board-check",
+            "board-use",
+            "board-info"
+          ]
+        },
+        {
+          "position": 4,
+          "scene_slot": "FAB",
+          "q1_order": [
+            "board-check",
+            "board-use",
+            "board-info",
+            "board-off"
+          ]
+        },
+        {
+          "position": 5,
+          "scene_slot": "F4",
+          "q1_order": [
+            "board-use",
+            "board-info",
+            "board-off",
+            "board-check"
+          ]
+        },
+        {
+          "position": 6,
+          "scene_slot": "F3",
+          "q1_order": [
+            "board-check",
+            "board-off",
+            "board-info",
+            "board-use"
+          ]
+        }
+      ]
+    },
+    {
+      "sequence_id": "BB10-06",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F7",
+          "q1_order": [
+            "board-use",
+            "board-info",
+            "board-off",
+            "board-check"
+          ]
+        },
+        {
+          "position": 2,
+          "scene_slot": "FAB",
+          "q1_order": [
+            "board-info",
+            "board-off",
+            "board-check",
+            "board-use"
+          ]
+        },
+        {
+          "position": 3,
+          "scene_slot": "F6",
+          "q1_order": [
+            "board-off",
+            "board-check",
+            "board-use",
+            "board-info"
+          ]
+        },
+        {
+          "position": 4,
+          "scene_slot": "F3",
+          "q1_order": [
+            "board-check",
+            "board-use",
+            "board-info",
+            "board-off"
+          ]
+        },
+        {
+          "position": 5,
+          "scene_slot": "F5",
+          "q1_order": [
+            "board-info",
+            "board-off",
+            "board-check",
+            "board-use"
+          ]
+        },
+        {
+          "position": 6,
+          "scene_slot": "F4",
+          "q1_order": [
+            "board-off",
+            "board-info",
+            "board-use",
+            "board-check"
+          ]
+        }
+      ]
+    },
+    {
+      "sequence_id": "BB10-07",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F5",
+          "q1_order": [
+            "board-use",
+            "board-info",
+            "board-off",
+            "board-check"
+          ]
+        },
+        {
+          "position": 2,
+          "scene_slot": "F6",
+          "q1_order": [
+            "board-info",
+            "board-off",
+            "board-check",
+            "board-use"
+          ]
+        },
+        {
+          "position": 3,
+          "scene_slot": "F4",
+          "q1_order": [
+            "board-off",
+            "board-check",
+            "board-use",
+            "board-info"
+          ]
+        },
+        {
+          "position": 4,
+          "scene_slot": "F7",
+          "q1_order": [
+            "board-check",
+            "board-use",
+            "board-info",
+            "board-off"
+          ]
+        },
+        {
+          "position": 5,
+          "scene_slot": "F3",
+          "q1_order": [
+            "board-off",
+            "board-check",
+            "board-use",
+            "board-info"
+          ]
+        },
+        {
+          "position": 6,
+          "scene_slot": "FAB",
+          "q1_order": [
+            "board-info",
+            "board-use",
+            "board-check",
+            "board-off"
+          ]
+        }
+      ]
+    },
+    {
+      "sequence_id": "BB10-08",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F6",
+          "q1_order": [
+            "board-use",
+            "board-info",
+            "board-off",
+            "board-check"
+          ]
+        },
+        {
+          "position": 2,
+          "scene_slot": "F7",
+          "q1_order": [
+            "board-info",
+            "board-off",
+            "board-check",
+            "board-use"
+          ]
+        },
+        {
+          "position": 3,
+          "scene_slot": "F5",
+          "q1_order": [
+            "board-off",
+            "board-check",
+            "board-use",
+            "board-info"
+          ]
+        },
+        {
+          "position": 4,
+          "scene_slot": "FAB",
+          "q1_order": [
+            "board-check",
+            "board-use",
+            "board-info",
+            "board-off"
+          ]
+        },
+        {
+          "position": 5,
+          "scene_slot": "F4",
+          "q1_order": [
+            "board-check",
+            "board-use",
+            "board-info",
+            "board-off"
+          ]
+        },
+        {
+          "position": 6,
+          "scene_slot": "F3",
+          "q1_order": [
+            "board-use",
+            "board-check",
+            "board-off",
+            "board-info"
+          ]
+        }
+      ]
+    },
+    {
+      "sequence_id": "BB10-09",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F7",
+          "q1_order": [
+            "board-use",
+            "board-info",
+            "board-off",
+            "board-check"
+          ]
+        },
+        {
+          "position": 2,
+          "scene_slot": "FAB",
+          "q1_order": [
+            "board-info",
+            "board-off",
+            "board-check",
+            "board-use"
+          ]
+        },
+        {
+          "position": 3,
+          "scene_slot": "F6",
+          "q1_order": [
+            "board-off",
+            "board-check",
+            "board-use",
+            "board-info"
+          ]
+        },
+        {
+          "position": 4,
+          "scene_slot": "F3",
+          "q1_order": [
+            "board-check",
+            "board-use",
+            "board-info",
+            "board-off"
+          ]
+        },
+        {
+          "position": 5,
+          "scene_slot": "F5",
+          "q1_order": [
+            "board-use",
+            "board-info",
+            "board-off",
+            "board-check"
+          ]
+        },
+        {
+          "position": 6,
+          "scene_slot": "F4",
+          "q1_order": [
+            "board-check",
+            "board-off",
+            "board-info",
+            "board-use"
+          ]
+        }
+      ]
+    },
+    {
+      "sequence_id": "BB10-10",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "FAB",
+          "q1_order": [
+            "board-use",
+            "board-info",
+            "board-off",
+            "board-check"
+          ]
+        },
+        {
+          "position": 2,
+          "scene_slot": "F3",
+          "q1_order": [
+            "board-info",
+            "board-off",
+            "board-check",
+            "board-use"
+          ]
+        },
+        {
+          "position": 3,
+          "scene_slot": "F7",
+          "q1_order": [
+            "board-off",
+            "board-check",
+            "board-use",
+            "board-info"
+          ]
+        },
+        {
+          "position": 4,
+          "scene_slot": "F4",
+          "q1_order": [
+            "board-check",
+            "board-use",
+            "board-info",
+            "board-off"
+          ]
+        },
+        {
+          "position": 5,
+          "scene_slot": "F6",
+          "q1_order": [
+            "board-info",
+            "board-off",
+            "board-check",
+            "board-use"
+          ]
+        },
+        {
+          "position": 6,
+          "scene_slot": "F5",
+          "q1_order": [
+            "board-off",
+            "board-info",
+            "board-use",
+            "board-check"
+          ]
+        }
+      ]
+    },
+    {
+      "sequence_id": "BB10-11",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F3",
+          "q1_order": [
+            "board-use",
+            "board-info",
+            "board-off",
+            "board-check"
+          ]
+        },
+        {
+          "position": 2,
+          "scene_slot": "F4",
+          "q1_order": [
+            "board-info",
+            "board-off",
+            "board-check",
+            "board-use"
+          ]
+        },
+        {
+          "position": 3,
+          "scene_slot": "FAB",
+          "q1_order": [
+            "board-off",
+            "board-check",
+            "board-use",
+            "board-info"
+          ]
+        },
+        {
+          "position": 4,
+          "scene_slot": "F5",
+          "q1_order": [
+            "board-check",
+            "board-use",
+            "board-info",
+            "board-off"
+          ]
+        },
+        {
+          "position": 5,
+          "scene_slot": "F7",
+          "q1_order": [
+            "board-off",
+            "board-check",
+            "board-use",
+            "board-info"
+          ]
+        },
+        {
+          "position": 6,
+          "scene_slot": "F6",
+          "q1_order": [
+            "board-info",
+            "board-use",
+            "board-check",
+            "board-off"
+          ]
+        }
+      ]
+    },
+    {
+      "sequence_id": "BB10-12",
+      "slots": [
+        {
+          "position": 1,
+          "scene_slot": "F4",
+          "q1_order": [
+            "board-use",
+            "board-info",
+            "board-off",
+            "board-check"
+          ]
+        },
+        {
+          "position": 2,
+          "scene_slot": "F5",
+          "q1_order": [
+            "board-info",
+            "board-off",
+            "board-check",
+            "board-use"
+          ]
+        },
+        {
+          "position": 3,
+          "scene_slot": "F3",
+          "q1_order": [
+            "board-off",
+            "board-check",
+            "board-use",
+            "board-info"
+          ]
+        },
+        {
+          "position": 4,
+          "scene_slot": "F6",
+          "q1_order": [
+            "board-check",
+            "board-use",
+            "board-info",
+            "board-off"
+          ]
+        },
+        {
+          "position": 5,
+          "scene_slot": "FAB",
+          "q1_order": [
+            "board-check",
+            "board-use",
+            "board-info",
+            "board-off"
+          ]
+        },
+        {
+          "position": 6,
+          "scene_slot": "F7",
+          "q1_order": [
+            "board-use",
+            "board-check",
+            "board-off",
+            "board-info"
+          ]
+        }
+      ]
+    }
+  ]
+}

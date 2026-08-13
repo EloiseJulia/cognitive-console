@@ -14,6 +14,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=7.0"]
+# Public deployment of the V11 stepwise study (Render free web + Postgres).
+# Optional: the loopback owner-preview and the offline test suite run without
+# it (psycopg is imported lazily inside PostgresExportStore).
+deploy = ["psycopg[binary]>=3.1"]
 # Optional real-model backend for the CPU activation provider + C1 facade pilot.
 # NOT a hard dependency: the offline test suite runs without these, and all
 # torch/transformers imports are lazy (inside methods) so the package imports

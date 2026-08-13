@@ -24,6 +24,41 @@ const app = {
 
 window.StepwiseButtonBoardTest = app;
 
+// Consent gate copy. PLACEHOLDER wording — to be replaced with the research
+// team's approved bilingual informed-consent text before real recruitment.
+// This block is a UI gate only: it does not touch study logic, expected
+// answers, keys, routing, or the signed export.
+const CONSENT_COPY = {
+  "zh-Hans": {
+    heading: "知情同意（占位文案）",
+    body: [
+      "【占位说明：以下为示意文案，正式版将由研究团队按已批准的知情同意书替换。】",
+      "这是一项匿名的小规模学术调查，了解普通人如何判断界面上的按钮。全部产品、按钮与试用记录均为虚构示意，不代表任何真实产品。",
+      "参与完全自愿。你可以随时关闭页面退出，不会有任何影响。我们只记录你在本页面内做出的选择，不收集姓名、联系方式或任何可识别你身份的信息。",
+    ],
+    agree: "我已阅读上述说明，并自愿参加。",
+    start: "同意并开始",
+    decline: "我不同意 / 退出",
+    declined: "感谢你的时间。你已退出，本页面未记录任何回答，可以直接关闭窗口。",
+  },
+  en: {
+    heading: "Informed consent (placeholder)",
+    body: [
+      "[Placeholder: this is illustrative text. The final version will be replaced with the research team's approved informed-consent statement.]",
+      "This is an anonymous, small academic survey about how people judge on-screen buttons. All products, buttons, and trial records are fictional examples and do not represent any real product.",
+      "Participation is entirely voluntary. You may close the page and withdraw at any time with no consequence. We record only the choices you make on this page; we do not collect your name, contact details, or any information that could identify you.",
+    ],
+    agree: "I have read the above and volunteer to take part.",
+    start: "Agree and begin",
+    decline: "I do not agree / Exit",
+    declined: "Thank you for your time. You have exited; no answers were recorded and you may close this window.",
+  },
+};
+
+function consentCopy() {
+  return CONSENT_COPY[app.locale] || CONSENT_COPY.en;
+}
+
 function el(tag, attrs = {}, text = null) {
   const node = document.createElement(tag);
   for (const [key, value] of Object.entries(attrs)) {
@@ -112,6 +147,28 @@ function localizedError() {
 
 function showWelcome() {
   const copy = app.materials.common.welcome;
+  const consent = consentCopy();
+  const startButton = el(
+    "button",
+    { type: "button", dataset: { action: "start" }, disabled: "", onclick: startStudy },
+    consent.start,
+  );
+  const agreeBox = el("input", { type: "checkbox", id: "consent-agree" });
+  agreeBox.addEventListener("change", () => {
+    if (agreeBox.checked) startButton.removeAttribute("disabled");
+    else startButton.setAttribute("disabled", "");
+  });
+  const agreeLabel = el("label", { class: "consent-agree", for: "consent-agree" });
+  agreeLabel.append(agreeBox, el("span", {}, " " + consent.agree));
+  const consentSection = el("section", { class: "consent", "aria-label": consent.heading });
+  consentSection.append(el("h2", {}, consent.heading));
+  for (const line of consent.body) consentSection.append(el("p", {}, line));
+  consentSection.append(agreeLabel);
+  const actions = el("div", { class: "actions" });
+  actions.append(
+    startButton,
+    el("button", { type: "button", class: "secondary", onclick: declineConsent }, consent.decline),
+  );
   startPanel.replaceChildren(
     el("h1", {}, copy.heading),
     el("p", { class: "subtitle" }, copy.goal),
@@ -120,14 +177,24 @@ function showWelcome() {
     el("p", {}, copy.card_only),
     el("p", {}, copy.privacy),
     el("p", { class: "draft" }, app.materials.common.draft),
+    consentSection,
     el("p", { class: "error", role: "alert", tabindex: "-1" }),
-    el("button", { type: "button", dataset: { action: "start" }, onclick: startStudy }, copy.start),
+    actions,
   );
   gate.hidden = true;
   stage.hidden = true;
   startPanel.hidden = false;
   header.hidden = false;
   footer.hidden = false;
+  focusHeading(startPanel);
+}
+
+function declineConsent() {
+  const consent = consentCopy();
+  startPanel.replaceChildren(
+    el("h1", {}, consent.heading),
+    el("p", {}, consent.declined),
+  );
   focusHeading(startPanel);
 }
 

@@ -1,14 +1,27 @@
-"""Loopback-only, volatile V11 stepwise owner-preview server."""
+"""V11 stepwise study server.
+
+Two modes share the same request logic:
+
+* Loopback owner-preview (default): binds a loopback address, loads the
+  verification key from a file, keeps all state in volatile memory.
+* Public deployment (opt-in via ``STEPWISE_PUBLIC_ORIGIN``): binds a public
+  address, reads the verification key and admin token from the environment,
+  validates CSRF/Host/Origin against the external public origin, and writes
+  every signed export to a durable store so a spun-down free instance never
+  loses submitted data.
+"""
 
 from __future__ import annotations
 
 import argparse
+import base64
 import csv
 import hmac
 import io
 import ipaddress
 import json
 import mimetypes
+import os
 import re
 import secrets
 import threading
@@ -45,6 +58,7 @@ from .materials import (
     scene_material,
     validated_sources,
 )
+from .storage import ExportStore, create_store
 
 
 STATIC_DIR = Path(__file__).with_name("static")
@@ -113,11 +127,17 @@ class StepwiseServer(ThreadingHTTPServer):
         address: tuple[str, int],
         key: bytes,
         *,
+        public_origin: str | None = None,
+        storage: ExportStore | None = None,
+        admin_token: str | None = None,
         max_sessions: int = 100,
         session_ttl_seconds: float = 7200,
     ):
         super().__init__(address, StepwiseHandler)
         self.verification_key = key
+        self.public_origin = public_origin
+        self.storage = storage
+        self.admin_token = admin_token
         self.sessions: dict[str, dict[str, Any]] = {}
         self.session_lock = threading.RLock()
         self.max_sessions = max_sessions
@@ -131,10 +151,14 @@ class StepwiseServer(ThreadingHTTPServer):
 
     @property
     def origin(self) -> str:
+        if self.public_origin is not None:
+            return self.public_origin
         return f"http://{self.server_address[0]}:{self.server_port}"
 
     @property
     def allowed_host(self) -> str:
+        if self.public_origin is not None:
+            return urlsplit(self.public_origin).netloc
         return f"{self.server_address[0]}:{self.server_port}"
 
     def cleanup_expired(self) -> None:
@@ -370,13 +394,86 @@ class StepwiseHandler(BaseHTTPRequestHandler):
             "options": question["options"],
         }
 
+    def _persist(
+        self,
+        session: dict[str, Any],
+        signed_export: dict[str, Any],
+        *,
+        complete: bool,
+    ) -> None:
+        storage = self.server.storage
+        if storage is None:
+            return
+        try:
+            storage.save_attempt(
+                session["attempt_id"],
+                run_id=session["run_id"],
+                completion_status="complete" if complete else "partial",
+                complete=complete,
+                signed_export=signed_export,
+            )
+        except Exception as exc:  # fail closed: do not advance phase on data loss
+            raise ValueError("could not persist attempt") from exc
+
+    @staticmethod
+    def _admin_csv(exports: list[dict[str, Any]]) -> str:
+        if not exports:
+            return ""
+        chunks: list[str] = []
+        for index, export in enumerate(exports):
+            csv_text = StepwiseHandler._csv(export)
+            if index == 0:
+                chunks.append(csv_text)
+            else:
+                parts = csv_text.split("\r\n", 1)
+                chunks.append(parts[1] if len(parts) > 1 else "")
+        return "".join(chunks)
+
+    def _admin_export(self, parsed: Any) -> None:
+        token = self.server.admin_token
+        provided = self.headers.get("X-Admin-Token", "")
+        if not token or not hmac.compare_digest(provided, token):
+            self._error(403, "admin token required")
+            return
+        if self.server.storage is None:
+            self._error(409, "persistence is not enabled")
+            return
+        query = parse_qs(parsed.query)
+        output_format = query.get("format", ["json"])[0]
+        if output_format not in {"json", "csv"}:
+            self._error(400, "unsupported export format")
+            return
+        rows = self.server.storage.all_attempts()
+        exports = [row["signed_export"] for row in rows]
+        if output_format == "json":
+            body = (
+                json.dumps(
+                    {"count": len(exports), "attempts": exports},
+                    ensure_ascii=False,
+                    indent=2,
+                )
+                + "\n"
+            ).encode("utf-8")
+            self._send(body, "application/json; charset=utf-8")
+        else:
+            self._send(
+                b"\xef\xbb\xbf" + self._admin_csv(exports).encode("utf-8"),
+                "text/csv; charset=utf-8",
+            )
+
     def do_GET(self) -> None:
         self.server.cleanup_expired()
+        parsed = urlsplit(self.path)
+        path = unquote(parsed.path)
+        if path == "/healthz":
+            self._send(b"ok\n", "text/plain; charset=utf-8")
+            return
         if not self._request_origin_ok(post=False):
             self._error(403, "request origin rejected")
             return
-        parsed = urlsplit(self.path)
-        path = unquote(parsed.path)
+        if path == "/admin/export":
+            self._admin_export(parsed)
+            return
         if path == "/api/bootstrap":
             materials, _, _ = validated_sources()
             self._json(
@@ -722,7 +819,9 @@ class StepwiseHandler(BaseHTTPRequestHandler):
         ):
             raise ValueError("attempt cannot be completed")
         export = self._canonical_export(session, complete=True)
-        session["signed_export"] = sign_export(export, self.server.verification_key)
+        signed = sign_export(export, self.server.verification_key)
+        self._persist(session, signed, complete=True)
+        session["signed_export"] = signed
         session["phase"] = "export_ready"
         return {"phase": "export_ready", "attempt_id": session["attempt_id"], "complete": True}
 
@@ -743,7 +842,9 @@ class StepwiseHandler(BaseHTTPRequestHandler):
         }:
             raise ValueError("partial export is not available in this phase")
         export = self._canonical_export(session, complete=False)
-        session["signed_export"] = sign_export(export, self.server.verification_key)
+        signed = sign_export(export, self.server.verification_key)
+        self._persist(session, signed, complete=False)
+        session["signed_export"] = signed
         session["phase"] = "export_ready"
         return {"phase": "export_ready", "attempt_id": session["attempt_id"], "complete": False}
 
@@ -832,27 +933,99 @@ def create_server(
     port: int = 8891,
     verification_key_file: Path | None = None,
     *,
+    public_origin: str | None = None,
+    verification_key: bytes | None = None,
+    storage: ExportStore | None = None,
+    admin_token: str | None = None,
     max_sessions: int = 100,
     session_ttl_seconds: float = 7200,
 ) -> StepwiseServer:
-    try:
-        address = ipaddress.ip_address(host)
-    except ValueError as exc:
-        raise ValueError("host must be a loopback IP address") from exc
-    if not address.is_loopback:
-        raise ValueError("refusing non-loopback host")
     if max_sessions < 1 or session_ttl_seconds <= 0:
         raise ValueError("session limits must be positive")
-    key = load_or_create_key(verification_key_file or DEFAULT_KEY_FILE)
+    if public_origin is None:
+        try:
+            address = ipaddress.ip_address(host)
+        except ValueError as exc:
+            raise ValueError("host must be a loopback IP address") from exc
+        if not address.is_loopback:
+            raise ValueError("refusing non-loopback host")
+        key = load_or_create_key(verification_key_file or DEFAULT_KEY_FILE)
+    else:
+        public_origin = public_origin.rstrip("/")
+        parsed = urlsplit(public_origin)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            raise ValueError("public_origin must be an absolute http(s) URL")
+        if not verification_key or len(verification_key) < 32:
+            raise ValueError("deployment requires a >=32 byte verification key")
+        if not admin_token:
+            raise ValueError("deployment requires an admin token")
+        key = verification_key
     return StepwiseServer(
         (host, port),
         key,
+        public_origin=public_origin,
+        storage=storage,
+        admin_token=admin_token,
         max_sessions=max_sessions,
         session_ttl_seconds=session_ttl_seconds,
     )
 
 
+def _decode_key(material: str) -> bytes:
+    material = material.strip()
+    if not material:
+        raise SystemExit("STEPWISE_VERIFICATION_KEY is required in deployment mode")
+    try:
+        key = bytes.fromhex(material)
+    except ValueError:
+        try:
+            key = base64.b64decode(material, validate=True)
+        except Exception as exc:
+            raise SystemExit(
+                "STEPWISE_VERIFICATION_KEY must be hex or base64"
+            ) from exc
+    if len(key) < 32:
+        raise SystemExit("STEPWISE_VERIFICATION_KEY must decode to >=32 bytes")
+    return key
+
+
+def _main_public(public_origin: str) -> int:
+    host = os.environ.get("STEPWISE_BIND_HOST", "0.0.0.0")
+    port = int(os.environ.get("PORT", "10000"))
+    admin_token = os.environ.get("STEPWISE_ADMIN_TOKEN", "").strip()
+    if not admin_token:
+        raise SystemExit("STEPWISE_ADMIN_TOKEN is required in deployment mode")
+    key = _decode_key(os.environ.get("STEPWISE_VERIFICATION_KEY", ""))
+    storage = create_store(os.environ.get("DATABASE_URL"))
+    max_sessions = int(os.environ.get("STEPWISE_MAX_SESSIONS", "500"))
+    server = create_server(
+        host,
+        port,
+        public_origin=public_origin,
+        verification_key=key,
+        storage=storage,
+        admin_token=admin_token,
+        max_sessions=max_sessions,
+    )
+    persistence = "postgres" if storage is not None else "volatile-memory"
+    print(
+        "Public V11 stepwise deployment "
+        f"bind={host}:{server.server_port} origin={server.origin} "
+        f"persistence={persistence}"
+    )
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        server.server_close()
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
+    deploy_origin = os.environ.get("STEPWISE_PUBLIC_ORIGIN", "").strip()
+    if deploy_origin:
+        return _main_public(deploy_origin)
     parser = argparse.ArgumentParser(
         description="Run the V11 stepwise button-board owner-local preview."
     )

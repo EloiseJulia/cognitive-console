@@ -1,0 +1,47 @@
+# Render Blueprint for the V11 stepwise study (public data collection).
+#
+# This deploys ONLY the button_board_stepwise study as a public web service
+# backed by a free Render Postgres database. Participant entry is fully public
+# (no access code); the owner downloads all submissions through a
+# token-guarded admin endpoint. The verification key and admin token live in
+# environment variables only — never in the repository or the image.
+#
+# Usage:
+#   1. In Render, create a new Blueprint pointing at this file.
+#   2. Set STEPWISE_PUBLIC_ORIGIN to the service's final URL, e.g.
+#      https://stepwise-study.onrender.com  (no trailing slash).
+#   3. Set STEPWISE_VERIFICATION_KEY to a fixed 64-hex-char secret, generated
+#      once with:  openssl rand -hex 32
+#      (Keep it stable forever so old signatures stay verifiable.)
+#   4. STEPWISE_ADMIN_TOKEN is auto-generated; read it from the Render
+#      dashboard and keep it private. Download data with:
+#        curl -H "X-Admin-Token: <token>" \
+#          https://<origin>/admin/export?format=json  -o submissions.json
+#        curl -H "X-Admin-Token: <token>" \
+#          https://<origin>/admin/export?format=csv   -o submissions.csv
+
+services:
+  - type: web
+    name: stepwise-study
+    runtime: python
+    plan: free
+    buildCommand: "pip install -e .[deploy]"
+    startCommand: "python -m cognitive_console.button_board_stepwise"
+    healthCheckPath: /healthz
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.5"
+      - key: STEPWISE_PUBLIC_ORIGIN
+        sync: false
+      - key: STEPWISE_VERIFICATION_KEY
+        sync: false
+      - key: STEPWISE_ADMIN_TOKEN
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: stepwise-db
+          property: connectionString
+
+databases:
+  - name: stepwise-db
+    plan: free

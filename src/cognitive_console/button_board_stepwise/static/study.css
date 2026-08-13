@@ -240,3 +240,19 @@ dialog::backdrop { background: rgba(20, 27, 36, .55); }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; scroll-behavior: auto !important; }
 }
+.consent {
+  margin: 16px 0;
+  padding: 16px 18px;
+  border: 1px solid #8c959f;
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+.consent h2 { margin-top: 0; }
+.consent-agree {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+  font-weight: 650;
+}
+.consent-agree input { margin-top: 4px; }

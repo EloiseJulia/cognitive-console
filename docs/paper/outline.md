@@ -16,7 +16,7 @@ A readable latent axis should not automatically become a control. Actionability 
 
 1. **Problem and metric shift.** A slider implies behavioral control. Legibility and output movement do not establish incremental actionability over the prompt channel.
 2. **Method and artifact.** A comparative evidence gate tests the candidate latent route against a strong but bounded 16-prompt channel. READ, TRANSFER, comparator, calibration warning, and evidence tier map the computational result to a blocking reason and record-specific interface action.
-3. **Evidence and implication.** No tested cell demonstrates superiority. The four uncertainty contrasts resolve in the comparator-negative direction, deliberation is mixed, and skepticism is underpowered near the registered margin. Four prospectively frozen new split seeds plus the previously observed frozen seed yield the same verdict across all five over the shared item pool. Positive controls narrow endpoint, instrument, and scale alternatives without supplying a passing latent behavioral positive control.
+3. **Evidence and implication.** No tested cell demonstrates superiority. The four uncertainty contrasts are negative under the frozen scorer as run, but the all-generation sign is unidentified in the one rechecked cell and three cells were not rechecked; deliberation is mixed, and skepticism is underpowered near the registered margin. Four prospectively frozen new split seeds plus the previously observed frozen seed yield the same verdict across all five over the shared item pool. Positive controls narrow endpoint, instrument, and scale alternatives without supplying a passing latent behavioral positive control.
 
 ## Section roles
 
@@ -28,7 +28,7 @@ Important interface promise → output-change criterion is insufficient → comp
 
 - Alex scenario makes the slider's promise concrete.
 - Establish the metric shift on the first page.
-- Introduce the 16-prompt comparator as a strong, fair, reconstructable existing channel.
+- Introduce the 16-prompt comparator as a strong, bounded, reconstructable existing channel (parity/blindness not established).
 - Present preregistration and positive controls as credibility assets.
 - Contributions: comparative criterion; five-field interface record; preregistered worked boundary.
 

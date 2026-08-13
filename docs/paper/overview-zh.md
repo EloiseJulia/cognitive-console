@@ -132,7 +132,7 @@ Facade denominator 是 same-origin positive-pole reach：`<mean(extraction-posit
 - direct steer-vs-baseline compliance 约 `+0.011`；
 - direct steer-vs-baseline `1-Brier` 约 `+0.0008`。
 
-所以不是“steering 直接伤害 baseline calibration”，而是 bounded prompt arm 相对 steer-near-baseline 更好。
+所以不是"steering 直接伤害 baseline calibration"，而是在 frozen scorer 下（as run）bounded prompt arm 相对 steer-near-baseline 分数更高——但该符号在唯一复查格（Qwen/CAA）的 all-generation missingness 下不可识别，其余三格未复查。
 
 E-0013 只复查最大 CAA×Qwen cell：
 
@@ -214,7 +214,7 @@ Console 不是展示更多模型内部信息，而是决定一个 affordance 的
 
 - 第一段集中声明：无 user study，因此 comprehensibility、usability、reliance effects 未测试；正文其它位置不重复这一完整免责声明；
 - 无 passing latent behavioral positive control；
-- C1 exploratory，单模型单 run，轴组成异质；
+- C1 exploratory，两模型各单 run，轴组成异质；
 - ITI 没有对应 READ validation；
 - F1 只复查 CAA×Qwen complete cases，adversarial bounds 跨 0，其余三格未复查；
 - skepticism 严重欠功效，deliberation 混合；

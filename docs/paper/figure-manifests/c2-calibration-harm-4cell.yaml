@@ -1,3 +1,4 @@
+status: "SUPERSEDED 2026-08-13 — the script-generated output_file below is NO LONGER included by main.tex; the manuscript now uses the hand-designed v5 figure fig3-uncertainty.pdf. Retained only as the numeric source-artifact lineage the v5 figure was verified against (see fig1-3-v5-design-provenance.md)."
 artifact_id: "fig-calibration-harm-4cell"
 artifact_type: "main companion figure"
 title: "Steer-vs-bounded-prompt uncertainty calibration contrast across steering methods and model families"

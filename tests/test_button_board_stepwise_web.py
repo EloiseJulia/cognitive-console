@@ -162,6 +162,10 @@ def advance_demonstration(base, attempt):
     assert current["phase"] == "demonstration"
     assert [row["step"] for row in current["worked_steps"]] == [1, 2, 3]
     assert all(row["evidence"] and row["why"] for row in current["worked_steps"])
+    assert all(
+        len([option for option in row["options"] if option["demonstrated"]]) == 1
+        for row in current["worked_steps"]
+    )
     assert current["destination"]["id"] == "dest-off"
     assert "options" not in current and "path" not in current
     current = request_json(base, "/api/continue", {"attempt_id": attempt})
@@ -543,9 +547,9 @@ def test_partial_signature_tamper_wrong_key_and_cross_version_hardfail(live_serv
         with pytest.raises(ExportError, match="V5/V6/V7/V8/V9/V11"):
             validate_export(old, TEST_KEY)
     old_materials = copy.deepcopy(partial)
-    old_materials["materials_version"] = "v11.1-stepwise-20260813-draft"
+    old_materials["materials_version"] = "v11.2-stepwise-20260813-draft"
     for trial in old_materials["trials"]:
-        trial["materials_version"] = "v11.1-stepwise-20260813-draft"
+        trial["materials_version"] = "v11.2-stepwise-20260813-draft"
     old_materials = sign_export(old_materials, TEST_KEY)
     with pytest.raises(ExportError, match="wrong materials version"):
         validate_export(old_materials, TEST_KEY)
@@ -707,6 +711,11 @@ def test_static_open_book_aria_privacy_keyboard_and_desktop_contract():
     assert 'class: "destination"' not in js
     assert ".destination" not in css
     assert "show-demonstration" in js and "worked-step" in css
+    assert "next-demonstration-step" in js
+    assert 'aria-live": "polite"' in js and 'aria-atomic": "true"' in js
+    assert "worked-option--demonstrated" in js and "worked-correct-label" in js
+    assert "worked-option--demonstrated" in css and "worked-reasoning" in css
+    assert "#dafbe1" in css and "#e7f3ff" in css
     assert "localStorage" not in js and "sessionStorage" not in js
     assert "performance.now" not in js
     assert "innerHTML" not in js
@@ -967,29 +976,119 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
                             cdp.wait("document.querySelector('[data-action=\"show-demonstration\"]')")
                             cdp.click("show-demonstration")
                             cdp.wait("document.querySelector('.demonstration-card')")
-                            demonstration_audit = cdp.eval(
+                            for demonstrated_step in range(1, 4):
+                                cdp.wait(
+                                    "document.activeElement?.classList.contains("
+                                    "'worked-step-heading')"
+                                )
+                                demonstration_audit = cdp.eval(
+                                    """(() => {
+                                      const shown=document.querySelector(
+                                        '.worked-option--demonstrated'
+                                      );
+                                      const reasoning=document.querySelector('.worked-reasoning');
+                                      const correctStyle=getComputedStyle(shown);
+                                      const reasoningStyle=getComputedStyle(reasoning);
+                                      return {
+                                        worked:document.querySelectorAll('.worked-step').length,
+                                        heading:document.querySelector(
+                                          '.worked-step-heading'
+                                        )?.innerText || '',
+                                        inputs:document.querySelectorAll(
+                                          '.demonstration-card input, .demonstration-card select, '
+                                          + '.demonstration-card [role="radio"]'
+                                        ).length,
+                                        options:document.querySelectorAll(
+                                          '.worked-option'
+                                        ).length,
+                                        demonstrated:document.querySelectorAll(
+                                          '.worked-option--demonstrated'
+                                        ).length,
+                                        correctText:shown?.innerText || '',
+                                        correctBackground:correctStyle.backgroundColor,
+                                        reasoningBackground:reasoningStyle.backgroundColor,
+                                        reasoningLabel:reasoning?.getAttribute('aria-label') || '',
+                                        next:Boolean(document.querySelector(
+                                          '[data-action="next-demonstration-step"]'
+                                        )),
+                                        destinationExplainers:document.querySelectorAll(
+                                          '.reference-panel .destination'
+                                        ).length,
+                                        checklist:Boolean(document.querySelector(
+                                          '.reference-panel .checklist'
+                                        )),
+                                        card:Boolean(document.querySelector('.record-card')),
+                                        originalMethod:document.querySelector(
+                                          '.record-card'
+                                        )?.innerText.includes(
+                                          window.StepwiseButtonBoardTest.materials.common.labels.existing
+                                        ),
+                                        live:document.querySelector(
+                                          '.worked-step'
+                                        )?.getAttribute('aria-live'),
+                                        atomic:document.querySelector(
+                                          '.worked-step'
+                                        )?.getAttribute('aria-atomic'),
+                                        activeClass:document.activeElement?.className || '',
+                                        private:/expected_state|comparison_rule|scope_correct|gaa_correct/i.test(
+                                          document.querySelector('#stage').outerHTML
+                                        ),
+                                      };
+                                    })()"""
+                                )
+                                assert demonstration_audit["worked"] == 1
+                                assert str(demonstrated_step) in demonstration_audit["heading"]
+                                assert demonstration_audit["inputs"] == 0
+                                assert demonstration_audit["options"] == 2
+                                assert demonstration_audit["demonstrated"] == 1
+                                assert (
+                                    app_label := cdp.eval(
+                                        "window.StepwiseButtonBoardTest.materials.common."
+                                        "demonstration.demonstrated_choice"
+                                    )
+                                ) in demonstration_audit["correctText"]
+                                assert demonstration_audit["correctBackground"] == "rgb(218, 251, 225)"
+                                assert demonstration_audit["reasoningBackground"] == "rgb(231, 243, 255)"
+                                assert demonstration_audit["reasoningLabel"]
+                                assert demonstration_audit["next"]
+                                assert demonstration_audit["destinationExplainers"] == 0
+                                assert demonstration_audit["checklist"]
+                                assert demonstration_audit["card"]
+                                assert demonstration_audit["originalMethod"]
+                                assert demonstration_audit["live"] == "polite"
+                                assert demonstration_audit["atomic"] == "true"
+                                assert "worked-step-heading" in demonstration_audit["activeClass"]
+                                assert not demonstration_audit["private"]
+                                press_button(
+                                    cdp,
+                                    '[data-action="next-demonstration-step"]',
+                                )
+                            cdp.wait("document.querySelector('[data-action=\"begin-formal\"]')")
+                            cdp.wait(
+                                "document.activeElement?.classList.contains("
+                                "'demonstration-result-heading')"
+                            )
+                            result_audit = cdp.eval(
                                 """(() => ({
                                   worked:document.querySelectorAll('.worked-step').length,
+                                  result:document.querySelectorAll(
+                                    '.demonstration-result'
+                                  ).length,
+                                  card:Boolean(document.querySelector('.record-card')),
+                                  activeClass:document.activeElement?.className || '',
                                   inputs:document.querySelectorAll(
                                     '.demonstration-card input, .demonstration-card select'
                                   ).length,
-                                  destinationExplainers:document.querySelectorAll(
-                                    '.reference-panel .destination'
-                                  ).length,
-                                  checklist:Boolean(document.querySelector('.reference-panel .checklist')),
-                                  private:/expected_state|comparison_rule|scope_correct|gaa_correct/i.test(
-                                    document.querySelector('#stage').outerHTML
-                                  ),
                                 }))()"""
                             )
-                            assert demonstration_audit == {
-                                "worked": 3,
+                            assert result_audit == {
+                                "worked": 0,
+                                "result": 1,
+                                "card": True,
+                                "activeClass": "demonstration-result-heading",
                                 "inputs": 0,
-                                "destinationExplainers": 0,
-                                "checklist": True,
-                                "private": False,
                             }
-                            cdp.click("begin-formal")
+                            press_button(cdp, '[data-action="begin-formal"]')
                             cdp.wait(
                                 "window.StepwiseButtonBoardTest.currentStep === 1"
                             )
@@ -1124,6 +1223,11 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
                         cdp.click("start")
                         cdp.wait("document.querySelector('[data-action=\"show-demonstration\"]')")
                         cdp.click("show-demonstration")
+                        for _ in range(3):
+                            cdp.wait(
+                                "document.querySelector('[data-action=\"next-demonstration-step\"]')"
+                            )
+                            cdp.click("next-demonstration-step")
                         cdp.wait("document.querySelector('[data-action=\"begin-formal\"]')")
                         cdp.click("begin-formal")
                         cdp.wait("document.querySelector('#save-exit-button:not([hidden])')")

@@ -1,7 +1,7 @@
 {
   "schema_version": "microstudy-button-board-stepwise-v11-bilingual",
   "source_schema_version": "microstudy-button-board-stepwise-source-v1",
-  "materials_version": "v11.2-stepwise-20260813-draft",
+  "materials_version": "v11.3-stepwise-20260813-draft",
   "export_schema_version": "microstudy-export-v8-stepwise-demonstration-signed",
   "analysis_version": "button-board-stepwise-gaa-v2",
   "ab_invariance_hash": "1202f424184b1cd2b7f1dd7f051eea20cf7ed51ace42982c7a50459d36d5bd9d",
@@ -43,7 +43,7 @@
     ],
     "sticky_reference_width_px": 300,
     "one_question_at_a_time": true,
-    "practice_mode": "read_only_worked_demonstration",
+    "practice_mode": "read_only_guided_demonstration",
     "formal_correctness_feedback": false
   },
   "locales": {
@@ -68,11 +68,14 @@
         },
         "demonstration": {
           "heading": "Worked example",
-          "intro": "This fictional example is separate from every formal scenario. Read the card, then follow each shown choice and its card evidence.",
+          "intro": "This fictional example is separate from every formal scenario. The card stays visible while one worked question is revealed at a time.",
           "step": "Step {step}",
-          "choose": "Choose",
+          "options": "Choices for this step",
+          "demonstrated_choice": "✓ Correct choice",
+          "reasoning": "How this step is solved",
           "evidence": "Card evidence",
           "why": "Why",
+          "next_step": "Next step",
           "result": "Worked result"
         },
         "formal_intro": {
@@ -354,7 +357,18 @@
           {
             "step": 1,
             "question": "Does the new item show a condition, or perform an action intended to change the stated target outcome?",
-            "choice": "Performs an action intended to change the outcome",
+            "options": [
+              {
+                "id": "INFO",
+                "text": "Shows or reports the current condition",
+                "demonstrated": false
+              },
+              {
+                "id": "CONTROL",
+                "text": "Performs an action intended to change the outcome",
+                "demonstrated": true
+              }
+            ],
             "evidence": [
               "The new button moved one compartment to the front in 10/10 rounds."
             ],
@@ -363,7 +377,18 @@
           {
             "step": 2,
             "question": "Did the card test both methods for the stated number of rounds under the listed matched conditions?",
-            "choice": "Both methods were tested as stated",
+            "options": [
+              {
+                "id": "COMPARED",
+                "text": "Both methods were tested as stated",
+                "demonstrated": true
+              },
+              {
+                "id": "NOT_COMPARED",
+                "text": "No / the card does not show that",
+                "demonstrated": false
+              }
+            ],
             "evidence": [
               "The 10 paired rounds used the same drawer contents, sock placement, target color, and 20-second limit; method order or side alternated.",
               "The original method and new button each had 10 rounds."
@@ -373,7 +398,18 @@
           {
             "step": 3,
             "question": "Using only the defined goal and equal denominators, did the new item meet the goal more often, or equally/less often?",
-            "choice": "The count was equal or lower",
+            "options": [
+              {
+                "id": "BETTER",
+                "text": "The new item met the goal more often",
+                "demonstrated": false
+              },
+              {
+                "id": "NOT_BETTER",
+                "text": "The count was equal or lower",
+                "demonstrated": true
+              }
+            ],
             "evidence": [
               "The original method met the target in 8/10 rounds; the new button did so in 6/10."
             ],
@@ -1008,11 +1044,14 @@
         },
         "demonstration": {
           "heading": "带解析的示范",
-          "intro": "这个虚构示范与所有正式题都不同。先读卡片，再看每一步选什么，以及依据卡片哪句话。",
+          "intro": "这个虚构示范与所有正式题都不同。卡片会一直显示，示范一次只揭示一个问题。",
           "step": "第 {step} 步",
-          "choose": "选择",
+          "options": "这一步的选项",
+          "demonstrated_choice": "✓ 正确选择",
+          "reasoning": "这一步怎么判断",
           "evidence": "卡片依据",
           "why": "为什么",
+          "next_step": "下一步",
           "result": "示范结果"
         },
         "formal_intro": {
@@ -1294,7 +1333,18 @@
           {
             "step": 1,
             "question": "这张卡里的新东西，是用来【看情况】，还是按下后会【执行一个动作，目的是改变上面的目标结果】？",
-            "choice": "执行一个动作，目的是改变目标结果",
+            "options": [
+              {
+                "id": "INFO",
+                "text": "只显示或告诉当前情况",
+                "demonstrated": false
+              },
+              {
+                "id": "CONTROL",
+                "text": "执行一个动作，目的是改变目标结果",
+                "demonstrated": true
+              }
+            ],
             "evidence": [
               "新按钮在 10/10 轮中都把一个分格推到抽屉前面。"
             ],
@@ -1303,7 +1353,18 @@
           {
             "step": 2,
             "question": "卡片有没有按上面写出的相同条件，让两种做法各做规定轮次？",
-            "choice": "两种做法按记录比较过",
+            "options": [
+              {
+                "id": "COMPARED",
+                "text": "两种做法按记录比较过",
+                "demonstrated": true
+              },
+              {
+                "id": "NOT_COMPARED",
+                "text": "没有／卡片看不出来",
+                "demonstrated": false
+              }
+            ],
             "evidence": [
               "共 10 个配对轮；每轮的抽屉内容、袜子摆放、指定颜色和 20 秒限制相同，做法顺序或左右位置轮换。",
               "原办法和新按钮各做 10 轮。"
@@ -1313,7 +1374,18 @@
           {
             "step": 3,
             "question": "只看定义的目标和相同分母：新东西达到目标的次数更多，还是一样／更少？",
-            "choice": "次数一样或更少",
+            "options": [
+              {
+                "id": "BETTER",
+                "text": "新东西达到目标的次数更多",
+                "demonstrated": false
+              },
+              {
+                "id": "NOT_BETTER",
+                "text": "次数一样或更少",
+                "demonstrated": true
+              }
+            ],
             "evidence": [
               "原办法 8/10 轮达到目标；新按钮 6/10 轮达到目标。"
             ],

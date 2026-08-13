@@ -1,8 +1,8 @@
 # Implementation Plan: V3 Stepwise Open-Book Button Board
 
 - **Status:** `DRAFT / NOT FROZEN / implementation for owner-local preview`
-- **Branch:** `feature/microstudy-v3-declutter`
-- **Governance:** D-0117, D-0118, D-0119
+- **Branch:** `feature/microstudy-v3-guided-demo`
+- **Governance:** D-0117, D-0118, D-0119, D-0120
 - **Non-goals:** human data, recruitment, timing, ethics administration,
   Protocol Freeze, public deployment, paper/claim/result edits, Contract/Flat,
   or V1/V2 replacement
@@ -95,10 +95,49 @@ V11.2 acceptance:
 - [x] Signed export contains a generated attempt identity and minimal
       demonstration acknowledgement, with no practice answer data.
 
+## V11.3 guided-demonstration dependency order
+
+1. Preserve the exact formal/P1 logic projection and
+   `cb91ebcf364bf07bea40cf541872de7efe07d548d75b2a265dc9be59a6a2b0bd`
+   fingerprint; change only the read-only P1 presentation.
+2. Extend only the P1 demonstration projection with both localized options and
+   one practice-only `demonstrated` marker derived from P1's unchanged route.
+   Keep the marker out of every formal scene, formal payload, export, and
+   analysis input.
+3. Render one P1 question at a time. Show the demonstrated option with green
+   styling and the explicit “✓ Correct choice / ✓ 正确选择” label; show the
+   rationale and card citation in a separate neutral-blue information panel.
+4. Advance locally with a keyboard-operable “Next step” button. After the last
+   worked question, reveal the final destination and overall reason, then use
+   the existing server transition to begin formal trials.
+5. Focus each newly revealed step/result heading and expose it through polite,
+   atomic live regions. Keep the P1 card, original method, and checklist
+   continuously visible.
+6. Bump materials only to `v11.3-stepwise-20260813-draft`; retain V8 export,
+   V2 analysis, formal routing, A/B allocation, backtracking, final-path
+   scoring, and all security/privacy contracts.
+7. Re-run generator/materials/Node, targeted and full pytest, Chrome/Edge
+   en/zh at 100%/200%, isolated V3/V2/V9 smokes, cleanup, and diff hygiene.
+
+V11.3 acceptance:
+
+- [x] P1 reveals exactly one current worked question; later questions and the
+      final result are absent until “Next step.”
+- [x] Both options are visible but non-interactive; one has a green treatment
+      plus a textual correct-choice label, so color is not the only cue.
+- [x] Each step has a distinct neutral-blue reasoning/evidence panel.
+- [x] Final destination/summary appears only after the worked chain, followed
+      by “Begin formal scenarios.”
+- [x] P1 still creates no answer/path/timing/score data; the signed export
+      remains only `demonstration_status: acknowledged`.
+- [x] Formal expected derivation, logic fingerprint, sequence, A/B-only
+      manipulation, router, scoring, revision, and leakage boundaries remain
+      unchanged.
+
 ## Preview
 
 ```powershell
-Set-Location "C:\Users\v-elzhang\Desktop\MyFolder\cognitive console\.worktrees\microstudy-v3-declutter"
+Set-Location "C:\Users\v-elzhang\Desktop\MyFolder\cognitive console\.worktrees\microstudy-v3-guided-demo"
 $env:PYTHONPATH = "src"
 python -m cognitive_console.button_board_stepwise --port 0
 ```

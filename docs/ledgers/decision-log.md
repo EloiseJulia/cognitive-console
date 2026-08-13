@@ -5,6 +5,46 @@
 
 ---
 
+## 2026-08-13 · D-0120 · Owner approves guided read-only P1 demonstration
+- The owner approved changing only V3's P1 presentation from an all-at-once
+  worked example to a guided read-only reveal. The P1 card, “What you
+  originally did,” and “How to think” stay visible while one worked question
+  appears at a time. Both options are visible but non-interactive; the
+  demonstrated option uses green styling plus the explicit bilingual text
+  “✓ Correct choice / ✓ 正确选择.” A separate neutral-blue information panel
+  gives the rationale and exact P1 card citation. “Next step” advances through
+  the unchanged P1 chain; only then does the final destination and overall
+  reason appear before “Begin formal scenarios.”
+- This authorization is presentation-only. P1 remains a fictional,
+  non-formal, unscored demonstration and creates no answer, path, timing,
+  score, or response event. The export remains limited to
+  `demonstration_status: acknowledged`. The practice-only `demonstrated`
+  presentation marker is absent from all formal scenes, formal payloads,
+  signed exports, and analysis inputs.
+- Materials become `v11.3-stepwise-20260813-draft`; export remains
+  `microstudy-export-v8-stepwise-demonstration-signed` and analysis remains
+  `button-board-stepwise-gaa-v2`. Mechanical comparison with pre-change commit
+  `f5dd878` confirms that every formal public scene is byte-structure equal,
+  derived keys and sequences differ only in `materials_version`, and the logic
+  fingerprint remains
+  `cb91ebcf364bf07bea40cf541872de7efe07d548d75b2a265dc9be59a6a2b0bd`.
+  Formal routing, expected derivation, answers, A/B-only manipulation,
+  back/reselect, final-path-only GAA/Strict, and security/privacy controls are
+  unchanged.
+- The experiment registry records the final code commit in a lineage follow-up
+  after the implementation commit. Generator/material validation, all V3 and
+  unchanged V9/V2
+  tests, Chrome/Edge en/zh at 100%/200%, isolated V9/V2/V3 smokes, and the
+  repository suite excluding the single clean-baseline-reproduced
+  `test_c2b_tasks.py::test_real_loader_is_deferred_offline` failure pass.
+- This remains owner-local synthetic preparation with maximum status
+  `ready_for_owner_local_preview_no_human_data` and `valid_for_paper=false`.
+  It authorizes no recruitment, participant contact, human data, timing pilot,
+  ethics/privacy/retention approval, public deployment, paper/claim/result
+  change, exploratory-to-confirmatory upgrade, or Protocol Freeze. Human
+  bilingual, structural, usability, accessibility, ethics, privacy, timing,
+  sample-size, preregistration, and freeze gates remain open.
+
 ## 2026-08-13 · D-0119 · Owner approves V3 UX declutter with no logic, answer, or scoring change
 - The owner approved three V3-only burden reductions: remove redundant
   card-flow preamble and participant-code entry; remove the separate

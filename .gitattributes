@@ -1,1 +1,5 @@
 *.pdf binary
+
+# Sealed TEST-once artifact: pin bytes so its recorded sha256 (data_hash in the
+# experiment-registry) stays verifiable on checkout regardless of core.autocrlf.
+results/c2b_resolution_refinement/test-sealed/** -text

@@ -1600,54 +1600,120 @@ experiments:
   hypothesis_id: H2-resolution-refinement
   claim_ids: [C2]
   type: confirmatory_preparation
-  status: planned
-  code_commit: null
-  dirty_tree: null
-  data_hash: null
+  status: done
+  code_commit: 0a1e973d47827dccc0b74e6e550bfb745120f8aa
+  dirty_tree: false
+  data_hash: 349f1e515961e1f12fdbfa0e6cf6f805a67ab7fe3a74336983885b681f7a7aa8
   env_hash: null
   config_hash: null
   model: Qwen/Qwen2.5-7B-Instruct@a09a35458c702b33eeacc393d103063234e8bc28
   dataset: pinned TruthfulQA multiple_choice validation + TriviaQA rc.nocontext validation;
     frozen-item-disjoint DEV only
   seed: 20260812
-  hardware: authorized NVIDIA A800 80GB profile
+  hardware: authorized NVIDIA A800 80GB PCIe profile (nvidia-a800-80gb, owner-authorized 2026-08-12)
   started_at: null
   ended_at: null
   exit_code: null
-  raw_metrics: null
-  summary_metrics: null
-  artifacts: []
+  raw_metrics:
+    dev_selection_embedded_in: results/c2b_resolution_refinement/test-sealed/resolution_refinement_results.json
+    skepticism_frozen_alpha: 2.0
+    skepticism_layer: 20
+    skepticism_best_prompt_id: skep-strong-15
+    uncertainty_awareness_frozen_alpha: 2.0
+    uncertainty_awareness_layer: 24
+    uncertainty_awareness_best_prompt_id: unc-strong-01
+    k_samples: 5
+  summary_metrics:
+    status: DEV_SELECTION_COMPLETE
+    note: >-
+      Frozen alpha/prompt/layer selection completed on coherence-passing
+      candidates; produces no TEST estimate and cannot overwrite the frozen 0/12.
+  artifacts:
+  - results/c2b_resolution_refinement/test-sealed/resolution_refinement_results.json
   failure_reason: null
   valid_for_paper: false
+  scientific_status: PENDING_HOSTILE_RESULT_AUDIT
   validation_notes: >-
-    UNRUN frozen DEV selection for docs/specs/resolution-refinement-prereg.md.
-    Selects prompt and alpha only; creates no TEST estimate and cannot overwrite
-    E-0005/E-0006/E-0011.
+    LINEAGE RECONCILIATION (2026-08-13): the DEV selection actually executed at
+    commit 0a1e973; its full per-alpha grid (degeneracy, dev_steer_outcome) and
+    the selected frozen_alpha=2.0 / layer / best-prompt for each axis are embedded
+    in the committed sealed TEST results JSON under the dev_selection block, so
+    no standalone DEV artifact exists (data_hash points to that committed JSON).
+    Deliberation axis has no DEV or TEST record in the sealed artifact (only
+    skepticism and uncertainty_awareness were run/reported) - UNVERIFIED whether
+    deliberation was executed. Selects prompt and alpha only; creates no TEST
+    estimate and cannot overwrite E-0005/E-0006/E-0011. Independent hostile result
+    audit still required.
 
 - experiment_id: c2b-resolution-caa-qwen-test-20260812
-  parent: c2b-resolution-caa-qwen-dev-20260812
+  parent: E-0005
+  dev_selection_parent: c2b-resolution-caa-qwen-dev-20260812
   hypothesis_id: H2-resolution-refinement
   claim_ids: [C2]
   type: confirmatory
-  status: planned
-  code_commit: null
-  dirty_tree: null
-  data_hash: null
+  status: done
+  code_commit: 0a1e973d47827dccc0b74e6e550bfb745120f8aa
+  dirty_tree: false
+  data_hash: 349f1e515961e1f12fdbfa0e6cf6f805a67ab7fe3a74336983885b681f7a7aa8
   env_hash: null
   config_hash: null
+  protocol_id: c2b-resolution-refinement-20260812
   model: Qwen/Qwen2.5-7B-Instruct@a09a35458c702b33eeacc393d103063234e8bc28
   dataset: pinned frozen-item-disjoint skepticism N=757 total/505 TEST and
     uncertainty N=1219 total/813 TEST
   seed: 20260812
-  hardware: authorized NVIDIA A800 80GB profile
+  hardware: >-
+    authorized NVIDIA A800 80GB PCIe profile (nvidia-a800-80gb, owner-authorized
+    2026-08-12); profile_sha256 sha256:65e4cf84a9bc58b61152b911ab87648692914b1cee75aa17e97cd5f823fad249
   started_at: null
   ended_at: null
   exit_code: null
-  raw_metrics: null
-  summary_metrics: null
-  artifacts: []
+  raw_metrics:
+    results_path: results/c2b_resolution_refinement/test-sealed/resolution_refinement_results.json
+    results_sha256: 349f1e515961e1f12fdbfa0e6cf6f805a67ab7fe3a74336983885b681f7a7aa8
+    bonferroni_ci_level: 0.9833333333333333
+    delta: 0.05
+    skepticism_n_test: 505
+    skepticism_mean_diff: -0.013465346534653467
+    skepticism_ci_lo: -0.048188118811881085
+    skepticism_ci_hi: 0.02217821782178218
+    skepticism_coherence_ok: true
+    skepticism_passed: false
+    skepticism_test_item_ids_sha256: sha256:8abe78eff2afd0fa057f53bd52b448e30b4adc254168d558d7335ba2dc819173
+    uncertainty_awareness_n_test: 813
+    uncertainty_awareness_mean_diff: -0.09023761377613776
+    uncertainty_awareness_ci_lo: -0.12374604243542434
+    uncertainty_awareness_ci_hi: -0.058216545510455096
+    uncertainty_awareness_coherence_ok: true
+    uncertainty_awareness_passed: false
+    uncertainty_awareness_test_item_ids_sha256: sha256:fd7f138f3d0f37b04f0c06575740f210e615cde318357b0efea132dab5e93632
+  summary_metrics:
+    axes_reported: 2
+    axes_passed: 0
+    note: >-
+      0 of 2 reported axes passed (skepticism CI includes 0; uncertainty_awareness
+      mean_diff negative). Deliberation axis absent from artifact. Artifact
+      contains no top-level verdict field; no verdict is asserted here.
+  artifacts:
+  - results/c2b_resolution_refinement/test-sealed/resolution_refinement_results.json
   failure_reason: null
   valid_for_paper: false
+  scientific_status: PENDING_HOSTILE_RESULT_AUDIT
+  additive_to_frozen_0_of_12: true
+  must_not_overwrite: E-0005/E-0006/E-0011
   validation_notes: >-
-    UNRUN TEST-once additive resolution refinement. It reports whatever occurs,
-    never stops on significance, and never replaces the frozen 0/12 grid.
+    LINEAGE RECONCILIATION (2026-08-13): the sealed TEST-once result actually
+    executed but the registry only had an UNRUN "planned" placeholder and the
+    result JSON was never committed. Reconciled: sealed JSON
+    (experiment_id inside = c2b-resolution-caa-qwen-test-20260812, phase TEST,
+    protocol c2b-resolution-refinement-20260812) copied verbatim into
+    results/c2b_resolution_refinement/test-sealed/ (sha256 349f1e51... recomputed
+    on the committed copy = MATCH). code_commit and seed taken from the JSON's
+    code_identity/sampling blocks. Only skepticism and uncertainty_awareness axes
+    are present in the artifact; the prereg's third axis (deliberation) has no
+    record here (UNVERIFIED). scientific_status=PENDING_HOSTILE_RESULT_AUDIT and
+    valid_for_paper=false are copied from the artifact and NOT upgraded. This TEST
+    result is additive to the frozen 0/12 and MUST NOT overwrite E-0005/E-0006/E-0011,
+    which are untouched. parent set to E-0005 (frozen artifact this is additive to)
+    per reconciliation instruction; dev_selection_parent preserves the DEV linkage.
+    Independent hostile result audit still required before any paper use.

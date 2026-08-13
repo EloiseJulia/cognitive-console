@@ -997,6 +997,12 @@ def _main_public(public_origin: str) -> int:
         raise SystemExit("STEPWISE_ADMIN_TOKEN is required in deployment mode")
     key = _decode_key(os.environ.get("STEPWISE_VERIFICATION_KEY", ""))
     storage = create_store(os.environ.get("DATABASE_URL"))
+    if storage is None:
+        raise SystemExit(
+            "DATABASE_URL is required in deployment mode; refusing to collect "
+            "public data without durable persistence (a free Render instance "
+            "loses in-memory state on restart)"
+        )
     max_sessions = int(os.environ.get("STEPWISE_MAX_SESSIONS", "500"))
     server = create_server(
         host,

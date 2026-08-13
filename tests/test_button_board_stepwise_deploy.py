@@ -217,3 +217,14 @@ def test_admin_export_409_when_persistence_disabled():
         with pytest.raises(urllib.error.HTTPError) as exc:
             _raw_get(base, "/admin/export?format=json", {"X-Admin-Token": ADMIN_TOKEN})
         assert exc.value.code == 409
+
+
+def test_deployment_entrypoint_requires_database_url(monkeypatch):
+    from cognitive_console.button_board_stepwise.server import main
+
+    monkeypatch.setenv("STEPWISE_PUBLIC_ORIGIN", "https://study.test")
+    monkeypatch.setenv("STEPWISE_ADMIN_TOKEN", "tok")
+    monkeypatch.setenv("STEPWISE_VERIFICATION_KEY", KEY.hex())
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    with pytest.raises(SystemExit):
+        main([])

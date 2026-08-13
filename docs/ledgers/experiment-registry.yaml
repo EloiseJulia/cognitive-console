@@ -1834,3 +1834,77 @@ experiments:
     paper evidence. Human data, recruitment, ethics, timing, public deployment,
     claim/result changes, exploratory-to-confirmatory upgrade, and Protocol
     Freeze remain unauthorized.
+- experiment_id: clean-pc-c27e9b4-20260813
+  parent: null
+  hypothesis_id: H-gate-validity
+  claim_ids: []
+  type: diagnostic
+  status: done
+  code_commit: c27e9b4464dfa937bcc16d833b1e501780f0abaa
+  predeclaration_commit: f3e7c5a   # PRECEDES the run commit (parent of c27e9b4); locks endpoint/scorer/budget/contrasts/seeds before any generation
+  dirty_tree: true   # ONLY untracked output/helper files; git status --porcelain shows NO tracked-file modification (verified on host); git diff main -- src is empty
+  data_hash: sha256:90ddc78f50dc7e06c8fa88f9532a5a3f0d5f9915f7c91d40a6060e6879459455  # raw_generations.jsonl (795 records)
+  env_hash: null
+  config_hash: null
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: >-
+    80 FRESH TriviaQA rc.nocontext validation items (parse_uncertainty_rows),
+    deterministically drawn (FRESH_SEED=20260814) and VERIFIED disjoint by item-id
+    AND normalized-question-text hash from the frozen E-0006 uncertainty pool
+    (seed=0) and the E-0012 pool (seed=12/offset=500). Split 27 DEV / 53 TEST
+    (split_dev_test dev_fraction=1/3 seed=20260723); TEST evaluated only.
+  seed: 20260723   # split + bootstrap; gen base seeds prompt/baselineA=20260723, baselineB=20260724; fresh draw 20260814
+  hardware: A800 (suzlab-a800) GPU3 only, CUDA_VISIBLE_DEVICES=3, bfloat16
+  started_at: '2026-08-13T06:19:27+00:00'
+  ended_at: '2026-08-13T06:28:19+00:00'
+  exit_code: 0
+  raw_metrics:
+    wall_clock_seconds: 532.0
+    a800_gpu_hours: 0.1478
+    a800_gpu_hours_upper_bound: 0.1886
+    n_test: 53
+    k_samples: 5
+    max_new_tokens: 32
+    temperature: 0.7
+    do_sample: true
+    compliance_rate_prompt: 1.0
+    compliance_rate_baselineA: 0.0
+    compliance_rate_baselineB: 0.0
+  summary_metrics:
+    endpoint: prefix_compliance(ANSWER:)   # NOVEL predeclared deterministic scorer; decision rule via UNMODIFIED frozen adjudicate_c2b
+    positive_mean_diff: 1.0
+    positive_ci_0p98333: [1.0, 1.0]
+    positive_pass: true
+    negative_mean_diff: 0.0
+    negative_ci_0p98333: [0.0, 0.0]
+    negative_pass: false
+    gate_satisfiable_and_discriminative: true
+  valid_for_paper: false
+  scientific_status: PENDING_HOSTILE_RESULT_AUDIT
+  validation_notes: >-
+    Prospective, outcome-blind POSITIVE CONTROL on the GATE using a CONFOUND-FREE
+    prefix-compliance endpoint, after the prior uncertainty-endpoint control
+    (prospective-pc-efb6520-20260813) narrowly missed PASS due to a
+    confidence-parseability x truncation confound. Predeclaration f3e7c5a locks
+    endpoint (reply must begin with exact literal ANSWER:), deterministic scorer,
+    token budget (32, non-truncation-confounded), both contrasts, and all seeds
+    BEFORE generation. Decision rule = UNMODIFIED frozen adjudicate_c2b
+    cluster_bootstrap_ci (B=10000, item-cluster, CI 1-0.05/3=0.98333, seed
+    20260723) + axis_pass (delta=0.05, coherence tau=1.5/eps=0.02). POSITIVE
+    (strong-format prompt - neutral baselineA) PASSES: mean_diff=+1.0, CI
+    [1.0,1.0] excludes 0, coherence clean (deg 0.0003 <= 0.0226) -> gate
+    SATISFIABLE. NEGATIVE (neutral baselineB - neutral baselineA) FAILS:
+    mean_diff=0.0, CI [0.0,0.0] straddles 0 -> gate DISCRIMINATIVE. Compliance
+    rates prompt=1.000 / baselineA=0.000 / baselineB=0.000; outputs coherent
+    (strong prompt emits "ANSWER: <answer>", neutral answers normally). Item
+    disjointness verified empty by id and text hash. GATED artifact:
+    valid_for_paper=false, PENDING_HOSTILE_RESULT_AUDIT; NOT blessed, pushed, or
+    merged. No frozen artifact touched (E-0005/6/11/13, arm_full,
+    e0006_uncertainty_baseline, frozen src modules); git diff main -- src empty.
+    No tuning-to-pass; endpoint not swapped/retried. GPU3 only; GPUs 0-2
+    untouched. SCOPE: shows the gate accepts a PROMPT/instruction effect and
+    rejects a null; says NOTHING about a latent/steering signal satisfying the
+    gate. Human data, recruitment, ethics, public deployment, claim/venue
+    changes, exploratory-to-confirmatory upgrade, and Protocol Freeze remain
+    unauthorized.
+  failure_reason: null

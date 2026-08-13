@@ -7,6 +7,7 @@
 |---|---|---|---|---|---|
 | 2026-07-23 | (none) | 0 | — | — | 0 |
 | 2026-08-05 | A800 GPU-hours (failed pre-DEV attempt) | 0.00722222 upper bound | E-0016 | D-0095 | >=0.00722222 (legacy GPU runs not backfilled) |
+| 2026-08-13 | A800 GPU-hours (GPU3 only, confound-free positive control) | 0.1478 (upper bound 0.1886); owner-authorized cap 0.5 | clean-pc-c27e9b4-20260813 | owner (this run) | >=0.15522222 (legacy GPU runs not backfilled) |
 
 - max_gpu_hours: TBD (human)
 - max_api_cost: TBD (human)

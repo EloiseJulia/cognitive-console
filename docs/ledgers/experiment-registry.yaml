@@ -1836,8 +1836,9 @@ experiments:
     Chrome/Edge English/Simplified-Chinese 100%/200% keyboard/focus/ARIA/layout/
     complete/partial gates, all 51 unchanged V9/V2 coexistence tests, and
     isolated ephemeral-port V9/V2/V3 root+bootstrap smokes passed. The current
-    repository suite excluding test_c2b_tasks.py passes with 6 skips. The raw
-    full suite has one known environment-dependent
+    repository suite passes with 6 skips when only
+    test_c2b_tasks.py::test_real_loader_is_deferred_offline is deselected. The
+    raw full suite has that one known environment-dependent
     test_c2b_tasks.py::test_real_loader_is_deferred_offline failure; that
     failure reproduced unchanged in a detached clean-baseline worktree at
     f5dd878. Runtime keys, browser profiles, smoke directories, and the

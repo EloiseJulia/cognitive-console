@@ -2,8 +2,8 @@
 
 - **Spec ID:** `microstudy-button-board-stepwise-v3`
 - **Status:** `DRAFT / NOT FROZEN / OWNER-LOCAL ONLY / NO HUMAN DATA`
-- **Governance:** D-0117, D-0118, D-0119
-- **Materials:** `v11.2-stepwise-20260813-draft`
+- **Governance:** D-0117, D-0118, D-0119, D-0120
+- **Materials:** `v11.3-stepwise-20260813-draft`
 - **Preregistration:** [`../research/2026-08-12-microstudy-button-board-stepwise-v3-DRAFT.md`](../research/2026-08-12-microstudy-button-board-stepwise-v3-DRAFT.md)
 - **Plan:** [`../plans/microstudy-button-board-stepwise-v3.md`](../plans/microstudy-button-board-stepwise-v3.md)
 
@@ -24,7 +24,7 @@ V3 uses:
 entry point: cognitive_console.button_board_stepwise
 data directory: data/button_board_stepwise_v11
 schema: microstudy-button-board-stepwise-v11-bilingual
-materials: v11.2-stepwise-20260813-draft
+materials: v11.3-stepwise-20260813-draft
 export: microstudy-export-v8-stepwise-demonstration-signed
 analysis: button-board-stepwise-gaa-v2
 ```
@@ -50,13 +50,19 @@ The V9 and V2 defaults remain unchanged.
 - The result repeats only the participant-derived destination and raw path. It
   never displays correctness, an expected path, or a score. Its raw path
   summaries remain editable until the participant continues.
-- P1 is a read-only worked example, distinct from every formal scene. It shows
-  the fictional card, each applicable question, the demonstrated choice, the
-  exact card sentence(s) supporting that choice, and the final destination.
-  It teaches only that an action occurring is not the same as beating the
+- P1 is a read-only guided worked example, distinct from every formal scene.
+  The fictional card, “What you originally did,” and “How to think” remain
+  visible while exactly one applicable question is revealed at a time. Both
+  options are shown as non-interactive text; the demonstrated choice has a
+  green treatment plus the explicit bilingual label “✓ Correct choice /
+  ✓ 正确选择.” A separate neutral-blue reasoning panel states why that choice
+  follows and cites the exact P1 card sentence(s). “Next step” reveals only the
+  next worked question. After the final worked question, the page shows the
+  destination and one overall reason, then offers “Begin formal scenarios.”
+  P1 teaches only that an action occurring is not the same as beating the
   existing method on the stated target. It requests and stores no practice
-  answer. One “Begin formal scenarios” action moves directly to the first
-  formal item; formal trials provide no feedback.
+  answer, path, timing, score, or response event; formal trials provide no
+  correctness feedback.
 
 The frozen route is:
 
@@ -89,9 +95,10 @@ The source cannot contain `expected_*`, `compared`, `better`, `harm`,
 `scope_written`, or `scope_correct`. The generator derives those fields,
 `expected_answer_by_step`, exit answer, decisive step, and state. The worked
 example projection is generated from P1's derived route but exposes only
-participant-facing question, choice, cited card text, explanation, and result;
-it contains no `expected_*` or scoring key. Public materials omit all private
-fields.
+participant-facing questions, the two practice-only options with one
+`demonstrated` presentation marker, cited P1 card text, explanation, and
+result. The marker is absent from every formal scene and payload; it contains
+no `expected_*` or scoring key. Public materials omit all private fields.
 
 ## Approved plain-language scenario skin
 
@@ -149,11 +156,12 @@ replacing `practice_status` changes the export contract to
 `microstudy-export-v8-stepwise-demonstration-signed`; exact material, analysis,
 and export versions retain fail-closed separation from V11.1 and earlier.
 
-Participant payload, DOM, ARIA, logs, and raw signed JSON/CSV contain no
+Formal participant payload, DOM, ARIA, logs, and raw signed JSON/CSV contain no
 expected path, structural key, comparison rule, correct scope, GAA, Strict, or
-correctness marker. Offline analysis verifies the signature, reconstructs the
-plan from exact V11 hashes, re-derives expected values, and fails closed on any
-V5/V6/V7/V9/V10/V11 mixture.
+correctness marker. The only visible correct-choice marker belongs to the
+fictional P1 demonstration and is not exported. Offline analysis verifies the
+signature, reconstructs the plan from exact V11 hashes, re-derives expected
+values, and fails closed on any V5/V6/V7/V9/V10/V11 mixture.
 
 ## Security, privacy, and accessibility
 
@@ -167,9 +175,11 @@ sent to the browser. There are no access logs, absolute timestamps, browser
 storage, resume, free text, or automatic downloads.
 
 Automated gates cover Chrome and Edge, English and Simplified Chinese, 100% and
-200%, native keyboard controls, heading focus, DOM/ARIA leakage, sticky
-open-book layout, one-question flow, complete/partial export, and the 1023 px
-desktop block. Manual screen-reader and human semantic review remain open.
+200%, native keyboard controls, per-reveal heading focus, polite live regions,
+text-plus-color correct-choice marking, distinct non-error reasoning color,
+DOM/ARIA leakage, sticky open-book layout, one-question flow, complete/partial
+export, and the 1023 px desktop block. Manual screen-reader and human semantic
+review remain open.
 
 ## Human gates
 

@@ -17,6 +17,8 @@ const app = {
   currentScene: null,
   currentProgress: null,
   currentStep: null,
+  demonstration: null,
+  demonstrationStep: 0,
   ready: false,
 };
 
@@ -36,22 +38,26 @@ function el(tag, attrs = {}, text = null) {
   return node;
 }
 
-function focusHeading(container) {
-  const heading = container.querySelector("h1, h2");
+function focusHeading(container, selector = "h1, h2") {
+  const heading = container.querySelector(selector);
   if (heading) {
     heading.tabIndex = -1;
     heading.focus();
   }
 }
 
-function replaceStage(...nodes) {
+function replaceStageFocused(selector, ...nodes) {
   stage.replaceChildren(...nodes);
   gate.hidden = true;
   startPanel.hidden = true;
   stage.hidden = false;
   header.hidden = false;
   footer.hidden = false;
-  requestAnimationFrame(() => focusHeading(stage));
+  requestAnimationFrame(() => focusHeading(stage, selector || "h1, h2"));
+}
+
+function replaceStage(...nodes) {
+  replaceStageFocused(null, ...nodes);
 }
 
 function requestId() {
@@ -287,32 +293,52 @@ function renderTrial(response) {
 }
 
 function workedStep(row, copy) {
-  const card = el("section", { class: "worked-step" });
+  const card = el("section", {
+    class: "worked-step",
+    "aria-live": "polite",
+    "aria-atomic": "true",
+  });
   card.append(
-    el("h3", {}, copy.step.replace("{step}", String(row.step))),
+    el("h2", { class: "worked-step-heading" }, copy.step.replace("{step}", String(row.step))),
     el("p", { class: "worked-question" }, row.question),
-    el("p", { class: "worked-choice" }, `${copy.choose}: ${row.choice}`),
+    el("h3", { class: "worked-label" }, copy.options),
+  );
+  const options = el("ul", { class: "worked-options", "aria-label": copy.options });
+  for (const option of row.options) {
+    const item = el("li", {
+      class: `worked-option${option.demonstrated ? " worked-option--demonstrated" : ""}`,
+    });
+    item.append(el("span", { class: "worked-option-text" }, option.text));
+    if (option.demonstrated) {
+      item.append(el("strong", { class: "worked-correct-label" }, copy.demonstrated_choice));
+    }
+    options.append(item);
+  }
+  card.append(options);
+  const reasoning = el("section", {
+    class: "worked-reasoning",
+    "aria-label": copy.reasoning,
+  });
+  reasoning.append(
+    el("h3", {}, copy.reasoning),
+    el("p", { class: "worked-why" }, `${copy.why}: ${row.why}`),
     el("p", { class: "worked-label" }, `${copy.evidence}:`),
   );
   const evidence = el("ul", { class: "worked-evidence" });
   for (const text of row.evidence) evidence.append(el("li", {}, text));
-  card.append(evidence, el("p", { class: "worked-why" }, `${copy.why}: ${row.why}`));
+  reasoning.append(evidence);
+  card.append(reasoning);
   return card;
 }
 
-function renderDemonstration(response) {
-  app.currentScene = response.scene;
-  app.currentProgress = response.progress;
-  app.currentStep = null;
-  const copy = app.materials.common.demonstration;
-  const formal = app.materials.common.formal_intro;
-  const explanation = el("section", { class: "demonstration-card" });
-  explanation.append(el("h2", {}, copy.heading), el("p", {}, copy.intro));
-  for (const row of response.worked_steps) {
-    explanation.append(workedStep(row, copy));
-  }
-  explanation.append(
-    el("h3", {}, copy.result),
+function demonstrationResult(response, copy, formal) {
+  const result = el("section", {
+    class: "demonstration-result",
+    "aria-live": "polite",
+    "aria-atomic": "true",
+  });
+  result.append(
+    el("h2", { class: "demonstration-result-heading" }, copy.result),
     el("div", { class: "result-destination" }, response.destination.label),
     el("p", {}, response.destination.description),
     el("p", { class: "demonstration-summary" }, response.why),
@@ -322,20 +348,55 @@ function renderDemonstration(response) {
       type: "button", dataset: { action: "begin-formal" }, onclick: beginFormal,
     }, formal.begin),
   );
+  return result;
+}
+
+function renderDemonstration(response = app.demonstration) {
+  app.demonstration = response;
+  app.currentScene = response.scene;
+  app.currentProgress = response.progress;
+  app.currentStep = null;
+  const copy = app.materials.common.demonstration;
+  const formal = app.materials.common.formal_intro;
+  const explanation = el("section", { class: "demonstration-card" });
+  explanation.append(el("h2", {}, copy.heading), el("p", {}, copy.intro));
+  const isResult = app.demonstrationStep >= response.worked_steps.length;
+  if (isResult) {
+    explanation.append(demonstrationResult(response, copy, formal));
+  } else {
+    explanation.append(
+      workedStep(response.worked_steps[app.demonstrationStep], copy),
+      el("button", {
+        type: "button",
+        dataset: { action: "next-demonstration-step" },
+        onclick: nextDemonstrationStep,
+      }, copy.next_step),
+    );
+  }
   const layout = el("div", { class: "study-layout" });
   const left = el("div", { class: "trial-column" });
   left.append(recordCard(response.scene), explanation);
   layout.append(left, referencePanel());
-  replaceStage(el("h1", {}, response.progress), layout);
+  replaceStageFocused(
+    isResult ? ".demonstration-result-heading" : ".worked-step-heading",
+    el("h1", {}, response.progress),
+    layout,
+  );
   saveButton.hidden = true;
 }
 
 async function beginDemonstration() {
   try {
+    app.demonstrationStep = 0;
     renderDemonstration(await api("/api/continue", { attempt_id: app.attemptId }));
   } catch (error) {
     showError(stage, localizedError());
   }
+}
+
+function nextDemonstrationStep() {
+  app.demonstrationStep += 1;
+  renderDemonstration();
 }
 
 async function submitStep() {
@@ -413,6 +474,8 @@ async function continueAfterResult() {
 
 async function beginFormal() {
   try {
+    app.demonstration = null;
+    app.demonstrationStep = 0;
     renderTrial(await api("/api/continue", { attempt_id: app.attemptId }));
   } catch (error) {
     showError(stage, localizedError());

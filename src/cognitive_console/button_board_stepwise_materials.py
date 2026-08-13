@@ -20,7 +20,7 @@ DERIVED_KEYS_PATH = DATA_DIR / "derived_keys.json"
 
 SOURCE_SCHEMA_VERSION = "microstudy-button-board-stepwise-source-v1"
 MATERIAL_SCHEMA_VERSION = "microstudy-button-board-stepwise-v11-bilingual"
-MATERIALS_VERSION = "v11.2-stepwise-20260813-draft"
+MATERIALS_VERSION = "v11.3-stepwise-20260813-draft"
 SEQUENCE_SCHEMA_VERSION = "microstudy-button-board-stepwise-sequences-v1"
 EXPORT_SCHEMA_VERSION = "microstudy-export-v8-stepwise-demonstration-signed"
 ANALYSIS_VERSION = "button-board-stepwise-gaa-v2"
@@ -271,13 +271,16 @@ COMMON = {
     "demonstration": {
         "heading": bi("Worked example", "带解析的示范"),
         "intro": bi(
-            "This fictional example is separate from every formal scenario. Read the card, then follow each shown choice and its card evidence.",
-            "这个虚构示范与所有正式题都不同。先读卡片，再看每一步选什么，以及依据卡片哪句话。",
+            "This fictional example is separate from every formal scenario. The card stays visible while one worked question is revealed at a time.",
+            "这个虚构示范与所有正式题都不同。卡片会一直显示，示范一次只揭示一个问题。",
         ),
         "step": bi("Step {step}", "第 {step} 步"),
-        "choose": bi("Choose", "选择"),
+        "options": bi("Choices for this step", "这一步的选项"),
+        "demonstrated_choice": bi("✓ Correct choice", "✓ 正确选择"),
+        "reasoning": bi("How this step is solved", "这一步怎么判断"),
         "evidence": bi("Card evidence", "卡片依据"),
         "why": bi("Why", "为什么"),
+        "next_step": bi("Next step", "下一步"),
         "result": bi("Worked result", "示范结果"),
     },
     "formal_intro": {
@@ -1315,16 +1318,18 @@ def _practice_demonstration(locale: str) -> dict[str, Any]:
     steps = []
     for step_text, answer_id in derived["expected_answer_by_step"].items():
         step = int(step_text)
-        choice = next(
-            row["text"][locale]
-            for row in STEP_OPTIONS[step]
-            if row["id"] == answer_id
-        )
         steps.append(
             {
                 "step": step,
                 "question": QUESTIONS[step][locale],
-                "choice": choice,
+                "options": [
+                    {
+                        "id": row["id"],
+                        "text": row["text"][locale],
+                        "demonstrated": row["id"] == answer_id,
+                    }
+                    for row in STEP_OPTIONS[step]
+                ],
                 "evidence": [
                     facts[index]
                     for index in PRACTICE_DEMONSTRATION_EVIDENCE[step]
@@ -1487,7 +1492,7 @@ def generate_materials() -> tuple[dict[str, Any], dict[str, Any]]:
             "zoom_levels": [1, 2],
             "sticky_reference_width_px": 300,
             "one_question_at_a_time": True,
-            "practice_mode": "read_only_worked_demonstration",
+            "practice_mode": "read_only_guided_demonstration",
             "formal_correctness_feedback": False,
         },
         "locales": locales,
@@ -1733,7 +1738,16 @@ def validate_materials(*, require_files_current: bool = True) -> dict[str, Any]:
                 for option in STEP_OPTIONS[row["step"]]
                 if option["id"] == answer_id
             )
-            if row["choice"] != answer_text or not row["evidence"] or not row["why"]:
+            demonstrated = [
+                option for option in row["options"] if option["demonstrated"]
+            ]
+            if (
+                len(demonstrated) != 1
+                or demonstrated[0]["id"] != answer_id
+                or demonstrated[0]["text"] != answer_text
+                or not row["evidence"]
+                or not row["why"]
+            ):
                 raise ValueError(f"demonstration derivation mismatch for {locale}")
     public_text = json.dumps(materials, ensure_ascii=False)
     for forbidden in (

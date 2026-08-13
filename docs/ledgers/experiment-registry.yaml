@@ -1750,21 +1750,21 @@ experiments:
   claim_ids: []
   type: exploratory_formative_human_protocol
   status: ready_for_owner_local_preview_no_human_data
-  code_commit: 0e53cbb2aa38a8e42f85cab566d02e15315e1fda
+  code_commit: 7d05f1f1f93e1f1be3ab51b012b49cab91ddbc3d
   dirty_tree: false
   data_hash: >-
-    canonical_materials_hash=63f6573359dc4f40f42f77a51d399e7e66fe9b1443f75f14bedf734797ba5eed;
-    sequences_hash=a5e33daff4d71a6385617ac2632f0318592372e7afe5d56834dc41625b111e6f;
-    derived_keys_hash=e684c4949c128d27cfd7dd57a8758c1fdfa133bae2a6f2313d51726e31e0ef39;
+    canonical_materials_hash=8352b45a19698a58721f40340a5e94abe98bef1451b939df6e7cd6b9b13bdf0b;
+    sequences_hash=0a3c0d6f06dcd597298a19e2ccbc87e152d83b1c3b28fc1b096477420c4ecf3f;
+    derived_keys_hash=6494fe7ea480bdc56275e676f71f5a18c2c05d60a73a61242c1a90c154bc156d;
     ab_invariance_hash=1202f424184b1cd2b7f1dd7f051eea20cf7ed51ace42982c7a50459d36d5bd9d;
-    locale_en=b87d72f41daa49f07d3a3bd547bb7e9886fd5f569fc0bbf5582ab7b9b6e658c8;
-    locale_zh-Hans=a25acd2b7cd449e2218ea0730bd4807a6d4f5521bc4854b5ddd6af8d19e7aa69
+    locale_en=ee710fe2a1e4f07c1b359d0eee0d03020699114dceb094a3a4205fc42d11f7d2;
+    locale_zh-Hans=5cf1733ec74d8f889aab42ce4440ae36ea378ed690c46f14ccff13c82c8a3221
   env_hash: null
   config_hash: null
   model: null
   dataset: one read-only worked example plus six fictional V11 formal cards per attempt; no human data; no live product
   material_schema_version: microstudy-button-board-stepwise-v11-bilingual
-  materials_version: v11.2-stepwise-20260813-draft
+  materials_version: v11.3-stepwise-20260813-draft
   sequence_schema_version: microstudy-button-board-stepwise-sequences-v1
   export_schema_version: microstudy-export-v8-stepwise-demonstration-signed
   analysis_version: button-board-stepwise-gaa-v2
@@ -1798,7 +1798,7 @@ experiments:
   failure_reason: null
   valid_for_paper: false
   validation_notes: >-
-    D-0117 through D-0119 authorize an independent V3/V11.2 stepwise open-book
+    D-0117 through D-0120 authorize an independent V3/V11.3 stepwise open-book
     fictional button-board preview. D-0119 removes redundant flow preamble and
     participant-code entry, removes only the separate four-destination
     explanation cards while retaining the six-question checklist, and turns P1
@@ -1817,8 +1817,17 @@ experiments:
     three applicable questions, authored choices, cited P1 card sentences,
     rationale, and final destination; it contains no formal scene text,
     response control, expected/scoring key, practice answer, path, or timing.
+    D-0120 changes only P1's presentation to a guided one-question-at-a-time
+    reveal. Each current P1 step shows both non-interactive options, marks the
+    demonstrated option with green styling plus explicit bilingual correct
+    text, and separates rationale/card evidence in a neutral-blue information
+    panel. Keyboard “Next step” advances locally; heading focus and polite
+    atomic live regions announce each reveal. The card, original method, and
+    checklist remain visible. The final destination/summary appears only after
+    the three unchanged P1 steps, then the existing server transition begins
+    formal trials. P1 still exports only demonstration_status=acknowledged.
     Formal back/reselect, final-path GAA/Strict, and no-correctness feedback are
-    unchanged. Exact V11.2/V8/V2 identities preserve cross-version hard
+    unchanged. Exact V11.3/V8/V2 identities preserve cross-version hard
     failure. Participant payloads, DOM/ARIA, JSON, and CSV omit private expected
     and score-derived fields. Loopback Host/origin, CSRF, capability,
     request-ID idempotency, success-only TTL, capacity, volatile memory, no
@@ -1826,13 +1835,14 @@ experiments:
     material validation, all three Node suites, all 30 V3 tests including
     Chrome/Edge English/Simplified-Chinese 100%/200% keyboard/focus/ARIA/layout/
     complete/partial gates, all 51 unchanged V9/V2 coexistence tests, and
-    isolated ephemeral-port V9/V2/V3 root+bootstrap smokes passed. The 889-test
-    collection passes 882 tests with 6 skips when the single known
-    test_c2b_tasks.py::test_real_loader_is_deferred_offline failure is
-    deselected; that failure reproduced unchanged on a clean main archive at
-    2e478082200f716736f12d109bb429109e2c308b. Two Windows permission races seen
-    in the first full run passed on immediate targeted rerun and the subsequent
-    full selected run. Runtime keys/profiles/snapshots were removed. This is
+    isolated ephemeral-port V9/V2/V3 root+bootstrap smokes passed. The current
+    repository suite passes with 6 skips when only
+    test_c2b_tasks.py::test_real_loader_is_deferred_offline is deselected. The
+    raw full suite has that one known environment-dependent
+    test_c2b_tasks.py::test_real_loader_is_deferred_offline failure; that
+    failure reproduced unchanged in a detached clean-baseline worktree at
+    f5dd878. Runtime keys, browser profiles, smoke directories, and the
+    temporary baseline worktree were removed. This is
     synthetic implementation preparation, not a study run or paper evidence.
     Human data, recruitment, ethics, timing, public deployment, claim/result
     changes, exploratory-to-confirmatory upgrade, and Protocol Freeze remain

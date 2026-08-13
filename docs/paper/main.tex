@@ -144,7 +144,7 @@ Karny et al.~provide the closest verified interface and human-evidence neighbor.
 They study passive prediction and explicitly leave active steering interfaces to future work. Their subjective/behavioral divergence also cautions against treating perceived usefulness as evidence that an interface improves actionability judgments.
 
 Documentation frameworks such as model cards and datasheets demonstrate how structured records can bind claims to provenance, evaluation, and scope. \cite{mitchell2019modelcards,gebru2021datasheets} Internal algorithmic-audit frameworks add a process-oriented precedent: staged development decisions produce linked records across the system lifecycle. \cite{raji2020accountability} {}% SOURCE_CHECKED 2026-08-11
-Our five-field record applies a related accountability move at the control-affordance level: it records READ, TRANSFER, comparator, calibration warning, and evidence tier for one proposed active latent control. These precedents motivate traceability at the level of one affordance; our contribution makes the record operational through a behavioral qualification rule and worked interface decision.
+Our five-field record applies a related accountability move at the control-affordance level: it records READ, TRANSFER, comparator, calibration warning, and evidence tier for one proposed active latent control. These precedents motivate traceability at the level of one affordance; our contribution makes the record operational through a behavioral qualification rule and worked interface decision. Table~\ref{tab:novelty-neighbors} summarizes the nearest neighbors and what each leaves open for the present interface decision.
 
 \begin{table*}[t]
 \centering
@@ -203,7 +203,7 @@ The record contains five fields.
   \textbf{EVIDENCE TIER} binds the record to a model, method, axis, task, layer, protocol, and evidence status so that a result cannot silently transfer to another setting.
 \end{enumerate}
 
-The record uses a direct hybrid mapping: computational results first, then a structured evidence or blocking reason, then interface eligibility and action. READ may be supported, unsupported, or not evaluated. TRANSFER may be not tested, not evaluable, no-pass, or pass. The record preserves why: the interval includes zero, the contrast is comparator-negative, the estimate is below the point-estimate floor, coherence fails, or missingness limits interpretation. READ support makes the representation a \textbf{read-only diagnostic candidate within this evidence tier}. An active control passes the computational gate within this evidence tier only when READ is supported and the reported TRANSFER rule passes. In every other case the active control is withheld, without turning the blocking reason into a formal state or an operational claim. {}% FL-077
+The record uses a direct hybrid mapping: computational results first, then a structured evidence or blocking reason, then interface eligibility and action (Figure~\ref{fig:evidence-flow}). READ may be supported, unsupported, or not evaluated. TRANSFER may be not tested, not evaluable, no-pass, or pass. The record preserves why: the interval includes zero, the contrast is comparator-negative, the estimate is below the point-estimate floor, coherence fails, or missingness limits interpretation. READ support makes the representation a \textbf{read-only diagnostic candidate within this evidence tier}. An active control passes the computational gate within this evidence tier only when READ is supported and the reported TRANSFER rule passes. In every other case the active control is withheld, without turning the blocking reason into a formal state or an operational claim. {}% FL-077
 {}% OI-014
 
 \begin{figure*}[t]
@@ -374,7 +374,7 @@ The contract turns that aggregate into three structured evidence profiles: insuf
 \label{fig:c1-ratio-ci}
 \end{figure}
 
-The exploratory READ facade reports a three-of-four aggregate pattern in each model, but the composition differs. Deliberation and skepticism satisfy the reported facade criterion in both model families; uncertainty does so only in Qwen, while focus does so only in Llama and overshoots in Qwen. {}% FL-039
+The exploratory READ facade reports a three-of-four aggregate pattern in each model, but the composition differs (Figure~\ref{fig:c1-ratio-ci}). Deliberation and skepticism satisfy the reported facade criterion in both model families; uncertainty does so only in Qwen, while focus does so only in Llama and overshoots in Qwen. {}% FL-039
 {}% FL-040
 These results come from one exploratory run per model using CAA-style directions. {}% FL-036
 {}% FL-038
@@ -397,9 +397,9 @@ The record therefore reports a need for finer resolution relative to the 0.05 fl
 {}% FL-043
 The record keeps those outcomes separate instead of compressing them into one label.
 
-\textbf{Uncertainty produces a comparator-specific warning.} All four steer-minus-prompt contrasts were negative under the frozen scorer. The Qwen--CAA recheck retains a negative complete-case contrast, while its all-generation bounds cross zero. {}% FL-004
+\textbf{Uncertainty produces a comparator-specific warning.} All four steer-minus-prompt contrasts were negative under the frozen scorer (Figure~\ref{fig:c2-calibration-harm}). The Qwen--CAA recheck retains a negative complete-case contrast, while its all-generation bounds cross zero. {}% FL-004
 {}% FL-047
-The record therefore reports the negative as a frozen-scorer outcome bounded by missingness, not an identified comparator advantage.
+The record therefore reports the negative as a frozen-scorer outcome bounded by missingness, not an identified comparator advantage. Table~\ref{tab:axis-actions} summarizes the three axes' blocking reasons and next evaluations.
 
 \begin{table*}[t]
 \centering
@@ -423,7 +423,7 @@ Uncertainty & TRANSFER no-pass; frozen contrasts are comparator-negative, while 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{figures/c2-calibration-harm.pdf}
-\caption{Paired steer-minus-bounded-prompt uncertainty effects and Bonferroni-corrected intervals across the four tested model–method cells.}
+\caption{Paired steer-minus-bounded-prompt uncertainty effects and Bonferroni-corrected intervals across the four tested model–method cells. These are frozen-scorer, complete-case contrasts; the sign is not identified once all-generation missingness is admitted (see the Qwen–CAA recheck).}
 \Description{All four uncertainty point estimates are negative relative to the selected prompt comparator, and their intervals exclude zero under the frozen scorer. The figure does not show direct steer-versus-unsteered-baseline harm or resolve missingness.}
 \label{fig:c2-calibration-harm}
 \end{figure}
@@ -437,7 +437,7 @@ Among complete pairs, steer minus prompt was \(-0.337\) with a 95\% confidence i
 {}% FL-047
 {}% FL-048
 {}% FL-049
-The sign is therefore not identified under unrestricted missingness, and no grid-wide resolved uncertainty effect follows. {}% C-005
+The sign is therefore not identified under unrestricted missingness, and no grid-wide resolved uncertainty effect follows. Table~\ref{tab:calibration-scope} lays out how the interpretation changes with comparator and missingness scope. {}% C-005
 
 \begin{table*}[t]
 \centering
@@ -498,7 +498,7 @@ EVIDENCE TIER & Qwen2.5-7B-Instruct, CAA single-layer additive intervention at h
 % FL-003, FL-008, FL-009, FL-011, FL-024, FL-036, FL-038, FL-040, FL-042, FL-044, FL-047, FL-048, FL-080, FL-081
 \end{table*}
 
-For this record, the exploratory READ result makes uncertainty a \textbf{read-only diagnostic candidate} within its tier. The TRANSFER result is no-pass relative to the comparator, and the all-generation contrast is missingness-limited. {}% C-005
+For this record (Table~\ref{tab:worked-record}), the exploratory READ result makes uncertainty a \textbf{read-only diagnostic candidate} within its tier. The TRANSFER result is no-pass relative to the comparator, and the all-generation contrast is missingness-limited. {}% C-005
 {}% C-007
 The active control is therefore withheld for this record while the comparator and blocking reason remain visible.
 
@@ -507,7 +507,7 @@ The active control is therefore withheld for this record while the comparator an
 Return to Alex's policy-writing assistant. The prototype uncertainty slider has local Qwen--CAA READ support, but its TRANSFER record is no-pass relative to the comparator. The targeted recheck shows steering near the unsteered baseline, a negative complete-case steer-minus-prompt estimate, and missingness bounds that cross zero. {}% FL-044
 {}% FL-047
 
-For this record, the team pauses the slider: the \textbf{active control is withheld}, while the representation remains a \textbf{read-only diagnostic candidate}. The comparator view explains what the prompt channel achieved; the warning distinguishes steer-versus-prompt from steer-versus-baseline; and the evidence tier keeps the Qwen--CAA result from migrating to ITI or Llama. Because the tested evidence replaces the prompt rather than composing with it, this recommendation is scoped to latent-only (substitution) controls; a slider that acts on top of a user instruction would need composition evidence the present evaluation does not provide.
+For this record, the team pauses the slider: the \textbf{active control is withheld}, while the representation remains a \textbf{read-only diagnostic candidate} (Figure~\ref{fig:console}). The comparator view explains what the prompt channel achieved; the warning distinguishes steer-versus-prompt from steer-versus-baseline; and the evidence tier keeps the Qwen--CAA result from migrating to ITI or Llama. Because the tested evidence replaces the prompt rather than composing with it, this recommendation is scoped to latent-only (substitution) controls; a slider that acts on top of a user instruction would need composition evidence the present evaluation does not provide.
 
 \begin{figure*}[t]
 \centering

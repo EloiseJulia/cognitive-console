@@ -972,6 +972,13 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
                             assert cdp.eval(
                                 "!document.querySelector('input[type=\"text\"]')"
                             )
+                            assert cdp.eval(
+                                "document.querySelector('[data-action=\"start\"]').disabled === true"
+                            )
+                            cdp.eval("document.querySelector('#consent-agree').click()")
+                            assert cdp.eval(
+                                "document.querySelector('[data-action=\"start\"]').disabled === false"
+                            )
                             cdp.click("start")
                             cdp.wait("document.querySelector('[data-action=\"show-demonstration\"]')")
                             cdp.click("show-demonstration")
@@ -1220,6 +1227,7 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
                         )
                         cdp.eval("document.querySelector('[data-locale=\"en\"]').click()")
                         cdp.wait("document.querySelector('[data-action=\"start\"]')")
+                        cdp.eval("document.querySelector('#consent-agree').click()")
                         cdp.click("start")
                         cdp.wait("document.querySelector('[data-action=\"show-demonstration\"]')")
                         cdp.click("show-demonstration")

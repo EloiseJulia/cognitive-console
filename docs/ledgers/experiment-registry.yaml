@@ -1847,3 +1847,28 @@ experiments:
     Human data, recruitment, ethics, timing, public deployment, claim/result
     changes, exploratory-to-confirmatory upgrade, and Protocol Freeze remain
     unauthorized.
+    D-0121 deployment lineage follow-up (implementation commit 80f202e,
+    branch feature/stepwise-public-deploy): adds deployment-only infrastructure
+    for owner-run public data collection on Render (free web + Postgres) plus a
+    UI-only placeholder informed-consent gate. Study logic is unchanged: the
+    logic fingerprint stays
+    cb91ebcf364bf07bea40cf541872de7efe07d548d75b2a265dc9be59a6a2b0bd,
+    materials stay v11.3-stepwise-20260813-draft, export schema stays
+    microstudy-export-v8-stepwise-demonstration-signed, and analysis stays
+    button-board-stepwise-gaa-v2; expected answers, A/B design, sequences, and
+    GAA/Strict are identical. New: attempt-keyed idempotent signed-export store
+    (Postgres in deployment, in-memory in tests), opt-in public server mode
+    (STEPWISE_PUBLIC_ORIGIN) with env verification key + external-origin
+    CSRF/Host/Origin checks, per-attempt persistence on complete/save-exit,
+    owner-only /admin/export guarded by STEPWISE_ADMIN_TOKEN, and /healthz. The
+    loopback owner-preview mode is unchanged. Participant JSON/CSV/DOM/ARIA
+    still omit expected/scoring fields. Validation: generator --check current;
+    fingerprint reprinted equal; 42 V3 Python tests (incl. Chrome/Edge en/zh
+    CDP flows updated to tick consent), 12 new deployment tests, the V3 Node
+    suite, and 30 V1/V2 coexistence tests pass. The agent did not push, deploy,
+    recruit, or contact participants; the owner performs the deploy. Ethics and
+    informed consent are owner-asserted present (not independently verified).
+    valid_for_paper stays false: protocol + preregistration freeze,
+    sample-size/MDE, privacy/retention, and human bilingual/accessibility review
+    remain OPEN human gates, so any data collected before the freeze is
+    exploratory pilot only.

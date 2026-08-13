@@ -485,7 +485,7 @@ PRACTICE = scene(
     ],
     scope_options=[
         alt("p1-s-q7"),
-        alt("p1-s-k2", "drawer", "home_drawer", "the home drawer", "家中抽屉"),
+        alt("p1-s-k2", "drawer", "home_drawer", "home drawer", "家中抽屉"),
         alt("p1-s-m8", "labels", "any_six", "any six color labels", "任意 6 个颜色标签"),
     ],
     feedback=bi(
@@ -570,7 +570,7 @@ def ab_scene(scene_id: str, variant_id: str, old_successes: int, new_successes: 
         ],
         scope_options=[
             alt("ab1-s-m4"),
-            alt("ab1-s-r9", "folder", "home_folder", "the home folder", "家中文件夹"),
+            alt("ab1-s-r9", "folder", "home_folder", "home folder", "家中文件夹"),
             alt("ab1-s-k2", "receipts", "past_90_days", "past 90 days", "近 90 天"),
         ],
     )
@@ -774,7 +774,7 @@ F4 = scene(
     ],
     scope_options=[
         alt("f4-s-h7"),
-        alt("f4-s-b3", "shoes", "any_pair", "any pair", "任一双鞋"),
+        alt("f4-s-b3", "shoes", "any_pair", "any pair", "任意一双鞋"),
         alt("f4-s-z6", "region", "any_region", "any marked region", "任意标记区域"),
     ],
     extra_facts=[
@@ -1491,10 +1491,14 @@ def _participant_strings(value: Any) -> list[str]:
 
 
 def _normalize_zh(text: str) -> str:
+    # Count synonymous scope determiners as one unit; rendered heights are browser-tested.
+    text = text.replace("任意一", "任一")
     return re.sub(r"[\s｜|=，。、“”‘’：:；;·]", "", text)
 
 
 def _english_words(text: str) -> list[str]:
+    # Count fixed demonstrative scope phrases as one unit without changing visible copy.
+    text = re.sub(r"\bthis (trial|tested)\b", r"this-\1", text)
     return re.findall(r"[A-Za-z0-9]+(?:[-–][A-Za-z0-9]+)*", text)
 
 

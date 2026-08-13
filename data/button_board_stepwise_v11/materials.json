@@ -4,7 +4,7 @@
   "materials_version": "v11.1-stepwise-20260813-draft",
   "export_schema_version": "microstudy-export-v7-stepwise-bilingual-signed",
   "analysis_version": "button-board-stepwise-gaa-v1",
-  "ab_invariance_hash": "dc63b3e802d44fb99903fa85ae4c4d4406b4702f853244f1e87002d800bd5531",
+  "ab_invariance_hash": "1202f424184b1cd2b7f1dd7f051eea20cf7ed51ace42982c7a50459d36d5bd9d",
   "formal_scene_ids": [
     "AB1-A",
     "AB1-B",
@@ -364,11 +364,11 @@
           },
           {
             "id": "p1-s-k2",
-            "text": "Only when | drawer=the home drawer | labels=current six color labels | operator=self only",
+            "text": "Only when | drawer=home drawer | labels=current six color labels | operator=self only",
             "segments": [
               {
                 "label": "drawer",
-                "value": "the home drawer"
+                "value": "home drawer"
               },
               {
                 "label": "labels",
@@ -445,11 +445,11 @@
             },
             {
               "id": "ab1-s-r9",
-              "text": "Only when | folder=the home folder | receipts=past 30 days | light=desk lamp on | operator=self only",
+              "text": "Only when | folder=home folder | receipts=past 30 days | light=desk lamp on | operator=self only",
               "segments": [
                 {
                   "label": "folder",
-                  "value": "the home folder"
+                  "value": "home folder"
                 },
                 {
                   "label": "receipts",
@@ -532,11 +532,11 @@
             },
             {
               "id": "ab1-s-r9",
-              "text": "Only when | folder=the home folder | receipts=past 30 days | light=desk lamp on | operator=self only",
+              "text": "Only when | folder=home folder | receipts=past 30 days | light=desk lamp on | operator=self only",
               "segments": [
                 {
                   "label": "folder",
-                  "value": "the home folder"
+                  "value": "home folder"
                 },
                 {
                   "label": "receipts",
@@ -1732,11 +1732,11 @@
             },
             {
               "id": "f4-s-b3",
-              "text": "仅在｜鞋=任一双鞋 | 鞋垫=这块鞋垫 | 区域=这个标记区域",
+              "text": "仅在｜鞋=任意一双鞋 | 鞋垫=这块鞋垫 | 区域=这个标记区域",
               "segments": [
                 {
                   "label": "鞋",
-                  "value": "任一双鞋"
+                  "value": "任意一双鞋"
                 },
                 {
                   "label": "鞋垫",

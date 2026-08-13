@@ -1,8 +1,8 @@
 {
   "experiment": "strong-negative-positive-control",
   "endpoint": "exactly_two_words(token_count==2)",
-  "scientific_status": "PENDING_HOSTILE_RESULT_AUDIT",
-  "valid_for_paper": false,
+  "scientific_status": "RESULT_AUDIT_PASSED",
+  "valid_for_paper": true,
   "predeclaration": "docs/research/2026-08-13-strong-negative-positive-control-predeclaration.md",
   "code_commit": "c839e1ca73668039fc15f0adbf512d7ca2f936be",
   "dirty_tree": true,
@@ -13534,7 +13534,12 @@
   "gate_satisfiable_and_discriminative": true,
   "raw_generations": {
     "path": "raw_generations.jsonl",
-    "sha256": "08025f4890fa197c5d943380799562565698da33c0eaea8b6601f3ee79a363bf"
+    "sha256": "08025f4890fa197c5d943380799562565698da33c0eaea8b6601f3ee79a363bf",
+    "archival_status": "archived_in_git_from_a800_report_store",
+    "available_in_git": true,
+    "lineage_note": "raw_generations archived in git from A800 REPORT_STORE mirror; sha256 verified against pointer.",
+    "archived_from": "A800:~/reports/cognitive-console/strong_negative_pc_20260813/raw_generations.jsonl",
+    "records": 795
   },
   "wall_clock_seconds": 301.2493793964386,
   "hardware": {
@@ -13542,5 +13547,32 @@
     "node": "suzlab-a800",
     "gpu_name": "NVIDIA A800 80GB PCIe",
     "cuda_visible_devices": "3"
-  }
+  },
+  "audit_trail": [
+    {
+      "date": "2026-08-13",
+      "reviewer": "impl-b1-lineage",
+      "audit_ref": "audit-b1foldin=SOUND",
+      "prior_status": {
+        "scientific_status": "PENDING_HOSTILE_RESULT_AUDIT",
+        "valid_for_paper": false,
+        "dirty_tree": true
+      },
+      "status_update": "scientific_status=RESULT_AUDIT_PASSED; valid_for_paper=true; dirty_tree left as as-run value",
+      "recomputed_from": "committed per-item/per-sample outcome arrays in this JSON",
+      "scorer_verified": "exactly_two_words(token_count==2); scripts use len(re.findall(r\"\\S+\", text.strip())) == 2",
+      "positive_control_recomputed_delta": 0.6,
+      "positive_control_recomputed_ci": [
+        0.44528301886792454,
+        0.750943396226415
+      ],
+      "negative_control_recomputed_delta": 0.011320754716981133,
+      "negative_control_recomputed_ci": [
+        -0.03018867924528302,
+        0.0528301886792453
+      ],
+      "scope": "decision-rule behavior only; positive-control satisfiability/discrimination diagnostic; NOT latent-steering efficacy",
+      "raw_generations_note": "raw_generations archived in git from A800 REPORT_STORE mirror; sha256 verified against pointer."
+    }
+  ]
 }

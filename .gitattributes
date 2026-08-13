@@ -1,1 +1,2 @@
 *.pdf binary
+results/strong_negative_pc_20260813/raw_generations.jsonl -text

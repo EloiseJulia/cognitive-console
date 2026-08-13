@@ -2,8 +2,8 @@
 
 The full raw generations (795 records = 3 conditions × 53 TEST items × 5 samples,
 including the decoded model text and per-row `base_seed`, `call_seed`, and
-`finish_reason` for every sample) are **NOT committed to git** (REPORT_STORE policy
-for large raw artifacts). They live in REPORT_STORE:
+`finish_reason` for every sample) are now archived in this directory as
+`raw_generations.jsonl`, copied from the A800 REPORT_STORE mirror on 2026-08-13.
 
 - **REPORT_STORE path (Windows):**
   `%USERPROFILE%\reports\cognitive-console\strong_negative_pc_20260813\raw_generations.jsonl`

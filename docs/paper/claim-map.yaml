@@ -5,7 +5,7 @@ claims:
     supporting_evidence_ids: ["E-0003", "E-0008"]
     scope: "Qwen2.5-7B-Instruct and Llama-3-8B-Instruct; deliberation and skepticism hold in both; uncertainty is model-dependent (Qwen 0.713 hold vs Llama 1.000 no-facade); focus is model-dependent (Llama 0.471 hold vs Qwen 2.844 overshoot/no-facade)"
     paper_sections: ["Abstract", "Introduction", "Methods", "Results", "Limitations", "Conclusion"]
-    main_artifacts: ["fig-ratio-ci", "table-c1-twomodel"]
+    main_artifacts: ["fig2-read-facade.pdf", "table-c1-twomodel"]
     valid_for_paper: "false for confirmatory/core claim per evidence ledger; usable only if explicitly labeled exploratory/scoped"
     gate_notes: "E-0003 and E-0008 both have valid_for_paper=false for confirmatory use. Mark exploratory everywhere; say aggregate support replicates but axis composition does not."
   C2:
@@ -14,13 +14,28 @@ claims:
     supporting_evidence_ids: ["E-0005", "E-0006", "E-0009", "E-0011", "E-0013", "E-0014", "E-0015"]
     scope: "Frozen C2b adjudicator; core headline is {CAA, ITI} x {Qwen2.5-7B, Llama-3-8B}; axes deliberation, skepticism, uncertainty_awareness; bounded prompt effort; naive/off-the-shelf steering under the frozen method-specific single-layer additive convention h'=h+alpha*s_m*u_m, with s_CAA=1, s_ITI=sigma_L, and coefficient alpha<=24 (not a common injected-norm bound). E-0009 is exploratory method-strength context. E-0011 measures split sensitivity over the same shared item pool: four new split seeds were prospectively frozen after the original frozen seed had been observed. E-0013 is valid only for the CAA×Qwen format-robustness/limitation claim; three cells remain unverified. E-0014 and E-0015 are valid only as positive-control and assay-sensitivity limitations, not as positive latent-control evidence or universal negatives."
     paper_sections: ["Abstract", "Introduction", "Methods", "Results", "Limitations", "Conclusion"]
-    main_artifacts: ["table-c2-delta-4cell", "fig-calibration-harm-4cell"]
+    main_artifacts: ["table-c2-delta-4cell", "fig3-uncertainty.pdf"]
     valid_for_paper: true
     exploratory_supporting_evidence_ids: ["E-0009"]
     core_evidence_ids: ["E-0005", "E-0006", "E-0011"]
     scoped_limitation_evidence_ids: ["E-0013", "E-0014", "E-0015"]
     excluded_diagnostic_ids: ["E-0015-logit-diagnostic"]
     gate_notes: "Passes Abstract/Contributions/Conclusion evidence gate via E-0005/E-0006 and the E-0011 split-seed robustness companion. E-0013 supports only D-0078's CAA×Qwen format-robustness statement, including post-generation conditioning and missingness caveats; ITI×Qwen and both Llama cells were not rechecked. E-0014 supports endpoint-live plus bounded unit-direction CAA null limitation wording and is not a passing latent positive control. E-0015 supports a scale-corrected CAA coherent-null/assay-sensitivity limitation with ceiling and MDE caveats, not a universal/core latent negative. E-0015-logit-diagnostic is valid_for_paper=false, appendix-only, and supports no claim. Scope guard: bounded prompt vs naive/off-the-shelf CAA/ITI under method-specific scaling; 2 models × 2 methods; not an impossibility theorem."
+  B1:
+    statement: "The qualification adjudicator is mechanically satisfiable and discriminative under a simple prompt-level positive control: it accepts the exactly-two-words prompt effect (Δ=0.6000, CI[0.4453,0.7509]) and rejects a noisy strong-vs-strong-prime null (Δ=0.0113, CI[-0.0302,0.0528])."
+    status: "supported positive-control diagnostic; valid_for_paper=true for decision-rule behavior only"
+    supporting_evidence_ids: ["E-B1-PC-20260813"]
+    scope: "Decision-rule behavior only. This is a prompt/instruction positive-control diagnostic for adjudicator satisfiability and discrimination; it is additive to the frozen C2 0/12 grid and does not overwrite E-0005/E-0006/E-0011. It is explicitly NOT latent-steering efficacy evidence."
+    paper_sections: ["Methods", "Results", "Limitations"]
+    main_artifacts: []
+    evidence_artifacts:
+      - "results/noisy_pc_20260813/noisy_pc_result.json"
+      - "results/strong_negative_pc_20260813/strong_negative_pc_result.json"
+      - "results/strong_negative_pc_20260813/raw_generations.jsonl"
+      - "docs/ledgers/evidence-ledger.md#E-B1-PC-20260813"
+    valid_for_paper: true
+    gate_notes: "B1 supports only the paper's qualification-rule sanity check: satisfiable + discriminative adjudication. pc3 raw decoded generations are unavailable and honestly recorded; metrics remain independently recomputable from committed arrays under the trivial token_count==2 scorer. Do not cite B1 as a latent-control or steering success."
+
   C2-mech:
     statement: "The steer-vs-bounded-prompt negative contrast under the frozen scorer (as run; all-generation sign unidentified in the one rechecked Qwen/CAA cell) might be explained by off-manifold steering distance; direct Qwen/CAA steer-vs-baseline is near zero (+0.011 compliance, +0.0008 1-Brier)."
     status: "hypothesis/future work only; directly tested and not supported"
@@ -78,16 +93,20 @@ reverse_artifact_map:
     supports_claims: ["C1"]
     manifest: "docs/paper/table-manifests/c1-twomodel.yaml"
     gate_status: "ok, exploratory label required; two-model aggregate support but axis heterogeneity must be stated"
-  fig-ratio-ci:
+  fig2-read-facade.pdf:
     artifact_type: "main figure"
     supports_claims: ["C1"]
-    manifest: "docs/paper/figure-manifests/c1-ratio-ci.yaml"
-    gate_status: "ok, exploratory label required"
-  fig-calibration-harm-4cell:
+    file: "docs/paper/figures/fig2-read-facade.pdf"
+    manuscript_label: "fig:c1-ratio-ci"
+    provenance_doc: "docs/paper/figure-manifests/fig1-3-v5-design-provenance.md"
+    gate_status: "ok, v5 hand-rendered figure; manuscript label fig:c1-ratio-ci maps to actual fig2-read-facade.pdf; numbers verified on 2026-08-13 against source artifact c1_facade_summary.md (Qwen ratios deliberation 0.583, skepticism 0.548, uncertainty 0.713, focus 2.844; CIs consistent); exploratory label required"
+  fig3-uncertainty.pdf:
     artifact_type: "main figure"
     supports_claims: ["C2"]
-    manifest: "docs/paper/figure-manifests/c2-calibration-harm-4cell.yaml"
-    gate_status: "ok, manifest stub pending plotting script"
+    file: "docs/paper/figures/fig3-uncertainty.pdf"
+    manuscript_label: "fig:c2-calibration-harm"
+    provenance_doc: "docs/paper/figure-manifests/fig1-3-v5-design-provenance.md"
+    gate_status: "ok, v5 hand-rendered figure; manuscript label fig:c2-calibration-harm maps to actual fig3-uncertainty.pdf; numbers verified on 2026-08-13 against source table c2-delta-4cell.tex (CAA/Qwen -0.228[-0.370,-0.092], CAA/Llama -0.072[-0.103,-0.034], ITI/Qwen -0.103[-0.136,-0.069], ITI/Llama -0.084[-0.115,-0.049])"
   fig-console-ui-contract:
     artifact_type: "main figure"
     supports_claims: ["C2", "C3"]
@@ -113,6 +132,10 @@ gate_summary:
       has_project_evidence_row: true
       evidence_ids: ["E-0005", "E-0006", "E-0009", "E-0011", "E-0013", "E-0014", "E-0015"]
       gate_result: "pass via E-0005/E-0006 frozen core and E-0011 robustness; E-0013/14/15 are scoped limitation evidence only; E-0015-logit-diagnostic is excluded"
+    - claim: "B1"
+      has_project_evidence_row: true
+      evidence_ids: ["E-B1-PC-20260813"]
+      gate_result: "pass only as a decision-rule positive-control diagnostic; not latent efficacy and not part of the C2 frozen 0/12 grid"
     - claim: "C3"
       has_project_evidence_row: false
       evidence_ids: []

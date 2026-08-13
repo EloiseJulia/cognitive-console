@@ -1452,21 +1452,36 @@ experiments:
   claim_ids:
   - C2b
   type: confirmatory_positive_control
-  status: frozen_unrun_pending_independent_hostile_audit
-  code_commit: pending_this_commit
+  status: invalid_setup_complete_test_not_accessed
+  code_commit: 32195f6238023e9762f2fadf74b2453ac90ce864
   dirty_tree: false
   data_hash: truthfulqa_revision=741b8276f2d1982aa3d5b832d3ee81ed3b896490;prompt_bank_lf_normalized_sha256=9d58c45e7266888e107eaca3ddb691e8ca966f9aea74fa63623d23e9fcf68bc9
   env_hash: transformers=4.44.2;datasets=2.21.x
-  config_hash: runtime_canonical_hash_pending_unrun_preflight
+  config_hash: sha256:b3a650ff873ecfc09f2b2e2b85e65b3637f36a26edc4323c59b79a6102d1aa92
   model: NousResearch/Meta-Llama-3-8B-Instruct@53346005fb0ef11d3b6a83b12c895cca40156b6c
   dataset: truthfulqa/truthful_qa generation+multiple_choice validation@741b8276f2d1982aa3d5b832d3ee81ed3b896490
   seed: 20260811
-  hardware: owner-approved NVIDIA A800 80GB, CUDA_VISIBLE_DEVICES=3; no GPU run in this commit
+  hardware: >-
+    owner-approved NVIDIA A800 80GB PCIe, CUDA_VISIBLE_DEVICES=3 (physical GPU3,
+    cuda_uuid f8229272-74e3-41ee-1707-c48fa06ae03f), bf16/CUDA12.8/Python3.12;
+    DEV generation + truth/info judge scoring completed on GPU; TEST not accessed
   started_at: null
   ended_at: null
   exit_code: null
-  raw_metrics: null
-  summary_metrics: null
+  raw_metrics:
+    dev_mean_iti_minus_baseline: 0.029268292682926834
+    dev_coherence_ok: true
+    required_delta: 0.05
+    fold0_iti_ratio_0p100_mean_iti_minus_baseline: 0.01951219512195122
+    fold1_iti_ratio_0p125_mean_iti_minus_baseline: 0.03902439024390244
+    test_accessed: false
+  summary_metrics:
+    status: INVALID_SETUP
+    coherence_ok: true
+    interpretation: >-
+      calibrated coherent in-domain latent method (ITI on TruthfulQA) beats the
+      best-bounded-prompt baseline by only +0.0293, below the 0.05 eligibility
+      floor; honest sub-threshold negative, not a passing positive control
   artifacts:
   - docs/ledgers/prereg-iti-truthfulqa-calibrated-positive-control.md
   - data/strongest_prompts/truthfulness_positive_control.jsonl
@@ -1474,24 +1489,48 @@ experiments:
   - src/cognitive_console/eval/truthfulqa_positive_control.py
   - src/cognitive_console/experiments/iti_positive_control.py
   - scripts/run_iti_truthfulqa_positive_control.py
-  failure_reason: null
+  provenance_sha256:
+    external_location: >-
+      session-store 89164e3a-d07d-4820-ae40-40fe8bc8540e /files/results/ITI-calibrated-DEV/
+      (multi-MB dev_generations*.jsonl NOT copied into git per artifact-size policy;
+      recorded here by sha256 only)
+    dev_manifest_json: 2d375026ab56a5a61991ae949c9deca1fb33d32235ac97b936ff9185efbee817
+    dev_artifact_manifest_json: bee0e7b002d1c819ce4bf654d868b166a465c7fbadf7ed9ca38085369e13998d
+    dev_generations_raw_jsonl: 597e11cc49ffed24121e735f8fe38a92ba02c5760dfcf0ade008c584dabccba2
+    execution_fingerprint: sha256:e128efe66845756d1a00d009e2ecabb8ef8a92b6734a160fb0ef1c90fe65c8e4
+    run_config_hash: sha256:b3a650ff873ecfc09f2b2e2b85e65b3637f36a26edc4323c59b79a6102d1aa92
+    dev_manifest_hash: sha256:e38fb3b672e4473428b952066102dc64b822a493b058b908a06af033d5ec9a35
+  failure_reason: >-
+    Not an execution failure: DEV ran cleanly (18040 generations + truth/info
+    judge scoring). status=INVALID_SETUP because mean(ITI-baseline)=+0.0293 is
+    below the prereg eligibility floor required_delta=0.05, despite
+    coherence_ok=true (alpha-bug fix confirmed working). Per prereg TEST was
+    forbidden (status != ELIGIBLE) and not accessed.
   valid_for_paper: false
+  scientific_status: PENDING_HOSTILE_RESULT_AUDIT
   validation_notes: >-
-    UNRUN corrected attempt. Per-head sigma remains Li et al.'s sample standard
-    deviation of outer-training activation projections onto the unit truthful
-    direction. The frozen target-fraction grid is
-    {0.025,0.050,0.075,0.100,0.125}; each fold converts it deterministically to
-    numeric alpha coefficients so the worst selected layer's aggregate injected
-    norm is at most 12.5% of the median natural o_proj-input norm. This
-    calibration uses no generation, judge, DEV outcome, or TEST outcome.
-    Inner DEV selects the best Truthful AND Informative alpha only among
-    coherence-passing candidates; no coherent candidate yields INVALID_SETUP.
-    All generator/dataset/judge identities, two-fold split, K=5, 64-token
-    generation, ITI-minus-best-bounded-prompt estimand, DEV >=0.05 eligibility,
-    TEST-once lock, random-direction-must-fail rule, coherence/rate gates, and
-    frozen 0/12 preservation remain unchanged. The non-root host may set
-    CC_TEST_ATTEMPT_ROOT=/home/elzhang/.cognitive-console. Independent hostile
-    audit is required before preflight/DEV; TEST remains separately gated.
+    LINEAGE RECONCILIATION (2026-08-13): this row previously carried a stale
+    UNRUN placeholder ("frozen_unrun...", code_commit pending), but the run
+    actually executed and is documented in the COMMITTED failure-log entry dated
+    2026-08-13. Reconciled to the calibrated ITI x TruthfulQA positive control at
+    commit 32195f6 (A800 GPU3, Llama-3-8B-Instruct generator, seed 20260811).
+    Per-head sigma is Li et al.'s sample std of outer-training activation
+    projections onto the unit truthful direction; magnitude was calibrated by the
+    frozen target-fraction grid {0.025,0.050,0.075,0.100,0.125} bounding the worst
+    selected layer's aggregate injected norm to <=12.5% of the median natural
+    o_proj-input norm (setup-only fix, does not touch the estimand or frozen 0/12).
+    DEV outcome (verified from dev_manifest.json): status=INVALID_SETUP,
+    coherence_ok=true, mean(ITI-baseline)=+0.02927 < required_delta 0.05; folds
+    fold0 (ratio 0.100) +0.01951, fold1 (ratio 0.125) +0.03902; test_accessed=false.
+    All four provenance sha256s recorded in the failure-log were recomputed from
+    the session-store artifacts and MATCH exactly; execution_fingerprint
+    sha256:e128efe6... confirmed inside dev_manifest.json. exit_code left null:
+    the process completed through eligibility computation but no literal process
+    exit code is recorded in the fetched artifacts (UNVERIFIED). started_at/ended_at
+    left null (precise run timestamps not attributable from fetched artifacts).
+    valid_for_paper=false; frozen 0/12 (E-0005/E-0006/E-0011) untouched; the
+    earlier incoherent attempt (-20260811, f23c10f) is a distinct row and is not
+    modified. Independent hostile RESULT audit still required before any paper use.
 
 - experiment_id: microstudy-contract-application-20260810
   parent: null

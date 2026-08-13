@@ -1,0 +1,95 @@
+experiments:
+- experiment_id: E-0013b
+  parent: E-0013
+  hypothesis_id: H2
+  claim_ids:
+  - C2b
+  type: exploratory
+  status: done
+  scientific_status: PENDING_HOSTILE_RESULT_AUDIT
+  valid_for_paper: false
+  code_commit: a0f8d145fad995921290f58d154f6a6f5e1056b0
+  branch: feature/uncertainty-missingness-recheck
+  dirty_tree: false
+  data_source: results/arm_full/cell_*/transcripts/uncertainty_awareness__test_{steer,prompt,baseline}__*.jsonl
+  data_note: >-
+    Reanalysis of ALREADY-COLLECTED frozen generations. NO new generation, NO GPU.
+    Frozen transcripts read READ-ONLY from the main checkout; no frozen artifact
+    was modified.
+  seed: 20260723
+  bootstrap_b: 10000
+  primary_ci_level: 0.9833333333333333
+  anchor_ci_level: 0.95
+  hardware: cpu-analysis-only
+  purpose: >-
+    Reproduce the E-0013 confidence-parseability / missingness decomposition
+    (complete-case + adversarial all-generation imputation bounds) for the THREE
+    uncertainty cells E-0013 never rechecked (iti__qwen2.5-7b, caa__llama3-8b,
+    iti__llama3-8b), to test whether the grid-wide "uncertainty favors the
+    comparator" claim is robust or a scoring/missingness artifact.
+  method_validation:
+    exact_reproduction_of_E-0013: true
+    note: >-
+      Running this script's decomposition on E-0013's OWN samples.jsonl reproduces
+      results/E-0013-uncertainty-recheck/reanalysis.json bit-for-bit (all_match=true).
+    provenance_validation: >-
+      Transcript-derived as-run 0.5-imputed steer-minus-prompt delta reproduces the
+      frozen grid mean_diff for all four cells (|diff| <= 4e-5), confirming the
+      transcripts are the true basis of the frozen grid claim.
+  summary_metrics:
+    caa__qwen2.5-7b_anchor_from_transcripts:
+      steer_parseable_rate: 0.8151
+      prompt_parseable_rate: 0.4377
+      complete_case_point: -0.44324
+      complete_case_ci95: [-0.61542, -0.26034]
+      complete_case_excludes_zero: true
+      complete_case_n_item_clusters: 33
+      adversarial_bounds: [-0.50692, 0.24025]
+      adversarial_bounds_cross_zero: true
+      e0013_regen_reference: {steer_parseable: 0.826, prompt_parseable: 0.445, complete_case: -0.33668, bounds: [-0.47836, 0.24995]}
+    iti__qwen2.5-7b:
+      steer_parseable_rate: 0.0453
+      prompt_parseable_rate: 0.4377
+      complete_case_point: -0.34875
+      complete_case_ci95: [-0.57500, -0.12250]
+      complete_case_ci9833: [-0.58750, -0.05875]
+      complete_case_excludes_zero: true
+      complete_case_n_item_clusters: 4
+      complete_case_n_sample_pairs: 6
+      complete_case_caveat: uninterpretably underpowered (4 items / 6 pairs of 265)
+      adversarial_bounds: [-0.95943, 0.55755]
+      adversarial_bounds_cross_zero: true
+    caa__llama3-8b:
+      steer_parseable_rate: 0.0
+      prompt_parseable_rate: 0.5057
+      complete_case_point: null
+      complete_case_status: UNDEFINED (0 parseable steer generations -> 0 complete-case pairs)
+      adversarial_bounds: [-0.94509, 0.54925]
+      adversarial_bounds_cross_zero: true
+    iti__llama3-8b:
+      steer_parseable_rate: 0.1547
+      prompt_parseable_rate: 0.5057
+      complete_case_point: -0.02593
+      complete_case_ci95: [-0.20166, 0.14542]
+      complete_case_ci9833: [-0.23355, 0.18646]
+      complete_case_excludes_zero: false
+      complete_case_n_item_clusters: 17
+      adversarial_bounds: [-0.84157, 0.49810]
+      adversarial_bounds_cross_zero: true
+    robustness_verdict: >-
+      NOT ROBUST - plausibly a missingness/scoring artifact. All 4 cells' adversarial
+      all-generation imputation bounds cross zero. Of the 3 rechecked cells, complete-case
+      harm is UNDEFINED (caa-llama), NULL (iti-llama CI includes 0), or resting on 4
+      items/6 pairs (iti-qwen). Only caa-qwen retains a defensible complete-case negative.
+      In all 3 rechecked cells steering SUPPRESSES confidence-parseability (0.0-0.155 vs
+      0.44-0.51), so the negative as-run delta is dominated by the 0.5-imputation of the
+      high-missingness (steer) condition - the OPPOSITE compliance direction to caa-qwen.
+  artifacts:
+  - results/E-0013b-uncertainty-missingness/reanalysis.json
+  - results/E-0013b-uncertainty-missingness/REPORT.md
+  - scripts/run_uncertainty_missingness_recheck.py
+  failure_reason: null
+  validation_notes: >-
+    Additive robustness recheck; does NOT modify frozen E-0005/E-0006/E-0011/E-0013.
+    Not blessed by this subagent. Awaiting independent hostile result audit before any
+    use in the paper.

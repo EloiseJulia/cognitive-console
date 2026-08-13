@@ -1,0 +1,749 @@
+{
+  "experiment_id": "E-0013b",
+  "title": "Uncertainty missingness/format-compliance recheck for the three unrechecked cells",
+  "valid_for_paper": false,
+  "scientific_status": "PENDING_HOSTILE_RESULT_AUDIT",
+  "generated_at": "2026-08-13T04:53:51.676238+00:00",
+  "method": {
+    "source_of_generations": "frozen results/arm_full/cell_*/transcripts test_{steer,prompt,baseline}",
+    "no_new_generation": true,
+    "format_compliant_definition": "parse.parsed_confidence is not None",
+    "per_generation_score_field": "sample_outcome (frozen 0.5-imputed per-generation 1-Brier)",
+    "decomposition_reference": "scripts/run_uncertainty_format_recheck.py (E-0013)",
+    "bootstrap": "item-cluster percentile bootstrap (adjudicate_c2b.cluster_bootstrap_ci, cluster=True)",
+    "bootstrap_b": 10000,
+    "bootstrap_seed": 20260723,
+    "primary_ci_level": 0.9833333333333333,
+    "anchor_ci_level_for_e0013_reproduction": 0.95
+  },
+  "phase_files": {
+    "caa__qwen2.5-7b": {
+      "steer": "results/arm_full/cell_caa__qwen2.5-7b/transcripts/uncertainty_awareness__test_steer__alpha=8.0.jsonl",
+      "prompt": "results/arm_full/cell_caa__qwen2.5-7b/transcripts/uncertainty_awareness__test_prompt__prompt=unc-strong-01_alpha=0.jsonl",
+      "baseline": "results/arm_full/cell_caa__qwen2.5-7b/transcripts/uncertainty_awareness__test_baseline__alpha=0.jsonl"
+    },
+    "iti__qwen2.5-7b": {
+      "steer": "results/arm_full/cell_iti__qwen2.5-7b/transcripts/uncertainty_awareness__test_steer__alpha=12.0.jsonl",
+      "prompt": "results/arm_full/cell_iti__qwen2.5-7b/transcripts/uncertainty_awareness__test_prompt__prompt=unc-strong-01_alpha=0.jsonl",
+      "baseline": "results/arm_full/cell_iti__qwen2.5-7b/transcripts/uncertainty_awareness__test_baseline__alpha=0.jsonl"
+    },
+    "caa__llama3-8b": {
+      "steer": "results/arm_full/cell_caa__llama3-8b/transcripts/uncertainty_awareness__test_steer__alpha=8.0.jsonl",
+      "prompt": "results/arm_full/cell_caa__llama3-8b/transcripts/uncertainty_awareness__test_prompt__prompt=unc-strong-09_alpha=0.jsonl",
+      "baseline": "results/arm_full/cell_caa__llama3-8b/transcripts/uncertainty_awareness__test_baseline__alpha=0.jsonl"
+    },
+    "iti__llama3-8b": {
+      "steer": "results/arm_full/cell_iti__llama3-8b/transcripts/uncertainty_awareness__test_steer__alpha=6.0.jsonl",
+      "prompt": "results/arm_full/cell_iti__llama3-8b/transcripts/uncertainty_awareness__test_prompt__prompt=unc-strong-09_alpha=0.jsonl",
+      "baseline": "results/arm_full/cell_iti__llama3-8b/transcripts/uncertainty_awareness__test_baseline__alpha=0.jsonl"
+    }
+  },
+  "sanity_counts": {
+    "caa__qwen2.5-7b": {
+      "prompt": {
+        "n_rows": 265,
+        "n_items": 53,
+        "k_per_item": [
+          5
+        ]
+      },
+      "steer": {
+        "n_rows": 265,
+        "n_items": 53,
+        "k_per_item": [
+          5
+        ]
+      },
+      "baseline": {
+        "n_rows": 265,
+        "n_items": 53,
+        "k_per_item": [
+          5
+        ]
+      }
+    },
+    "iti__qwen2.5-7b": {
+      "prompt": {
+        "n_rows": 265,
+        "n_items": 53,
+        "k_per_item": [
+          5
+        ]
+      },
+      "steer": {
+        "n_rows": 265,
+        "n_items": 53,
+        "k_per_item": [
+          5
+        ]
+      },
+      "baseline": {
+        "n_rows": 265,
+        "n_items": 53,
+        "k_per_item": [
+          5
+        ]
+      }
+    },
+    "caa__llama3-8b": {
+      "prompt": {
+        "n_rows": 265,
+        "n_items": 53,
+        "k_per_item": [
+          5
+        ]
+      },
+      "steer": {
+        "n_rows": 265,
+        "n_items": 53,
+        "k_per_item": [
+          5
+        ]
+      },
+      "baseline": {
+        "n_rows": 265,
+        "n_items": 53,
+        "k_per_item": [
+          5
+        ]
+      }
+    },
+    "iti__llama3-8b": {
+      "prompt": {
+        "n_rows": 265,
+        "n_items": 53,
+        "k_per_item": [
+          5
+        ]
+      },
+      "steer": {
+        "n_rows": 265,
+        "n_items": 53,
+        "k_per_item": [
+          5
+        ]
+      },
+      "baseline": {
+        "n_rows": 265,
+        "n_items": 53,
+        "k_per_item": [
+          5
+        ]
+      }
+    }
+  },
+  "e0013_method_reproduction_validation": {
+    "all_match": true,
+    "checks": [
+      {
+        "metric": "steer_format_compliance_rate",
+        "reconstructed": 0.8264150943396227,
+        "e0013_reference": 0.8264150943396227,
+        "abs_diff": 0.0,
+        "match": true
+      },
+      {
+        "metric": "prompt_format_compliance_rate",
+        "reconstructed": 0.44528301886792454,
+        "e0013_reference": 0.44528301886792454,
+        "abs_diff": 0.0,
+        "match": true
+      },
+      {
+        "metric": "as_run_imputed_delta",
+        "reconstructed": -0.20948830188679243,
+        "e0013_reference": -0.20948830188679243,
+        "abs_diff": 0.0,
+        "match": true
+      },
+      {
+        "metric": "complete_case_point",
+        "reconstructed": -0.3366781481481482,
+        "e0013_reference": -0.3366781481481482,
+        "abs_diff": 0.0,
+        "match": true
+      },
+      {
+        "metric": "complete_case_ci_lo",
+        "reconstructed": -0.5075485879629629,
+        "e0013_reference": -0.5075485879629629,
+        "abs_diff": 0.0,
+        "match": true
+      },
+      {
+        "metric": "complete_case_ci_hi",
+        "reconstructed": -0.16516796759259258,
+        "e0013_reference": -0.16516796759259258,
+        "abs_diff": 0.0,
+        "match": true
+      },
+      {
+        "metric": "n_compliant_sample_pairs",
+        "reconstructed": 110,
+        "e0013_reference": 110,
+        "abs_diff": 0.0,
+        "match": true
+      },
+      {
+        "metric": "bound_least_favorable_to_steer",
+        "reconstructed": -0.4783562264150944,
+        "e0013_reference": -0.4783562264150944,
+        "abs_diff": 0.0,
+        "match": true
+      },
+      {
+        "metric": "bound_most_favorable_to_steer",
+        "reconstructed": 0.2499456603773585,
+        "e0013_reference": 0.2499456603773585,
+        "abs_diff": 0.0,
+        "match": true
+      }
+    ],
+    "note": "exact reproduction of E-0013 reanalysis.json from E-0013's own samples.jsonl",
+    "reference_file": "results/E-0013-uncertainty-recheck/reanalysis.json"
+  },
+  "caaqwen_frozen_transcript_vs_e0013_regen_crosscheck": {
+    "note": "CAA-Qwen re-decomposed from FROZEN arm_full transcripts; E-0013 re-GENERATED its own samples, so exact equality is NOT expected. Compared for directional agreement.",
+    "steer_parseable_rate": {
+      "frozen_transcripts": 0.8150943396226416,
+      "e0013_regen": 0.8264150943396227
+    },
+    "prompt_parseable_rate": {
+      "frozen_transcripts": 0.4377358490566038,
+      "e0013_regen": 0.44528301886792454
+    },
+    "complete_case_point": {
+      "frozen_transcripts": -0.4432434343434343,
+      "e0013_regen": -0.3366781481481482
+    },
+    "adversarial_bounds": {
+      "frozen_transcripts": [
+        -0.5069181132075472,
+        0.24025169811320754
+      ],
+      "e0013_regen": [
+        -0.4783562264150944,
+        0.2499456603773585
+      ]
+    }
+  },
+  "per_cell_ci_level_0p95_e0013_anchor": {
+    "caa__qwen2.5-7b": {
+      "conditions": {
+        "prompt": {
+          "n_samples": 265,
+          "n_format_compliant": 116,
+          "format_compliance_rate": 0.4377358490566038,
+          "n_format_dropped": 149,
+          "format_dropped_rate": 0.5622641509433962,
+          "mean_frozen_imputed_1minus_brier": 0.8478875471698113
+        },
+        "steer": {
+          "n_samples": 265,
+          "n_format_compliant": 216,
+          "format_compliance_rate": 0.8150943396226416,
+          "n_format_dropped": 49,
+          "format_dropped_rate": 0.18490566037735848,
+          "mean_frozen_imputed_1minus_brier": 0.6202147169811321
+        },
+        "baseline": {
+          "n_samples": 265,
+          "n_format_compliant": 215,
+          "format_compliance_rate": 0.8113207547169812,
+          "n_format_dropped": 50,
+          "format_dropped_rate": 0.18867924528301888,
+          "mean_frozen_imputed_1minus_brier": 0.6129811320754717
+        }
+      },
+      "frozen_uncertainty_delta_steer_minus_prompt_as_run_imputed": {
+        "point": -0.22767283018867926,
+        "n_items": 53
+      },
+      "format_compliant_only_delta_steer_minus_prompt": {
+        "point": -0.4432434343434343,
+        "ci_lo": -0.6154215719696968,
+        "ci_hi": -0.26033774621212125,
+        "ci_level": 0.95,
+        "bootstrap_b": 10000,
+        "n_items": 33,
+        "excludes_zero": true,
+        "n_compliant_sample_pairs": 109,
+        "restriction": "paired item/sample rows where both steer and prompt parsed confidence"
+      },
+      "sensitivity": {
+        "worst_case_imputation_bounds": {
+          "bounds": [
+            {
+              "variant": "least_favorable_to_steer",
+              "delta": -0.5069181132075472,
+              "n_items": 53
+            },
+            {
+              "variant": "most_favorable_to_steer",
+              "delta": 0.24025169811320754,
+              "n_items": 53
+            }
+          ],
+          "crosses_zero": true
+        }
+      }
+    },
+    "iti__qwen2.5-7b": {
+      "conditions": {
+        "prompt": {
+          "n_samples": 265,
+          "n_format_compliant": 116,
+          "format_compliance_rate": 0.4377358490566038,
+          "n_format_dropped": 149,
+          "format_dropped_rate": 0.5622641509433962,
+          "mean_frozen_imputed_1minus_brier": 0.8478875471698113
+        },
+        "steer": {
+          "n_samples": 265,
+          "n_format_compliant": 12,
+          "format_compliance_rate": 0.045283018867924525,
+          "n_format_dropped": 253,
+          "format_dropped_rate": 0.9547169811320755,
+          "mean_frozen_imputed_1minus_brier": 0.7451320754716981
+        },
+        "baseline": {
+          "n_samples": 265,
+          "n_format_compliant": 215,
+          "format_compliance_rate": 0.8113207547169812,
+          "n_format_dropped": 50,
+          "format_dropped_rate": 0.18867924528301888,
+          "mean_frozen_imputed_1minus_brier": 0.6129811320754717
+        }
+      },
+      "frozen_uncertainty_delta_steer_minus_prompt_as_run_imputed": {
+        "point": -0.10275547169811322,
+        "n_items": 53
+      },
+      "format_compliant_only_delta_steer_minus_prompt": {
+        "point": -0.34875,
+        "ci_lo": -0.5750000000000001,
+        "ci_hi": -0.1225,
+        "ci_level": 0.95,
+        "bootstrap_b": 10000,
+        "n_items": 4,
+        "excludes_zero": true,
+        "n_compliant_sample_pairs": 6,
+        "restriction": "paired item/sample rows where both steer and prompt parsed confidence"
+      },
+      "sensitivity": {
+        "worst_case_imputation_bounds": {
+          "bounds": [
+            {
+              "variant": "least_favorable_to_steer",
+              "delta": -0.9593592452830189,
+              "n_items": 53
+            },
+            {
+              "variant": "most_favorable_to_steer",
+              "delta": 0.5576218867924528,
+              "n_items": 53
+            }
+          ],
+          "crosses_zero": true
+        }
+      }
+    },
+    "caa__llama3-8b": {
+      "conditions": {
+        "prompt": {
+          "n_samples": 265,
+          "n_format_compliant": 134,
+          "format_compliance_rate": 0.5056603773584906,
+          "n_format_dropped": 131,
+          "format_dropped_rate": 0.49433962264150944,
+          "mean_frozen_imputed_1minus_brier": 0.8215279245283018
+        },
+        "steer": {
+          "n_samples": 265,
+          "n_format_compliant": 0,
+          "format_compliance_rate": 0.0,
+          "n_format_dropped": 265,
+          "format_dropped_rate": 1.0,
+          "mean_frozen_imputed_1minus_brier": 0.75
+        },
+        "baseline": {
+          "n_samples": 265,
+          "n_format_compliant": 249,
+          "format_compliance_rate": 0.939622641509434,
+          "n_format_dropped": 16,
+          "format_dropped_rate": 0.06037735849056604,
+          "mean_frozen_imputed_1minus_brier": 0.6824984905660377
+        }
+      },
+      "frozen_uncertainty_delta_steer_minus_prompt_as_run_imputed": {
+        "point": -0.07152792452830188,
+        "n_items": 53
+      },
+      "format_compliant_only_delta_steer_minus_prompt": {
+        "point": NaN,
+        "ci_lo": NaN,
+        "ci_hi": NaN,
+        "ci_level": 0.95,
+        "bootstrap_b": 10000,
+        "n_items": 0,
+        "excludes_zero": false,
+        "n_compliant_sample_pairs": 0,
+        "restriction": "paired item/sample rows where both steer and prompt parsed confidence"
+      },
+      "sensitivity": {
+        "worst_case_imputation_bounds": {
+          "bounds": [
+            {
+              "variant": "least_favorable_to_steer",
+              "delta": -0.9451128301886794,
+              "n_items": 53
+            },
+            {
+              "variant": "most_favorable_to_steer",
+              "delta": 0.5492267924528302,
+              "n_items": 53
+            }
+          ],
+          "crosses_zero": true
+        }
+      }
+    },
+    "iti__llama3-8b": {
+      "conditions": {
+        "prompt": {
+          "n_samples": 265,
+          "n_format_compliant": 134,
+          "format_compliance_rate": 0.5056603773584906,
+          "n_format_dropped": 131,
+          "format_dropped_rate": 0.49433962264150944,
+          "mean_frozen_imputed_1minus_brier": 0.8215279245283018
+        },
+        "steer": {
+          "n_samples": 265,
+          "n_format_compliant": 41,
+          "format_compliance_rate": 0.15471698113207547,
+          "n_format_dropped": 224,
+          "format_dropped_rate": 0.8452830188679246,
+          "mean_frozen_imputed_1minus_brier": 0.7375094339622641
+        },
+        "baseline": {
+          "n_samples": 265,
+          "n_format_compliant": 249,
+          "format_compliance_rate": 0.939622641509434,
+          "n_format_dropped": 16,
+          "format_dropped_rate": 0.06037735849056604,
+          "mean_frozen_imputed_1minus_brier": 0.6824984905660377
+        }
+      },
+      "frozen_uncertainty_delta_steer_minus_prompt_as_run_imputed": {
+        "point": -0.08401849056603775,
+        "n_items": 53
+      },
+      "format_compliant_only_delta_steer_minus_prompt": {
+        "point": -0.02592843137254903,
+        "ci_lo": -0.20166495098039217,
+        "ci_hi": 0.14541796568627452,
+        "ci_level": 0.95,
+        "bootstrap_b": 10000,
+        "n_items": 17,
+        "excludes_zero": false,
+        "n_compliant_sample_pairs": 23,
+        "restriction": "paired item/sample rows where both steer and prompt parsed confidence"
+      },
+      "sensitivity": {
+        "worst_case_imputation_bounds": {
+          "bounds": [
+            {
+              "variant": "least_favorable_to_steer",
+              "delta": -0.8415656603773586,
+              "n_items": 53
+            },
+            {
+              "variant": "most_favorable_to_steer",
+              "delta": 0.4980569811320754,
+              "n_items": 53
+            }
+          ],
+          "crosses_zero": true
+        }
+      }
+    }
+  },
+  "per_cell_ci_level_grid_0p9833": {
+    "caa__qwen2.5-7b": {
+      "conditions": {
+        "prompt": {
+          "n_samples": 265,
+          "n_format_compliant": 116,
+          "format_compliance_rate": 0.4377358490566038,
+          "n_format_dropped": 149,
+          "format_dropped_rate": 0.5622641509433962,
+          "mean_frozen_imputed_1minus_brier": 0.8478875471698113
+        },
+        "steer": {
+          "n_samples": 265,
+          "n_format_compliant": 216,
+          "format_compliance_rate": 0.8150943396226416,
+          "n_format_dropped": 49,
+          "format_dropped_rate": 0.18490566037735848,
+          "mean_frozen_imputed_1minus_brier": 0.6202147169811321
+        },
+        "baseline": {
+          "n_samples": 265,
+          "n_format_compliant": 215,
+          "format_compliance_rate": 0.8113207547169812,
+          "n_format_dropped": 50,
+          "format_dropped_rate": 0.18867924528301888,
+          "mean_frozen_imputed_1minus_brier": 0.6129811320754717
+        }
+      },
+      "frozen_uncertainty_delta_steer_minus_prompt_as_run_imputed": {
+        "point": -0.22767283018867926,
+        "n_items": 53
+      },
+      "format_compliant_only_delta_steer_minus_prompt": {
+        "point": -0.4432434343434343,
+        "ci_lo": -0.6544797159090908,
+        "ci_hi": -0.2203619570707069,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 10000,
+        "n_items": 33,
+        "excludes_zero": true,
+        "n_compliant_sample_pairs": 109,
+        "restriction": "paired item/sample rows where both steer and prompt parsed confidence"
+      },
+      "sensitivity": {
+        "worst_case_imputation_bounds": {
+          "bounds": [
+            {
+              "variant": "least_favorable_to_steer",
+              "delta": -0.5069181132075472,
+              "n_items": 53
+            },
+            {
+              "variant": "most_favorable_to_steer",
+              "delta": 0.24025169811320754,
+              "n_items": 53
+            }
+          ],
+          "crosses_zero": true
+        }
+      }
+    },
+    "iti__qwen2.5-7b": {
+      "conditions": {
+        "prompt": {
+          "n_samples": 265,
+          "n_format_compliant": 116,
+          "format_compliance_rate": 0.4377358490566038,
+          "n_format_dropped": 149,
+          "format_dropped_rate": 0.5622641509433962,
+          "mean_frozen_imputed_1minus_brier": 0.8478875471698113
+        },
+        "steer": {
+          "n_samples": 265,
+          "n_format_compliant": 12,
+          "format_compliance_rate": 0.045283018867924525,
+          "n_format_dropped": 253,
+          "format_dropped_rate": 0.9547169811320755,
+          "mean_frozen_imputed_1minus_brier": 0.7451320754716981
+        },
+        "baseline": {
+          "n_samples": 265,
+          "n_format_compliant": 215,
+          "format_compliance_rate": 0.8113207547169812,
+          "n_format_dropped": 50,
+          "format_dropped_rate": 0.18867924528301888,
+          "mean_frozen_imputed_1minus_brier": 0.6129811320754717
+        }
+      },
+      "frozen_uncertainty_delta_steer_minus_prompt_as_run_imputed": {
+        "point": -0.10275547169811322,
+        "n_items": 53
+      },
+      "format_compliant_only_delta_steer_minus_prompt": {
+        "point": -0.34875,
+        "ci_lo": -0.5875000000000001,
+        "ci_hi": -0.05875,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 10000,
+        "n_items": 4,
+        "excludes_zero": true,
+        "n_compliant_sample_pairs": 6,
+        "restriction": "paired item/sample rows where both steer and prompt parsed confidence"
+      },
+      "sensitivity": {
+        "worst_case_imputation_bounds": {
+          "bounds": [
+            {
+              "variant": "least_favorable_to_steer",
+              "delta": -0.9593592452830189,
+              "n_items": 53
+            },
+            {
+              "variant": "most_favorable_to_steer",
+              "delta": 0.5576218867924528,
+              "n_items": 53
+            }
+          ],
+          "crosses_zero": true
+        }
+      }
+    },
+    "caa__llama3-8b": {
+      "conditions": {
+        "prompt": {
+          "n_samples": 265,
+          "n_format_compliant": 134,
+          "format_compliance_rate": 0.5056603773584906,
+          "n_format_dropped": 131,
+          "format_dropped_rate": 0.49433962264150944,
+          "mean_frozen_imputed_1minus_brier": 0.8215279245283018
+        },
+        "steer": {
+          "n_samples": 265,
+          "n_format_compliant": 0,
+          "format_compliance_rate": 0.0,
+          "n_format_dropped": 265,
+          "format_dropped_rate": 1.0,
+          "mean_frozen_imputed_1minus_brier": 0.75
+        },
+        "baseline": {
+          "n_samples": 265,
+          "n_format_compliant": 249,
+          "format_compliance_rate": 0.939622641509434,
+          "n_format_dropped": 16,
+          "format_dropped_rate": 0.06037735849056604,
+          "mean_frozen_imputed_1minus_brier": 0.6824984905660377
+        }
+      },
+      "frozen_uncertainty_delta_steer_minus_prompt_as_run_imputed": {
+        "point": -0.07152792452830188,
+        "n_items": 53
+      },
+      "format_compliant_only_delta_steer_minus_prompt": {
+        "point": NaN,
+        "ci_lo": NaN,
+        "ci_hi": NaN,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 10000,
+        "n_items": 0,
+        "excludes_zero": false,
+        "n_compliant_sample_pairs": 0,
+        "restriction": "paired item/sample rows where both steer and prompt parsed confidence"
+      },
+      "sensitivity": {
+        "worst_case_imputation_bounds": {
+          "bounds": [
+            {
+              "variant": "least_favorable_to_steer",
+              "delta": -0.9451128301886794,
+              "n_items": 53
+            },
+            {
+              "variant": "most_favorable_to_steer",
+              "delta": 0.5492267924528302,
+              "n_items": 53
+            }
+          ],
+          "crosses_zero": true
+        }
+      }
+    },
+    "iti__llama3-8b": {
+      "conditions": {
+        "prompt": {
+          "n_samples": 265,
+          "n_format_compliant": 134,
+          "format_compliance_rate": 0.5056603773584906,
+          "n_format_dropped": 131,
+          "format_dropped_rate": 0.49433962264150944,
+          "mean_frozen_imputed_1minus_brier": 0.8215279245283018
+        },
+        "steer": {
+          "n_samples": 265,
+          "n_format_compliant": 41,
+          "format_compliance_rate": 0.15471698113207547,
+          "n_format_dropped": 224,
+          "format_dropped_rate": 0.8452830188679246,
+          "mean_frozen_imputed_1minus_brier": 0.7375094339622641
+        },
+        "baseline": {
+          "n_samples": 265,
+          "n_format_compliant": 249,
+          "format_compliance_rate": 0.939622641509434,
+          "n_format_dropped": 16,
+          "format_dropped_rate": 0.06037735849056604,
+          "mean_frozen_imputed_1minus_brier": 0.6824984905660377
+        }
+      },
+      "frozen_uncertainty_delta_steer_minus_prompt_as_run_imputed": {
+        "point": -0.08401849056603775,
+        "n_items": 53
+      },
+      "format_compliant_only_delta_steer_minus_prompt": {
+        "point": -0.02592843137254903,
+        "ci_lo": -0.2335502205882353,
+        "ci_hi": 0.18646372549019694,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 10000,
+        "n_items": 17,
+        "excludes_zero": false,
+        "n_compliant_sample_pairs": 23,
+        "restriction": "paired item/sample rows where both steer and prompt parsed confidence"
+      },
+      "sensitivity": {
+        "worst_case_imputation_bounds": {
+          "bounds": [
+            {
+              "variant": "least_favorable_to_steer",
+              "delta": -0.8415656603773586,
+              "n_items": 53
+            },
+            {
+              "variant": "most_favorable_to_steer",
+              "delta": 0.4980569811320754,
+              "n_items": 53
+            }
+          ],
+          "crosses_zero": true
+        }
+      }
+    }
+  },
+  "robustness_verdict_inputs": {
+    "rechecked_cells": [
+      "iti__qwen2.5-7b",
+      "caa__llama3-8b",
+      "iti__llama3-8b"
+    ],
+    "per_cell": {
+      "iti__qwen2.5-7b": {
+        "adversarial_bounds_cross_zero": true,
+        "complete_case_point": -0.34875,
+        "complete_case_excludes_zero": true,
+        "complete_case_negative_and_significant": true,
+        "steer_parseable_rate": 0.045283018867924525,
+        "prompt_parseable_rate": 0.4377358490566038
+      },
+      "caa__llama3-8b": {
+        "adversarial_bounds_cross_zero": true,
+        "complete_case_point": NaN,
+        "complete_case_excludes_zero": false,
+        "complete_case_negative_and_significant": false,
+        "steer_parseable_rate": 0.0,
+        "prompt_parseable_rate": 0.5056603773584906
+      },
+      "iti__llama3-8b": {
+        "adversarial_bounds_cross_zero": true,
+        "complete_case_point": -0.02592843137254903,
+        "complete_case_excludes_zero": false,
+        "complete_case_negative_and_significant": false,
+        "steer_parseable_rate": 0.15471698113207547,
+        "prompt_parseable_rate": 0.5056603773584906
+      }
+    },
+    "n_cells_adversarial_bounds_cross_zero": 3,
+    "n_cells_complete_case_negative_and_significant": 1
+  }
+}

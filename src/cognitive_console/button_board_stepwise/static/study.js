@@ -64,7 +64,7 @@ const CONSENT_COPY = {
       },
       {
         title: "知情同意声明",
-        text: "勾选下方选项即表示：我已阅读并理解以上信息，我已年满 [18] 周岁，自愿参加本研究，并知道我可以随时退出。",
+        text: "勾选下方选项即表示：我已阅读并理解以上信息，我已年满 [年龄门槛，如 18（待填写）] 周岁，自愿参加本研究，并知道我可以随时退出。",
       },
     ],
     agree: "我已阅读并理解以上信息，自愿参加本研究。",
@@ -105,7 +105,7 @@ const CONSENT_COPY = {
       },
       {
         title: "Statement of consent",
-        text: "By ticking the box below I confirm that: I have read and understood the information above, I am at least [18] years old, I take part voluntarily, and I understand I may withdraw at any time.",
+        text: "By ticking the box below I confirm that: I have read and understood the information above, I am at least [age threshold, e.g. 18 (to be completed)] years old, I take part voluntarily, and I understand I may withdraw at any time.",
       },
     ],
     agree: "I have read and understood the information above and volunteer to take part.",

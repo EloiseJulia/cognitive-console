@@ -25,7 +25,7 @@
   informed-consent gate. Real recruitment / human-data collection must wait
   until the advisor (and, where required, the ethics body) approves the final
   consent text and the bracketed placeholders are filled.
-- Scope: UI-only. Implementation commit `8749e90` changes
+- Scope: UI-only. Implementation commit `1f17d92` changes
   only front-end consent copy (`CONSENT_COPY`) and its rendering (section
   titles) plus one CSS rule. No study logic, expected answers, keys, routing,
   sequences, A/B, GAA/Strict, materials, or the signed export changed; the

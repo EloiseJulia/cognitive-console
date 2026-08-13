@@ -33,7 +33,7 @@
 }
 
 \begin{abstract}
-Interfaces increasingly place controls beside named latent properties, implying that moving the control will reliably change the corresponding behavior. Readability and output movement do not establish that promise when prompting already offers a behavioral alternative. We contribute a comparator-bound evaluation contract: an active latent control must earn its affordance by improving a declared behavioral outcome over a bounded, DEV-selected prompt comparator, under an uncertainty rule, a point-estimate floor, and a coherence gate. READ evidence, the comparator, a calibration warning, and an evidence tier record what the interface may claim. Applied across Qwen and Llama, CAA and ITI, and three behavioral axes, the contract qualifies none of the twelve model--method--axis tests and resolves that shared outcome into distinct, actionable profiles: skepticism is resolution-limited, deliberation is mixed, and uncertainty favors the comparator under the frozen scorer. Because no latent positive control passed, we report a worked procedural boundary rather than a validated assay or a general steering verdict, and we present the interface mapping as a proposed design procedure rather than a validated user outcome.
+Interfaces increasingly place controls beside named latent properties, implying that moving the control will reliably change the corresponding behavior. Readability and output movement do not establish that promise when prompting already offers a behavioral alternative. We contribute a comparator-bound evaluation contract: an active latent control must earn its affordance by improving a declared behavioral outcome over a bounded, DEV-selected prompt comparator, under an uncertainty rule, a point-estimate floor, and a coherence gate. READ evidence, the comparator, a calibration warning, and an evidence tier record what the interface may claim. Applied across Qwen and Llama, CAA and ITI, and three behavioral axes, the contract qualifies none of the twelve model--method--axis tests and resolves that shared outcome into distinct, actionable profiles: skepticism is resolution-limited, deliberation is mixed, and uncertainty favors the comparator under the frozen scorer, though its all-generation interpretation remains open. Because no latent positive control passed, we report a worked procedural boundary rather than a validated assay or a general steering verdict, and we present the interface mapping as a proposed design procedure rather than a validated user outcome.
 \end{abstract}
 
 \begin{CCSXML}
@@ -319,7 +319,7 @@ g_a^S\le\tau g_a^0+\epsilon.
 with \(\delta=0.05\), \(\tau=1.5\), and \(\epsilon=0.02\). {}% FL-030
 {}% FL-031
 {}% PREREG: docs/ledgers/prereg-c2b-adjudication.md; IMPLEMENTATION: src/cognitive_console/experiments/adjudicate_c2b.py
-Equation \ref{eq:qualification-rule} requires an interval excluding zero and a point estimate at least \(\delta\); it does \textbf{not} require the interval's lower bound to exceed \(\delta\). This certifies a demonstrated advantage without demanding the largest defensible effect; a stricter release can raise \(\delta\) or require the lower bound to clear it. The contract is the requirement---a declared comparator, outcome, uncertainty rule, floor, and coherence gate---while the specific values (\(\delta=0.05\), the coherence ratio, and the two-axis aggregation) are this application's settings rather than part of the portable procedure. The protocol and executable adjudicator were frozen on 2026-07-23. The degradation score is one minus the distinct trigram ratio for each generation; scores are averaged within the steering and unsteered cells, and the steering mean must satisfy \(g_a^S\le1.5g_a^0+0.02\). The implementation adds \(10^{-12}\) only as floating-point comparison tolerance.
+Equation \ref{eq:qualification-rule} requires an interval excluding zero and a point estimate at least \(\delta\); it does \textbf{not} require the interval's lower bound to exceed \(\delta\). This operationalizes a positive-advantage release criterion---an interval excluding zero with a point estimate that clears \(\delta\)---without demanding the largest defensible effect; a stricter release can raise \(\delta\) or require the lower bound to clear it. The contract is the requirement---a declared comparator, outcome, uncertainty rule, floor, and coherence gate---while the specific values (\(\delta=0.05\), the coherence ratio, and the two-axis aggregation) are this application's settings rather than part of the portable procedure. The protocol and executable adjudicator were frozen on 2026-07-23. The degradation score is one minus the distinct trigram ratio for each generation; scores are averaged within the steering and unsteered cells, and the steering mean must satisfy \(g_a^S\le1.5g_a^0+0.02\). The implementation adds \(10^{-12}\) only as floating-point comparison tolerance.
 
 The computational procedure labels a model--method cell positive when at least two axes pass, conditional when one passes, and negative when none pass. {}% FL-033
 This cell-level result remains distinct from the structured reason and record-specific interface action.
@@ -390,7 +390,7 @@ Table \ref{tab:c2-delta-4cell} exposes the complete four-cell grid and the evide
 
 \textbf{Skepticism directs the next evaluation toward resolution.} Minimum detectable positive effects (MDEs) were 0.188, 0.268, 0.225, and 0.279 across the four model--method cells, compared with a declared point-estimate floor of 0.05. {}% FL-041
 {}% FL-031
-The record therefore reports a resolution need near the floor, not an ineffectiveness verdict.
+The record therefore reports a need for finer resolution relative to the 0.05 floor, not an ineffectiveness verdict.
 
 \textbf{Deliberation preserves a mixed result.} Two ITI cells fell inside a \(\pm0.05\) equivalence interval in a post-hoc TOST, while the CAA cells remained underpowered. {}% FL-005
 {}% FL-014
@@ -512,7 +512,7 @@ For this record, the team pauses the slider: the \textbf{active control is withh
 \begin{figure*}[t]
 \centering
 \includegraphics[width=\textwidth]{figures/console-ui-contract.pdf}
-\caption{Artifact-derived cards show computational status, the axis-specific blocking reason, the evidence tier, and the record-specific interface action; each card also surfaces any missing provenance link (here, the persisted direction/split identity) as part of the tier rather than concealing it.}
+\caption{Artifact-derived cards show computational status, the axis-specific blocking reason, the evidence tier, and the record-specific interface action; each card also surfaces any missing provenance link (here, the persisted direction/split identity) as an explicitly flagged tier limitation rather than concealing it.}
 \Description{Two console cards summarize deliberation and uncertainty without state badges. Each card shows READ and TRANSFER status, the blocking reason, comparator or calibration evidence, and the evidence tier. For the uncertainty record, the active slider is withheld while the read-only diagnostic remains a candidate within that tier.}
 \label{fig:console}
 \end{figure*}

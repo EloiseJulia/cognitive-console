@@ -1837,3 +1837,109 @@ experiments:
     Human data, recruitment, ethics, timing, public deployment, claim/result
     changes, exploratory-to-confirmatory upgrade, and Protocol Freeze remain
     unauthorized.
+- experiment_id: strong-negative-pc-c839e1c-20260813
+  parent: noisy-pc-f16ce51-20260813   # extends the SOUND pc3 run; reuses its setup exactly, only the negative arm changes
+  hypothesis_id: H-gate-validity
+  claim_ids: []
+  type: diagnostic
+  status: done
+  code_commit: c839e1ca73668039fc15f0adbf512d7ca2f936be
+  predeclaration_commit: 2b64bb9   # PRECEDES the script + result commits; locks endpoint/scorer/budget/pool-range/contrasts/all-three-seeds before any generation
+  dirty_tree: true   # ONLY untracked output/helper files on host; git diff f5dd878..HEAD -- src data (branch tip vs base) is EMPTY; no tracked-file modification
+  data_hash: sha256:08025f4890fa197c5d943380799562565698da33c0eaea8b6601f3ee79a363bf  # raw_generations.jsonl (795 records; incl. base_seed/call_seed/finish_reason)
+  env_hash: null
+  config_hash: null
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: >-
+    SAME verified-disjoint pool as pc3 = first 80 FRESH TriviaQA rc.nocontext
+    validation items with id-index >=100 (triviaqa-00100..00179), parsed by
+    parse_uncertainty_rows; item ids kept byte-identical to pc3 (pc3-triviaqa-%05d)
+    so strong(i)/baselineA(ii) reproduce pc3 bit-for-bit. VERIFIED disjoint by
+    item-id AND normalized-question-text hash from the REAL frozen E-0006 artifact
+    (manifest ids + jsonl prompts; host jsonl sha256 9c1e12ccef16 == manifest
+    artifact_sha256, manifest_matches_host_jsonl=true) and from the E-0012 pool.
+    Split 27 DEV / 53 TEST (split_dev_test dev_fraction=1/3 seed=20260723); TEST
+    evaluated only.
+  seed: 20260723   # split + bootstrap; gen base seeds strong/baselineA=20260723, strong'=20260813 (INDEPENDENT); fresh pool is a deterministic slice (no random draw)
+  hardware: A800 GPU3 only, CUDA_VISIBLE_DEVICES=3, bfloat16, host suzlab-a800
+  started_at: '2026-08-13T07:47:32+00:00'
+  ended_at: '2026-08-13T07:52:33+00:00'
+  exit_code: 0
+  raw_metrics:
+    wall_clock_seconds: 301.2
+    a800_gpu_hours: 0.0837
+    n_test: 53
+    k_samples: 5
+    max_new_tokens: 32
+    temperature: 0.7
+    do_sample: true
+    compliance_rate_strong: 0.6
+    compliance_rate_baselineA: 0.0
+    compliance_rate_strong_prime: 0.5886792452830188
+    strong_per_item_distinct_values: [0.0, 0.2, 0.6, 0.8, 1.0]
+    strong_prime_per_item_distinct_values: [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+    eos_token_ids: [151645]
+    finish_reason_strong: {stop: 265}
+    finish_reason_baselineA: {length: 254, stop: 11}
+    finish_reason_strong_prime: {stop: 265}
+  summary_metrics:
+    endpoint: exactly_two_words(token_count==2)   # NOVEL predeclared deterministic scorer; decision rule via UNMODIFIED frozen adjudicate_c2b
+    positive_contrast: strong - baselineA
+    positive_mean_diff: 0.6
+    positive_ci_0p98333: [0.4453, 0.7509]
+    positive_ci_width: 0.3057
+    positive_per_item_diff_std: 0.4613
+    positive_n_distinct_per_item_diff: 5
+    positive_coherence_ok: true
+    positive_pass: true
+    positive_non_degenerate: true
+    negative_contrast: strong - strong' (SAME instruction, INDEPENDENT seed) = NON-DEGENERATE noisy null
+    negative_mean_diff: 0.0113207547
+    negative_ci_0p98333: [-0.0302, 0.0528]
+    negative_ci_width: 0.083
+    negative_per_item_diff_std: 0.1254
+    negative_per_item_diff_min: -0.4
+    negative_per_item_diff_max: 0.4
+    negative_per_item_diff_distinct_values: [-0.4, -0.2, 0.0, 0.2, 0.4]
+    negative_n_distinct_per_item_diff: 5
+    negative_ci_is_degenerate_point: false
+    negative_non_degenerate: true
+    negative_pass: false
+    rejects_noisy_null: true
+    gate_satisfiable_and_discriminative: true
+  artifacts:
+  - results/strong_negative_pc_20260813/strong_negative_pc_result.json
+  - results/strong_negative_pc_20260813/REPORT.md
+  - results/strong_negative_pc_20260813/raw_generations.POINTER.md
+  - results/strong_negative_pc_20260813/run.log
+  - docs/research/2026-08-13-strong-negative-positive-control-predeclaration.md
+  - scripts/run_strong_negative_control.py
+  failure_reason: null
+  valid_for_paper: false
+  scientific_status: PENDING_HOSTILE_RESULT_AUDIT
+  validation_notes: >-
+    Prospective, outcome-blind STRONG-vs-STRONG' positive control that closes the
+    ONE remaining pc3 hostile-audit gap (MAJOR): pc3's negative arm was a DEGENERATE
+    EXACT null (both neutral baselines 0.0 -> CI [0,0]), which only shows rejection
+    of an exact null, not a noisy one. This run reuses the SOUND pc3 setup exactly
+    (endpoint/scorer/budget/pool/split/frozen adjudicator; item ids byte-identical
+    so strong+baselineA reproduce pc3 bit-for-bit) and changes ONLY the negative
+    arm: condition (iii) becomes strong' = the SAME strong instruction under an
+    INDEPENDENT seed (20260813 vs strong 20260723), and NEGATIVE = strong - strong'
+    is a NON-DEGENERATE noisy null. POSITIVE (strong-baselineA) PASS: mean_diff=0.600
+    CI(0.983333)=[0.4453,0.7509] (identical to pc3). NON-DEGENERATE NEGATIVE
+    (strong-strong') FAIL as designed: mean_diff=0.0113, CI(0.983333)=[-0.0302,
+    0.0528] width 0.083 (NOT [0,0]), per-item diff std 0.1254 spanning -0.4..+0.4
+    with 5 distinct values, is_non_degenerate=True; CI includes 0 and mean < delta
+    so the gate correctly FAILS it. rejects_noisy_null=True;
+    gate_satisfiable_and_discriminative=True. Also closes pc3 UNVERIFIED: every raw
+    row records base_seed, per-(item,sample) call_seed, and finish_reason (strong &
+    strong' all EOS-stop; neutral baselineA 254/265 hit the 32-token budget).
+    Disjointness re-verified against the ACTUAL frozen E-0006 artifact (id + text
+    intersections empty; host jsonl sha256 == manifest artifact_sha256). Decision
+    rule via UNMODIFIED frozen adjudicate_c2b. Predeclaration 2b64bb9 precedes script
+    c839e1c and the result. GPU3 only (0.0837 GPU-h, < 0.3 cap); GPUs 0-2 untouched;
+    main untouched; not blessed/pushed/merged; no tuning-to-pass, run once. SCOPE:
+    decision-machinery satisfiability + discrimination against a NOISY null on a
+    benign prompt/instruction effect; says NOTHING about a latent/steering pass.
+    valid_for_paper=false; PENDING_HOSTILE_RESULT_AUDIT.

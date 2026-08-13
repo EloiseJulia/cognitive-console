@@ -1,0 +1,35 @@
+Using the latest cached version of the dataset since mandarjoshi/trivia_qa couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'rc.nocontext' at /home/elzhang/cc_l0/hf_home/datasets/mandarjoshi___trivia_qa/rc.nocontext/0.0.0/0f7faf33a3908546c6fd5b73a660e0f8ff173c2f (last modified on Sun Aug  2 15:41:20 2026).
+Using the latest cached version of the dataset since mandarjoshi/trivia_qa couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'rc.nocontext' at /home/elzhang/cc_l0/hf_home/datasets/mandarjoshi___trivia_qa/rc.nocontext/0.0.0/0f7faf33a3908546c6fd5b73a660e0f8ff173c2f (last modified on Sun Aug  2 15:41:20 2026).
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 5560.24it/s]
+[strong-neg] generating condition (i) strong=exactly-two-words seed=20260723 ...
+[strong-neg]   strong compliance_rate=0.600
+[strong-neg] generating condition (ii) baselineA=neutral seed=20260723 ...
+[strong-neg]   baselineA compliance_rate=0.000
+[strong-neg] generating condition (iii) strong'=exactly-two-words indep seed=20260813 ...
+[strong-neg]   strong' compliance_rate=0.589
+
+===== STRONG-vs-STRONG' POSITIVE CONTROL (GATED — PENDING HOSTILE AUDIT) =====
+code_commit=c839e1ca73668039fc15f0adbf512d7ca2f936be dirty=True
+endpoint=exactly_two_words(==2)  budget=32  k=5
+compliance rates: strong=0.600 baselineA=0.000 strong'=0.589
+fresh disjointness vs REAL frozen E-0006: id_overlap=[] text_overlap=[] (frozen_n=80, jsonl_sha=9c1e12ccef16, manifest==host=True)
+
+[POSITIVE(strong - baselineA)] expected=PASS
+  mean_diff=0.6000  CI(0.983333)=[0.4453,0.7509]  width=0.3057  excl0=True  mean>=delta(0.05)=True
+  per-item diff: std=0.4613 min=0.000 max=1.000 distinct=5 nonzero=35 non_degenerate=True
+  coherence_ok=True (treat_deg=0.0000 ceiling=0.0252)  => PASS=True
+
+[NEGATIVE(strong - strong')] expected=FAIL
+  mean_diff=0.0113  CI(0.983333)=[-0.0302,0.0528]  width=0.0830  excl0=False  mean>=delta(0.05)=False
+  per-item diff: std=0.1254 min=-0.400 max=0.400 distinct=5 nonzero=9 non_degenerate=True
+  coherence_ok=True (treat_deg=0.0000 ceiling=0.0200)  => PASS=False
+
+POSITIVE non-degenerate = True
+NEGATIVE non-degenerate (proper CI + >=3 distinct per-item diffs) = True
+gate REJECTS a NOISY null (NEGATIVE FAIL & non-degenerate) = True
+GATE satisfiable+discriminative (POSITIVE PASS & NEGATIVE FAIL) = True
+wall_clock_seconds=301.2
+wrote results/strong_negative_pc_20260813/strong_negative_pc_result.json
+wrote results/strong_negative_pc_20260813/raw_generations.jsonl (sha256=08025f4890fa197c5d943380799562565698da33c0eaea8b6601f3ee79a363bf)

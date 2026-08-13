@@ -43,14 +43,12 @@ from .materials import (
     planned_trials,
     question_material,
     scene_material,
-    stable_option_order,
     validated_sources,
 )
 
 
 STATIC_DIR = Path(__file__).with_name("static")
 DEFAULT_KEY_FILE = Path(".runtime") / "button-board-stepwise-v11-verification.key"
-PARTICIPANT_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 PRIVATE_FIELD_RE = re.compile(
     r"(expected|comparison_rule|required_readings|required_scope_dimensions|"
     r"scope_correct|scope_written|decisive_step|gaa_correct|strict_correct|"
@@ -262,28 +260,18 @@ class StepwiseHandler(BaseHTTPRequestHandler):
         return max(0, round((time.monotonic() - session["started"]) * 1000))
 
     def _current_trial(self, session: dict[str, Any]) -> dict[str, Any]:
-        if session["mode"] == "practice":
-            return session["practice_trial"]
         return session["trials"][session["index"]]
 
     def _current_scene_id(self, session: dict[str, Any]) -> str:
-        return "P1" if session["mode"] == "practice" else session["plan"][session["index"]]["scene_id"]
+        return session["plan"][session["index"]]["scene_id"]
 
     def _question_payload(self, session: dict[str, Any], step: int) -> dict[str, Any]:
         locale = session["selected_locale"]
         scene_id = self._current_scene_id(session)
         question = question_material(locale, step)
         if step == 6:
-            public_scene = (
-                session["practice"]
-                if session["mode"] == "practice"
-                else scene_material(locale, scene_id)
-            )
-            order = (
-                session["practice_scope_order"]
-                if session["mode"] == "practice"
-                else session["plan"][session["index"]]["scope_order_ids"]
-            )
+            public_scene = scene_material(locale, scene_id)
+            order = session["plan"][session["index"]]["scope_order_ids"]
             options = _ordered_rows(public_scene["scope_options"], order)
         else:
             options = question["options"]
@@ -295,7 +283,7 @@ class StepwiseHandler(BaseHTTPRequestHandler):
         trial["step_shown_at_relative"].append(self._elapsed(session))
         trial["completion_status"] = "in_progress"
         return {
-            "phase": "practice_step" if session["mode"] == "practice" else "formal_step",
+            "phase": "formal_step",
             "step": step,
             "question": question["prompt"],
             "options": options,
@@ -304,14 +292,10 @@ class StepwiseHandler(BaseHTTPRequestHandler):
 
     def _trial_payload(self, session: dict[str, Any]) -> dict[str, Any]:
         locale = session["selected_locale"]
-        if session["mode"] == "practice":
-            scene = session["practice"]
-            progress = session["common"]["progress"]["practice"]
-        else:
-            scene = scene_material(locale, self._current_scene_id(session))
-            progress = session["common"]["progress"]["formal"].replace(
-                "{current}", str(session["index"] + 1)
-            )
+        scene = scene_material(locale, self._current_scene_id(session))
+        progress = session["common"]["progress"]["formal"].replace(
+            "{current}", str(session["index"] + 1)
+        )
         trial = self._current_trial(session)
         trial["presented"] = True
         question = self._question_payload(session, 1)
@@ -336,21 +320,15 @@ class StepwiseHandler(BaseHTTPRequestHandler):
         )
         path = self._public_path(session)
         response = {
-            "phase": (
-                "practice_result"
-                if session["mode"] == "practice"
-                else "formal_result"
-            ),
+            "phase": "formal_result",
             "destination": {
                 "id": destination["id"],
                 "label": destination["label"],
                 "description": destination["description"],
             },
             "path": path,
-            "has_next_formal": session["mode"] == "formal" and session["index"] < 5,
+            "has_next_formal": session["index"] < 5,
         }
-        if session["mode"] == "practice":
-            response["feedback"] = session["practice"]["feedback"]
         return response
 
     def _public_path(self, session: dict[str, Any]) -> list[dict[str, Any]]:
@@ -362,19 +340,22 @@ class StepwiseHandler(BaseHTTPRequestHandler):
         ):
             question = question_material(session["selected_locale"], step)
             rows = (
-                (
-                    session["practice"]["scope_options"]
-                    if session["mode"] == "practice"
-                    else scene_material(
-                        session["selected_locale"], self._current_scene_id(session)
-                    )["scope_options"]
-                )
+                scene_material(
+                    session["selected_locale"], self._current_scene_id(session)
+                )["scope_options"]
                 if step == 6
                 else question["options"]
             )
             label = next(row["text"] for row in rows if row["id"] == answer)
             path.append({"step": step, "answer_id": answer, "answer_text": label})
         return path
+
+    def _demonstration_payload(self, session: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "phase": "demonstration",
+            "progress": session["common"]["progress"]["demonstration"],
+            **json.loads(json.dumps(session["demonstration"])),
+        }
 
     def _attention_payload(self, session: dict[str, Any]) -> dict[str, Any]:
         session["phase"] = "attention"
@@ -529,12 +510,9 @@ class StepwiseHandler(BaseHTTPRequestHandler):
             self._error(409, str(exc))
 
     def _start(self, body: dict[str, Any]) -> dict[str, Any]:
-        if set(body) != {"participant_code", "selected_locale", "request_id"}:
+        if set(body) != {"selected_locale", "request_id"}:
             raise ValueError("invalid start fields")
-        participant = body["participant_code"]
         locale = body["selected_locale"]
-        if not isinstance(participant, str) or not PARTICIPANT_RE.fullmatch(participant):
-            raise ValueError("invalid participant code")
         if locale not in LOCALES:
             raise ValueError("invalid selected locale")
         if len(self.server.sessions) >= self.server.max_sessions:
@@ -544,25 +522,15 @@ class StepwiseHandler(BaseHTTPRequestHandler):
         allocation_block = allocation_serial // 24
         sequence_id = f"BBS11-{allocation_cell // 2 + 1:02d}"
         ab_variant = "A" if allocation_cell % 2 == 0 else "B"
-        plan = planned_trials(sequence_id, ab_variant, participant)
+        attempt_id = str(uuid.uuid4())
+        plan = planned_trials(sequence_id, ab_variant, attempt_id)
         materials, sequences, keys = validated_sources()
         common_payload = common_materials(locale)
-        canonical_hash = material_hashes()["canonical_materials_hash"]
-        practice = materials["locales"][locale]["practice"]
-        practice_scope = stable_option_order(
-            practice["scope_options"],
-            participant,
-            "P1",
-            canonical_hash,
-            "scope",
-        )
-        attempt_id = str(uuid.uuid4())
         capability = secrets.token_urlsafe(32)
         self.server.attempt_serial += 1
         now = time.monotonic()
         session = {
             "attempt_id": attempt_id,
-            "participant_code": participant,
             "run_id": self.server.run_id,
             "attempt_serial": self.server.attempt_serial,
             "capability": capability,
@@ -571,26 +539,15 @@ class StepwiseHandler(BaseHTTPRequestHandler):
             "selected_locale": locale,
             **locale_bundle_metadata(locale),
             "common": common_payload["common"],
-            "practice": practice,
-            "practice_scope_order": [row["id"] for row in practice_scope],
-            "practice_trial": {
-                **_empty_trial(
-                    {
-                        "slot_index": 0,
-                        "scene_id": "P1",
-                        "position": 0,
-                    }
-                ),
-                "planned": False,
-            },
+            "demonstration": common_payload["demonstration"],
+            "demonstration_status": "not_shown",
             "sequence_id": sequence_id,
             "ab_variant": ab_variant,
             "allocation_block": allocation_block,
             "allocation_cell": allocation_cell,
             "plan": plan,
             "trials": [_empty_trial(slot) for slot in plan],
-            "mode": "practice",
-            "phase": "practice_ready",
+            "phase": "demonstration_ready",
             "index": 0,
             "started": now,
             "last_seen": self.server.clock(),
@@ -609,7 +566,7 @@ class StepwiseHandler(BaseHTTPRequestHandler):
         self.server.locale_allocation_counts[locale] += 1
         return {
             "attempt_id": attempt_id,
-            "phase": "practice_ready",
+            "phase": "demonstration_ready",
             "capability": capability,
             "run_id": self.server.run_id,
             "attempt_serial": self.server.attempt_serial,
@@ -624,15 +581,12 @@ class StepwiseHandler(BaseHTTPRequestHandler):
     ) -> dict[str, Any]:
         if set(body) != {"attempt_id", "request_id"}:
             raise ValueError("invalid continue fields")
-        if session["phase"] == "practice_ready":
-            session["mode"] = "practice"
-            session["phase"] = "practice_step"
-            return self._trial_payload(session)
-        if session["phase"] == "practice_result":
-            session["mode"] = "formal"
-            session["phase"] = "formal_intro"
-            return {"phase": "formal_intro"}
-        if session["phase"] == "formal_intro":
+        if session["phase"] == "demonstration_ready":
+            session["demonstration_status"] = "shown"
+            session["phase"] = "demonstration"
+            return self._demonstration_payload(session)
+        if session["phase"] == "demonstration":
+            session["demonstration_status"] = "acknowledged"
             session["phase"] = "formal_step"
             return self._trial_payload(session)
         if session["phase"] == "formal_result":
@@ -651,7 +605,7 @@ class StepwiseHandler(BaseHTTPRequestHandler):
     ) -> dict[str, Any]:
         if set(body) != {"attempt_id", "step", "answer", "request_id"}:
             raise ValueError("invalid step fields")
-        if session["phase"] not in {"practice_step", "formal_step"}:
+        if session["phase"] != "formal_step":
             raise ValueError("step answer is not available")
         trial = self._current_trial(session)
         step = body["step"]
@@ -679,9 +633,7 @@ class StepwiseHandler(BaseHTTPRequestHandler):
             trial["participant_exit_step"] = step
             trial["participant_derived_state"] = route["state"]
             trial["completion_status"] = "complete"
-            session["phase"] = (
-                "practice_result" if session["mode"] == "practice" else "formal_result"
-            )
+            session["phase"] = "formal_result"
             return self._result_payload(session, route["state"])
         next_step = route["next_step"]
         return self._question_payload(session, next_step)
@@ -695,8 +647,6 @@ class StepwiseHandler(BaseHTTPRequestHandler):
         if set(body) != {"attempt_id", "step", "request_id"}:
             raise ValueError("invalid revise-step fields")
         if session["phase"] not in {
-            "practice_step",
-            "practice_result",
             "formal_step",
             "formal_result",
         }:
@@ -720,9 +670,7 @@ class StepwiseHandler(BaseHTTPRequestHandler):
         trial["participant_derived_state"] = None
         trial["scope_selected_id"] = None
         trial["completion_status"] = "in_progress"
-        session["phase"] = (
-            "practice_step" if session["mode"] == "practice" else "formal_step"
-        )
+        session["phase"] = "formal_step"
         return self._question_payload(session, step)
 
     def _attention(
@@ -823,7 +771,6 @@ class StepwiseHandler(BaseHTTPRequestHandler):
             "attempt_id": session["attempt_id"],
             "run_id": session["run_id"],
             "attempt_serial": session["attempt_serial"],
-            "participant_code": session["participant_code"],
             "selected_locale": session["selected_locale"],
             "locale_bundle_version": session["locale_bundle_version"],
             "locale_bundle_hash": session["locale_bundle_hash"],
@@ -833,17 +780,7 @@ class StepwiseHandler(BaseHTTPRequestHandler):
             "allocation_cell": session["allocation_cell"],
             "completion_status": "complete" if complete else "partial",
             "complete": complete,
-            "practice_status": {
-                field: json.loads(json.dumps(session["practice_trial"][field]))
-                for field in (
-                    "step_presented",
-                    "step_selected_option_id",
-                    "participant_exit_step",
-                    "participant_derived_state",
-                    "scope_selected_id",
-                    "completion_status",
-                )
-            },
+            "demonstration_status": session["demonstration_status"],
             "attention_selected_id": session["attention_selected_id"],
             "reflection_choice_ids": json.loads(json.dumps(session["reflection"])),
             "trials": trials,

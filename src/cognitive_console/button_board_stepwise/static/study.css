@@ -38,7 +38,6 @@ main { width: min(1180px, calc(100% - 32px)); margin: 18px auto; }
 .language-actions button { min-width: 180px; min-height: 52px; }
 label { display: block; margin: 14px 0; font-weight: 650; }
 input, select, button { font: inherit; padding: 9px 11px; margin-top: 6px; }
-input[type="text"] { display: block; width: min(100%, 430px); }
 button, .button-link {
   cursor: pointer;
   border: 2px solid #3e4955;
@@ -67,7 +66,7 @@ dialog:focus-visible, h1:focus-visible, h2:focus-visible {
   align-items: start;
 }
 .trial-column { min-width: 0; }
-.record-card, .question-card, .result-card, .reference-panel {
+.record-card, .question-card, .result-card, .demonstration-card, .reference-panel {
   border: 1px solid #8c959f;
   border-radius: 11px;
   background: #ffffff;
@@ -93,7 +92,7 @@ dialog:focus-visible, h1:focus-visible, h2:focus-visible {
   border-radius: 7px;
   background: #fcfcfd;
 }
-.question-card, .result-card { margin-top: 16px; padding: 18px; }
+.question-card, .result-card, .demonstration-card { margin-top: 16px; padding: 18px; }
 .question-heading { color: #59636e; font-size: .88rem; }
 .answered-steps {
   margin: 12px 0;
@@ -146,17 +145,23 @@ legend { margin-bottom: 10px; font-size: 1.12rem; font-weight: 750; }
   padding: 15px;
 }
 .reference-panel h2 { margin: 0 0 8px; font-size: .92rem; color: #59636e; }
-.destination {
-  min-height: 74px;
-  margin: 7px 0;
-  padding: 8px 9px;
-  border: 1px solid #8c959f;
-  border-radius: 7px;
-  font-size: .84rem;
-}
-.destination b { display: block; font-size: .94rem; }
 .checklist { margin: 7px 0 0; padding-left: 22px; font-size: .82rem; }
 .checklist li { margin: 5px 0; }
+.worked-step {
+  margin: 14px 0;
+  padding: 13px;
+  border: 1px solid #aeb4bb;
+  border-radius: 8px;
+}
+.worked-step h3 { margin: 0 0 8px; }
+.worked-question { font-weight: 750; }
+.worked-choice, .worked-why {
+  padding: 9px 10px;
+  border-left: 4px solid #59636e;
+  background: #f6f8fa;
+}
+.worked-label { margin-bottom: 4px; font-weight: 750; }
+.worked-evidence { margin-top: 4px; }
 .result-destination {
   display: inline-block;
   padding: 7px 12px;
@@ -165,7 +170,7 @@ legend { margin-bottom: 10px; font-size: 1.12rem; font-weight: 750; }
   font-weight: 800;
 }
 .path-list li { margin: 5px 0; }
-.practice-feedback, .formal-instructions {
+.demonstration-summary, .formal-instructions {
   padding: 12px;
   border: 1px solid #8c959f;
   background: #f6f8fa;

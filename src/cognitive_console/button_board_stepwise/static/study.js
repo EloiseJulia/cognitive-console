@@ -106,22 +106,14 @@ function localizedError() {
 
 function showWelcome() {
   const copy = app.materials.common.welcome;
-  const input = el("input", {
-    id: "participant-code", type: "text", maxlength: "64", autocomplete: "off",
-    "aria-describedby": "participant-help",
-  });
   startPanel.replaceChildren(
     el("h1", {}, copy.heading),
     el("p", { class: "subtitle" }, copy.goal),
-    el("p", {}, copy.steps),
     el("p", { class: "fiction-notice" }, app.materials.common.disclaimer),
     el("p", {}, copy.open_book),
     el("p", {}, copy.card_only),
     el("p", {}, copy.privacy),
     el("p", { class: "draft" }, app.materials.common.draft),
-    el("label", { for: "participant-code" }, copy.participant_label),
-    input,
-    el("p", { id: "participant-help", class: "muted" }, copy.participant_help),
     el("p", { class: "error", role: "alert", tabindex: "-1" }),
     el("button", { type: "button", dataset: { action: "start" }, onclick: startStudy }, copy.start),
   );
@@ -147,16 +139,8 @@ async function chooseLanguage(locale) {
 }
 
 async function startStudy() {
-  const input = document.querySelector("#participant-code");
-  const code = input.value.trim();
-  if (!/^[A-Za-z0-9._-]{1,64}$/.test(code)) {
-    showError(startPanel, app.materials.common.welcome.participant_help);
-    input.focus();
-    return;
-  }
   try {
     const response = await api("/api/start", {
-      participant_code: code,
       selected_locale: app.locale,
     });
     app.attemptId = response.attempt_id;
@@ -173,10 +157,9 @@ function showTutorial() {
     el("h1", {}, copy.heading),
     el("p", { class: "fiction-notice" }, app.materials.common.disclaimer),
     el("p", {}, copy.intuition),
-    el("p", {}, copy.operation),
     el("button", {
-      type: "button", dataset: { action: "show-practice" }, onclick: beginPractice,
-    }, copy.show_practice),
+      type: "button", dataset: { action: "show-demonstration" }, onclick: beginDemonstration,
+    }, copy.show_demonstration),
   );
 }
 
@@ -205,13 +188,7 @@ function recordCard(scene) {
 
 function referencePanel() {
   const common = app.materials.common;
-  const aside = el("aside", { class: "reference-panel", "aria-label": common.labels.reference_destinations });
-  aside.append(el("h2", {}, common.labels.reference_destinations));
-  for (const row of common.destinations) {
-    const box = el("div", { class: "destination" });
-    box.append(el("b", {}, row.label), el("span", {}, row.description));
-    aside.append(box);
-  }
+  const aside = el("aside", { class: "reference-panel", "aria-label": common.labels.reference_checklist });
   aside.append(el("h2", {}, common.labels.reference_checklist));
   const list = el("ol", { class: "checklist" });
   for (const text of common.checklist) list.append(el("li", {}, text));
@@ -306,12 +283,56 @@ function renderTrial(response) {
   left.append(recordCard(app.currentScene), questionCard(response));
   layout.append(left, referencePanel());
   replaceStage(heading, layout);
-  saveButton.hidden = response.phase === "practice_step";
+  saveButton.hidden = false;
 }
 
-async function beginPractice() {
+function workedStep(row, copy) {
+  const card = el("section", { class: "worked-step" });
+  card.append(
+    el("h3", {}, copy.step.replace("{step}", String(row.step))),
+    el("p", { class: "worked-question" }, row.question),
+    el("p", { class: "worked-choice" }, `${copy.choose}: ${row.choice}`),
+    el("p", { class: "worked-label" }, `${copy.evidence}:`),
+  );
+  const evidence = el("ul", { class: "worked-evidence" });
+  for (const text of row.evidence) evidence.append(el("li", {}, text));
+  card.append(evidence, el("p", { class: "worked-why" }, `${copy.why}: ${row.why}`));
+  return card;
+}
+
+function renderDemonstration(response) {
+  app.currentScene = response.scene;
+  app.currentProgress = response.progress;
+  app.currentStep = null;
+  const copy = app.materials.common.demonstration;
+  const formal = app.materials.common.formal_intro;
+  const explanation = el("section", { class: "demonstration-card" });
+  explanation.append(el("h2", {}, copy.heading), el("p", {}, copy.intro));
+  for (const row of response.worked_steps) {
+    explanation.append(workedStep(row, copy));
+  }
+  explanation.append(
+    el("h3", {}, copy.result),
+    el("div", { class: "result-destination" }, response.destination.label),
+    el("p", {}, response.destination.description),
+    el("p", { class: "demonstration-summary" }, response.why),
+    el("p", { class: "formal-instructions" }, formal.guard),
+    el("p", {}, formal.feedback),
+    el("button", {
+      type: "button", dataset: { action: "begin-formal" }, onclick: beginFormal,
+    }, formal.begin),
+  );
+  const layout = el("div", { class: "study-layout" });
+  const left = el("div", { class: "trial-column" });
+  left.append(recordCard(response.scene), explanation);
+  layout.append(left, referencePanel());
+  replaceStage(el("h1", {}, response.progress), layout);
+  saveButton.hidden = true;
+}
+
+async function beginDemonstration() {
   try {
-    renderTrial(await api("/api/continue", { attempt_id: app.attemptId }));
+    renderDemonstration(await api("/api/continue", { attempt_id: app.attemptId }));
   } catch (error) {
     showError(stage, localizedError());
   }
@@ -362,9 +383,6 @@ function showResult(response) {
     el("h2", {}, labels.path),
   );
   result.append(answeredSteps(response.path));
-  if (response.feedback) {
-    result.append(el("p", { class: "practice-feedback" }, response.feedback));
-  }
   const actions = el("div", { class: "question-actions" });
   const previous = response.path[response.path.length - 1];
   actions.append(el("button", {
@@ -380,33 +398,17 @@ function showResult(response) {
   left.append(recordCard(app.currentScene), result);
   layout.append(left, referencePanel());
   replaceStage(heading, layout);
-  saveButton.hidden = response.phase === "practice_result";
+  saveButton.hidden = false;
 }
 
 async function continueAfterResult() {
   try {
     const response = await api("/api/continue", { attempt_id: app.attemptId });
-    if (response.phase === "formal_intro") showFormalIntro();
-    else if (response.phase === "attention") showAttention(response);
+    if (response.phase === "attention") showAttention(response);
     else renderTrial(response);
   } catch (error) {
     showError(stage, localizedError());
   }
-}
-
-function showFormalIntro() {
-  app.currentStep = null;
-  const copy = app.materials.common.formal_intro;
-  replaceStage(
-    el("h1", {}, copy.heading),
-    el("p", { class: "fiction-notice" }, app.materials.common.disclaimer),
-    el("p", { class: "formal-instructions" }, copy.guard),
-    el("p", {}, copy.feedback),
-    el("button", {
-      type: "button", dataset: { action: "begin-formal" }, onclick: beginFormal,
-    }, copy.begin),
-  );
-  saveButton.hidden = true;
 }
 
 async function beginFormal() {

@@ -1,8 +1,8 @@
 # Implementation Plan: V3 Stepwise Open-Book Button Board
 
 - **Status:** `DRAFT / NOT FROZEN / implementation for owner-local preview`
-- **Branch:** `feature/microstudy-v3-polish`
-- **Governance:** D-0117, D-0118
+- **Branch:** `feature/microstudy-v3-declutter`
+- **Governance:** D-0117, D-0118, D-0119
 - **Non-goals:** human data, recruitment, timing, ethics administration,
   Protocol Freeze, public deployment, paper/claim/result edits, Contract/Flat,
   or V1/V2 replacement
@@ -63,10 +63,42 @@
 - [x] Final export/scoring contains only the surviving final path and no private
       derivation material.
 
+## V11.2 declutter dependency order
+
+1. Preserve the content-independent
+   `cb91ebcf364bf07bea40cf541872de7efe07d548d75b2a265dc9be59a6a2b0bd`
+   logic fingerprint and all generated expected fields.
+2. Remove welcome/tutorial flow preamble and the participant-code input. Make
+   start locale-only and use a random server UUID as the option-order,
+   attempt, export, and deduplication identity.
+3. Remove only the separate four-destination explanation cards from the sticky
+   reference panel; retain the “How to think” checklist and every formal
+   question option.
+4. Project P1 as a read-only worked example with card-cited reasoning and one
+   direct “Begin formal scenarios” action. Delete practice response transitions
+   and export no practice answer/path/timing/score.
+5. Replace `practice_status` with the minimal
+   `demonstration_status: acknowledged`, remove `participant_code`, and bump
+   materials/export/analysis identities to V11.2/V8/V2 with exact
+   cross-version failure.
+6. Re-run generator/materials, Node, targeted/full pytest, Chrome/Edge en/zh at
+   100%/200%, security, isolated V3/V2/V9 smokes, cleanup, and diff hygiene.
+
+V11.2 acceptance:
+
+- [x] Locale selection is the only participant-provided start value.
+- [x] No anonymous-code control or client/server validation remains.
+- [x] The sticky panel contains the checklist but no four-destination explainer.
+- [x] P1 is read-only, card-cited, separate from formal scenes, and unscored.
+- [x] Formal router, options, sequence/allocation, A/B isolation, backtracking,
+      GAA/Strict, expected derivation, and logic fingerprint are unchanged.
+- [x] Signed export contains a generated attempt identity and minimal
+      demonstration acknowledgement, with no practice answer data.
+
 ## Preview
 
 ```powershell
-Set-Location "C:\Users\v-elzhang\Desktop\MyFolder\cognitive console\.worktrees\microstudy-v3-polish"
+Set-Location "C:\Users\v-elzhang\Desktop\MyFolder\cognitive console\.worktrees\microstudy-v3-declutter"
 $env:PYTHONPATH = "src"
 python -m cognitive_console.button_board_stepwise --port 0
 ```

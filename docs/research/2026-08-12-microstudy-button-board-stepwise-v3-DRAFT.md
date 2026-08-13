@@ -6,7 +6,7 @@
 
 The permitted descriptive target is accuracy when applying frozen evidence
 thresholds one question at a time after short teaching while the fictional card
-and reference panel remain visible. This design does not estimate benefit,
+and “How to think” checklist remain visible. This design does not estimate benefit,
 trust, safety, control, efficiency, long-term recall, interface superiority,
 Contract/Flat effects, real-product effects, latent mechanisms, or population
 generalization.
@@ -16,11 +16,18 @@ generalization.
 - Within-participant: six formal fictional cards.
 - Between-attempt material sensitivity: mutually exclusive AB1-A/B, allocated
   1:1 within locale and fixed in the same balanced slot.
-- One practice card before formal trials.
+- One read-only worked example before formal trials. It uses the separate P1
+  fictional card and shows each applicable question, demonstrated choice,
+  cited card sentence(s), explanation, and final destination. It collects no
+  practice response and proceeds directly to the first formal item after one
+  acknowledgement.
 - AC1 after formal trials; excluded from GAA, Strict, and step accuracy.
 - Structured optional reflection; no free text.
 - Twelve balanced six-slot orders; successful starts cycle through 24
   sequence-by-variant cells independently per locale.
+- Start requires only the selected locale. The server generates a random
+  non-personal `attempt_id`; no participant code, name, contact detail, or free
+  text is requested.
 - Within a scenario, participants may reopen the immediately previous step or
   any answered-step summary. Reopening removes that step and all later answers;
   the replacement answer alone determines the new continuation or early exit.
@@ -50,7 +57,7 @@ Secondary summaries:
 - all-completer, all-answerer, and AC1-pass sensitivity views.
 
 No speed/ability conclusion or reaction-time exclusion is permitted.
-No backtrack count is exported or analyzed in V11.1. Discarded answers are not
+No backtrack count is exported or analyzed in V11.2. Discarded answers are not
 part of GAA, Strict, step accuracy, or the signed raw path.
 
 ## Missingness and exclusion
@@ -58,17 +65,24 @@ part of GAA, Strict, step accuracy, or the signed raw path.
 Partial signed exports retain submitted raw steps and leave later steps absent.
 No imputation or cross-version backfill is allowed. AC1 failure is not a primary
 exclusion; any AC1-pass analysis must be paired with all-completer results.
-Duplicate participant codes require owner adjudication rather than automatic
-selection. V9, V10, and V11 exports cannot be mixed.
+No participant code is collected. The server-generated UUID `attempt_id`, with
+`run_id`, is the export identity; duplicate export identities fail closed.
+V9, V10, and V11 exports cannot be mixed.
 
 ## Materials and derivation
 
-All cards are rendered from the V11.1 typed fact registry. D-0118 changes only
+All cards are rendered from the V11.2 typed fact registry. D-0118 changes only
 the participant-visible bilingual skin to ordinary object names and explicit
 one-sentence target definitions. The comparison schema
 contains an existing/new method map for paired and single-method records.
 Expected answers, exit, decisive step, state, GAA, and Strict are not material
 inputs. Public files and raw exports contain no private derivation keys.
+The P1 worked-example projection is derived from the unchanged P1 route but
+contains no response controls. The signed export records only
+`demonstration_status: acknowledged`, never a practice choice, path, timing, or
+score. The separate four-destination explanation block is absent; the sticky
+panel retains the six-question checklist, and all formal question options,
+routes, keys, and scoring remain unchanged.
 
 F4 explicitly reports 0 original-method rounds, 10 new-button rounds, and no
 round using the original method. Its complete three-dimension scope remains

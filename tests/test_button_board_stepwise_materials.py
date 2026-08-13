@@ -23,9 +23,9 @@ def test_v11_generator_validator_and_versions_are_exact():
     report = sw.validate_materials()
     assert report["status"] == "PASS"
     assert report["schema_version"] == "microstudy-button-board-stepwise-v11-bilingual"
-    assert report["materials_version"] == "v11.1-stepwise-20260813-draft"
-    assert report["export_schema_version"] == "microstudy-export-v7-stepwise-bilingual-signed"
-    assert report["analysis_version"] == "button-board-stepwise-gaa-v1"
+    assert report["materials_version"] == "v11.2-stepwise-20260813-draft"
+    assert report["export_schema_version"] == "microstudy-export-v8-stepwise-demonstration-signed"
+    assert report["analysis_version"] == "button-board-stepwise-gaa-v2"
     assert report["formal_scene_count"] == 6
     checked = subprocess.run(
         [sys.executable, "scripts/generate_microstudy_v11_stepwise.py", "--check"],
@@ -236,7 +236,7 @@ def test_sequences_balance_scene_positions_and_success_allocation_cells():
     assert Counter(variant for _, variant in allocations) == {"A": 12, "B": 12}
 
 
-def test_scope_order_is_stable_and_participant_specific():
+def test_scope_order_is_stable_and_internal_attempt_specific():
     materials, _, _ = sw.load_sources()
     rows = materials["locales"]["en"]["scenes"]["F6"]["scope_options"]
     first = stable_option_order(rows, "P-ONE", "F6", "hash", "scope")
@@ -277,7 +277,67 @@ def test_public_materials_have_no_private_or_score_keys_and_are_bilingual():
         assert len(bundle["common"]["destinations"]) == 4
         assert len(bundle["common"]["checklist"]) == 6
         assert set(bundle["common"]["questions"]) == {str(step) for step in range(1, 7)}
+        demonstration = bundle["demonstration"]
+        assert demonstration["scene"]["display_id"] == "P1"
+        assert "scope_options" not in demonstration["scene"]
+        assert [row["step"] for row in demonstration["worked_steps"]] == [1, 2, 3]
+        assert all(
+            set(row) == {"step", "question", "choice", "evidence", "why"}
+            and row["evidence"]
+            for row in demonstration["worked_steps"]
+        )
     assert keys["scenes"]["F4"]["comparison_rule"]["design"] == "single_method_record"
+
+
+def test_read_only_demonstration_is_derived_from_p1_and_excludes_formal_cards():
+    materials, keys = sw.generate_materials()
+    practice_path = keys["practice"]["expected_answer_by_step"]
+    formal_text = {
+        locale: json.dumps(materials["locales"][locale]["scenes"], ensure_ascii=False)
+        for locale in sw.LOCALES
+    }
+    for locale in sw.LOCALES:
+        demonstration = materials["locales"][locale]["demonstration"]
+        assert demonstration["scene"]["display_id"] == "P1"
+        assert demonstration["scene"]["title"] not in formal_text[locale]
+        assert demonstration["destination"]["id"] == "dest-off"
+        for row in demonstration["worked_steps"]:
+            selected = next(
+                option["text"][locale]
+                for option in sw.STEP_OPTIONS[row["step"]]
+                if option["id"] == practice_path[str(row["step"])]
+            )
+            assert row["choice"] == selected
+        rendered = json.dumps(demonstration, ensure_ascii=False)
+        assert not any(scene_id in rendered for scene_id in sw.FORMAL_SCENE_IDS)
+        assert "expected_" not in rendered
+
+
+def test_decluttered_bilingual_onboarding_has_no_code_or_flow_preamble():
+    materials, _ = sw.generate_materials()
+    for locale in sw.LOCALES:
+        common = materials["locales"][locale]["common"]
+        welcome = common["welcome"]
+        assert set(welcome) == {
+            "heading",
+            "goal",
+            "open_book",
+            "card_only",
+            "privacy",
+            "start",
+        }
+        assert set(common["tutorial"]) == {
+            "heading",
+            "intuition",
+            "show_demonstration",
+        }
+        text = json.dumps(
+            {"welcome": welcome, "tutorial": common["tutorial"]},
+            ensure_ascii=False,
+        )
+        assert "Anonymous code" not in text and "匿名代码" not in text
+        assert "one card at a time" not in text
+        assert "一张张" not in text and "一步一步整理" not in text
 
 
 def test_neutral_record_and_ambiguity_scans_fail_closed():

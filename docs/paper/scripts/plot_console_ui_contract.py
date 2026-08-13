@@ -179,8 +179,8 @@ def _card_lines(card: dict, e0013: dict, grid_size: int) -> list[tuple[str, str]
         ),
         _signal_line(
             "GRID SCOPE NOTE",
-            f"{grid_size}/{grid_size} comparator-negative; Qwen-CAA near baseline; "
-            f"{grid_size - rechecked} rechecks absent.",
+            f"{grid_size}/{grid_size} negative under the frozen scorer as run; Qwen-CAA near baseline; "
+            f"all-generation sign unidentified, {grid_size - rechecked} cells not rechecked.",
         ),
         _signal_line(
             "EXACT EVIDENCE TIER",

@@ -1,0 +1,22 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[prospective-pc] generating condition (i) prompt=unc-strong-01 ...
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 6137.77it/s]
+[prospective-pc] generating condition (ii) baselineA=neutral ...
+[prospective-pc] generating condition (iii) baselineB=neutral (indep seed) ...
+
+================ PROSPECTIVE POSITIVE CONTROL (GATED — PENDING HOSTILE AUDIT) ================
+code_commit=efb65200976f2890b0413c2614d9a97d5a20840d dirty=True
+fresh disjointness: id_overlap=[] text_overlap=[]
+
+[POSITIVE(prompt - baselineA)] expected=PASS
+  mean_diff=0.1399  CI(0.983333)=[-0.0011,0.2771]  excl0=False  mean>=delta(0.05)=True
+  coherence_ok=True (treat_deg=0.0123 ceiling=0.0319)  => PASS=False
+
+[NEGATIVE(baselineB - baselineA)] expected=FAIL
+  mean_diff=0.0007  CI(0.983333)=[-0.0475,0.0517]  excl0=False  mean>=delta(0.05)=False
+  coherence_ok=True (treat_deg=0.0067 ceiling=0.0319)  => PASS=False
+
+GATE satisfiable+discriminative (POSITIVE PASS & NEGATIVE FAIL) = False
+wall_clock_seconds=970.4
+wrote results/prospective_pc_20260813/prospective_pc_result.json
+wrote results/prospective_pc_20260813/raw_generations.jsonl (sha256=dd98123fabf91524e81ebb90c197539f0c275608fb7002b62f6f4ea2e43974ca)

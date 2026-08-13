@@ -1825,3 +1825,90 @@ experiments:
     evidence. Human data, recruitment, ethics, timing, public deployment,
     claim/result changes, exploratory-to-confirmatory upgrade, and Protocol
     Freeze remain unauthorized.
+- experiment_id: prospective-pc-efb6520-20260813
+  parent: null
+  hypothesis_id: H-gate-validity
+  claim_ids: []
+  type: diagnostic
+  status: done
+  code_commit: efb65200976f2890b0413c2614d9a97d5a20840d
+  dirty_tree: true   # ONLY the untracked results/ output dir; git status --porcelain shows NO tracked-file modification (verified on host)
+  data_hash: sha256:dd98123fabf91524e81ebb90c197539f0c275608fb7002b62f6f4ea2e43974ca  # raw_generations.jsonl (795 records)
+  env_hash: null
+  config_hash: null
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: >-
+    80 FRESH TriviaQA rc.nocontext validation items (parse_uncertainty_rows),
+    deterministically drawn (FRESH_SEED=20260813) and VERIFIED disjoint by item-id
+    AND normalized-question-text hash from the frozen E-0006 uncertainty pool
+    (seed=0) and the E-0012 pool (seed=12/offset=500). Split 27 DEV / 53 TEST
+    (split_dev_test dev_fraction=1/3 seed=20260723); TEST evaluated only.
+  seed: 20260723   # split + bootstrap; gen base seeds prompt/baselineA=20260723, baselineB=20260724; fresh draw 20260813
+  hardware: A800 (suzlab-a800) GPU3 only, CUDA_VISIBLE_DEVICES=3, bfloat16
+  started_at: '2026-08-13T13:39:50+00:00'
+  ended_at: '2026-08-13T13:56:01+00:00'
+  exit_code: 0
+  raw_metrics:
+    wall_clock_seconds: 970.4
+    a800_gpu_hours_upper_bound: 0.2696
+    n_test: 53
+    k_samples: 5
+    max_new_tokens: 64
+    temperature: 0.7
+    do_sample: true
+    conf_parse_rate_prompt: 0.37
+    conf_parse_rate_baselineA: 0.81
+    conf_parse_rate_baselineB: 0.81
+  summary_metrics:
+    endpoint: per_item_1minus_brier (frozen score_sample_outcome, UNMODIFIED)
+    gate: cluster_bootstrap_ci(B=10000, ci_level=0.983333, seed=20260723, cluster) + axis_pass(delta=0.05, coherence tau=1.5/eps=0.02)
+    positive_control:
+      contrast: prompt(unc-strong-01) - baselineA
+      expected: PASS
+      mean_diff: 0.1399
+      ci_lo: -0.0011
+      ci_hi: 0.2771
+      ci_excludes_zero: false
+      mean_diff_ge_delta: true
+      coherence_ok: true
+      passed: false
+    negative_control:
+      contrast: baselineB - baselineA
+      expected: FAIL
+      mean_diff: 0.0007
+      ci_lo: -0.0475
+      ci_hi: 0.0517
+      ci_excludes_zero: false
+      mean_diff_ge_delta: false
+      coherence_ok: true
+      passed: false
+    gate_discriminative_negative_rejected: true
+    gate_satisfiable_and_discriminative: false
+  artifacts:
+  - results/prospective_pc_20260813/prospective_pc_result.json
+  - results/prospective_pc_20260813/run.log
+  - results/prospective_pc_20260813/raw_generations.POINTER.md
+  - docs/research/2026-08-13-prospective-pc-predeclaration.md
+  - scripts/run_prospective_positive_control.py
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    PROSPECTIVE, outcome-blind POSITIVE CONTROL on the frozen comparator-bound
+    uncertainty gate (owner-authorized single A800 run, GPU3 only, 0.27 GPU-h <=
+    1 GPU-h cap). scientific_status=PENDING_HOSTILE_RESULT_AUDIT: this run is NOT
+    blessed, NOT pushed, NOT merged. Predeclaration (commit d8e6450) precedes the
+    result commit and fixes population/endpoint/both-contrasts/threshold/CI/seed/
+    gate. NEGATIVE control correctly FAILS (mean ~0, CI includes 0) => gate is
+    DISCRIMINATIVE. POSITIVE control did NOT pass: large mean effect (+0.140 >=
+    delta=0.05) with acceptable coherence, but the paired item-cluster bootstrap
+    CI at the Bonferroni 98.333% level barely includes 0 (lo=-0.0011). Honest
+    mechanism (NOT tuned away): under the frozen 64-token budget the strong
+    uncertainty prompt yields verbose/hedged answers that truncate before the
+    'Confidence: X%' token, so only 37% of prompt-condition samples parse a
+    confidence (vs 81% for neutral baselines); unparsed -> conf=0.5 -> 1-Brier=
+    0.75 default, inflating variance. Result reported as predeclared with no
+    arm/axis/endpoint/threshold/CI/seed substitution and no tuning-to-pass.
+    SCOPE: shows the gate accepts a PROMPT effect direction and rejects a null;
+    it does NOT show the gate accepting a latent/steering signal. No frozen
+    artifact (E-0005/6/11/13, arm_full, data/e0006_uncertainty_baseline, frozen
+    src modules) was modified. Awaiting independent hostile RESULT audit.

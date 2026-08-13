@@ -5,6 +5,52 @@
 
 ---
 
+## 2026-08-13 · D-0119 · Owner approves V3 UX declutter with no logic, answer, or scoring change
+- The owner approved three V3-only burden reductions: remove redundant
+  card-flow preamble and participant-code entry; remove the separate
+  four-destination explanation block while retaining the “How to think”
+  checklist and all formal options; and replace interactive P1 practice with a
+  read-only worked example showing each applicable question, the demonstrated
+  choice, cited P1 card sentence(s), rationale, and final destination.
+- Start requires only `selected_locale`. The volatile loopback server generates
+  a random UUID `attempt_id`, uses it as the stable option-order seed, and uses
+  `(run_id, attempt_id)` as the signed-export and duplicate-file identity. No
+  participant code, name, contact detail, or free text is requested.
+- P1 remains the same fictional non-formal case. Its read-only projection is
+  derived from the unchanged P1 route and teaches only “a response is not the
+  same as beating the existing method on the stated target.” It contains no
+  formal scene text, steps 4–6, response control, expected/scoring key, or
+  practice answer/path/timing/score. The export records only
+  `demonstration_status: acknowledged`.
+- The export contract is therefore
+  `microstudy-export-v8-stepwise-demonstration-signed`: `participant_code` and
+  `practice_status` are removed. Analysis becomes
+  `button-board-stepwise-gaa-v2` and reconstructs the unchanged formal plan from
+  `attempt_id`. Materials become `v11.2-stepwise-20260813-draft`; exact
+  materials/export/analysis identity and hashes preserve cross-version
+  fail-closed behavior.
+- Mechanical clean-main comparison and the fixed regression fingerprint
+  `cb91ebcf364bf07bea40cf541872de7efe07d548d75b2a265dc9be59a6a2b0bd`
+  confirm that P1/formal nature, comparison design/counts, harm, scope values
+  and correct IDs, required dimensions, expected paths, decisive exits,
+  four-state answers, A/B-only manipulation, and sequence structure are
+  unchanged. Formal back/reselect and final-path-only GAA/Strict are unchanged.
+- Implementation commit:
+  `0e53cbb2aa38a8e42f85cab566d02e15315e1fda`. Generator/material validation,
+  all three Node suites, all 30 V3 tests including Chrome/Edge en/zh at
+  100%/200%, all 51 V9/V2 coexistence tests, isolated ephemeral-port V9/V2/V3
+  smokes, and the 888-test selected repository run passed (882 passed, 6
+  skipped). The sole deselected
+  `test_c2b_tasks.py::test_real_loader_is_deferred_offline` failure reproduced
+  unchanged on clean main `2e478082200f716736f12d109bb429109e2c308b`.
+- This remains owner-local synthetic preparation with maximum status
+  `ready_for_owner_local_preview_no_human_data` and `valid_for_paper=false`.
+  It authorizes no recruitment, participant contact, human data, timing pilot,
+  ethics/privacy/retention approval, public deployment, paper/claim/result
+  change, exploratory-to-confirmatory upgrade, or Protocol Freeze. All human
+  semantic, structural, usability, accessibility, ethics, privacy, timing,
+  sample-size, preregistration-freeze, and Protocol Freeze gates remain open.
+
 ## 2026-08-13 · D-0118 · Owner approves V3 everyday wording and within-item step revision
 - The owner approved replacing V3 participant-visible coined object names with
   ordinary bilingual names and one-sentence operational target definitions.

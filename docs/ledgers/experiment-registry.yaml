@@ -1750,24 +1750,24 @@ experiments:
   claim_ids: []
   type: exploratory_formative_human_protocol
   status: ready_for_owner_local_preview_no_human_data
-  code_commit: bed60862ef3b5c3b8859a1f0f04073f524b8d983
+  code_commit: 0e53cbb2aa38a8e42f85cab566d02e15315e1fda
   dirty_tree: false
   data_hash: >-
-    canonical_materials_hash=3665cc870ffb5b442d6acec94036bc4035d0e9130bc2b2d27041b65abaef1345;
-    sequences_hash=12ba64a7d507f4de94407a1adccca6ccec1cbcb482bf0f04fa91807f19c909b0;
-    derived_keys_hash=a4d8df943db31281b79ca918df0e8d0a6d23f1980dc0abad0285203f17d0e289;
+    canonical_materials_hash=63f6573359dc4f40f42f77a51d399e7e66fe9b1443f75f14bedf734797ba5eed;
+    sequences_hash=a5e33daff4d71a6385617ac2632f0318592372e7afe5d56834dc41625b111e6f;
+    derived_keys_hash=e684c4949c128d27cfd7dd57a8758c1fdfa133bae2a6f2313d51726e31e0ef39;
     ab_invariance_hash=1202f424184b1cd2b7f1dd7f051eea20cf7ed51ace42982c7a50459d36d5bd9d;
-    locale_en=4c7e6531eb663f994619b3c641a02d33a79206533af156563debeb98fda1089c;
-    locale_zh-Hans=e4c4e29ddb7afb681ab4ad4939dd653b4362e6a9ea34fd6b6e96859a3f18cd1f
+    locale_en=b87d72f41daa49f07d3a3bd547bb7e9886fd5f569fc0bbf5582ab7b9b6e658c8;
+    locale_zh-Hans=a25acd2b7cd449e2218ea0730bd4807a6d4f5521bc4854b5ddd6af8d19e7aa69
   env_hash: null
   config_hash: null
   model: null
-  dataset: six fictional V11 stepwise cards per attempt; no human data; no live product
+  dataset: one read-only worked example plus six fictional V11 formal cards per attempt; no human data; no live product
   material_schema_version: microstudy-button-board-stepwise-v11-bilingual
-  materials_version: v11.1-stepwise-20260813-draft
+  materials_version: v11.2-stepwise-20260813-draft
   sequence_schema_version: microstudy-button-board-stepwise-sequences-v1
-  export_schema_version: microstudy-export-v7-stepwise-bilingual-signed
-  analysis_version: button-board-stepwise-gaa-v1
+  export_schema_version: microstudy-export-v8-stepwise-demonstration-signed
+  analysis_version: button-board-stepwise-gaa-v2
   seed: 20260812
   hardware: owner-local Windows loopback preview only; no participant run authorized
   started_at: null
@@ -1798,39 +1798,42 @@ experiments:
   failure_reason: null
   valid_for_paper: false
   validation_notes: >-
-    D-0117 and D-0118 authorize an independent V3/V11.1 stepwise open-book
-    fictional button-board preview. V11.1 replaces coined bilingual object
-    names with ordinary names and one-sentence operational target definitions.
-    The content-independent logic fingerprint remains
+    D-0117 through D-0119 authorize an independent V3/V11.2 stepwise open-book
+    fictional button-board preview. D-0119 removes redundant flow preamble and
+    participant-code entry, removes only the separate four-destination
+    explanation cards while retaining the six-question checklist, and turns P1
+    into a read-only card-cited worked example. Start now accepts only locale;
+    the server generates a random UUID attempt_id used for option ordering and
+    the (run_id, attempt_id) export/deduplication identity. Export V8 removes
+    participant_code and replaces practice_status with the single non-response
+    value demonstration_status=acknowledged. Analysis V2 reconstructs plans
+    from attempt_id. The content-independent logic fingerprint remains
     cb91ebcf364bf07bea40cf541872de7efe07d548d75b2a265dc9be59a6a2b0bd:
     nature, comparison design/counts, scope value IDs/correct IDs, expected
-    paths, decisive exits, and four-state answers are unchanged. Public,
-    locale, A/B-invariance, sequence, and derived-key hashes intentionally
-    changed because the materials version and participant-visible labels
-    changed. F4 now states that the original-method column has 0 rounds, the
-    new-button column has 10 rounds, and no round used the original method; it
-    still derives compared=false, NOT_COMPARED, scope_written=true, and U.
-    Participants may reopen the previous or any answered step. Reopening
-    truncates that step and all later answers, clears the former exit, and
-    recomputes the continuation/early exit. Signed JSON/CSV, GAA, and Strict
-    use only the final surviving path; discarded answers are neither exported
-    nor scored. No revision counter was added, so export schema V7 is unchanged;
-    the V11.1 material identity preserves cross-version hard failure.
-    Participant payloads, DOM/ARIA, and raw exports still omit private expected
+    paths, decisive exits, four-state answers, A/B-only manipulation, and
+    sequence structure are unchanged. Mechanical comparison with clean main
+    confirmed equality for every P1/formal logic projection and sequence after
+    removing only materials_version. P1's public demonstration shows only its
+    three applicable questions, authored choices, cited P1 card sentences,
+    rationale, and final destination; it contains no formal scene text,
+    response control, expected/scoring key, practice answer, path, or timing.
+    Formal back/reselect, final-path GAA/Strict, and no-correctness feedback are
+    unchanged. Exact V11.2/V8/V2 identities preserve cross-version hard
+    failure. Participant payloads, DOM/ARIA, JSON, and CSV omit private expected
     and score-derived fields. Loopback Host/origin, CSRF, capability,
     request-ID idempotency, success-only TTL, capacity, volatile memory, no
     access logs/storage, and key isolation remain intact. Generator --check,
-    material validation, Node, all 27 V3 tests, Chrome/Edge English/Simplified
-    Chinese 100%/200% keyboard/focus/ARIA/layout/complete/partial gates, all 51
-    V9/V2 coexistence tests, an external revise-flow HTTP smoke, and isolated
-    V9/V2/V3-new/V3-old server smokes passed. The full 886-test collection
-    produced 879 passes, 6 skips, and the one environment-dependent
-    test_c2b_tasks.py::test_real_loader_is_deferred_offline failure, reproduced
-    on clean base a0f8d145fad995921290f58d154f6a6f5e1056b0 with the same
-    command. The clean-base run additionally encountered an unrelated
-    Windows permission flake in test_lineage; the feature branch did not.
-    Runtime keys, browser profiles, baseline worktree, and smoke PIDs were
-    removed. This is synthetic implementation preparation, not a study run or
-    paper evidence. Human data, recruitment, ethics, timing, public deployment,
-    claim/result changes, exploratory-to-confirmatory upgrade, and Protocol
-    Freeze remain unauthorized.
+    material validation, all three Node suites, all 30 V3 tests including
+    Chrome/Edge English/Simplified-Chinese 100%/200% keyboard/focus/ARIA/layout/
+    complete/partial gates, all 51 unchanged V9/V2 coexistence tests, and
+    isolated ephemeral-port V9/V2/V3 root+bootstrap smokes passed. The 889-test
+    collection passes 882 tests with 6 skips when the single known
+    test_c2b_tasks.py::test_real_loader_is_deferred_offline failure is
+    deselected; that failure reproduced unchanged on a clean main archive at
+    2e478082200f716736f12d109bb429109e2c308b. Two Windows permission races seen
+    in the first full run passed on immediate targeted rerun and the subsequent
+    full selected run. Runtime keys/profiles/snapshots were removed. This is
+    synthetic implementation preparation, not a study run or paper evidence.
+    Human data, recruitment, ethics, timing, public deployment, claim/result
+    changes, exploratory-to-confirmatory upgrade, and Protocol Freeze remain
+    unauthorized.

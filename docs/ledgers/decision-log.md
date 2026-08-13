@@ -5,6 +5,21 @@
 
 ---
 
+## 2026-08-13 · D-0123 · Owner decides consent stays a front-end gate, not recorded in exports
+- The owner decided **not** to record informed-consent acknowledgement into the
+  exported data. Consent remains a front-end-only gate (Begin is disabled until
+  the participant ticks agree; decline exits). No `consent_acknowledged`,
+  `consent_version`, or consent timestamp is added to the signed export.
+- Consequence: the export schema stays `microstudy-export-v8-stepwise-
+  demonstration-signed` (no V8->V9 bump); server `_start`, `_canonical_export`,
+  analysis, and their tests are unchanged. Rationale accepted by owner: the
+  front-end gate already guarantees "a submission exists only if the participant
+  agreed," so a data-level consent field is not required for this study.
+- Honest boundary for future work: if the advisor/ethics reviewer, a journal,
+  or a reviewer later requires per-record proof of consent inside the data,
+  this decision must be reopened (it would be a schema V8->V9 change). This
+  decision does not weaken any open human gate; it only fixes scope.
+
 ## 2026-08-13 · D-0122 · Owner asks agent to draft the informed-consent front page (DRAFT, pending finalization)
 - Clarification correcting D-0121: the owner states the ethics review is
   approved, but the **informed-consent text did not actually exist yet** and

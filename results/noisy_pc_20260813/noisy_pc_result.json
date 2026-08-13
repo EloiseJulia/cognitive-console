@@ -1,8 +1,8 @@
 {
   "experiment": "noisy-positive-control",
   "endpoint": "exactly_two_words(token_count==2)",
-  "scientific_status": "PENDING_HOSTILE_RESULT_AUDIT",
-  "valid_for_paper": false,
+  "scientific_status": "RESULT_AUDIT_PASSED",
+  "valid_for_paper": true,
   "predeclaration": "docs/research/2026-08-13-noisy-positive-control-predeclaration.md",
   "code_commit": "f16ce51109300092a4288257b4035720c3d08a0c",
   "dirty_tree": true,
@@ -9536,7 +9536,11 @@
   "gate_satisfiable_and_discriminative": true,
   "raw_generations": {
     "path": "raw_generations.jsonl",
-    "sha256": "0b29eebf45eec37d3cc7507f12d19246ce20cfb8ff92eb4e1a404c8e549aad8d"
+    "sha256": "0b29eebf45eec37d3cc7507f12d19246ce20cfb8ff92eb4e1a404c8e549aad8d",
+    "archival_status": "unavailable_lost_from_report_store",
+    "available_in_git": false,
+    "lineage_note": "raw_generations unavailable/lost from REPORT_STORE/A800; metric independently recomputable from committed per_item_outcome/per_sample_outcomes arrays; scorer=token_count==2 is trivially checkable.",
+    "records_expected": 795
   },
   "wall_clock_seconds": 473.40435433387756,
   "hardware": {
@@ -9544,5 +9548,32 @@
     "node": "suzlab-a800",
     "gpu_name": "NVIDIA A800 80GB PCIe",
     "cuda_visible_devices": "3"
-  }
+  },
+  "audit_trail": [
+    {
+      "date": "2026-08-13",
+      "reviewer": "impl-b1-lineage",
+      "audit_ref": "audit-b1foldin=SOUND",
+      "prior_status": {
+        "scientific_status": "PENDING_HOSTILE_RESULT_AUDIT",
+        "valid_for_paper": false,
+        "dirty_tree": true
+      },
+      "status_update": "scientific_status=RESULT_AUDIT_PASSED; valid_for_paper=true; dirty_tree left as as-run value",
+      "recomputed_from": "committed per-item/per-sample outcome arrays in this JSON",
+      "scorer_verified": "exactly_two_words(token_count==2); scripts use len(re.findall(r\"\\S+\", text.strip())) == 2",
+      "positive_control_recomputed_delta": 0.6,
+      "positive_control_recomputed_ci": [
+        0.44528301886792454,
+        0.750943396226415
+      ],
+      "negative_control_recomputed_delta": 0.0,
+      "negative_control_recomputed_ci": [
+        0.0,
+        0.0
+      ],
+      "scope": "decision-rule behavior only; positive-control satisfiability/discrimination diagnostic; NOT latent-steering efficacy",
+      "raw_generations_note": "raw_generations unavailable/lost from REPORT_STORE/A800; metric independently recomputable from committed per_item_outcome/per_sample_outcomes arrays; scorer=token_count==2 is trivially checkable."
+    }
+  ]
 }

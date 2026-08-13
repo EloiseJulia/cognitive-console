@@ -1501,3 +1501,164 @@ experiments:
     human bilingual stable-ID semantic review and manual screen-reader review remain
     UNVERIFIED PRE-RECRUITMENT. This row records materials and implementation
     preparation only and must not be represented as a run or paper evidence.
+
+- experiment_id: noisy-pc-f16ce51-20260813
+  parent: null
+  hypothesis_id: H-B1-POSITIVE-CONTROL-DIAGNOSTIC
+  claim_ids:
+  - B1
+  type: positive_control_diagnostic
+  status: result_audit_passed_valid_for_paper_decision_rule_only
+  purpose: >-
+    Positive-control satisfiability/discrimination diagnostic for the qualification adjudicator:
+    prove the decision rule mechanically can pass a clear prompt/instruction effect and fail a null.
+    This is NOT latent-steering efficacy evidence.
+  code_commit: f16ce51109300092a4288257b4035720c3d08a0c
+  dirty_tree: true
+  data_hash:
+    fresh_pool_ids: triviaqa-00100..triviaqa-00179
+    frozen_e0006_jsonl_sha256: sha256:9c1e12ccef1659b9686688bd3d408dfc898ffc70d81d5fe0be783f2d979a4b2f
+    id_intersection_e0006: []
+    text_intersection_e0006: []
+    id_intersection_e0012: []
+    text_intersection_e0012: []
+  env_hash: null
+  config_hash: null
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: >-
+    Fresh TriviaQA rc.nocontext validation pool with orig ids triviaqa-00100..00179,
+    split seed 20260723 into 27 DEV / 53 TEST; verified disjoint from frozen E-0006
+    and E-0012 by id and normalized text hash. Additive diagnostic; does not overwrite
+    the frozen 0/12 grid or E-0005/E-0006/E-0011.
+  seed:
+    split: 20260723
+    bootstrap: 20260723
+    base_strong: 20260723
+    base_baselineA: 20260723
+    base_baselineB: 20260724
+  hardware: A800 GPU3, bfloat16, host suzlab-a800
+  started_at: null
+  ended_at: '2026-08-13'
+  exit_code: 0
+  scope: decision-rule behavior only
+  predeclaration: docs/research/2026-08-13-noisy-positive-control-predeclaration.md
+  raw_metrics:
+    endpoint: exactly_two_words(token_count==2)
+    k_samples: 5
+    bootstrap_b: 10000
+    ci_level: 0.9833333333333333
+    strong_compliance: 0.6
+    baselineA_compliance: 0.0
+    baselineB_compliance: 0.0
+  summary_metrics:
+    positive_control_delta: 0.6
+    positive_control_ci_9833: [0.44528301886792454, 0.750943396226415]
+    positive_control_passed: true
+    negative_control_delta: 0.0
+    negative_control_ci_9833: [0.0, 0.0]
+    negative_control_passed: false
+    gate_satisfiable_and_discriminative: true
+    interpretation: prompt positive control accepted; exact neutral-null rejected; NOT latent efficacy
+  artifacts:
+  - path: results/noisy_pc_20260813/noisy_pc_result.json
+    sha256: d68ba1b8a06d777baf6c2408d2ba19f3987bbd511e22ce37dcc7a319b5a466f6
+  - path: results/noisy_pc_20260813/REPORT.md
+  - path: results/noisy_pc_20260813/run.log
+  - path: results/noisy_pc_20260813/raw_generations.POINTER.md
+  raw_generations:
+    archival_status: unavailable_lost_from_report_store
+    as_run_sha256: sha256:0b29eebf45eec37d3cc7507f12d19246ce20cfb8ff92eb4e1a404c8e549aad8d
+    note: >-
+      raw_generations unavailable; metric independently recomputable from committed
+      per_item_outcome/per_sample_outcomes arrays; scorer=token_count==2 trivially checkable.
+      Do not reconstruct or fabricate decoded raw text.
+  audit_ref:
+    hostile_result_audit: audit-b1foldin=SOUND
+    lineage_recompute: impl-b1-lineage 2026-08-13 exact match to JSON and paper numbers
+  failure_reason: null
+  valid_for_paper: true
+  validation_notes: >-
+    Valid only for B1 qualification-rule behavior: the adjudicator can pass a prompt/instruction
+    positive control and fail a null. It is additive to, and does not revise, the frozen C2
+    0/12 grid, E-0005, E-0006, or E-0011. It is not evidence that latent steering works.
+
+- experiment_id: strong-negative-pc-c839e1c-20260813
+  parent: noisy-pc-f16ce51-20260813
+  hypothesis_id: H-B1-POSITIVE-CONTROL-DIAGNOSTIC
+  claim_ids:
+  - B1
+  type: positive_control_diagnostic
+  status: result_audit_passed_valid_for_paper_decision_rule_only
+  purpose: >-
+    Strong-negative positive-control diagnostic for qualification-adjudicator discrimination:
+    preserve the prompt positive pass while showing the decision rule rejects a noisy strong-vs-strong'
+    null with a non-degenerate CI. This is NOT latent-steering efficacy evidence.
+  code_commit: c839e1ca73668039fc15f0adbf512d7ca2f936be
+  dirty_tree: true
+  data_hash:
+    fresh_pool_ids: triviaqa-00100..triviaqa-00179
+    frozen_e0006_jsonl_sha256: sha256:9c1e12ccef1659b9686688bd3d408dfc898ffc70d81d5fe0be783f2d979a4b2f
+    manifest_matches_host_jsonl: true
+    id_intersection_e0006: []
+    text_intersection_e0006: []
+    id_intersection_e0012: []
+    text_intersection_e0012: []
+  env_hash: null
+  config_hash: null
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: >-
+    Same fresh TriviaQA rc.nocontext validation pool as noisy-pc (orig ids triviaqa-00100..00179),
+    split seed 20260723 into 27 DEV / 53 TEST; verified disjoint from frozen E-0006 and E-0012.
+    Additive diagnostic; does not overwrite the frozen 0/12 grid or E-0005/E-0006/E-0011.
+  seed:
+    split: 20260723
+    bootstrap: 20260723
+    base_strong: 20260723
+    base_baselineA: 20260723
+    base_strong_prime: 20260813
+  hardware: A800 GPU3, bfloat16, host suzlab-a800
+  started_at: null
+  ended_at: '2026-08-13'
+  exit_code: 0
+  scope: decision-rule behavior only
+  predeclaration: docs/research/2026-08-13-strong-negative-positive-control-predeclaration.md
+  raw_metrics:
+    endpoint: exactly_two_words(token_count==2)
+    k_samples: 5
+    bootstrap_b: 10000
+    ci_level: 0.9833333333333333
+    strong_compliance: 0.6
+    baselineA_compliance: 0.0
+    strong_prime_compliance: 0.5886792452830188
+  summary_metrics:
+    positive_control_delta: 0.6
+    positive_control_ci_9833: [0.44528301886792454, 0.750943396226415]
+    positive_control_passed: true
+    negative_control_delta: 0.011320754716981133
+    negative_control_ci_9833: [-0.03018867924528302, 0.0528301886792453]
+    negative_control_passed: false
+    rejects_noisy_null: true
+    gate_satisfiable_and_discriminative: true
+    interpretation: prompt positive control accepted; noisy strong-vs-strong-prime null rejected; NOT latent efficacy
+  artifacts:
+  - path: results/strong_negative_pc_20260813/strong_negative_pc_result.json
+    sha256: b41cd09a6a96410f9d9c7e3565d63d599de482fe3753aa45a3ad015d4e45cae3
+  - path: results/strong_negative_pc_20260813/raw_generations.jsonl
+    sha256: 08025f4890fa197c5d943380799562565698da33c0eaea8b6601f3ee79a363bf
+  - path: results/strong_negative_pc_20260813/REPORT.md
+  - path: results/strong_negative_pc_20260813/run.log
+  - path: results/strong_negative_pc_20260813/raw_generations.POINTER.md
+  raw_generations:
+    archival_status: archived_in_git_from_a800_report_store
+    records: 795
+    sha256: sha256:08025f4890fa197c5d943380799562565698da33c0eaea8b6601f3ee79a363bf
+    source: A800:~/reports/cognitive-console/strong_negative_pc_20260813/raw_generations.jsonl
+  audit_ref:
+    hostile_result_audit: audit-b1foldin=SOUND
+    lineage_recompute: impl-b1-lineage 2026-08-13 exact match to JSON and paper numbers
+  failure_reason: null
+  valid_for_paper: true
+  validation_notes: >-
+    Valid only for B1 qualification-rule behavior: the adjudicator can pass a prompt/instruction
+    positive control and fail a noisy null. It is additive to, and does not revise, the frozen C2
+    0/12 grid, E-0005, E-0006, or E-0011. It is not evidence that latent steering works.

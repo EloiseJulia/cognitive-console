@@ -1,7 +1,10 @@
 # 论文总览（中文内部理解版）
 
-> **2026-08-11 当前状态（内部导航，不是论文证据）：** 当前 source 标题仍为
-> **When Does a Legible Latent Axis Earn a Control? A Comparator-Bound Evaluation Contract for Latent-Control Interfaces**。
+> **2026-08-13 更新：** canonical 主稿已由 owner 指令切换为重构版 `reframed.tex`，并覆盖进
+> `docs/paper/main.tex`（构建入口不变；旧稿备份为 `docs/paper/obsolete_main.tex`）。当前 source 标题为
+> **Before You Add the Slider: A Comparator-Bound Test for Latent Controls in LLM Interfaces**。
+> （旧标题 "When Does a Legible Latent Axis Earn a Control? …" 已退役。下文 framing 描述尚未逐段
+> resync 到 reframed 措辞，待 Manager 处理。）
 > 主 framing 是 comparator-bound actionability gate，而不是 latent steering 普遍失败。AxBench
 > 已在 method-level benchmark 中直接比较 prompting 与多种 representation-level interventions；
 > Basu et al. 已在临床 triage 中直接研究 representation-to-actionability gap，且 Arm 1 含
@@ -16,7 +19,7 @@
 > E-0016 仍无 DEV/TEST 或科学结果。任何旧 reviewer acceptance probability 均早于最新写作，
 > 不得当作当前评分；需对当前 `main` 重新独立评审。
 >
-> 当前标题：**When Does a Legible Latent Axis Earn a Control? A Comparator-Bound Evaluation Contract for Latent-Control Interfaces**
+> 当前标题：**Before You Add the Slider: A Comparator-Bound Test for Latent Controls in LLM Interfaces**
 > 目标 venue：IUI。本文档只同步当前论文 framing。数字以生成表、冻结 artifact、evidence ledger 和 `main.tex` 为准。
 
 ## 1. 一句话叙事

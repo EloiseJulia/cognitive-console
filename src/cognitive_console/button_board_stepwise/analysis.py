@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import hmac
 import json
+import uuid
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any, Iterable
@@ -46,7 +47,6 @@ SESSION_FIELDS = {
     "attempt_id",
     "run_id",
     "attempt_serial",
-    "participant_code",
     "selected_locale",
     "locale_bundle_version",
     "locale_bundle_hash",
@@ -56,7 +56,7 @@ SESSION_FIELDS = {
     "allocation_cell",
     "completion_status",
     "complete",
-    "practice_status",
+    "demonstration_status",
     "attention_selected_id",
     "reflection_choice_ids",
     "trials",
@@ -85,6 +85,13 @@ TRIAL_FIELDS = {
 def _require(condition: bool, message: str) -> None:
     if not condition:
         raise ExportError(message)
+
+
+def _is_uuid(value: Any) -> bool:
+    try:
+        return isinstance(value, str) and str(uuid.UUID(value)) == value
+    except (ValueError, AttributeError):
+        return False
 
 
 def _assert_no_private_keys(value: Any, path: str = "$") -> None:
@@ -255,7 +262,7 @@ def validate_export(data: dict[str, Any], key: bytes) -> dict[str, Any]:
     )
     _require(
         data["export_schema_version"] == EXPORT_SCHEMA_VERSION,
-        "wrong export schema; V5/V6/V7/V9/V11 mixing is forbidden",
+        "wrong export schema; V5/V6/V7/V8/V9/V11 mixing is forbidden",
     )
     _require(
         data["sequence_schema_version"] == SEQUENCE_SCHEMA_VERSION,
@@ -299,6 +306,10 @@ def validate_export(data: dict[str, Any], key: bytes) -> dict[str, Any]:
         "invalid attempt serial",
     )
     _require(
+        _is_uuid(data["run_id"]) and _is_uuid(data["attempt_id"]),
+        "invalid internal attempt identity",
+    )
+    _require(
         type(data["allocation_block"]) is int and data["allocation_block"] >= 0,
         "invalid allocation block",
     )
@@ -317,7 +328,7 @@ def validate_export(data: dict[str, Any], key: bytes) -> dict[str, Any]:
     plan = planned_trials(
         data["sequence_id"],
         data["ab_variant"],
-        data["participant_code"],
+        data["attempt_id"],
     )
     trials = data["trials"]
     _require(isinstance(trials, list) and len(trials) == 6, "six trials required")
@@ -329,19 +340,9 @@ def validate_export(data: dict[str, Any], key: bytes) -> dict[str, Any]:
         not ({"AB1-A", "AB1-B"} <= {row["scene_id"] for row in trials}),
         "one attempt cannot contain both AB1 variants",
     )
-    practice = data["practice_status"]
     _require(
-        isinstance(practice, dict)
-        and set(practice)
-        == {
-            "step_presented",
-            "step_selected_option_id",
-            "participant_exit_step",
-            "participant_derived_state",
-            "scope_selected_id",
-            "completion_status",
-        },
-        "invalid practice status",
+        data["demonstration_status"] == "acknowledged",
+        "invalid demonstration status",
     )
     _require(
         data["attention_selected_id"] in {"INFO", "CONTROL", None},
@@ -381,11 +382,6 @@ def load_exports(paths: Iterable[Path], key: bytes) -> list[dict[str, Any]]:
     _require(len(versions) == 1, "mixed export versions are forbidden")
     identities = [(row["run_id"], row["attempt_id"]) for row in exports]
     _require(len(identities) == len(set(identities)), "duplicate export file")
-    participants = [row["participant_code"] for row in exports]
-    _require(
-        len(participants) == len(set(participants)),
-        "duplicate participant code requires owner adjudication",
-    )
     return exports
 
 
@@ -404,7 +400,7 @@ def analyze(exports: list[dict[str, Any]]) -> dict[str, Any]:
         plan = planned_trials(
             export["sequence_id"],
             export["ab_variant"],
-            export["participant_code"],
+            export["attempt_id"],
         )
         gaa_values: list[int] = []
         strict_values: list[int] = []
@@ -436,7 +432,7 @@ def analyze(exports: list[dict[str, Any]]) -> dict[str, Any]:
                     ] += 1
         participant_rows.append(
             {
-                "participant_code": export["participant_code"],
+                "attempt_id": export["attempt_id"],
                 "selected_locale": export["selected_locale"],
                 "ab_variant": export["ab_variant"],
                 "completion_status": export["completion_status"],
@@ -452,7 +448,7 @@ def analyze(exports: list[dict[str, Any]]) -> dict[str, Any]:
         )
     complete_rows = [row for row in participant_rows if row["completion_status"] == "complete"]
     return {
-        "schema_version": "button-board-stepwise-analysis-summary-v1",
+        "schema_version": "button-board-stepwise-analysis-summary-v2",
         "materials_version": MATERIALS_VERSION,
         "analysis_version": ANALYSIS_VERSION,
         "participant_count": len(participant_rows),

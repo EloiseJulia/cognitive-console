@@ -34,21 +34,23 @@ def common_materials(locale: str) -> dict[str, Any]:
         "materials_version": materials["materials_version"],
         **locale_bundle_metadata(locale),
         "common": common,
-        "practice": json.loads(json.dumps(materials["locales"][locale]["practice"])),
+        "demonstration": json.loads(
+            json.dumps(materials["locales"][locale]["demonstration"])
+        ),
         "sequence_count": len(sequences["sequences"]),
     }
 
 
 def stable_option_order(
     rows: list[dict[str, Any]],
-    participant_code: str,
+    ordering_seed: str,
     scene_id: str,
     materials_hash: str,
     kind: str,
 ) -> list[dict[str, Any]]:
     def key(row: dict[str, Any]) -> str:
         payload = (
-            f"{participant_code}\0{scene_id}\0{materials_hash}\0{kind}\0{row['id']}"
+            f"{ordering_seed}\0{scene_id}\0{materials_hash}\0{kind}\0{row['id']}"
         ).encode("utf-8")
         return hashlib.sha256(payload).hexdigest()
 
@@ -58,7 +60,7 @@ def stable_option_order(
 def planned_trials(
     sequence_id: str,
     ab_variant: str,
-    participant_code: str,
+    ordering_seed: str,
 ) -> list[dict[str, Any]]:
     materials, sequences, keys = validated_sources()
     if ab_variant not in {"A", "B"}:
@@ -85,7 +87,7 @@ def planned_trials(
                     row["id"]
                     for row in stable_option_order(
                         scene["scope_options"],
-                        participant_code,
+                        ordering_seed,
                         scene_id,
                         canonical_hash,
                         "scope",

@@ -1,6 +1,6 @@
 {
   "schema_version": "microstudy-button-board-stepwise-derived-v1",
-  "materials_version": "v11.1-stepwise-20260813-draft",
+  "materials_version": "v11.2-stepwise-20260813-draft",
   "source_schema_version": "microstudy-button-board-stepwise-source-v1",
   "ab_invariance_hash": "1202f424184b1cd2b7f1dd7f051eea20cf7ed51ace42982c7a50459d36d5bd9d",
   "practice": {

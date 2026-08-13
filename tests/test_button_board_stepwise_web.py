@@ -132,11 +132,11 @@ def welcome(base, locale="en"):
     return request_json(base, f"/api/welcome?selected_locale={locale}")
 
 
-def start(base, participant="P1", locale="en"):
+def start(base, locale="en"):
     return request_json(
         base,
         "/api/start",
-        {"participant_code": participant, "selected_locale": locale},
+        {"selected_locale": locale},
     )
 
 
@@ -157,30 +157,29 @@ def revise_step(base, attempt, step, *, request_id=None):
     )
 
 
-def advance_practice(base, attempt):
+def advance_demonstration(base, attempt):
     current = request_json(base, "/api/continue", {"attempt_id": attempt})
-    assert current["phase"] == "practice_step"
-    for step, answer in ((1, "CONTROL"), (2, "COMPARED"), (3, "NOT_BETTER")):
-        current = answer_step(base, attempt, step, answer)
-    assert current["phase"] == "practice_result"
-    assert "6/10" in current["feedback"] and "8/10" in current["feedback"]
+    assert current["phase"] == "demonstration"
+    assert [row["step"] for row in current["worked_steps"]] == [1, 2, 3]
+    assert all(row["evidence"] and row["why"] for row in current["worked_steps"])
+    assert current["destination"]["id"] == "dest-off"
+    assert "options" not in current and "path" not in current
     current = request_json(base, "/api/continue", {"attempt_id": attempt})
-    assert current["phase"] == "formal_intro"
+    assert current["phase"] == "formal_step"
+    assert current["step"] == 1
     return current
 
 
 def complete_attempt(
     base,
     server,
-    participant="P-COMPLETE",
     locale="en",
     wrong_scope_scene=None,
 ):
     materials = welcome(base, locale)
-    created = start(base, participant, locale)
+    created = start(base, locale)
     attempt = created["attempt_id"]
-    advance_practice(base, attempt)
-    current = request_json(base, "/api/continue", {"attempt_id": attempt})
+    current = advance_demonstration(base, attempt)
     for _ in range(6):
         session = server.sessions[attempt]
         slot = session["plan"][session["index"]]
@@ -227,8 +226,25 @@ def test_headers_selected_locale_step_payload_and_no_private_keys(live_server):
     assert english["selected_locale"] == "en"
     assert chinese["selected_locale"] == "zh-Hans"
     assert "questions" not in english["common"]
-    assert english["practice"]["title"] != chinese["practice"]["title"]
-    created = start(base, "PAYLOAD", "en")
+    assert (
+        english["demonstration"]["scene"]["title"]
+        != chinese["demonstration"]["scene"]["title"]
+    )
+    created = start(base, "en")
+    demonstration = request_json(
+        base,
+        "/api/continue",
+        {"attempt_id": created["attempt_id"]},
+    )
+    assert set(demonstration) == {
+        "phase",
+        "progress",
+        "scene",
+        "worked_steps",
+        "destination",
+        "why",
+    }
+    assert "options" not in demonstration and "path" not in demonstration
     current = request_json(
         base,
         "/api/continue",
@@ -250,9 +266,31 @@ def test_headers_selected_locale_step_payload_and_no_private_keys(live_server):
     assert output.getvalue() == ""
 
 
+def test_start_has_no_participant_input_and_uses_generated_attempt_identity(live_server):
+    base, server = live_server
+    created = start(base, "zh-Hans")
+    attempt = created["attempt_id"]
+    assert str(uuid.UUID(attempt)) == attempt
+    assert server.sessions[attempt]["attempt_id"] == attempt
+    assert "participant_code" not in server.sessions[attempt]
+    demonstration = request_json(base, "/api/continue", {"attempt_id": attempt})
+    assert demonstration["phase"] == "demonstration"
+    with pytest.raises(urllib.error.HTTPError):
+        answer_step(base, attempt, 1, "CONTROL")
+    assert server.sessions[attempt]["demonstration_status"] == "shown"
+    assert "practice_trial" not in server.sessions[attempt]
+    with pytest.raises(urllib.error.HTTPError):
+        request_json(
+            base,
+            "/api/start",
+            {"selected_locale": "en", "participant_code": "SHOULD-NOT-BE-ACCEPTED"},
+        )
+    assert server.attempt_serial == 1
+
+
 def test_success_only_allocation_balances_sequence_and_ab_per_locale(live_server):
     base, server = live_server
-    rows = [start(base, f"P-{index:02d}", "en") for index in range(24)]
+    rows = [start(base, "en") for _ in range(24)]
     sessions = [server.sessions[row["attempt_id"]] for row in rows]
     assert Counter(row["sequence_id"] for row in sessions) == {
         f"BBS11-{index:02d}": 2 for index in range(1, 13)
@@ -273,6 +311,8 @@ def test_complete_signed_raw_export_and_analysis(live_server):
     assert export["materials_version"] == MATERIALS_VERSION
     assert export["complete"] is True
     assert len(export["trials"]) == 6
+    assert export["demonstration_status"] == "acknowledged"
+    assert "participant_code" not in export and "practice_status" not in export
     assert_no_private_keys(export)
     validated = validate_export(export, TEST_KEY)
     plan = server.sessions[export["attempt_id"]]["plan"]
@@ -284,6 +324,8 @@ def test_complete_signed_raw_export_and_analysis(live_server):
     assert all(row["strict_gaa_trial"] is True for row in scores)
     summary = analyze([validated])
     assert summary["participant_count"] == 1
+    assert summary["participants"][0]["attempt_id"] == export["attempt_id"]
+    assert "participant_code" not in summary["participants"][0]
     assert summary["mean_gaa_rate_complete"] == 1
     assert summary["mean_strict_rate_complete"] == 1
     csv_url = (
@@ -296,6 +338,8 @@ def test_complete_signed_raw_export_and_analysis(live_server):
     with urllib.request.urlopen(request) as response:
         csv_text = response.read().decode("utf-8-sig")
     assert "step_selected_option_id" in csv_text
+    assert "demonstration_status" in csv_text
+    assert "participant_code" not in csv_text and "practice_status" not in csv_text
     assert "expected_state" not in csv_text
 
 
@@ -304,7 +348,6 @@ def test_wrong_supported_scope_keeps_gaa_and_removes_strict(live_server):
     export = complete_attempt(
         base,
         server,
-        participant="WRONG-SCOPE",
         wrong_scope_scene="F6",
     )
     validated = validate_export(export, TEST_KEY)
@@ -330,10 +373,9 @@ def test_wrong_supported_scope_keeps_gaa_and_removes_strict(live_server):
 def test_same_state_wrong_decisive_path_gets_gaa_not_strict(live_server):
     base, server = live_server
     materials = welcome(base)
-    created = start(base, "ALT-WITHHELD")
+    created = start(base)
     attempt = created["attempt_id"]
-    advance_practice(base, attempt)
-    request_json(base, "/api/continue", {"attempt_id": attempt})
+    advance_demonstration(base, attempt)
     while True:
         session = server.sessions[attempt]
         slot = session["plan"][session["index"]]
@@ -365,22 +407,22 @@ def test_same_state_wrong_decisive_path_gets_gaa_not_strict(live_server):
 
 def test_early_exit_hides_later_steps_and_attention_is_not_formal(live_server):
     base, server = live_server
-    created = start(base, "EARLY")
+    created = start(base)
     attempt = created["attempt_id"]
-    response = request_json(base, "/api/continue", {"attempt_id": attempt})
+    advance_demonstration(base, attempt)
     response = answer_step(base, attempt, 1, "INFO")
-    assert response["phase"] == "practice_result"
+    assert response["phase"] == "formal_result"
     assert [row["step"] for row in response["path"]] == [1]
-    trial = server.sessions[attempt]["practice_trial"]
+    trial = server.sessions[attempt]["trials"][0]
     assert trial["step_presented"] == [1]
     assert trial["participant_derived_state"] == "DIAGNOSTIC"
 
 
 def test_revise_previous_jump_and_early_exit_recompute_final_path(live_server):
     base, server = live_server
-    created = start(base, "REVISE")
+    created = start(base)
     attempt = created["attempt_id"]
-    current = request_json(base, "/api/continue", {"attempt_id": attempt})
+    current = advance_demonstration(base, attempt)
 
     current = answer_step(base, attempt, 1, "CONTROL")
     current = answer_step(base, attempt, 2, "COMPARED")
@@ -392,14 +434,14 @@ def test_revise_previous_jump_and_early_exit_recompute_final_path(live_server):
     current = revise_step(base, attempt, 2)
     assert current["step"] == 2
     assert [row["step"] for row in current["path"]] == [1]
-    trial = server.sessions[attempt]["practice_trial"]
+    trial = server.sessions[attempt]["trials"][0]
     assert trial["step_presented"] == [1, 2]
     assert trial["step_selected_option_id"] == ["CONTROL"]
     assert trial["participant_derived_state"] is None
     assert trial["scope_selected_id"] is None
 
     current = answer_step(base, attempt, 2, "NOT_COMPARED")
-    assert current["phase"] == "practice_result"
+    assert current["phase"] == "formal_result"
     assert [row["answer_id"] for row in current["path"]] == [
         "CONTROL",
         "NOT_COMPARED",
@@ -410,7 +452,7 @@ def test_revise_previous_jump_and_early_exit_recompute_final_path(live_server):
     current = revise_step(base, attempt, 1)
     assert current["step"] == 1 and current["path"] == []
     current = answer_step(base, attempt, 1, "INFO")
-    assert current["phase"] == "practice_result"
+    assert current["phase"] == "formal_result"
     assert [row["answer_id"] for row in current["path"]] == ["INFO"]
     assert trial["step_presented"] == [1]
     assert trial["step_selected_option_id"] == ["INFO"]
@@ -422,10 +464,9 @@ def test_revision_is_idempotent_and_final_formal_scoring_uses_only_final_route(
     live_server,
 ):
     base, server = live_server
-    created = start(base, "FINAL-ROUTE")
+    created = start(base)
     attempt = created["attempt_id"]
-    advance_practice(base, attempt)
-    current = request_json(base, "/api/continue", {"attempt_id": attempt})
+    current = advance_demonstration(base, attempt)
     slot = server.sessions[attempt]["plan"][0]
 
     temporary = "CONTROL" if slot["expected_answer_by_step"]["1"] == "INFO" else "INFO"
@@ -478,16 +519,15 @@ def test_revision_is_idempotent_and_final_formal_scoring_uses_only_final_route(
 
 def test_partial_signature_tamper_wrong_key_and_cross_version_hardfail(live_server):
     base, _ = live_server
-    created = start(base, "PARTIAL")
+    created = start(base)
     attempt = created["attempt_id"]
-    advance_practice(base, attempt)
-    request_json(base, "/api/continue", {"attempt_id": attempt})
+    advance_demonstration(base, attempt)
     request_json(base, "/api/save-exit", {"attempt_id": attempt})
     partial = request_json(base, f"/api/export?attempt_id={attempt}&format=json")
     assert partial["complete"] is False
     assert validate_export(partial, TEST_KEY)
     tampered = copy.deepcopy(partial)
-    tampered["participant_code"] = "CHANGED"
+    tampered["attempt_id"] = str(uuid.uuid4())
     with pytest.raises(ExportError, match="signature"):
         validate_export(tampered, TEST_KEY)
     with pytest.raises(ExportError, match="wrong verification key"):
@@ -500,12 +540,12 @@ def test_partial_signature_tamper_wrong_key_and_cross_version_hardfail(live_serv
         old = copy.deepcopy(partial)
         old["export_schema_version"] = old_version
         old = sign_export(old, TEST_KEY)
-        with pytest.raises(ExportError, match="V5/V6/V7/V9/V11"):
+        with pytest.raises(ExportError, match="V5/V6/V7/V8/V9/V11"):
             validate_export(old, TEST_KEY)
     old_materials = copy.deepcopy(partial)
-    old_materials["materials_version"] = "v11-stepwise-20260812-draft"
+    old_materials["materials_version"] = "v11.1-stepwise-20260813-draft"
     for trial in old_materials["trials"]:
-        trial["materials_version"] = "v11-stepwise-20260812-draft"
+        trial["materials_version"] = "v11.1-stepwise-20260813-draft"
     old_materials = sign_export(old_materials, TEST_KEY)
     with pytest.raises(ExportError, match="wrong materials version"):
         validate_export(old_materials, TEST_KEY)
@@ -514,6 +554,13 @@ def test_partial_signature_tamper_wrong_key_and_cross_version_hardfail(live_serv
     leaked = sign_export(leaked, TEST_KEY)
     with pytest.raises(ExportError, match="private or score-derived"):
         validate_export(leaked, TEST_KEY)
+    answered_demo = copy.deepcopy(partial)
+    answered_demo["demonstration_status"] = {
+        "step_selected_option_id": ["CONTROL"],
+    }
+    answered_demo = sign_export(answered_demo, TEST_KEY)
+    with pytest.raises(ExportError, match="demonstration status"):
+        validate_export(answered_demo, TEST_KEY)
 
 
 def test_request_security_idempotency_capacity_and_memory_only(live_server):
@@ -529,7 +576,6 @@ def test_request_security_idempotency_capacity_and_memory_only(live_server):
     csrf = CLIENTS[base]["csrf"]
     body = json.dumps(
         {
-            "participant_code": "BAD-ORIGIN",
             "selected_locale": "en",
             "request_id": uuid.uuid4().hex,
         }
@@ -552,13 +598,13 @@ def test_request_security_idempotency_capacity_and_memory_only(live_server):
     first = request_json(
         base,
         "/api/start",
-        {"participant_code": "IDEMP", "selected_locale": "en"},
+        {"selected_locale": "en"},
         request_id=request_id,
     )
     second = request_json(
         base,
         "/api/start",
-        {"participant_code": "IDEMP", "selected_locale": "en"},
+        {"selected_locale": "en"},
         request_id=request_id,
     )
     assert first == second
@@ -581,9 +627,9 @@ def test_request_security_idempotency_capacity_and_memory_only(live_server):
     tiny_base = f"http://127.0.0.1:{tiny.server_port}"
     try:
         request_json(tiny_base, "/api/bootstrap")
-        start(tiny_base, "ONE")
+        start(tiny_base)
         with pytest.raises(urllib.error.HTTPError):
-            start(tiny_base, "TWO")
+            start(tiny_base)
     finally:
         tiny.shutdown()
         tiny.server_close()
@@ -607,7 +653,7 @@ def test_failed_requests_do_not_renew_ttl():
     base = f"http://127.0.0.1:{server.server_port}"
     try:
         request_json(base, "/api/bootstrap")
-        created = start(base, "TTL")
+        created = start(base)
         attempt = created["attempt_id"]
         original = server.sessions[attempt]["last_seen"]
         time.sleep(0.04)
@@ -627,7 +673,7 @@ def test_failed_requests_do_not_renew_ttl():
 
 def test_load_exports_rejects_duplicates_and_mixed_versions(live_server):
     base, server = live_server
-    data = complete_attempt(base, server, "LOAD-1")
+    data = complete_attempt(base, server)
     first = RUNTIME / "one.json"
     second = RUNTIME / "two.json"
     first.write_text(json.dumps(data), encoding="utf-8")
@@ -638,7 +684,7 @@ def test_load_exports_rejects_duplicates_and_mixed_versions(live_server):
     mixed["export_schema_version"] = "microstudy-export-v7-button-board-raw-signed"
     mixed = sign_export(mixed, TEST_KEY)
     second.write_text(json.dumps(mixed), encoding="utf-8")
-    with pytest.raises(ExportError, match="V5/V6/V7/V9/V11"):
+    with pytest.raises(ExportError, match="V5/V6/V7/V8/V9/V11"):
         load_exports([first, second], TEST_KEY)
 
 
@@ -657,6 +703,10 @@ def test_static_open_book_aria_privacy_keyboard_and_desktop_contract():
     assert "/api/revise-step" in js
     assert "answered-steps" in css and "step-summary" in css
     assert 'aria-label": labels.answered_steps' in js
+    assert "participant-code" not in js and "participant_code" not in js
+    assert 'class: "destination"' not in js
+    assert ".destination" not in css
+    assert "show-demonstration" in js and "worked-step" in css
     assert "localStorage" not in js and "sessionStorage" not in js
     assert "performance.now" not in js
     assert "innerHTML" not in js
@@ -908,15 +958,41 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
                             cdp.eval(
                                 f'document.querySelector(\'[data-locale="{locale}"]\').click()'
                             )
-                            cdp.wait("document.querySelector('#participant-code')")
+                            cdp.wait("document.querySelector('[data-action=\"start\"]')")
                             assert cdp.eval("document.documentElement.lang") == locale
-                            cdp.eval(
-                                "document.querySelector('#participant-code').value="
-                                + json.dumps(f"{browser_name[0]}-{case_index}")
+                            assert cdp.eval(
+                                "!document.querySelector('input[type=\"text\"]')"
                             )
                             cdp.click("start")
-                            cdp.wait("document.querySelector('[data-action=\"show-practice\"]')")
-                            cdp.click("show-practice")
+                            cdp.wait("document.querySelector('[data-action=\"show-demonstration\"]')")
+                            cdp.click("show-demonstration")
+                            cdp.wait("document.querySelector('.demonstration-card')")
+                            demonstration_audit = cdp.eval(
+                                """(() => ({
+                                  worked:document.querySelectorAll('.worked-step').length,
+                                  inputs:document.querySelectorAll(
+                                    '.demonstration-card input, .demonstration-card select'
+                                  ).length,
+                                  destinationExplainers:document.querySelectorAll(
+                                    '.reference-panel .destination'
+                                  ).length,
+                                  checklist:Boolean(document.querySelector('.reference-panel .checklist')),
+                                  private:/expected_state|comparison_rule|scope_correct|gaa_correct/i.test(
+                                    document.querySelector('#stage').outerHTML
+                                  ),
+                                }))()"""
+                            )
+                            assert demonstration_audit == {
+                                "worked": 3,
+                                "inputs": 0,
+                                "destinationExplainers": 0,
+                                "checklist": True,
+                                "private": False,
+                            }
+                            cdp.click("begin-formal")
+                            cdp.wait(
+                                "window.StepwiseButtonBoardTest.currentStep === 1"
+                            )
                             click_answer(cdp, "INFO", keyboard=True)
                             cdp.wait(
                                 "document.querySelector('.result-card "
@@ -944,15 +1020,6 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
                             cdp.wait(
                                 "window.StepwiseButtonBoardTest.currentStep === 1"
                             )
-                            click_answer(cdp, "CONTROL")
-                            click_answer(cdp, "COMPARED")
-                            click_answer(cdp, "NOT_BETTER")
-                            cdp.wait(
-                                "document.querySelector('[data-action=\"continue-after-result\"]')"
-                            )
-                            cdp.click("continue-after-result")
-                            cdp.wait("document.querySelector('[data-action=\"begin-formal\"]')")
-                            cdp.click("begin-formal")
                             for trial_index in range(6):
                                 cdp.wait(
                                     "window.StepwiseButtonBoardTest.currentStep === 1"
@@ -983,6 +1050,9 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
                                           return {
                                             card:Boolean(card), question:Boolean(question),
                                             aside:Boolean(aside), asideWidth:rect?.width,
+                                            destinationExplainers:document.querySelectorAll(
+                                              '.reference-panel .destination'
+                                            ).length,
                                             questions:document.querySelectorAll('.question-card').length,
                                             choiceHeights:choices,
                                             summaryCount:summaries.length,
@@ -1000,6 +1070,7 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
                                     )
                                     assert audit["card"] and audit["question"] and audit["aside"]
                                     assert audit["questions"] == 1
+                                    assert audit["destinationExplainers"] == 0
                                     assert audit["asideWidth"] == pytest.approx(300, abs=1)
                                     assert not audit["overflow"] and not audit["private"]
                                     assert audit["activeTag"] in {"H1", "H2"}
@@ -1049,15 +1120,10 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
                             "window.StepwiseButtonBoardTest && window.StepwiseButtonBoardTest.ready"
                         )
                         cdp.eval("document.querySelector('[data-locale=\"en\"]').click()")
-                        cdp.wait("document.querySelector('#participant-code')")
-                        cdp.eval("document.querySelector('#participant-code').value='partial-browser'")
+                        cdp.wait("document.querySelector('[data-action=\"start\"]')")
                         cdp.click("start")
-                        cdp.wait("document.querySelector('[data-action=\"show-practice\"]')")
-                        cdp.click("show-practice")
-                        for answer in ("CONTROL", "COMPARED", "NOT_BETTER"):
-                            click_answer(cdp, answer)
-                        cdp.wait("document.querySelector('[data-action=\"continue-after-result\"]')")
-                        cdp.click("continue-after-result")
+                        cdp.wait("document.querySelector('[data-action=\"show-demonstration\"]')")
+                        cdp.click("show-demonstration")
                         cdp.wait("document.querySelector('[data-action=\"begin-formal\"]')")
                         cdp.click("begin-formal")
                         cdp.wait("document.querySelector('#save-exit-button:not([hidden])')")

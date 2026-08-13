@@ -1,9 +1,9 @@
 {
   "schema_version": "microstudy-button-board-stepwise-v11-bilingual",
   "source_schema_version": "microstudy-button-board-stepwise-source-v1",
-  "materials_version": "v11.1-stepwise-20260813-draft",
-  "export_schema_version": "microstudy-export-v7-stepwise-bilingual-signed",
-  "analysis_version": "button-board-stepwise-gaa-v1",
+  "materials_version": "v11.2-stepwise-20260813-draft",
+  "export_schema_version": "microstudy-export-v8-stepwise-demonstration-signed",
+  "analysis_version": "button-board-stepwise-gaa-v2",
   "ab_invariance_hash": "1202f424184b1cd2b7f1dd7f051eea20cf7ed51ace42982c7a50459d36d5bd9d",
   "formal_scene_ids": [
     "AB1-A",
@@ -43,6 +43,7 @@
     ],
     "sticky_reference_width_px": 300,
     "one_question_at_a_time": true,
+    "practice_mode": "read_only_worked_demonstration",
     "formal_correctness_feedback": false
   },
   "locales": {
@@ -53,21 +54,26 @@
         "title": "Stepwise fictional button board",
         "draft": "DRAFT — owner-local preview only — not open for recruitment",
         "welcome": {
-          "heading": "Sort fictional trial cards one step at a time",
-          "goal": "Use an always-visible fictional trial card and answer one small question at a time to place each item where its evidence supports.",
-          "steps": "1 practice, 6 formal scenarios, and 1 read-the-instruction check.",
-          "open_book": "You do not need to memorize rules. The card and reference panel stay visible.",
+          "heading": "Fictional button-board activity",
+          "goal": "Decide where the evidence supports placing each fictional new function.",
+          "open_book": "You do not need to memorize rules. The card and “How to think” checklist stay visible.",
           "card_only": "Use only the page record; do not add everyday experience.",
-          "privacy": "Use an anonymous code. There is no free text and submitted answers cannot be recovered.",
-          "participant_label": "Anonymous code",
-          "participant_help": "Use 1–64 letters, numbers, dots, underscores, or hyphens.",
+          "privacy": "No name, contact detail, or free text is requested. The server creates a random internal attempt ID.",
           "start": "Start"
         },
         "tutorial": {
-          "heading": "One idea and the stepwise controls",
+          "heading": "One core idea",
           "intuition": "A button responding does not mean it meets the stated goal more often than the existing method.",
-          "operation": "Read the card, choose one answer, and the next applicable question will appear. A branch may end early. You can go back and change any answered step before continuing to the next scenario.",
-          "show_practice": "Open the practice card"
+          "show_demonstration": "View a worked example"
+        },
+        "demonstration": {
+          "heading": "Worked example",
+          "intro": "This fictional example is separate from every formal scenario. Read the card, then follow each shown choice and its card evidence.",
+          "step": "Step {step}",
+          "choose": "Choose",
+          "evidence": "Card evidence",
+          "why": "Why",
+          "result": "Worked result"
         },
         "formal_intro": {
           "heading": "Formal scenarios",
@@ -81,7 +87,6 @@
           "existing": "What you originally did",
           "new_item": "New function",
           "record": "Trial record",
-          "reference_destinations": "Four destinations",
           "reference_checklist": "How to think",
           "path": "Your reasoning path",
           "answered_steps": "Answered steps",
@@ -95,7 +100,7 @@
           "choice_required": "Choose one answer before continuing."
         },
         "progress": {
-          "practice": "Practice",
+          "demonstration": "Worked example",
           "formal": "Formal scenario {current} of 6",
           "attention": "Read-the-instruction check",
           "reflection": "Optional reflection"
@@ -325,81 +330,62 @@
           }
         }
       },
-      "practice": {
-        "display_id": "P1",
-        "variant_id": null,
-        "title": "Sock-finding drawer button",
-        "card": {
-          "situation": "Retrieve a pair of socks in a specified color from a divided drawer.",
-          "goal": "“Correct within 20 seconds” means both socks match the specified color.",
-          "existing": "Read the front color labels, then search one compartment at a time.",
-          "new_item": "Pressing the matching color button moves one possible compartment to the front.",
-          "facts": [
-            "The new button moved one compartment to the front in 10/10 rounds.",
-            "The 10 paired rounds used the same drawer contents, sock placement, target color, and 20-second limit; method order or side alternated.",
-            "The original method and new button each had 10 rounds.",
-            "The original method met the target in 8/10 rounds; the new button did so in 6/10.",
-            "A sock was caught by a compartment edge in 0/10 rounds; A sock left the drawer in 0/10 rounds.",
-            "Recorded scope | drawer=this trial drawer | labels=current six color labels | operator=self only."
-          ]
-        },
-        "scope_options": [
-          {
-            "id": "p1-s-q7",
-            "text": "Only when | drawer=this trial drawer | labels=current six color labels | operator=self only",
-            "segments": [
-              {
-                "label": "drawer",
-                "value": "this trial drawer"
-              },
-              {
-                "label": "labels",
-                "value": "current six color labels"
-              },
-              {
-                "label": "operator",
-                "value": "self only"
-              }
-            ]
-          },
-          {
-            "id": "p1-s-k2",
-            "text": "Only when | drawer=home drawer | labels=current six color labels | operator=self only",
-            "segments": [
-              {
-                "label": "drawer",
-                "value": "home drawer"
-              },
-              {
-                "label": "labels",
-                "value": "current six color labels"
-              },
-              {
-                "label": "operator",
-                "value": "self only"
-              }
-            ]
-          },
-          {
-            "id": "p1-s-m8",
-            "text": "Only when | drawer=this trial drawer | labels=any six color labels | operator=self only",
-            "segments": [
-              {
-                "label": "drawer",
-                "value": "this trial drawer"
-              },
-              {
-                "label": "labels",
-                "value": "any six color labels"
-              },
-              {
-                "label": "operator",
-                "value": "self only"
-              }
+      "demonstration": {
+        "scene": {
+          "display_id": "P1",
+          "variant_id": null,
+          "title": "Sock-finding drawer button",
+          "card": {
+            "situation": "Retrieve a pair of socks in a specified color from a divided drawer.",
+            "goal": "“Correct within 20 seconds” means both socks match the specified color.",
+            "existing": "Read the front color labels, then search one compartment at a time.",
+            "new_item": "Pressing the matching color button moves one possible compartment to the front.",
+            "facts": [
+              "The new button moved one compartment to the front in 10/10 rounds.",
+              "The 10 paired rounds used the same drawer contents, sock placement, target color, and 20-second limit; method order or side alternated.",
+              "The original method and new button each had 10 rounds.",
+              "The original method met the target in 8/10 rounds; the new button did so in 6/10.",
+              "A sock was caught by a compartment edge in 0/10 rounds; A sock left the drawer in 0/10 rounds.",
+              "Recorded scope | drawer=this trial drawer | labels=current six color labels | operator=self only."
             ]
           }
+        },
+        "worked_steps": [
+          {
+            "step": 1,
+            "question": "Does the new item show a condition, or perform an action intended to change the stated target outcome?",
+            "choice": "Performs an action intended to change the outcome",
+            "evidence": [
+              "The new button moved one compartment to the front in 10/10 rounds."
+            ],
+            "why": "The button moves a compartment, so it performs an action rather than only reporting a condition."
+          },
+          {
+            "step": 2,
+            "question": "Did the card test both methods for the stated number of rounds under the listed matched conditions?",
+            "choice": "Both methods were tested as stated",
+            "evidence": [
+              "The 10 paired rounds used the same drawer contents, sock placement, target color, and 20-second limit; method order or side alternated.",
+              "The original method and new button each had 10 rounds."
+            ],
+            "why": "The record says the rounds were paired under the same listed conditions and both methods had ten rounds."
+          },
+          {
+            "step": 3,
+            "question": "Using only the defined goal and equal denominators, did the new item meet the goal more often, or equally/less often?",
+            "choice": "The count was equal or lower",
+            "evidence": [
+              "The original method met the target in 8/10 rounds; the new button did so in 6/10."
+            ],
+            "why": "The new button met the target in 6/10 rounds, fewer than the original method's 8/10."
+          }
         ],
-        "feedback": "The new button acted in all ten rounds, but the target occurred in 6/10 rounds, compared with 8/10 for the original method. This feedback applies only to this practice record."
+        "destination": {
+          "id": "dest-off",
+          "label": "Leave it off",
+          "description": "Do not place it on this button board."
+        },
+        "why": "The button reacted every time, but it did not beat the existing method on the stated target. A response alone is not enough."
       },
       "scenes": {
         "AB1-A": {
@@ -1008,21 +994,26 @@
         "title": "一步一问虚构按钮板",
         "draft": "DRAFT — 仅供所有者本地预览 — 尚未开放招募",
         "welcome": {
-          "heading": "一步一步整理虚构试用卡",
-          "goal": "看着始终显示的虚构试用卡，一次回答一个小问题，把新东西整理到证据支持的去处。",
-          "steps": "1 个练习、6 个正式场景、1 个阅读检查。",
-          "open_book": "不用记规则，卡片和参考区会一直显示。",
+          "heading": "虚构按钮板活动",
+          "goal": "判断证据支持把每个虚构新功能放到哪里。",
+          "open_book": "不用记规则，卡片和“怎么想”清单会一直显示。",
           "card_only": "只按卡片，不补充生活经验。",
-          "privacy": "使用匿名代码，不收自由文本，提交后不能恢复作答。",
-          "participant_label": "匿名代码",
-          "participant_help": "请输入 1–64 个字母、数字、点、下划线或连字符。",
+          "privacy": "不要求姓名、联系方式或自由文本；服务器会自动生成随机内部尝试编号。",
           "start": "开始"
         },
         "tutorial": {
-          "heading": "一条直觉和一步一问操作",
+          "heading": "一条核心直觉",
           "intuition": "按钮会动或有反应，不等于它比原来的做法更常达到明确目标。",
-          "operation": "读记录后选择一个答案，页面只显示下一个适用问题；有些分支会提前结束。进入下一题前，你可以返回并修改任意已答步骤。",
-          "show_practice": "打开练习卡"
+          "show_demonstration": "查看带解析的示范"
+        },
+        "demonstration": {
+          "heading": "带解析的示范",
+          "intro": "这个虚构示范与所有正式题都不同。先读卡片，再看每一步选什么，以及依据卡片哪句话。",
+          "step": "第 {step} 步",
+          "choose": "选择",
+          "evidence": "卡片依据",
+          "why": "为什么",
+          "result": "示范结果"
         },
         "formal_intro": {
           "heading": "正式场景",
@@ -1036,7 +1027,6 @@
           "existing": "你原来怎么做",
           "new_item": "新功能",
           "record": "试用记录",
-          "reference_destinations": "四个去处",
           "reference_checklist": "怎么想",
           "path": "你的推理路径",
           "answered_steps": "已答步骤",
@@ -1050,7 +1040,7 @@
           "choice_required": "继续前请选择一项。"
         },
         "progress": {
-          "practice": "练习",
+          "demonstration": "带解析的示范",
           "formal": "正式场景 {current}/6",
           "attention": "阅读检查",
           "reflection": "可选反思"
@@ -1280,81 +1270,62 @@
           }
         }
       },
-      "practice": {
-        "display_id": "P1",
-        "variant_id": null,
-        "title": "抽屉找袜按钮",
-        "card": {
-          "situation": "从分格抽屉中取出指定颜色的一双袜子。",
-          "goal": "“20 秒内取对”指两只袜子都与指定颜色相同。",
-          "existing": "看抽屉前的颜色标签，再逐格寻找。",
-          "new_item": "按下对应颜色的按钮后，一个可能的分格会被推到抽屉前面。",
-          "facts": [
-            "新按钮在 10/10 轮中都把一个分格推到抽屉前面。",
-            "共 10 个配对轮；每轮的抽屉内容、袜子摆放、指定颜色和 20 秒限制相同，做法顺序或左右位置轮换。",
-            "原办法和新按钮各做 10 轮。",
-            "原办法 8/10 轮达到目标；新按钮 6/10 轮达到目标。",
-            "袜子被分格边缘卡住 0/10；袜子被推出抽屉 0/10。",
-            "范围记录｜抽屉=此次抽屉｜标签=当前 6 个颜色标签｜操作者=仅限本人。"
-          ]
-        },
-        "scope_options": [
-          {
-            "id": "p1-s-q7",
-            "text": "仅在｜抽屉=此次抽屉 | 标签=当前 6 个颜色标签 | 操作者=仅限本人",
-            "segments": [
-              {
-                "label": "抽屉",
-                "value": "此次抽屉"
-              },
-              {
-                "label": "标签",
-                "value": "当前 6 个颜色标签"
-              },
-              {
-                "label": "操作者",
-                "value": "仅限本人"
-              }
-            ]
-          },
-          {
-            "id": "p1-s-k2",
-            "text": "仅在｜抽屉=家中抽屉 | 标签=当前 6 个颜色标签 | 操作者=仅限本人",
-            "segments": [
-              {
-                "label": "抽屉",
-                "value": "家中抽屉"
-              },
-              {
-                "label": "标签",
-                "value": "当前 6 个颜色标签"
-              },
-              {
-                "label": "操作者",
-                "value": "仅限本人"
-              }
-            ]
-          },
-          {
-            "id": "p1-s-m8",
-            "text": "仅在｜抽屉=此次抽屉 | 标签=任意 6 个颜色标签 | 操作者=仅限本人",
-            "segments": [
-              {
-                "label": "抽屉",
-                "value": "此次抽屉"
-              },
-              {
-                "label": "标签",
-                "value": "任意 6 个颜色标签"
-              },
-              {
-                "label": "操作者",
-                "value": "仅限本人"
-              }
+      "demonstration": {
+        "scene": {
+          "display_id": "P1",
+          "variant_id": null,
+          "title": "抽屉找袜按钮",
+          "card": {
+            "situation": "从分格抽屉中取出指定颜色的一双袜子。",
+            "goal": "“20 秒内取对”指两只袜子都与指定颜色相同。",
+            "existing": "看抽屉前的颜色标签，再逐格寻找。",
+            "new_item": "按下对应颜色的按钮后，一个可能的分格会被推到抽屉前面。",
+            "facts": [
+              "新按钮在 10/10 轮中都把一个分格推到抽屉前面。",
+              "共 10 个配对轮；每轮的抽屉内容、袜子摆放、指定颜色和 20 秒限制相同，做法顺序或左右位置轮换。",
+              "原办法和新按钮各做 10 轮。",
+              "原办法 8/10 轮达到目标；新按钮 6/10 轮达到目标。",
+              "袜子被分格边缘卡住 0/10；袜子被推出抽屉 0/10。",
+              "范围记录｜抽屉=此次抽屉｜标签=当前 6 个颜色标签｜操作者=仅限本人。"
             ]
           }
+        },
+        "worked_steps": [
+          {
+            "step": 1,
+            "question": "这张卡里的新东西，是用来【看情况】，还是按下后会【执行一个动作，目的是改变上面的目标结果】？",
+            "choice": "执行一个动作，目的是改变目标结果",
+            "evidence": [
+              "新按钮在 10/10 轮中都把一个分格推到抽屉前面。"
+            ],
+            "why": "按钮会移动分格，所以它是在执行动作，不只是显示情况。"
+          },
+          {
+            "step": 2,
+            "question": "卡片有没有按上面写出的相同条件，让两种做法各做规定轮次？",
+            "choice": "两种做法按记录比较过",
+            "evidence": [
+              "共 10 个配对轮；每轮的抽屉内容、袜子摆放、指定颜色和 20 秒限制相同，做法顺序或左右位置轮换。",
+              "原办法和新按钮各做 10 轮。"
+            ],
+            "why": "记录写明两种做法在相同列出条件下配对试用，而且各做十轮。"
+          },
+          {
+            "step": 3,
+            "question": "只看定义的目标和相同分母：新东西达到目标的次数更多，还是一样／更少？",
+            "choice": "次数一样或更少",
+            "evidence": [
+              "原办法 8/10 轮达到目标；新按钮 6/10 轮达到目标。"
+            ],
+            "why": "新按钮 6/10 轮达到目标，少于原办法的 8/10 轮。"
+          }
         ],
-        "feedback": "新按钮十次都执行了动作，但“20 秒内取对”为 6/10，原办法为 8/10。本反馈只针对这条练习记录。"
+        "destination": {
+          "id": "dest-off",
+          "label": "不装",
+          "description": "不放到这块按钮板上。"
+        },
+        "why": "按钮每次都有反应，但在明确目标上没有胜过原办法。只有反应还不够。"
       },
       "scenes": {
         "AB1-A": {

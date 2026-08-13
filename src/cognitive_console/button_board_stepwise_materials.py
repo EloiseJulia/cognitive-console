@@ -20,10 +20,10 @@ DERIVED_KEYS_PATH = DATA_DIR / "derived_keys.json"
 
 SOURCE_SCHEMA_VERSION = "microstudy-button-board-stepwise-source-v1"
 MATERIAL_SCHEMA_VERSION = "microstudy-button-board-stepwise-v11-bilingual"
-MATERIALS_VERSION = "v11.1-stepwise-20260813-draft"
+MATERIALS_VERSION = "v11.2-stepwise-20260813-draft"
 SEQUENCE_SCHEMA_VERSION = "microstudy-button-board-stepwise-sequences-v1"
-EXPORT_SCHEMA_VERSION = "microstudy-export-v7-stepwise-bilingual-signed"
-ANALYSIS_VERSION = "button-board-stepwise-gaa-v1"
+EXPORT_SCHEMA_VERSION = "microstudy-export-v8-stepwise-demonstration-signed"
+ANALYSIS_VERSION = "button-board-stepwise-gaa-v2"
 LOCALES = ("en", "zh-Hans")
 FORMAL_SLOTS = ("AB1", "F2", "F3", "F4", "F5", "F6")
 FORMAL_SCENE_IDS = ("AB1-A", "AB1-B", "F2", "F3", "F4", "F5", "F6")
@@ -240,50 +240,45 @@ COMMON = {
         "DRAFT — 仅供所有者本地预览 — 尚未开放招募",
     ),
     "welcome": {
-        "heading": bi("Sort fictional trial cards one step at a time", "一步一步整理虚构试用卡"),
+        "heading": bi("Fictional button-board activity", "虚构按钮板活动"),
         "goal": bi(
-            "Use an always-visible fictional trial card and answer one small "
-            "question at a time to place each item where its evidence supports.",
-            "看着始终显示的虚构试用卡，一次回答一个小问题，把新东西整理到证据支持的去处。",
-        ),
-        "steps": bi(
-            "1 practice, 6 formal scenarios, and 1 read-the-instruction check.",
-            "1 个练习、6 个正式场景、1 个阅读检查。",
+            "Decide where the evidence supports placing each fictional new function.",
+            "判断证据支持把每个虚构新功能放到哪里。",
         ),
         "open_book": bi(
-            "You do not need to memorize rules. The card and reference panel stay visible.",
-            "不用记规则，卡片和参考区会一直显示。",
+            "You do not need to memorize rules. The card and “How to think” checklist stay visible.",
+            "不用记规则，卡片和“怎么想”清单会一直显示。",
         ),
         "card_only": bi(
             "Use only the page record; do not add everyday experience.",
             "只按卡片，不补充生活经验。",
         ),
         "privacy": bi(
-            "Use an anonymous code. There is no free text and submitted answers cannot be recovered.",
-            "使用匿名代码，不收自由文本，提交后不能恢复作答。",
-        ),
-        "participant_label": bi("Anonymous code", "匿名代码"),
-        "participant_help": bi(
-            "Use 1–64 letters, numbers, dots, underscores, or hyphens.",
-            "请输入 1–64 个字母、数字、点、下划线或连字符。",
+            "No name, contact detail, or free text is requested. The server creates a random internal attempt ID.",
+            "不要求姓名、联系方式或自由文本；服务器会自动生成随机内部尝试编号。",
         ),
         "start": bi("Start", "开始"),
     },
     "tutorial": {
-        "heading": bi("One idea and the stepwise controls", "一条直觉和一步一问操作"),
+        "heading": bi("One core idea", "一条核心直觉"),
         "intuition": bi(
             "A button responding does not mean it meets the stated goal more "
             "often than the existing method.",
             "按钮会动或有反应，不等于它比原来的做法更常达到明确目标。",
         ),
-        "operation": bi(
-            "Read the card, choose one answer, and the next applicable question "
-            "will appear. A branch may end early. You can go back and change "
-            "any answered step before continuing to the next scenario.",
-            "读记录后选择一个答案，页面只显示下一个适用问题；有些分支会提前结束。"
-            "进入下一题前，你可以返回并修改任意已答步骤。",
+        "show_demonstration": bi("View a worked example", "查看带解析的示范"),
+    },
+    "demonstration": {
+        "heading": bi("Worked example", "带解析的示范"),
+        "intro": bi(
+            "This fictional example is separate from every formal scenario. Read the card, then follow each shown choice and its card evidence.",
+            "这个虚构示范与所有正式题都不同。先读卡片，再看每一步选什么，以及依据卡片哪句话。",
         ),
-        "show_practice": bi("Open the practice card", "打开练习卡"),
+        "step": bi("Step {step}", "第 {step} 步"),
+        "choose": bi("Choose", "选择"),
+        "evidence": bi("Card evidence", "卡片依据"),
+        "why": bi("Why", "为什么"),
+        "result": bi("Worked result", "示范结果"),
     },
     "formal_intro": {
         "heading": bi("Formal scenarios", "正式场景"),
@@ -304,7 +299,6 @@ COMMON = {
         "existing": bi("What you originally did", "你原来怎么做"),
         "new_item": bi("New function", "新功能"),
         "record": bi("Trial record", "试用记录"),
-        "reference_destinations": bi("Four destinations", "四个去处"),
         "reference_checklist": bi("How to think", "怎么想"),
         "path": bi("Your reasoning path", "你的推理路径"),
         "answered_steps": bi("Answered steps", "已答步骤"),
@@ -318,7 +312,7 @@ COMMON = {
         "choice_required": bi("Choose one answer before continuing.", "继续前请选择一项。"),
     },
     "progress": {
-        "practice": bi("Practice", "练习"),
+        "demonstration": bi("Worked example", "带解析的示范"),
         "formal": bi("Formal scenario {current} of 6", "正式场景 {current}/6"),
         "attention": bi("Read-the-instruction check", "阅读检查"),
         "reflection": bi("Optional reflection", "可选反思"),
@@ -495,6 +489,30 @@ PRACTICE = scene(
         "新按钮十次都执行了动作，但“20 秒内取对”为 6/10，原办法为 8/10。"
         "本反馈只针对这条练习记录。",
     ),
+)
+
+PRACTICE_DEMONSTRATION_RATIONALES = {
+    1: bi(
+        "The button moves a compartment, so it performs an action rather than only reporting a condition.",
+        "按钮会移动分格，所以它是在执行动作，不只是显示情况。",
+    ),
+    2: bi(
+        "The record says the rounds were paired under the same listed conditions and both methods had ten rounds.",
+        "记录写明两种做法在相同列出条件下配对试用，而且各做十轮。",
+    ),
+    3: bi(
+        "The new button met the target in 6/10 rounds, fewer than the original method's 8/10.",
+        "新按钮 6/10 轮达到目标，少于原办法的 8/10 轮。",
+    ),
+}
+PRACTICE_DEMONSTRATION_EVIDENCE = {
+    1: (0,),
+    2: (1, 2),
+    3: (3,),
+}
+PRACTICE_DEMONSTRATION_FINAL_WHY = bi(
+    "The button reacted every time, but it did not beat the existing method on the stated target. A response alone is not enough.",
+    "按钮每次都有反应，但在明确目标上没有胜过原办法。只有反应还不够。",
 )
 
 
@@ -1289,6 +1307,46 @@ def _public_scene(scene_row: dict[str, Any], locale: str) -> dict[str, Any]:
     }
 
 
+def _practice_demonstration(locale: str) -> dict[str, Any]:
+    derived = derive_expected(PRACTICE)
+    facts = _public_scene(PRACTICE, locale)["card"]["facts"]
+    scene_public = _public_scene(PRACTICE, locale)
+    scene_public.pop("scope_options")
+    steps = []
+    for step_text, answer_id in derived["expected_answer_by_step"].items():
+        step = int(step_text)
+        choice = next(
+            row["text"][locale]
+            for row in STEP_OPTIONS[step]
+            if row["id"] == answer_id
+        )
+        steps.append(
+            {
+                "step": step,
+                "question": QUESTIONS[step][locale],
+                "choice": choice,
+                "evidence": [
+                    facts[index]
+                    for index in PRACTICE_DEMONSTRATION_EVIDENCE[step]
+                ],
+                "why": PRACTICE_DEMONSTRATION_RATIONALES[step][locale],
+            }
+        )
+    destination = next(
+        row for row in DESTINATIONS if row["state"] == derived["expected_state"]
+    )
+    return {
+        "scene": scene_public,
+        "worked_steps": steps,
+        "destination": {
+            "id": destination["id"],
+            "label": destination["label"][locale],
+            "description": destination["description"][locale],
+        },
+        "why": PRACTICE_DEMONSTRATION_FINAL_WHY[locale],
+    }
+
+
 def _localized(value: Any, locale: str) -> Any:
     if isinstance(value, dict):
         if set(value) == set(LOCALES) and all(isinstance(value[key], str) for key in LOCALES):
@@ -1400,10 +1458,7 @@ def generate_materials() -> tuple[dict[str, Any], dict[str, Any]]:
         locale: {
             "language_name": COMMON["language_name"][locale],
             "common": _common(locale),
-            "practice": {
-                **_public_scene(PRACTICE, locale),
-                "feedback": PRACTICE["feedback"][locale],
-            },
+            "demonstration": _practice_demonstration(locale),
             "scenes": {
                 row["scene_id"]: _public_scene(row, locale) for row in FORMAL_SCENES
             },
@@ -1432,6 +1487,7 @@ def generate_materials() -> tuple[dict[str, Any], dict[str, Any]]:
             "zoom_levels": [1, 2],
             "sticky_reference_width_px": 300,
             "one_question_at_a_time": True,
+            "practice_mode": "read_only_worked_demonstration",
             "formal_correctness_feedback": False,
         },
         "locales": locales,
@@ -1659,9 +1715,26 @@ def validate_materials(*, require_files_current: bool = True) -> dict[str, Any]:
             raise ValueError(f"four-state coverage failed for AB1-{variant}")
     if set(materials["locales"]) != set(LOCALES):
         raise ValueError("locale parity failed")
+    practice_path = derive_expected(PRACTICE)["expected_answer_by_step"]
     for locale in LOCALES:
         if set(materials["locales"][locale]["scenes"]) != set(FORMAL_SCENE_IDS):
             raise ValueError(f"scene parity failed for {locale}")
+        demonstration = materials["locales"][locale]["demonstration"]
+        if (
+            demonstration["scene"]["display_id"] != "P1"
+            or "scope_options" in demonstration["scene"]
+            or [row["step"] for row in demonstration["worked_steps"]] != [1, 2, 3]
+        ):
+            raise ValueError(f"invalid read-only demonstration for {locale}")
+        for row in demonstration["worked_steps"]:
+            answer_id = practice_path[str(row["step"])]
+            answer_text = next(
+                option["text"][locale]
+                for option in STEP_OPTIONS[row["step"]]
+                if option["id"] == answer_id
+            )
+            if row["choice"] != answer_text or not row["evidence"] or not row["why"]:
+                raise ValueError(f"demonstration derivation mismatch for {locale}")
     public_text = json.dumps(materials, ensure_ascii=False)
     for forbidden in (
         "expected_answer_by_step", "expected_exit_answer", "expected_decisive_step",

@@ -21,10 +21,13 @@ generalization.
 - Structured optional reflection; no free text.
 - Twelve balanced six-slot orders; successful starts cycle through 24
   sequence-by-variant cells independently per locale.
+- Within a scenario, participants may reopen the immediately previous step or
+  any answered-step summary. Reopening removes that step and all later answers;
+  the replacement answer alone determines the new continuation or early exit.
 
 ## Frozen routes and outcomes
 
-The participant state is derived only from the submitted route. GAA compares
+The participant state is derived only from the final surviving route. GAA compares
 that state with the independently machine-derived state. Strict additionally
 requires the exact machine-derived path and decisive exit answer. A wrong scope
 option after reaching Step 6 yields participant state S but fails Strict.
@@ -47,6 +50,8 @@ Secondary summaries:
 - all-completer, all-answerer, and AC1-pass sensitivity views.
 
 No speed/ability conclusion or reaction-time exclusion is permitted.
+No backtrack count is exported or analyzed in V11.1. Discarded answers are not
+part of GAA, Strict, step accuracy, or the signed raw path.
 
 ## Missingness and exclusion
 
@@ -58,10 +63,16 @@ selection. V9, V10, and V11 exports cannot be mixed.
 
 ## Materials and derivation
 
-All cards are rendered from the V11 typed fact registry. The comparison schema
+All cards are rendered from the V11.1 typed fact registry. D-0118 changes only
+the participant-visible bilingual skin to ordinary object names and explicit
+one-sentence target definitions. The comparison schema
 contains an existing/new method map for paired and single-method records.
 Expected answers, exit, decisive step, state, GAA, and Strict are not material
 inputs. Public files and raw exports contain no private derivation keys.
+
+F4 explicitly reports 0 original-method rounds, 10 new-button rounds, and no
+round using the original method. Its complete three-dimension scope remains
+present, so its derived result remains NOT_COMPARED/U rather than SCOPE_MISSING.
 
 ## Claim mapping
 

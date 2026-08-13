@@ -1750,21 +1750,21 @@ experiments:
   claim_ids: []
   type: exploratory_formative_human_protocol
   status: ready_for_owner_local_preview_no_human_data
-  code_commit: d1e5c86f0978f421985d5ff9378b53cd7e989b1f
+  code_commit: bed60862ef3b5c3b8859a1f0f04073f524b8d983
   dirty_tree: false
   data_hash: >-
-    canonical_materials_hash=212b2006bbfe4a57cef4496913f8a13f302f1a28bc8f341cb517515d3c43df0b;
-    sequences_hash=8aaff27969a4c26baa23f8736aa0bbf73e1275e37a5ee071f53f4cb1d9ba8f34;
-    derived_keys_hash=1410ea94ae9725528ab62a0aa855c121643006a67e84fd31edbca1ee5e259934;
-    ab_invariance_hash=deed6497ee1bd3156d2a0428d6606affb2d2a884e63807ac620e116e294c98d4;
-    locale_en=10dd55bbf9e157a2f241c898ea61405bedd4559d87e0c2719e92c0a75f2d10ca;
-    locale_zh-Hans=06eda5c2331be582f496bd716bd69e2588f67b1614c4fad97b7665f372e9a26c
+    canonical_materials_hash=3665cc870ffb5b442d6acec94036bc4035d0e9130bc2b2d27041b65abaef1345;
+    sequences_hash=12ba64a7d507f4de94407a1adccca6ccec1cbcb482bf0f04fa91807f19c909b0;
+    derived_keys_hash=a4d8df943db31281b79ca918df0e8d0a6d23f1980dc0abad0285203f17d0e289;
+    ab_invariance_hash=1202f424184b1cd2b7f1dd7f051eea20cf7ed51ace42982c7a50459d36d5bd9d;
+    locale_en=4c7e6531eb663f994619b3c641a02d33a79206533af156563debeb98fda1089c;
+    locale_zh-Hans=e4c4e29ddb7afb681ab4ad4939dd653b4362e6a9ea34fd6b6e96859a3f18cd1f
   env_hash: null
   config_hash: null
   model: null
   dataset: six fictional V11 stepwise cards per attempt; no human data; no live product
   material_schema_version: microstudy-button-board-stepwise-v11-bilingual
-  materials_version: v11-stepwise-20260812-draft
+  materials_version: v11.1-stepwise-20260813-draft
   sequence_schema_version: microstudy-button-board-stepwise-sequences-v1
   export_schema_version: microstudy-export-v7-stepwise-bilingual-signed
   analysis_version: button-board-stepwise-gaa-v1
@@ -1798,30 +1798,39 @@ experiments:
   failure_reason: null
   valid_for_paper: false
   validation_notes: >-
-    D-0117 authorizes an independent V3/V11 stepwise open-book fictional
-    button-board preview. A typed fact registry renders participant cards,
-    unified existing/new method maps, scope values, and bilingual scope options.
-    The generator derives compared/better/harm/scope completeness, every
-    expected step, exit answer, decisive step, and state; public materials,
-    participant payloads, DOM/ARIA, and raw signed exports omit those private
-    fields. F4 uses the same method-map schema with 0 existing and 10 new-item
-    rounds. AB1 variants differ only in target counts and each allocation has
-    all four states. Step 6 distractors differ from the faithful vector by one
-    dimension, have equal dimension counts, matched English word counts, and
-    normalized Chinese lengths within one character. V9/V10/V11 materials,
-    entry points, exports, and analyses remain independent and mixed inputs fail
-    closed. The loopback server retains Host/origin, CSRF, capability,
+    D-0117 and D-0118 authorize an independent V3/V11.1 stepwise open-book
+    fictional button-board preview. V11.1 replaces coined bilingual object
+    names with ordinary names and one-sentence operational target definitions.
+    The content-independent logic fingerprint remains
+    cb91ebcf364bf07bea40cf541872de7efe07d548d75b2a265dc9be59a6a2b0bd:
+    nature, comparison design/counts, scope value IDs/correct IDs, expected
+    paths, decisive exits, and four-state answers are unchanged. Public,
+    locale, A/B-invariance, sequence, and derived-key hashes intentionally
+    changed because the materials version and participant-visible labels
+    changed. F4 now states that the original-method column has 0 rounds, the
+    new-button column has 10 rounds, and no round used the original method; it
+    still derives compared=false, NOT_COMPARED, scope_written=true, and U.
+    Participants may reopen the previous or any answered step. Reopening
+    truncates that step and all later answers, clears the former exit, and
+    recomputes the continuation/early exit. Signed JSON/CSV, GAA, and Strict
+    use only the final surviving path; discarded answers are neither exported
+    nor scored. No revision counter was added, so export schema V7 is unchanged;
+    the V11.1 material identity preserves cross-version hard failure.
+    Participant payloads, DOM/ARIA, and raw exports still omit private expected
+    and score-derived fields. Loopback Host/origin, CSRF, capability,
     request-ID idempotency, success-only TTL, capacity, volatile memory, no
-    access logs, no browser storage, and private-key isolation. Generator
-    --check, material validator, Node checks, all 23 V3 material/web tests,
-    Chrome/Edge English/Simplified-Chinese 100%/200% keyboard/focus/layout/
-    complete/partial gates, all 51 V9/V2 coexistence tests, and isolated
-    port-8894/8895/8896 HTTP smoke passed. The full repository command has one
-    environment-dependent
-    test_c2b_tasks.py::test_real_loader_is_deferred_offline failure reproduced
-    unchanged by the same full command on clean base 961b58a. Runtime keys,
-    browser profiles, baseline worktree, and smoke processes were removed.
-    This is synthetic implementation preparation, not a study run or paper
-    evidence. Human data, recruitment, ethics, timing, public deployment,
+    access logs/storage, and key isolation remain intact. Generator --check,
+    material validation, Node, all 27 V3 tests, Chrome/Edge English/Simplified
+    Chinese 100%/200% keyboard/focus/ARIA/layout/complete/partial gates, all 51
+    V9/V2 coexistence tests, an external revise-flow HTTP smoke, and isolated
+    V9/V2/V3-new/V3-old server smokes passed. The full 886-test collection
+    produced 879 passes, 6 skips, and the one environment-dependent
+    test_c2b_tasks.py::test_real_loader_is_deferred_offline failure, reproduced
+    on clean base a0f8d145fad995921290f58d154f6a6f5e1056b0 with the same
+    command. The clean-base run additionally encountered an unrelated
+    Windows permission flake in test_lineage; the feature branch did not.
+    Runtime keys, browser profiles, baseline worktree, and smoke PIDs were
+    removed. This is synthetic implementation preparation, not a study run or
+    paper evidence. Human data, recruitment, ethics, timing, public deployment,
     claim/result changes, exploratory-to-confirmatory upgrade, and Protocol
     Freeze remain unauthorized.

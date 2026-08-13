@@ -95,6 +95,17 @@ dialog:focus-visible, h1:focus-visible, h2:focus-visible {
 }
 .question-card, .result-card { margin-top: 16px; padding: 18px; }
 .question-heading { color: #59636e; font-size: .88rem; }
+.answered-steps {
+  margin: 12px 0;
+  padding: 11px;
+  border: 1px solid #d0d7de;
+  border-radius: 8px;
+  background: #f6f8fa;
+}
+.answered-steps h2 { margin: 0 0 7px; font-size: .95rem; }
+.step-summary-list { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.step-summary { width: 100%; margin: 0; text-align: left; }
+.question-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
 fieldset { margin: 10px 0 0; padding: 0; border: 0; }
 legend { margin-bottom: 10px; font-size: 1.12rem; font-weight: 750; }
 .choice-list { display: grid; gap: 9px; }

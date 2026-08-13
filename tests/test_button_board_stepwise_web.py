@@ -148,6 +148,15 @@ def answer_step(base, attempt, step, answer):
     )
 
 
+def revise_step(base, attempt, step, *, request_id=None):
+    return request_json(
+        base,
+        "/api/revise-step",
+        {"attempt_id": attempt, "step": int(step)},
+        request_id=request_id,
+    )
+
+
 def advance_practice(base, attempt):
     current = request_json(base, "/api/continue", {"attempt_id": attempt})
     assert current["phase"] == "practice_step"
@@ -231,9 +240,11 @@ def test_headers_selected_locale_step_payload_and_no_private_keys(live_server):
         "step",
         "question",
         "options",
+        "path",
         "progress",
         "scene",
     }
+    assert current["path"] == []
     assert len(current["options"]) == 2
     assert current["scene"]["card"]["facts"]
     assert output.getvalue() == ""
@@ -365,6 +376,106 @@ def test_early_exit_hides_later_steps_and_attention_is_not_formal(live_server):
     assert trial["participant_derived_state"] == "DIAGNOSTIC"
 
 
+def test_revise_previous_jump_and_early_exit_recompute_final_path(live_server):
+    base, server = live_server
+    created = start(base, "REVISE")
+    attempt = created["attempt_id"]
+    current = request_json(base, "/api/continue", {"attempt_id": attempt})
+
+    current = answer_step(base, attempt, 1, "CONTROL")
+    current = answer_step(base, attempt, 2, "COMPARED")
+    current = answer_step(base, attempt, 3, "BETTER")
+    current = answer_step(base, attempt, 4, "NO_HARM")
+    assert current["step"] == 5
+    assert [row["step"] for row in current["path"]] == [1, 2, 3, 4]
+
+    current = revise_step(base, attempt, 2)
+    assert current["step"] == 2
+    assert [row["step"] for row in current["path"]] == [1]
+    trial = server.sessions[attempt]["practice_trial"]
+    assert trial["step_presented"] == [1, 2]
+    assert trial["step_selected_option_id"] == ["CONTROL"]
+    assert trial["participant_derived_state"] is None
+    assert trial["scope_selected_id"] is None
+
+    current = answer_step(base, attempt, 2, "NOT_COMPARED")
+    assert current["phase"] == "practice_result"
+    assert [row["answer_id"] for row in current["path"]] == [
+        "CONTROL",
+        "NOT_COMPARED",
+    ]
+    assert trial["participant_exit_step"] == 2
+    assert trial["participant_derived_state"] == "UNRESOLVED"
+
+    current = revise_step(base, attempt, 1)
+    assert current["step"] == 1 and current["path"] == []
+    current = answer_step(base, attempt, 1, "INFO")
+    assert current["phase"] == "practice_result"
+    assert [row["answer_id"] for row in current["path"]] == ["INFO"]
+    assert trial["step_presented"] == [1]
+    assert trial["step_selected_option_id"] == ["INFO"]
+    assert trial["participant_exit_step"] == 1
+    assert trial["participant_derived_state"] == "DIAGNOSTIC"
+
+
+def test_revision_is_idempotent_and_final_formal_scoring_uses_only_final_route(
+    live_server,
+):
+    base, server = live_server
+    created = start(base, "FINAL-ROUTE")
+    attempt = created["attempt_id"]
+    advance_practice(base, attempt)
+    current = request_json(base, "/api/continue", {"attempt_id": attempt})
+    slot = server.sessions[attempt]["plan"][0]
+
+    temporary = "CONTROL" if slot["expected_answer_by_step"]["1"] == "INFO" else "INFO"
+    current = answer_step(base, attempt, 1, temporary)
+    if current["phase"].endswith("_step"):
+        current = answer_step(base, attempt, 2, "NOT_COMPARED")
+    assert current["phase"] == "formal_result"
+
+    request_id = uuid.uuid4().hex
+    first = revise_step(base, attempt, 1, request_id=request_id)
+    second = revise_step(base, attempt, 1, request_id=request_id)
+    assert first == second
+    for step, answer in slot["expected_answer_by_step"].items():
+        current = answer_step(base, attempt, step, answer)
+    assert current["phase"] == "formal_result"
+
+    trial = server.sessions[attempt]["trials"][0]
+    assert trial["step_presented"] == [
+        int(step) for step in slot["expected_answer_by_step"]
+    ]
+    assert trial["step_selected_option_id"] == list(
+        slot["expected_answer_by_step"].values()
+    )
+    assert trial_scores(trial, slot) == {
+        "gaa_trial": True,
+        "path_exact": True,
+        "decisive_read_correct": True,
+        "strict_gaa_trial": True,
+    }
+    request_json(base, "/api/save-exit", {"attempt_id": attempt})
+    exported = request_json(
+        base, f"/api/export?attempt_id={attempt}&format=json"
+    )
+    final = validate_export(exported, TEST_KEY)["trials"][0]
+    assert final["step_selected_option_id"] == list(
+        slot["expected_answer_by_step"].values()
+    )
+    assert final["participant_exit_step"] == slot["expected_decisive_step"]
+    assert final["participant_derived_state"] == slot["expected_state"]
+    assert final["scope_selected_id"] == (
+        final["step_selected_option_id"][-1]
+        if final["participant_exit_step"] == 6
+        else None
+    )
+    assert len(final["step_shown_at_relative"]) == len(
+        final["step_answered_at_relative"]
+    ) == len(final["step_selected_option_id"])
+    assert_no_private_keys(first)
+
+
 def test_partial_signature_tamper_wrong_key_and_cross_version_hardfail(live_server):
     base, _ = live_server
     created = start(base, "PARTIAL")
@@ -391,6 +502,13 @@ def test_partial_signature_tamper_wrong_key_and_cross_version_hardfail(live_serv
         old = sign_export(old, TEST_KEY)
         with pytest.raises(ExportError, match="V5/V6/V7/V9/V11"):
             validate_export(old, TEST_KEY)
+    old_materials = copy.deepcopy(partial)
+    old_materials["materials_version"] = "v11-stepwise-20260812-draft"
+    for trial in old_materials["trials"]:
+        trial["materials_version"] = "v11-stepwise-20260812-draft"
+    old_materials = sign_export(old_materials, TEST_KEY)
+    with pytest.raises(ExportError, match="wrong materials version"):
+        validate_export(old_materials, TEST_KEY)
     leaked = copy.deepcopy(partial)
     leaked["trials"][0]["expected_state"] = "SUPPORTED"
     leaked = sign_export(leaked, TEST_KEY)
@@ -536,6 +654,9 @@ def test_static_open_book_aria_privacy_keyboard_and_desktop_contract():
     assert "focus-visible" in css and "prefers-reduced-motion" in css
     assert "@media (max-width: 1023px)" in css
     assert "showModal()" in js
+    assert "/api/revise-step" in js
+    assert "answered-steps" in css and "step-summary" in css
+    assert 'aria-label": labels.answered_steps' in js
     assert "localStorage" not in js and "sessionStorage" not in js
     assert "performance.now" not in js
     assert "innerHTML" not in js
@@ -744,6 +865,30 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
                 "document.querySelector('[data-action=\"submit-step\"]').click()"
             )
 
+    def press_button(cdp, selector):
+        target = f"document.querySelector({json.dumps(selector)})"
+        cdp.eval(f"{target}.focus()")
+        cdp.wait(f"document.activeElement === {target}")
+        cdp.call(
+            "Input.dispatchKeyEvent",
+            {
+                "type": "keyDown",
+                "key": "Enter",
+                "code": "Enter",
+                "windowsVirtualKeyCode": 13,
+                "text": "\r",
+            },
+        )
+        cdp.call(
+            "Input.dispatchKeyEvent",
+            {
+                "type": "keyUp",
+                "key": "Enter",
+                "code": "Enter",
+                "windowsVirtualKeyCode": 13,
+            },
+        )
+
     cases = [
         ("en", 1),
         ("en", 2),
@@ -772,8 +917,36 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
                             cdp.click("start")
                             cdp.wait("document.querySelector('[data-action=\"show-practice\"]')")
                             cdp.click("show-practice")
-                            for index, answer in enumerate(("CONTROL", "COMPARED", "NOT_BETTER")):
-                                click_answer(cdp, answer, keyboard=index == 0)
+                            click_answer(cdp, "INFO", keyboard=True)
+                            cdp.wait(
+                                "document.querySelector('.result-card "
+                                "[data-action=\"revise-step\"][data-step=\"1\"]')"
+                            )
+                            press_button(
+                                cdp,
+                                '.result-card [data-action="revise-step"][data-step="1"]',
+                            )
+                            cdp.wait(
+                                "window.StepwiseButtonBoardTest.currentStep === 1"
+                            )
+                            cdp.wait(
+                                '["H1", "H2"].includes(document.activeElement?.tagName)'
+                            )
+                            click_answer(cdp, "CONTROL")
+                            cdp.wait(
+                                "window.StepwiseButtonBoardTest.currentStep === 2"
+                            )
+                            assert cdp.eval(
+                                "document.querySelector('.answered-steps')?.getAttribute('aria-label')"
+                                " === window.StepwiseButtonBoardTest.materials.common.labels.answered_steps"
+                            )
+                            press_button(cdp, '[data-action="previous-step"]')
+                            cdp.wait(
+                                "window.StepwiseButtonBoardTest.currentStep === 1"
+                            )
+                            click_answer(cdp, "CONTROL")
+                            click_answer(cdp, "COMPARED")
+                            click_answer(cdp, "NOT_BETTER")
                             cdp.wait(
                                 "document.querySelector('[data-action=\"continue-after-result\"]')"
                             )
@@ -804,11 +977,20 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
                                           const rect=aside?.getBoundingClientRect();
                                           const choices=[...document.querySelectorAll('.choice')]
                                             .map(node=>node.getBoundingClientRect().height);
+                                          const summaries=[...document.querySelectorAll(
+                                            '.answered-steps [data-action="revise-step"]'
+                                          )];
                                           return {
                                             card:Boolean(card), question:Boolean(question),
                                             aside:Boolean(aside), asideWidth:rect?.width,
                                             questions:document.querySelectorAll('.question-card').length,
                                             choiceHeights:choices,
+                                            summaryCount:summaries.length,
+                                            summaryAria:summaries.every(node=>Boolean(
+                                              node.getAttribute('aria-label')
+                                            )),
+                                            navAria:document.querySelector('.answered-steps')
+                                              ?.getAttribute('aria-label') || null,
                                             overflow:document.documentElement.scrollWidth >
                                               document.documentElement.clientWidth,
                                             private:/expected_state|comparison_rule|scope_correct|gaa_correct/i.test(html),
@@ -821,6 +1003,9 @@ def test_real_chrome_edge_en_zh_100_200_keyboard_aria_complete_partial():
                                     assert audit["asideWidth"] == pytest.approx(300, abs=1)
                                     assert not audit["overflow"] and not audit["private"]
                                     assert audit["activeTag"] in {"H1", "H2"}
+                                    assert audit["summaryCount"] == int(step) - 1
+                                    if int(step) > 1:
+                                        assert audit["summaryAria"] and audit["navAria"]
                                     if int(step) == 6:
                                         assert max(audit["choiceHeights"]) - min(
                                             audit["choiceHeights"]

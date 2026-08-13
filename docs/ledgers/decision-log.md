@@ -5,6 +5,34 @@
 
 ---
 
+## 2026-08-13 · D-0118 · Owner approves V3 everyday wording and within-item step revision
+- The owner approved replacing V3 participant-visible coined object names with
+  ordinary bilingual names and one-sentence operational target definitions.
+  This is a material-skin change only. It does not alter scene IDs, keys,
+  sequence/allocation, nature, comparison design/counts, harm counts, scope
+  value IDs, faithful scope IDs, expected paths, decisive exits, or four-state
+  answers. Final implementation commit:
+  `bed60862ef3b5c3b8859a1f0f04073f524b8d983` (including the exact scope-wording
+  follow-up to `4533d30d51cf2217edd0f2532c846d423542a8ba`).
+- F4 must make the absence of a comparison immediately visible: 0
+  original-method rounds, 10 new-button rounds, and no round using the original
+  method. F4 remains `compared=false`, decisive `NOT_COMPARED`,
+  `scope_written=true`, and `UNRESOLVED`; F5 remains the missing-scope item.
+- Within a scenario, the participant may return to the previous step or reopen
+  any answered-step summary. Reopening a step deletes that answer and all later
+  answers, then recomputes continuation or early exit from the replacement.
+  The signed export and GAA/Strict analysis use only the final surviving path.
+- No revision-history field or counter is exported. The export schema therefore
+  remains `microstudy-export-v7-stepwise-bilingual-signed`; material identity is
+  bumped to `v11.1-stepwise-20260813-draft`, and exact material/hash validation
+  retains cross-version fail-closed behavior.
+- This remains owner-local synthetic implementation preparation with maximum
+  status `ready_for_owner_local_preview_no_human_data` and
+  `valid_for_paper=false`. It authorizes no recruitment, participant contact,
+  human data, timing pilot, ethics administration, public deployment,
+  paper/claim/result change, exploratory-to-confirmatory upgrade, or Protocol
+  Freeze. All human gates recorded in D-0117 remain open.
+
 ## 2026-08-12 · D-0117 · Owner authorizes V3 stepwise open-book button board for local preview only
 - The owner approved V3 as a distinct one-question-at-a-time, open-book,
   fictional button-board material, sequence, signed-export, and analysis

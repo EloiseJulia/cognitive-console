@@ -20,7 +20,7 @@ DERIVED_KEYS_PATH = DATA_DIR / "derived_keys.json"
 
 SOURCE_SCHEMA_VERSION = "microstudy-button-board-stepwise-source-v1"
 MATERIAL_SCHEMA_VERSION = "microstudy-button-board-stepwise-v11-bilingual"
-MATERIALS_VERSION = "v11-stepwise-20260812-draft"
+MATERIALS_VERSION = "v11.1-stepwise-20260813-draft"
 SEQUENCE_SCHEMA_VERSION = "microstudy-button-board-stepwise-sequences-v1"
 EXPORT_SCHEMA_VERSION = "microstudy-export-v7-stepwise-bilingual-signed"
 ANALYSIS_VERSION = "button-board-stepwise-gaa-v1"
@@ -278,8 +278,10 @@ COMMON = {
         ),
         "operation": bi(
             "Read the card, choose one answer, and the next applicable question "
-            "will appear. A branch may end early.",
-            "读卡后选择一个答案，页面只显示下一个适用问题；有些分支会提前结束。",
+            "will appear. A branch may end early. You can go back and change "
+            "any answered step before continuing to the next scenario.",
+            "读记录后选择一个答案，页面只显示下一个适用问题；有些分支会提前结束。"
+            "进入下一题前，你可以返回并修改任意已答步骤。",
         ),
         "show_practice": bi("Open the practice card", "打开练习卡"),
     },
@@ -300,16 +302,19 @@ COMMON = {
         "situation": bi("Situation", "情境"),
         "goal": bi("Target", "目标"),
         "existing": bi("What you originally did", "你原来怎么做"),
-        "new_item": bi("New item", "新东西"),
+        "new_item": bi("New function", "新功能"),
         "record": bi("Trial record", "试用记录"),
         "reference_destinations": bi("Four destinations", "四个去处"),
         "reference_checklist": bi("How to think", "怎么想"),
         "path": bi("Your reasoning path", "你的推理路径"),
+        "answered_steps": bi("Answered steps", "已答步骤"),
         "result": bi("Based on your answers, place it in:", "根据你的回答放进："),
     },
     "actions": {
         "submit": bi("Choose and continue", "选择并继续"),
         "continue": bi("Continue", "继续"),
+        "back": bi("Previous step", "上一步"),
+        "change_step": bi("Change step {step}: {answer}", "修改第 {step} 步：{answer}"),
         "choice_required": bi("Choose one answer before continuing.", "继续前请选择一项。"),
     },
     "progress": {
@@ -383,6 +388,7 @@ def scene(
     scope_dimensions: list[dict[str, Any]],
     scope_options: list[dict[str, Any]],
     observation: dict[str, Any] | None = None,
+    comparison_fact: dict[str, str] | None = None,
     extra_facts: list[dict[str, Any]] | None = None,
     feedback: dict[str, str] | None = None,
     variant_id: str | None = None,
@@ -402,6 +408,7 @@ def scene(
         "scope_dimensions": scope_dimensions,
         "scope_options": scope_options,
         "observation": observation,
+        "comparison_fact": comparison_fact,
         "extra_facts": extra_facts or [],
         "feedback": feedback,
     }
@@ -409,7 +416,7 @@ def scene(
 
 PRACTICE = scene(
     "P1",
-    title=bi("Sock-drawer retrieval key", "抽屉取袜扣"),
+    title=bi("Sock-finding drawer button", "抽屉找袜按钮"),
     situation=bi(
         "Retrieve a pair of socks in a specified color from a divided drawer.",
         "从分格抽屉中取出指定颜色的一双袜子。",
@@ -419,17 +426,17 @@ PRACTICE = scene(
         "“20 秒内取对”指两只袜子都与指定颜色相同。",
     ),
     existing=bi(
-        "Read the front color labels and search compartment by compartment.",
-        "看抽屉前的颜色标签后逐格寻找。",
+        "Read the front color labels, then search one compartment at a time.",
+        "看抽屉前的颜色标签，再逐格寻找。",
     ),
     new_item=bi(
-        "Pressing a color key moves one candidate compartment to the front.",
-        "按颜色键后，一个候选分格被推到前沿。",
+        "Pressing the matching color button moves one possible compartment to the front.",
+        "按下对应颜色的按钮后，一个可能的分格会被推到抽屉前面。",
     ),
     nature="control",
     action_fact=bi(
-        "The new key moved one compartment to the front in 10 of 10 rounds.",
-        "新扣 10/10 轮都把一个分格推到前沿。",
+        "The new button moved one compartment to the front in 10/10 rounds.",
+        "新按钮在 10/10 轮中都把一个分格推到抽屉前面。",
     ),
     comparison_rule=comparison(
         "paired_same_conditions",
@@ -445,25 +452,48 @@ PRACTICE = scene(
             ("time_limit", "20-second limit", "20 秒限制"),
         ],
     ),
+    comparison_fact=bi(
+        "The 10 paired rounds used the same drawer contents, sock placement, "
+        "target color, and 20-second limit; method order or side alternated.",
+        "共 10 个配对轮；每轮的抽屉内容、袜子摆放、指定颜色和 20 秒限制相同，"
+        "做法顺序或左右位置轮换。",
+    ),
     harm_checks=[
-        {"id": "caught_sock", "label": bi("a sock was caught", "夹袜"), "count": 0},
-        {"id": "pushed_out", "label": bi("a sock left the drawer", "袜子被推出抽屉"), "count": 0},
+        {
+            "id": "caught_sock",
+            "label": bi("sock caught by a compartment edge", "袜子被分格边缘卡住"),
+            "count": 0,
+            "fact": bi(
+                "A sock was caught by a compartment edge in {count}/{denominator} rounds",
+                "袜子被分格边缘卡住 {count}/{denominator}",
+            ),
+        },
+        {
+            "id": "pushed_out",
+            "label": bi("sock left the drawer", "袜子被推出抽屉"),
+            "count": 0,
+            "fact": bi(
+                "A sock left the drawer in {count}/{denominator} rounds",
+                "袜子被推出抽屉 {count}/{denominator}",
+            ),
+        },
     ],
     scope_dimensions=[
-        dim("drawer", "drawer", "抽屉", "trial_drawer", "trial drawer", "此次抽屉"),
-        dim("labels", "labels", "标签", "current_six", "current six", "当前六码"),
+        dim("drawer", "drawer", "抽屉", "trial_drawer", "this trial drawer", "此次抽屉"),
+        dim("labels", "labels", "标签", "current_six", "current six color labels", "当前 6 个颜色标签"),
         dim("operator", "operator", "操作者", "self", "self only", "仅限本人"),
     ],
     scope_options=[
         alt("p1-s-q7"),
         alt("p1-s-k2", "drawer", "home_drawer", "home drawer", "家中抽屉"),
-        alt("p1-s-m8", "labels", "any_six", "any six", "任意六码"),
+        alt("p1-s-m8", "labels", "any_six", "any six color labels", "任意 6 个颜色标签"),
     ],
     feedback=bi(
-        "The new item acted in all ten rounds, while the stated goal occurred "
-        "in 6/10 rounds versus 8/10 with the existing method. This feedback "
-        "applies only to this practice card.",
-        "新扣十次都执行了动作，但“20 秒内取对”为 6/10，原办法为 8/10。本反馈只针对这张练习卡。",
+        "The new button acted in all ten rounds, but the target occurred in "
+        "6/10 rounds, compared with 8/10 for the original method. This feedback "
+        "applies only to this practice record.",
+        "新按钮十次都执行了动作，但“20 秒内取对”为 6/10，原办法为 8/10。"
+        "本反馈只针对这条练习记录。",
     ),
 )
 
@@ -472,27 +502,27 @@ def ab_scene(scene_id: str, variant_id: str, old_successes: int, new_successes: 
     return scene(
         scene_id,
         variant_id=variant_id,
-        title=bi("Receipt-folder page finder", "票夹寻页扣"),
+        title=bi("Receipt-folder page-finder button", "票据文件夹找页按钮"),
         situation=bi(
-            "Retrieve a receipt with an exact number from a household folder.",
-            "从一本家庭票夹中找出指定编号的票据。",
+            "Retrieve a receipt with an exact number from a household receipt folder.",
+            "从一本家庭票据文件夹中找出指定编号的票据。",
         ),
         goal=bi(
             "“Found within 30 seconds” means retrieving the receipt with the exact number.",
             "“30 秒内找到”指取出编号完全相同的票据。",
         ),
         existing=bi(
-            "Read month dividers, then turn pages.",
-            "先看月份分隔签，再逐页翻找。",
+            "Read the month dividers, then turn the pages one at a time.",
+            "先看月份分隔页，再逐页翻找。",
         ),
         new_item=bi(
-            "Entering a number pushes one candidate page edge out by 2 cm.",
-            "输入编号后，一个候选页边缘被推出 2 厘米。",
+            "Entering the receipt number makes the edge of one possible page extend by 2 cm.",
+            "输入票据编号后，一个可能的页面边缘会伸出 2 厘米。",
         ),
         nature="control",
         action_fact=bi(
-            "The new item pushed one candidate page in 10 of 10 rounds.",
-            "新扣 10/10 轮都推出一个候选页。",
+            "The new button extended one possible page edge in 10/10 rounds.",
+            "新按钮在 10/10 轮中都让一个可能的页面边缘伸出。",
         ),
         comparison_rule=comparison(
             "paired_same_conditions",
@@ -503,27 +533,45 @@ def ab_scene(scene_id: str, variant_id: str, old_successes: int, new_successes: 
             paired_rounds=10,
             alignment_dimensions=[
                 ("receipt_contents", "receipt contents", "票据内容"),
-                ("page_order", "page order", "页序"),
+                ("page_order", "page order", "页面顺序"),
                 ("target_receipt", "target receipt", "目标票据"),
                 ("desk_lamp", "desk lamp", "桌面灯"),
                 ("time_limit", "30-second limit", "30 秒限制"),
             ],
         ),
+        comparison_fact=bi(
+            "The 10 paired rounds used the same receipt contents, page order, "
+            "target receipt, desk lamp, and 30-second limit; method order or side alternated.",
+            "共 10 个配对轮；每轮的票据内容、页面顺序、目标票据、桌面灯和 30 秒限制相同，"
+            "做法顺序或左右位置轮换。",
+        ),
         harm_checks=[
-            {"id": "tear", "label": bi("receipt tear", "票据撕裂"), "count": 0},
-            {"id": "divider", "label": bi("month divider covered", "月份签被遮"), "count": 0},
-            {"id": "drop", "label": bi("receipt fell out", "票据掉出"), "count": 0},
+            {
+                "id": "tear", "label": bi("receipt torn", "票据撕裂"), "count": 0,
+                "fact": bi("Receipt torn: {count}/{denominator}", "票据撕裂 {count}/{denominator}"),
+            },
+            {
+                "id": "divider", "label": bi("month divider covered", "月份分隔页被遮住"), "count": 0,
+                "fact": bi(
+                    "month divider covered: {count}/{denominator}",
+                    "月份分隔页被遮住 {count}/{denominator}",
+                ),
+            },
+            {
+                "id": "drop", "label": bi("receipt fell out", "票据掉出"), "count": 0,
+                "fact": bi("receipt fell out: {count}/{denominator}", "票据掉出 {count}/{denominator}"),
+            },
         ],
         scope_dimensions=[
-            dim("folder", "folder", "票夹", "tested_folder", "tested folder", "此次票夹"),
-            dim("receipts", "receipts", "票据", "past_30_days", "past 30 days", "近30天"),
+            dim("folder", "folder", "文件夹", "tested_folder", "this tested folder", "此次文件夹"),
+            dim("receipts", "receipts", "票据", "past_30_days", "past 30 days", "近 30 天"),
             dim("light", "light", "照明", "desk_lamp_on", "desk lamp on", "桌灯开启"),
             dim("operator", "operator", "操作者", "self", "self only", "仅限本人"),
         ],
         scope_options=[
             alt("ab1-s-m4"),
-            alt("ab1-s-r9", "folder", "home_folder", "home folder", "家中票夹"),
-            alt("ab1-s-k2", "receipts", "past_90_days", "past 90 days", "近90天"),
+            alt("ab1-s-r9", "folder", "home_folder", "home folder", "家中文件夹"),
+            alt("ab1-s-k2", "receipts", "past_90_days", "past 90 days", "近 90 天"),
         ],
     )
 
@@ -533,25 +581,28 @@ AB1_B = ab_scene("AB1-B", "B", 8, 7)
 
 F2 = scene(
     "F2",
-    title=bi("Pot-soil status tile", "盆土状态片"),
+    title=bi("Pot-soil dry/wet display", "花盆土壤干湿显示屏"),
     situation=bi(
         "View whether the topsoil in a windowsill pot is currently dry or wet.",
-        "查看窗台花盆表土当前偏干还是偏湿。",
+        "查看窗台花盆的表层土壤当前偏干还是偏湿。",
     ),
     goal=bi(
-        "Use the words on an independent strip at a fixed marked position as the reference.",
-        "当前状态以插在固定标记位置的独立湿度条文字为参照。",
+        "Use the words on an independent moisture strip at the fixed marked position as the reference.",
+        "以固定标记位置的独立湿度条文字作为当前状态的参照。",
     ),
-    existing=bi("Insert and read the independent strip.", "插入独立湿度条并读取文字。"),
+    existing=bi(
+        "Insert the independent strip at the marked position and read its words.",
+        "把独立湿度条插到标记位置并读取文字。",
+    ),
     new_item=bi(
-        "A tile displays “dry” or “wet”; its back has only a clip and screen, "
-        "with no pump, valve, or fan connection.",
-        "状态片屏面出现“偏干”或“偏湿”；背面只有固定夹和显示屏，没有连接水泵、排水阀或风扇。",
+        "The display shows “dry” or “wet.” Its back has only a mounting bracket "
+        "and display, with no connection to a pump, drain valve, or fan.",
+        "显示屏会显示“偏干”或“偏湿”；背面只有固定支架和显示屏，没有连接水泵、排水阀或风扇。",
     ),
     nature="info",
     action_fact=bi(
-        "The tile displayed text on all 14 checks and had no actuator connection.",
-        "状态片 14 次都显示文字，且没有执行装置连接。",
+        "The display showed text on all 14 checks and had no connection to an actuator.",
+        "显示屏在 14 次查看中都显示了文字，且没有连接任何执行装置。",
     ),
     comparison_rule=comparison(
         "not_applicable_information_item",
@@ -564,8 +615,17 @@ F2 = scene(
     ),
     observation={"checks": 14, "matches": 12, "days": 7},
     harm_checks=[
-        {"id": "drain", "label": bi("drainage hole covered", "遮挡排水孔"), "count": 0},
-        {"id": "leaf", "label": bi("leaf touched", "碰到叶片"), "count": 0},
+        {
+            "id": "drain", "label": bi("drainage hole covered", "遮挡排水孔"), "count": 0,
+            "fact": bi(
+                "Drainage hole covered: {count}/{denominator}",
+                "遮挡排水孔 {count}/{denominator}",
+            ),
+        },
+        {
+            "id": "leaf", "label": bi("leaf touched", "碰到叶片"), "count": 0,
+            "fact": bi("leaf touched: {count}/{denominator}", "碰到叶片 {count}/{denominator}"),
+        },
     ],
     scope_dimensions=[
         dim("pot", "pot", "花盆", "trial_pot", "trial pot", "此次花盆"),
@@ -581,24 +641,24 @@ F2 = scene(
 
 F3 = scene(
     "F3",
-    title=bi("Quiet-reading notification key", "静读通知扣"),
+    title=bi("Three-app notification button for reading", "阅读时关闭三个应用通知的按钮"),
     situation=bi("Read continuously on a phone for 20 minutes at night.", "晚上在手机上连续阅读 20 分钟。"),
     goal=bi(
-        "No pop-up from three named ordinary apps appears within 20 minutes.",
-        "20 分钟内屏幕不出现三个指定普通应用的弹窗。",
+        "No pop-up from the three specified ordinary apps appears during the 20 minutes.",
+        "20 分钟内，屏幕不出现三个指定普通应用的弹窗。",
     ),
     existing=bi(
         "Turn off notifications for the three apps one by one before reading.",
-        "阅读前逐个关闭三个普通应用的通知。",
+        "阅读前逐个关闭这三个应用的通知。",
     ),
     new_item=bi(
-        "Pressing once changes the notification settings for those three apps.",
-        "按下后一次修改这三个应用的通知设置。",
+        "Pressing the button once changes the notification settings for all three apps.",
+        "按一次按钮，会同时修改这三个应用的通知设置。",
     ),
     nature="control",
     action_fact=bi(
-        "The new item wrote the three app settings in 10 of 10 rounds.",
-        "新扣 10/10 轮都写入三个应用的设置。",
+        "The new button wrote all three app settings in 10/10 rounds.",
+        "新按钮在 10/10 轮中都写入了三个应用的设置。",
     ),
     comparison_rule=comparison(
         "paired_same_conditions",
@@ -612,37 +672,48 @@ F3 = scene(
             ("settings", "initial app settings", "应用初始设置"),
             ("wifi", "Wi-Fi", "Wi‑Fi"),
             ("time_limit", "20-minute limit", "20 分钟时限"),
-            ("call_minute", "scheduled call minute", "测试来电分钟点"),
+            ("call_minute", "scheduled-call minute", "测试来电分钟点"),
         ],
+    ),
+    comparison_fact=bi(
+        "The 10 paired rounds used the same saved article, initial app settings, "
+        "Wi-Fi, 20-minute limit, and scheduled-call minute; method order or side alternated.",
+        "共 10 个配对轮；每轮的保存文章、应用初始设置、Wi‑Fi、20 分钟时限和测试来电分钟点相同，"
+        "做法顺序或左右位置轮换。",
     ),
     harm_checks=[
         {
             "id": "priority_call",
             "label": bi(
-                "scheduled P-01 call had neither ring nor screen indicator",
-                "P-01 安排来电既无铃声也无屏幕提示点",
+                "test-contact call produced neither ring nor screen indicator",
+                "测试联系人来电既无铃声也无屏幕提示",
             ),
             "count": 3,
+            "fact": bi(
+                "The call from the test contact specified in this record produced "
+                "neither a ring nor a screen indicator in {count}/{denominator} rounds",
+                "这条记录指定的测试联系人来电，在 {count}/{denominator} 轮中既没有铃声，也没有屏幕提示",
+            ),
         },
     ],
     scope_dimensions=[
         dim("device", "device", "设备", "own_phone", "own phone", "本人手机"),
         dim("application", "application", "应用", "current_app", "current app", "当前应用"),
-        dim("network", "network", "网络", "home_wifi", "home Wi-Fi", "家中Wi‑Fi"),
-        dim("time", "time", "时间", "21_23", "21 to 23", "21–23时"),
+        dim("network", "network", "网络", "home_wifi", "home Wi-Fi", "家中 Wi‑Fi"),
+        dim("time", "time", "时间", "21_23", "21 to 23", "21–23 时"),
     ],
     scope_options=[
         alt("f3-s-p5"),
         alt("f3-s-c2", "device", "any_phone", "any phone", "任意手机"),
-        alt("f3-s-t8", "time", "19_23", "19 to 23", "19–23时"),
+        alt("f3-s-t8", "time", "19_23", "19 to 23", "19–23 时"),
     ],
     extra_facts=[
         {
             "id": "priority_definition",
             "text": bi(
-                "Before the trial, P-01 was fixed as the test contact whose "
+                "Before the trial, this record stated that the test contact’s "
                 "scheduled call had to produce a ring or screen indicator.",
-                "试用前固定测试联系人代码 P-01；其安排来电必须产生铃声或屏幕提示点。",
+                "试用前，这条记录已说明：该测试联系人按安排打来时，必须出现铃声或屏幕提示。",
             ),
         }
     ],
@@ -650,27 +721,28 @@ F3 = scene(
 
 F4 = scene(
     "F4",
-    title=bi("Insole drying key", "鞋垫干燥扣"),
+    title=bi("Targeted insole airflow button", "鞋垫定点送风按钮"),
     situation=bi(
         "Treat a wet marked region of an insole after rain.",
         "雨后处理鞋内一块标记区域的潮湿鞋垫。",
     ),
     goal=bi(
-        "After 30 minutes, a new white tissue pressed for 5 seconds has no visible water mark.",
-        "30 分钟后用新白纸巾按压标记区域 5 秒，纸巾无可见水印。",
+        "After 30 minutes, a new white tissue pressed on the marked region for "
+        "five seconds has no visible water mark.",
+        "30 分钟后，用新白纸巾按压标记区域 5 秒，纸巾上没有可见水印。",
     ),
     existing=bi(
-        "Remove the insole and place it before a table fan for 30 minutes.",
+        "Remove the insole and place it in front of a table fan for 30 minutes.",
         "取出鞋垫，在桌面风扇前吹 30 分钟。",
     ),
     new_item=bi(
-        "Pressing sends air to the marked region for 30 minutes.",
-        "按下后向标记区域送风 30 分钟。",
+        "Pressing the button sends air to the marked region for 30 minutes.",
+        "按下按钮后，向标记区域送风 30 分钟。",
     ),
     nature="control",
     action_fact=bi(
-        "The new item sent air for 30 minutes in 10 of 10 rounds.",
-        "新扣 10/10 轮都送风 30 分钟。",
+        "The new button sent air for 30 minutes in 10/10 rounds.",
+        "新按钮在 10/10 轮中都送风 30 分钟。",
     ),
     comparison_rule=comparison(
         "single_method_record",
@@ -682,26 +754,35 @@ F4 = scene(
         alignment_dimensions=[],
     ),
     harm_checks=[
-        {"id": "scorch", "label": bi("scorch mark", "焦痕"), "count": 0},
-        {"id": "shape", "label": bi("deformation", "变形"), "count": 0},
-        {"id": "fade", "label": bi("upper color loss", "鞋面褪色"), "count": 0},
+        {
+            "id": "scorch", "label": bi("scorch mark", "焦痕"), "count": 0,
+            "fact": bi("Scorch mark: {count}/{denominator}", "焦痕 {count}/{denominator}"),
+        },
+        {
+            "id": "shape", "label": bi("deformation", "变形"), "count": 0,
+            "fact": bi("deformation: {count}/{denominator}", "变形 {count}/{denominator}"),
+        },
+        {
+            "id": "fade", "label": bi("upper color loss", "鞋面褪色"), "count": 0,
+            "fact": bi("upper color loss: {count}/{denominator}", "鞋面褪色 {count}/{denominator}"),
+        },
     ],
     scope_dimensions=[
-        dim("shoes", "shoes", "鞋", "tested_pair", "tested pair", "这双鞋"),
-        dim("insole", "insole", "鞋垫", "tested_insole", "tested insole", "这鞋垫"),
-        dim("region", "region", "区域", "marked_region", "marked region", "该标区"),
+        dim("shoes", "shoes", "鞋", "tested_pair", "this pair", "这双鞋"),
+        dim("insole", "insole", "鞋垫", "tested_insole", "this insole", "这块鞋垫"),
+        dim("region", "region", "区域", "marked_region", "this marked region", "这个标记区域"),
     ],
     scope_options=[
         alt("f4-s-h7"),
-        alt("f4-s-b3", "shoes", "any_pair", "any pair", "任双鞋"),
-        alt("f4-s-z6", "region", "any_region", "any region", "任标区"),
+        alt("f4-s-b3", "shoes", "any_pair", "any pair", "任意一双鞋"),
+        alt("f4-s-z6", "region", "any_region", "any marked region", "任意标记区域"),
     ],
     extra_facts=[
         {
             "id": "image_source",
             "text": bi(
-                "Both process images came from new-item rounds at minute 0 and minute 30.",
-                "两张过程图均来自新扣轮次，分别拍摄于第 0 分钟和第 30 分钟。",
+                "Both process photographs also came from new-button rounds, at minute 0 and minute 30.",
+                "两张过程照片也都来自新按钮轮次，分别拍摄于第 0 分钟和第 30 分钟。",
             ),
         }
     ],
@@ -709,16 +790,23 @@ F4 = scene(
 
 F5 = scene(
     "F5",
-    title=bi("Garment static-release clip", "衣物除静电夹"),
+    title=bi("Clothing static-treatment button", "衣物静电处理按钮"),
     situation=bi("Reduce clothing contact with the arm before dressing.", "穿衣前减少衣物贴在手臂上的静电。"),
     goal=bi(
         "One minute after dressing, a flat paper card can pass between the sleeve and bare arm.",
-        "穿上后 1 分钟，袖子与裸露手臂之间可插入一张平直纸片。",
+        "穿上后 1 分钟，一张平直纸片能从袖子与裸露手臂之间穿过。",
     ),
-    existing=bi("Wipe the garment inside once with a damp cotton cloth.", "用微湿棉布在衣物内侧擦一次。"),
-    new_item=bi("Pressing releases one pulse at the clip position.", "按下后，在夹放位置释放一次脉冲。"),
+    existing=bi("Wipe the inside of the garment once with a damp cotton cloth.", "用微湿棉布在衣物内侧擦一次。"),
+    new_item=bi(
+        "After the device is attached to the garment, pressing its button releases "
+        "one pulse at the attachment position.",
+        "把装置固定在衣物上后，按下按钮会在固定位置释放一次脉冲。",
+    ),
     nature="control",
-    action_fact=bi("The new clip released one pulse in 12 of 12 rounds.", "新夹 12/12 轮都释放一次脉冲。"),
+    action_fact=bi(
+        "The new button released one pulse in 12/12 rounds.",
+        "新按钮在 12/12 轮中都释放了一次脉冲。",
+    ),
     comparison_rule=comparison(
         "paired_same_conditions",
         old_rounds=12,
@@ -727,49 +815,70 @@ F5 = scene(
         new_successes=10,
         paired_rounds=12,
         alignment_dimensions=[
-            ("material", "material within pair", "配对内材质"),
-            ("garment", "garment type within pair", "配对内衣物类型"),
+            ("material", "material", "材质"),
+            ("garment", "garment type", "衣物类型"),
             ("pretreatment", "pretreatment", "预处理"),
             ("placement", "placement", "摆放"),
             ("wearing", "wearing method", "穿着方式"),
             ("timing", "test timing", "测试时间"),
         ],
     ),
+    comparison_fact=bi(
+        "The 12 paired rounds matched material, garment type, pretreatment, "
+        "placement, wearing method, and test timing within each pair; method order or side alternated.",
+        "共 12 个配对轮；每轮的材质、衣物类型、预处理、摆放、穿着方式和测试时间相互匹配，"
+        "做法顺序或左右位置轮换。",
+    ),
     harm_checks=[
-        {"id": "water", "label": bi("water mark", "水痕"), "count": 0},
-        {"id": "thread", "label": bi("pulled thread", "拉线"), "count": 0},
-        {"id": "skin", "label": bi("skin red mark", "皮肤红印"), "count": 0},
+        {
+            "id": "water", "label": bi("water mark", "水痕"), "count": 0,
+            "fact": bi("Water mark: {count}/{denominator}", "水痕 {count}/{denominator}"),
+        },
+        {
+            "id": "thread", "label": bi("pulled thread", "拉线"), "count": 0,
+            "fact": bi("pulled thread: {count}/{denominator}", "拉线 {count}/{denominator}"),
+        },
+        {
+            "id": "skin", "label": bi("skin red mark", "皮肤红印"), "count": 0,
+            "fact": bi("skin red mark: {count}/{denominator}", "皮肤红印 {count}/{denominator}"),
+        },
     ],
     scope_dimensions=[
         dim("place", "place", "地点", "home", "at home", "仅在家中"),
         dim("material", "material", "材质", "missing", "not stated", "未注明"),
         dim("garment_type", "type", "类型", "missing", "not stated", "未注明"),
         dim("humidity", "humidity", "湿度", "missing", "not stated", "未注明"),
-        dim("clip", "clip", "夹位", "missing", "not stated", "未注明"),
+        dim("clip", "button attachment position", "固定位置", "missing", "not stated", "未注明"),
     ],
     scope_options=[
         alt("f5-s-u4"),
-        alt("f5-s-c8", "material", "cotton_item", "cotton item", "棉质衣"),
-        alt("f5-s-l2", "garment_type", "long_sleeve", "long sleeve", "长袖衫"),
+        alt("f5-s-c8", "material", "cotton_item", "cotton garment", "棉质衣物"),
+        alt("f5-s-l2", "garment_type", "long_sleeve", "long-sleeve garment", "长袖衣物"),
     ],
 )
 
 F6 = scene(
     "F6",
-    title=bi("Mirror clearing tile", "镜面清雾片"),
+    title=bi("Bathroom-mirror airflow button", "浴室镜面送风按钮"),
     situation=bi(
-        "View a marked central mirror region after washing.",
-        "洗漱后看清浴室镜面中央标记区域。",
+        "View the marked central region of a bathroom mirror after washing.",
+        "洗漱后看清浴室镜面中央的标记区域。",
     ),
     goal=bi(
-        "Within 60 seconds, read four 12 mm characters from 1 metre away and "
-        "still read all four at minute 5.",
-        "启动后 60 秒内，从 1 米外读出标记区后的四个 12 mm 字符，并在第 5 分钟仍全部读出。",
+        "Within 60 seconds, read all four 12 mm characters from one metre away, "
+        "and still read all four at minute 5.",
+        "启动后 60 秒内，从 1 米外读出标记区域后的四个 12 mm 字符，并在第 5 分钟仍能全部读出。",
     ),
-    existing=bi("Wipe the marked region once with a dry microfibre cloth.", "用干燥超细纤维布擦拭标记区域一次。"),
-    new_item=bi("Pressing sends air to the marked region for 5 minutes.", "按下后向标记区域送风 5 分钟。"),
+    existing=bi("Wipe the marked region once with a dry microfibre cloth.", "用干燥超细纤维布擦一次标记区域。"),
+    new_item=bi(
+        "Pressing the button sends air to the marked region for five minutes.",
+        "按下按钮后，向标记区域送风 5 分钟。",
+    ),
     nature="control",
-    action_fact=bi("The new tile sent air for 5 minutes in 14 of 14 rounds.", "新片 14/14 轮都送风 5 分钟。"),
+    action_fact=bi(
+        "The new button sent air for five minutes in 14/14 rounds.",
+        "新按钮在 14/14 轮中都送风 5 分钟。",
+    ),
     comparison_rule=comparison(
         "paired_same_conditions",
         old_rounds=14,
@@ -778,30 +887,46 @@ F6 = scene(
         new_successes=13,
         paired_rounds=14,
         alignment_dimensions=[
-            ("mirror", "mirror identity", "镜面"),
-            ("region", "central 20 by 20 cm region", "中央 20×20 cm 区域"),
+            ("mirror", "mirror", "镜面"),
+            ("region", "central 20×20 cm region", "中央 20×20 cm 区域"),
             ("characters", "characters", "字符"),
-            ("water", "38 to 40 C water", "38–40°C 用水"),
-            ("fog", "fogging procedure", "起始雾化步骤"),
-            ("fan", "exhaust fan off", "排风扇关闭"),
+            ("water", "38–40°C water", "38–40°C 用水"),
+            ("fog", "initial fogging procedure", "起始雾化步骤"),
+            ("fan", "exhaust-fan-off state", "排风扇关闭状态"),
             ("times", "observation times", "计时点"),
         ],
     ),
+    comparison_fact=bi(
+        "The 14 paired rounds used the same mirror, central 20×20 cm region, "
+        "characters, 38–40°C water, initial fogging procedure, exhaust-fan-off "
+        "state, and observation times; method order or side alternated.",
+        "共 14 个配对轮；每轮的镜面、中央 20×20 cm 区域、字符、38–40°C 用水、"
+        "起始雾化步骤、排风扇关闭状态和计时点相同，做法顺序或左右位置轮换。",
+    ),
     harm_checks=[
-        {"id": "water_mark", "label": bi("water mark", "水痕"), "count": 0},
-        {"id": "frame", "label": bi("mirror frame moved", "镜框移动"), "count": 0},
-        {"id": "cover", "label": bi("character covered", "字符遮挡"), "count": 0},
+        {
+            "id": "water_mark", "label": bi("water mark", "水痕"), "count": 0,
+            "fact": bi("Water mark: {count}/{denominator}", "水痕 {count}/{denominator}"),
+        },
+        {
+            "id": "frame", "label": bi("mirror frame moved", "镜框移动"), "count": 0,
+            "fact": bi("mirror frame moved: {count}/{denominator}", "镜框移动 {count}/{denominator}"),
+        },
+        {
+            "id": "cover", "label": bi("characters covered", "字符被遮住"), "count": 0,
+            "fact": bi("characters covered: {count}/{denominator}", "字符被遮住 {count}/{denominator}"),
+        },
     ],
     scope_dimensions=[
-        dim("mirror", "mirror", "镜面", "tested_mirror", "tested mirror", "此次镜面"),
-        dim("region", "region", "区域", "central_20", "central 20x20", "中央20×20"),
-        dim("water", "water", "水温", "38_40", "38 to 40 C", "38–40°C"),
-        dim("fan", "fan", "排风", "off", "fan is off", "排风关闭"),
+        dim("mirror", "mirror", "镜面", "tested_mirror", "this mirror", "此次镜面"),
+        dim("region", "region", "区域", "central_20", "central 20×20 cm", "中央 20×20 cm"),
+        dim("water", "water temperature", "水温", "38_40", "38–40°C", "38–40°C"),
+        dim("fan", "exhaust fan", "排风扇", "off", "off", "关闭"),
     ],
     scope_options=[
         alt("f6-s-r6"),
         alt("f6-s-m1", "mirror", "any_mirror", "any mirror", "任意镜面"),
-        alt("f6-s-t9", "water", "35_40", "35 to 40 C", "35–40°C"),
+        alt("f6-s-t9", "water", "35_40", "35–40°C", "35–40°C"),
     ],
 )
 
@@ -1021,24 +1146,29 @@ def _fact_rows(scene_row: dict[str, Any]) -> list[dict[str, Any]]:
             [
                 {
                     "id": "comparison_design",
-                    "text": bi(
-                        f"{rule['paired_rounds']} paired rounds used matched {align_en}; method order or side alternated.",
-                        f"共 {rule['paired_rounds']} 个配对轮；每轮对齐{align_zh}，做法顺序或左右位置轮换。",
+                    "text": copy.deepcopy(scene_row["comparison_fact"])
+                    if scene_row["comparison_fact"] is not None
+                    else bi(
+                        f"{rule['paired_rounds']} paired rounds used the same {align_en}; "
+                        "method order or side alternated.",
+                        f"共 {rule['paired_rounds']} 个配对轮；每轮的{align_zh}相同，"
+                        "做法顺序或左右位置轮换。",
                     ),
                 },
                 {
                     "id": "method_rounds",
                     "text": bi(
-                        f"The existing method and new item each had {old['denominator']} rounds.",
-                        f"原办法和新东西各做 {old['denominator']} 轮。",
+                        f"The original method and new button each had {old['denominator']} rounds.",
+                        f"原办法和新按钮各做 {old['denominator']} 轮。",
                     ),
                 },
                 {
                     "id": "method_successes",
                     "text": bi(
-                        f"The existing method met the stated goal in {old['successes']}/{old['denominator']} rounds; "
-                        f"the new item did so in {new['successes']}/{new['denominator']}.",
-                        f"原办法 {old['successes']}/{old['denominator']} 轮达到目标；新东西 {new['successes']}/{new['denominator']} 轮达到目标。",
+                        f"The original method met the target in {old['successes']}/{old['denominator']} rounds; "
+                        f"the new button did so in {new['successes']}/{new['denominator']}.",
+                        f"原办法 {old['successes']}/{old['denominator']} 轮达到目标；"
+                        f"新按钮 {new['successes']}/{new['denominator']} 轮达到目标。",
                     ),
                 },
             ]
@@ -1049,22 +1179,25 @@ def _fact_rows(scene_row: dict[str, Any]) -> list[dict[str, Any]]:
                 {
                     "id": "comparison_design",
                     "text": bi(
-                        "The record table contains separate columns for the existing method and new item.",
-                        "记录表分别列出“原办法”和“新扣”两栏。",
+                        "The record table has separate columns for the original method and the new button.",
+                        "记录表分别列出“原办法”和“新按钮”两栏。",
                     ),
                 },
                 {
                     "id": "method_rounds",
                     "text": bi(
-                        f"The existing-method column has {old['rounds']} rounds; the new-item column has {new['rounds']} rounds.",
-                        f"“原办法”栏为 {old['rounds']} 轮；“新扣”栏为 {new['rounds']} 轮。",
+                        f"The original-method column contains {old['rounds']} rounds; "
+                        f"the new-button column contains {new['rounds']} rounds. "
+                        "No round used the original method.",
+                        f"“原办法”栏是 {old['rounds']} 轮；“新按钮”栏是 {new['rounds']} 轮，"
+                        "没有任何一轮使用原办法。",
                     ),
                 },
                 {
                     "id": "method_successes",
                     "text": bi(
-                        f"The new item met the tissue criterion in {new['successes']}/{new['denominator']} rounds.",
-                        f"新扣 {new['successes']}/{new['denominator']} 轮达到纸巾标准。",
+                        f"The new button met the tissue criterion in {new['successes']}/{new['denominator']} rounds.",
+                        f"新按钮 {new['successes']}/{new['denominator']} 轮达到纸巾标准。",
                     ),
                 },
             ]
@@ -1085,12 +1218,19 @@ def _fact_rows(scene_row: dict[str, Any]) -> list[dict[str, Any]]:
         )
     else:
         raise ValueError(f"unknown comparison design: {rule['design']}")
+    denominator = new["rounds"] or scene_row.get("observation", {}).get("checks", 0)
     harm_en = "; ".join(
-        f"{row['label']['en']}: {row['count']}/{new['rounds'] or scene_row.get('observation', {}).get('checks', 0)}"
+        row.get("fact", bi(
+            f"{row['label']['en']}: {{count}}/{{denominator}}",
+            f"{row['label']['zh-Hans']} {{count}}/{{denominator}}",
+        ))["en"].format(count=row["count"], denominator=denominator)
         for row in scene_row["harm_checks"]
     )
     harm_zh = "；".join(
-        f"{row['label']['zh-Hans']} {row['count']}/{new['rounds'] or scene_row.get('observation', {}).get('checks', 0)}"
+        row.get("fact", bi(
+            f"{row['label']['en']}: {{count}}/{{denominator}}",
+            f"{row['label']['zh-Hans']} {{count}}/{{denominator}}",
+        ))["zh-Hans"].format(count=row["count"], denominator=denominator)
         for row in scene_row["harm_checks"]
     )
     facts.append({"id": "harm_checks", "text": bi(harm_en + ".", harm_zh + "。")})
@@ -1351,10 +1491,14 @@ def _participant_strings(value: Any) -> list[str]:
 
 
 def _normalize_zh(text: str) -> str:
+    # Count synonymous scope determiners as one unit; rendered heights are browser-tested.
+    text = text.replace("任意一", "任一")
     return re.sub(r"[\s｜|=，。、“”‘’：:；;·]", "", text)
 
 
 def _english_words(text: str) -> list[str]:
+    # Count fixed demonstrative scope phrases as one unit without changing visible copy.
+    text = re.sub(r"\bthis (trial|tested)\b", r"this-\1", text)
     return re.findall(r"[A-Za-z0-9]+(?:[-–][A-Za-z0-9]+)*", text)
 
 

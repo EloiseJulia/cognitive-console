@@ -1,8 +1,8 @@
 {
   "schema_version": "microstudy-button-board-stepwise-derived-v1",
-  "materials_version": "v11-stepwise-20260812-draft",
+  "materials_version": "v11.1-stepwise-20260813-draft",
   "source_schema_version": "microstudy-button-board-stepwise-source-v1",
-  "ab_invariance_hash": "deed6497ee1bd3156d2a0428d6606affb2d2a884e63807ac620e116e294c98d4",
+  "ab_invariance_hash": "1202f424184b1cd2b7f1dd7f051eea20cf7ed51ace42982c7a50459d36d5bd9d",
   "practice": {
     "nature": "control",
     "compared": true,
@@ -127,7 +127,7 @@
             "id": "page_order",
             "label": {
               "en": "page order",
-              "zh-Hans": "页序"
+              "zh-Hans": "页面顺序"
             }
           },
           {
@@ -227,7 +227,7 @@
             "id": "page_order",
             "label": {
               "en": "page order",
-              "zh-Hans": "页序"
+              "zh-Hans": "页面顺序"
             }
           },
           {
@@ -402,7 +402,7 @@
           {
             "id": "call_minute",
             "label": {
-              "en": "scheduled call minute",
+              "en": "scheduled-call minute",
               "zh-Hans": "测试来电分钟点"
             }
           }
@@ -531,15 +531,15 @@
           {
             "id": "material",
             "label": {
-              "en": "material within pair",
-              "zh-Hans": "配对内材质"
+              "en": "material",
+              "zh-Hans": "材质"
             }
           },
           {
             "id": "garment",
             "label": {
-              "en": "garment type within pair",
-              "zh-Hans": "配对内衣物类型"
+              "en": "garment type",
+              "zh-Hans": "衣物类型"
             }
           },
           {
@@ -638,14 +638,14 @@
           {
             "id": "mirror",
             "label": {
-              "en": "mirror identity",
+              "en": "mirror",
               "zh-Hans": "镜面"
             }
           },
           {
             "id": "region",
             "label": {
-              "en": "central 20 by 20 cm region",
+              "en": "central 20×20 cm region",
               "zh-Hans": "中央 20×20 cm 区域"
             }
           },
@@ -659,22 +659,22 @@
           {
             "id": "water",
             "label": {
-              "en": "38 to 40 C water",
+              "en": "38–40°C water",
               "zh-Hans": "38–40°C 用水"
             }
           },
           {
             "id": "fog",
             "label": {
-              "en": "fogging procedure",
+              "en": "initial fogging procedure",
               "zh-Hans": "起始雾化步骤"
             }
           },
           {
             "id": "fan",
             "label": {
-              "en": "exhaust fan off",
-              "zh-Hans": "排风扇关闭"
+              "en": "exhaust-fan-off state",
+              "zh-Hans": "排风扇关闭状态"
             }
           },
           {

@@ -1,6 +1,6 @@
 {
   "schema_version": "microstudy-button-board-stepwise-sequences-v1",
-  "materials_version": "v11-stepwise-20260812-draft",
+  "materials_version": "v11.1-stepwise-20260813-draft",
   "allocation_cycle": {
     "cells_per_locale": 24,
     "sequence_count": 12,

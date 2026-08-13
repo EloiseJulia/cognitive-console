@@ -219,6 +219,34 @@ function referencePanel() {
   return aside;
 }
 
+function answeredSteps(path) {
+  if (!path?.length) return null;
+  const labels = app.materials.common.labels;
+  const actions = app.materials.common.actions;
+  const nav = el("nav", {
+    class: "answered-steps",
+    "aria-label": labels.answered_steps,
+  });
+  nav.append(el("h2", {}, labels.answered_steps));
+  const list = el("ol", { class: "step-summary-list" });
+  for (const row of path) {
+    const text = actions.change_step
+      .replace("{step}", String(row.step))
+      .replace("{answer}", row.answer_text);
+    const item = el("li");
+    item.append(el("button", {
+      type: "button",
+      class: "secondary step-summary",
+      dataset: { action: "revise-step", step: String(row.step) },
+      "aria-label": text,
+      onclick: () => reviseStep(row.step),
+    }, `${row.step}. ${row.answer_text}`));
+    list.append(item);
+  }
+  nav.append(list);
+  return nav;
+}
+
 function questionCard(response) {
   if (!uniqueIds(response.options)) throw new Error("duplicate option IDs");
   app.currentStep = response.step;
@@ -251,7 +279,21 @@ function questionCard(response) {
   const button = el("button", {
     type: "button", dataset: { action: "submit-step" }, onclick: submitStep,
   }, app.materials.common.actions.submit);
-  card.append(fieldset, error, button);
+  const history = answeredSteps(response.path);
+  if (history) card.append(history);
+  card.append(fieldset, error);
+  const actions = el("div", { class: "question-actions" });
+  if (response.path?.length) {
+    const previous = response.path[response.path.length - 1];
+    actions.append(el("button", {
+      type: "button",
+      class: "secondary",
+      dataset: { action: "previous-step" },
+      onclick: () => reviseStep(previous.step),
+    }, app.materials.common.actions.back));
+  }
+  actions.append(button);
+  card.append(actions);
   return card;
 }
 
@@ -294,6 +336,18 @@ async function submitStep() {
   }
 }
 
+async function reviseStep(step) {
+  try {
+    const response = await api("/api/revise-step", {
+      attempt_id: app.attemptId,
+      step,
+    });
+    renderTrial(response);
+  } catch (error) {
+    showError(stage, localizedError());
+  }
+}
+
 function showResult(response) {
   app.currentStep = null;
   const labels = app.materials.common.labels;
@@ -307,15 +361,22 @@ function showResult(response) {
     el("p", {}, response.destination.description),
     el("h2", {}, labels.path),
   );
-  const path = el("ol", { class: "path-list" });
-  for (const row of response.path) path.append(el("li", {}, row.answer_text));
-  result.append(path);
+  result.append(answeredSteps(response.path));
   if (response.feedback) {
     result.append(el("p", { class: "practice-feedback" }, response.feedback));
   }
-  result.append(el("button", {
+  const actions = el("div", { class: "question-actions" });
+  const previous = response.path[response.path.length - 1];
+  actions.append(el("button", {
+    type: "button",
+    class: "secondary",
+    dataset: { action: "previous-step" },
+    onclick: () => reviseStep(previous.step),
+  }, app.materials.common.actions.back));
+  actions.append(el("button", {
     type: "button", dataset: { action: "continue-after-result" }, onclick: continueAfterResult,
   }, app.materials.common.actions.continue));
+  result.append(actions);
   left.append(recordCard(app.currentScene), result);
   layout.append(left, referencePanel());
   replaceStage(heading, layout);

@@ -299,6 +299,7 @@ class StepwiseHandler(BaseHTTPRequestHandler):
             "step": step,
             "question": question["prompt"],
             "options": options,
+            "path": self._public_path(session),
         }
 
     def _trial_payload(self, session: dict[str, Any]) -> dict[str, Any]:
@@ -333,6 +334,26 @@ class StepwiseHandler(BaseHTTPRequestHandler):
             )
             if private == state
         )
+        path = self._public_path(session)
+        response = {
+            "phase": (
+                "practice_result"
+                if session["mode"] == "practice"
+                else "formal_result"
+            ),
+            "destination": {
+                "id": destination["id"],
+                "label": destination["label"],
+                "description": destination["description"],
+            },
+            "path": path,
+            "has_next_formal": session["mode"] == "formal" and session["index"] < 5,
+        }
+        if session["mode"] == "practice":
+            response["feedback"] = session["practice"]["feedback"]
+        return response
+
+    def _public_path(self, session: dict[str, Any]) -> list[dict[str, Any]]:
         trial = self._current_trial(session)
         path = []
         for step, answer in zip(
@@ -353,23 +374,7 @@ class StepwiseHandler(BaseHTTPRequestHandler):
             )
             label = next(row["text"] for row in rows if row["id"] == answer)
             path.append({"step": step, "answer_id": answer, "answer_text": label})
-        response = {
-            "phase": (
-                "practice_result"
-                if session["mode"] == "practice"
-                else "formal_result"
-            ),
-            "destination": {
-                "id": destination["id"],
-                "label": destination["label"],
-                "description": destination["description"],
-            },
-            "path": path,
-            "has_next_formal": session["mode"] == "formal" and session["index"] < 5,
-        }
-        if session["mode"] == "practice":
-            response["feedback"] = session["practice"]["feedback"]
-        return response
+        return path
 
     def _attention_payload(self, session: dict[str, Any]) -> dict[str, Any]:
         session["phase"] = "attention"
@@ -484,6 +489,7 @@ class StepwiseHandler(BaseHTTPRequestHandler):
                 "/api/start": self._start,
                 "/api/continue": self._continue,
                 "/api/step": self._step,
+                "/api/revise-step": self._revise_step,
                 "/api/attention": self._attention,
                 "/api/reflection": self._reflection,
                 "/api/complete": self._complete,
@@ -679,6 +685,45 @@ class StepwiseHandler(BaseHTTPRequestHandler):
             return self._result_payload(session, route["state"])
         next_step = route["next_step"]
         return self._question_payload(session, next_step)
+
+    def _revise_step(
+        self,
+        body: dict[str, Any],
+        *,
+        session: dict[str, Any],
+    ) -> dict[str, Any]:
+        if set(body) != {"attempt_id", "step", "request_id"}:
+            raise ValueError("invalid revise-step fields")
+        if session["phase"] not in {
+            "practice_step",
+            "practice_result",
+            "formal_step",
+            "formal_result",
+        }:
+            raise ValueError("step revision is not available")
+        trial = self._current_trial(session)
+        step = body["step"]
+        if type(step) is not int or step not in trial["step_presented"]:
+            raise ValueError("invalid revision step")
+        index = trial["step_presented"].index(step)
+        if index >= len(trial["step_selected_option_id"]):
+            raise ValueError("only answered steps can be revised")
+        for field in (
+            "step_presented",
+            "step_presented_option_order",
+            "step_shown_at_relative",
+        ):
+            del trial[field][index:]
+        for field in ("step_selected_option_id", "step_answered_at_relative"):
+            del trial[field][index:]
+        trial["participant_exit_step"] = None
+        trial["participant_derived_state"] = None
+        trial["scope_selected_id"] = None
+        trial["completion_status"] = "in_progress"
+        session["phase"] = (
+            "practice_step" if session["mode"] == "practice" else "formal_step"
+        )
+        return self._question_payload(session, step)
 
     def _attention(
         self,

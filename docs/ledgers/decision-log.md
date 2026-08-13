@@ -5,6 +5,52 @@
 
 ---
 
+## 2026-08-13 · D-0121 · Owner authorizes public deployment of V3 stepwise study for real data collection
+- The owner directed deploying the V3/V11.3 stepwise study to a public free
+  Render web service (free Postgres) to collect **real volunteer data** for a
+  small course user study; recruitment is handled by the owner's advisor. The
+  owner stated ethics review and informed consent are already in place and
+  asked for a simple on-page consent option. This is a human-approved research
+  decision (public deployment + human-subjects data collection per AGENTS.md
+  §5); it is recorded here as the human authorization.
+- Scope of this authorization is the deployment infrastructure and a consent
+  gate only. Study logic is unchanged: implementation commit
+  `80f202e` preserves the logic fingerprint
+  `cb91ebcf364bf07bea40cf541872de7efe07d548d75b2a265dc9be59a6a2b0bd`,
+  materials `v11.3-stepwise-20260813-draft`, export schema V8, GAA/Strict,
+  A/B-only manipulation, sequences, and every expected answer. Participant
+  payloads, DOM/ARIA, JSON, and CSV still omit expected/scoring fields.
+- Added, deployment-only: an idempotent attempt-keyed signed-export store
+  (Postgres in deployment, in-memory for tests); an opt-in public server mode
+  (`STEPWISE_PUBLIC_ORIGIN`) that binds a public address, reads the
+  verification key and admin token from the environment, and validates
+  CSRF/Host/Origin against the external origin; per-attempt persistence on
+  complete/save-exit; an owner-only `/admin/export` guarded by
+  `STEPWISE_ADMIN_TOKEN`; and a `/healthz` endpoint. The loopback owner-preview
+  mode is byte-for-byte unchanged. Participant entry is fully public (owner's
+  choice: no access code); the attention check + exclusion rules filter noise.
+- The consent gate is UI-only placeholder bilingual copy on the welcome screen
+  (Begin stays disabled until "I agree"; decline exits). It touches no study
+  logic, expected answers, keys, routing, or the signed export. The placeholder
+  text MUST be replaced with the advisor's approved informed-consent wording
+  before recruitment. Recording consent into the export (which would bump the
+  export schema) was deliberately deferred and is flagged to the owner.
+- The agent does NOT push, deploy, recruit, or contact participants; the owner
+  performs the Render deploy. Verification key and admin token live only in
+  environment variables, never in the repo or image.
+- Validation on `80f202e`: generator `--check` current; logic fingerprint
+  reprinted equal; all 42 V3 Python tests (incl. Chrome/Edge en/zh CDP flows
+  updated to tick consent), 12 new deployment tests, the V3 Node suite, and the
+  30 V1/V2 coexistence tests pass.
+- Status stays `ready_for_owner_local_preview_no_human_data` intent with
+  `valid_for_paper=false`. Human gates that remain OPEN and MUST close before
+  the collected data can be treated as confirmatory paper evidence: protocol +
+  preregistration freeze (frozen answer key, primary metric GAA, exclusion
+  rules), defensible sample-size/MDE, privacy/data-retention plan, and human
+  bilingual/accessibility review. Until those close, any collected data is
+  exploratory pilot only. Ethics/informed-consent are owner-asserted present
+  (not independently verified by the agent).
+
 ## 2026-08-13 · D-0120 · Owner approves guided read-only P1 demonstration
 - The owner approved changing only V3's P1 presentation from an all-at-once
   worked example to a guided read-only reveal. The P1 card, “What you

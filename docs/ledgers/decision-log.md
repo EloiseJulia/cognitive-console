@@ -11,8 +11,9 @@
   This is a material-skin change only. It does not alter scene IDs, keys,
   sequence/allocation, nature, comparison design/counts, harm counts, scope
   value IDs, faithful scope IDs, expected paths, decisive exits, or four-state
-  answers. Implementation commit:
-  `4533d30d51cf2217edd0f2532c846d423542a8ba`.
+  answers. Final implementation commit:
+  `bed60862ef3b5c3b8859a1f0f04073f524b8d983` (including the exact scope-wording
+  follow-up to `4533d30d51cf2217edd0f2532c846d423542a8ba`).
 - F4 must make the absence of a comparison immediately visible: 0
   original-method rounds, 10 new-button rounds, and no round using the original
   method. F4 remains `compared=false`, decisive `NOT_COMPARED`,

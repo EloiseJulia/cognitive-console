@@ -2,8 +2,8 @@
 
 - **Spec ID:** `microstudy-button-board-stepwise-v3`
 - **Status:** `DRAFT / NOT FROZEN / OWNER-LOCAL ONLY / NO HUMAN DATA`
-- **Governance:** D-0117
-- **Materials:** `v11-stepwise-20260812-draft`
+- **Governance:** D-0117, D-0118
+- **Materials:** `v11.1-stepwise-20260813-draft`
 - **Preregistration:** [`../research/2026-08-12-microstudy-button-board-stepwise-v3-DRAFT.md`](../research/2026-08-12-microstudy-button-board-stepwise-v3-DRAFT.md)
 - **Plan:** [`../plans/microstudy-button-board-stepwise-v3.md`](../plans/microstudy-button-board-stepwise-v3.md)
 
@@ -24,7 +24,7 @@ V3 uses:
 entry point: cognitive_console.button_board_stepwise
 data directory: data/button_board_stepwise_v11
 schema: microstudy-button-board-stepwise-v11-bilingual
-materials: v11-stepwise-20260812-draft
+materials: v11.1-stepwise-20260813-draft
 export: microstudy-export-v7-stepwise-bilingual-signed
 analysis: button-board-stepwise-gaa-v1
 ```
@@ -40,9 +40,15 @@ The V9 and V2 defaults remain unchanged.
 - Right: a 300 px sticky open-book panel keeps four equal-weight destinations
   and the six-question checklist visible.
 - Below the card: exactly one applicable question appears.
-- Submitted answers cannot be changed. Branch exits hide later steps.
+- The current question includes a Previous step action. Every answered-step
+  summary is a keyboard-accessible button that can reopen that step, including
+  after an early branch result and before continuing to the next scenario.
+- Reopening a step removes that answer and every later answer, then recomputes
+  the route from the new final path. Later steps appear or disappear solely
+  from the replacement answer.
 - The result repeats only the participant-derived destination and raw path. It
-  never displays correctness, an expected path, or a score.
+  never displays correctness, an expected path, or a score. Its raw path
+  summaries remain editable until the participant continues.
 - Practice P1 teaches only that an action occurring is not the same as meeting
   the target more often. Formal trials provide no feedback.
 
@@ -78,20 +84,30 @@ The source cannot contain `expected_*`, `compared`, `better`, `harm`,
 `expected_answer_by_step`, exit answer, decisive step, and state. Public
 materials omit all private fields.
 
+## Approved plain-language scenario skin
+
+D-0118 replaces coined object names with ordinary bilingual names and gives
+each target a one-sentence operational definition. This changes visible text
+and the material/locale hashes, but not scene IDs, sequence keys, comparison
+designs, counts, denominators, scope value IDs, faithful scope IDs, routes, or
+answers. F4 now states in consecutive facts that the original-method column
+contains 0 rounds, the new-button column contains 10 rounds, and no round used
+the original method. F4 remains `compared=false`, `NOT_COMPARED`, and U.
+
 ## Frozen scenario set
 
 Each attempt receives P1, one mutually exclusive AB1 variant, F2–F6, and AC1:
 
 | Scene | Derived exit |
 |---|---|
-| P1 sock-drawer key | W at Step 3 |
-| AB1-A receipt-folder finder | S at Step 6 |
-| AB1-B receipt-folder finder | W at Step 3 |
-| F2 pot-soil status tile | D at Step 1 |
-| F3 quiet-reading notification key | W at Step 4 |
-| F4 insole drying key | U at Step 2 |
-| F5 static-release clip | U at Step 5 |
-| F6 mirror clearing tile | S at Step 6 |
+| P1 sock-finding drawer button | W at Step 3 |
+| AB1-A receipt-folder page-finder button | S at Step 6 |
+| AB1-B receipt-folder page-finder button | W at Step 3 |
+| F2 pot-soil dry/wet display | D at Step 1 |
+| F3 three-app notification button for reading | W at Step 4 |
+| F4 targeted insole airflow button | U at Step 2 |
+| F5 clothing static-treatment button | U at Step 5 |
+| F6 bathroom-mirror airflow button | S at Step 6 |
 
 AB1-A/B differ only in existing/new target counts. Each variant still exposes
 all four states across six formal trials.
@@ -114,6 +130,13 @@ Strict = GAA + exact full path + correct decisive exit reading
 
 A wrong Step 6 scope still yields participant state S and therefore may retain
 GAA, but it fails Strict. AC1 is excluded from both.
+
+Raw signed exports contain only the final surviving step path. Reopened and
+discarded answers are not scored or exported. The existing relative shown and
+answered times remain aligned to each surviving final-path step. No revision
+counter was added, so the export schema remains
+`microstudy-export-v7-stepwise-bilingual-signed`; the material version and
+hashes provide fail-closed separation from V11.0.
 
 Participant payload, DOM, ARIA, logs, and raw signed JSON/CSV contain no
 expected path, structural key, comparison rule, correct scope, GAA, Strict, or

@@ -23,7 +23,7 @@ def test_v11_generator_validator_and_versions_are_exact():
     report = sw.validate_materials()
     assert report["status"] == "PASS"
     assert report["schema_version"] == "microstudy-button-board-stepwise-v11-bilingual"
-    assert report["materials_version"] == "v11-stepwise-20260812-draft"
+    assert report["materials_version"] == "v11.1-stepwise-20260813-draft"
     assert report["export_schema_version"] == "microstudy-export-v7-stepwise-bilingual-signed"
     assert report["analysis_version"] == "button-board-stepwise-gaa-v1"
     assert report["formal_scene_count"] == 6
@@ -80,6 +80,38 @@ def test_expected_path_exit_decisive_step_and_state_are_automatic():
             "scope_written",
             "scope_correct",
         } & set(row)
+
+
+def test_plain_language_rename_preserves_the_preapproved_logic_fingerprint():
+    projection = {}
+    for row in [sw.PRACTICE, *sw.FORMAL_SCENES]:
+        derived = sw.derive_expected(row)
+        rule = derived["comparison_rule"]
+        projection[row["scene_id"]] = {
+            "nature": derived["nature"],
+            "compared": derived["compared"],
+            "better": derived["better"],
+            "harm": derived["harm"],
+            "scope_written": derived["scope_written"],
+            "scope_correct": derived["scope_correct"],
+            "comparison_rule": {
+                "design": rule["design"],
+                "paired_rounds": rule["paired_rounds"],
+                "methods": rule["methods"],
+                "alignment_ids": [
+                    item["id"] for item in rule["alignment_dimensions"]
+                ],
+            },
+            "required_scope_dimensions": derived["required_scope_dimensions"],
+            "expected_answer_by_step": derived["expected_answer_by_step"],
+            "expected_exit_answer": derived["expected_exit_answer"],
+            "expected_decisive_step": derived["expected_decisive_step"],
+            "expected_state": derived["expected_state"],
+        }
+    fingerprint = hashlib.sha256(
+        json.dumps(projection, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    assert fingerprint == "cb91ebcf364bf07bea40cf541872de7efe07d548d75b2a265dc9be59a6a2b0bd"
 
 
 def test_unified_method_schema_covers_paired_single_and_information_items():
@@ -255,6 +287,47 @@ def test_neutral_record_and_ambiguity_scans_fail_closed():
     leaked["locales"]["zh-Hans"]["scenes"]["F6"]["card"]["facts"][0] += " 智能"
     with pytest.raises(ValueError, match="ambiguous or conclusion"):
         sw._validate_neutral_text(leaked)
+
+
+def test_participant_material_uses_approved_everyday_object_names():
+    materials, _ = sw.generate_materials()
+    text = json.dumps(materials["locales"], ensure_ascii=False)
+    for forbidden in (
+        "抽屉取袜扣",
+        "票夹寻页扣",
+        "盆土状态片",
+        "静读通知扣",
+        "鞋垫干燥扣",
+        "衣物除静电夹",
+        "镜面清雾片",
+        "新扣",
+        "新夹",
+        "新片",
+        "固定夹",
+        "夹位",
+        "候选页",
+        "P-01",
+        "Sock-drawer retrieval key",
+        "Receipt-folder page finder",
+        "Pot-soil status tile",
+        "Quiet-reading notification key",
+        "Insole drying key",
+        "Garment static-release clip",
+        "Mirror clearing tile",
+    ):
+        assert forbidden not in text
+    for required in (
+        "抽屉找袜按钮",
+        "票据文件夹找页按钮",
+        "花盆土壤干湿显示屏",
+        "阅读时关闭三个应用通知的按钮",
+        "鞋垫定点送风按钮",
+        "衣物静电处理按钮",
+        "浴室镜面送风按钮",
+        "没有任何一轮使用原办法",
+        "No round used the original method",
+    ):
+        assert required in text
     leaked = copy.deepcopy(materials)
     leaked["locales"]["en"]["scenes"]["F3"]["card"]["facts"][0] += " supported"
     with pytest.raises(ValueError, match="ambiguous or conclusion"):

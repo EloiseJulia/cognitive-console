@@ -1,10 +1,10 @@
 {
   "schema_version": "microstudy-button-board-stepwise-v11-bilingual",
   "source_schema_version": "microstudy-button-board-stepwise-source-v1",
-  "materials_version": "v11-stepwise-20260812-draft",
+  "materials_version": "v11.1-stepwise-20260813-draft",
   "export_schema_version": "microstudy-export-v7-stepwise-bilingual-signed",
   "analysis_version": "button-board-stepwise-gaa-v1",
-  "ab_invariance_hash": "deed6497ee1bd3156d2a0428d6606affb2d2a884e63807ac620e116e294c98d4",
+  "ab_invariance_hash": "dc63b3e802d44fb99903fa85ae4c4d4406b4702f853244f1e87002d800bd5531",
   "formal_scene_ids": [
     "AB1-A",
     "AB1-B",
@@ -66,7 +66,7 @@
         "tutorial": {
           "heading": "One idea and the stepwise controls",
           "intuition": "A button responding does not mean it meets the stated goal more often than the existing method.",
-          "operation": "Read the card, choose one answer, and the next applicable question will appear. A branch may end early.",
+          "operation": "Read the card, choose one answer, and the next applicable question will appear. A branch may end early. You can go back and change any answered step before continuing to the next scenario.",
           "show_practice": "Open the practice card"
         },
         "formal_intro": {
@@ -79,16 +79,19 @@
           "situation": "Situation",
           "goal": "Target",
           "existing": "What you originally did",
-          "new_item": "New item",
+          "new_item": "New function",
           "record": "Trial record",
           "reference_destinations": "Four destinations",
           "reference_checklist": "How to think",
           "path": "Your reasoning path",
+          "answered_steps": "Answered steps",
           "result": "Based on your answers, place it in:"
         },
         "actions": {
           "submit": "Choose and continue",
           "continue": "Continue",
+          "back": "Previous step",
+          "change_step": "Change step {step}: {answer}",
           "choice_required": "Choose one answer before continuing."
         },
         "progress": {
@@ -325,33 +328,33 @@
       "practice": {
         "display_id": "P1",
         "variant_id": null,
-        "title": "Sock-drawer retrieval key",
+        "title": "Sock-finding drawer button",
         "card": {
           "situation": "Retrieve a pair of socks in a specified color from a divided drawer.",
           "goal": "“Correct within 20 seconds” means both socks match the specified color.",
-          "existing": "Read the front color labels and search compartment by compartment.",
-          "new_item": "Pressing a color key moves one candidate compartment to the front.",
+          "existing": "Read the front color labels, then search one compartment at a time.",
+          "new_item": "Pressing the matching color button moves one possible compartment to the front.",
           "facts": [
-            "The new key moved one compartment to the front in 10 of 10 rounds.",
-            "10 paired rounds used matched drawer contents, sock placement, target color, 20-second limit; method order or side alternated.",
-            "The existing method and new item each had 10 rounds.",
-            "The existing method met the stated goal in 8/10 rounds; the new item did so in 6/10.",
-            "a sock was caught: 0/10; a sock left the drawer: 0/10.",
-            "Recorded scope | drawer=trial drawer | labels=current six | operator=self only."
+            "The new button moved one compartment to the front in 10/10 rounds.",
+            "The 10 paired rounds used the same drawer contents, sock placement, target color, and 20-second limit; method order or side alternated.",
+            "The original method and new button each had 10 rounds.",
+            "The original method met the target in 8/10 rounds; the new button did so in 6/10.",
+            "A sock was caught by a compartment edge in 0/10 rounds; A sock left the drawer in 0/10 rounds.",
+            "Recorded scope | drawer=this trial drawer | labels=current six color labels | operator=self only."
           ]
         },
         "scope_options": [
           {
             "id": "p1-s-q7",
-            "text": "Only when | drawer=trial drawer | labels=current six | operator=self only",
+            "text": "Only when | drawer=this trial drawer | labels=current six color labels | operator=self only",
             "segments": [
               {
                 "label": "drawer",
-                "value": "trial drawer"
+                "value": "this trial drawer"
               },
               {
                 "label": "labels",
-                "value": "current six"
+                "value": "current six color labels"
               },
               {
                 "label": "operator",
@@ -361,15 +364,15 @@
           },
           {
             "id": "p1-s-k2",
-            "text": "Only when | drawer=home drawer | labels=current six | operator=self only",
+            "text": "Only when | drawer=the home drawer | labels=current six color labels | operator=self only",
             "segments": [
               {
                 "label": "drawer",
-                "value": "home drawer"
+                "value": "the home drawer"
               },
               {
                 "label": "labels",
-                "value": "current six"
+                "value": "current six color labels"
               },
               {
                 "label": "operator",
@@ -379,15 +382,15 @@
           },
           {
             "id": "p1-s-m8",
-            "text": "Only when | drawer=trial drawer | labels=any six | operator=self only",
+            "text": "Only when | drawer=this trial drawer | labels=any six color labels | operator=self only",
             "segments": [
               {
                 "label": "drawer",
-                "value": "trial drawer"
+                "value": "this trial drawer"
               },
               {
                 "label": "labels",
-                "value": "any six"
+                "value": "any six color labels"
               },
               {
                 "label": "operator",
@@ -396,35 +399,35 @@
             ]
           }
         ],
-        "feedback": "The new item acted in all ten rounds, while the stated goal occurred in 6/10 rounds versus 8/10 with the existing method. This feedback applies only to this practice card."
+        "feedback": "The new button acted in all ten rounds, but the target occurred in 6/10 rounds, compared with 8/10 for the original method. This feedback applies only to this practice record."
       },
       "scenes": {
         "AB1-A": {
           "display_id": "AB1",
           "variant_id": "A",
-          "title": "Receipt-folder page finder",
+          "title": "Receipt-folder page-finder button",
           "card": {
-            "situation": "Retrieve a receipt with an exact number from a household folder.",
+            "situation": "Retrieve a receipt with an exact number from a household receipt folder.",
             "goal": "“Found within 30 seconds” means retrieving the receipt with the exact number.",
-            "existing": "Read month dividers, then turn pages.",
-            "new_item": "Entering a number pushes one candidate page edge out by 2 cm.",
+            "existing": "Read the month dividers, then turn the pages one at a time.",
+            "new_item": "Entering the receipt number makes the edge of one possible page extend by 2 cm.",
             "facts": [
-              "The new item pushed one candidate page in 10 of 10 rounds.",
-              "10 paired rounds used matched receipt contents, page order, target receipt, desk lamp, 30-second limit; method order or side alternated.",
-              "The existing method and new item each had 10 rounds.",
-              "The existing method met the stated goal in 5/10 rounds; the new item did so in 8/10.",
-              "receipt tear: 0/10; month divider covered: 0/10; receipt fell out: 0/10.",
-              "Recorded scope | folder=tested folder | receipts=past 30 days | light=desk lamp on | operator=self only."
+              "The new button extended one possible page edge in 10/10 rounds.",
+              "The 10 paired rounds used the same receipt contents, page order, target receipt, desk lamp, and 30-second limit; method order or side alternated.",
+              "The original method and new button each had 10 rounds.",
+              "The original method met the target in 5/10 rounds; the new button did so in 8/10.",
+              "Receipt torn: 0/10; month divider covered: 0/10; receipt fell out: 0/10.",
+              "Recorded scope | folder=this tested folder | receipts=past 30 days | light=desk lamp on | operator=self only."
             ]
           },
           "scope_options": [
             {
               "id": "ab1-s-m4",
-              "text": "Only when | folder=tested folder | receipts=past 30 days | light=desk lamp on | operator=self only",
+              "text": "Only when | folder=this tested folder | receipts=past 30 days | light=desk lamp on | operator=self only",
               "segments": [
                 {
                   "label": "folder",
-                  "value": "tested folder"
+                  "value": "this tested folder"
                 },
                 {
                   "label": "receipts",
@@ -442,11 +445,11 @@
             },
             {
               "id": "ab1-s-r9",
-              "text": "Only when | folder=home folder | receipts=past 30 days | light=desk lamp on | operator=self only",
+              "text": "Only when | folder=the home folder | receipts=past 30 days | light=desk lamp on | operator=self only",
               "segments": [
                 {
                   "label": "folder",
-                  "value": "home folder"
+                  "value": "the home folder"
                 },
                 {
                   "label": "receipts",
@@ -464,11 +467,11 @@
             },
             {
               "id": "ab1-s-k2",
-              "text": "Only when | folder=tested folder | receipts=past 90 days | light=desk lamp on | operator=self only",
+              "text": "Only when | folder=this tested folder | receipts=past 90 days | light=desk lamp on | operator=self only",
               "segments": [
                 {
                   "label": "folder",
-                  "value": "tested folder"
+                  "value": "this tested folder"
                 },
                 {
                   "label": "receipts",
@@ -489,29 +492,29 @@
         "AB1-B": {
           "display_id": "AB1",
           "variant_id": "B",
-          "title": "Receipt-folder page finder",
+          "title": "Receipt-folder page-finder button",
           "card": {
-            "situation": "Retrieve a receipt with an exact number from a household folder.",
+            "situation": "Retrieve a receipt with an exact number from a household receipt folder.",
             "goal": "“Found within 30 seconds” means retrieving the receipt with the exact number.",
-            "existing": "Read month dividers, then turn pages.",
-            "new_item": "Entering a number pushes one candidate page edge out by 2 cm.",
+            "existing": "Read the month dividers, then turn the pages one at a time.",
+            "new_item": "Entering the receipt number makes the edge of one possible page extend by 2 cm.",
             "facts": [
-              "The new item pushed one candidate page in 10 of 10 rounds.",
-              "10 paired rounds used matched receipt contents, page order, target receipt, desk lamp, 30-second limit; method order or side alternated.",
-              "The existing method and new item each had 10 rounds.",
-              "The existing method met the stated goal in 8/10 rounds; the new item did so in 7/10.",
-              "receipt tear: 0/10; month divider covered: 0/10; receipt fell out: 0/10.",
-              "Recorded scope | folder=tested folder | receipts=past 30 days | light=desk lamp on | operator=self only."
+              "The new button extended one possible page edge in 10/10 rounds.",
+              "The 10 paired rounds used the same receipt contents, page order, target receipt, desk lamp, and 30-second limit; method order or side alternated.",
+              "The original method and new button each had 10 rounds.",
+              "The original method met the target in 8/10 rounds; the new button did so in 7/10.",
+              "Receipt torn: 0/10; month divider covered: 0/10; receipt fell out: 0/10.",
+              "Recorded scope | folder=this tested folder | receipts=past 30 days | light=desk lamp on | operator=self only."
             ]
           },
           "scope_options": [
             {
               "id": "ab1-s-m4",
-              "text": "Only when | folder=tested folder | receipts=past 30 days | light=desk lamp on | operator=self only",
+              "text": "Only when | folder=this tested folder | receipts=past 30 days | light=desk lamp on | operator=self only",
               "segments": [
                 {
                   "label": "folder",
-                  "value": "tested folder"
+                  "value": "this tested folder"
                 },
                 {
                   "label": "receipts",
@@ -529,11 +532,11 @@
             },
             {
               "id": "ab1-s-r9",
-              "text": "Only when | folder=home folder | receipts=past 30 days | light=desk lamp on | operator=self only",
+              "text": "Only when | folder=the home folder | receipts=past 30 days | light=desk lamp on | operator=self only",
               "segments": [
                 {
                   "label": "folder",
-                  "value": "home folder"
+                  "value": "the home folder"
                 },
                 {
                   "label": "receipts",
@@ -551,11 +554,11 @@
             },
             {
               "id": "ab1-s-k2",
-              "text": "Only when | folder=tested folder | receipts=past 90 days | light=desk lamp on | operator=self only",
+              "text": "Only when | folder=this tested folder | receipts=past 90 days | light=desk lamp on | operator=self only",
               "segments": [
                 {
                   "label": "folder",
-                  "value": "tested folder"
+                  "value": "this tested folder"
                 },
                 {
                   "label": "receipts",
@@ -576,16 +579,16 @@
         "F2": {
           "display_id": "F2",
           "variant_id": null,
-          "title": "Pot-soil status tile",
+          "title": "Pot-soil dry/wet display",
           "card": {
             "situation": "View whether the topsoil in a windowsill pot is currently dry or wet.",
-            "goal": "Use the words on an independent strip at a fixed marked position as the reference.",
-            "existing": "Insert and read the independent strip.",
-            "new_item": "A tile displays “dry” or “wet”; its back has only a clip and screen, with no pump, valve, or fan connection.",
+            "goal": "Use the words on an independent moisture strip at the fixed marked position as the reference.",
+            "existing": "Insert the independent strip at the marked position and read its words.",
+            "new_item": "The display shows “dry” or “wet.” Its back has only a mounting bracket and display, with no connection to a pump, drain valve, or fan.",
             "facts": [
-              "The tile displayed text on all 14 checks and had no actuator connection.",
+              "The display showed text on all 14 checks and had no connection to an actuator.",
               "Across 7 days, 12 of 14 displays matched the independent strip.",
-              "drainage hole covered: 0/14; leaf touched: 0/14.",
+              "Drainage hole covered: 0/14; leaf touched: 0/14.",
               "Recorded scope | pot=trial pot | location=this sill | soil=same soil."
             ]
           },
@@ -649,19 +652,19 @@
         "F3": {
           "display_id": "F3",
           "variant_id": null,
-          "title": "Quiet-reading notification key",
+          "title": "Three-app notification button for reading",
           "card": {
             "situation": "Read continuously on a phone for 20 minutes at night.",
-            "goal": "No pop-up from three named ordinary apps appears within 20 minutes.",
+            "goal": "No pop-up from the three specified ordinary apps appears during the 20 minutes.",
             "existing": "Turn off notifications for the three apps one by one before reading.",
-            "new_item": "Pressing once changes the notification settings for those three apps.",
+            "new_item": "Pressing the button once changes the notification settings for all three apps.",
             "facts": [
-              "The new item wrote the three app settings in 10 of 10 rounds.",
-              "10 paired rounds used matched saved article, initial app settings, Wi-Fi, 20-minute limit, scheduled call minute; method order or side alternated.",
-              "The existing method and new item each had 10 rounds.",
-              "The existing method met the stated goal in 6/10 rounds; the new item did so in 9/10.",
-              "scheduled P-01 call had neither ring nor screen indicator: 3/10.",
-              "Before the trial, P-01 was fixed as the test contact whose scheduled call had to produce a ring or screen indicator.",
+              "The new button wrote all three app settings in 10/10 rounds.",
+              "The 10 paired rounds used the same saved article, initial app settings, Wi-Fi, 20-minute limit, and scheduled-call minute; method order or side alternated.",
+              "The original method and new button each had 10 rounds.",
+              "The original method met the target in 6/10 rounds; the new button did so in 9/10.",
+              "The call from the test contact specified in this record produced neither a ring nor a screen indicator in 3/10 rounds.",
+              "Before the trial, this record stated that the test contact’s scheduled call had to produce a ring or screen indicator.",
               "Recorded scope | device=own phone | application=current app | network=home Wi-Fi | time=21 to 23."
             ]
           },
@@ -737,44 +740,44 @@
         "F4": {
           "display_id": "F4",
           "variant_id": null,
-          "title": "Insole drying key",
+          "title": "Targeted insole airflow button",
           "card": {
             "situation": "Treat a wet marked region of an insole after rain.",
-            "goal": "After 30 minutes, a new white tissue pressed for 5 seconds has no visible water mark.",
-            "existing": "Remove the insole and place it before a table fan for 30 minutes.",
-            "new_item": "Pressing sends air to the marked region for 30 minutes.",
+            "goal": "After 30 minutes, a new white tissue pressed on the marked region for five seconds has no visible water mark.",
+            "existing": "Remove the insole and place it in front of a table fan for 30 minutes.",
+            "new_item": "Pressing the button sends air to the marked region for 30 minutes.",
             "facts": [
-              "The new item sent air for 30 minutes in 10 of 10 rounds.",
-              "The record table contains separate columns for the existing method and new item.",
-              "The existing-method column has 0 rounds; the new-item column has 10 rounds.",
-              "The new item met the tissue criterion in 8/10 rounds.",
-              "scorch mark: 0/10; deformation: 0/10; upper color loss: 0/10.",
-              "Both process images came from new-item rounds at minute 0 and minute 30.",
-              "Recorded scope | shoes=tested pair | insole=tested insole | region=marked region."
+              "The new button sent air for 30 minutes in 10/10 rounds.",
+              "The record table has separate columns for the original method and the new button.",
+              "The original-method column contains 0 rounds; the new-button column contains 10 rounds. No round used the original method.",
+              "The new button met the tissue criterion in 8/10 rounds.",
+              "Scorch mark: 0/10; deformation: 0/10; upper color loss: 0/10.",
+              "Both process photographs also came from new-button rounds, at minute 0 and minute 30.",
+              "Recorded scope | shoes=this pair | insole=this insole | region=this marked region."
             ]
           },
           "scope_options": [
             {
               "id": "f4-s-h7",
-              "text": "Only when | shoes=tested pair | insole=tested insole | region=marked region",
+              "text": "Only when | shoes=this pair | insole=this insole | region=this marked region",
               "segments": [
                 {
                   "label": "shoes",
-                  "value": "tested pair"
+                  "value": "this pair"
                 },
                 {
                   "label": "insole",
-                  "value": "tested insole"
+                  "value": "this insole"
                 },
                 {
                   "label": "region",
-                  "value": "marked region"
+                  "value": "this marked region"
                 }
               ]
             },
             {
               "id": "f4-s-b3",
-              "text": "Only when | shoes=any pair | insole=tested insole | region=marked region",
+              "text": "Only when | shoes=any pair | insole=this insole | region=this marked region",
               "segments": [
                 {
                   "label": "shoes",
@@ -782,29 +785,29 @@
                 },
                 {
                   "label": "insole",
-                  "value": "tested insole"
+                  "value": "this insole"
                 },
                 {
                   "label": "region",
-                  "value": "marked region"
+                  "value": "this marked region"
                 }
               ]
             },
             {
               "id": "f4-s-z6",
-              "text": "Only when | shoes=tested pair | insole=tested insole | region=any region",
+              "text": "Only when | shoes=this pair | insole=this insole | region=any marked region",
               "segments": [
                 {
                   "label": "shoes",
-                  "value": "tested pair"
+                  "value": "this pair"
                 },
                 {
                   "label": "insole",
-                  "value": "tested insole"
+                  "value": "this insole"
                 },
                 {
                   "label": "region",
-                  "value": "any region"
+                  "value": "any marked region"
                 }
               ]
             }
@@ -813,25 +816,25 @@
         "F5": {
           "display_id": "F5",
           "variant_id": null,
-          "title": "Garment static-release clip",
+          "title": "Clothing static-treatment button",
           "card": {
             "situation": "Reduce clothing contact with the arm before dressing.",
             "goal": "One minute after dressing, a flat paper card can pass between the sleeve and bare arm.",
-            "existing": "Wipe the garment inside once with a damp cotton cloth.",
-            "new_item": "Pressing releases one pulse at the clip position.",
+            "existing": "Wipe the inside of the garment once with a damp cotton cloth.",
+            "new_item": "After the device is attached to the garment, pressing its button releases one pulse at the attachment position.",
             "facts": [
-              "The new clip released one pulse in 12 of 12 rounds.",
-              "12 paired rounds used matched material within pair, garment type within pair, pretreatment, placement, wearing method, test timing; method order or side alternated.",
-              "The existing method and new item each had 12 rounds.",
-              "The existing method met the stated goal in 7/12 rounds; the new item did so in 10/12.",
-              "water mark: 0/12; pulled thread: 0/12; skin red mark: 0/12.",
-              "Recorded scope | place=at home | material=not stated | type=not stated | humidity=not stated | clip=not stated."
+              "The new button released one pulse in 12/12 rounds.",
+              "The 12 paired rounds matched material, garment type, pretreatment, placement, wearing method, and test timing within each pair; method order or side alternated.",
+              "The original method and new button each had 12 rounds.",
+              "The original method met the target in 7/12 rounds; the new button did so in 10/12.",
+              "Water mark: 0/12; pulled thread: 0/12; skin red mark: 0/12.",
+              "Recorded scope | place=at home | material=not stated | type=not stated | humidity=not stated | button attachment position=not stated."
             ]
           },
           "scope_options": [
             {
               "id": "f5-s-u4",
-              "text": "Only when | place=at home | material=not stated | type=not stated | humidity=not stated | clip=not stated",
+              "text": "Only when | place=at home | material=not stated | type=not stated | humidity=not stated | button attachment position=not stated",
               "segments": [
                 {
                   "label": "place",
@@ -850,14 +853,14 @@
                   "value": "not stated"
                 },
                 {
-                  "label": "clip",
+                  "label": "button attachment position",
                   "value": "not stated"
                 }
               ]
             },
             {
               "id": "f5-s-c8",
-              "text": "Only when | place=at home | material=cotton item | type=not stated | humidity=not stated | clip=not stated",
+              "text": "Only when | place=at home | material=cotton garment | type=not stated | humidity=not stated | button attachment position=not stated",
               "segments": [
                 {
                   "label": "place",
@@ -865,7 +868,7 @@
                 },
                 {
                   "label": "material",
-                  "value": "cotton item"
+                  "value": "cotton garment"
                 },
                 {
                   "label": "type",
@@ -876,14 +879,14 @@
                   "value": "not stated"
                 },
                 {
-                  "label": "clip",
+                  "label": "button attachment position",
                   "value": "not stated"
                 }
               ]
             },
             {
               "id": "f5-s-l2",
-              "text": "Only when | place=at home | material=not stated | type=long sleeve | humidity=not stated | clip=not stated",
+              "text": "Only when | place=at home | material=not stated | type=long-sleeve garment | humidity=not stated | button attachment position=not stated",
               "segments": [
                 {
                   "label": "place",
@@ -895,14 +898,14 @@
                 },
                 {
                   "label": "type",
-                  "value": "long sleeve"
+                  "value": "long-sleeve garment"
                 },
                 {
                   "label": "humidity",
                   "value": "not stated"
                 },
                 {
-                  "label": "clip",
+                  "label": "button attachment position",
                   "value": "not stated"
                 }
               ]
@@ -912,47 +915,47 @@
         "F6": {
           "display_id": "F6",
           "variant_id": null,
-          "title": "Mirror clearing tile",
+          "title": "Bathroom-mirror airflow button",
           "card": {
-            "situation": "View a marked central mirror region after washing.",
-            "goal": "Within 60 seconds, read four 12 mm characters from 1 metre away and still read all four at minute 5.",
+            "situation": "View the marked central region of a bathroom mirror after washing.",
+            "goal": "Within 60 seconds, read all four 12 mm characters from one metre away, and still read all four at minute 5.",
             "existing": "Wipe the marked region once with a dry microfibre cloth.",
-            "new_item": "Pressing sends air to the marked region for 5 minutes.",
+            "new_item": "Pressing the button sends air to the marked region for five minutes.",
             "facts": [
-              "The new tile sent air for 5 minutes in 14 of 14 rounds.",
-              "14 paired rounds used matched mirror identity, central 20 by 20 cm region, characters, 38 to 40 C water, fogging procedure, exhaust fan off, observation times; method order or side alternated.",
-              "The existing method and new item each had 14 rounds.",
-              "The existing method met the stated goal in 8/14 rounds; the new item did so in 13/14.",
-              "water mark: 0/14; mirror frame moved: 0/14; character covered: 0/14.",
-              "Recorded scope | mirror=tested mirror | region=central 20x20 | water=38 to 40 C | fan=fan is off."
+              "The new button sent air for five minutes in 14/14 rounds.",
+              "The 14 paired rounds used the same mirror, central 20×20 cm region, characters, 38–40°C water, initial fogging procedure, exhaust-fan-off state, and observation times; method order or side alternated.",
+              "The original method and new button each had 14 rounds.",
+              "The original method met the target in 8/14 rounds; the new button did so in 13/14.",
+              "Water mark: 0/14; mirror frame moved: 0/14; characters covered: 0/14.",
+              "Recorded scope | mirror=this mirror | region=central 20×20 cm | water temperature=38–40°C | exhaust fan=off."
             ]
           },
           "scope_options": [
             {
               "id": "f6-s-r6",
-              "text": "Only when | mirror=tested mirror | region=central 20x20 | water=38 to 40 C | fan=fan is off",
+              "text": "Only when | mirror=this mirror | region=central 20×20 cm | water temperature=38–40°C | exhaust fan=off",
               "segments": [
                 {
                   "label": "mirror",
-                  "value": "tested mirror"
+                  "value": "this mirror"
                 },
                 {
                   "label": "region",
-                  "value": "central 20x20"
+                  "value": "central 20×20 cm"
                 },
                 {
-                  "label": "water",
-                  "value": "38 to 40 C"
+                  "label": "water temperature",
+                  "value": "38–40°C"
                 },
                 {
-                  "label": "fan",
-                  "value": "fan is off"
+                  "label": "exhaust fan",
+                  "value": "off"
                 }
               ]
             },
             {
               "id": "f6-s-m1",
-              "text": "Only when | mirror=any mirror | region=central 20x20 | water=38 to 40 C | fan=fan is off",
+              "text": "Only when | mirror=any mirror | region=central 20×20 cm | water temperature=38–40°C | exhaust fan=off",
               "segments": [
                 {
                   "label": "mirror",
@@ -960,37 +963,37 @@
                 },
                 {
                   "label": "region",
-                  "value": "central 20x20"
+                  "value": "central 20×20 cm"
                 },
                 {
-                  "label": "water",
-                  "value": "38 to 40 C"
+                  "label": "water temperature",
+                  "value": "38–40°C"
                 },
                 {
-                  "label": "fan",
-                  "value": "fan is off"
+                  "label": "exhaust fan",
+                  "value": "off"
                 }
               ]
             },
             {
               "id": "f6-s-t9",
-              "text": "Only when | mirror=tested mirror | region=central 20x20 | water=35 to 40 C | fan=fan is off",
+              "text": "Only when | mirror=this mirror | region=central 20×20 cm | water temperature=35–40°C | exhaust fan=off",
               "segments": [
                 {
                   "label": "mirror",
-                  "value": "tested mirror"
+                  "value": "this mirror"
                 },
                 {
                   "label": "region",
-                  "value": "central 20x20"
+                  "value": "central 20×20 cm"
                 },
                 {
-                  "label": "water",
-                  "value": "35 to 40 C"
+                  "label": "water temperature",
+                  "value": "35–40°C"
                 },
                 {
-                  "label": "fan",
-                  "value": "fan is off"
+                  "label": "exhaust fan",
+                  "value": "off"
                 }
               ]
             }
@@ -1018,7 +1021,7 @@
         "tutorial": {
           "heading": "一条直觉和一步一问操作",
           "intuition": "按钮会动或有反应，不等于它比原来的做法更常达到明确目标。",
-          "operation": "读卡后选择一个答案，页面只显示下一个适用问题；有些分支会提前结束。",
+          "operation": "读记录后选择一个答案，页面只显示下一个适用问题；有些分支会提前结束。进入下一题前，你可以返回并修改任意已答步骤。",
           "show_practice": "打开练习卡"
         },
         "formal_intro": {
@@ -1031,16 +1034,19 @@
           "situation": "情境",
           "goal": "目标",
           "existing": "你原来怎么做",
-          "new_item": "新东西",
+          "new_item": "新功能",
           "record": "试用记录",
           "reference_destinations": "四个去处",
           "reference_checklist": "怎么想",
           "path": "你的推理路径",
+          "answered_steps": "已答步骤",
           "result": "根据你的回答放进："
         },
         "actions": {
           "submit": "选择并继续",
           "continue": "继续",
+          "back": "上一步",
+          "change_step": "修改第 {step} 步：{answer}",
           "choice_required": "继续前请选择一项。"
         },
         "progress": {
@@ -1277,25 +1283,25 @@
       "practice": {
         "display_id": "P1",
         "variant_id": null,
-        "title": "抽屉取袜扣",
+        "title": "抽屉找袜按钮",
         "card": {
           "situation": "从分格抽屉中取出指定颜色的一双袜子。",
           "goal": "“20 秒内取对”指两只袜子都与指定颜色相同。",
-          "existing": "看抽屉前的颜色标签后逐格寻找。",
-          "new_item": "按颜色键后，一个候选分格被推到前沿。",
+          "existing": "看抽屉前的颜色标签，再逐格寻找。",
+          "new_item": "按下对应颜色的按钮后，一个可能的分格会被推到抽屉前面。",
           "facts": [
-            "新扣 10/10 轮都把一个分格推到前沿。",
-            "共 10 个配对轮；每轮对齐抽屉内容、袜子摆放、指定颜色、20 秒限制，做法顺序或左右位置轮换。",
-            "原办法和新东西各做 10 轮。",
-            "原办法 8/10 轮达到目标；新东西 6/10 轮达到目标。",
-            "夹袜 0/10；袜子被推出抽屉 0/10。",
-            "范围记录｜抽屉=此次抽屉｜标签=当前六码｜操作者=仅限本人。"
+            "新按钮在 10/10 轮中都把一个分格推到抽屉前面。",
+            "共 10 个配对轮；每轮的抽屉内容、袜子摆放、指定颜色和 20 秒限制相同，做法顺序或左右位置轮换。",
+            "原办法和新按钮各做 10 轮。",
+            "原办法 8/10 轮达到目标；新按钮 6/10 轮达到目标。",
+            "袜子被分格边缘卡住 0/10；袜子被推出抽屉 0/10。",
+            "范围记录｜抽屉=此次抽屉｜标签=当前 6 个颜色标签｜操作者=仅限本人。"
           ]
         },
         "scope_options": [
           {
             "id": "p1-s-q7",
-            "text": "仅在｜抽屉=此次抽屉 | 标签=当前六码 | 操作者=仅限本人",
+            "text": "仅在｜抽屉=此次抽屉 | 标签=当前 6 个颜色标签 | 操作者=仅限本人",
             "segments": [
               {
                 "label": "抽屉",
@@ -1303,7 +1309,7 @@
               },
               {
                 "label": "标签",
-                "value": "当前六码"
+                "value": "当前 6 个颜色标签"
               },
               {
                 "label": "操作者",
@@ -1313,7 +1319,7 @@
           },
           {
             "id": "p1-s-k2",
-            "text": "仅在｜抽屉=家中抽屉 | 标签=当前六码 | 操作者=仅限本人",
+            "text": "仅在｜抽屉=家中抽屉 | 标签=当前 6 个颜色标签 | 操作者=仅限本人",
             "segments": [
               {
                 "label": "抽屉",
@@ -1321,7 +1327,7 @@
               },
               {
                 "label": "标签",
-                "value": "当前六码"
+                "value": "当前 6 个颜色标签"
               },
               {
                 "label": "操作者",
@@ -1331,7 +1337,7 @@
           },
           {
             "id": "p1-s-m8",
-            "text": "仅在｜抽屉=此次抽屉 | 标签=任意六码 | 操作者=仅限本人",
+            "text": "仅在｜抽屉=此次抽屉 | 标签=任意 6 个颜色标签 | 操作者=仅限本人",
             "segments": [
               {
                 "label": "抽屉",
@@ -1339,7 +1345,7 @@
               },
               {
                 "label": "标签",
-                "value": "任意六码"
+                "value": "任意 6 个颜色标签"
               },
               {
                 "label": "操作者",
@@ -1348,39 +1354,39 @@
             ]
           }
         ],
-        "feedback": "新扣十次都执行了动作，但“20 秒内取对”为 6/10，原办法为 8/10。本反馈只针对这张练习卡。"
+        "feedback": "新按钮十次都执行了动作，但“20 秒内取对”为 6/10，原办法为 8/10。本反馈只针对这条练习记录。"
       },
       "scenes": {
         "AB1-A": {
           "display_id": "AB1",
           "variant_id": "A",
-          "title": "票夹寻页扣",
+          "title": "票据文件夹找页按钮",
           "card": {
-            "situation": "从一本家庭票夹中找出指定编号的票据。",
+            "situation": "从一本家庭票据文件夹中找出指定编号的票据。",
             "goal": "“30 秒内找到”指取出编号完全相同的票据。",
-            "existing": "先看月份分隔签，再逐页翻找。",
-            "new_item": "输入编号后，一个候选页边缘被推出 2 厘米。",
+            "existing": "先看月份分隔页，再逐页翻找。",
+            "new_item": "输入票据编号后，一个可能的页面边缘会伸出 2 厘米。",
             "facts": [
-              "新扣 10/10 轮都推出一个候选页。",
-              "共 10 个配对轮；每轮对齐票据内容、页序、目标票据、桌面灯、30 秒限制，做法顺序或左右位置轮换。",
-              "原办法和新东西各做 10 轮。",
-              "原办法 5/10 轮达到目标；新东西 8/10 轮达到目标。",
-              "票据撕裂 0/10；月份签被遮 0/10；票据掉出 0/10。",
-              "范围记录｜票夹=此次票夹｜票据=近30天｜照明=桌灯开启｜操作者=仅限本人。"
+              "新按钮在 10/10 轮中都让一个可能的页面边缘伸出。",
+              "共 10 个配对轮；每轮的票据内容、页面顺序、目标票据、桌面灯和 30 秒限制相同，做法顺序或左右位置轮换。",
+              "原办法和新按钮各做 10 轮。",
+              "原办法 5/10 轮达到目标；新按钮 8/10 轮达到目标。",
+              "票据撕裂 0/10；月份分隔页被遮住 0/10；票据掉出 0/10。",
+              "范围记录｜文件夹=此次文件夹｜票据=近 30 天｜照明=桌灯开启｜操作者=仅限本人。"
             ]
           },
           "scope_options": [
             {
               "id": "ab1-s-m4",
-              "text": "仅在｜票夹=此次票夹 | 票据=近30天 | 照明=桌灯开启 | 操作者=仅限本人",
+              "text": "仅在｜文件夹=此次文件夹 | 票据=近 30 天 | 照明=桌灯开启 | 操作者=仅限本人",
               "segments": [
                 {
-                  "label": "票夹",
-                  "value": "此次票夹"
+                  "label": "文件夹",
+                  "value": "此次文件夹"
                 },
                 {
                   "label": "票据",
-                  "value": "近30天"
+                  "value": "近 30 天"
                 },
                 {
                   "label": "照明",
@@ -1394,15 +1400,15 @@
             },
             {
               "id": "ab1-s-r9",
-              "text": "仅在｜票夹=家中票夹 | 票据=近30天 | 照明=桌灯开启 | 操作者=仅限本人",
+              "text": "仅在｜文件夹=家中文件夹 | 票据=近 30 天 | 照明=桌灯开启 | 操作者=仅限本人",
               "segments": [
                 {
-                  "label": "票夹",
-                  "value": "家中票夹"
+                  "label": "文件夹",
+                  "value": "家中文件夹"
                 },
                 {
                   "label": "票据",
-                  "value": "近30天"
+                  "value": "近 30 天"
                 },
                 {
                   "label": "照明",
@@ -1416,15 +1422,15 @@
             },
             {
               "id": "ab1-s-k2",
-              "text": "仅在｜票夹=此次票夹 | 票据=近90天 | 照明=桌灯开启 | 操作者=仅限本人",
+              "text": "仅在｜文件夹=此次文件夹 | 票据=近 90 天 | 照明=桌灯开启 | 操作者=仅限本人",
               "segments": [
                 {
-                  "label": "票夹",
-                  "value": "此次票夹"
+                  "label": "文件夹",
+                  "value": "此次文件夹"
                 },
                 {
                   "label": "票据",
-                  "value": "近90天"
+                  "value": "近 90 天"
                 },
                 {
                   "label": "照明",
@@ -1441,33 +1447,33 @@
         "AB1-B": {
           "display_id": "AB1",
           "variant_id": "B",
-          "title": "票夹寻页扣",
+          "title": "票据文件夹找页按钮",
           "card": {
-            "situation": "从一本家庭票夹中找出指定编号的票据。",
+            "situation": "从一本家庭票据文件夹中找出指定编号的票据。",
             "goal": "“30 秒内找到”指取出编号完全相同的票据。",
-            "existing": "先看月份分隔签，再逐页翻找。",
-            "new_item": "输入编号后，一个候选页边缘被推出 2 厘米。",
+            "existing": "先看月份分隔页，再逐页翻找。",
+            "new_item": "输入票据编号后，一个可能的页面边缘会伸出 2 厘米。",
             "facts": [
-              "新扣 10/10 轮都推出一个候选页。",
-              "共 10 个配对轮；每轮对齐票据内容、页序、目标票据、桌面灯、30 秒限制，做法顺序或左右位置轮换。",
-              "原办法和新东西各做 10 轮。",
-              "原办法 8/10 轮达到目标；新东西 7/10 轮达到目标。",
-              "票据撕裂 0/10；月份签被遮 0/10；票据掉出 0/10。",
-              "范围记录｜票夹=此次票夹｜票据=近30天｜照明=桌灯开启｜操作者=仅限本人。"
+              "新按钮在 10/10 轮中都让一个可能的页面边缘伸出。",
+              "共 10 个配对轮；每轮的票据内容、页面顺序、目标票据、桌面灯和 30 秒限制相同，做法顺序或左右位置轮换。",
+              "原办法和新按钮各做 10 轮。",
+              "原办法 8/10 轮达到目标；新按钮 7/10 轮达到目标。",
+              "票据撕裂 0/10；月份分隔页被遮住 0/10；票据掉出 0/10。",
+              "范围记录｜文件夹=此次文件夹｜票据=近 30 天｜照明=桌灯开启｜操作者=仅限本人。"
             ]
           },
           "scope_options": [
             {
               "id": "ab1-s-m4",
-              "text": "仅在｜票夹=此次票夹 | 票据=近30天 | 照明=桌灯开启 | 操作者=仅限本人",
+              "text": "仅在｜文件夹=此次文件夹 | 票据=近 30 天 | 照明=桌灯开启 | 操作者=仅限本人",
               "segments": [
                 {
-                  "label": "票夹",
-                  "value": "此次票夹"
+                  "label": "文件夹",
+                  "value": "此次文件夹"
                 },
                 {
                   "label": "票据",
-                  "value": "近30天"
+                  "value": "近 30 天"
                 },
                 {
                   "label": "照明",
@@ -1481,15 +1487,15 @@
             },
             {
               "id": "ab1-s-r9",
-              "text": "仅在｜票夹=家中票夹 | 票据=近30天 | 照明=桌灯开启 | 操作者=仅限本人",
+              "text": "仅在｜文件夹=家中文件夹 | 票据=近 30 天 | 照明=桌灯开启 | 操作者=仅限本人",
               "segments": [
                 {
-                  "label": "票夹",
-                  "value": "家中票夹"
+                  "label": "文件夹",
+                  "value": "家中文件夹"
                 },
                 {
                   "label": "票据",
-                  "value": "近30天"
+                  "value": "近 30 天"
                 },
                 {
                   "label": "照明",
@@ -1503,15 +1509,15 @@
             },
             {
               "id": "ab1-s-k2",
-              "text": "仅在｜票夹=此次票夹 | 票据=近90天 | 照明=桌灯开启 | 操作者=仅限本人",
+              "text": "仅在｜文件夹=此次文件夹 | 票据=近 90 天 | 照明=桌灯开启 | 操作者=仅限本人",
               "segments": [
                 {
-                  "label": "票夹",
-                  "value": "此次票夹"
+                  "label": "文件夹",
+                  "value": "此次文件夹"
                 },
                 {
                   "label": "票据",
-                  "value": "近90天"
+                  "value": "近 90 天"
                 },
                 {
                   "label": "照明",
@@ -1528,14 +1534,14 @@
         "F2": {
           "display_id": "F2",
           "variant_id": null,
-          "title": "盆土状态片",
+          "title": "花盆土壤干湿显示屏",
           "card": {
-            "situation": "查看窗台花盆表土当前偏干还是偏湿。",
-            "goal": "当前状态以插在固定标记位置的独立湿度条文字为参照。",
-            "existing": "插入独立湿度条并读取文字。",
-            "new_item": "状态片屏面出现“偏干”或“偏湿”；背面只有固定夹和显示屏，没有连接水泵、排水阀或风扇。",
+            "situation": "查看窗台花盆的表层土壤当前偏干还是偏湿。",
+            "goal": "以固定标记位置的独立湿度条文字作为当前状态的参照。",
+            "existing": "把独立湿度条插到标记位置并读取文字。",
+            "new_item": "显示屏会显示“偏干”或“偏湿”；背面只有固定支架和显示屏，没有连接水泵、排水阀或风扇。",
             "facts": [
-              "状态片 14 次都显示文字，且没有执行装置连接。",
+              "显示屏在 14 次查看中都显示了文字，且没有连接任何执行装置。",
               "七天共查看 14 次，其中 12 次与独立湿度条文字相同。",
               "遮挡排水孔 0/14；碰到叶片 0/14。",
               "范围记录｜花盆=此次花盆｜位置=这个窗台｜盆土=同种盆土。"
@@ -1601,26 +1607,26 @@
         "F3": {
           "display_id": "F3",
           "variant_id": null,
-          "title": "静读通知扣",
+          "title": "阅读时关闭三个应用通知的按钮",
           "card": {
             "situation": "晚上在手机上连续阅读 20 分钟。",
-            "goal": "20 分钟内屏幕不出现三个指定普通应用的弹窗。",
-            "existing": "阅读前逐个关闭三个普通应用的通知。",
-            "new_item": "按下后一次修改这三个应用的通知设置。",
+            "goal": "20 分钟内，屏幕不出现三个指定普通应用的弹窗。",
+            "existing": "阅读前逐个关闭这三个应用的通知。",
+            "new_item": "按一次按钮，会同时修改这三个应用的通知设置。",
             "facts": [
-              "新扣 10/10 轮都写入三个应用的设置。",
-              "共 10 个配对轮；每轮对齐保存文章、应用初始设置、Wi‑Fi、20 分钟时限、测试来电分钟点，做法顺序或左右位置轮换。",
-              "原办法和新东西各做 10 轮。",
-              "原办法 6/10 轮达到目标；新东西 9/10 轮达到目标。",
-              "P-01 安排来电既无铃声也无屏幕提示点 3/10。",
-              "试用前固定测试联系人代码 P-01；其安排来电必须产生铃声或屏幕提示点。",
-              "范围记录｜设备=本人手机｜应用=当前应用｜网络=家中Wi‑Fi｜时间=21–23时。"
+              "新按钮在 10/10 轮中都写入了三个应用的设置。",
+              "共 10 个配对轮；每轮的保存文章、应用初始设置、Wi‑Fi、20 分钟时限和测试来电分钟点相同，做法顺序或左右位置轮换。",
+              "原办法和新按钮各做 10 轮。",
+              "原办法 6/10 轮达到目标；新按钮 9/10 轮达到目标。",
+              "这条记录指定的测试联系人来电，在 3/10 轮中既没有铃声，也没有屏幕提示。",
+              "试用前，这条记录已说明：该测试联系人按安排打来时，必须出现铃声或屏幕提示。",
+              "范围记录｜设备=本人手机｜应用=当前应用｜网络=家中 Wi‑Fi｜时间=21–23 时。"
             ]
           },
           "scope_options": [
             {
               "id": "f3-s-p5",
-              "text": "仅在｜设备=本人手机 | 应用=当前应用 | 网络=家中Wi‑Fi | 时间=21–23时",
+              "text": "仅在｜设备=本人手机 | 应用=当前应用 | 网络=家中 Wi‑Fi | 时间=21–23 时",
               "segments": [
                 {
                   "label": "设备",
@@ -1632,17 +1638,17 @@
                 },
                 {
                   "label": "网络",
-                  "value": "家中Wi‑Fi"
+                  "value": "家中 Wi‑Fi"
                 },
                 {
                   "label": "时间",
-                  "value": "21–23时"
+                  "value": "21–23 时"
                 }
               ]
             },
             {
               "id": "f3-s-c2",
-              "text": "仅在｜设备=任意手机 | 应用=当前应用 | 网络=家中Wi‑Fi | 时间=21–23时",
+              "text": "仅在｜设备=任意手机 | 应用=当前应用 | 网络=家中 Wi‑Fi | 时间=21–23 时",
               "segments": [
                 {
                   "label": "设备",
@@ -1654,17 +1660,17 @@
                 },
                 {
                   "label": "网络",
-                  "value": "家中Wi‑Fi"
+                  "value": "家中 Wi‑Fi"
                 },
                 {
                   "label": "时间",
-                  "value": "21–23时"
+                  "value": "21–23 时"
                 }
               ]
             },
             {
               "id": "f3-s-t8",
-              "text": "仅在｜设备=本人手机 | 应用=当前应用 | 网络=家中Wi‑Fi | 时间=19–23时",
+              "text": "仅在｜设备=本人手机 | 应用=当前应用 | 网络=家中 Wi‑Fi | 时间=19–23 时",
               "segments": [
                 {
                   "label": "设备",
@@ -1676,11 +1682,11 @@
                 },
                 {
                   "label": "网络",
-                  "value": "家中Wi‑Fi"
+                  "value": "家中 Wi‑Fi"
                 },
                 {
                   "label": "时间",
-                  "value": "19–23时"
+                  "value": "19–23 时"
                 }
               ]
             }
@@ -1689,26 +1695,26 @@
         "F4": {
           "display_id": "F4",
           "variant_id": null,
-          "title": "鞋垫干燥扣",
+          "title": "鞋垫定点送风按钮",
           "card": {
             "situation": "雨后处理鞋内一块标记区域的潮湿鞋垫。",
-            "goal": "30 分钟后用新白纸巾按压标记区域 5 秒，纸巾无可见水印。",
+            "goal": "30 分钟后，用新白纸巾按压标记区域 5 秒，纸巾上没有可见水印。",
             "existing": "取出鞋垫，在桌面风扇前吹 30 分钟。",
-            "new_item": "按下后向标记区域送风 30 分钟。",
+            "new_item": "按下按钮后，向标记区域送风 30 分钟。",
             "facts": [
-              "新扣 10/10 轮都送风 30 分钟。",
-              "记录表分别列出“原办法”和“新扣”两栏。",
-              "“原办法”栏为 0 轮；“新扣”栏为 10 轮。",
-              "新扣 8/10 轮达到纸巾标准。",
+              "新按钮在 10/10 轮中都送风 30 分钟。",
+              "记录表分别列出“原办法”和“新按钮”两栏。",
+              "“原办法”栏是 0 轮；“新按钮”栏是 10 轮，没有任何一轮使用原办法。",
+              "新按钮 8/10 轮达到纸巾标准。",
               "焦痕 0/10；变形 0/10；鞋面褪色 0/10。",
-              "两张过程图均来自新扣轮次，分别拍摄于第 0 分钟和第 30 分钟。",
-              "范围记录｜鞋=这双鞋｜鞋垫=这鞋垫｜区域=该标区。"
+              "两张过程照片也都来自新按钮轮次，分别拍摄于第 0 分钟和第 30 分钟。",
+              "范围记录｜鞋=这双鞋｜鞋垫=这块鞋垫｜区域=这个标记区域。"
             ]
           },
           "scope_options": [
             {
               "id": "f4-s-h7",
-              "text": "仅在｜鞋=这双鞋 | 鞋垫=这鞋垫 | 区域=该标区",
+              "text": "仅在｜鞋=这双鞋 | 鞋垫=这块鞋垫 | 区域=这个标记区域",
               "segments": [
                 {
                   "label": "鞋",
@@ -1716,35 +1722,35 @@
                 },
                 {
                   "label": "鞋垫",
-                  "value": "这鞋垫"
+                  "value": "这块鞋垫"
                 },
                 {
                   "label": "区域",
-                  "value": "该标区"
+                  "value": "这个标记区域"
                 }
               ]
             },
             {
               "id": "f4-s-b3",
-              "text": "仅在｜鞋=任双鞋 | 鞋垫=这鞋垫 | 区域=该标区",
+              "text": "仅在｜鞋=任一双鞋 | 鞋垫=这块鞋垫 | 区域=这个标记区域",
               "segments": [
                 {
                   "label": "鞋",
-                  "value": "任双鞋"
+                  "value": "任一双鞋"
                 },
                 {
                   "label": "鞋垫",
-                  "value": "这鞋垫"
+                  "value": "这块鞋垫"
                 },
                 {
                   "label": "区域",
-                  "value": "该标区"
+                  "value": "这个标记区域"
                 }
               ]
             },
             {
               "id": "f4-s-z6",
-              "text": "仅在｜鞋=这双鞋 | 鞋垫=这鞋垫 | 区域=任标区",
+              "text": "仅在｜鞋=这双鞋 | 鞋垫=这块鞋垫 | 区域=任意标记区域",
               "segments": [
                 {
                   "label": "鞋",
@@ -1752,11 +1758,11 @@
                 },
                 {
                   "label": "鞋垫",
-                  "value": "这鞋垫"
+                  "value": "这块鞋垫"
                 },
                 {
                   "label": "区域",
-                  "value": "任标区"
+                  "value": "任意标记区域"
                 }
               ]
             }
@@ -1765,25 +1771,25 @@
         "F5": {
           "display_id": "F5",
           "variant_id": null,
-          "title": "衣物除静电夹",
+          "title": "衣物静电处理按钮",
           "card": {
             "situation": "穿衣前减少衣物贴在手臂上的静电。",
-            "goal": "穿上后 1 分钟，袖子与裸露手臂之间可插入一张平直纸片。",
+            "goal": "穿上后 1 分钟，一张平直纸片能从袖子与裸露手臂之间穿过。",
             "existing": "用微湿棉布在衣物内侧擦一次。",
-            "new_item": "按下后，在夹放位置释放一次脉冲。",
+            "new_item": "把装置固定在衣物上后，按下按钮会在固定位置释放一次脉冲。",
             "facts": [
-              "新夹 12/12 轮都释放一次脉冲。",
-              "共 12 个配对轮；每轮对齐配对内材质、配对内衣物类型、预处理、摆放、穿着方式、测试时间，做法顺序或左右位置轮换。",
-              "原办法和新东西各做 12 轮。",
-              "原办法 7/12 轮达到目标；新东西 10/12 轮达到目标。",
+              "新按钮在 12/12 轮中都释放了一次脉冲。",
+              "共 12 个配对轮；每轮的材质、衣物类型、预处理、摆放、穿着方式和测试时间相互匹配，做法顺序或左右位置轮换。",
+              "原办法和新按钮各做 12 轮。",
+              "原办法 7/12 轮达到目标；新按钮 10/12 轮达到目标。",
               "水痕 0/12；拉线 0/12；皮肤红印 0/12。",
-              "范围记录｜地点=仅在家中｜材质=未注明｜类型=未注明｜湿度=未注明｜夹位=未注明。"
+              "范围记录｜地点=仅在家中｜材质=未注明｜类型=未注明｜湿度=未注明｜固定位置=未注明。"
             ]
           },
           "scope_options": [
             {
               "id": "f5-s-u4",
-              "text": "仅在｜地点=仅在家中 | 材质=未注明 | 类型=未注明 | 湿度=未注明 | 夹位=未注明",
+              "text": "仅在｜地点=仅在家中 | 材质=未注明 | 类型=未注明 | 湿度=未注明 | 固定位置=未注明",
               "segments": [
                 {
                   "label": "地点",
@@ -1802,14 +1808,14 @@
                   "value": "未注明"
                 },
                 {
-                  "label": "夹位",
+                  "label": "固定位置",
                   "value": "未注明"
                 }
               ]
             },
             {
               "id": "f5-s-c8",
-              "text": "仅在｜地点=仅在家中 | 材质=棉质衣 | 类型=未注明 | 湿度=未注明 | 夹位=未注明",
+              "text": "仅在｜地点=仅在家中 | 材质=棉质衣物 | 类型=未注明 | 湿度=未注明 | 固定位置=未注明",
               "segments": [
                 {
                   "label": "地点",
@@ -1817,7 +1823,7 @@
                 },
                 {
                   "label": "材质",
-                  "value": "棉质衣"
+                  "value": "棉质衣物"
                 },
                 {
                   "label": "类型",
@@ -1828,14 +1834,14 @@
                   "value": "未注明"
                 },
                 {
-                  "label": "夹位",
+                  "label": "固定位置",
                   "value": "未注明"
                 }
               ]
             },
             {
               "id": "f5-s-l2",
-              "text": "仅在｜地点=仅在家中 | 材质=未注明 | 类型=长袖衫 | 湿度=未注明 | 夹位=未注明",
+              "text": "仅在｜地点=仅在家中 | 材质=未注明 | 类型=长袖衣物 | 湿度=未注明 | 固定位置=未注明",
               "segments": [
                 {
                   "label": "地点",
@@ -1847,14 +1853,14 @@
                 },
                 {
                   "label": "类型",
-                  "value": "长袖衫"
+                  "value": "长袖衣物"
                 },
                 {
                   "label": "湿度",
                   "value": "未注明"
                 },
                 {
-                  "label": "夹位",
+                  "label": "固定位置",
                   "value": "未注明"
                 }
               ]
@@ -1864,25 +1870,25 @@
         "F6": {
           "display_id": "F6",
           "variant_id": null,
-          "title": "镜面清雾片",
+          "title": "浴室镜面送风按钮",
           "card": {
-            "situation": "洗漱后看清浴室镜面中央标记区域。",
-            "goal": "启动后 60 秒内，从 1 米外读出标记区后的四个 12 mm 字符，并在第 5 分钟仍全部读出。",
-            "existing": "用干燥超细纤维布擦拭标记区域一次。",
-            "new_item": "按下后向标记区域送风 5 分钟。",
+            "situation": "洗漱后看清浴室镜面中央的标记区域。",
+            "goal": "启动后 60 秒内，从 1 米外读出标记区域后的四个 12 mm 字符，并在第 5 分钟仍能全部读出。",
+            "existing": "用干燥超细纤维布擦一次标记区域。",
+            "new_item": "按下按钮后，向标记区域送风 5 分钟。",
             "facts": [
-              "新片 14/14 轮都送风 5 分钟。",
-              "共 14 个配对轮；每轮对齐镜面、中央 20×20 cm 区域、字符、38–40°C 用水、起始雾化步骤、排风扇关闭、计时点，做法顺序或左右位置轮换。",
-              "原办法和新东西各做 14 轮。",
-              "原办法 8/14 轮达到目标；新东西 13/14 轮达到目标。",
-              "水痕 0/14；镜框移动 0/14；字符遮挡 0/14。",
-              "范围记录｜镜面=此次镜面｜区域=中央20×20｜水温=38–40°C｜排风=排风关闭。"
+              "新按钮在 14/14 轮中都送风 5 分钟。",
+              "共 14 个配对轮；每轮的镜面、中央 20×20 cm 区域、字符、38–40°C 用水、起始雾化步骤、排风扇关闭状态和计时点相同，做法顺序或左右位置轮换。",
+              "原办法和新按钮各做 14 轮。",
+              "原办法 8/14 轮达到目标；新按钮 13/14 轮达到目标。",
+              "水痕 0/14；镜框移动 0/14；字符被遮住 0/14。",
+              "范围记录｜镜面=此次镜面｜区域=中央 20×20 cm｜水温=38–40°C｜排风扇=关闭。"
             ]
           },
           "scope_options": [
             {
               "id": "f6-s-r6",
-              "text": "仅在｜镜面=此次镜面 | 区域=中央20×20 | 水温=38–40°C | 排风=排风关闭",
+              "text": "仅在｜镜面=此次镜面 | 区域=中央 20×20 cm | 水温=38–40°C | 排风扇=关闭",
               "segments": [
                 {
                   "label": "镜面",
@@ -1890,21 +1896,21 @@
                 },
                 {
                   "label": "区域",
-                  "value": "中央20×20"
+                  "value": "中央 20×20 cm"
                 },
                 {
                   "label": "水温",
                   "value": "38–40°C"
                 },
                 {
-                  "label": "排风",
-                  "value": "排风关闭"
+                  "label": "排风扇",
+                  "value": "关闭"
                 }
               ]
             },
             {
               "id": "f6-s-m1",
-              "text": "仅在｜镜面=任意镜面 | 区域=中央20×20 | 水温=38–40°C | 排风=排风关闭",
+              "text": "仅在｜镜面=任意镜面 | 区域=中央 20×20 cm | 水温=38–40°C | 排风扇=关闭",
               "segments": [
                 {
                   "label": "镜面",
@@ -1912,21 +1918,21 @@
                 },
                 {
                   "label": "区域",
-                  "value": "中央20×20"
+                  "value": "中央 20×20 cm"
                 },
                 {
                   "label": "水温",
                   "value": "38–40°C"
                 },
                 {
-                  "label": "排风",
-                  "value": "排风关闭"
+                  "label": "排风扇",
+                  "value": "关闭"
                 }
               ]
             },
             {
               "id": "f6-s-t9",
-              "text": "仅在｜镜面=此次镜面 | 区域=中央20×20 | 水温=35–40°C | 排风=排风关闭",
+              "text": "仅在｜镜面=此次镜面 | 区域=中央 20×20 cm | 水温=35–40°C | 排风扇=关闭",
               "segments": [
                 {
                   "label": "镜面",
@@ -1934,15 +1940,15 @@
                 },
                 {
                   "label": "区域",
-                  "value": "中央20×20"
+                  "value": "中央 20×20 cm"
                 },
                 {
                   "label": "水温",
                   "value": "35–40°C"
                 },
                 {
-                  "label": "排风",
-                  "value": "排风关闭"
+                  "label": "排风扇",
+                  "value": "关闭"
                 }
               ]
             }

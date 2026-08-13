@@ -5,6 +5,42 @@
 
 ---
 
+## 2026-08-13 · D-0122 · Owner asks agent to draft the informed-consent front page (DRAFT, pending finalization)
+- Clarification correcting D-0121: the owner states the ethics review is
+  approved, but the **informed-consent text did not actually exist yet** and
+  asked the agent to draft the study's consent front page. So D-0121's
+  "informed-consent owner-asserted present" is superseded: ethics approval is
+  owner-asserted; the consent wording is an agent-written DRAFT here.
+- The agent replaced the placeholder welcome-screen consent block with a
+  complete bilingual (zh-Hans/en) informed-consent draft covering purpose, what
+  the participant does, voluntary participation/withdrawal, anonymity/privacy,
+  data use & retention, risks/benefits, ethics approval, and a consent
+  statement. All study-specific facts the agent cannot know — researcher/
+  department, contact email, ethics body/approval number, task duration,
+  compensation, retention plan, age threshold — are left as clearly bracketed
+  `[ … (to be completed) ]` placeholders. The agent did not invent any ethics
+  approval number, institution, or contact detail.
+- **This is a DRAFT for the advisor / ethics reviewer to review and finalize.**
+  Agent-drafted consent wording is NOT ethics approval and does not close the
+  informed-consent gate. Real recruitment / human-data collection must wait
+  until the advisor (and, where required, the ethics body) approves the final
+  consent text and the bracketed placeholders are filled.
+- Scope: UI-only. Implementation commit `8749e90` changes
+  only front-end consent copy (`CONSENT_COPY`) and its rendering (section
+  titles) plus one CSS rule. No study logic, expected answers, keys, routing,
+  sequences, A/B, GAA/Strict, materials, or the signed export changed; the
+  logic fingerprint
+  `cb91ebcf364bf07bea40cf541872de7efe07d548d75b2a265dc9be59a6a2b0bd` is
+  unchanged and the export still omits expected/scoring fields. The consent
+  gate still blocks Begin until the participant agrees.
+- Validation: generator `--check` current; fingerprint test green; V3
+  materials/web (incl. Chrome/Edge en/zh CDP flows that render the full consent
+  and tick agree) + 13 deployment tests + Node suite pass.
+- Status unchanged: `valid_for_paper=false`, no push/deploy/recruitment by the
+  agent. Protocol + preregistration freeze, sample-size/MDE, privacy/retention,
+  final consent finalization, and human bilingual/accessibility review remain
+  OPEN human gates. Data collected before those close is exploratory pilot only.
+
 ## 2026-08-13 · D-0121 · Owner authorizes public deployment of V3 stepwise study for real data collection
 - The owner directed deploying the V3/V11.3 stepwise study to a public free
   Render web service (free Postgres) to collect **real volunteer data** for a

@@ -24,31 +24,91 @@ const app = {
 
 window.StepwiseButtonBoardTest = app;
 
-// Consent gate copy. PLACEHOLDER wording — to be replaced with the research
-// team's approved bilingual informed-consent text before real recruitment.
-// This block is a UI gate only: it does not touch study logic, expected
-// answers, keys, routing, or the signed export.
+// Informed-consent front page. DRAFT written by the agent at the owner's
+// request (decision D-0122). Ethics approval is owner-asserted as granted, but
+// the consent text did not previously exist. Every bracketed [ ... ] field is
+// a PLACEHOLDER the advisor / ethics reviewer must complete and finalize
+// before real recruitment. UI gate only: it does not touch study logic,
+// expected answers, keys, routing, or the signed export.
 const CONSENT_COPY = {
   "zh-Hans": {
-    heading: "知情同意（占位文案）",
+    heading: "研究知情同意书（草案）",
     body: [
-      "【占位说明：以下为示意文案，正式版将由研究团队按已批准的知情同意书替换。】",
-      "这是一项匿名的小规模学术调查，了解普通人如何判断界面上的按钮。全部产品、按钮与试用记录均为虚构示意，不代表任何真实产品。",
-      "参与完全自愿。你可以随时关闭页面退出，不会有任何影响。我们只记录你在本页面内做出的选择，不收集姓名、联系方式或任何可识别你身份的信息。",
+      {
+        title: "研究目的",
+        text: "这是一项匿名的小规模学术研究，了解普通人如何判断界面上标注了某种功能的按钮。研究由 [研究者姓名 / 院系（待填写）] 开展。",
+      },
+      {
+        title: "你需要做什么",
+        text: "你将阅读若干虚构的“试用记录”卡片，并逐个判断某个按钮应当放到哪里。全程大约 [约 X 分钟（待填写）]。所有产品、按钮和试用记录都是虚构示意，不代表任何真实产品或其功效。",
+      },
+      {
+        title: "自愿参与与退出",
+        text: "参与完全自愿。你可以在任何时候关闭页面退出，不会有任何不利影响；即使不完成，也不会受到任何评价。",
+      },
+      {
+        title: "匿名与隐私",
+        text: "本研究不收集你的姓名、联系方式、账号或任何可识别你身份的信息。系统只记录你在本页面内做出的选择，以及一个随机生成的临时编号（仅用于区分不同作答）。",
+      },
+      {
+        title: "数据的用途与保存",
+        text: "去标识化的作答数据将用于学术研究分析，并可能以汇总形式在学术论文或报告中发表；不会公开任何能识别到个人的信息。数据的保存与管理遵循 [数据保存方案 / 期限（待填写）]。",
+      },
+      {
+        title: "风险与获益",
+        text: "本研究没有已知风险。[报酬 / 学分说明（待填写；如无补偿请注明）]。你的参与将帮助我们了解普通用户对这类判断的理解。",
+      },
+      {
+        title: "伦理审查与联系方式",
+        text: "本研究已通过 [伦理审查机构名称 / 批准编号（待填写）] 的审查。如对本研究有任何疑问，可联系 [研究者姓名 / 邮箱（待填写）]；如对参与者权益有疑问，可联系 [伦理委员会联系方式（待填写）]。",
+      },
+      {
+        title: "知情同意声明",
+        text: "勾选下方选项即表示：我已阅读并理解以上信息，我已年满 [18] 周岁，自愿参加本研究，并知道我可以随时退出。",
+      },
     ],
-    agree: "我已阅读上述说明，并自愿参加。",
+    agree: "我已阅读并理解以上信息，自愿参加本研究。",
     start: "同意并开始",
     decline: "我不同意 / 退出",
     declined: "感谢你的时间。你已退出，本页面未记录任何回答，可以直接关闭窗口。",
   },
   en: {
-    heading: "Informed consent (placeholder)",
+    heading: "Research informed-consent form (draft)",
     body: [
-      "[Placeholder: this is illustrative text. The final version will be replaced with the research team's approved informed-consent statement.]",
-      "This is an anonymous, small academic survey about how people judge on-screen buttons. All products, buttons, and trial records are fictional examples and do not represent any real product.",
-      "Participation is entirely voluntary. You may close the page and withdraw at any time with no consequence. We record only the choices you make on this page; we do not collect your name, contact details, or any information that could identify you.",
+      {
+        title: "Purpose of the study",
+        text: "This is an anonymous, small academic study of how ordinary people judge on-screen buttons that are labelled with some function. It is conducted by [researcher name / department (to be completed)].",
+      },
+      {
+        title: "What you will do",
+        text: "You will read a series of fictional “trial record” cards and decide, one at a time, where a button should go. The whole task takes about [about X minutes (to be completed)]. All products, buttons, and trial records are fictional examples and do not represent any real product or its effects.",
+      },
+      {
+        title: "Voluntary participation and withdrawal",
+        text: "Participation is entirely voluntary. You may close the page and withdraw at any time with no adverse consequence; you will not be evaluated even if you do not finish.",
+      },
+      {
+        title: "Anonymity and privacy",
+        text: "This study does not collect your name, contact details, account, or any information that could identify you. The system records only the choices you make on this page, plus a randomly generated temporary identifier used solely to distinguish separate submissions.",
+      },
+      {
+        title: "How the data is used and stored",
+        text: "De-identified responses will be used for academic research analysis and may be published in aggregate form in academic papers or reports; no individually identifiable information will be disclosed. Storage and handling follow [data-retention plan / period (to be completed)].",
+      },
+      {
+        title: "Risks and benefits",
+        text: "There are no known risks in this study. [Compensation / course-credit statement (to be completed; state if there is none)]. Your participation helps us understand how ordinary users reason about such judgements.",
+      },
+      {
+        title: "Ethics review and contact",
+        text: "This study has been approved by [ethics review body / approval number (to be completed)]. For questions about the study, contact [researcher name / email (to be completed)]; for questions about your rights as a participant, contact [ethics committee contact (to be completed)].",
+      },
+      {
+        title: "Statement of consent",
+        text: "By ticking the box below I confirm that: I have read and understood the information above, I am at least [18] years old, I take part voluntarily, and I understand I may withdraw at any time.",
+      },
     ],
-    agree: "I have read the above and volunteer to take part.",
+    agree: "I have read and understood the information above and volunteer to take part.",
     start: "Agree and begin",
     decline: "I do not agree / Exit",
     declined: "Thank you for your time. You have exited; no answers were recorded and you may close this window.",
@@ -162,7 +222,14 @@ function showWelcome() {
   agreeLabel.append(agreeBox, el("span", {}, " " + consent.agree));
   const consentSection = el("section", { class: "consent", "aria-label": consent.heading });
   consentSection.append(el("h2", {}, consent.heading));
-  for (const line of consent.body) consentSection.append(el("p", {}, line));
+  for (const item of consent.body) {
+    if (typeof item === "string") {
+      consentSection.append(el("p", {}, item));
+    } else {
+      if (item.title) consentSection.append(el("h3", {}, item.title));
+      consentSection.append(el("p", {}, item.text));
+    }
+  }
   consentSection.append(agreeLabel);
   const actions = el("div", { class: "actions" });
   actions.append(

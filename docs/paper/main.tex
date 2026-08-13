@@ -205,31 +205,9 @@ The record uses a direct hybrid mapping: computational results first, then a str
 
 \begin{figure*}[t]
 \centering
-\begin{tikzpicture}[
-    node distance=5mm,
-    box/.style={draw, rounded corners=2mm, align=left, minimum height=31mm,
-        inner xsep=2.5mm, inner ysep=2.5mm, font=\footnotesize, line width=0.7pt},
-    computation/.style={box, text width=37mm, fill=blue!6, draw=blue!60!black},
-    evidence/.style={box, text width=42mm, fill=black!3, draw=black!60},
-    action/.style={box, text width=46mm, fill=green!5, draw=green!45!black},
-    arrow/.style={-{Latex[length=2mm]}, line width=0.8pt, draw=black!75}
-]
-\node[computation] (computation) {\textbf{COMPUTATIONAL RESULTS}\\[1mm]
-READ: supported / unsupported / not evaluated\\
-TRANSFER: not tested / not evaluable / no-pass / pass};
-\node[evidence, right=of computation] (evidence) {\textbf{STRUCTURED EVIDENCE}\\[1mm]
-Comparator and exact evidence tier\\
-Interval includes zero / comparator-negative\\
-Below floor / coherence failure / missingness-limited};
-\node[action, right=of evidence] (action) {\textbf{INTERFACE ELIGIBILITY / ACTION}\\[1mm]
-READ supported: read-only diagnostic candidate within this evidence tier\\
-READ supported + TRANSFER pass: active control passes the computational gate within this evidence tier\\
-Otherwise: active control withheld};
-\draw[arrow] (computation) -- (evidence);
-\draw[arrow] (evidence) -- (action);
-\end{tikzpicture}
-\caption{Direct mapping from computational results to structured evidence and interface action. The record retains the comparator, blocking reason, and exact evidence tier rather than assigning a formal state.}
-\Description{Three boxes form a left-to-right flow. The first lists READ and TRANSFER computational statuses. The second records the comparator, evidence tier, interval, point-estimate, coherence, and missingness reasons. The third states that READ support makes a read-only diagnostic a candidate, a supported READ plus TRANSFER pass makes an active control pass the computational gate within the tier, and all other records withhold the active control.}
+\includegraphics[width=0.86\textwidth]{figures/fig1-qualification-flow.pdf}
+\caption{The qualification record maps a candidate axis through READ, the bounded prompt comparator, interval, floor, and coherence checks to an interface action---an active control passes the gate only when all checks pass; otherwise it is withheld with its blocking reason, while a supported READ remains a read-only diagnostic candidate. The record retains the comparator, blocking reason, and evidence tier rather than assigning a formal state.}
+\Description{A left-to-right decision flow: candidate axis and evidence tier, then Local READ supported, TRANSFER versus bounded prompt comparator, interval status relative to zero, point estimate reaches the 0.05 floor, and coherence passes. Passing all checks yields an active control that passes the gate within the evidence tier; each failed check routes to an active control withheld box labelled with its blocking reason (READ not supported, TRANSFER not tested, interval includes zero, below the 0.05 floor, coherence failure). A supported READ separately yields a read-only diagnostic candidate within the evidence tier.}
 \label{fig:evidence-flow}
 \end{figure*}
 
@@ -367,9 +345,9 @@ The contract turns that aggregate into three structured evidence profiles: insuf
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{figures/c1-ratio-ci.pdf}
-\caption{Exploratory Qwen READ facade ratios and 95\% intervals across four axes.}
-\Description{Deliberation, skepticism, and uncertainty ratios lie below the ratio-one reference, while focus overshoots it. The companion text reports that the Llama result has the same aggregate count but a different axis composition.}
+\includegraphics[width=\linewidth]{figures/fig2-read-facade.pdf}
+\caption{Exploratory CAA-style READ facade ratios and 95\% intervals across four axes in both model families (Qwen2.5-7B and Llama-3-8B); the criterion is met when the complete CI lies below $r=1$. Deliberation and skepticism meet it in both models, uncertainty only in Qwen, and focus only in Llama, so READ is model-, axis-, layer-, and method-specific.}
+\Description{Facade ratios on a log-2 axis for deliberation, skepticism, uncertainty, and focus, each with Qwen and Llama points and 95 percent intervals against a random-null reference and an r equals one line. Deliberation and skepticism sit below one in both models; uncertainty is below one only for Qwen; focus is below one only for Llama and overshoots for Qwen.}
 \label{fig:c1-ratio-ci}
 \end{figure}
 
@@ -421,7 +399,7 @@ Uncertainty & TRANSFER no-pass; frozen contrasts are comparator-negative, while 
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{figures/c2-calibration-harm.pdf}
+\includegraphics[width=\linewidth]{figures/fig3-uncertainty.pdf}
 \caption{Paired steer-minus-bounded-prompt uncertainty effects and Bonferroni-corrected intervals across the four tested model–method cells, under the frozen scorer with missing confidences imputed. For the Qwen–CAA cell a format-and-missingness recheck leaves the all-generation sign unidentified; the other three cells were not rechecked.}
 \Description{All four uncertainty point estimates are negative relative to the selected prompt comparator, and their intervals exclude zero under the frozen scorer. The figure does not show direct steer-versus-unsteered-baseline harm or resolve missingness.}
 \label{fig:c2-calibration-harm}

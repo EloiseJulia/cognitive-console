@@ -1,5 +1,28 @@
 # STAGED FOLD-IN DRAFT — PENDING AUDIT, NOT BLESSED
 
+> ## FINAL DISPOSITION 2026-08-13 (Writer, owner-approved): **NOT LANDED — WILL NOT LAND for this submission.**
+> Independent hostile correctness audit (`audit-resref`, 2026-08-13) verdict = **CONDITIONAL**:
+> the committed per-item statistics are **independently reproducible** (skepticism mean
+> −0.0134653465, 98.33% CI [−0.0481881188, +0.0221782178], n=505; uncertainty mean
+> −0.0902376138, CI [−0.1237460424, −0.0582165455], n=813; item-pool hashes match; no
+> frozen-ID / DEV-TEST overlap; scorer identity confirmed; coherence passes; pairing clean;
+> E-0005/6/11 untouched; pytest 10 passed) — BUT the prereg-required **raw audit bundle**
+> (sealed generations / parse diagnostics / truncation / degeneracy / DEV artifacts /
+> TEST-once marker) is **missing from the branch AND absent from the accessible A800**
+> (experiment_id `c2b-resolution-caa-qwen-test-20260812` was run 8/12 on another host;
+> raw artifacts unrecoverable; owner does not recall storage location). The audit therefore
+> cannot independently verify the **missingness/imputation handling** on the uncertainty axis
+> (imputes missing confidence → 0.5), and the prohibition on rerun (TEST-once freeze) makes the
+> bundle non-regenerable. Because uncertainty is the project's historical missingness failure
+> mode (E-0013 complete-case vs all-generation bounds crossing zero), landing a powered
+> comparator-negative claim that cannot be independently re-checked was judged an unacceptable
+> overclaim risk. **Decision: do NOT fold in; submit the conservative version** (uncertainty
+> retains the existing "one rechecked cell missingness-limited / three unrechecked" wording).
+> The paper's core spine (0/12, B1 satisfiability, three profiles, comparator-bound contract,
+> substitution-only scope) does not depend on this fold-in. Flagged for Manager: MINOR prereg
+> hygiene — `docs/specs/resolution-refinement-prereg.md:172` still contains the phrase
+> "Powered null"; skepticism must only ever be described as a **sub-floor bounded estimate**.
+
 > **STATUS: DO NOT LAND. DO NOT `\input`. DO NOT MERGE INTO `main.tex`.**
 > This file is a *staged* draft of proposed edits for two experiments. Every number
 > below is currently `valid_for_paper=false` and has **not** cleared the required

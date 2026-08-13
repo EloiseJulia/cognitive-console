@@ -476,7 +476,7 @@ The procedure therefore returns more than pass or no-pass: it connects each comp
 
 The record is designed to guard against three substitutions in interface reasoning: READ for TRANSFER, absolute output change for comparison against the declared alternative, and evidence from one tier for another. It reports the computational result, preserves the structured evidence or blocking reason, and then specifies the record-specific interface action.
 
-\paragraph{What a designer gains today.} Even when every candidate is a no-pass, the record is immediately actionable: it names which control not to ship now, which representation may still be exposed read-only, which axis most repays further measurement (skepticism, whose margin is within reach), and which needs measurement repair before any claim (uncertainty's missingness)---while blocking the two substitutions it is built to prevent, promoting a control on READ or on output movement alone.
+\paragraph{What a designer gains today.} Even when every candidate is a no-pass, the record is immediately actionable: it names which control not to ship now, which representation may still be exposed read-only, which axis is resolution-limited near the floor and can be re-measured directly (skepticism), and which needs measurement repair before any claim (uncertainty's missingness)---while blocking the two substitutions it is built to prevent, promoting a control on READ or on output movement alone.
 
 \subsection{Worked Record: Qwen--CAA Uncertainty}\label{worked-record-qwencaa-uncertainty}
 
@@ -578,6 +578,8 @@ Because no latent behavioral positive control passes, the no-pass grid cannot di
 Prompt endpoint liveness and random-direction sensitivity show that parts of the pipeline respond; they do not validate the target intervention. The raw-magnitude follow-up narrows simple under-scaling only for Qwen single-layer CAA, and CAA/ITI coefficients do not imply a common injected norm. {}% FL-026
 {}% FL-054
 {}% FL-078
+
+As a prospective check that the qualification rule can \emph{qualify} a control and not only withhold one, we ran the unchanged adjudicator on a predeclared, format-following prompt effect over a pool disjoint from the tested items. It accepted a non-degenerate instruction advantage (\(\Delta=0.60\), 98.33\% item-cluster bootstrap CI \([0.45,0.75]\)) and rejected both an exact null and an independently resampled noisy null (\(\Delta=0.01\), CI \([-0.03,+0.05]\)). The qualification rule is therefore mechanically satisfiable and discriminative---the all-fail grid is not an artifact of an unsatisfiable gate---but this validates basic decision-rule behavior, not latent-steering efficacy or near-threshold calibration. {}% experiment_ids: prospective-pc-noisy (feature/positive-control-noisy@364ee43) + strong-negative (feature/positive-control-strong-negative@5d6dbe1); PENDING lineage reconciliation onto the writing branch
 
 The diagnostic studies provide supporting context: a direct refusal prompt reaches 95.5\%, a random uncertainty direction shifts the measured outcome by \(-0.24\) with 95\% CI \([-0.36,-0.12]\), and bounded CAA produces 0\% refusal. {}% FL-051
 {}% FL-052

@@ -1,0 +1,33 @@
+Using the latest cached version of the dataset since mandarjoshi/trivia_qa couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'rc.nocontext' at /home/elzhang/cc_l0/hf_home/datasets/mandarjoshi___trivia_qa/rc.nocontext/0.0.0/0f7faf33a3908546c6fd5b73a660e0f8ff173c2f (last modified on Sun Aug  2 15:41:20 2026).
+Using the latest cached version of the dataset since mandarjoshi/trivia_qa couldn't be found on the Hugging Face Hub (offline mode is enabled).
+Found the latest cached dataset configuration 'rc.nocontext' at /home/elzhang/cc_l0/hf_home/datasets/mandarjoshi___trivia_qa/rc.nocontext/0.0.0/0f7faf33a3908546c6fd5b73a660e0f8ff173c2f (last modified on Sun Aug  2 15:41:20 2026).
+[noisy-pc] generating condition (i) strong=exactly-two-words ...
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 4451.76it/s]
+[noisy-pc]   strong compliance_rate=0.600
+[noisy-pc] generating condition (ii) baselineA=neutral ...
+[noisy-pc]   baselineA compliance_rate=0.000
+[noisy-pc] generating condition (iii) baselineB=neutral (indep seed) ...
+[noisy-pc]   baselineB compliance_rate=0.000
+
+============ NOISY POSITIVE CONTROL (GATED — PENDING HOSTILE AUDIT) ============
+code_commit=f16ce51109300092a4288257b4035720c3d08a0c dirty=True
+endpoint=exactly_two_words(==2)  budget=32  k=5
+compliance rates: strong=0.600 baselineA=0.000 baselineB=0.000
+fresh disjointness vs REAL frozen E-0006: id_overlap=[] text_overlap=[] (frozen_n=80, jsonl_sha=9c1e12ccef16)
+
+[POSITIVE(strong - baselineA)] expected=PASS
+  mean_diff=0.6000  CI(0.983333)=[0.4453,0.7509]  width=0.3057  excl0=True  mean>=delta(0.05)=True
+  per-item diff: std=0.4613 distinct_values=5 degenerate_point_CI=False
+  coherence_ok=True (treat_deg=0.0000 ceiling=0.0252)  => PASS=True
+
+[NEGATIVE(baselineB - baselineA)] expected=FAIL
+  mean_diff=0.0000  CI(0.983333)=[0.0000,0.0000]  width=0.0000  excl0=False  mean>=delta(0.05)=False
+  per-item diff: std=0.0000 distinct_values=1 degenerate_point_CI=True
+  coherence_ok=True (treat_deg=0.0032 ceiling=0.0252)  => PASS=False
+
+POSITIVE non-degenerate (proper CI + >=3 distinct per-item diffs) = True
+GATE satisfiable+discriminative (POSITIVE PASS & NEGATIVE FAIL) = True
+wall_clock_seconds=473.4
+wrote results/noisy_pc_20260813/noisy_pc_result.json
+wrote results/noisy_pc_20260813/raw_generations.jsonl (sha256=0b29eebf45eec37d3cc7507f12d19246ce20cfb8ff92eb4e1a404c8e549aad8d)

@@ -1,5 +1,3 @@
-% Conditional IUI draft generated from pipeline/CONDITIONAL_PAPER.md.
-% Regenerate with the command documented in pipeline/BUILD.md.
 \documentclass[manuscript,review,anonymous]{acmart}
 
 \AtBeginDocument{\providecommand\BibTeX{{Bib\TeX}}}
@@ -17,7 +15,6 @@
 
 \providecommand{\tightlist}{%
   \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
-\newcommand{\Gap}[1]{\textcolor{red}{[MISSING FACT: #1]}}
 \newcommand{\TopRule}{\toprule}
 
 \begin{document}
@@ -423,7 +420,7 @@ Uncertainty & TRANSFER no-pass; frozen contrasts are comparator-negative, while 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{figures/c2-calibration-harm.pdf}
-\caption{Paired steer-minus-bounded-prompt uncertainty effects and Bonferroni-corrected intervals across the four tested model–method cells. These are frozen-scorer, complete-case contrasts; the sign is not identified once all-generation missingness is admitted (see the Qwen–CAA recheck).}
+\caption{Paired steer-minus-bounded-prompt uncertainty effects and Bonferroni-corrected intervals across the four tested model–method cells, under the frozen scorer with missing confidences imputed. For the Qwen–CAA cell a format-and-missingness recheck leaves the all-generation sign unidentified; the other three cells were not rechecked.}
 \Description{All four uncertainty point estimates are negative relative to the selected prompt comparator, and their intervals exclude zero under the frozen scorer. The figure does not show direct steer-versus-unsteered-baseline harm or resolve missingness.}
 \label{fig:c2-calibration-harm}
 \end{figure}
@@ -519,7 +516,7 @@ For this record, the team pauses the slider: the \textbf{active control is withh
 
 \subsection{Display Requirements Implied by the Record}\label{display-requirements-implied-by-the-record}
 
-An interface that exposes this record would need to keep the relative comparison visible. Showing only the negative steer-minus-prompt estimate could imply that steering harmed baseline calibration; the Qwen--CAA format-and-missingness recheck instead places steering near baseline and the comparator above it. {}% FL-044
+An interface that exposes this record would need to keep the relative comparison visible. Showing only the negative steer-minus-prompt estimate could imply that steering harmed baseline calibration; the Qwen--CAA format-and-missingness recheck instead places steering near baseline and the comparator above it under the frozen scorer. {}% FL-044
 The record must also expose missingness rather than letting a complete-case interval stand in for all generations. {}% FL-046
 {}% FL-049
 Finally, the evidence tier must prevent Qwen--CAA READ from appearing as evidence for Llama, ITI, another layer, or another task.
@@ -543,7 +540,7 @@ They do not require new categorical labels. The record's practical contribution 
 
 \subsection{Why the Comparator Changes the Interface Claim}\label{why-the-comparator-changes-the-interface-claim}
 
-An active latent control makes a claim about consequences, not merely movement. In the Qwen--CAA format-and-missingness recheck, the comparator field identifies prompt improvement over a steer-near-baseline condition rather than direct steering harm. {}% FL-044
+An active latent control makes a claim about consequences, not merely movement. In the Qwen--CAA format-and-missingness recheck, the comparator field records prompt improvement under the frozen scorer over a steer-near-baseline condition rather than direct steering harm. {}% FL-044
 {}% FL-045
 The comparator changes what the same observed gap means for the interface.
 

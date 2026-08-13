@@ -1834,3 +1834,91 @@ experiments:
     paper evidence. Human data, recruitment, ethics, timing, public deployment,
     claim/result changes, exploratory-to-confirmatory upgrade, and Protocol
     Freeze remain unauthorized.
+- experiment_id: noisy-pc-f16ce51-20260813
+  parent: null
+  hypothesis_id: H-gate-validity
+  claim_ids: []
+  type: diagnostic
+  status: done
+  code_commit: f16ce51109300092a4288257b4035720c3d08a0c
+  predeclaration_commit: 0573a78   # PRECEDES the run/script commits; locks endpoint/scorer/budget/pool-range/contrasts/seeds before any generation
+  dirty_tree: true   # ONLY untracked output/helper files on host; git status --porcelain showed NO tracked-file modification; git diff main -- src and -- data are empty
+  data_hash: sha256:0b29eebf45eec37d3cc7507f12d19246ce20cfb8ff92eb4e1a404c8e549aad8d  # raw_generations.jsonl (795 records)
+  env_hash: null
+  config_hash: null
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: >-
+    80 FRESH TriviaQA rc.nocontext validation items (parse_uncertainty_rows),
+    deterministic contiguous slice = first 80 parsed items with id-index >=100
+    (triviaqa-00100..00179), VERIFIED disjoint by item-id AND normalized-question-
+    text hash from the REAL frozen E-0006 uncertainty artifact (manifest ids +
+    jsonl prompts; host jsonl sha256 9c1e12ccef16 == manifest artifact_sha256) and
+    from the E-0012 pool (offset 500). Split 27 DEV / 53 TEST (split_dev_test
+    dev_fraction=1/3 seed=20260723); TEST evaluated only.
+  seed: 20260723   # split + bootstrap; gen base seeds strong/baselineA=20260723, baselineB=20260724; fresh pool is a deterministic slice (no random draw)
+  hardware: A800 GPU3 only, CUDA_VISIBLE_DEVICES=3, bfloat16
+  started_at: '2026-08-13T07:06:54+00:00'
+  ended_at: '2026-08-13T07:14:47+00:00'
+  exit_code: 0
+  raw_metrics:
+    wall_clock_seconds: 473.4
+    a800_gpu_hours: 0.1315
+    n_test: 53
+    k_samples: 5
+    max_new_tokens: 32
+    temperature: 0.7
+    do_sample: true
+    compliance_rate_strong: 0.6
+    compliance_rate_baselineA: 0.0
+    compliance_rate_baselineB: 0.0
+    strong_per_item_distinct_values: [0.0, 0.2, 0.6, 0.8, 1.0]
+    strong_n_fractional_items: 8
+  summary_metrics:
+    endpoint: exactly_two_words(token_count==2)   # NOVEL predeclared deterministic scorer; decision rule via UNMODIFIED frozen adjudicate_c2b
+    positive_mean_diff: 0.6
+    positive_ci_0p98333: [0.4453, 0.7509]
+    positive_ci_width: 0.3057
+    positive_per_item_diff_std: 0.4613
+    positive_n_distinct_per_item_diff: 5
+    positive_ci_is_degenerate_point: false
+    positive_coherence_ok: true
+    positive_pass: true
+    positive_non_degenerate: true
+    negative_mean_diff: 0.0
+    negative_ci_0p98333: [0.0, 0.0]
+    negative_pass: false
+    gate_satisfiable_and_discriminative: true
+  artifacts:
+  - results/noisy_pc_20260813/noisy_pc_result.json
+  - results/noisy_pc_20260813/REPORT.md
+  - results/noisy_pc_20260813/raw_generations.POINTER.md
+  - results/noisy_pc_20260813/run.log
+  - docs/research/2026-08-13-noisy-positive-control-predeclaration.md
+  - scripts/run_noisy_positive_control.py
+  failure_reason: null
+  valid_for_paper: false
+  scientific_status: PENDING_HOSTILE_RESULT_AUDIT
+  validation_notes: >-
+    Prospective, outcome-blind NOISY (non-degenerate) POSITIVE CONTROL of the
+    frozen comparator-bound gate, fixing the two hostile-audit rejections: (1) REAL
+    disjointness verified against the ACTUAL frozen E-0006 artifact (manifest ids +
+    jsonl prompts; hard-fail on any id/text overlap) rather than a re-sampled
+    reconstruction; (2) a NON-DEGENERATE noisy endpoint (answer in exactly two
+    words; whitespace-token-count==2) whose strong-arm per-item compliance is
+    fractional (8/53 items fractional; distinct per-item outcomes 0.0/0.2/0.6/0.8/
+    1.0) so the item-cluster bootstrap CI is a proper interval, NOT the [1,1]/[0,0]
+    collapse of the rejected ANSWER: straw control. POSITIVE (strong-baselineA)
+    PASS: mean_diff=0.600, CI(0.983333)=[0.4453,0.7509] width 0.3057 excludes 0,
+    mean>=delta, coherence clean, non_degenerate=True. NEGATIVE (baselineB-
+    baselineA) FAIL: mean_diff=0.0, CI=[0,0] (a true null; neutral prompt never
+    yields exactly two words). gate_satisfiable_and_discriminative=True. Decision
+    rule via UNMODIFIED frozen adjudicate_c2b; predeclaration commit 0573a78
+    precedes the script (f16ce51) and this result. GPU3 only, 0.1315 GPU-h (<=0.5
+    cap); GPUs 0-2 untouched; no frozen artifact touched (git diff main -- src and
+    -- data empty); not blessed/pushed/merged; main untouched; no tuning-to-pass.
+    SCOPE: the gate accepts a PROMPT/instruction effect and rejects a null on fresh
+    outcome-blind data with realistic variance; it says NOTHING about a latent/
+    steering-vector pass. Honest caveat: the non-degenerate spread is concentrated
+    in the strong arm; the neutral baselines are uniformly 0.0, which is the correct
+    behavior of a genuine null, materially different from the straw control whose
+    POSITIVE arm was the degenerate [1,1].

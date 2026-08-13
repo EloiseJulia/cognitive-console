@@ -1,0 +1,463 @@
+\documentclass[sigconf]{acmart}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{placeins}
+\usepackage{seqsplit}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,decorations.pathreplacing,shapes.geometric}
+\DeclareRobustCommand{\pathtt}[1]{\texttt{\seqsplit{#1}}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    Bib\TeX}}}
+
+\setcopyright{none}
+\settopmatter{printacmref=false, printccs=false, printfolios=true}
+\renewcommand\footnotetextcopyrightpermission[1]{}
+\acmConference[IUI Anonymous Submission]{ACM International Conference on Intelligent User Interfaces}{Anonymous submission}{Under review}
+
+\ccsdesc[500]{Human-centered computing~Interactive systems and tools}
+\ccsdesc[300]{Computing methodologies~Natural language generation}
+\keywords{cognitive consoles, latent steering, prompt control, calibration, human-AI interaction}
+
+\title{When Does a Legible Latent Axis Earn a Control? A Comparator-Bound Evaluation Contract for Latent-Control Interfaces}
+\renewcommand{\shorttitle}{When Does a Legible Latent Axis Earn a Control?}
+
+\author{Anonymous Authors}
+\affiliation{%
+  \institution{Anonymous Institution}
+  \city{Anonymous City}
+  \country{}}
+\email{anonymous@example.com}
+
+\begin{document}
+
+\begin{abstract}
+Interfaces increasingly place sliders beside named latent properties, implying control over the corresponding behavior. Readable directions and changed outputs do not support that promise alone: prompt-based LLM interfaces already give users a textual comparator channel. We contribute a comparator-bound evaluation gate. A latent axis earns control status only through reliable incremental behavioral gain over a bounded, reconstructable prompt comparator under a preregistered margin and coherence requirement. A five-field record captures READ, TRANSFER, the comparator, calibration warnings, and the exact evidence tier, mapping each computational result to a blocking reason and record-specific interface action.
+
+We instantiate the gate across two models, two additive steering families (CAA and ITI), and three behavioral axes. No tested cell demonstrated superiority; no latent arm passes its behavioral criterion. The gate withholds all twelve procedural axis-cell candidates while preserving resolution differences: All four steer-vs-prompt uncertainty contrasts were resolved in the negative direction, deliberation yields mixed evidence, and skepticism remains underpowered near the registered margin. The previously observed split seed and four prospectively frozen new DEV/TEST split seeds preserved the verdict across all five over the shared item pool. Positive controls show endpoint response and detection of prompt- and random-direction-induced behavioral changes; scale correction weakens under-scaling as an explanation within the coherent range. The application establishes a scoped qualification boundary for these interventions and an operational, reconstructable method for deciding what a latent-control interface can honestly promise.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+\label{sec:introduction}
+
+Alex is drafting a difficult message with an AI assistant and sees a slider labeled ``skepticism.'' Moving it upward appears to promise that the assistant will challenge a false premise more reliably. The widget makes a control claim. Yet the evidence commonly used to justify latent controls, such as readable features or changed outputs, does not show that the latent route improves behavior beyond instructions that a user can already give.
+
+Anthropic's 24-hour Golden Gate Claude research demonstration made direct amplification of an internal Claude~3 Sonnet feature publicly visible, distinct from role-play or a system prompt; the public demonstration did not include a matched prompt-comparator qualification \cite{anthropic2024goldengate}.
+
+This paper changes the metric. A candidate latent affordance must demonstrate reliable incremental behavioral control over a bounded prompt channel, not merely movement in activations or text. The comparator is deliberately strong but fair. Sixteen authored prompt candidates cover varied wording and specificity; prompt and latent settings are selected on DEV only, and neither channel sees TEST during selection. The bounded channel is usable and reconstructable. It is harder to dismiss than a single casual prompt.
+
+Figure~\ref{fig:concept} previews the resulting artifact logic. In the current study, READ can support read-only diagnosis within a local tier, while every tested active control is withheld because no comparator-bound TRANSFER result passes.
+
+\begin{figure*}[t]
+  \centering
+  \input{figures/concept.tex}
+  \caption{Direct mapping from an exact-tier computational record to its blocking reason and interface action.}
+  \Description{A candidate record binds model, method, direction and layer, task and outcome, protocol and version, and comparator. READ, TRANSFER, coherence, and calibration evidence produce a blocking reason and then determine read-only diagnostic and active-control eligibility. A comparative pass applies only within the exact tier and does not imply deployment permission or user benefit.}
+  \label{fig:concept}
+\end{figure*}
+
+The problem matters at the interface. People monitor care, uncertainty, and resistance to faulty premises while using generative systems \cite{tankelevitch2024metacog}, and interface signals shape trust and reliance \cite{lee2004trust}. Confidence and explanation cues do not reliably improve calibration; some interventions intended to reduce over-reliance have weak or adverse effects \cite{bansal2019beyond,bucinca2021trust}. Human-AI guidance consequently links exposed information to an available action \cite{amershi2019guidelines,liao2024transparency}. A latent slider supplies that action visually, whether or not its behavioral qualification has been tested.
+
+Prompt instruments, feature-steering interfaces, personalization steering, human-centered activation-steering workflows, and latent-space manipulation tools already bring model structure to the interaction surface \cite{riche2025aiinstr,huang2025steering,bo2026steerable,labarta2026attribution,raval2026latman}. Prior benchmarks also compare prompting with representation-level interventions: AxBench evaluates prompting alongside SAEs, LAT, supervised steering vectors, linear probes, and ReFT \cite{wu2025axbench}. Bo et al.\ compare steering interfaces with an unscaffolded prompting-only baseline. Our contribution is therefore not the first prompt--steering comparison or a universal null; it is a local, per-affordance qualification record. Mishra et al.\ show that steering can reach residual states that bounded prompting does not reproduce \cite{mishra2026nonsurj}, but internal non-surjectivity does not entail behavioral advantage. Trained steering can also mimic prompting \cite{heyman2026steer}. The right question is local and comparative: has this method, on this axis and model, earned actionability over the existing channel?
+
+We ask:
+\begin{quote}
+\emph{What evidence should a latent-control interface require before a readable axis is presented as an actionable control?}
+\end{quote}
+We answer with a comparative evidence gate and its five-field record format. READ records whether a label has representational support. TRANSFER records the preregistered behavioral verdict; the bounded comparator states what the existing prompt channel achieved; the warning preserves contrast-specific measurement limits; and the evidence tier prevents a result from migrating across models or methods. The contract follows the observed failure modes rather than preceding them as a generic checklist.
+
+The paper makes three contributions:
+\begin{enumerate}
+  \item \textbf{A comparative criterion for latent actionability.} Control requires reliable incremental behavioral performance over a bounded prompt channel; legibility and output movement are insufficient.
+  \item \textbf{A five-field interface record for the evidence gate.} READ, TRANSFER, comparator, calibration warning, and evidence tier preserve the computational result, blocking reason, and resulting interface action.
+  \item \textbf{A preregistered worked boundary.} The complete CAA/ITI by Qwen/Llama grid, split-seed analysis, and positive-control studies instantiate the gate without extending the conclusion beyond the tested single-layer additive setting.
+\end{enumerate}
+
+The worked evaluation covers two 7--8B instruction-model families and two naive additive steering families. The latent coefficient \(\alpha\) is selected from \(\{2,4,6,8,12,16,24\}\) under the frozen method-specific scaling in Section~\ref{sec:methods}. Paired TEST comparisons use item-cluster bootstrap intervals, multiplicity control across axes, a \(0.05\) superiority margin, and the exact coherence gate. The core comparison was preregistered before TEST. The original split seed had already been observed before four new DEV/TEST split seeds were prospectively frozen over the shared item pool. Positive controls probe whether endpoint inactivity, instrument insensitivity, or under-scaling could explain a non-pass; the TOST analysis is post-hoc and exploratory.
+
+The frozen rule yields no superior cell. Four prospectively frozen new split seeds plus the previously observed frozen seed yielded the same verdict across all five over the shared item pool; this analysis measures split sensitivity. The information differs by axis: deliberation is mixed, skepticism is underpowered for the registered \(0.05\) margin, and uncertainty yields a repeated steer-vs-bounded-prompt negative contrast under the frozen scorer. In the rechecked Qwen/CAA lineage, steering stays near baseline while the bounded prompt improves; complete-case analysis remains negative, but adversarial missingness bounds cross zero and the other three cells were not format-rechecked.
+
+Positive controls narrow the alternatives without manufacturing a stronger null. We selected refusal as an intended easy positive control: a direct prompt moves that endpoint, and a random direction moves the uncertainty measure. Raw-magnitude CAA substantially weakens the under-scaling explanation within the coherent range, but no latent behavioral positive control passes and effects below the assay's resolution remain possible.
+
+Frozen artifacts populate the contract visualized by the console. The result is a versioned decision record: evidence first, affordance second.
+
+\section{Related Work}
+\label{sec:related-work}
+
+\subsection{Transparency Does Not Qualify Actionability}
+
+Transparency research asks what to expose and whether the exposure supports human judgment \cite{liao2024transparency}. Generative-AI users must monitor care, uncertainty, and self-correction alongside final answers \cite{tankelevitch2024metacog}, yet interface cues can alter reliance without improving calibration \cite{lee2004trust,bansal2019beyond,bucinca2021trust}. Human-AI guidelines accordingly connect information to available action \cite{amershi2019guidelines}. They do not provide a test for when an interpretable latent axis deserves an action-oriented widget.
+
+Several systems make that omission concrete. Huang and Lim expose SAE features for lay steering \cite{huang2025steering}; Labarta et al.\ support expert activation-steering work in vision and CLIP \cite{labarta2026attribution}; Raval et al.\ make embeddings manipulable \cite{raval2026latman}; and AI-Instruments turns prompts into reusable interface objects \cite{riche2025aiinstr}. System-prompt and instruction-conflict studies further show that control is negotiated across layers with uneven authority and visibility \cite{neumann2026whocontrols,he2025coninstruct}. None of these interface forms, by itself, supplies comparative behavioral qualification for each latent affordance.
+
+Bo et al.\ study three activation-steering designs for cold-start personalization: SELECT, CALIBRATE, and LEARN. Their Gemma~2 9B IT evaluation includes an unscaffolded PROMPT baseline \cite{bo2026steerable}. The exploratory within-subject study (\(n=14\)) evaluates preference expression and alignment through computational and self-reported measures, finding heterogeneous user preferences rather than blanket superiority \cite{bo2026steerable}. That work supplies user evidence about interaction designs; our complementary target is a preregistered, per-axis model-evidence gate against a bounded selected prompt comparator, with an explicit margin, coherence check, and evidence tier.
+
+\subsection{Activation Steering and the Prompt Comparator}
+
+We compare two established intervention families. Contrastive Activation Addition derives a mean-difference direction from paired examples and adds it during inference \cite{rimsky2024caa}. Inference-Time Intervention uses probe-derived directions to alter truthful-answer behavior \cite{li2023iti}. Activation addition and representation engineering broaden the family \cite{turner2023actadd,zou2023repe}, while instruction-steering work connects natural-language instructions to activation-space interventions \cite{stolfo2025instr}. These methods establish internal intervention and output movement. An interface still needs to know whether the intervention adds behavioral control over prompting.
+
+Steering can be brittle or unsafe, and its effects depend on context \cite{fan2026asteer,korznikov2025rogue}. Sprejer et al.\ report capability-behavior trade-offs for SAE feature steering relative to prompting \cite{sprejer2026mindgap}; their task, method, and registration differ, but the comparator exposes the same design risk. Heyman and Vandeputte show that trained steering can mimic prompting \cite{heyman2026steer}. Their result is also a boundary: our evidence concerns the tested bounded naive additive CAA/ITI convention, while trained or stronger methods require a new qualification record.
+
+AxBench makes the prompt comparison explicit at benchmark scale, evaluating prompting against SAEs, LAT, supervised steering vectors, linear probes, and ReFT on Gemma-2-2B/9B \cite{wu2025axbench}. Under its Concept500 steering protocol, after per-concept factor selection, prompting has a higher mean overall steering score than the representation-steering methods compared in Table~2. We therefore do not claim the first prompt--steering comparison. AxBench ranks methods; our unit of decision is one interface affordance under a bounded DEV-selected comparator, matched-item inference, a registered \(0.05\) margin, Bonferroni correction, coherence, and an exact-tier interface action.
+
+\subsection{Internal Legibility and Behavioral Transfer}
+
+We separate two claims that are often compressed into the phrase ``latent control.'' The first is representational: an internal direction is interpretable or readable. The second is behavioral: intervening on that direction produces a useful outcome. Mishra et al.\ show internal non-surjectivity, where bounded prompts do not reproduce all steered residual states \cite{mishra2026nonsurj}. That result motivates our question and leaves the behavioral comparison open. Our evaluation procedure tests that comparison on shared items.
+
+Basu et al.\ directly quantify a representation-to-actionability gap in clinical triage: highly discriminative internal probes coexist with substantially lower output sensitivity, and the study finds at-best partial correction across its four intervention arms \cite{basu2026actionability}. Their Arm~1 includes a safety-focused prompt-engineering condition. The study is not, however, organized around one DEV-selected, matched-item prompt comparator and one superiority estimand across all four arms, nor does it produce a latent-control interface record.
+
+The contribution lies in the interface decision, not in first observing a prompt comparison or an interpretability--actionability gap. Prior work already establishes both empirical premises \cite{wu2025axbench,basu2026actionability,bo2026steerable}; the open step is an explicit per-affordance gate that binds the selected comparator, margin, coherence requirement, measurement warning, and evidence tier to the resulting interface action. We contribute that gate and its artifact-backed record format, not a new vector, broad benchmark, or universal steering claim. Table~\ref{tab:novelty-neighbors} summarizes the closest contrasts.
+
+\begin{table*}[t]
+  \centering
+  \caption{Nearest-neighbor systems and the interface decision each leaves open.}
+  \label{tab:novelty-neighbors}
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{L{0.23\linewidth}L{0.32\linewidth}L{0.37\linewidth}}
+    \toprule
+    Prior work & What it establishes & What remains for an interface decision \\
+    \midrule
+    Huang and Lim \cite{huang2025steering} & A lay interface for SAE feature steering and persona construction. & Whether each visible feature has comparative behavioral evidence sufficient for a control affordance. \\
+    Bo et al. \cite{bo2026steerable} & SELECT, CALIBRATE, and LEARN interfaces for cold-start personalization, compared with an unscaffolded PROMPT baseline in an exploratory within-subject study (\(n=14\)). & Whether each candidate affordance passes a preregistered per-axis qualification against a bounded selected prompt comparator, with margin, coherence, and evidence tier. \\
+    Wu et al.\ (AxBench) \cite{wu2025axbench} & A method-level benchmark comparing prompting with SAEs, LAT, supervised steering vectors, linear probes, and ReFT on Gemma-2-2B/9B. & A per-affordance interface decision using a bounded DEV-selected comparator, matched items, registered margin, multiplicity correction, coherence, warning, and evidence tier. \\
+    Basu et al. \cite{basu2026actionability} & A 400-vignette clinical study of the gap from internal representation to error correction; Arm~1 includes safety-focused prompt engineering. & A uniform matched prompt comparator across intervention arms and a widget-level qualification record with an explicit interface action. \\
+    Riche et al.; Labarta et al.; Raval et al. \cite{riche2025aiinstr,labarta2026attribution,raval2026latman} & Prompt instruments, expert activation-steering workflow, and embedding-visualization manipulation. & A prompt-vs-latent behavioral contract for LLM generation. \\
+    Mishra et al. \cite{mishra2026nonsurj} & Internal residual-state non-surjectivity under bounded prompts. & Whether internal reach yields superior user-visible behavior. \\
+    Heyman and Vandeputte \cite{heyman2026steer} & Trained steering that mimics prompting. & Evidence local to the trained method; it bounds our naive-method claim. \\
+    Sprejer et al. \cite{sprejer2026mindgap} & SAE steering can create capability-behavior trade-offs relative to prompting. & A preregistered CAA/ITI comparison on metacognitive outcomes and an interface decision rule. \\
+    Rimsky et al.; Li et al. \cite{rimsky2024caa,li2023iti} & CAA and ITI steering methods. & Whether these methods beat a bounded prompt comparator without coherence loss. \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+\section{From Interface Risk to Evaluation Contract}
+\label{sec:contract-derivation}
+
+Placing a slider beside an interpretable direction tells the user that dragging it will change the named behavior, even when the evidence establishes only readability or output movement. The evidence motivated a set of observed patterns, inconclusive states, and prospective safeguards. The contract records those distinctions and any future evidence that changes them.
+
+Each field answers a specific breakdown:
+\begin{enumerate}
+  \item \textbf{READ} prevents a readable CAA direction from lending its label to an unmeasured ITI direction or from granting actionability by itself.
+  \item \textbf{TRANSFER} blocks activation, logit, or output movement from standing in for a scored behavioral pass on the intended outcome.
+  \item \textbf{BOUNDED PROMPT COMPARATOR} records the existing channel because output movement can conceal that a usable prompt already reaches the same or better behavior.
+  \item \textbf{CALIBRATION WARNING} preserves the exact contrast and missingness limits, preventing steer-vs-prompt evidence from being rendered as direct steer-vs-baseline harm.
+  \item \textbf{EVIDENCE TIER} binds the verdict to its model, method, direction and layer, task and outcome, protocol and version, comparator, and inferential resolution because those dimensions diverged in the artifacts.
+\end{enumerate}
+
+Model cards and datasheets provide a precedent for attaching scope and provenance to technical artifacts \cite{mitchell2019modelcards,gebru2021datasheets}. Our record operates at the level of one candidate control and adds a comparative behavioral gate: evidence is not merely documented after deployment but determines whether actionability is granted.
+
+The mapping is direct. READ support can justify a read-only diagnostic candidate within its tier. Missing, mismatched, untested, failed, underpowered, incoherent, or measurement-limited evidence is recorded as the blocking reason for active control. Active control passes the computational gate only when the specified intervention clears the behavioral comparison and coherence requirements within the exact same evidence tier.
+
+\subsection{From Candidate Evidence to Interface Action}
+
+The contract can be applied as a compact design checklist:
+\begin{enumerate}
+  \item \textbf{Specify the candidate and tier.} Bind model, method, direction and layer, task and outcome, protocol and version, and comparator.
+  \item \textbf{Define the target outcome and READ evidence.} State what behavior the proposed control names and whether that semantic label has local representational support.
+  \item \textbf{Bound a usable comparator.} Select both the prompt and latent channels without TEST access, and preserve the prompt budget and selected comparator in the record.
+  \item \textbf{Run TRANSFER with coherence.} Test the preregistered comparative margin and record incoherence rather than treating output movement as useful gain.
+  \item \textbf{Map result to action.} Preserve the computational result, write the specific blocking reason, and then determine two outputs: whether READ supports a read-only diagnostic candidate within its tier, and whether active control is withheld or passes the computational gate within the exact tier.
+\end{enumerate}
+This checklist is a proposed interface-evaluation workflow. Its user-facing comprehension and effects have not been validated.
+
+\section{Methods}
+\label{sec:methods}
+
+We organize the method around interface inference risks. The exploratory facade measurement checks whether a semantic label has representational support. The comparative evaluation tests whether acting on the candidate axis earns a control claim over a bounded prompt channel. Positive controls assess endpoint inertness, instrument insensitivity, and insufficient intervention scale as alternative explanations for a negative result. Evidence tiers keep these answers separate.
+
+\subsection{READ Precondition: Exploratory Facade Measurement}
+
+We measure an exploratory representational facade on Qwen2.5-7B-Instruct and Llama-3-8B-Instruct. For each metacognitive axis \(a\), contrastive examples define a CAA-style unit direction \(\hat v_a\). With \(\bar h_{\mathrm{neutral},a}\) denoting the neutral-origin mean, the numerator is the strongest readable prompt's displacement from that origin projected onto \(\hat v_a\), and the denominator is the extraction-set positive pole's displacement from the same origin projected onto the same axis:
+\begin{align}
+  \operatorname{reach}_{\mathrm{prompt},a}
+    &= \left\langle
+       \bar h_{\mathrm{prompt},a}-\bar h_{\mathrm{neutral},a},
+       \hat v_a
+       \right\rangle, \nonumber\\
+  \operatorname{reach}_{\mathrm{pole},a}
+    &= \left\langle
+       \bar h_{\mathrm{extract}+,a}-\bar h_{\mathrm{neutral},a},
+       \hat v_a
+       \right\rangle.
+  \label{eq:facade-reaches}
+\end{align}
+The denominator uses the extraction-positive and neutral activations from the same origin. The positive-minus-negative contrast-vector norm serves only to derive \(\hat v_a\). The same-origin ratio is
+\begin{equation}
+  r_a =
+  \frac{\operatorname{reach}_{\mathrm{prompt},a}}
+       {\operatorname{reach}_{\mathrm{pole},a}}.
+  \label{eq:facade-ratio}
+\end{equation}
+In plain language, this ratio asks what fraction of the neutral-to-positive-pole distance the strongest readable prompt covers along the extracted direction.
+The facade criterion requires Equation~\ref{eq:facade-ratio} and its interval to lie below one. This answers a labeling question; it neither establishes behavioral transfer nor validates ITI's probe-derived directions. Each model contributes one exploratory run, so READ evidence is axis- and method-specific.
+
+\subsection{TRANSFER Evaluation: Why the Comparator Is Part of the Method}
+
+The behavioral question asks whether the tested latent channel produces a target improvement beyond a bounded prompt channel. An output change alone does not answer it. We therefore select both channels on DEV and compare them once on TEST.
+
+For every model and axis, we select the prompt channel from 16 authored candidates. The set covers varied wording and specificity but is not an exhaustive prompt search. It is deliberately stronger than a single casual prompt and deliberately bounded so that the comparison is reconstructable. We select the latent channel's \(\alpha\) from \(\{2,4,6,8,12,16,24\}\). Neither channel uses TEST items for selection.
+
+We deliberately use a substitution design to isolate the latent channel's incremental or replacement claim relative to a bounded prompt. The steer condition is the neutral instruction \emph{``Please answer the following question.''} plus the latent intervention; the prompt condition uses the DEV-selected prompt with no intervention. Prompt-plus-steer composition is a separate question about complementarity and interference.
+
+We sample \(k=5\) generations per item at temperature \(0.7\), cap generation at 64 new tokens, and measure task accuracy for deliberation, false-premise rejection for skepticism, and \(1-\mathrm{Brier}\) for uncertainty awareness. The cap suits short answers and confidence strings but may constrain GSM8K reasoning. These are operational task outcomes, not complete psychological measures of the axis labels. In particular, \(1-\mathrm{Brier}\) combines reliability, resolution, base-rate behavior, and confidence-format effects that are not decomposed here.
+
+For uncertainty, both conditions receive the same request to end with an answer and confidence. The parser accepts several confidence formats, maps percentages to \([0,1]\), and treats missing confidence as \(0.5\). Under the frozen scorer, missing confidence yields \(1-\mathrm{Brier}=0.75\) regardless of correctness. This choice creates an interface-inference risk of its own: a condition can differ because it changes format compliance as well as calibrated confidence. We therefore keep the frozen comparison, report a targeted format recheck, and attach its missingness limits without rewriting the protocol after TEST.
+
+\input{tables/axis-outcome-definitions.tex}
+
+\subsection{Frozen Decision Rule}
+
+For axis \(a\) at layer \(L\), CAA uses the contrastive mean-difference direction
+\begin{equation}
+  \begin{aligned}
+    v_a
+      &= \mathbb{E}_{x \in A_a^+}[h_L(x)]
+       - \mathbb{E}_{x \in A_a^-}[h_L(x)], \\
+    \hat v_a
+      &= \frac{v_a}{\lVert v_a\rVert},
+    & h'_L
+      &= h_L + \alpha\hat v_a.
+  \end{aligned}
+  \label{eq:caa-steering}
+\end{equation}
+In Equation~\ref{eq:caa-steering}, \(\hat v_a\) is unit-normalized. The two tested methods share an additive form but not an absolute injection scale:
+\begin{equation}
+  h'_L=h_L+\alpha s_{m,a,L}\hat u_{m,a,L},
+  \qquad
+  s_{\mathrm{CAA},a,L}=1,\quad
+  s_{\mathrm{ITI},a,L}=\sigma_{a,L}.
+  \label{eq:method-specific-steering}
+\end{equation}
+For CAA, \(\hat u_{\mathrm{CAA},a,L}=\hat v_a\). For ITI, \(\hat u_{\mathrm{ITI},a,L}\) is the unit-normalized logistic-probe direction \cite{li2023iti}, and \(\sigma_{a,L}\) is the frozen sample standard deviation of the combined extraction positive/negative activations projected onto that direction. Thus both methods use the same coefficient grid with \(\alpha\le24\), but ITI's injected norm is \(\alpha\sigma_{a,L}\), not \(\alpha\); no common norm bound of 24 applies to ITI.
+
+For TEST item \(i\) on axis \(a\), let \(y^{(s)}_{iaj}\) be generation \(j\)'s outcome under condition \(s\). Equation~\ref{eq:paired-diff} first aggregates the \(k\) generations within each item, then forms the paired difference:
+\begin{equation}
+  \bar y^{(s)}_{ia}=\frac{1}{k}\sum_{j=1}^{k}y^{(s)}_{iaj},
+  \qquad
+  d_{ia}=\bar y^{(\mathrm{steer})}_{ia}
+         -\bar y^{(\mathrm{prompt})}_{ia}.
+  \label{eq:paired-diff}
+\end{equation}
+The item-cluster bootstrap resamples TEST items, not individual generations, with \(k=5\) and \(B=10000\). Across three axes within a cell, the Bonferroni two-sided confidence level is \(1-0.05/3\approx0.9833\) (98.33\%). Let \(I_a=[\ell_a,u_a]\) be this interval for \(\bar d_a\), and let \(g_a^0\) and \(g_a^S\) be the mean DEV degeneracy scores for the unsteered neutral baseline and steer cell, respectively. With \(\delta=0.05\), \(\tau=1.5\), and the frozen additive floor \(\epsilon=0.02\), the rule is
+\begin{equation}
+  \begin{aligned}
+    \operatorname{pass}(a)\iff{}&
+      0\notin I_a
+      \;\land\;
+      \bar d_a\ge\delta\\
+      &{}\land\;
+      g_a^S\le\tau g_a^0+\epsilon,\\
+    &\delta=0.05,\quad \tau=1.5,\quad \epsilon=0.02.
+  \end{aligned}
+  \label{eq:axis-pass}
+\end{equation}
+Equation~\ref{eq:axis-pass} uses the frozen implementation's two-sided CI exclusion rule; the mean margin separately fixes the desired superiority direction. The additive floor prevents a near-zero baseline from collapsing the gate into an exact-zero requirement; the implementation adds \(10^{-12}\) only as a floating-point comparison tolerance. The margin prevents negligible differences from licensing a control, and the coherence gate rejects gains due to degradation or repetition. The cell verdict is positive for at least two passing axes, conditional for one, and negative for none. This is a superiority test, not an equivalence test.
+
+We apply Bonferroni correction within a cell across three axes. For split sensitivity, the original frozen seed had already been observed before four new DEV/TEST split seeds were prospectively frozen over the same shared item pool. The correction does not provide familywise control over the full descriptive 12-cell grid, and the split analysis does not measure independent item-sampling generalization.
+
+\subsection{Positive Controls and Evidence Tiers}
+
+We use the bounded refusal control to test whether a refusal endpoint moves under a direct prompt and under the bounded unit-direction CAA convention, then test raw-magnitude CAA with the scale-corrected control. The intervention follows \(h\mapsto h+\beta v\), with \(\beta\in\{0.125,0.25,0.5,1,2\}\), on refusal and the three metacognitive outcomes in Qwen2.5-7B. These studies serve three diagnostic purposes: verify that the endpoint can move, verify that the instrument can detect a behavioral change, and test whether the original CAA unit-direction grid was simply too small. They do not become evidence for a user-facing control unless a latent arm passes its behavioral criterion.
+
+For five probes per axis, a supplementary logit diagnostic records first-position changes in target tokens. It is non-confirmatory context and supports no paper claim. The proxy includes tokens such as ``I'' that may begin ordinary or hedged answers, so it cannot be treated as refusal itself.
+
+\subsection{Artifact Lineage}
+
+Independent reviewers checked the frozen comparative evaluation, the 2-by-2 robustness arm, the off-manifold mechanism test, both facade measurements, the PSR-style exploratory arm, the format recheck, and both positive controls. We generate tables and figures from committed result artifacts through machine-readable manifests without editing generated table or figure values in this paper source.
+
+The artifact registry in Appendix~\ref{app:artifact-registry} maps each semantic experiment name to its evidence role and artifact pointer. The comparative manifest includes the selected prompt identifiers, text, source pointers, and hashes. The paper artifacts can be regenerated with Python and the committed result artifacts, without GPU access.
+
+\section{Results as Interface Decisions}
+\label{sec:results}
+
+\subsection{READ Establishes a Diagnostic Precondition}
+
+This result establishes only whether a local semantic label has representational support before any control claim is considered.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/c1-ratio-ci.pdf}
+  \caption{Facade ratios and confidence intervals for four Qwen2.5-7B axes.}
+  \Description{Facade ratios with confidence intervals for four cognitive axes.}
+  \label{fig:c1-ratio-ci}
+\end{figure}
+
+\input{tables/c1-twomodel.tex}
+
+Figure~\ref{fig:c1-ratio-ci} and Table~\ref{tab:c1-twomodel} show why READ must stay separate. Both models support the facade pattern on three of four axes in aggregate, although the composition differs. Deliberation and skepticism hold in both. Uncertainty holds on Qwen and fails the facade criterion on Llama; focus holds on Llama and overshoots on Qwen. A designer could reasonably label some contrastive directions as readable in a specific model. The evidence does not license a model-invariant axis or an ITI READ claim. It also supplies no behavioral slider.
+
+\subsection{TRANSFER: No Tested Cell Earns a Superiority Claim}
+
+\input{tables/c2-delta-4cell.tex}
+
+\noindent\textbf{Resolution note.} Skepticism has minimum detectable superiority effects of 0.188, 0.268, 0.225, and 0.279 across the four cells, compared with the registered margin of 0.05. It is therefore underpowered for effects near that margin.
+
+Table~\ref{tab:c2-delta-4cell} applies the preregistered control-affordance rule. The full CAA/ITI by Qwen/Llama grid contains 12 axis-cell tests, producing 0 of 12 passes because none beats the selected prompt while meeting the registered margin and coherence conditions. That procedural output does not imply a uniformly resolved null: the four uncertainty contrasts resolve in the comparator-negative direction, deliberation is mixed, and skepticism is underpowered near the registered margin. This is a scoped failed-superiority boundary for the named tasks, axes, models, methods, comparator budget, and intervention scale.
+
+The verdict has unequal resolution across axes. Deliberation is mixed: a post-hoc exploratory TOST places the two ITI cells within the \(\pm0.05\) interval, while the CAA cells are underpowered. These analyses characterize the boundary after the preregistered test; they do not establish a true null or equivalence. Appendix Table~\ref{tab:equivalence-tost} reports the post-hoc details.
+
+The split analysis then tests selection sensitivity. Four prospectively frozen new split seeds plus the previously observed frozen seed yielded the same no-pass verdict across all five and all four method-model cells over the shared item pool. Only membership changes, so this robustness result does not establish external validity across new items.
+
+\subsection{Calibration Warning: Keep the Comparator Attached}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/c2-calibration-harm.pdf}
+  \caption{Paired steer-minus-bounded-prompt uncertainty effects and confidence intervals across four method-model cells.}
+  \Description{Four negative steer-minus-prompt uncertainty effects with intervals below zero.}
+  \label{fig:c2-calibration-harm}
+\end{figure}
+
+This result determines what the calibration warning may claim and which comparator it must name. Under the frozen scorer, each steer-minus-prompt interval is negative and excludes zero. Yet the design implication changes if the comparator is detached. In the rechecked CAA$\times$Qwen lineage, bounded steering is nearly identical to the unsteered baseline: compliance changes by about \(+0.011\), and \(1-\mathrm{Brier}\) by about \(+0.0008\). The observed gap is therefore prompt improvement relative to a steer-near-baseline condition, not evidence that steering directly reduces calibration from baseline.
+
+The format recheck narrows what the warning may say. In CAA$\times$Qwen, steer is more likely than the bounded prompt to emit parseable confidence, 0.826 versus 0.445. Among paired generations where both conditions emit confidence, steer minus prompt remains negative at \(-0.34\), 95\% CI [\(-0.51\), \(-0.17\)]. This analysis conditions on a post-generation variable and drops incomplete pairs. Adversarial missingness bounds over all generations are [\(-0.478\), \(+0.250\)], so the sign is not identified under unrestricted missingness. The other three cells were not rechecked. The defensible mapping is therefore a frozen-scoring calibration warning across four cells, complete-case support in the largest cell, and an explicit missingness and scope blocking reason.
+
+We find no mechanism support in the preregistered off-manifold test. Whitened Mahalanobis distance fails its criterion in all four cells. The calibration contrast may involve reliability, resolution, answer style, base rates, or formatting, but none is established here.
+
+\subsection{What the Positive Controls Establish}
+\label{sec:positive-controls}
+
+These controls separate endpoint activity, assay sensitivity, and intervention scale from evidence for a target-specific latent control. The random uncertainty direction moves the measured outcome by \(-0.24\), CI [\(-0.36\), \(-0.12\)]. This shows that the pipeline detects a latent perturbation-induced behavioral change, narrowing the instrument-insensitivity explanation. It is not a target-specific known-positive latent control.
+
+The bounded refusal check establishes that the behavioral endpoint is live: a direct refusal prompt reaches 95\%, whereas bounded unit-direction CAA produces 0\% refusal for every \(\alpha\le24\). The natural refusal class-difference norm is about 216 while the injected norm is at most 24, so this check narrows endpoint inertness but exposes a scale limitation.
+
+The scale-corrected raw-magnitude CAA check addresses that limitation. Refusal stays at 0\% for every coherent \(\beta\), and all metacognitive steer-vs-neutral intervals include zero. Coherent perturbations reach about \(0.5\)--\(0.66\times\lVert h\rVert\); the only point near \(1.05\times\lVert h\rVert\) is degenerate, with refusal output degeneracy rising at \(\beta=2\). This substantially weakens the under-scaling explanation within the coherent range without establishing that the scale is sufficient. No latent behavioral positive control passes, and null cells have MDE near 0.19, so effects below that resolution remain possible.
+
+The non-confirmatory first-token diagnostic appears only in Appendix~\ref{app:logit-delta-diagnostic}; the paper excludes it from claim-bearing evidence because its token proxy overlaps ordinary answer starts.
+
+\section{Interface-Evaluation Contract in Use}
+\label{sec:design-implications}
+
+\input{tables/failure-taxonomy.tex}
+
+The evidence record turns the comparative gate into a direct mapping. It reports the computational result, keeps failed, underpowered, incoherent, untested, and tier-mismatched blocking reasons distinct, and then determines interface eligibility. Figure~\ref{fig:console} retains read-only diagnostic information when READ is locally supported while marking active control withheld for the tested records.
+
+The uncertainty card shows why the record matters. It names the steer-vs-bounded-prompt contrast, reports steer near baseline only where rechecked, and carries the complete-case and missingness limits. The deliberation card preserves mixed resolution. Both cards bind their states to the tested model, direction construction, layer, task, comparator budget, and protocol.
+
+\subsection{Illustrative Design Scenario}
+
+Consider a product team building a writing assistant for policy analysts who inspect whether a model recognizes uncertainty before drafting a recommendation. Its prototype begins with an ``uncertainty awareness'' slider. The Qwen CAA direction has exploratory READ support, so the record permits a read-only diagnostic candidate within that tier; the behavioral comparison does not pass, so active control is withheld.
+
+The team replaces the slider with a non-actionable diagnostic and comparator view. Opening the warning reveals that the frozen contrast is steer versus prompt, that steering is near baseline in the rechecked lineage, and that unrestricted missingness leaves the all-generation sign unresolved. The interface preserves inspection while declining a control promise that the gate did not qualify.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\textwidth]{figures/console-ui-contract.pdf}
+  \caption{Artifact-derived cards map deliberation and uncertainty results to blocking reasons and interface actions within their evidence tiers.}
+  \Description{Two grayscale-readable console cards summarize computational status, exact evidence tier, key comparator or calibration evidence, the blocking reason, and the resulting interface action. Each retains a read-only diagnostic candidate within its tier while active control is withheld.}
+  \label{fig:console}
+\end{figure*}
+
+\section{Discussion}
+\label{sec:discussion}
+
+\subsection{A Control Is a Comparative Claim}
+
+Legibility supports inspection, debugging, annotation, and hypothesis formation, but it does not supply actionability. The two-model facade result makes READ local: aggregate support masks per-axis reversals, and ITI's probe-derived directions do not inherit the CAA facade measurement. A control claim instead requires a target outcome, a bounded comparator, a meaningful margin, and coherence. In the uncertainty case, that comparator changes the interpretation from ``steering harms calibration'' to the supported statement that the prompt improves over steer-near-baseline under the frozen scorer.
+
+The substitution design also bounds the claim. We test steering in place of the selected prompt. Prompt-plus-steer composition asks whether the channels complement or interfere with one another and requires a new preregistration and protocol.
+
+\subsection{Evidence Tier and Versioned Affordance Lifecycle}
+
+Negative and inconclusive evidence produce different blocking reasons. A failed comparative test, an underpowered result, incoherence, and an untested model or method remain distinct. A model or method swap also creates a tier mismatch rather than inheriting the earlier result. The calibration warning retains its statistical structure: four frozen-scoring comparator-negative contrasts, steer near baseline in the rechecked lineage, a negative complete-case estimate, missingness bounds that cross zero, and three cells without rechecks.
+
+Evidence tiers prevent method and model substitution. Trained steering can mimic prompting \cite{heyman2026steer}, while SAE feature steering, projection ablation, multi-layer schedules, and naive single-layer addition make different behavioral claims. Local READ support can justify a read-only diagnostic candidate. Active control requires a comparator-bound pass in the same tier. A model, method, direction, layer, task, outcome, protocol, version, or comparator change creates a new tier and requires new evidence.
+
+\subsection{Scope Creates New Evaluation Obligations}
+
+The contract changes whether a control appears; it does not add a warning beside a predetermined slider. This ordering matters because warnings and confidence cues can have weak or adverse effects \cite{bansal2019beyond,bucinca2021trust}. The present console is therefore an artifact instantiation of an evaluation method, not evidence that users understand or benefit from it.
+
+New settings create new obligations rather than inheriting the current verdict. Stronger or trained steering needs its own READ and TRANSFER record; prompt-plus-steer composition needs a new comparison; calibration-mechanism claims need a fresh preregistered protocol; and user-facing comprehension, reliance, or benefit requires a separate human evaluation.
+
+\section{Scope and Conditions of the Contract}
+\label{sec:limitations}
+
+We conducted no user study; the contract's comprehensibility, usability, and effects on calibrated reliance remain untested. The console is a model-evidence artifact instantiation, and any claim about people's mental models, interaction quality, or reliance requires a separate human evaluation.
+
+Bo et al.\ supply exploratory user evidence for preference-control interface designs \cite{bo2026steerable}. Our study instead supplies a model-evidence qualification procedure for objective and task outcomes and does not transfer their user evidence to this artifact.
+
+\paragraph{READ condition.}
+The READ field covers only the exploratory contrastive CAA-style measurement in each tested model. Each model contributes one run, the axis composition differs, and facade ratios are linear proxies. ITI directions and stable semantic-feature claims require new READ evidence.
+
+\paragraph{Calibration and missingness condition.}
+The calibration warning is scoped to the frozen-scoring steer-vs-prompt contrast across the tested grid. The targeted CAA$\times$Qwen complete-case estimate is negative, and the adversarial missingness bounds span zero. The other three cells were not format-rechecked. A reliability, resolution, or formatting explanation requires new evidence because the committed artifacts do not provide a Brier decomposition.
+
+\paragraph{Power condition.}
+We apply the failed-superiority decision to every tested cell while retaining its axis-specific inferential resolution. Skepticism MDE values are about 0.19--0.28, well above the 0.05 pass margin, so skepticism is underpowered for effects near that margin. Deliberation is mixed, and the post-hoc equivalence results remain exploratory boundary cases. Stronger statements about either axis require new evidence at the relevant resolution.
+
+\paragraph{Scope condition.}\setlength{\emergencystretch}{1em}
+We scope the headline to bounded naive CAA/ITI under the method-specific single-layer additive convention in Equation~\ref{eq:method-specific-steering}. It covers coefficient \(\alpha\le24\) on the tested Qwen2.5-7B and Llama-3-8B tasks. The coefficient grid has method-specific scale: CAA uses \(s=1\), whereas ITI uses its frozen probe-projection standard deviation \(\sigma_{a,L}\). The scale-corrected study applies to single-layer CAA on Qwen2.5-7B. Trained methods, larger models, other layers, multi-layer schedules, projection or ablation methods, RepE variants, and other axes require their own evidence tiers.
+
+\paragraph{Protocol.}
+The robustness result combines four prospectively frozen new split seeds with the previously observed frozen seed; all five use the same shared item pool and measure split sensitivity. Bonferroni correction applies within each cell across three axes, and the 64-token cap may constrain deliberation. New item pools and grid-wide familywise inference require new protocols and re-evaluation; Section~\ref{sec:discussion} defines the separate composition question.
+
+The contract's evidence obligations define the remaining decision boundaries. A method with independently supported behavioral effects can supply a latent positive control. Additional models, tasks, and direction families create new READ and TRANSFER obligations, while calibration-mechanism claims require a fresh preregistered protocol.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+Output change is the wrong threshold for a latent control. The comparative evidence gate instead requires reliable incremental behavior over a bounded prompt channel, with coherence and scope attached. Its five-field record preserves READ as diagnostic evidence and keeps comparator-specific warnings intact. Every affordance verdict is bound to an evidence tier. In the tested bounded naive CAA/ITI setting, the artifact retains read-only diagnostic candidates where READ is supported and withholds every active control. A readable latent axis should become actionable only after it passes that gate within the exact tier.
+
+\appendix
+\section{Non-Claim-Bearing Logit Diagnostic}
+\label{app:logit-delta-diagnostic}
+
+We treat this supplementary diagnostic as qualitative and non-confirmatory and exclude it from claim support. It uses five probes per axis and measures the first-position logsumexp of common refusal-leading tokens, including tokens such as ``I'' that may also begin ordinary or hedged answers. It therefore provides context about propagation and does not measure refusal.
+
+We observe that, at coherent \(\beta=1\), the refusal direction raises this token mass by about \(+13.9\) nats on average, while 0/5 probes match the preregistered refusal markers. One probe has a change of about \(+16.9\) nats with a byte-identical greedy completion. At \(\beta=2\), target tokens dominate but generation degenerates into repetition. The diagnostic provides context about target-token movement without scored behavioral control. It is not claim-bearing evidence and does not establish a working latent handle.
+
+\section{Post-Hoc Equivalence and Resolution Context}
+\label{app:tost}
+
+\input{tables/equivalence-tost.tex}
+
+\section{Exploratory Social-Axis Context}
+\label{app:social-context}
+
+We retain the exploratory social-axis study as context only and exclude it from claim support and the central console figure. In one Qwen model and one seed, the novice-disclosure axis satisfies its exploratory READ check, while the powered LLM-judge evaluation returns an honest behavioral null on implemented M1 option-pushing and M4 deference. M2 and M3 were not implemented and support no null claim. Human-rater agreement is pending, so the result is not confirmatory. It does not establish a social control, a user benefit, or a generalization beyond the tested axis and model.
+
+\section{Artifact Registry}
+\label{app:artifact-registry}
+
+The console uses Table~\ref{tab:artifact-registry} to map experiment identifiers to semantic roles and artifact pointers. The identifiers serve lineage only and do not change the validity or scope stated in the paper.
+
+\begin{table*}[t]
+  \centering
+  \caption{Experiment identifiers, semantic names, evidence roles, validity scopes, and artifact pointers.}
+  \label{tab:artifact-registry}
+  \scriptsize
+  \begin{tabular}{L{0.07\linewidth}L{0.18\linewidth}L{0.19\linewidth}L{0.20\linewidth}L{0.19\linewidth}}
+    \toprule
+    ID & Semantic experiment name & Evidence role & Validity / scope & Artifact pointer \\
+    \midrule
+    E-0003 & Qwen exploratory facade measurement & READ context & Exploratory; Qwen CAA-style axes & \pathtt{results/gpu\_7b\_2026-07-23/c1/} \\
+    E-0005 & Frozen Qwen CAA comparison & TRANSFER result & Scoped failed-superiority & \pathtt{results/c2b\_adjudication\_hf\_2026-07-24/} \\
+    E-0006 & Four-cell comparative grid & TRANSFER result & Core tested-grid evidence & \pathtt{results/arm\_full/} \\
+    E-0007 & Off-manifold mechanism test & Mechanism context & Null; supports no mechanism claim & \pathtt{results/ood\_capture/} \\
+    E-0008 & Llama exploratory facade measurement & READ context & Exploratory; Llama CAA-style axes & \pathtt{results/llama\_c1\_facade\_2026-07-24/} \\
+    E-0009 & PSR-style method-strength arm & Boundary context & Exploratory; Qwen-only, single seed; no headline support & \pathtt{results/psr\_qwen\_primary/} \\
+    E-0010 & Exploratory social-axis study & Appendix context & Non-confirmatory; no claim support & \pathtt{results/flagship\_powered/} \\
+    E-0011 & Split-seed robustness companion & Robustness & Same item pool; split sensitivity & \pathtt{results/E-0011/} \\
+    E-0013 & Uncertainty format recheck & Calibration limitation & CAA$\times$Qwen only; missingness bounded & \pathtt{results/E-0013-uncertainty-recheck/} \\
+    E-0014 & Bounded refusal positive control & Endpoint and scale check & No latent behavioral pass & \pathtt{results/E-0014-positive-control/} \\
+    E-0015 & Scale-corrected positive control & Scale and sensitivity check & Qwen single-layer CAA; scoped null & \pathtt{results/E-0015-scale-corrected-positive-control/} \\
+    E-0015-logit & First-token logit diagnostic & Diagnostic context & Non-claim-bearing & \pathtt{results/E-0015-logit-delta/} \\
+    \bottomrule
+  \end{tabular}
+\end{table*}
+
+\FloatBarrier
+
+We exclude E-0012, which is invalid for paper use, and E-0016, whose recorded attempt produced no scientific result. Neither contributes paper evidence.
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}

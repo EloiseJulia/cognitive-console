@@ -754,9 +754,9 @@ def _dev(args) -> int:
     if (out_dir / "dev" / "SEALED.json").exists():
         raise ValueError("DEV is already sealed; do not overwrite it")
     items = load_selected_items(args.backend)
+    hardware = _capture_hardware(args.hardware_profile) if args.backend == "hf" else None
     specs, spec_meta = _make_specs(args, items, out_dir / "dev" / "work")
     sampling = sampling_manifest(items)
-    hardware = _capture_hardware(args.hardware_profile) if args.backend == "hf" else None
     selections: Dict[str, object] = {}
     for cell in CELLS:
         cell_out = _cell_dir(out_dir / "dev", cell)
@@ -853,8 +853,8 @@ def _test(args) -> int:
     sampling = sampling_manifest(items)
     if sampling != dev_payload["sampling"]:
         raise ValueError("TEST sampling identity differs from DEV")
-    specs, spec_meta = _make_specs(args, items, out_dir / "test" / "work")
     hardware = _capture_hardware(args.hardware_profile) if args.backend == "hf" else None
+    specs, spec_meta = _make_specs(args, items, out_dir / "test" / "work")
     registry_profile = resolve_test_attempt_registry(prepare=True)
     cell_summaries: Dict[str, object] = {}
     for cell in CELLS:

@@ -1,5 +1,5 @@
 {
-  "file_count": 87,
+  "file_count": 105,
   "files": [
     {
       "bytes": 21214,
@@ -147,9 +147,9 @@
       "sha256": "sha256:008b3bee374c44cb7c027fcadc4b17fdd09417e3f87c3212a03f2f30994bd1db"
     },
     {
-      "bytes": 2470,
+      "bytes": 3091,
       "path": "experiment-registry.yaml",
-      "sha256": "sha256:4904b9667b6be2346af0db5581deff4e4aaa9f8607204f95a432e6b13b1307bd"
+      "sha256": "sha256:476ee1f3046053b681624f46c524fe8c634dea3f28fcea579bc0f14debdc1ffb"
     },
     {
       "bytes": 2200,
@@ -165,6 +165,11 @@
       "bytes": 3275,
       "path": "logs/test-A3.log",
       "sha256": "sha256:148ae954250407d638b91858487bad21bba92bdf6db35fdccff5b59037aa4533"
+    },
+    {
+      "bytes": 724,
+      "path": "logs/test-A4.log",
+      "sha256": "sha256:e815a7ab39401420fda5d28e44770154cce1290f07da80971973e3111810e495"
     },
     {
       "bytes": 145637,
@@ -417,6 +422,91 @@
       "sha256": "sha256:b478e0c22ffad7a19858f406444d49460ea0c61dac8229c0268780fbcab771e5"
     },
     {
+      "bytes": 111388,
+      "path": "test/cells/A4/sealed/powered_tost_A_result.json",
+      "sha256": "sha256:6668246ee3de67687f2c29271fb32a79b850dd9e7b7e44c0a38bae8fe3c7525b"
+    },
+    {
+      "bytes": 97,
+      "path": "test/cells/A4/SEALED.json",
+      "sha256": "sha256:829ae46ced4559f2965f407f89a79c011c08c62575d12365b475e6224ee80f39"
+    },
+    {
+      "bytes": 662,
+      "path": "test/cells/A4/TEST_STARTED.json",
+      "sha256": "sha256:2024b557d33ded396b583797990798b73b9d46221399efbae16eaf92f6bce94a"
+    },
+    {
+      "bytes": 16,
+      "path": "test/cells/A4/work/checkpoints/config_fingerprint.txt",
+      "sha256": "sha256:0e59bc705e1504cd384ab29e922cdc184193e9d327e86cbb92c9325e44c81649"
+    },
+    {
+      "bytes": 250983,
+      "path": "test/cells/A4/work/checkpoints/uncertainty_awareness_conflict.jsonl",
+      "sha256": "sha256:a72d82b7bb3344d343b20992e3f5ae9a86eb6aa167aa1b388731bd0b9de51b6f"
+    },
+    {
+      "bytes": 249531,
+      "path": "test/cells/A4/work/checkpoints/uncertainty_awareness_conflict_pole.jsonl",
+      "sha256": "sha256:59da2ccd7283fe1aa638937562a47e0a09a648a063c0cd62ba946e3f0f76849e"
+    },
+    {
+      "bytes": 233827,
+      "path": "test/cells/A4/work/checkpoints/uncertainty_awareness_test_baseline.jsonl",
+      "sha256": "sha256:9d5198313bcbe2ca62339ad911608259711012ba935843379f4c7dd9e888e9eb"
+    },
+    {
+      "bytes": 247905,
+      "path": "test/cells/A4/work/checkpoints/uncertainty_awareness_test_prompt.jsonl",
+      "sha256": "sha256:60184449d11c5442fc3eefc73aa07e5aafda3e139f12949f9ac2d2f5f4f11346"
+    },
+    {
+      "bytes": 241918,
+      "path": "test/cells/A4/work/checkpoints/uncertainty_awareness_test_steer.jsonl",
+      "sha256": "sha256:d3bb749a69f8df520c42705629c67585e83fd9f346f33842690d96eb9bac2000"
+    },
+    {
+      "bytes": 26000472,
+      "path": "test/cells/A4/work/transcripts/all_generations.jsonl",
+      "sha256": "sha256:63302e726f1417e3fdc9a6ae1c3e073cf6ceebc68f4f13351e1ae16394e371ef"
+    },
+    {
+      "bytes": 7287857,
+      "path": "test/cells/A4/work/transcripts/paired_test_channels.jsonl",
+      "sha256": "sha256:ce0289f54e68209d0c63e4bdbe996325ae91a547d358475515ab4e8c272e0ff4"
+    },
+    {
+      "bytes": 5807464,
+      "path": "test/cells/A4/work/transcripts/uncertainty_awareness__conflict__prompt=unc-strong-01_alpha=-24.0.jsonl",
+      "sha256": "sha256:971a1512e77c4db7033ef1fa5f23da2a5bfef4d59cc53efdde492f0edc11d2ac"
+    },
+    {
+      "bytes": 5749534,
+      "path": "test/cells/A4/work/transcripts/uncertainty_awareness__conflict_pole__prompt=unc-strong-01_alpha=0.jsonl",
+      "sha256": "sha256:137253dd62379b828dedeb3edaf7288bea16e34d5133f2efea28a27d3ec3146a"
+    },
+    {
+      "bytes": 4627296,
+      "path": "test/cells/A4/work/transcripts/uncertainty_awareness__test_baseline__alpha=0.jsonl",
+      "sha256": "sha256:01f73233f759e5fe9a82d55b89478c8a04c368a51eda35a902c7e0e1c6b790f8"
+    },
+    {
+      "bytes": 5750944,
+      "path": "test/cells/A4/work/transcripts/uncertainty_awareness__test_prompt__prompt=unc-strong-01_alpha=0.jsonl",
+      "sha256": "sha256:669203cfcac162c02be5016734e8a673f68e4c72c6bd3920b377430b60b813b3"
+    },
+    {
+      "bytes": 4667949,
+      "path": "test/cells/A4/work/transcripts/uncertainty_awareness__test_steer__alpha=24.0.jsonl",
+      "sha256": "sha256:2a234d1c437e7fb16aa0f9d7bdd14ecc24ce834acb65565d0da8bf39346ef011"
+    },
+    {
+      "bytes": 143849,
+      "path": "test/SEALED.json",
+      "sha256": "sha256:a5be749317adb51555218dec9c8c82fa56079c0fb02221e8ae6cb51c609a0c13"
+    },
+    {
       "bytes": 28800,
       "path": "test/work/directions/A1-deliberation-L20.npy",
       "sha256": "sha256:7c559db08f6aa54bc9aba1bdfd7adc0afa8dc8e533aa8aeb923970daf9777977"
@@ -439,5 +529,5 @@
   ],
   "protocol_id": "powered-tost-A-20260813",
   "root": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\powered-tost-a\\results\\powered_tost_A_20260813",
-  "total_bytes": 209463461
+  "total_bytes": 270836498
 }

@@ -5,7 +5,7 @@ experiments:
   claim_ids:
   - C2b
   type: confirmatory-protocol-pending-audit
-  status: partial
+  status: done
   protocol_id: powered-tost-A-20260813
   code_commit: 0ce7377384b4ba6daa0ccf153d95f18aeaac333c
   dirty_tree: false
@@ -54,5 +54,18 @@ experiments:
       coherence_ok: true
       result_path: C:\Users\v-elzhang\Desktop\MyFolder\cognitive console\.worktrees\powered-tost-a\results\powered_tost_A_20260813\test\cells\A3\sealed\powered_tost_A_result.json
       result_sha256: sha256:6bafea7ab0f7cc81e6ec2eb29cc83ecb6ee518bd2ee38bf0bb2e0f01b135de7c
+    A4:
+      strict_verdict: NEGATIVE-CONTRAST
+      n_test: 813
+      achieved_mde: 0.049992556887575194
+      dev_alpha: 24.0
+      mean_diff: -0.08807067650676507
+      ci_lo: -0.11980263530135303
+      ci_hi: -0.057529313653136516
+      tost_ci_lo: -0.10927168634686348
+      tost_ci_hi: -0.06746039114391143
+      coherence_ok: true
+      result_path: C:\Users\v-elzhang\Desktop\MyFolder\cognitive console\.worktrees\powered-tost-a\results\powered_tost_A_20260813\test\cells\A4\sealed\powered_tost_A_result.json
+      result_sha256: sha256:6668246ee3de67687f2c29271fb32a79b850dd9e7b7e44c0a38bae8fe3c7525b
   artifacts:
   - C:/Users/v-elzhang/Desktop/MyFolder/cognitive console/.worktrees/powered-tost-a/results/powered_tost_A_20260813

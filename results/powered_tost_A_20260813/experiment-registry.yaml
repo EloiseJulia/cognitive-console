@@ -8,12 +8,38 @@ experiments:
   status: partial
   protocol_id: powered-tost-A-20260813
   code_commit: 0ce7377384b4ba6daa0ccf153d95f18aeaac333c
-  dirty_tree: true
+  dirty_tree: false
   seed: 20260812
   hardware: nvidia-a800-80gb
   valid_for_paper: false
   validation_notes: PENDING_HOSTILE_RESULT_AUDIT; do not fold until Manager/human
     gate.
-  summary_metrics: {}
+  summary_metrics:
+    A1:
+      strict_verdict: EQUIVALENT
+      n_test: 150
+      achieved_mde: 0.03857491412822587
+      dev_alpha: 2.0
+      mean_diff: 0.021333333333333336
+      ci_lo: 0.0
+      ci_hi: 0.04800000000000001
+      tost_ci_lo: 0.005333333333333334
+      tost_ci_hi: 0.04
+      coherence_ok: true
+      result_path: C:\Users\v-elzhang\Desktop\MyFolder\cognitive console\.worktrees\powered-tost-a\results\powered_tost_A_20260813\test\cells\A1\sealed\powered_tost_A_result.json
+      result_sha256: sha256:1dd0a99ad4944d299dec84d3b41b0e07082fa9f6f803135b1ade8826725199a8
+    A2:
+      strict_verdict: EQUIVALENT
+      n_test: 150
+      achieved_mde: 0.03625112412050142
+      dev_alpha: 2.0
+      mean_diff: 0.006666666666666667
+      ci_lo: -0.008000000000000002
+      ci_hi: 0.021333333333333336
+      tost_ci_lo: -0.004
+      tost_ci_hi: 0.016000000000000004
+      coherence_ok: true
+      result_path: C:\Users\v-elzhang\Desktop\MyFolder\cognitive console\.worktrees\powered-tost-a\results\powered_tost_A_20260813\test\cells\A2\sealed\powered_tost_A_result.json
+      result_sha256: sha256:6508db8c9fb62250d5e989810b0c8069b2b631c978a3f4acefad8673daa6444f
   artifacts:
   - C:/Users/v-elzhang/Desktop/MyFolder/cognitive console/.worktrees/powered-tost-a/results/powered_tost_A_20260813

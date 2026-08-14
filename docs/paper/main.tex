@@ -30,7 +30,7 @@
 }
 
 \begin{abstract}
-Interfaces increasingly place controls beside named latent properties, implying that moving the control will reliably change the corresponding behavior. Readability and output movement do not establish that promise when prompting already offers a behavioral alternative. We contribute a comparator-bound evaluation contract: an active latent control must earn its affordance by improving a declared behavioral outcome over a bounded, DEV-selected prompt comparator, under an uncertainty rule, a point-estimate floor, and a coherence gate. Representational-readability (READ) evidence, the comparator, a calibration warning, and an evidence tier record what the interface may claim. Applied in a prompt-versus-latent substitution design across Qwen and Llama, CAA and ITI, and three behavioral axes, the contract qualifies none of the twelve model--method--axis tests and resolves that shared outcome into distinct, actionable profiles: skepticism and deliberation are equivalent to the best prompt within the \(\pm0.05\) margin in the pre-registered refined CAA cells, with the remaining skepticism cells still resolution-limited, and all four uncertainty contrasts are negative under the frozen scorer (one rechecked cell missingness-limited with an unidentified sign, three unrechecked). A predeclared positive control confirms the rule can qualify and discriminate a control, not only withhold one, so this outcome reflects the evidence rather than an unsatisfiable gate. Because no latent positive control passed, the empirical contribution is a worked procedural boundary rather than a validated assay or a general steering verdict, and the interface mapping is a designer-facing procedure whose user outcomes a planned study will probe (comprehensibility, not benefit).
+Interfaces increasingly place controls beside named latent properties, implying that moving the control will reliably change the corresponding behavior. Readability and output movement do not establish that promise when prompting already offers a behavioral alternative. We contribute a comparator-bound evaluation contract: an active latent control must earn its affordance by improving a declared behavioral outcome over a bounded, DEV-selected prompt comparator, under an uncertainty rule, a point-estimate floor, and a coherence gate. Representational-readability (READ) evidence, the comparator, a calibration warning, and an evidence tier record what the interface may claim. Applied in a prompt-versus-latent substitution design across Qwen and Llama, CAA and ITI, and three behavioral axes, the contract qualifies none of the twelve model--method--axis tests and resolves that shared outcome into distinct, actionable profiles: skepticism and deliberation are equivalent to the best prompt within the \(\pm0.05\) margin in the pre-registered refined CAA cells (bounded equivalence for skepticism, whose achievable resolution slightly exceeds the floor), with the remaining skepticism cells still resolution-limited, and all four uncertainty contrasts are negative under the frozen scorer (one rechecked cell missingness-limited with an unidentified sign, three unrechecked). A predeclared positive control confirms the rule can qualify and discriminate a control, not only withhold one, so this outcome reflects the evidence rather than an unsatisfiable gate. Because no latent positive control passed, the empirical contribution is a worked procedural boundary rather than a validated assay or a general steering verdict, and the interface mapping is a designer-facing procedure whose user outcomes a planned study will probe (comprehensibility, not benefit).
 \end{abstract}
 
 \begin{CCSXML}
@@ -72,7 +72,7 @@ The worked application compares CAA and ITI on Qwen and Llama across deliberatio
 {}% FL-008
 {}% FL-031
 
-None of the twelve model--method--axis tests qualifies under the reported rule---the contract doing its job: no candidate earned an active control, so each is withheld rather than promoted on legibility or output movement alone. That common computational result does not imply one common scientific conclusion or interface action. Skepticism is underpowered near the point-estimate floor; deliberation is mixed; and uncertainty is negative relative to the comparator under the frozen scorer, with a targeted Qwen--CAA recheck whose complete-case estimate remains negative but whose all-generation missingness bounds cross zero. {}% FL-003
+None of the twelve model--method--axis tests qualifies under the reported rule---the contract doing its job: no candidate earned an active control, so each is withheld rather than promoted on legibility or output movement alone. That common computational result does not imply one common scientific conclusion or interface action. In pre-registered refinements, deliberation steering is equivalent to the best prompt within the \(\pm0.05\) margin in both CAA cells and skepticism is bounded-equivalent in the Qwen--CAA cell (at a resolution slightly above the floor); uncertainty is negative relative to the comparator under the frozen scorer, with a targeted Qwen--CAA recheck whose complete-case estimate remains negative but whose all-generation missingness bounds cross zero. {}% FL-003
 {}% FL-004
 {}% FL-041
 {}% FL-043
@@ -392,7 +392,7 @@ The record therefore reports the negative as a frozen-scorer outcome bounded by 
 \TopRule
 Axis & Computational result and structured evidence & Next evaluation \\
 \midrule
-Skepticism & TRANSFER no-pass; MDEs far exceed the 0.05 point-estimate floor & Resolution near the floor obtained for the Qwen--CAA cell (bounded-equivalent within \(\pm0.05\) at MDE 0.053); the other three cells, ITI, and a passing latent positive control remain open. \\
+Skepticism & TRANSFER no-pass; MDEs far exceed the 0.05 point-estimate floor & Resolution near the floor obtained for the Qwen--CAA cell (bounded-equivalent within \(\pm0.05\), but at MDE 0.053 \(>\delta\), so not fully floor-powered); the other three cells, ITI, and a passing latent positive control remain open. \\
 Deliberation & TRANSFER no-pass; small mixed differences, exploratory post-hoc equivalence in two ITI cells, and a pre-registered refinement powering both CAA cells & Both CAA cells now powered to \(\pm0.05\) equivalence; ITI cells were already equivalent. \\
 Uncertainty & TRANSFER no-pass; frozen contrasts are comparator-negative, while the one-cell recheck is missingness-limited and three cells remain unrechecked & Repair measurement and retain the comparator-specific warning; a fully powered Qwen--CAA re-measurement confirms the comparator-negative direction. \\
 \bottomrule
@@ -520,7 +520,7 @@ A readable direction can still support inspection, debugging, hypothesis formati
 {}% FL-040
 The alternative is not ``ship a slider'' or ``hide the representation.'' It is to preserve local evidence without turning visibility into a behavioral promise.
 
-The three evidence profiles lead to different evaluation work. Skepticism requests more resolution; deliberation calls for a better-targeted test; uncertainty calls for measurement repair and a comparator-specific warning. {}% FL-041
+The three evidence profiles lead to different evaluation work. Where refined, skepticism is bounded-equivalent and deliberation is equivalent to the best prompt within the margin; uncertainty calls for measurement repair and a comparator-specific warning. {}% FL-041
 {}% FL-043
 {}% FL-047
 They do not require new categorical labels. The record's practical contribution is the explicit path from computational result to structured reason to record-specific interface action.
@@ -572,9 +572,9 @@ In the raw-magnitude Qwen--CAA sweep, coherent perturbations reach about \(0.5\)
 The preregistered whitened-Mahalanobis analysis also returns no support for the tested off-manifold mechanism. {}% FL-050
 The first-token logit analysis remains non-claim-bearing appendix context.
 
-Resolution also differs by claim. READ is exploratory, single-run, and CAA-specific. {}% FL-036
+Resolution also differs by claim. READ is exploratory and CAA-specific; its facade criterion holds across three replication seeds, though the reported ratios are from a single run and exact values vary by seed. {}% FL-036
 {}% FL-038
-Skepticism is underpowered relative to the point-estimate floor, deliberation's equivalence descriptions are post hoc, and uncertainty remains format- and missingness-sensitive. {}% FL-041
+A pre-registered refinement powers the Qwen--CAA deliberation and skepticism cells to \(\pm0.05\) equivalence (skepticism bounded, at MDE 0.053 slightly above the floor), and uncertainty remains format- and missingness-sensitive. {}% FL-041
 {}% FL-043
 {}% FL-047
 {}% FL-048

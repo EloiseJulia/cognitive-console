@@ -4,9 +4,9 @@ experiments:
   hypothesis_id: H1-c1-read-facade
   claim_ids:
   - C1
-  type: confirmatory-protocol-pending-audit
-  status: done
-  protocol_id: "powered-tost-A-20260813 \xA710 C1 READ piggyback"
+  type: confirmatory-result-audit-passed
+  status: RESULT_AUDIT_PASSED
+  protocol_id: powered-tost-A-20260813 §10 C1 READ piggyback
   code_commit: 0ce7377384b4ba6daa0ccf153d95f18aeaac333c
   dirty_tree: false
   seed: 20260812
@@ -16,13 +16,11 @@ experiments:
   - 20260814
   model: Qwen/Qwen2.5-7B-Instruct
   hardware: nvidia-a800-80gb; CUDA_VISIBLE_DEVICES=3; device=cuda dtype=float16
-  valid_for_paper: false
-  scientific_status: PENDING_HOSTILE_RESULT_AUDIT
-  validation_notes: C1 READ piggyback artifact produced in Experiment A run window.
-    Main script completed metric JSON/summary and then hit an out-dir-relative registry
-    path error; registry/manifest were reconstructed from the sealed JSON and log
-    without rerunning compute. Do not fold until hostile audit plus Manager/human
-    gate.
+  valid_for_paper: true
+  scientific_status: RESULT_AUDIT_PASSED
+  validation_notes: RESULT_AUDIT_PASSED after independent hostile audit audit-powered-tost=SOUND and owner-approved 2026-08-14
+    fold gate. Paper use is limited to criterion-level seed stability; exact C1 ratios changed versus the original single
+    run and must not be described as numeric reproduction.
   summary_metrics:
     n_axes: 3
     n_axes_facade_holds_ci: 3
@@ -55,3 +53,25 @@ experiments:
   - c1_read/c1_facade_summary.md
   - logs/c1-read.log
   - c1_read/SHA256_MANIFEST.json
+  audit_ref: audit-powered-tost=SOUND
+  fold_gate: owner-approved 2026-08-14
+  scope: 'Decision passed human fold gate (owner-approved 2026-08-14). Valid only as C1 READ criterion-level seed-stability
+    supplement: ratio<1 holds for all three seeds; exact ratios 0.566/0.520/0.507 do not numerically reproduce the earlier
+    single-run 0.583/0.548/0.713; not a C1 confirmatory/core upgrade.'
+  audit_trail:
+  - date: '2026-08-14'
+    actor: impl-lineage-subagent ed553ce7-13f0-44a7-9f86-d15e2166609b
+    audit_ref: audit-powered-tost=SOUND
+    fold_gate: owner-approved 2026-08-14
+    prior_status:
+      type: confirmatory-protocol-pending-audit
+      status: done
+      scientific_status: PENDING_HOSTILE_RESULT_AUDIT
+      valid_for_paper: false
+      validation_notes: C1 READ piggyback artifact produced in Experiment A run window. Main script completed metric JSON/summary
+        and then hit an out-dir-relative registry path error; registry/manifest were reconstructed from the sealed JSON and
+        log without rerunning compute. Do not fold until hostile audit plus Manager/human gate.
+    status_update: status=RESULT_AUDIT_PASSED; scientific_status=RESULT_AUDIT_PASSED; valid_for_paper=true
+    scope: 'Decision passed human fold gate (owner-approved 2026-08-14). Valid only as C1 READ criterion-level seed-stability
+      supplement: ratio<1 holds for all three seeds; exact ratios 0.566/0.520/0.507 do not numerically reproduce the earlier
+      single-run 0.583/0.548/0.713; not a C1 confirmatory/core upgrade.'

@@ -1,0 +1,19 @@
+experiments:
+- experiment_id: powered-tost-A-test-20260813
+  parent: c2b-resolution-refinement-20260812
+  hypothesis_id: H2-powered-equivalence
+  claim_ids:
+  - C2b
+  type: confirmatory-protocol-pending-audit
+  status: partial
+  protocol_id: powered-tost-A-20260813
+  code_commit: 0ce7377384b4ba6daa0ccf153d95f18aeaac333c
+  dirty_tree: true
+  seed: 20260812
+  hardware: nvidia-a800-80gb
+  valid_for_paper: false
+  validation_notes: PENDING_HOSTILE_RESULT_AUDIT; do not fold until Manager/human
+    gate.
+  summary_metrics: {}
+  artifacts:
+  - C:/Users/v-elzhang/Desktop/MyFolder/cognitive console/.worktrees/powered-tost-a/results/powered_tost_A_20260813

@@ -1,0 +1,268 @@
+{
+  "file_count": 52,
+  "files": [
+    {
+      "bytes": 21214,
+      "path": "dev/cells/A1/sealed/dev_selection.json",
+      "sha256": "sha256:6b800995d66b4939758039e662eff80f3e161526650ec7377429affba71f8a11"
+    },
+    {
+      "bytes": 16,
+      "path": "dev/cells/A1/work/checkpoints/config_fingerprint.txt",
+      "sha256": "sha256:283f891f1aa2d1e04e417b6d10716f09f71b15c3ca6e640d8aa7f999c4fb49cd"
+    },
+    {
+      "bytes": 149536,
+      "path": "dev/cells/A1/work/checkpoints/deliberation_dev_alpha.jsonl",
+      "sha256": "sha256:ba073bf457b554219fc68efcd97edf8f0ec2bafd3e6a797a4efb41f3d82a7b23"
+    },
+    {
+      "bytes": 21333,
+      "path": "dev/cells/A1/work/checkpoints/deliberation_dev_baseline.jsonl",
+      "sha256": "sha256:d036b57391b3f254ec1a9bfda808ae4256b9d4762ee649a4ee1626dfa2becaa5"
+    },
+    {
+      "bytes": 364503,
+      "path": "dev/cells/A1/work/checkpoints/deliberation_dev_prompt.jsonl",
+      "sha256": "sha256:1fa62d8908d46914951ea7fc01d708ff838373e91f9c2e3b012ba1c812709994"
+    },
+    {
+      "bytes": 13300720,
+      "path": "dev/cells/A1/work/transcripts/all_generations.jsonl",
+      "sha256": "sha256:db73d5821bbe0e4d1b4be453b5cc5771e8485a565cd7ebbbdfebcae8635742e9"
+    },
+    {
+      "bytes": 21234,
+      "path": "dev/cells/A2/sealed/dev_selection.json",
+      "sha256": "sha256:c8db914c8a4ff3193b2fa9f5ea15f35ff43092c71bfa38ad6c28a17ff2e71240"
+    },
+    {
+      "bytes": 16,
+      "path": "dev/cells/A2/work/checkpoints/config_fingerprint.txt",
+      "sha256": "sha256:2190b2ff883958e0f5f235e5003ab44717567112132b5c460f30a753cb301b26"
+    },
+    {
+      "bytes": 153474,
+      "path": "dev/cells/A2/work/checkpoints/deliberation_dev_alpha.jsonl",
+      "sha256": "sha256:116e167618aabb60b573489906ea5023018d2961e9ce3b21ff591059fadbc80d"
+    },
+    {
+      "bytes": 22166,
+      "path": "dev/cells/A2/work/checkpoints/deliberation_dev_baseline.jsonl",
+      "sha256": "sha256:7d1ff877bc9d9a186c329af182594ec459956dba6a23f1da35d128590dc59b0a"
+    },
+    {
+      "bytes": 369715,
+      "path": "dev/cells/A2/work/checkpoints/deliberation_dev_prompt.jsonl",
+      "sha256": "sha256:6c796184c6e7e37147ab6f53693a2dfc36dc941b3d07eab6fc6414f3d41a2ead"
+    },
+    {
+      "bytes": 13339142,
+      "path": "dev/cells/A2/work/transcripts/all_generations.jsonl",
+      "sha256": "sha256:d53358683e3e058174ef790b186e4e0a2dd4aa3112cad7cf39337acad4a3df54"
+    },
+    {
+      "bytes": 60819,
+      "path": "dev/cells/A3/sealed/dev_selection.json",
+      "sha256": "sha256:2496719fb33d56d74d0c2e2071903edcb9785aba791abf4d924909159f15734b"
+    },
+    {
+      "bytes": 16,
+      "path": "dev/cells/A3/work/checkpoints/config_fingerprint.txt",
+      "sha256": "sha256:235ccc7059090aee08336668c42b2b17b16e9d5f18eaba7cbdca7cbfa7d486a3"
+    },
+    {
+      "bytes": 451268,
+      "path": "dev/cells/A3/work/checkpoints/skepticism_dev_alpha.jsonl",
+      "sha256": "sha256:2d6c5b92376a1de1a198b4aa33de1dc31ea98ed9a353f1cbbc0e7dbeb63b6b56"
+    },
+    {
+      "bytes": 64141,
+      "path": "dev/cells/A3/work/checkpoints/skepticism_dev_baseline.jsonl",
+      "sha256": "sha256:7c16a95aaa635a571c33f1208c14c204d5266827b77826939b152c2d316e3526"
+    },
+    {
+      "bytes": 1196727,
+      "path": "dev/cells/A3/work/checkpoints/skepticism_dev_prompt.jsonl",
+      "sha256": "sha256:fa8b4461f83ca5e48f6cbeeffd82dc7360cdf47c1a0da97b05a6e9c252fb208e"
+    },
+    {
+      "bytes": 46063017,
+      "path": "dev/cells/A3/work/transcripts/all_generations.jsonl",
+      "sha256": "sha256:46bc896968989a725f521191409f037fa39814f3c05fa7289d91d132b54cd933"
+    },
+    {
+      "bytes": 76205,
+      "path": "dev/cells/A4/sealed/dev_selection.json",
+      "sha256": "sha256:66183a26ab4feea44cfeaeb2ee701eb38407c495ae924c6725a6466e317e7934"
+    },
+    {
+      "bytes": 16,
+      "path": "dev/cells/A4/work/checkpoints/config_fingerprint.txt",
+      "sha256": "sha256:0060b59ba0d26eb09c8448e28ef79958d256c817d2e0b1f8a7e07320ceedb3dc"
+    },
+    {
+      "bytes": 837168,
+      "path": "dev/cells/A4/work/checkpoints/uncertainty_awareness_dev_alpha.jsonl",
+      "sha256": "sha256:0923101d804814b575dce6b0c1cb8f1c25c2e16cc8dd185d7ed08e54681ff6d1"
+    },
+    {
+      "bytes": 117081,
+      "path": "dev/cells/A4/work/checkpoints/uncertainty_awareness_dev_baseline.jsonl",
+      "sha256": "sha256:ee7c20a4e2024663c3c114b8c68285e783b148b2064038259fc41b3b438eacf3"
+    },
+    {
+      "bytes": 2050711,
+      "path": "dev/cells/A4/work/checkpoints/uncertainty_awareness_dev_prompt.jsonl",
+      "sha256": "sha256:edeae914999529841fe0103204288f875482cb10056976bcc442d00eafef143b"
+    },
+    {
+      "bytes": 63139781,
+      "path": "dev/cells/A4/work/transcripts/all_generations.jsonl",
+      "sha256": "sha256:d0d4e3ff54a25d6ea2f3744476432e9b883cb9d9a3ddb290886933b0aa891d58"
+    },
+    {
+      "bytes": 142752,
+      "path": "dev/SEALED.json",
+      "sha256": "sha256:6320decaec14af5f6901b0ce61cd81e04230e7207fc5608426876585fac26e4e"
+    },
+    {
+      "bytes": 28800,
+      "path": "dev/work/directions/A1-deliberation-L20.npy",
+      "sha256": "sha256:7c559db08f6aa54bc9aba1bdfd7adc0afa8dc8e533aa8aeb923970daf9777977"
+    },
+    {
+      "bytes": 32896,
+      "path": "dev/work/directions/A2-deliberation-L12.npy",
+      "sha256": "sha256:b2b783b7ad89e88448fa64d7da585641407291deea5759606edd77bf612225f4"
+    },
+    {
+      "bytes": 28800,
+      "path": "dev/work/directions/A3-skepticism-L20.npy",
+      "sha256": "sha256:b85e505a66c2153c342f1287ec738d540beb14b5cfbe4f3f5d0c233979aa9d22"
+    },
+    {
+      "bytes": 28800,
+      "path": "dev/work/directions/A4-uncertainty_awareness-L20.npy",
+      "sha256": "sha256:008b3bee374c44cb7c027fcadc4b17fdd09417e3f87c3212a03f2f30994bd1db"
+    },
+    {
+      "bytes": 674,
+      "path": "experiment-registry.yaml",
+      "sha256": "sha256:40359dd0390c602698c72f30d721b898ccc0e1c3a5fdc8cd0f04fbbc8523f9c3"
+    },
+    {
+      "bytes": 2200,
+      "path": "logs/dev.log",
+      "sha256": "sha256:83741219e765f55840df211343b6624c1236dcb78a27a8bcf66cc0e71d09b399"
+    },
+    {
+      "bytes": 145637,
+      "path": "preflight/preflight.json",
+      "sha256": "sha256:66db0c3ed7378cf5f76c6cb53ab3295a12cef871d554b1adcd0ef19e58a44705"
+    },
+    {
+      "bytes": 23909,
+      "path": "test/cells/A1/sealed/powered_tost_A_result.json",
+      "sha256": "sha256:1dd0a99ad4944d299dec84d3b41b0e07082fa9f6f803135b1ade8826725199a8"
+    },
+    {
+      "bytes": 97,
+      "path": "test/cells/A1/SEALED.json",
+      "sha256": "sha256:89c5a0b636a44f231aa2b6f073919f101ac0040fa92e9b8b0089dbde3bf3d880"
+    },
+    {
+      "bytes": 662,
+      "path": "test/cells/A1/TEST_STARTED.json",
+      "sha256": "sha256:51fb7a0c8e34d1f278fc16f4f266f4c979ba4a5a5ce9363cfe308017ed434bac"
+    },
+    {
+      "bytes": 16,
+      "path": "test/cells/A1/work/checkpoints/config_fingerprint.txt",
+      "sha256": "sha256:65b6980e968ee16bec893c64d168b69fc312ac55a70e94a4150a9b7c8e561fdd"
+    },
+    {
+      "bytes": 45884,
+      "path": "test/cells/A1/work/checkpoints/deliberation_conflict.jsonl",
+      "sha256": "sha256:f5132c92d955e269be541cc66154676dfd1f5666a9aaf05ef0f5467371d939fc"
+    },
+    {
+      "bytes": 45916,
+      "path": "test/cells/A1/work/checkpoints/deliberation_conflict_pole.jsonl",
+      "sha256": "sha256:1531548271475b90d811d6642fdd8270fc2a4d2f160e92c35e3e69658687ebdc"
+    },
+    {
+      "bytes": 43029,
+      "path": "test/cells/A1/work/checkpoints/deliberation_test_baseline.jsonl",
+      "sha256": "sha256:9221cd7264a413bbd3a37e6ab76ac17128e26ef64e0e6a7c39cfa0e2e64fab65"
+    },
+    {
+      "bytes": 45616,
+      "path": "test/cells/A1/work/checkpoints/deliberation_test_prompt.jsonl",
+      "sha256": "sha256:2fa515f84dfce2ec3f29d4a8482bf64380e5e5b35361fb720eaed58499150a38"
+    },
+    {
+      "bytes": 42554,
+      "path": "test/cells/A1/work/checkpoints/deliberation_test_steer.jsonl",
+      "sha256": "sha256:c3b5dcde275b3a8f5f5b86cd9df4a63565c0ec54898cf40f81716d2470144b5a"
+    },
+    {
+      "bytes": 5558639,
+      "path": "test/cells/A1/work/transcripts/all_generations.jsonl",
+      "sha256": "sha256:2793b9c3c68f431101f86b180ba3a478411edcfa18972783e0c074efb3376fac"
+    },
+    {
+      "bytes": 1194194,
+      "path": "test/cells/A1/work/transcripts/deliberation__conflict__prompt=delib-strong-07_alpha=-2.0.jsonl",
+      "sha256": "sha256:a48d87572b937a8298785e1e22b2f5e5cbccf6590cfdbf3f0c7cc5274bc2ddf4"
+    },
+    {
+      "bytes": 1194566,
+      "path": "test/cells/A1/work/transcripts/deliberation__conflict_pole__prompt=delib-strong-07_alpha=0.jsonl",
+      "sha256": "sha256:d1c656a5e4fab37a29b7017ed8140f48cdff612e57d208bf43361d8f61ff3b34"
+    },
+    {
+      "bytes": 1041105,
+      "path": "test/cells/A1/work/transcripts/deliberation__test_baseline__alpha=0.jsonl",
+      "sha256": "sha256:bb85a66ce0bb1f04ebf798f8c5ff0398a1e6a93d352126379a4d1e881ae3ee5e"
+    },
+    {
+      "bytes": 1192316,
+      "path": "test/cells/A1/work/transcripts/deliberation__test_prompt__prompt=delib-strong-07_alpha=0.jsonl",
+      "sha256": "sha256:24210756af9d7ccc26df603f91c8e4d429d6b78f85311082511ea00df4f50737"
+    },
+    {
+      "bytes": 1039958,
+      "path": "test/cells/A1/work/transcripts/deliberation__test_steer__alpha=2.0.jsonl",
+      "sha256": "sha256:6ccf82071a9aff93cebf01ad0c9ba8fde3e6d58ac020b673f69494856eb231bb"
+    },
+    {
+      "bytes": 1615785,
+      "path": "test/cells/A1/work/transcripts/paired_test_channels.jsonl",
+      "sha256": "sha256:8baa514e9d64825b51770b46430adb0a99ec51f2fcfe42e778d87c1ce280986d"
+    },
+    {
+      "bytes": 28800,
+      "path": "test/work/directions/A1-deliberation-L20.npy",
+      "sha256": "sha256:7c559db08f6aa54bc9aba1bdfd7adc0afa8dc8e533aa8aeb923970daf9777977"
+    },
+    {
+      "bytes": 32896,
+      "path": "test/work/directions/A2-deliberation-L12.npy",
+      "sha256": "sha256:b2b783b7ad89e88448fa64d7da585641407291deea5759606edd77bf612225f4"
+    },
+    {
+      "bytes": 28800,
+      "path": "test/work/directions/A3-skepticism-L20.npy",
+      "sha256": "sha256:b85e505a66c2153c342f1287ec738d540beb14b5cfbe4f3f5d0c233979aa9d22"
+    },
+    {
+      "bytes": 28800,
+      "path": "test/work/directions/A4-uncertainty_awareness-L20.npy",
+      "sha256": "sha256:008b3bee374c44cb7c027fcadc4b17fdd09417e3f87c3212a03f2f30994bd1db"
+    }
+  ],
+  "protocol_id": "powered-tost-A-20260813",
+  "root": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\powered-tost-a\\results\\powered_tost_A_20260813",
+  "total_bytes": 155434120
+}

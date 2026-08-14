@@ -1,0 +1,16 @@
+{
+  "cell_id": "A1",
+  "code_identity": {
+    "code_commit": "0ce7377384b4ba6daa0ccf153d95f18aeaac333c",
+    "dirty_tree": false
+  },
+  "experiment_id": "powered-tost-A-test-20260813-A1",
+  "global_attempt_marker": "/home/elzhang/.local/state/cognitive-console/powered-tost-A/test-attempts/powered-tost-A-test-20260813-A1.json",
+  "protocol_id": "powered-tost-A-20260813",
+  "registry_profile": {
+    "registry_owner_root": "/home/elzhang/.local/state/cognitive-console",
+    "registry_root": "/home/elzhang/.local/state/cognitive-console/powered-tost-A/test-attempts",
+    "registry_root_env": "CC_TEST_ATTEMPT_ROOT",
+    "registry_root_overridden": true
+  }
+}

@@ -1,0 +1,19 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/291 [00:00<?, ?it/s]Loading weights:  11%|█         | 31/291 [00:00<00:00, 300.87it/s]Loading weights:  25%|██▌       | 74/291 [00:00<00:00, 370.97it/s]Loading weights:  45%|████▍     | 130/291 [00:00<00:00, 452.38it/s]Loading weights:  62%|██████▏   | 180/291 [00:00<00:00, 469.56it/s]Loading weights:  79%|███████▊  | 229/291 [00:00<00:00, 473.28it/s]Loading weights: 100%|██████████| 291/291 [00:00<00:00, 481.85it/s]
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   0%|          | 1/339 [00:00<00:38,  8.79it/s]Loading weights:  21%|██        | 72/339 [00:00<00:00, 394.06it/s]Loading weights:  47%|████▋     | 158/339 [00:00<00:00, 584.31it/s]Loading weights:  72%|███████▏  | 243/339 [00:00<00:00, 676.69it/s]Loading weights:  97%|█████████▋| 328/339 [00:00<00:00, 731.15it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 637.05it/s]
+Traceback (most recent call last):
+  File "/home/elzhang/cc_l0/powered_tost_a_repo/scripts/run_powered_tost_a.py", line 1132, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/elzhang/cc_l0/powered_tost_a_repo/scripts/run_powered_tost_a.py", line 1121, in main
+    return _dev(args)
+           ^^^^^^^^^^
+  File "/home/elzhang/cc_l0/powered_tost_a_repo/scripts/run_powered_tost_a.py", line 759, in _dev
+    hardware = _capture_hardware(args.hardware_profile) if args.backend == "hf" else None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elzhang/cc_l0/powered_tost_a_repo/scripts/run_powered_tost_a.py", line 306, in _capture_hardware
+    return validate_hardware_profile(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elzhang/cc_l0/powered_tost_a_repo/src/cognitive_console/ops/hardware_profiles.py", line 94, in validate_hardware_profile
+    raise ValueError(
+ValueError: insufficient free VRAM before load: 52.702 GiB < 60.000 GiB

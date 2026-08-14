@@ -21,8 +21,11 @@ dist/
 # Large / regenerable run artifacts. We DO commit the small results JSON +
 # human summary (see !exceptions below); everything else under results/ is local.
 results/**/activations/
+results/**/activation_cache/
+results/**/.powered_tost_activation_cache/
 results/**/*.npy
 results/**/*.npz
+!results/powered_tost_A_20260813/**/directions/*.npy
 
 .prompt-*.txt
 .worktrees/

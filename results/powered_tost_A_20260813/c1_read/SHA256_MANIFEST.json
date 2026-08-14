@@ -1,0 +1,49 @@
+{
+  "artifact_id": "powered-tost-A-c1-read-raw-bundle",
+  "file_count": 8,
+  "files": [
+    {
+      "bytes": 19357,
+      "path": "c1_read/c1_facade_results.json",
+      "sha256": "sha256:4165833febd7e03eff1e7e9eff1cb111a5c7c4fb270063ddcaea961579050b09"
+    },
+    {
+      "bytes": 5991,
+      "path": "c1_read/c1_facade_summary.md",
+      "sha256": "sha256:cab0f61851a0369de26db01a1af88e1daa32b3c36e24dd430c1998f274d8a1f4"
+    },
+    {
+      "bytes": 1815,
+      "path": "c1_read/experiment-registry.yaml",
+      "sha256": "sha256:baff6498745c2f5eb512137a5797d702f6b36bf7c1189e143d3956f9a2a4252e"
+    },
+    {
+      "bytes": 2249,
+      "path": "logs/c1-read.log",
+      "sha256": "sha256:e0a339a25023badf14b3635f1412bcf89a904d0d5663bdeb9e812629f115fe59"
+    },
+    {
+      "bytes": 2200,
+      "path": "logs/dev.log",
+      "sha256": "sha256:83741219e765f55840df211343b6624c1236dcb78a27a8bcf66cc0e71d09b399"
+    },
+    {
+      "bytes": 34787,
+      "path": "logs/test-A2.log",
+      "sha256": "sha256:f6c6eaf582e0ff159230aa061a512e1108fb053a50fbc99cb9f5daea1872cc27"
+    },
+    {
+      "bytes": 3275,
+      "path": "logs/test-A3.log",
+      "sha256": "sha256:148ae954250407d638b91858487bad21bba92bdf6db35fdccff5b59037aa4533"
+    },
+    {
+      "bytes": 724,
+      "path": "logs/test-A4.log",
+      "sha256": "sha256:e815a7ab39401420fda5d28e44770154cce1290f07da80971973e3111810e495"
+    }
+  ],
+  "protocol_id": "powered-tost-A-20260813",
+  "root": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\powered-tost-a\\results\\powered_tost_A_20260813\\c1_read",
+  "total_bytes": 70398
+}

@@ -1,0 +1,57 @@
+experiments:
+- experiment_id: powered-tost-A-c1-read-20260814
+  parent: powered-tost-A-20260813
+  hypothesis_id: H1-c1-read-facade
+  claim_ids:
+  - C1
+  type: confirmatory-protocol-pending-audit
+  status: done
+  protocol_id: "powered-tost-A-20260813 \xA710 C1 READ piggyback"
+  code_commit: 0ce7377384b4ba6daa0ccf153d95f18aeaac333c
+  dirty_tree: false
+  seed: 20260812
+  seeds:
+  - 20260812
+  - 20260813
+  - 20260814
+  model: Qwen/Qwen2.5-7B-Instruct
+  hardware: nvidia-a800-80gb; CUDA_VISIBLE_DEVICES=3; device=cuda dtype=float16
+  valid_for_paper: false
+  scientific_status: PENDING_HOSTILE_RESULT_AUDIT
+  validation_notes: C1 READ piggyback artifact produced in Experiment A run window.
+    Main script completed metric JSON/summary and then hit an out-dir-relative registry
+    path error; registry/manifest were reconstructed from the sealed JSON and log
+    without rerunning compute. Do not fold until hostile audit plus Manager/human
+    gate.
+  summary_metrics:
+    n_axes: 3
+    n_axes_facade_holds_ci: 3
+    n_axes_seed_stable: 3
+    facade_support_fraction: 1.0
+    axes:
+      deliberation:
+        layer: 20
+        facade_ratio: 0.5661125272293612
+        ci_lo: 0.461645128603128
+        ci_hi: 0.673530330139422
+        seed_stable: true
+        c1_signal: true
+      skepticism:
+        layer: 20
+        facade_ratio: 0.5198157466715358
+        ci_lo: 0.42029462497879577
+        ci_hi: 0.6277396101212008
+        seed_stable: true
+        c1_signal: true
+      uncertainty_awareness:
+        layer: 24
+        facade_ratio: 0.5066121833086958
+        ci_lo: 0.22942413850642135
+        ci_hi: 0.75986351539686
+        seed_stable: true
+        c1_signal: true
+  artifacts:
+  - c1_read/c1_facade_results.json
+  - c1_read/c1_facade_summary.md
+  - logs/c1-read.log
+  - c1_read/SHA256_MANIFEST.json

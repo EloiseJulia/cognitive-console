@@ -1,0 +1,20 @@
+[c1] system-available RAM at start: 685170 MB (watchdog floor 450 MB)
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   1%|▏         | 5/339 [00:00<00:09, 35.65it/s]Loading weights:  35%|███▌      | 120/339 [00:00<00:00, 596.40it/s]Loading weights:  58%|█████▊    | 196/339 [00:00<00:00, 660.72it/s]Loading weights:  81%|████████▏ | 276/339 [00:00<00:00, 712.10it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 659.93it/s]
+[c1] model=Qwen/Qwen2.5-7B-Instruct hidden_dim=3584 layers=0..28 scan=[2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28]
+[c1] axis=deliberation             layer= 20(stable) prompt_reach=  9.358 pole_reach= 16.531 ratio= 0.566 CI=[0.462,0.674] extract_ok=True seed_stable=True c1=True  (5.3s)
+[c1] axis=skepticism               layer= 20(stable) prompt_reach= 12.096 pole_reach= 23.269 ratio= 0.520 CI=[0.420,0.628] extract_ok=True seed_stable=True c1=True  (4.7s)
+[c1] axis=uncertainty_awareness    layer= 24(stable) prompt_reach= 18.160 pole_reach= 35.845 ratio= 0.507 CI=[0.229,0.760] extract_ok=True seed_stable=True c1=True  (4.8s)
+Traceback (most recent call last):
+  File "/home/elzhang/cc_l0/powered_tost_a_repo/scripts/run_c1_facade.py", line 1063, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/elzhang/cc_l0/powered_tost_a_repo/scripts/run_c1_facade.py", line 1055, in main
+    exp_id = _register(payload, out_dir, json_path, args.seed)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/elzhang/cc_l0/powered_tost_a_repo/scripts/run_c1_facade.py", line 960, in _register
+    artifacts=[str(json_path.relative_to(_REPO)).replace("\\", "/")],
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 682, in relative_to
+    raise ValueError(f"{str(self)!r} is not in the subpath of {str(other)!r}")
+ValueError: '/home/elzhang/reports/cognitive-console/powered_tost_A_20260813/c1_read/c1_facade_results.json' is not in the subpath of '/home/elzhang/cc_l0/powered_tost_a_repo'

@@ -1,6 +1,26 @@
 {
-  "file_count": 105,
+  "file_count": 110,
   "files": [
+    {
+      "bytes": 19357,
+      "path": "c1_read/c1_facade_results.json",
+      "sha256": "sha256:4165833febd7e03eff1e7e9eff1cb111a5c7c4fb270063ddcaea961579050b09"
+    },
+    {
+      "bytes": 5991,
+      "path": "c1_read/c1_facade_summary.md",
+      "sha256": "sha256:cab0f61851a0369de26db01a1af88e1daa32b3c36e24dd430c1998f274d8a1f4"
+    },
+    {
+      "bytes": 1815,
+      "path": "c1_read/experiment-registry.yaml",
+      "sha256": "sha256:baff6498745c2f5eb512137a5797d702f6b36bf7c1189e143d3956f9a2a4252e"
+    },
+    {
+      "bytes": 1656,
+      "path": "c1_read/SHA256_MANIFEST.json",
+      "sha256": "sha256:f6e4fcae35b56a7f1c8aeb50d1f56d048ad826d245b2a30c130ef008ac07b660"
+    },
     {
       "bytes": 21214,
       "path": "dev/cells/A1/sealed/dev_selection.json",
@@ -150,6 +170,11 @@
       "bytes": 3091,
       "path": "experiment-registry.yaml",
       "sha256": "sha256:476ee1f3046053b681624f46c524fe8c634dea3f28fcea579bc0f14debdc1ffb"
+    },
+    {
+      "bytes": 2249,
+      "path": "logs/c1-read.log",
+      "sha256": "sha256:e0a339a25023badf14b3635f1412bcf89a904d0d5663bdeb9e812629f115fe59"
     },
     {
       "bytes": 2200,
@@ -529,5 +554,5 @@
   ],
   "protocol_id": "powered-tost-A-20260813",
   "root": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\powered-tost-a\\results\\powered_tost_A_20260813",
-  "total_bytes": 270836498
+  "total_bytes": 270867566
 }

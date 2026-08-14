@@ -1717,3 +1717,168 @@ experiments:
     which are untouched. parent set to E-0005 (frozen artifact this is additive to)
     per reconciliation instruction; dev_selection_parent preserves the DEV linkage.
     Independent hostile result audit still required before any paper use.
+- experiment_id: powered-tost-A-test-20260813
+  parent: c2b-resolution-refinement-20260812
+  hypothesis_id: H2-powered-equivalence
+  claim_ids:
+  - C2b
+  type: confirmatory-protocol-pending-audit
+  status: done
+  protocol_id: powered-tost-A-20260813
+  code_commit: 0ce7377384b4ba6daa0ccf153d95f18aeaac333c
+  dirty_tree: false
+  data_hash: sha256:f9e1ecafa879081ca9dae243f1a38dbc3690ee5f9597ba931ee653d99d72baa0
+  env_hash: null
+  config_hash: null
+  model: Qwen/Qwen2.5-7B-Instruct@a09a35458c702b33eeacc393d103063234e8bc28
+    plus NousResearch/Meta-Llama-3-8B-Instruct
+  dataset: GSM8K test / TruthfulQA validation / TriviaQA validation, frozen disjoint
+    selected pools per powered-tost-A prereg
+  seed: 20260812
+  hardware: nvidia-a800-80gb; profile_sha256
+    sha256:65e4cf84a9bc58b61152b911ab87648692914b1cee75aa17e97cd5f823fad249
+  started_at: 2026-08-13
+  ended_at: 2026-08-14
+  exit_code: 0
+  raw_metrics:
+    test_seal: results/powered_tost_A_20260813/test/SEALED.json
+    test_seal_sha256: sha256:a5be749317adb51555218dec9c8c82fa56079c0fb02221e8ae6cb51c609a0c13
+    raw_bundle_manifest: results/powered_tost_A_20260813/SHA256_MANIFEST.json
+    raw_bundle_manifest_sha256: sha256:f9e1ecafa879081ca9dae243f1a38dbc3690ee5f9597ba931ee653d99d72baa0
+    cells:
+      A1:
+        verdict: EQUIVALENT
+        n_test: 150
+        achieved_mde: 0.03857491412822587
+        dev_alpha: 2.0
+        mean_diff: 0.021333333333333336
+        ci_9833: [0.0, 0.04800000000000001]
+        tost_90_ci: [0.005333333333333334, 0.04]
+        coherence_ok: true
+        result_sha256: sha256:1dd0a99ad4944d299dec84d3b41b0e07082fa9f6f803135b1ade8826725199a8
+      A2:
+        verdict: EQUIVALENT
+        n_test: 150
+        achieved_mde: 0.03625112412050142
+        dev_alpha: 2.0
+        mean_diff: 0.006666666666666667
+        ci_9833: [-0.008000000000000002, 0.021333333333333336]
+        tost_90_ci: [-0.004, 0.016000000000000004]
+        coherence_ok: true
+        result_sha256: sha256:6508db8c9fb62250d5e989810b0c8069b2b631c978a3f4acefad8673daa6444f
+      A3:
+        verdict: EQUIVALENT
+        n_test: 505
+        achieved_mde: 0.052910535363717946
+        dev_alpha: 2.0
+        mean_diff: -0.014257425742574258
+        ci_9833: [-0.048712871287128715, 0.021386138613861388]
+        tost_90_ci: [-0.03841584158415842, 0.010297029702970298]
+        coherence_ok: true
+        result_sha256: sha256:6bafea7ab0f7cc81e6ec2eb29cc83ecb6ee518bd2ee38bf0bb2e0f01b135de7c
+      A4:
+        verdict: NEGATIVE-CONTRAST
+        n_test: 813
+        achieved_mde: 0.049992556887575194
+        dev_alpha: 24.0
+        mean_diff: -0.08807067650676507
+        ci_9833: [-0.11980263530135303, -0.057529313653136516]
+        tost_90_ci: [-0.10927168634686348, -0.06746039114391143]
+        coherence_ok: true
+        result_sha256: sha256:6668246ee3de67687f2c29271fb32a79b850dd9e7b7e44c0a38bae8fe3c7525b
+  summary_metrics:
+    cells_reported: 4
+    strict_verdicts:
+      EQUIVALENT: 3
+      NEGATIVE-CONTRAST: 1
+      PASS: 0
+      UNDERPOWERED: 0
+    valid_for_paper: false
+    fold_gate: PENDING_HOSTILE_RESULT_AUDIT
+  artifacts:
+  - results/powered_tost_A_20260813/test/SEALED.json
+  - results/powered_tost_A_20260813/SHA256_MANIFEST.json
+  - results/powered_tost_A_20260813/experiment-registry.yaml
+  - results/powered_tost_A_20260813/test/cells/A1/sealed/powered_tost_A_result.json
+  - results/powered_tost_A_20260813/test/cells/A2/sealed/powered_tost_A_result.json
+  - results/powered_tost_A_20260813/test/cells/A3/sealed/powered_tost_A_result.json
+  - results/powered_tost_A_20260813/test/cells/A4/sealed/powered_tost_A_result.json
+  failure_reason: null
+  valid_for_paper: false
+  scientific_status: PENDING_HOSTILE_RESULT_AUDIT
+  additive_to_frozen_0_of_12: true
+  must_not_overwrite: E-0005/E-0006/E-0011
+  validation_notes: >-
+    Restored interrupted Experiment A without rerunning DEV or A1 TEST. A1 was
+    copied from the A800 sealed artifact only. A2/A3/A4 each consumed a fresh
+    per-cell TEST-once marker and were committed as raw bundles immediately after
+    completion. Results are not foldable until an independent hostile result audit
+    and Manager/human fold gate pass.
+- experiment_id: powered-tost-A-c1-read-20260814
+  parent: powered-tost-A-test-20260813
+  hypothesis_id: H1-c1-read-facade
+  claim_ids:
+  - C1
+  type: confirmatory-protocol-pending-audit
+  status: done
+  protocol_id: powered-tost-A-20260813 §10 C1 READ piggyback
+  code_commit: 0ce7377384b4ba6daa0ccf153d95f18aeaac333c
+  dirty_tree: false
+  data_hash: sha256:f6e4fcae35b56a7f1c8aeb50d1f56d048ad826d245b2a30c130ef008ac07b660
+  env_hash: null
+  config_hash: null
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: C1 contrast-pair and strongest-prompt files committed under data/
+  seed: 20260812
+  seeds: [20260812, 20260813, 20260814]
+  hardware: nvidia-a800-80gb; CUDA_VISIBLE_DEVICES=3; device=cuda dtype=float16
+  started_at: 2026-08-14
+  ended_at: 2026-08-14
+  exit_code: 1
+  raw_metrics:
+    c1_results: results/powered_tost_A_20260813/c1_read/c1_facade_results.json
+    c1_results_sha256: sha256:4165833febd7e03eff1e7e9eff1cb111a5c7c4fb270063ddcaea961579050b09
+    raw_bundle_manifest: results/powered_tost_A_20260813/c1_read/SHA256_MANIFEST.json
+    raw_bundle_manifest_sha256: sha256:f6e4fcae35b56a7f1c8aeb50d1f56d048ad826d245b2a30c130ef008ac07b660
+    axes:
+      deliberation:
+        layer: 20
+        facade_ratio: 0.5661125272293612
+        ci_95: [0.461645128603128, 0.673530330139422]
+        seed_stable: true
+        c1_signal: true
+      skepticism:
+        layer: 20
+        facade_ratio: 0.5198157466715358
+        ci_95: [0.42029462497879577, 0.6277396101212008]
+        seed_stable: true
+        c1_signal: true
+      uncertainty_awareness:
+        layer: 24
+        facade_ratio: 0.5066121833086958
+        ci_95: [0.22942413850642135, 0.75986351539686]
+        seed_stable: true
+        c1_signal: true
+  summary_metrics:
+    n_axes: 3
+    n_axes_facade_holds_ci: 3
+    n_axes_seed_stable: 3
+    facade_support_fraction: 1.0
+    valid_for_paper: false
+    fold_gate: PENDING_HOSTILE_RESULT_AUDIT
+  artifacts:
+  - results/powered_tost_A_20260813/c1_read/c1_facade_results.json
+  - results/powered_tost_A_20260813/c1_read/c1_facade_summary.md
+  - results/powered_tost_A_20260813/c1_read/SHA256_MANIFEST.json
+  - results/powered_tost_A_20260813/c1_read/experiment-registry.yaml
+  - results/powered_tost_A_20260813/logs/c1-read.log
+  failure_reason: post-metric registry writer rejected out-dir outside source repo;
+    metrics JSON and summary were already written, and registry/manifest were
+    reconstructed from artifacts without rerunning compute.
+  valid_for_paper: false
+  scientific_status: PENDING_HOSTILE_RESULT_AUDIT
+  validation_notes: >-
+    C1 READ piggyback used three registered seeds and is retained as a raw bundle
+    for hostile audit only. The nonzero exit is an operational registration-path
+    failure after metric artifacts were written, not a generation/statistics
+    failure; audit must verify before any paper fold.

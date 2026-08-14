@@ -41,5 +41,18 @@ experiments:
       coherence_ok: true
       result_path: C:\Users\v-elzhang\Desktop\MyFolder\cognitive console\.worktrees\powered-tost-a\results\powered_tost_A_20260813\test\cells\A2\sealed\powered_tost_A_result.json
       result_sha256: sha256:6508db8c9fb62250d5e989810b0c8069b2b631c978a3f4acefad8673daa6444f
+    A3:
+      strict_verdict: EQUIVALENT
+      n_test: 505
+      achieved_mde: 0.052910535363717946
+      dev_alpha: 2.0
+      mean_diff: -0.014257425742574258
+      ci_lo: -0.048712871287128715
+      ci_hi: 0.021386138613861388
+      tost_ci_lo: -0.03841584158415842
+      tost_ci_hi: 0.010297029702970298
+      coherence_ok: true
+      result_path: C:\Users\v-elzhang\Desktop\MyFolder\cognitive console\.worktrees\powered-tost-a\results\powered_tost_A_20260813\test\cells\A3\sealed\powered_tost_A_result.json
+      result_sha256: sha256:6bafea7ab0f7cc81e6ec2eb29cc83ecb6ee518bd2ee38bf0bb2e0f01b135de7c
   artifacts:
   - C:/Users/v-elzhang/Desktop/MyFolder/cognitive console/.worktrees/powered-tost-a/results/powered_tost_A_20260813

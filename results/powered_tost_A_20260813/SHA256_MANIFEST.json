@@ -1,5 +1,5 @@
 {
-  "file_count": 70,
+  "file_count": 87,
   "files": [
     {
       "bytes": 21214,
@@ -147,9 +147,9 @@
       "sha256": "sha256:008b3bee374c44cb7c027fcadc4b17fdd09417e3f87c3212a03f2f30994bd1db"
     },
     {
-      "bytes": 1853,
+      "bytes": 2470,
       "path": "experiment-registry.yaml",
-      "sha256": "sha256:84ca0b6eb32b090b90a4a9f1b8c6dbca92aaeacc2e075cc60548d5c3e61f348d"
+      "sha256": "sha256:4904b9667b6be2346af0db5581deff4e4aaa9f8607204f95a432e6b13b1307bd"
     },
     {
       "bytes": 2200,
@@ -160,6 +160,11 @@
       "bytes": 34787,
       "path": "logs/test-A2.log",
       "sha256": "sha256:f6c6eaf582e0ff159230aa061a512e1108fb053a50fbc99cb9f5daea1872cc27"
+    },
+    {
+      "bytes": 3275,
+      "path": "logs/test-A3.log",
+      "sha256": "sha256:148ae954250407d638b91858487bad21bba92bdf6db35fdccff5b59037aa4533"
     },
     {
       "bytes": 145637,
@@ -332,6 +337,86 @@
       "sha256": "sha256:4755458d2e03ef50a488af76ba27c3872a1fe8555125aafcda3dc5bdd85e1959"
     },
     {
+      "bytes": 69962,
+      "path": "test/cells/A3/sealed/powered_tost_A_result.json",
+      "sha256": "sha256:6bafea7ab0f7cc81e6ec2eb29cc83ecb6ee518bd2ee38bf0bb2e0f01b135de7c"
+    },
+    {
+      "bytes": 97,
+      "path": "test/cells/A3/SEALED.json",
+      "sha256": "sha256:4d459ad4a5c64058b0c834e9328cf43efe76731bc40a9818f12fcdcf38528a38"
+    },
+    {
+      "bytes": 662,
+      "path": "test/cells/A3/TEST_STARTED.json",
+      "sha256": "sha256:056979d6e98e042152fb744f4853ad364ba675f72ebde9671aad195b2a887088"
+    },
+    {
+      "bytes": 16,
+      "path": "test/cells/A3/work/checkpoints/config_fingerprint.txt",
+      "sha256": "sha256:ddad65e8b4e84669321cf48adac3cc59a2ada3308db9d94b0ebba6d419c35053"
+    },
+    {
+      "bytes": 142903,
+      "path": "test/cells/A3/work/checkpoints/skepticism_conflict.jsonl",
+      "sha256": "sha256:f86e489553c42220b5e0957c057e2be1bdce391eca6f9a3d88a2ee67d4ac012b"
+    },
+    {
+      "bytes": 143543,
+      "path": "test/cells/A3/work/checkpoints/skepticism_conflict_pole.jsonl",
+      "sha256": "sha256:6da10e4fab7af697362ad6c43cf2b2ca6c23a9f112e968ac55ae14e9969da7c8"
+    },
+    {
+      "bytes": 128817,
+      "path": "test/cells/A3/work/checkpoints/skepticism_test_baseline.jsonl",
+      "sha256": "sha256:7ff44a39b7006d278a13547eefbe80031b6d55f9a7c960592c6542f6806665b5"
+    },
+    {
+      "bytes": 142533,
+      "path": "test/cells/A3/work/checkpoints/skepticism_test_prompt.jsonl",
+      "sha256": "sha256:55696b314420c9cbc729aee88863c385efaf445b22e137320058be10965e6f09"
+    },
+    {
+      "bytes": 128863,
+      "path": "test/cells/A3/work/checkpoints/skepticism_test_steer.jsonl",
+      "sha256": "sha256:c6efae970a596ea875ff93470168ee034325ed74d1081cab41a7f54a3fd565d8"
+    },
+    {
+      "bytes": 17637181,
+      "path": "test/cells/A3/work/transcripts/all_generations.jsonl",
+      "sha256": "sha256:fdfe55e8dace03b5312b50d904b590a2ba6fa144285a17cf03880d1398e18e45"
+    },
+    {
+      "bytes": 4275856,
+      "path": "test/cells/A3/work/transcripts/paired_test_channels.jsonl",
+      "sha256": "sha256:f4110ca2a3eb3509fee0f553e4824760bd88ff7a7113e32dc1f0f9167bff6e38"
+    },
+    {
+      "bytes": 3865813,
+      "path": "test/cells/A3/work/transcripts/skepticism__conflict__prompt=skep-strong-15_alpha=-2.0.jsonl",
+      "sha256": "sha256:21579d437c348590abcde84cca0814b811a634b343252f4614aa52af5ed7a479"
+    },
+    {
+      "bytes": 3874104,
+      "path": "test/cells/A3/work/transcripts/skepticism__conflict_pole__prompt=skep-strong-15_alpha=0.jsonl",
+      "sha256": "sha256:d95f6af4aeea7c65e9bb878bf7ee8373504b24b0716d0ffa58563323fb26b36e"
+    },
+    {
+      "bytes": 3186934,
+      "path": "test/cells/A3/work/transcripts/skepticism__test_baseline__alpha=0.jsonl",
+      "sha256": "sha256:bef3f484e4b5665bcdbb0e0fe223945911d7414f32d8f1443e10eba90f67d509"
+    },
+    {
+      "bytes": 3866529,
+      "path": "test/cells/A3/work/transcripts/skepticism__test_prompt__prompt=skep-strong-15_alpha=0.jsonl",
+      "sha256": "sha256:6b3bccba6b3fd8ef1e62f9729054d8e716c3c2e1da84462dfc37554965f47ef6"
+    },
+    {
+      "bytes": 3192251,
+      "path": "test/cells/A3/work/transcripts/skepticism__test_steer__alpha=2.0.jsonl",
+      "sha256": "sha256:b478e0c22ffad7a19858f406444d49460ea0c61dac8229c0268780fbcab771e5"
+    },
+    {
       "bytes": 28800,
       "path": "test/work/directions/A1-deliberation-L20.npy",
       "sha256": "sha256:7c559db08f6aa54bc9aba1bdfd7adc0afa8dc8e533aa8aeb923970daf9777977"
@@ -354,5 +439,5 @@
   ],
   "protocol_id": "powered-tost-A-20260813",
   "root": "C:\\Users\\v-elzhang\\Desktop\\MyFolder\\cognitive console\\.worktrees\\powered-tost-a\\results\\powered_tost_A_20260813",
-  "total_bytes": 168803505
+  "total_bytes": 209463461
 }

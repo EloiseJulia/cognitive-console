@@ -1,0 +1,38 @@
+{
+  "cells": {
+    "D1": {
+      "any_alpha_passes_gate": true,
+      "best_prompt_id": "delib-strong-10",
+      "dev_baseline_accuracy": 0.8106666666666666,
+      "dev_prompt_accuracy": 0.832,
+      "dev_selection_path": "results/delib_512_20260815/dev/cells/D1/sealed/dev_selection.json",
+      "dev_steer_accuracy": 0.8160000000000001,
+      "dev_steer_minus_prompt": -0.015999999999999903,
+      "layer": 20,
+      "model_id": "Qwen/Qwen2.5-7B-Instruct",
+      "selected_alpha": 16.0
+    },
+    "D2": {
+      "any_alpha_passes_gate": true,
+      "best_prompt_id": "delib-strong-04",
+      "dev_baseline_accuracy": 0.7066666666666667,
+      "dev_prompt_accuracy": 0.7306666666666666,
+      "dev_selection_path": "results/delib_512_20260815/dev/cells/D2/sealed/dev_selection.json",
+      "dev_steer_accuracy": 0.6533333333333332,
+      "dev_steer_minus_prompt": -0.07733333333333337,
+      "layer": 12,
+      "model_id": "NousResearch/Meta-Llama-3-8B-Instruct",
+      "selected_alpha": 2.0
+    }
+  },
+  "code_commit": "0af4b569d1141246b0565ac6384d9e7c8b926527",
+  "dirty_tree_at_run_start": false,
+  "experiment_id": "delib-512-dev-20260815",
+  "hardware": "nvidia-a800-80gb; CUDA_VISIBLE_DEVICES=1; GPU1",
+  "max_new_tokens": 512,
+  "phase": "DEV_SEALED",
+  "protocol_id": "deliberation-remeasure-512-20260815",
+  "source_out_dir": "/home/elzhang/cc_l0/delib_512_20260815_dev",
+  "test_status": "NOT_RUN_NOT_AUTHORIZED_IN_STAGE1",
+  "valid_for_paper": false
+}

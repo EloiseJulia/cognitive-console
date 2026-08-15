@@ -27,6 +27,38 @@
 #   validation_notes: null
 
 experiments:
+- experiment_id: delib-512-dev-20260815
+  parent: powered-tost-A-dev-20260813
+  hypothesis_id: H2-deliberation-512-remeasure
+  claim_ids:
+  - C2b
+  type: confirmatory-protocol-pending-audit
+  status: planned
+  protocol_id: deliberation-remeasure-512-20260815
+  code_commit: null
+  dirty_tree: null
+  data_hash: null
+  env_hash: null
+  config_hash: null
+  model:
+  - Qwen/Qwen2.5-7B-Instruct
+  - NousResearch/Meta-Llama-3-8B-Instruct
+  dataset: openai/gsm8k main test, excluding frozen first 60 IDs, inherited powered-tost-A deterministic selected pool
+  seed: 20260812
+  hardware: nvidia-a800-80gb; CUDA_VISIBLE_DEVICES=3 required; DEV only in Stage 1
+  started_at: null
+  ended_at: null
+  exit_code: null
+  raw_metrics: null
+  summary_metrics: null
+  artifacts:
+  - docs/specs/deliberation-remeasure-512-prereg.md
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    Owner-approved 512-token deliberation remeasure to diagnose/repair the
+    64-token GSM8K floor-effect artifact. Stage 1 authorizes DEV only and must
+    stop before TEST. TEST remains unauthorized until explicit Manager Stage 2 GO.
 - experiment_id: c1-facade-1dcc4fa7-0001
   parent: null
   hypothesis_id: H1

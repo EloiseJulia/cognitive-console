@@ -592,7 +592,7 @@ def select_on_dev_with_scores(
         if val > best_pout:
             best_pid, best_ptext, best_pout = pid, ptext, val
 
-    _, base_deg, _ = adj._channel_item_outcomes(  # noqa: SLF001
+    base_outs, base_deg, _ = adj._channel_item_outcomes(  # noqa: SLF001
         sampler,
         spec.axis,
         dev_items,
@@ -659,6 +659,7 @@ def select_on_dev_with_scores(
         "gate_ceiling": gate_ceiling,
         "n_dev": len(dev_items),
         "dev_item_ids": [str(item["id"]) for item in dev_items],
+        "baseline_outcome": float(base_outs.mean()),
     }
     return selection, diagnostics
 

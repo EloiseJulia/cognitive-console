@@ -5,6 +5,24 @@
 
 ---
 
+## 2026-08-15 · D-0115 · Owner-approved deliberation 512-token remeasure protocol frozen for DEV only
+- Owner approved a deliberation-only protocol revision after discovering that
+  the frozen 64-new-token GSM8K cap truncated multi-step reasoning before final
+  answers, producing a floor-effect artifact (~0–3% accuracy) in prompt, steer,
+  and baseline channels.
+- Frozen protocol:
+  `docs/specs/deliberation-remeasure-512-prereg.md`; protocol ID
+  `deliberation-remeasure-512-20260815`. Scope is only D1
+  (Qwen2.5-7B-Instruct CAA deliberation layer 20) and D2
+  (Llama-3-8B-Instruct CAA deliberation layer 12), inheriting powered-tost-A
+  infrastructure and parameters except `max_new_tokens=512`.
+- This is not a token sweep and does not authorize changing item pools,
+  layers, alpha grid, scorer, comparator, seeds, coherence gate, bootstrap, or
+  verdict rules. Stage 1 authorizes frozen-protocol commit, code check, and DEV
+  only; TEST requires a separate Manager "阶段2 GO".
+- `valid_for_paper=false`; no paper claim, E-0005/E-0006/E-0011 artifact, frozen
+  0/12 record, main checkout, push, or merge is changed by this decision.
+
 ## 2026-08-11 · D-0114 · Owner authorizes V9 scenario-knob version break for local preview only
 - The owner approved V9 as a distinct scenario-knob material, sequence, and
   signed-export version break. The exact implementation commit is

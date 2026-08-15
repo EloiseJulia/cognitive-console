@@ -5,6 +5,40 @@
 
 ---
 
+## 2026-08-13 · D-0124 · Offline single-file V3 stepwise study (no server/database) merged to main
+- Context: the owner's free Render Postgres quota is exhausted by another
+  project, so the online deployment path is shelved. Owner directive: let
+  volunteers use a self-contained local HTML (like the earlier demo) and return
+  a table for the owner to aggregate.
+- Decision (Manager self-ruled; internal main merge, not an external release):
+  ship a **zero-server/zero-database** offline path. A generator
+  (`scripts/generate_stepwise_offline.py`) reuses the trusted materials to bake
+  the 24 allocation packets + a JS port of `route_participant` into one HTML,
+  stripping every answer key (fail-closed self-check). Volunteers open it
+  locally, complete the study, and download an **unsigned** JSON+CSV to return
+  by hand. The owner scores/aggregates offline
+  (`scripts/aggregate_stepwise_offline.py`) by reusing the trusted
+  `analysis.trial_scores`/`analyze`.
+- Schema isolation: offline exports use a distinct name
+  `microstudy-export-offline-stepwise-v1` with `signed: false`; the aggregator
+  rejects the signed v8 schema, hash/version/locale/A-B/allocation mismatches,
+  and missing/duplicate `submission_id`. It never impersonates the signed path.
+- Invariants held: logic fingerprint, materials v11.3, and generator --check
+  unchanged; `src/` untouched; no answer keys or signed-export vocabulary ship
+  in the HTML or exports. Verified by two independent hostile audits: the first
+  returned NOT-MERGEABLE (MAJOR: no per-submission id despite the consent copy
+  promising one -> silent double-counting; MINOR: leftover signed-export
+  labels); after fixing (client-side `crypto.randomUUID()` submission_id + first-
+  wins dedup in the aggregator; unsigned/offline wording), the re-audit returned
+  MERGEABLE with both findings CLOSED. Offline suite = 6 tests.
+- Honest boundary (unchanged, still gated on humans): the returned data is an
+  **unsigned exploratory pilot** whose integrity depends on honest return; the
+  protocol is not frozen; one participant does not represent the population;
+  materials are fictional/illustrative. Formal recruitment or collecting human
+  data still requires the advisor/ethics reviewer to finalize the bilingual
+  consent placeholders and freeze the protocol. Merged to main locally as
+  2d23f1a; **not pushed**.
+
 ## 2026-08-13 · D-0123 · Owner decides consent stays a front-end gate, not recorded in exports
 - The owner decided **not** to record informed-consent acknowledgement into the
   exported data. Consent remains a front-end-only gate (Begin is disabled until

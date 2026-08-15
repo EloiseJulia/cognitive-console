@@ -55,7 +55,7 @@ from scripts import run_c2b_adjudication as base
 from scripts import run_gpu_phase0 as p0
 
 DEFAULT_OUT_DIR = _REPO / "results" / "E-0017-prompt-steer-composition"
-MAX_NEW_TOKENS = 64
+MAX_NEW_TOKENS = 512
 BATCH_SIZE = 16
 TEMPERATURE = 0.7
 N_EXTRACTION = 28

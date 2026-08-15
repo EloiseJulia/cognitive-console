@@ -1,8 +1,19 @@
 # PRE-REGISTRATION — E-0017 Prompt + Steer Composition Construct Validation
 
-- **Protocol ID:** `E-0017-prompt-steer-composition-v1`
-- **Status:** **FROZEN BEFORE REAL DEV/TEST, 2026-08-11; hostile-audit
-  repairs synchronized before any real execution.**
+- **Protocol ID:** `E-0017-prompt-steer-composition-v2`
+- **Supersedes:** `E-0017-prompt-steer-composition-v1`.
+- **Status:** **FROZEN BEFORE v2 REAL DEV/TEST, 2026-08-15; owner-approved
+  protocol revision after v1 DEV_INELIGIBLE diagnostic.**
+- **Revision approval:** owner/Manager §5 gate PASS on 2026-08-14. Rationale:
+  the v1 `max_new_tokens=64` cap structurally truncated GSM8K chain-of-thought
+  generations (`truncation_rate=1.0`) and prevented prompt eligibility before
+  the registered `PS-P` estimand could be evaluated. This is treated as a
+  generation-budget execution bug, not a composition result.
+- **Revised generation cap:** `max_new_tokens=512`, selected from prior task
+  requirements before rerun (GSM8K standard CoT evaluation needs 256--512
+  tokens; TruthfulQA option cues and TriviaQA answer+confidence fields fit
+  within the same cap). **No token-cap sweep is allowed.** The frozen value is
+  exactly 512.
 - **Execution gate:** CPU/synthetic validation only until a fresh hostile audit
   returns `PASS`. Real TEST additionally requires a one-use authorization file
   tied to the DEV selection hash, protocol commit, audit verdict, and approved
@@ -24,6 +35,10 @@
 - **Preservation rule:** the frozen substitution result remains exactly
   **0/12**. This protocol creates a new experiment and must not modify, relabel,
   or overwrite the C2 preregistration, runners, artifacts, or verdicts.
+- **v1 preservation:** the v1 real DEV attempt that ended with all axes
+  `DEV_INELIGIBLE` is retained as a superseded diagnostic record. It is not
+  deleted, relabeled as a scientific finding, or used as evidence for/against
+  composition.
 
 ## 1. Construct question and smallest high-information matrix
 
@@ -43,7 +58,8 @@ construct:
 - axes/tasks: deliberation/GSM8K, skepticism/TruthfulQA MC1, and uncertainty
   awareness/TriviaQA `rc.nocontext`;
 - CAA extraction, layer rule, prompt candidates, alpha grid, scorers, generation
-  settings, and coherence metric reuse the frozen C2 implementation.
+  settings, and coherence metric reuse the frozen C2 implementation except that
+  v2 freezes `max_new_tokens=512` for the registered DEV/TEST generations.
 
 This one method-model cell is chosen because it is the canonical E-0005/E-0006
 cell and all three Qwen CAA axes have local exploratory READ support. Adding ITI
@@ -393,6 +409,10 @@ deduplicated registry without regenerating DEV.
 - Config identity includes protocol, model/revision, method, axes, item IDs and
   hashes, prompt texts, neutral prompt, direction/layer, generation settings,
   seeds, selection, alpha, TEST N, and bootstrap settings.
+- The deterministic DEV/TEST item pools and the maximum TEST reservoir IDs are
+  unchanged by the v2 token-cap revision. v2 DEV must verify that every TEST
+  reservoir ID is byte-identical to the v1 pool reconstruction before any TEST
+  authorization can be considered.
 - The resolved model revision must equal the frozen revision.
 - `--hf-home` controls `HF_HOME`, hub/transformers cache, dataset cache, and the
   activation cache; model, tokenizer, and dataset loaders receive those paths
@@ -409,6 +429,9 @@ deduplicated registry without regenerating DEV.
 - Each HF record stores exact generated token IDs/count, finish reason, EOS-token
   membership, and token-derived max-length status. Word count and transcript-log
   character truncation never diagnose a generation cap.
+- v2 keeps the same primary estimand, pass rule, `delta=0.05`, DEV-only
+  prompt/alpha selection rule, TEST-once authorization gate, and mandatory
+  reporting branches as v1. Results must be reported regardless of direction.
 - Generated result and manifest remain `valid_for_paper=false` and `pending`
   until an independent hostile result/statistics/lineage audit.
 - No paper result text, claim-ledger upgrade, or evidence-ledger entry is written
@@ -436,7 +459,7 @@ python -m scripts.run_prompt_steer_composition `
   --test-authorization-file results\E-0017-prompt-steer-composition\backend-hf\test_authorization.json
 ```
 
-Worst-case planned generations:
+Worst-case planned generations (unchanged by the token-cap revision):
 
 - DEV: `3 * 96 * 5 * (16 + 1 + 2*7) = 44,640`;
 - TEST at all caps:
@@ -449,6 +472,8 @@ Worst-case planned generations:
   - total: **`5,764`**.
 - frozen one-retry hard ceiling: `172,800` physical generation attempts.
 
-Using the existing 2–4 seconds/batch range, partial batches, extraction/loading,
-and the frozen retry allowance, budget **4.5–13.5 A800 GPU-hours** and under
-60 GiB planned disk. This widened range is an estimate, not authorization.
+The v2 `max_new_tokens=512` cap increases possible per-generation latency while
+leaving item IDs, random seeds, logical generation counts, padded-batch counts,
+TEST reservoir order, and TEST-once gates unchanged. Budget should be approved
+against observed v2 DEV throughput before TEST; this estimate is not
+authorization.

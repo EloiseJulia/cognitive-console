@@ -26,7 +26,7 @@ import numpy as np
 
 from . import adjudicate_c2b as c2
 
-PROTOCOL_ID = "E-0017-prompt-steer-composition-v1"
+PROTOCOL_ID = "E-0017-prompt-steer-composition-v2"
 FROZEN_MODEL = "Qwen/Qwen2.5-7B-Instruct"
 FROZEN_MODEL_REVISION = "a09a35458c702b33eeacc393d103063234e8bc28"
 FROZEN_METHOD = "caa"
@@ -1043,9 +1043,14 @@ def frozen_protocol_dict() -> Dict[str, object]:
     return {
         "protocol_id": PROTOCOL_ID,
         "status": "FROZEN",
+        "supersedes": "E-0017-prompt-steer-composition-v1",
         "execution_gate": (
             "CPU/synthetic validation only until hostile implementation audit PASS; "
             "real TEST additionally requires one-use authorization and budget approval"
+        ),
+        "owner_approved_protocol_revision": (
+            "2026-08-14 v2 raises max_new_tokens from 64 to 512 based on "
+            "task-token requirements before rerun; no token-cap sweep is allowed"
         ),
         "model": FROZEN_MODEL,
         "model_revision": FROZEN_MODEL_REVISION,
@@ -1100,6 +1105,7 @@ def frozen_protocol_dict() -> Dict[str, object]:
             "score 0 and remain recorded"
         ),
         "batch_size": FROZEN_BATCH_SIZE,
+        "max_new_tokens": 512,
         "generation_retry_budget_per_backend_call": FROZEN_RETRY_BUDGET,
         "disk_budget_gb": FROZEN_DISK_BUDGET_GB,
         "disk_ceiling_gb": FROZEN_DISK_CEILING_GB,

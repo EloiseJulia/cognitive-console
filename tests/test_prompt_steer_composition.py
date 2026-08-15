@@ -143,6 +143,8 @@ def test_test_item_identity_is_sealed():
 def test_protocol_keeps_original_frozen_settings():
     protocol = C.frozen_protocol_dict()
     assert protocol["status"] == "FROZEN"
+    assert protocol["protocol_id"] == "E-0017-prompt-steer-composition-v2"
+    assert protocol["supersedes"] == "E-0017-prompt-steer-composition-v1"
     assert protocol["conditions"] == ["neutral", "prompt", "steer", "prompt_steer"]
     assert protocol["primary_estimand"] == "prompt_steer - prompt"
     assert "Bo et al." in protocol["prior_work_boundary"]
@@ -152,6 +154,7 @@ def test_protocol_keeps_original_frozen_settings():
     assert protocol["alpha_grid"] == list(c2.ALPHA_GRID)
     assert protocol["k_samples"] == c2.K_SAMPLES
     assert protocol["delta"] == c2.DELTA
+    assert protocol["max_new_tokens"] == 512
     assert protocol["generation_retry_budget_per_backend_call"] == 1
     assert protocol["disk_budget_gb"] == 60.0
     assert protocol["disk_ceiling_gb"] == 70.0

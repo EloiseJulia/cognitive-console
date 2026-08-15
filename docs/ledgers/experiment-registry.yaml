@@ -36,7 +36,7 @@ experiments:
   protocol_id: deliberation-remeasure-512-20260815
   code_commit: 0af4b569d1141246b0565ac6384d9e7c8b926527
   dirty_tree: false
-  data_hash: sha256:da63fde7348fe73f55fc26bdaf214a55ae0bf4754cd85933326923415c0e4c8c
+  data_hash: sha256:af87b5d23e964af167c7c781632f63d14c47b8ce731ef881b54c3c1d98e039ce
   env_hash: null
   config_hash: null
   model:
@@ -51,7 +51,7 @@ experiments:
   raw_metrics:
     dev_summary: results/delib_512_20260815/dev/DEV_SUMMARY.json
     raw_bundle_manifest: results/delib_512_20260815/SHA256_MANIFEST.json
-    raw_bundle_manifest_sha256: sha256:da63fde7348fe73f55fc26bdaf214a55ae0bf4754cd85933326923415c0e4c8c
+    raw_bundle_manifest_sha256: sha256:af87b5d23e964af167c7c781632f63d14c47b8ce731ef881b54c3c1d98e039ce
   summary_metrics:
     D1:
       selected_alpha: 16.0
@@ -70,6 +70,8 @@ experiments:
   artifacts:
   - results/delib_512_20260815/dev/SEALED.json
   - results/delib_512_20260815/dev/DEV_SUMMARY.json
+  - results/delib_512_20260815/dev/work/directions/D1-deliberation-L20.npy
+  - results/delib_512_20260815/dev/work/directions/D2-deliberation-L12.npy
   - results/delib_512_20260815/SHA256_MANIFEST.json
   failure_reason: null
   valid_for_paper: false

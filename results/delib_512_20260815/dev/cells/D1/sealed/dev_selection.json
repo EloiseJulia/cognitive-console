@@ -169,7 +169,7 @@
   "direction": {
     "axis": "deliberation",
     "layer": 20,
-    "path": "/home/elzhang/cc_l0/delib_512_20260815_dev/dev/work/directions/D1-deliberation-L20.npy",
+    "path": "results/delib_512_20260815/dev/work/directions/D1-deliberation-L20.npy",
     "sha256": "sha256:7c559db08f6aa54bc9aba1bdfd7adc0afa8dc8e533aa8aeb923970daf9777977"
   },
   "experiment_id": "delib-512-dev-20260815-D1",

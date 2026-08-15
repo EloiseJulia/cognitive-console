@@ -46,7 +46,7 @@ python scripts\aggregate_stepwise_offline.py path\to\returned-json --out-dir pat
 - `per_trial.csv`：每个 trial 一行，含参考状态、实际状态、逐步匹配和时长；
 - `summary.json`：与可信 `analysis.analyze()` 结构对齐的聚合，加上接受、跳过与告警清单。
 
-CSV 为 UTF-8 BOM，并对可能触发电子表格公式的单元格加 `'` 前缀。汇总器会拒绝错误 schema、签名版 v8、材料 hash/version、locale hash、A/B hash 或 allocation 身份不一致的文件。它按原始逐步答案重建路径；派生状态不一致时以重建值判分并记录告警。
+CSV 为 UTF-8 BOM，并对可能触发电子表格公式的单元格加 `'` 前缀。汇总器会拒绝错误 schema、签名版 v8、缺失 `submission_id`、材料 hash/version、locale hash、A/B hash 或 allocation 身份不一致的文件。每份导出在本地生成一个随机 `submission_id`（知情同意中已说明其用途）；若同一 `submission_id` 出现多次（例如同一文件被重复回传），汇总器只计入首次、其余记入 skipped，避免静默重复计数。它按原始逐步答案重建路径；派生状态不一致时以重建值判分并记录告警。
 
 ## 4. 每轮必须保存的核验记录
 

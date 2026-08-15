@@ -39,6 +39,7 @@ PRIVATE_KEY_PARTS = (
 TOP_LEVEL_FIELDS = {
     "export_schema",
     "signed",
+    "submission_id",
     "honesty_notice",
     "materials_version",
     "canonical_materials_hash",
@@ -97,6 +98,10 @@ def _validate_export(data: Any) -> tuple[dict[str, Any], list[str]]:
     _require(set(data) == TOP_LEVEL_FIELDS, "unexpected or missing top-level fields")
     _require(data["export_schema"] == OFFLINE_SCHEMA, "wrong export schema")
     _require(data["signed"] is False, "offline export must be explicitly unsigned")
+    _require(
+        isinstance(data["submission_id"], str) and len(data["submission_id"].strip()) >= 8,
+        "submission id missing or too short",
+    )
     _require(data["materials_version"] == MATERIALS_VERSION, "materials version mismatch")
     hashes = material_hashes()
     _require(
@@ -288,10 +293,21 @@ def aggregate(input_dir: Path, out_dir: Path) -> dict[str, Any]:
     accepted: list[tuple[Path, dict[str, Any]]] = []
     skipped: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
+    seen_ids: dict[str, str] = {}
     for path in sorted(input_dir.glob("*.json")):
         try:
             data = json.loads(path.read_text(encoding="utf-8-sig"))
             cleaned, file_warnings = _validate_export(data)
+            submission_id = cleaned["submission_id"]
+            if submission_id in seen_ids:
+                skipped.append(
+                    {
+                        "file": path.name,
+                        "reason": f"duplicate submission_id (already counted in {seen_ids[submission_id]})",
+                    }
+                )
+                continue
+            seen_ids[submission_id] = path.name
             accepted.append((path, cleaned))
             warnings.extend({"file": path.name, "message": message} for message in file_warnings)
         except (OSError, json.JSONDecodeError, OfflineExportError, ValueError) as error:
@@ -351,6 +367,7 @@ def aggregate(input_dir: Path, out_dir: Path) -> dict[str, Any]:
         participant_rows.append(
             {
                 "source_file": path.name,
+                "submission_id": export["submission_id"],
                 "participant_label": export["participant_label"],
                 "allocation_cell": cell,
                 "sequence_id": export["sequence_id"],
@@ -382,7 +399,7 @@ def aggregate(input_dir: Path, out_dir: Path) -> dict[str, Any]:
         }
     )
     _write_csv(out_dir / "participants.csv", list(participant_rows[0]) if participant_rows else [
-        "source_file", "participant_label", "allocation_cell", "sequence_id", "ab_variant",
+        "source_file", "submission_id", "participant_label", "allocation_cell", "sequence_id", "ab_variant",
         "selected_locale", "completion_status", "answered_trials", "gaa_count", "gaa_rate",
         "strict_count", "strict_rate", "attention_pass"
     ], participant_rows)

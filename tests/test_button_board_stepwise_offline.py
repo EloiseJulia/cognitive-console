@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import uuid
 from pathlib import Path
 
 from cognitive_console.button_board_stepwise import materials
@@ -36,6 +37,7 @@ def _base_export(cell: int = 0) -> dict:
     return {
         "export_schema": aggregator.OFFLINE_SCHEMA,
         "signed": False,
+        "submission_id": str(uuid.uuid4()),
         "honesty_notice": "Fictional unsigned exploratory pilot; protocol not frozen.",
         "materials_version": MATERIALS_VERSION,
         "canonical_materials_hash": hashes["canonical_materials_hash"],
@@ -156,6 +158,31 @@ def test_aggregate_scores_perfect_and_known_wrong_path(tmp_path):
     assert any(item["file"] == "wrong.json" for item in summary["warnings"])
     assert (out / "participants.csv").read_bytes().startswith(b"\xef\xbb\xbf")
     assert (out / "per_trial.csv").read_bytes().startswith(b"\xef\xbb\xbf")
+
+
+def test_aggregate_deduplicates_repeated_submission_id(tmp_path):
+    inputs = tmp_path / "inputs"
+    out = tmp_path / "out"
+    inputs.mkdir()
+    export = _perfect_export()
+    (inputs / "a.json").write_text(json.dumps(export), encoding="utf-8")
+    (inputs / "b.json").write_text(json.dumps(export), encoding="utf-8")
+    summary = aggregator.aggregate(inputs, out)
+    assert summary["participant_count"] == 1
+    assert {item["file"] for item in summary["skipped_files"]} == {"b.json"}
+    assert any("duplicate" in item["reason"] for item in summary["skipped_files"])
+
+
+def test_aggregate_rejects_missing_submission_id(tmp_path):
+    inputs = tmp_path / "inputs"
+    out = tmp_path / "out"
+    inputs.mkdir()
+    export = _perfect_export()
+    del export["submission_id"]
+    (inputs / "no-id.json").write_text(json.dumps(export), encoding="utf-8")
+    summary = aggregator.aggregate(inputs, out)
+    assert summary["participant_count"] == 0
+    assert {item["file"] for item in summary["skipped_files"]} == {"no-id.json"}
 
 
 def test_aggregate_rejects_signed_v8_and_hash_mismatch(tmp_path):

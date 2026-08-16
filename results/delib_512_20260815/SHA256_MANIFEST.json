@@ -1,6 +1,6 @@
 {
-  "experiment_id": "delib-512-dev-20260815",
-  "file_count": 20,
+  "experiment_id": "delib-512-test-20260815",
+  "file_count": 38,
   "files": [
     {
       "bytes": 22005,
@@ -83,9 +83,9 @@
       "sha256": "sha256:b2b783b7ad89e88448fa64d7da585641407291deea5759606edd77bf612225f4"
     },
     {
-      "bytes": 2251,
+      "bytes": 2403,
       "path": "experiment-registry.yaml",
-      "sha256": "sha256:d265b27385a147f68676313a37c3a0c09a55235bcb4b5e27f710b5147f7af030"
+      "sha256": "sha256:84a37b8e2fd879edd47600033dfaebb0215b6fd61894d4c263f2beecde341fd1"
     },
     {
       "bytes": 85950,
@@ -98,13 +98,103 @@
       "sha256": "sha256:b977e8e0dce6b45cd961d70b3deb03892730c7afa7caa660df7097dad868f2e6"
     },
     {
+      "bytes": 873,
+      "path": "logs/test-D1.log",
+      "sha256": "sha256:ff531658a7e32abd76b80c50ac6bada24d8525753df27e0ae4e371c779ff20c0"
+    },
+    {
       "bytes": 19717,
       "path": "preflight/preflight.json",
       "sha256": "sha256:132108f3dae2dff2e537def83c131cffc2691341e73cad20649c17db34c9c1da"
+    },
+    {
+      "bytes": 25472,
+      "path": "test/cells/D1/sealed/powered_tost_A_result.json",
+      "sha256": "sha256:97e123d75c38544576c46485be2203f597deef42e50deb4eace2ff7d665d799f"
+    },
+    {
+      "bytes": 97,
+      "path": "test/cells/D1/SEALED.json",
+      "sha256": "sha256:55af6cd5d0c49f7e316981901f485f9b79bb224fa03e5e8b88b30ba560c868d2"
+    },
+    {
+      "bytes": 616,
+      "path": "test/cells/D1/TEST_D1_SUMMARY.json",
+      "sha256": "sha256:a87c77f967116b9cf1d7a18523d1f1ba68c213b6cc89ae44e6834b1436518847"
+    },
+    {
+      "bytes": 1949,
+      "path": "test/cells/D1/TEST_STARTED.json",
+      "sha256": "sha256:69270d41b0f809948efe24794291144445fe169969b9b17346cdf2860504d389"
+    },
+    {
+      "bytes": 16,
+      "path": "test/cells/D1/work/checkpoints/config_fingerprint.txt",
+      "sha256": "sha256:032d19178e8df014bc2f3d4ddebf05a7ba88288c71b03c6223bfbcb38c24725c"
+    },
+    {
+      "bytes": 52435,
+      "path": "test/cells/D1/work/checkpoints/deliberation_conflict.jsonl",
+      "sha256": "sha256:108b499f6410d3699ad3df6fabe822c1db7e7105cd5ba0dff24824b3a669e13f"
+    },
+    {
+      "bytes": 52403,
+      "path": "test/cells/D1/work/checkpoints/deliberation_conflict_pole.jsonl",
+      "sha256": "sha256:5d9d66357af1a8f3964f190092e6d4f31b1de7bfe38351720b51be18e32a7d0c"
+    },
+    {
+      "bytes": 48369,
+      "path": "test/cells/D1/work/checkpoints/deliberation_test_baseline.jsonl",
+      "sha256": "sha256:967607feabb63599d47f534d9b32b39e2f4cb10abb6e4345c259772eda4e39a1"
+    },
+    {
+      "bytes": 52103,
+      "path": "test/cells/D1/work/checkpoints/deliberation_test_prompt.jsonl",
+      "sha256": "sha256:e5c4e5a6752f2a59c8c86bca65bee501f769bf3aff745aee146dec195f067570"
+    },
+    {
+      "bytes": 48874,
+      "path": "test/cells/D1/work/checkpoints/deliberation_test_steer.jsonl",
+      "sha256": "sha256:1115c3dc2547517ae9b19bed82d30db3b448fa08928fb67261f00db337895b17"
+    },
+    {
+      "bytes": 8666618,
+      "path": "test/cells/D1/work/transcripts/all_generations.jsonl",
+      "sha256": "sha256:65b63ee4d8d5279085d9e9353e6102ff08ab460ceb2cdc5b5f8e9e16113756ff"
+    },
+    {
+      "bytes": 1859797,
+      "path": "test/cells/D1/work/transcripts/deliberation__conflict__prompt=delib-strong-10_alpha=-16.0.jsonl",
+      "sha256": "sha256:05284cda6ca2dfacff39ad53401172df5b26e6e64d3cb4271903f6cdc72c47ca"
+    },
+    {
+      "bytes": 1911169,
+      "path": "test/cells/D1/work/transcripts/deliberation__conflict_pole__prompt=delib-strong-10_alpha=0.jsonl",
+      "sha256": "sha256:91339a3d6501eae6be3d52d3ed4de2dfcc718e6ed272e3fd790aaef482422e7a"
+    },
+    {
+      "bytes": 1499158,
+      "path": "test/cells/D1/work/transcripts/deliberation__test_baseline__alpha=0.jsonl",
+      "sha256": "sha256:dd768f6fc988c892ca4f183a0987482c451fb4e0bd45f2ac971e32bc0ad773e1"
+    },
+    {
+      "bytes": 1908919,
+      "path": "test/cells/D1/work/transcripts/deliberation__test_prompt__prompt=delib-strong-10_alpha=0.jsonl",
+      "sha256": "sha256:d1fd8cfd59e76bfd83999d53f1fb218147b1bc0ae7d2a76f5e350344b5afd822"
+    },
+    {
+      "bytes": 1591075,
+      "path": "test/cells/D1/work/transcripts/deliberation__test_steer__alpha=16.0.jsonl",
+      "sha256": "sha256:675548dee2f06e12c4f978b585527f33cb4a450be7b3acb71350279df0c6c5db"
+    },
+    {
+      "bytes": 3321439,
+      "path": "test/cells/D1/work/transcripts/paired_test_channels.jsonl",
+      "sha256": "sha256:6c02bbf22a0b88171b810ea2dd0a6dec9fd3e1406e51913410b9fa01060e0f81"
     }
   ],
-  "phase": "DEV_ONLY_TEST_NOT_RUN",
+  "phase": "TEST_PARTIAL_D1_ONLY_D2_NOT_RUN",
   "protocol_id": "deliberation-remeasure-512-20260815",
   "root": "results/delib_512_20260815",
-  "total_bytes": 43451093
+  "total_bytes": 64492627
 }

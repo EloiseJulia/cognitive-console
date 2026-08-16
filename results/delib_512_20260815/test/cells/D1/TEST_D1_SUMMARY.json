@@ -1,0 +1,18 @@
+{
+  "achieved_mde": 0.03857491412822587,
+  "ci_hi": 0.0,
+  "ci_lo": -0.08266666666666668,
+  "coherence_ok": true,
+  "dev_alpha": 16.0,
+  "experiment_id": "delib-512-test-20260815-D1",
+  "mean_diff": -0.03866666666666667,
+  "n_test": 150,
+  "phase": "TEST_D1_SEALED",
+  "protocol_id": "deliberation-remeasure-512-20260815",
+  "result_sha256": "sha256:97e123d75c38544576c46485be2203f597deef42e50deb4eace2ff7d665d799f",
+  "strict_verdict": "UNDERPOWERED",
+  "test_status": "D1_DONE_D2_NOT_RUN",
+  "tost_ci_hi": -0.011999999999999999,
+  "tost_ci_lo": -0.06799999999999999,
+  "valid_for_paper": false
+}

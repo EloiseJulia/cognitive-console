@@ -1,0 +1,46 @@
+{
+  "cell_id": "D1",
+  "code_identity": {
+    "code_commit": "0af4b569d1141246b0565ac6384d9e7c8b926527",
+    "dirty_tree": false
+  },
+  "experiment_id": "delib-512-test-20260815-D1",
+  "global_attempt_marker": "/home/elzhang/.local/state/cognitive-console/powered-tost-A/test-attempts/delib-512-test-20260815-D1.json",
+  "global_attempt_marker_payload": {
+    "artifact_out_dir": "/home/elzhang/cc_l0/delib_512_20260815_dev",
+    "cell": {
+      "axis": "deliberation",
+      "cell_id": "D1",
+      "current_mde": 0.0747,
+      "current_n": 40,
+      "layer": 20,
+      "layer_source": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+      "method": "caa",
+      "model_id": "Qwen/Qwen2.5-7B-Instruct",
+      "model_key": "qwen",
+      "model_revision": "a09a35458c702b33eeacc393d103063234e8bc28",
+      "planned_test_n": 150,
+      "se_estimate": 0.02308,
+      "selected_total_n": 225
+    },
+    "code_identity": {
+      "code_commit": "0af4b569d1141246b0565ac6384d9e7c8b926527",
+      "dirty_tree": false
+    },
+    "dev_selection_sha256": "sha256:848eb2646971b9d6d5c1ac30211a01e6625302fc1ad9cbe6ae6430088d831c44",
+    "experiment_id": "delib-512-test-20260815-D1",
+    "meaning": "TEST generation for this fixed cell is authorized to begin exactly once",
+    "protocol_id": "deliberation-remeasure-512-20260815",
+    "registry_owner_root": "/home/elzhang/.local/state/cognitive-console",
+    "registry_root": "/home/elzhang/.local/state/cognitive-console/powered-tost-A/test-attempts",
+    "registry_root_env": "CC_TEST_ATTEMPT_ROOT",
+    "registry_root_overridden": true
+  },
+  "protocol_id": "deliberation-remeasure-512-20260815",
+  "registry_profile": {
+    "registry_owner_root": "/home/elzhang/.local/state/cognitive-console",
+    "registry_root": "/home/elzhang/.local/state/cognitive-console/powered-tost-A/test-attempts",
+    "registry_root_env": "CC_TEST_ATTEMPT_ROOT",
+    "registry_root_overridden": true
+  }
+}

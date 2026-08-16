@@ -1,6 +1,6 @@
 experiments:
-- experiment_id: delib-512-dev-20260815
-  parent: powered-tost-A-dev-20260813
+- experiment_id: delib-512-test-20260815
+  parent: delib-512-dev-20260815
   hypothesis_id: H2-deliberation-512-remeasure
   claim_ids: [C2b]
   type: confirmatory-protocol-pending-audit
@@ -8,7 +8,7 @@ experiments:
   protocol_id: deliberation-remeasure-512-20260815
   code_commit: 0af4b569d1141246b0565ac6384d9e7c8b926527
   dirty_tree: false
-  data_hash: sha256:af87b5d23e964af167c7c781632f63d14c47b8ce731ef881b54c3c1d98e039ce
+  data_hash: sha256:a3832ebd8f0262df967ed7665b21f322adb53af687e536286088b7dabc90883d
   env_hash: null
   config_hash: null
   model:
@@ -17,39 +17,43 @@ experiments:
   dataset: openai/gsm8k main test, excluding frozen first 60 IDs, inherited powered-tost-A deterministic selected pool
   seed: 20260812
   hardware: nvidia-a800-80gb; CUDA_VISIBLE_DEVICES=1; GPU1
-  started_at: 2026-08-15T20:58:57+08:00
-  ended_at: 2026-08-15T23:41:25+08:00
+  started_at: 2026-08-16T19:11:40+08:00
+  ended_at: 2026-08-16T20:13:00+08:00
   exit_code: 0
   raw_metrics:
-    dev_summary: results/delib_512_20260815/dev/DEV_SUMMARY.json
+    test_summary: results/delib_512_20260815/test/TEST_SUMMARY.json
+    test_seal: results/delib_512_20260815/test/SEALED.json
     raw_bundle_manifest: results/delib_512_20260815/SHA256_MANIFEST.json
-    raw_bundle_manifest_sha256: sha256:af87b5d23e964af167c7c781632f63d14c47b8ce731ef881b54c3c1d98e039ce
+    raw_bundle_manifest_sha256: sha256:a3832ebd8f0262df967ed7665b21f322adb53af687e536286088b7dabc90883d
   summary_metrics:
     D1:
-      selected_alpha: 16.0
-      best_prompt_id: delib-strong-10
-      dev_prompt_accuracy: 0.832
-      dev_steer_accuracy: 0.8160000000000001
-      dev_baseline_accuracy: 0.8106666666666666
-      dev_steer_minus_prompt: -0.015999999999999903
+      strict_verdict: UNDERPOWERED
+      n_test: 150
+      achieved_mde: 0.03857491412822587
+      dev_alpha: 16.0
+      mean_diff: -0.03866666666666667
+      ci_9833: [-0.08266666666666668, 0.0]
+      tost_ci_90: [-0.06799999999999999, -0.011999999999999999]
+      coherence_ok: true
     D2:
-      selected_alpha: 2.0
-      best_prompt_id: delib-strong-04
-      dev_prompt_accuracy: 0.7306666666666666
-      dev_steer_accuracy: 0.6533333333333332
-      dev_baseline_accuracy: 0.7066666666666667
-      dev_steer_minus_prompt: -0.07733333333333337
+      strict_verdict: UNDERPOWERED
+      n_test: 150
+      achieved_mde: 0.03625112412050142
+      dev_alpha: 2.0
+      mean_diff: -0.023999999999999997
+      ci_9833: [-0.08, 0.02933333333333333]
+      tost_ci_90: [-0.06266666666666666, 0.013333333333333336]
+      coherence_ok: true
   artifacts:
-  - results/delib_512_20260815/dev/SEALED.json
-  - results/delib_512_20260815/dev/DEV_SUMMARY.json
-  - results/delib_512_20260815/dev/work/directions/D1-deliberation-L20.npy
-  - results/delib_512_20260815/dev/work/directions/D2-deliberation-L12.npy
+  - results/delib_512_20260815/test/SEALED.json
+  - results/delib_512_20260815/test/TEST_SUMMARY.json
   - results/delib_512_20260815/SHA256_MANIFEST.json
+  - results/delib_512_20260815/test/cells/D1/sealed/powered_tost_A_result.json
+  - results/delib_512_20260815/test/cells/D2/sealed/powered_tost_A_result.json
   failure_reason: null
   valid_for_paper: false
+  scientific_status: PENDING_HOSTILE_RESULT_AUDIT
   validation_notes: >-
-    Stage 1 DEV only. TEST was not run and remains unauthorized until explicit
-    Manager Stage 2 GO. 512-token smoke test repaired the deliberation floor
-    artifact: prompt/baseline DEV accuracies were D1 0.832/0.8107 and D2
-    0.7307/0.7067, far above the prior ~0-3% floor; selected steer accuracies
-    were D1 0.8160 and D2 0.6533.
+    Stage 2 TEST completed exactly once per fixed cell using sealed DEV selections
+    (D1 alpha=16, D2 alpha=2) and max_new_tokens=512. Both cells remain
+    valid_for_paper=false until hostile result audit and Manager/human fold gate.

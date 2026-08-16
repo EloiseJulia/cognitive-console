@@ -1,0 +1,46 @@
+{
+  "cell_id": "D2",
+  "code_identity": {
+    "code_commit": "0af4b569d1141246b0565ac6384d9e7c8b926527",
+    "dirty_tree": false
+  },
+  "experiment_id": "delib-512-test-20260815-D2",
+  "global_attempt_marker": "/home/elzhang/.local/state/cognitive-console/powered-tost-A/test-attempts/delib-512-test-20260815-D2.json",
+  "global_attempt_marker_payload": {
+    "artifact_out_dir": "/home/elzhang/cc_l0/delib_512_20260815_dev",
+    "cell": {
+      "axis": "deliberation",
+      "cell_id": "D2",
+      "current_mde": 0.0702,
+      "current_n": 40,
+      "layer": 12,
+      "layer_source": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
+      "method": "caa",
+      "model_id": "NousResearch/Meta-Llama-3-8B-Instruct",
+      "model_key": "llama",
+      "model_revision": null,
+      "planned_test_n": 150,
+      "se_estimate": 0.021706,
+      "selected_total_n": 225
+    },
+    "code_identity": {
+      "code_commit": "0af4b569d1141246b0565ac6384d9e7c8b926527",
+      "dirty_tree": false
+    },
+    "dev_selection_sha256": "sha256:bdd1bc82c30874afa7e7b29c379cebaf5499c73787ed6ea318485421e661bf1a",
+    "experiment_id": "delib-512-test-20260815-D2",
+    "meaning": "TEST generation for this fixed cell is authorized to begin exactly once",
+    "protocol_id": "deliberation-remeasure-512-20260815",
+    "registry_owner_root": "/home/elzhang/.local/state/cognitive-console",
+    "registry_root": "/home/elzhang/.local/state/cognitive-console/powered-tost-A/test-attempts",
+    "registry_root_env": "CC_TEST_ATTEMPT_ROOT",
+    "registry_root_overridden": true
+  },
+  "protocol_id": "deliberation-remeasure-512-20260815",
+  "registry_profile": {
+    "registry_owner_root": "/home/elzhang/.local/state/cognitive-console",
+    "registry_root": "/home/elzhang/.local/state/cognitive-console/powered-tost-A/test-attempts",
+    "registry_root_env": "CC_TEST_ATTEMPT_ROOT",
+    "registry_root_overridden": true
+  }
+}

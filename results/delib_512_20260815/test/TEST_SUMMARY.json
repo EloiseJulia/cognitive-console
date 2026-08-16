@@ -1,0 +1,40 @@
+{
+  "cells": {
+    "D1": {
+      "achieved_mde": 0.03857491412822587,
+      "ci_hi": 0.0,
+      "ci_lo": -0.08266666666666668,
+      "coherence_ok": true,
+      "dev_alpha": 16.0,
+      "mean_diff": -0.03866666666666667,
+      "n_test": 150,
+      "result_path": "results/delib_512_20260815/test/cells/D1/sealed/powered_tost_A_result.json",
+      "result_sha256": "sha256:97e123d75c38544576c46485be2203f597deef42e50deb4eace2ff7d665d799f",
+      "strict_verdict": "UNDERPOWERED",
+      "tost_ci_hi": -0.011999999999999999,
+      "tost_ci_lo": -0.06799999999999999
+    },
+    "D2": {
+      "achieved_mde": 0.03625112412050142,
+      "ci_hi": 0.02933333333333333,
+      "ci_lo": -0.08,
+      "coherence_ok": true,
+      "dev_alpha": 2.0,
+      "mean_diff": -0.023999999999999997,
+      "n_test": 150,
+      "result_path": "results/delib_512_20260815/test/cells/D2/sealed/powered_tost_A_result.json",
+      "result_sha256": "sha256:7d408f7a188f581434861ae5e58830ad2c50130e0e75007ad7c51e89102619ca",
+      "strict_verdict": "UNDERPOWERED",
+      "tost_ci_hi": 0.013333333333333336,
+      "tost_ci_lo": -0.06266666666666666
+    }
+  },
+  "code_commit": "0af4b569d1141246b0565ac6384d9e7c8b926527",
+  "experiment_id": "delib-512-test-20260815",
+  "hardware": "nvidia-a800-80gb; CUDA_VISIBLE_DEVICES=1; GPU1",
+  "max_new_tokens": 512,
+  "phase": "TEST_SEALED",
+  "protocol_id": "deliberation-remeasure-512-20260815",
+  "scientific_status": "PENDING_HOSTILE_RESULT_AUDIT",
+  "valid_for_paper": false
+}

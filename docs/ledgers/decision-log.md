@@ -5,7 +5,30 @@
 
 ---
 
-## 2026-08-17 · D-0131 · Study B decoupled offline collector built, audited, merged to main (DRAFT, pre-ethics)
+## 2026-08-17 · D-0132 · Study B collector simplified for participant burden (owner request)
+- Owner tried the DRAFT collector and found it too laborious; asked to simplify.
+- Explanation given: the slider-vs-own-prompt comparison and the prompt-writing
+  grouping probe are **load-bearing** (the own-prompt condition IS the
+  comparator = the real-user instantiation of the average-prompt arm; without it
+  the study only measures "did you like the slider" = the convenience≠warrant
+  confusion the paper attacks; the probe is the only objective way to split
+  populations after owner rejected self-report). These stay.
+- Owner (ask_user) chose trims to the optional/heavy parts (target ~10–15 min):
+  - **main paired tasks 2 → 1** (biggest burden cut; participant now writes 2
+    prompts total: 1 probe + 1 task).
+  - **questionnaires shortened** to 3–4 core covariate items + 3-item TLX/Likert.
+  - **optional reliance module removed** (export `reliance` field dropped;
+    aggregator field-set assertion tightened accordingly).
+- Honesty caveat recorded: cutting to 1 task reduces per-participant estimate
+  reliability / weakens the within-subject primary test; this is a PRE-FREEZE
+  pilot trim and NOT locked — task count is a freeze-time parameter to revisit
+  against power before recruitment. Invariants unchanged: zero answer keys /
+  zero Q in participant payload, V3 untouched, decoupled offline, one-shot
+  symmetric conditions.
+- Implementation follows worktree → implement → independent audit → local merge
+  (no push). Still 🔴 pre-ethics DRAFT; no recruitment/data until §7 gates.
+
+
 - Built per `docs/specs/study-B-collector.md` in worktree
   `feature/studyB-collector`: single-file offline HTML collector + generator +
   self-contained aggregator + 16 tests + README + export-schema doc.

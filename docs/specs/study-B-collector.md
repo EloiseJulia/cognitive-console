@@ -23,20 +23,23 @@
 
 ## 2. 参与者流程（phases）
 
+> **精简版（D-0132，owner 要求减负，约 10–15 分钟）**：主任务砍到 **1 个配对任务**；
+> 协变量 + TLX 精简到 3–4 核心项；**去掉可选 reliance 模块**。核心比较（滑块 vs 自写
+> prompt）与分组探针为 load-bearing，保留。任务数为 freeze 时按功效可回调的参数。
+
 按顺序，单文件内 SPA：
 
 1. **Consent（复用 V3 offline consent 骨架）**：双语；占位符 `(to be completed)` 留伦理/导师回填；勾选同意→记 `consent_agreed:true` + 时间戳（同意留痕入导出）。不同意→退出、不记数据。
-2. **Covariate 问卷（不定义组，仅协变量）**：广义 AI 熟练度（使用频率 / 是否调过参数 / 是否理解 latent 控制 / 自评 Likert）。
+2. **Covariate 问卷（不定义组，仅协变量；精简 3–4 项）**：使用频率 / 是否调过参数 / 是否理解 latent 控制 / 自评 Likert。
 3. **Prompt-writing 探针（§1.1）**：给标准化目标 + 待处理素材（示意/虚构），参与者写**一条** prompt（自由文本）。采集：prompt 文本、开始/提交时间戳、字数、编辑次数。**不判分**（rubric 打分事后双盲）。
-4. **主任务（两轴；§3/§5）**——每个配对任务两条件，**顺序抵消**（拉丁方/随机 seed 记入导出）：
+4. **主任务（两轴；§3/§5）——1 个配对任务**，两条件**顺序抵消**（随机 seed 记入导出）：
    - **Slider 条件**：呈现一个 latent 滑块 UI（离散档位，纯前端，**无模型输出**）。采集：最终档位、探索的档位数、开始/提交时间戳。
    - **Own-prompt 条件**：参与者写一条 prompt 达同目标。采集：prompt 文本、开始/提交时间戳、字数、编辑次数。
    - 两条件均**一次性提交、无反馈回路**（对称公平，见 D-0130）。
-5. **便利/主观评分（§4 便利轴）**：简版 NASA-TLX + Likert（effort / discoverability / willingness-to-use「滑块 vs 自己写 prompt 更愿用哪个 + 理由」）。
-6. **（可选）Reliance/信心**：参与者对自己两条件产出质量的信心（事后与实测 Q 比校准）。
-7. **导出**：生成 JSON（+ 可选 CSV 预览），供 owner 回收。
+5. **便利/主观评分（§4 便利轴；精简）**：简版 3 项 TLX/Likert（effort / discoverability）+ willingness-to-use「滑块 vs 自己写 prompt 更愿用哪个 + 理由」。
+6. **导出**：生成 JSON（+ 可选 CSV 预览），供 owner 回收。（**reliance 模块已移除**，D-0132。）
 
-> **DRAFT 任务内容**：首版内置**少量示意/虚构占位任务**（清晰标注 DRAFT/fictional）供自测流程；**最终任务集需另行撰写 + 审 + 冻结**，本 spec 不定稿任务文本。
+> **DRAFT 任务内容**：首版内置**1 个示意/虚构占位任务**（清晰标注 DRAFT/fictional）供自测流程；**最终任务集需另行撰写 + 审 + 冻结**，本 spec 不定稿任务文本。
 
 ---
 
@@ -52,11 +55,14 @@
 - `probe`(obj：`prompt_text`, `started_at_relative`, `committed_at_relative`, `char_count`, `edit_count`)
 - `task_order`(list，抵消序列 + seed)
 - `tasks`(list，每元素)：`task_id`, `condition_order`("slider_first"|"prompt_first"),
+- `task_order`(obj：抵消序列 + seed)
+- `tasks`(list，**精简版含 1 元素**，每元素)：`task_id`, `condition_order`("slider_first"|"prompt_first"),
   - `slider`：`final_setting`, `settings_explored`(int), `started_at_relative`, `committed_at_relative`
   - `own_prompt`：`prompt_text`, `char_count`, `edit_count`, `started_at_relative`, `committed_at_relative`
-- `convenience`(obj：TLX/Likert/willingness + 理由文本)
-- `reliance`(obj|null)
+- `convenience`(obj：精简 3 项 TLX/Likert + willingness + 理由文本)
 - `attention`(注意力检查答案，用于预注册排除)
+
+> **精简版移除 `reliance` 字段（D-0132）。** aggregator 字段集断言随之收紧为不含 reliance。
 
 **不含（硬契约，aggregator 强制断言）：** 任何 `expected` / `correct*` / `answer_key` / Q 值 / rubric 分。探针与任务本就无烘焙答案。
 

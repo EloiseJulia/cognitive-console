@@ -107,6 +107,36 @@ experiments:
     or the diagnostic α=40. TEST was not run. This triggers escalation before
     any further positive-control attempt.
 
+- experiment_id: E-0017c-gemma-official-stolfo-positive-control-stage1-dev
+  parent: E-0017b-official-stolfo-latent-positive-control-stage1-dev
+  hypothesis_id: H-assay-validity-positive-control
+  claim_ids: []
+  type: diagnostic
+  status: failed
+  code_commit: "85fd49c (local runner); remote archive commit b590aae"
+  dirty_tree: false
+  data_hash: sha256:1f4452fe01a36621e13d9ff926c4ec12a5d99ef33902ae158576e78f98e89dc8
+  env_hash: null
+  config_hash: null
+  model: google/gemma-2-2b-it@299a8560bedf22ed1c72a8a11e7dce4a7f9f51f8
+  dataset: "microsoft/llm-steer-instruct data/keywords/ifeval_single_keyword_include.jsonl @ 9dac937ef6fc3e483b1efc13863deeb03ec38dbe; intended DEV first 40 items; TEST not run"
+  seed: 20260817
+  hardware: "A800 GPU3 selected as free (CUDA_VISIBLE_DEVICES=3); model load failed before DEV generation"
+  started_at: '2026-08-17T14:36:00+00:00'
+  ended_at: '2026-08-17T14:36:00+00:00'
+  exit_code: 1
+  raw_metrics: null
+  summary_metrics: null
+  artifacts: []
+  failure_reason: "Hugging Face gated repo access denied for google/gemma-2-2b-it (401 GatedRepoError); no DEV generations, no TEST, no paper-valid result."
+  valid_for_paper: false
+  validation_notes: >-
+    Owner approved Gemma-2-2B-IT official positive-control DEV using official
+    layers {22,24}, weights {60,80,100,120}, n_extraction_per_keyword=10, and
+    official IFEval keywords:existence. The run could not start because the
+    remote environment lacks authenticated access to the gated Gemma model. Per
+    license/access redline, no workaround or model substitution was attempted.
+
 - experiment_id: c1-facade-1dcc4fa7-0001
   parent: null
   hypothesis_id: H1

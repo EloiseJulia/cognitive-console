@@ -17,6 +17,13 @@
 - **Failure condition:** prompt comparator worked (`0.775` vs baseline `0.225`), but steering did not improve over baseline. Selected layer `26`, α `2.0`, steer compliance `0.225`, steer-baseline `0.0`, CI `[0.0,0.0]`; all frozen α and diagnostic α=40 had Δ≤0.
 - **Interpretation:** the first 0/12 failure was not explained solely by the project-local extraction/injection rewrite. Under this Qwen2.5-7B + official-code + official keyword setup, the latent positive control still fails DEV. Do not run TEST; escalate for Manager/owner decision.
 
+## 2026-08-17 — E-0017c Gemma official positive-control blocked by gated model access
+
+- **Owner-approved plan:** run official Stolfo word-inclusion DEV on `google/gemma-2-2b-it@299a8560bedf22ed1c72a8a11e7dce4a7f9f51f8`, official layers `{22,24}`, official weights `{60,80,100,120}`, official keyword contrast/eval format, DEV n=40, TEST not run.
+- **GPU check:** GPU3 was free (`6/81920 MiB`, 0% util) before launch.
+- **Failure:** Hugging Face returned `401 GatedRepoError` for `google/gemma-2-2b-it/resolve/main/config.json`; the remote environment is not authenticated/authorized for the gated Gemma model.
+- **Action:** stopped without DEV generation and without TEST; cleaned remote directories. No workaround, model substitution, or use of unauthorized credentials was attempted.
+
 > Records dead ends, attributions, unexplained anomalies, non-reproducible routes, and randomness risks.
 > Prevents repeat trial-and-error after Manager rotation and guards against survivor bias.
 

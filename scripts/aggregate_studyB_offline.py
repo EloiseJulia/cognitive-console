@@ -141,6 +141,23 @@ def _assert_no_private_keys(value: Any, path: str = "$") -> None:
             _assert_no_private_keys(item, f"{path}[{index}]")
 
 
+def _assert_scalar_values(mapping: dict[str, Any], label: str) -> None:
+    """Reject nested containers in fields that must hold a scalar answer.
+
+    The key-name denylist (``_assert_no_private_keys``) alone is a false
+    guarantee: an answer can be smuggled into a harmless-looking key whose value
+    is a dict/list (e.g. ``covariates.self_rating = {"winner": "s3"}``). Every
+    value in these structured fields must be a scalar (``int | float | str`` or
+    ``None``); any ``dict``/``list`` container is rejected. ``bool`` is a subclass
+    of ``int`` and is allowed.
+    """
+    for key, value in mapping.items():
+        _require(
+            value is None or isinstance(value, (int, float, str)),
+            f"{label}.{key} must be a scalar value, not a container",
+        )
+
+
 def _monotonic(started: Any, committed: Any, label: str) -> None:
     if started is not None and committed is not None:
         _require(
@@ -184,6 +201,7 @@ def _validate_export(data: Any) -> dict[str, Any]:
 
     covariates = data["covariates"]
     _require(isinstance(covariates, dict) and set(covariates) == COVARIATE_KEYS, "covariate fields mismatch")
+    _assert_scalar_values(covariates, "covariates")
 
     probe = data["probe"]
     _require(isinstance(probe, dict) and set(probe) == PROBE_KEYS, "probe fields mismatch")
@@ -243,6 +261,7 @@ def _validate_export(data: Any) -> dict[str, Any]:
         isinstance(convenience, dict) and set(convenience) == CONVENIENCE_KEYS,
         "convenience fields mismatch",
     )
+    _assert_scalar_values(convenience, "convenience")
     _require(
         convenience["willingness_choice"] in {"slider", "own_prompt", None},
         "willingness_choice invalid",
@@ -254,9 +273,12 @@ def _validate_export(data: Any) -> dict[str, Any]:
         reliance is None or (isinstance(reliance, dict) and set(reliance) == RELIANCE_KEYS),
         "reliance fields mismatch",
     )
+    if isinstance(reliance, dict):
+        _assert_scalar_values(reliance, "reliance")
 
     attention = data["attention"]
     _require(isinstance(attention, dict) and set(attention) == ATTENTION_KEYS, "attention fields mismatch")
+    _assert_scalar_values(attention, "attention")
     _require(
         attention["selected_id"] is None or isinstance(attention["selected_id"], str),
         "attention selected_id invalid",

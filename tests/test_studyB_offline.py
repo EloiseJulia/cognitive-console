@@ -261,6 +261,36 @@ def test_aggregate_rejects_injected_answer_key(tmp_path):
     assert any("private key" in item["reason"] for item in summary["skipped_files"])
 
 
+def test_aggregate_rejects_container_smuggled_into_scalar_field(tmp_path):
+    """MAJOR-1 regression: an answer hidden in a harmless-keyed nested container
+    (dict or list) inside a scalar field must be rejected, not accepted."""
+    inputs = tmp_path / "in"
+    out = tmp_path / "out"
+    inputs.mkdir()
+    dict_leak = _base_export()
+    dict_leak["covariates"]["self_rating"] = {"winner": "s3"}
+    (inputs / "dict_leak.json").write_text(json.dumps(dict_leak), encoding="utf-8")
+    list_leak = _base_export()
+    list_leak["convenience"]["willingness_choice"] = ["own_prompt", "s3"]
+    (inputs / "list_leak.json").write_text(json.dumps(list_leak), encoding="utf-8")
+    reliance_leak = _base_export()
+    reliance_leak["reliance"]["confidence_slider"] = {"answer": "s3"}
+    (inputs / "reliance_leak.json").write_text(json.dumps(reliance_leak), encoding="utf-8")
+    attention_leak = _base_export()
+    attention_leak["attention"]["selected_id"] = {"answer": "purple"}
+    (inputs / "attention_leak.json").write_text(json.dumps(attention_leak), encoding="utf-8")
+    summary = aggregator.aggregate(inputs, out)
+    assert summary["participant_count"] == 0
+    skipped = {item["file"] for item in summary["skipped_files"]}
+    assert skipped == {
+        "dict_leak.json",
+        "list_leak.json",
+        "reliance_leak.json",
+        "attention_leak.json",
+    }
+    assert all("scalar value" in item["reason"] for item in summary["skipped_files"])
+
+
 def test_aggregate_rejects_non_monotonic_timestamps(tmp_path):
     inputs = tmp_path / "in"
     out = tmp_path / "out"

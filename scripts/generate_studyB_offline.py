@@ -33,10 +33,14 @@ EXPORT_SCHEMA = "microstudy-export-offline-studyB-v1"
 INSTRUMENT_VERSION = "studyB-collector-offline-0.1.0-draft"
 CONSENT_COPY_VERSION = "studyB-consent-draft-0.1"
 
-# Substrings that must never appear anywhere in the generated HTML. This is the
-# participant-side "zero answer key / zero Q" self-check. The task materials are
-# open-ended generation prompts with no baked answer, so none of these terms are
-# needed in participant-facing content.
+# Substrings that must never appear anywhere in the generated HTML. This is a
+# HEURISTIC participant-side "zero answer key / zero Q" self-check (a keyword
+# denylist), NOT a structural guarantee: it can only catch known terms, not an
+# answer smuggled under a novel key or as a nested value. The real structural
+# guarantee lives owner-side in aggregate_studyB_offline.py, which enforces an
+# exact field set and rejects nested containers in scalar fields. The task
+# materials are open-ended generation prompts with no baked answer, so none of
+# these terms are needed in participant-facing content.
 FORBIDDEN_TERMS = (
     "expected",
     "answer_key",

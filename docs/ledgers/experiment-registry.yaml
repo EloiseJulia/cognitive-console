@@ -61,6 +61,52 @@ experiments:
     baseline, while prompt comparator verified the programmable assay can score
     the constraint (prompt DEV compliance 8/12).
 
+- experiment_id: E-0017b-official-stolfo-latent-positive-control-stage1-dev
+  parent: E-0017-latent-behavioral-positive-control-stage1-dev
+  hypothesis_id: H-assay-validity-positive-control
+  claim_ids: []
+  type: diagnostic
+  status: failed
+  code_commit: "0b72781e9c4f3e33e5fbb58f56936a4a8340a78d (local runner); remote archive commit 8efa3c20e7e8f755d4454bca95bc9f6f214a5a71"
+  dirty_tree: false
+  data_hash: sha256:1f4452fe01a36621e13d9ff926c4ec12a5d99ef33902ae158576e78f98e89dc8
+  env_hash: null
+  config_hash: sha256:5914b96d025930f1459bf9d759a6c7f09eb368f2e545ff7009988ba78551e2c4
+  model: Qwen/Qwen2.5-7B-Instruct@a09a35458c702b33eeacc393d103063234e8bc28
+  dataset: "microsoft/llm-steer-instruct data/keywords/ifeval_single_keyword_include.jsonl @ 9dac937ef6fc3e483b1efc13863deeb03ec38dbe; DEV first 40 items; TEST not run"
+  seed: 20260817
+  hardware: "A800 GPU3 (CUDA_VISIBLE_DEVICES=3); remote host suzlab-a800"
+  started_at: null
+  ended_at: null
+  exit_code: 2
+  raw_metrics: results/latent_positive_control_official_stage1_dev/official_latent_positive_control_dev_results.json
+  summary_metrics:
+    dev_n: 40
+    official_repo_commit: 9dac937ef6fc3e483b1efc13863deeb03ec38dbe
+    source_layer_idx: 26
+    selected_alpha: 2.0
+    baseline_compliance: 0.225
+    prompt_compliance: 0.775
+    steer_compliance: 0.225
+    steer_minus_baseline: 0.0
+    steer_minus_baseline_ci_9833: [0.0, 0.0]
+    steer_minus_prompt: -0.55
+    steer_minus_prompt_ci_9833: [-0.725, -0.35]
+    coherence_ok: true
+    diagnostic_alpha40_steer_minus_baseline: 0.0
+  artifacts:
+  - results/latent_positive_control_official_stage1_dev/official_latent_positive_control_dev_results.json
+  - results/latent_positive_control_official_stage1_dev/official_latent_positive_control_dev_summary.md
+  failure_reason: "Official Stolfo-code rerun still failed DEV sanity: selected coherent steer cell matched baseline (0.225) and α scan including diagnostic α=40 produced no positive steer-baseline effect."
+  valid_for_paper: false
+  validation_notes: >-
+    Owner-approved rerun directly executed the official llm-steer-instruct repo
+    code and official IFEval-style keyword task format. The prompt comparator
+    strongly improved compliance (0.775 vs baseline 0.225), but latent steering
+    did not improve over baseline at official example layer 26 for any frozen α
+    or the diagnostic α=40. TEST was not run. This triggers escalation before
+    any further positive-control attempt.
+
 - experiment_id: c1-facade-1dcc4fa7-0001
   parent: null
   hypothesis_id: H1

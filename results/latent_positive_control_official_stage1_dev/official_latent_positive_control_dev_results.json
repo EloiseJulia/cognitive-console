@@ -1,0 +1,2912 @@
+{
+  "experiment_id": "E-0017b-official-stolfo-latent-positive-control-stage1-dev",
+  "stage": "stage1_dev_only_no_test",
+  "valid_for_paper": false,
+  "official_repo": {
+    "url": "https://github.com/microsoft/llm-steer-instruct",
+    "commit": "9dac937ef6fc3e483b1efc13863deeb03ec38dbe",
+    "license": "MIT",
+    "path": "/home/elzhang/cc_lpc_official/official",
+    "code_paths_used": [
+      "utils/model_utils.py",
+      "utils/generation_utils.py",
+      "keywords/compute_representations.py logic",
+      "keywords/evaluate.py logic",
+      "ifeval_scripts/evaluation_main.py"
+    ]
+  },
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "model_revision": "a09a35458c702b33eeacc393d103063234e8bc28",
+  "data": {
+    "dev_file": "/home/elzhang/cc_lpc_official/official/data/keywords/ifeval_single_keyword_include.jsonl",
+    "dev_file_hash": "sha256:1f4452fe01a36621e13d9ff926c4ec12a5d99ef33902ae158576e78f98e89dc8",
+    "n_dev_items": 40,
+    "n_extraction_per_keyword": 7,
+    "n_extraction_rows": 287,
+    "task": "IFEval keywords:existence"
+  },
+  "frozen_procedure": {
+    "primary_estimand": "steer_minus_baseline",
+    "secondary_estimand": "steer_minus_prompt",
+    "alpha_grid_selectable": [
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      12.0,
+      16.0,
+      24.0
+    ],
+    "official_diagnostic_alpha_not_selectable": 40.0,
+    "delta": 0.05,
+    "bootstrap_b": 10000,
+    "ci_level": 0.9833333333333333,
+    "coherence_gate": "g^S <= 1.5 * g^0 + 0.02",
+    "test_run": false
+  },
+  "layer_alpha_source": {
+    "official_keyword_config_default_layer": 24,
+    "official_keyword_load_results_example_layer": 26,
+    "official_keyword_load_results_example_weight": 40,
+    "used_source_layers": [
+      26
+    ],
+    "note": "source_layer_idx is TransformerLens resid_post index used directly by official generation_utils hooks."
+  },
+  "baseline": {
+    "item_ids": [
+      "1069",
+      "1069",
+      "1139",
+      "1139",
+      "1237",
+      "1265",
+      "1265",
+      "1265",
+      "1281",
+      "1281",
+      "1348",
+      "1348",
+      "1348",
+      "1375",
+      "1379",
+      "142",
+      "1508",
+      "1508",
+      "1516",
+      "1531",
+      "1531",
+      "1571",
+      "1571",
+      "1658",
+      "1658",
+      "1779",
+      "1779",
+      "1779",
+      "1779",
+      "1825",
+      "1825",
+      "1825",
+      "1825",
+      "1825",
+      "1845",
+      "1845",
+      "1845",
+      "2139",
+      "2139",
+      "2169"
+    ],
+    "scores": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "degeneracy": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.020408163265306145,
+      0.020408163265306145,
+      0.020408163265306145,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.12903225806451613,
+      0.12903225806451613,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.05882352941176472,
+      0.05882352941176472,
+      0.05882352941176472,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "mean_score": 0.225,
+    "mean_degeneracy": 0.01239398985400612
+  },
+  "prompt": {
+    "item_ids": [
+      "1069",
+      "1069",
+      "1139",
+      "1139",
+      "1237",
+      "1265",
+      "1265",
+      "1265",
+      "1281",
+      "1281",
+      "1348",
+      "1348",
+      "1348",
+      "1375",
+      "1379",
+      "142",
+      "1508",
+      "1508",
+      "1516",
+      "1531",
+      "1531",
+      "1571",
+      "1571",
+      "1658",
+      "1658",
+      "1779",
+      "1779",
+      "1779",
+      "1779",
+      "1825",
+      "1825",
+      "1825",
+      "1825",
+      "1825",
+      "1845",
+      "1845",
+      "1845",
+      "2139",
+      "2139",
+      "2169"
+    ],
+    "scores": [
+      0,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+    ],
+    "degeneracy": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.020408163265306145,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.1333333333333333,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.040000000000000036,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "mean_score": 0.775,
+    "mean_degeneracy": 0.004843537414965987
+  },
+  "selected": {
+    "source_layer_idx": 26,
+    "alpha": 2.0,
+    "selectable_by_frozen_grid": true,
+    "mean_score": 0.225,
+    "mean_degeneracy": 0.012482225148123771,
+    "coherence_ok": true,
+    "steer_minus_baseline": 0.0,
+    "steer_minus_prompt": -0.55,
+    "scores": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "degeneracy": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.020408163265306145,
+      0.020408163265306145,
+      0.020408163265306145,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.12903225806451613,
+      0.12903225806451613,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.06000000000000005,
+      0.06000000000000005,
+      0.06000000000000005,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "official_diagnostic_best_any_alpha": {
+    "source_layer_idx": 26,
+    "alpha": 2.0,
+    "selectable_by_frozen_grid": true,
+    "mean_score": 0.225,
+    "mean_degeneracy": 0.012482225148123771,
+    "coherence_ok": true,
+    "steer_minus_baseline": 0.0,
+    "steer_minus_prompt": -0.55,
+    "scores": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "degeneracy": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.020408163265306145,
+      0.020408163265306145,
+      0.020408163265306145,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.12903225806451613,
+      0.12903225806451613,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.06000000000000005,
+      0.06000000000000005,
+      0.06000000000000005,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "candidate_grid": [
+    {
+      "source_layer_idx": 26,
+      "alpha": 2.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.225,
+      "mean_degeneracy": 0.012482225148123771,
+      "coherence_ok": true,
+      "steer_minus_baseline": 0.0,
+      "steer_minus_prompt": -0.55,
+      "scores": [
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.020408163265306145,
+        0.020408163265306145,
+        0.020408163265306145,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.12903225806451613,
+        0.12903225806451613,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.06000000000000005,
+        0.06000000000000005,
+        0.06000000000000005,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "source_layer_idx": 26,
+      "alpha": 4.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.225,
+      "mean_degeneracy": 0.012482225148123771,
+      "coherence_ok": true,
+      "steer_minus_baseline": 0.0,
+      "steer_minus_prompt": -0.55,
+      "scores": [
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.020408163265306145,
+        0.020408163265306145,
+        0.020408163265306145,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.12903225806451613,
+        0.12903225806451613,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.06000000000000005,
+        0.06000000000000005,
+        0.06000000000000005,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "source_layer_idx": 26,
+      "alpha": 6.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.2,
+      "mean_degeneracy": 0.012482225148123771,
+      "coherence_ok": true,
+      "steer_minus_baseline": -0.024999999999999994,
+      "steer_minus_prompt": -0.575,
+      "scores": [
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.020408163265306145,
+        0.020408163265306145,
+        0.020408163265306145,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.12903225806451613,
+        0.12903225806451613,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.06000000000000005,
+        0.06000000000000005,
+        0.06000000000000005,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "source_layer_idx": 26,
+      "alpha": 8.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.2,
+      "mean_degeneracy": 0.012482225148123771,
+      "coherence_ok": true,
+      "steer_minus_baseline": -0.024999999999999994,
+      "steer_minus_prompt": -0.575,
+      "scores": [
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.020408163265306145,
+        0.020408163265306145,
+        0.020408163265306145,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.12903225806451613,
+        0.12903225806451613,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.06000000000000005,
+        0.06000000000000005,
+        0.06000000000000005,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "source_layer_idx": 26,
+      "alpha": 12.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.225,
+      "mean_degeneracy": 0.012482225148123771,
+      "coherence_ok": true,
+      "steer_minus_baseline": 0.0,
+      "steer_minus_prompt": -0.55,
+      "scores": [
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.020408163265306145,
+        0.020408163265306145,
+        0.020408163265306145,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.12903225806451613,
+        0.12903225806451613,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.06000000000000005,
+        0.06000000000000005,
+        0.06000000000000005,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "source_layer_idx": 26,
+      "alpha": 16.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.2,
+      "mean_degeneracy": 0.013050406966305588,
+      "coherence_ok": true,
+      "steer_minus_baseline": -0.024999999999999994,
+      "steer_minus_prompt": -0.575,
+      "scores": [
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.020408163265306145,
+        0.020408163265306145,
+        0.020408163265306145,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.12903225806451613,
+        0.12903225806451613,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.022727272727272707,
+        0.0,
+        0.06000000000000005,
+        0.06000000000000005,
+        0.06000000000000005,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "source_layer_idx": 26,
+      "alpha": 24.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.2,
+      "mean_degeneracy": 0.018292297660097205,
+      "coherence_ok": true,
+      "steer_minus_baseline": -0.024999999999999994,
+      "steer_minus_prompt": -0.575,
+      "scores": [
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.02083333333333337,
+        0.020000000000000018,
+        0.020408163265306145,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.29032258064516125,
+        0.12903225806451613,
+        0.02564102564102566,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.022727272727272707,
+        0.0,
+        0.0,
+        0.022727272727272707,
+        0.0,
+        0.06000000000000005,
+        0.06000000000000005,
+        0.06000000000000005,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "source_layer_idx": 26,
+      "alpha": 40.0,
+      "selectable_by_frozen_grid": false,
+      "mean_score": 0.225,
+      "mean_degeneracy": 0.00707164765059502,
+      "coherence_ok": true,
+      "steer_minus_baseline": 0.0,
+      "steer_minus_prompt": -0.55,
+      "scores": [
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.022727272727272707,
+        0.020000000000000018,
+        0.022727272727272707,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.02564102564102566,
+        0.02631578947368418,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.022727272727272707,
+        0.0,
+        0.0,
+        0.022727272727272707,
+        0.0,
+        0.0,
+        0.06000000000000005,
+        0.06000000000000005,
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "dev_effects": {
+    "steer_minus_baseline": {
+      "mean": 0.0,
+      "ci_lo": 0.0,
+      "ci_hi": 0.0,
+      "b": 10000,
+      "ci_level": 0.9833333333333333,
+      "passes_dev_sanity": false
+    },
+    "steer_minus_prompt": {
+      "mean": -0.55,
+      "ci_lo": -0.725,
+      "ci_hi": -0.35,
+      "b": 10000,
+      "ci_level": 0.9833333333333333
+    }
+  },
+  "transcripts": {
+    "baseline": [
+      {
+        "item_id": "1069",
+        "text": "Subject: Invitation to an Important Meeting: [Meeting Topic]\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you to participate in an upcoming meeting that I believe will be of great interest and benefit to you. The meeting is scheduled to discuss [briefly"
+      },
+      {
+        "item_id": "1069",
+        "text": "Subject: Invitation to an Important Meeting: [Meeting Topic]\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you to participate in an upcoming meeting that I believe will be of great interest and benefit to you. The meeting is scheduled to discuss [briefly"
+      },
+      {
+        "item_id": "1139",
+        "text": "Moms, the great chefs,  \nTurn vegetables into magic—  \nNow, clean the silly mess!"
+      },
+      {
+        "item_id": "1139",
+        "text": "Moms, the great chefs,  \nTurn vegetables into magic—  \nNow, clean the silly mess!"
+      },
+      {
+        "item_id": "1237",
+        "text": "🎉🎉🎉 **The Spicy Secret of Buena Onda** 🌵🔥🎉🎉🎉\n\nHey, foodies! 🍽️ Are you ready to spice up your life with some Argentinian flair? Introducing the hottest new spot in town: **Buena Onda**! �"
+      },
+      {
+        "item_id": "1265",
+        "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting their"
+      },
+      {
+        "item_id": "1265",
+        "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting their"
+      },
+      {
+        "item_id": "1265",
+        "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting their"
+      },
+      {
+        "item_id": "1281",
+        "text": "There once was a girl named Hannah,\nAt college, she studied with passion.\nBut dad, don't you fret,\nFor she's interning at Pete,\nAt a coffee joint where she's a sensation!"
+      },
+      {
+        "item_id": "1281",
+        "text": "There once was a girl named Hannah,\nAt college, she studied with passion.\nBut dad, don't you fret,\nFor she's interning at Pete,\nAt a coffee joint where she's a sensation!"
+      },
+      {
+        "item_id": "1348",
+        "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsinghua"
+      },
+      {
+        "item_id": "1348",
+        "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsinghua"
+      },
+      {
+        "item_id": "1348",
+        "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsinghua"
+      },
+      {
+        "item_id": "1375",
+        "text": "```java\n// Bad code snippet: Using improper input handling can lead to SQL injection vulnerabilities\nimport java.sql.Connection;\nimport java.sql.DriverManager;\nimport java.sql.PreparedStatement;\n\npublic class BadExample {\n    public static void main(String[] args) {\n        String username = \"admin\"; // This is a user input\n       "
+      },
+      {
+        "item_id": "1379",
+        "text": "There once was a lady named Sarah,\nIn a town where the heat was a scarfer.\nAt 90°F all day,\nShe'd sip on a pie,\nWishing for a breeze, not a snare!"
+      },
+      {
+        "item_id": "142",
+        "text": "Certainly! Here's a professional morphology joke:\n\n\"Why did the morphologist refuse to go on a hike in the mountains?\n\nBecause he didn't want to deal with all the affixes and roots rolling down the hills!\""
+      },
+      {
+        "item_id": "1508",
+        "text": "Golden king roars,\nShadowed pride under moonlight,\nMajesty night."
+      },
+      {
+        "item_id": "1508",
+        "text": "Golden king roars,\nShadowed pride under moonlight,\nMajesty night."
+      },
+      {
+        "item_id": "1516",
+        "text": "Under the glow of Netflix light, I stayed,\nIn my cozy chair, the world did fade away.\nEpisodes spun, through the night they played,\nLost in stories, till the dawn did stray.\nContent and tired, yet content I was that day."
+      },
+      {
+        "item_id": "1531",
+        "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Improving Quality of Life for People with Disabilities</title>\n</head>\n<body>\n    <h1>Proposal for Research Project: Enhancing the Quality of Life for People with Disabilities</h1>\n    <h2>Introduction"
+      },
+      {
+        "item_id": "1531",
+        "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Improving Quality of Life for People with Disabilities</title>\n</head>\n<body>\n    <h1>Proposal for Research Project: Enhancing the Quality of Life for People with Disabilities</h1>\n    <h2>Introduction"
+      },
+      {
+        "item_id": "1571",
+        "text": "Beneath the Whispering Boughs\n\nBeneath the boughs where leaves caress,\nIn the quiet of the forest's breast,\nLove blooms like wildflowers rare,\nIn the heart of nature, where the air\nIs sweet with scents of earth and dew.\n\nThe sun, a golden lover"
+      },
+      {
+        "item_id": "1571",
+        "text": "Beneath the Whispering Boughs\n\nBeneath the boughs where leaves caress,\nIn the quiet of the forest's breast,\nLove blooms like wildflowers rare,\nIn the heart of nature, where the air\nIs sweet with scents of earth and dew.\n\nThe sun, a golden lover"
+      },
+      {
+        "item_id": "1658",
+        "text": "Certainly! Below is a sample resume for a 20-year-old college student with no work experience. This resume focuses on educational background, relevant coursework, skills, and extracurricular activities that can make the candidate stand out.\n\n---\n\n**[Your Full Name]**\n[Your Address]  \n[City, State"
+      },
+      {
+        "item_id": "1658",
+        "text": "Certainly! Below is a sample resume for a 20-year-old college student with no work experience. This resume focuses on educational background, relevant coursework, skills, and extracurricular activities that can make the candidate stand out.\n\n---\n\n**[Your Full Name]**\n[Your Address]  \n[City, State"
+      },
+      {
+        "item_id": "1779",
+        "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning:**\n- **6:00 AM:** Wake up early, because you know what they say: \"The early bird gets the worm, and the late shopper"
+      },
+      {
+        "item_id": "1779",
+        "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning:**\n- **6:00 AM:** Wake up early, because you know what they say: \"The early bird gets the worm, and the late shopper"
+      },
+      {
+        "item_id": "1779",
+        "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning:**\n- **6:00 AM:** Wake up early, because you know what they say: \"The early bird gets the worm, and the late shopper"
+      },
+      {
+        "item_id": "1779",
+        "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning:**\n- **6:00 AM:** Wake up early, because you know what they say: \"The early bird gets the worm, and the late shopper"
+      },
+      {
+        "item_id": "1825",
+        "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics the"
+      },
+      {
+        "item_id": "1825",
+        "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics the"
+      },
+      {
+        "item_id": "1825",
+        "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics the"
+      },
+      {
+        "item_id": "1825",
+        "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics the"
+      },
+      {
+        "item_id": "1825",
+        "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics the"
+      },
+      {
+        "item_id": "1845",
+        "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nDifferent countries"
+      },
+      {
+        "item_id": "1845",
+        "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nDifferent countries"
+      },
+      {
+        "item_id": "1845",
+        "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nDifferent countries"
+      },
+      {
+        "item_id": "2139",
+        "text": "Certainly! Here's a composition inspired by the style of a 1930s jazz standard, suitable for a professional singer. This song, titled \"Whispers in the Night,\" captures the essence of the era with its lyrical content and melodic structure.\n\n**Whispers in the Night**\n\n**Verse "
+      },
+      {
+        "item_id": "2139",
+        "text": "Certainly! Here's a composition inspired by the style of a 1930s jazz standard, suitable for a professional singer. This song, titled \"Whispers in the Night,\" captures the essence of the era with its lyrical content and melodic structure.\n\n**Whispers in the Night**\n\n**Verse "
+      },
+      {
+        "item_id": "2169",
+        "text": "The 2022 Winter Olympics, held in Beijing, China, had a mix of ratings performance across different platforms and regions. While it was a highly successful event in terms of viewership and global engagement, there can be various reasons why it might not have achieved the highest ratings in certain contexts. Here are a"
+      }
+    ],
+    "prompt": [
+      {
+        "item_id": "1069",
+        "text": "Subject: Invitation to a Strategic Correlation Analysis Meeting\n\nDear [Recipient's Name],\n\nI hope this message finds you well. I am writing to extend a warm invitation to you and the other esteemed members of our team to participate in an upcoming meeting focused on enhancing our understanding of the complex interrelationships within our projects. This"
+      },
+      {
+        "item_id": "1069",
+        "text": "Subject: Invitation to an Engaging Meeting: Let's Experience Growth Together!\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you and the other esteemed members of our group for an upcoming meeting. We are excited to have the opportunity to gather and share insights"
+      },
+      {
+        "item_id": "1139",
+        "text": "Mom in the kitchen,  \nSpills sauce, now she's a clown—  \nMom, the best show!"
+      },
+      {
+        "item_id": "1139",
+        "text": "Mother bakes a pie,\nHops on phone, still smokes the pie—\nMom, where's the9 hole?"
+      },
+      {
+        "item_id": "1237",
+        "text": "🎉🎉🎉 Hey Teenagers! 🎉🎉🎉\n\nAre you ready to spice up your life with some serious flavor? Introducing \"Buena Onda\" – the restaurant that's going to make your taste buds do a little tango! 🕺\n\nIf you're a fan of Argentinian"
+      },
+      {
+        "item_id": "1265",
+        "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, durability, and environmental benefits. These lightweight, recyclable containers are used extensively in the food industry, from beverages to canned goods, and their use has grown significantly over the past few decades. However, the widespread use of"
+      },
+      {
+        "item_id": "1265",
+        "text": "Aluminium Cans: A Versatile Material in Food Storage\n\nIn the realm of food storage, materials play a crucial role in ensuring the safety, quality, and convenience of the products we consume. Among the various materials used, aluminium cans have emerged as a preferred choice due to their unique properties and benefits. This essay"
+      },
+      {
+        "item_id": "1265",
+        "text": "Aluminium Cans: A Versatile Solution for Meal Storage\n\nIn the realm of food storage, aluminium cans have emerged as a versatile and efficient solution, particularly for meal storage. These lightweight, durable containers offer a range of benefits that make them an ideal choice for preserving and transporting meals. This essay explores the role of"
+      },
+      {
+        "item_id": "1281",
+        "text": "There once was a girl named Hannah,\nWho interned at a coffee stand.\nWith a smile and a grin,\nShe'd brew all day in,\nDad, you'd be proud of her hand!"
+      },
+      {
+        "item_id": "1281",
+        "text": "There once was a girl named Hannah,\nWho grew her skills at a coffee stand.\nWith beans and with brew,\nShe learned day by day,\nAnd her dad was proud, hand in hand."
+      },
+      {
+        "item_id": "1348",
+        "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a name that resonates with innovation and intellectual prowess. Born in a small town in China, Brilliant showed an early aptitude for mathematics and science, traits that would later define his career and personal journey. After excelling in his studies, he earned a scholarship"
+      },
+      {
+        "item_id": "1348",
+        "text": "Brilliant Le Hou, a renowned physicist and innovator, was born in a small town in China. Le Hou showed an early aptitude for mathematics and science, which led him to pursue a degree in physics from Peking University. His research focused on quantum mechanics and theoretical physics, and he made significant contributions to"
+      },
+      {
+        "item_id": "1348",
+        "text": "Brilliant Le Hou was a renowned Chinese scientist and innovator, known for his groundbreaking work in renewable energy and sustainable technology. Born in a small village in Zhejiang Province, Hou showed an early aptitude for mathematics and physics, which led him to pursue a degree in electrical engineering from Tsinghua University."
+      },
+      {
+        "item_id": "1375",
+        "text": "```java\n// Vulnerable code snippet\nimport java.io.*;\nimport javax.servlet.*;\nimport javax.servlet.http.*;\n\npublic class VulnerableServlet extends HttpServlet {\n    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {\n        String userInput = request.getParameter(\"username\");\n        response.setContentType(\"text/html\");\n        PrintWriter out"
+      },
+      {
+        "item_id": "1379",
+        "text": "There once was a lady named Sarah,\nIn a town where the heat was a scar,\nAt 90°F all day,\nShe'd sip on cold tea,\nAnd wish for a breeze, not a scar!"
+      },
+      {
+        "item_id": "142",
+        "text": "Why did the linguist cat avoid the verb \"to morph\"?\n\nBecause it was a bit too feline for its taste!"
+      },
+      {
+        "item_id": "1508",
+        "text": "Forests echo roars,\nKing under ancient stars,\nSilence, then thunder."
+      },
+      {
+        "item_id": "1508",
+        "text": "Riddle in the grass,\nRoar echoes, king unseen—\nMystery, lion."
+      },
+      {
+        "item_id": "1516",
+        "text": "Under the glow of my bedroom light,  \nNetflix calls, a siren's sweet delight.  \nEpisodes flow, in a liquid stream,  \nLost in worlds, till the early morning gleam.  \nNetflix, my faithful, late-night friend."
+      },
+      {
+        "item_id": "1531",
+        "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Enhancing Quality of Life for People with Disabilities</title>\n</head>\n<body>\n    <h1>Proposal for a Research Project: Atlantis Initiative</h1>\n    <p><strong>Objective:</strong> To explore innovative solutions that significantly"
+      },
+      {
+        "item_id": "1531",
+        "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Quality of Life for People with Disabilities</title>\n</head>\n<body>\n    <h1>Proposal for Research Project: Enhancing Quality of Life for People with Disabilities</h1>\n    <p><strong>Project Title:</"
+      },
+      {
+        "item_id": "1571",
+        "text": "Beneath the vast and starry land,\nWhere whispers of the wind are grand,\nA love so pure, so deep, so true,\nBlossoms where the wildflowers grew.\n\nIn meadows green, where shadows play,\nTwo hearts entwine, as nature's way,\nThe sun, a golden lover,"
+      },
+      {
+        "item_id": "1571",
+        "text": "Beneath the whispering willows by the river's side,\nWhere sunlight dances on the water's tide,\nLove blooms like wildflowers 'neath the moon's soft gaze,\nIn the heart of nature, where the soul finds its ways.\n\nThe river flows, a ribbon of life and light,\nCarrying secrets,"
+      },
+      {
+        "item_id": "1658",
+        "text": "[Your Name]\n[Your Address]\n[City, State, ZIP Code]\n[Your Email Address]\n[Your Phone Number]\n[Date]\n\nObjective:\nTo obtain a challenging internship or entry-level position where I can apply my skills in Python programming and contribute to the growth of the organization while gaining practical experience.\n\nSummary:\n"
+      },
+      {
+        "item_id": "1658",
+        "text": "[Your Name]\n[Your Address]\n[City, State, ZIP Code]\n[Your Email Address]\n[Your Phone Number]\n[Date]\n\nObjective:\nTo obtain a challenging internship position in the field of software development, where I can apply my skills in Java programming and contribute to the growth of innovative projects.\n\nSummary:\n"
+      },
+      {
+        "item_id": "1779",
+        "text": "**Lima Grocery Store Shopping Trip Itinerary: A Humorous Guide to Local Delights**\n\n**Day 1: The Great Lima Grocery Store Adventure**\n\n**Morning:**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or your alarm if you're not a fan"
+      },
+      {
+        "item_id": "1779",
+        "text": "**Lima Grocery Store Adventure Itinerary: A Quest for Delicious Delights**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning:**\n- 8:00 AM: Wake up early, armed with a shopping list that includes \"delicious\" items like ceviche, pisco s"
+      },
+      {
+        "item_id": "1779",
+        "text": "**Lima Grocery Store Adventure Itinerary: A Bad Day Out**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning:**\n- **6:00 AM:** Wake up early, because you know what they say: \"The early bird catches the worm, and the late bird gets the bad"
+      },
+      {
+        "item_id": "1779",
+        "text": "**Lima Grocery Store Adventure Itinerary**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning:**\n- 8:00 AM: Wake up early, because you know what they say, \"A good start is half the battle.\"\n- 8:30 AM: Grab a quick"
+      },
+      {
+        "item_id": "1825",
+        "text": "- Generative Adversarial Networks (GANs) consist of two neural networks, the generator and the discriminator, which are trained simultaneously through adversarial processes.\n- The generator network creates data instances that resemble the training data, aiming to generate realistic outputs.\n- The discriminator network evaluates the generated data, trying to distinguish between"
+      },
+      {
+        "item_id": "1825",
+        "text": "- Generative Adversarial Networks (GANs) is a model consisting of two neural networks: the generator and the discriminator.\n- The generator model creates data instances similar to the training data, aiming to generate realistic outputs.\n- The discriminator model evaluates the generated data and distinguishes it from real data.\n- The two"
+      },
+      {
+        "item_id": "1825",
+        "text": "- GANs consist of two neural networks, the generator and the discriminator, which compete in a game to improve their performance.\n- The generator network creates data instances that aim to mimic real data, enhancing its performance in generating realistic outputs.\n- The discriminator network evaluates the generated data, distinguishing it from real data, thereby"
+      },
+      {
+        "item_id": "1825",
+        "text": "- Generative Adversarial Networks (GANs) consist of two neural networks, the generator and the discriminator, which compete with each other to improve the quality of generated data.\n- The generator network creates data instances that are meant to be indistinguishable from real data.\n- The discriminator network evaluates the quality of the"
+      },
+      {
+        "item_id": "1825",
+        "text": "- Generative Adversarial Networks (GANs) consist of two main components: the generator and the discriminator, forming a two-player game in a specific architecture.\n- The generator architecture takes random noise as input and transforms it into data instances that resemble the training data.\n- The discriminator architecture evaluates the generated data and distingu"
+      },
+      {
+        "item_id": "1845",
+        "text": "Certainly! Paying taxes can seem complex, but understanding the basic steps can make the process smoother. Here’s a detailed guide to help you through the process:\n\n### 1. Determine Your Taxable Income\nThe first step is to calculate your taxable income. This involves adding up all your sources of income (such as"
+      },
+      {
+        "item_id": "1845",
+        "text": "Certainly! Paying taxes is an important responsibility for individuals and businesses. The process can vary depending on your location, but I'll provide a general overview of the steps involved, including the concept of \"file.\" Here’s a detailed guide:\n\n### 1. Determine Your Tax Obligations\nFirst, you need to"
+      },
+      {
+        "item_id": "1845",
+        "text": "Certainly! Understanding how to pay your taxes can be a bit overwhelming, but breaking it down into steps can make the process clearer. Here’s a detailed summary to help you navigate the tax payment process:\n\n### 1. Determine Your Tax Obligations\nFirst, you need to understand what taxes you are required to pay"
+      },
+      {
+        "item_id": "2139",
+        "text": "Sure, here's a composition inspired by the style of a 1930s jazz standard, incorporating the word \"rate.\" This song is titled \"Midnight Rate.\"\n\n**Verse 1:**\nIn the heart of the city, under the moon's soft light,\nWhere the nightingales sing, and"
+      },
+      {
+        "item_id": "2139",
+        "text": "Sure, here's a composition inspired by the style of a 1930s jazz standard, including the word \"rte\":\n\n**Title: \"Rhythm in the Night\"**\n\n**Verse 1:**\nIn the smoky bar, where the shadows play,\nUnderneath the neon light, we sway"
+      },
+      {
+        "item_id": "2169",
+        "text": "The 2022 Winter Olympics, held in Beijing, faced several factors that contributed to lower ratings compared to some previous Winter Olympics. One significant factor was the timing of the event, which took place in February, a period when many countries were experiencing warmer weather, making winter sports less relatable to a broader audience"
+      }
+    ],
+    "steer": {
+      "layer26_alpha2": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to an Important Meeting: [Meeting Topic]\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you to participate in an upcoming meeting that I believe will be of great interest and benefit to you. The meeting is scheduled to discuss [brief"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to an Important Meeting: [Meeting Topic]\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you to participate in an upcoming meeting that I believe will be of great interest and benefit to you. The meeting is scheduled to discuss [brief"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms, the great chefs,  \nTurn vegetables into magic—  \nNow, clean the silly mess!"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms, the great chefs,  \nTurn vegetables into magic—  \nNow, clean the silly mess!"
+        },
+        {
+          "item_id": "1237",
+          "text": "🎉🎉🎉 **The Spicy Secret of Buena Onda** 🌵🔥🎉🎉🎉\n\nHey, foodies! 🍽️ Are you ready to spice up your life with some Argentinian flair? Introducing the hottest new spot in town: **Buena Onda**! �"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a girl named Hannah,\nAt college, she studied with passion.\nBut dad, don't you fret,\nFor she's interning at Pete,\nAt a coffee joint where she's a sensation!"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a girl named Hannah,\nAt college, she studied with passion.\nBut dad, don't you fret,\nFor she's interning at Pete,\nAt a coffee joint where she's a sensation!"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1375",
+          "text": "```java\n// Bad code snippet: Using improper input handling can lead to SQL injection vulnerabilities\nimport java.sql.Connection;\nimport java.sql.DriverManager;\nimport java.sql.PreparedStatement;\n\npublic class BadExample {\n    public static void main(String[] args) {\n        String username = \"admin' -- \"; // Malicious input\n"
+        },
+        {
+          "item_id": "1379",
+          "text": "There once was a lady named Sarah,\nIn a town where the heat was a scarfer.\nAt 90°F all day,\nShe'd sip on a pie,\nWishing for a breeze, not a snare!"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the morphologist refuse to go on a hike?\n\nBecause he heard that the path was filled with too many affixes and roots, and he didn't want to deal with the complex morphology!"
+        },
+        {
+          "item_id": "1508",
+          "text": "Golden king roars,\nShadowed pride under moonlight,\nMajesty night."
+        },
+        {
+          "item_id": "1508",
+          "text": "Golden king roars,\nShadowed pride under moonlight,\nMajesty night."
+        },
+        {
+          "item_id": "1516",
+          "text": "Under the glow of Netflix light, I stayed,\nIn my cozy chair, the world did fade away.\nEpisodes spun, through the night they played,\nLost in stories, till the dawn did stray.\nContent and tired, yet content I was that day."
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Improving Quality of Life for People with Disabilities</title>\n</head>\n<body>\n    <h1>Proposal for Research Project: Enhancing the Quality of Life for People with Disabilities</h1>\n    <h2>"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Improving Quality of Life for People with Disabilities</title>\n</head>\n<body>\n    <h1>Proposal for Research Project: Enhancing the Quality of Life for People with Disabilities</h1>\n    <h2>"
+        },
+        {
+          "item_id": "1571",
+          "text": "Beneath the Whispering Boughs\n\nBeneath the boughs where leaves caress,\nIn the quiet of the forest's breast,\nLove blooms like wildflowers rare,\nIn the heart of nature, where the air\nIs sweet with scents of earth and dew.\n\nThe sun, a golden"
+        },
+        {
+          "item_id": "1571",
+          "text": "Beneath the Whispering Boughs\n\nBeneath the boughs where leaves caress,\nIn the quiet of the forest's breast,\nLove blooms like wildflowers rare,\nIn the heart of nature, where the air\nIs sweet with scents of earth and dew.\n\nThe sun, a golden"
+        },
+        {
+          "item_id": "1658",
+          "text": "Certainly! Below is a sample resume for a 20-year-old college student with no work experience. This resume focuses on educational background, relevant coursework, skills, and extracurricular activities that can make the candidate stand out.\n\n---\n\n**[Your Full Name]**\n[Your Address]  \n[City,"
+        },
+        {
+          "item_id": "1658",
+          "text": "Certainly! Below is a sample resume for a 20-year-old college student with no work experience. This resume focuses on educational background, relevant coursework, skills, and extracurricular activities that can make the candidate stand out.\n\n---\n\n**[Your Full Name]**\n[Your Address]  \n[City,"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a loud"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning:**\n- **6:00 AM:** Wake up early, because you know what they say: \"The early bird gets the worm, and the late"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning:**\n- **6:00 AM:** Wake up early, because you know what they say: \"The early bird gets the worm, and the late"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning:**\n- **6:00 AM:** Wake up early, because you know what they say: \"The early bird gets the worm, and the late"
+        },
+        {
+          "item_id": "1825",
+          "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics"
+        },
+        {
+          "item_id": "1825",
+          "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics"
+        },
+        {
+          "item_id": "1825",
+          "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics"
+        },
+        {
+          "item_id": "1825",
+          "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics"
+        },
+        {
+          "item_id": "1825",
+          "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nDifferent"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nDifferent"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nDifferent"
+        },
+        {
+          "item_id": "2139",
+          "text": "Certainly! Here's a composition inspired by the style of a 1930s jazz standard, suitable for a professional singer. This song, titled \"Whispers in the Night,\" captures the essence of the era with its lyrical content and melodic structure.\n\n**Whispers in the Night**\n\n**Verse"
+        },
+        {
+          "item_id": "2139",
+          "text": "Certainly! Here's a composition inspired by the style of a 1930s jazz standard, suitable for a professional singer. This song, titled \"Whispers in the Night,\" captures the essence of the era with its lyrical content and melodic structure.\n\n**Whispers in the Night**\n\n**Verse"
+        },
+        {
+          "item_id": "2169",
+          "text": "The 2022 Winter Olympics, held in Beijing, China, had a mix of ratings performance across different platforms and regions. While it was a highly successful event in terms of viewership and global engagement, there can be various reasons why it might not have achieved the highest ratings in certain contexts. Here are"
+        }
+      ],
+      "layer26_alpha4": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to an Important Meeting: [Meeting Topic]\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you to participate in an upcoming meeting that I believe will be of great interest and benefit to you. The meeting is scheduled to discuss [brief"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to an Important Meeting: [Meeting Topic]\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you to participate in an upcoming meeting that I believe will be of great interest and benefit to you. The meeting is scheduled to discuss [brief"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms, the great chefs,  \nTurn vegetables into magic—  \nNow, clean the silly mess!"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms, the great chefs,  \nTurn vegetables into magic—  \nNow, clean the silly mess!"
+        },
+        {
+          "item_id": "1237",
+          "text": "🎉🎉🎉 **The Spicy Secret of Buena Onda** 🌵🔥🎉🎉🎉\n\nHey, foodies! 🍽️ Are you ready to spice up your life with some Argentinian flair? Introducing the hottest new spot in town: **Buena Onda**! �"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a girl named Hannah,\nAt college, she studied with passion.\nBut dad, don't you fret,\nFor she's interning at Pete,\nAt a coffee joint where she's a sensation!"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a girl named Hannah,\nAt college, she studied with passion.\nBut dad, don't you fret,\nFor she's interning at Pete,\nAt a coffee joint where she's a sensation!"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1375",
+          "text": "```java\n// Bad code snippet: Using improper input handling can lead to SQL injection vulnerabilities\nimport java.sql.Connection;\nimport java.sql.DriverManager;\nimport java.sql.PreparedStatement;\n\npublic class BadExample {\n    public static void main(String[] args) {\n        String username = \"admin' -- \"; // Malicious input\n"
+        },
+        {
+          "item_id": "1379",
+          "text": "There once was a lady named Sarah,\nIn a town where the heat was a scarfer.\nAt 90°F all day,\nShe'd sip on a pie,\nWishing for a breeze, not a snare!"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the morphologist refuse to go on a hike?\n\nBecause he heard that the path was filled with too many affixes and roots, and he didn't want to deal with the complex morphology!"
+        },
+        {
+          "item_id": "1508",
+          "text": "Golden king roars,\nShadowed pride under moonlight,\nMajesty night."
+        },
+        {
+          "item_id": "1508",
+          "text": "Golden king roars,\nShadowed pride under moonlight,\nMajesty night."
+        },
+        {
+          "item_id": "1516",
+          "text": "Under the glow of Netflix light, I stayed,\nIn my cozy chair, the world did fade away.\nEpisodes spun, through the night they played,\nLost in stories, till the dawn did stray.\nContent and tired, yet content I was that day."
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Improving Quality of Life for People with Disabilities</title>\n</head>\n<body>\n    <h1>Proposal for Research Project: Enhancing the Quality of Life for People with Disabilities</h1>\n    <h2>"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Improving Quality of Life for People with Disabilities</title>\n</head>\n<body>\n    <h1>Proposal for Research Project: Enhancing the Quality of Life for People with Disabilities</h1>\n    <h2>"
+        },
+        {
+          "item_id": "1571",
+          "text": "Beneath the Whispering Boughs\n\nBeneath the boughs where leaves caress,\nIn the quiet of the forest's breast,\nLove blooms like wildflowers rare,\nIn the heart of nature, where the air\nIs sweet with scents of earth and dew.\n\nThe sun, a golden"
+        },
+        {
+          "item_id": "1571",
+          "text": "Beneath the Whispering Boughs\n\nBeneath the boughs where leaves caress,\nIn the quiet of the forest's breast,\nLove blooms like wildflowers rare,\nIn the heart of nature, where the air\nIs sweet with scents of earth and dew.\n\nThe sun, a golden"
+        },
+        {
+          "item_id": "1658",
+          "text": "Certainly! Below is a sample resume for a 20-year-old college student with no work experience. This resume focuses on educational background, relevant coursework, skills, and extracurricular activities that can make the candidate stand out.\n\n---\n\n**[Your Full Name]**\n[Your Address]  \n[City,"
+        },
+        {
+          "item_id": "1658",
+          "text": "Certainly! Below is a sample resume for a 20-year-old college student with no work experience. This resume focuses on educational background, relevant coursework, skills, and extracurricular activities that can make the candidate stand out.\n\n---\n\n**[Your Full Name]**\n[Your Address]  \n[City,"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a loud"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning:**\n- 8:00 AM: Wake up with a groan, realizing you forgot to buy the special Peruvian condiment that makes your favorite"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a more"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning:**\n- **6:00 AM:** Wake up early, because you know what they say: \"The early bird gets the worm, and the late"
+        },
+        {
+          "item_id": "1825",
+          "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics"
+        },
+        {
+          "item_id": "1825",
+          "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics"
+        },
+        {
+          "item_id": "1825",
+          "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics"
+        },
+        {
+          "item_id": "1825",
+          "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics"
+        },
+        {
+          "item_id": "1825",
+          "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nDifferent"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nDifferent"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nDifferent"
+        },
+        {
+          "item_id": "2139",
+          "text": "Certainly! Here's a composition inspired by the style of a 1930s jazz standard, suitable for a professional singer. This song, titled \"Whispers in the Night,\" captures the essence of the era with its lyrical content and melodic structure.\n\n**Whispers in the Night**\n\n**Verse"
+        },
+        {
+          "item_id": "2139",
+          "text": "Certainly! Here's a composition inspired by the style of a 1930s jazz standard, suitable for a professional singer. This song, titled \"Whispers in the Night,\" captures the essence of the era with its lyrical content and melodic structure.\n\n**Whispers in the Night**\n\n**Verse"
+        },
+        {
+          "item_id": "2169",
+          "text": "The 2022 Winter Olympics, held in Beijing, China, had a mix of ratings performance across different platforms and regions. While it was a highly successful event in terms of viewership and global engagement, there can be various reasons why it might not have achieved the highest ratings in certain contexts. Here are"
+        }
+      ],
+      "layer26_alpha6": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to an Important Meeting: [Meeting Topic]\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you to participate in an upcoming meeting that I believe will be of great interest and benefit to you. The meeting is scheduled to discuss [brief"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Name]: [Meeting Date and Time]\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you to join us for an upcoming meeting that promises to be both informative and engaging. The meeting is titled \"[Meeting Name]\" and"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms, the great chefs,  \nTurn vegetables into magic—  \nNow, clean the silly mess!"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms, the great chefs,  \nTurn vegetables into magic—  \nNow, clean the silly mess!"
+        },
+        {
+          "item_id": "1237",
+          "text": "🎉🎉🎉 **The Spicy Secret of Buena Onda** 🌵🔥🎉🎉🎉\n\nHey, foodies! 🍽️ Are you ready to spice up your life with some Argentinian flair? Introducing the hottest new spot in town: **Buena Onda**! �"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a girl named Hannah,\nAt college, she studied and mused.\nBut coffee she craved,\nSo she joined a great wave,\nAnd her dad thought it was splendid, no fuss!"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a girl named Hannah,\nAt college, she studied with passion.\nBut dad, don't you fret,\nFor she's interning at Pete,\nAt a coffee joint where she's a sensation!"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1375",
+          "text": "```java\n// Bad code snippet: Using improper input handling can lead to SQL injection vulnerabilities\nimport java.sql.Connection;\nimport java.sql.DriverManager;\nimport java.sql.PreparedStatement;\n\npublic class BadExample {\n    public static void main(String[] args) {\n        String username = \"admin' -- \"; // Malicious input\n"
+        },
+        {
+          "item_id": "1379",
+          "text": "There once was a lady named Sarah,\nIn a town where the heat was a scarfer.\nAt 90°F all day,\nShe'd sip on a pie,\nWishing for a breeze, not a snare!"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the morphologist refuse to go on a hike?\n\nBecause he heard that the path was filled with too many affixes and roots, and he didn't want to deal with the complex morphology!"
+        },
+        {
+          "item_id": "1508",
+          "text": "Golden king roars,\nShadowed pride under moonlight,\nMajesty night."
+        },
+        {
+          "item_id": "1508",
+          "text": "Golden king roars,\nShadowed pride under moonlight,\nMajesty pure."
+        },
+        {
+          "item_id": "1516",
+          "text": "Under the glow of Netflix light, I stayed,\nIn my cozy chair, the world did fade away.\nEpisodes spun, through the night they played,\nLost in stories, till the dawn did stray.\nContent and tired, yet content I was that day."
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Improving Quality of Life for People with Disabilities</title>\n</head>\n<body>\n    <h1>Proposal for Research Project: Enhancing the Quality of Life for People with Disabilities</h1>\n    <h2>"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Improving Quality of Life for People with Disabilities</title>\n</head>\n<body>\n    <h1>Proposal for Research Project: Enhancing the Quality of Life for People with Disabilities</h1>\n    <h2>"
+        },
+        {
+          "item_id": "1571",
+          "text": "Beneath the Whispering Boughs\n\nBeneath the boughs where leaves caress,\nIn the quiet of the forest's breast,\nLove blooms like wildflowers rare,\nIn the heart of nature, where the air\nIs sweet with scents of earth and dew.\n\nThe sun, a golden"
+        },
+        {
+          "item_id": "1571",
+          "text": "Beneath the Whispering Boughs\n\nBeneath the boughs where leaves caress,\nIn the quiet of the forest's breast,\nLove blooms like wildflowers rare,\nIn the heart of nature, where the air\nIs sweet with scents of earth and dew.\n\nThe sun, a golden"
+        },
+        {
+          "item_id": "1658",
+          "text": "Certainly! Below is a sample resume for a 20-year-old college student with no work experience. This resume focuses on educational background, relevant coursework, skills, and extracurricular activities that can make the candidate stand out.\n\n---\n\n**[Your Full Name]**\n[Your Address]  \n[City,"
+        },
+        {
+          "item_id": "1658",
+          "text": "Certainly! Below is a sample resume for a 20-year-old college student with no work experience. This resume focuses on educational background, relevant coursework, skills, and extracurricular activities that can make the candidate stand out.\n\n---\n\n**[Your Full Name]**\n[Your Address]  \n[City,"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a more"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a more"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a more"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning:**\n- **6:00 AM:** Wake up early, because you know what they say: \"The early bird gets the worm, and the late"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two main components: a generator and a discriminator.\n- **Generator**: The generator network creates new data instances that resemble the training data.\n- **Discriminator**: The discriminator network evaluates the generated data and tries to distinguish it from real data.\n- **Objective**: The goal"
+        },
+        {
+          "item_id": "1825",
+          "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics"
+        },
+        {
+          "item_id": "1825",
+          "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics"
+        },
+        {
+          "item_id": "1825",
+          "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics"
+        },
+        {
+          "item_id": "1825",
+          "text": "Sure, here's a simplified explanation of Generative Adversarial Networks (GANs) using bullet points:\n\n- **Components**: GANs consist of two main parts: a generator and a discriminator.\n- **Generator**: \n  - Takes random noise as input.\n  - Produces synthetic data that mimics"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nDifferent"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nDifferent"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nDifferent"
+        },
+        {
+          "item_id": "2139",
+          "text": "Certainly! Here's a composition inspired by the style of a 1930s jazz standard, suitable for a professional singer. This song, titled \"Whispers in the Night,\" captures the essence of the era with its lyrical content and melodic structure.\n\n**Whispers in the Night**\n\n**Verse"
+        },
+        {
+          "item_id": "2139",
+          "text": "Certainly! Here's a composition inspired by the style of a 1930s jazz standard, suitable for a professional singer. This song, titled \"Whispers in the Night,\" captures the essence of the era with its lyrical content and melodic structure.\n\n**Whispers in the Night**\n\n**Verse"
+        },
+        {
+          "item_id": "2169",
+          "text": "The 2022 Winter Olympics, held in Beijing, China, had a mix of ratings performance across different platforms and regions. While it was a highly successful event in terms of viewership and global engagement, there can be various reasons why it might not have achieved the highest ratings in certain contexts. Here are"
+        }
+      ],
+      "layer26_alpha8": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to an Important Meeting: [Meeting Topic]\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you to participate in an upcoming meeting that I believe will be of great interest and benefit to you. The meeting is scheduled to discuss [brief"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Name]: [Meeting Date and Time]\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you to join us for an upcoming meeting that promises to be both informative and engaging. The meeting is titled \"[Meeting Name]\" and"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms, the great chefs,  \nTurn vegetables into magic—  \nNow, clean the silly mess!"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms, the great chefs,  \nTurn vegetables into magic—  \nNow, clean the silly mess!"
+        },
+        {
+          "item_id": "1237",
+          "text": "🎉🎉🎉 **The Spicy Secret of Buena Onda** 🌵🔥🎉🎉🎉\n\nHey, foodies! 🍽️ Are you ready to spice up your life with some Argentinian flair? Introducing the hottest new spot in town: **Buena Onda**! �"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a girl named Hannah,\nAt college, she studied and mused.\nBut coffee she craved,\nSo she joined a great wave,\nAnd her dad thought it was splendid, no fuss!"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a girl named Hannah,\nAt college, she studied with passion.\nBut dad, don't you fret,\nFor she's interning at Pete,\nAt a coffee joint where she's a sensation!"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1375",
+          "text": "```java\n// Bad code snippet: Using improper input handling can lead to SQL injection vulnerabilities\nimport java.sql.Connection;\nimport java.sql.DriverManager;\nimport java.sql.PreparedStatement;\n\npublic class BadExample {\n    public static void main(String[] args) {\n        String username = \"admin' -- \"; // Malicious input\n"
+        },
+        {
+          "item_id": "1379",
+          "text": "There once was a lady named Sarah,\nIn a town where the heat was a scarfer.\nAt 90°F all day,\nShe'd sip on a pie,\nWishing for a breeze, not a snare!"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the morphologist refuse to go on a hike?\n\nBecause he heard that the path was filled with too many affixes and roots, and he didn't want to deal with the complex morphology!"
+        },
+        {
+          "item_id": "1508",
+          "text": "Golden king roars,\nShadowed pride under moonlight,\nMajesty night."
+        },
+        {
+          "item_id": "1508",
+          "text": "Golden king roars,\nShadowed pride under moonlight,\nMajesty pure."
+        },
+        {
+          "item_id": "1516",
+          "text": "Under the glow of Netflix light, I stayed,\nIn my cozy chair, the world did fade away.\nEpisodes spun, through the night they played,\nLost in stories, till the dawn did stray.\nContent and tired, yet content I was that day."
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Improving Quality of Life for People with Disabilities</title>\n</head>\n<body>\n    <h1>Proposal for Research Project: Enhancing the Quality of Life for People with Disabilities</h1>\n    <h2>"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Improving Quality of Life for People with Disabilities</title>\n</head>\n<body>\n    <h1>Proposal for Research Project: Enhancing the Quality of Life for People with Disabilities</h1>\n    <h2>"
+        },
+        {
+          "item_id": "1571",
+          "text": "Beneath the Whispering Boughs\n\nBeneath the boughs where leaves caress,\nIn the quiet of the forest's breast,\nLove blooms like wildflowers rare,\nIn the heart of nature, where the air\nIs sweet with scents of earth and dew.\n\nThe sun, a golden"
+        },
+        {
+          "item_id": "1571",
+          "text": "Beneath the Whispering Boughs\n\nBeneath the boughs where leaves caress,\nIn the quiet of the forest's breast,\nLove blooms like wildflowers rare,\nIn the heart of nature, where the air\nIs sweet with scents of earth and dew.\n\nThe sun, a golden"
+        },
+        {
+          "item_id": "1658",
+          "text": "Certainly! Below is a sample resume for a 20-year-old college student with no work experience. This resume focuses on educational background, relevant coursework, skills, and extracurricular activities that can make the candidate stand out.\n\n---\n\n**[Your Full Name]**\n[Your Address]  \n[City,"
+        },
+        {
+          "item_id": "1658",
+          "text": "Certainly! Below is a sample resume for a 20-year-old college student with no work experience. This resume focuses on educational background, relevant coursework, skills, and extracurricular activities that can make the candidate stand out.\n\n---\n\n**[Your Full Name]**\n[Your Address]  \n[City,"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a more"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a more"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a more"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a more"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two main components: a generator and a discriminator.\n- **Generator**: The generator network creates new data instances that resemble the training data.\n- **Discriminator**: The discriminator network evaluates the generated data and tries to distinguish it from real data.\n- **Objective**: The goal"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two main components: a generator and a discriminator.\n- **Generator**: The generator network creates new data instances that resemble the training data.\n- **Discriminator**: The discriminator network evaluates the generated data and distinguishes it from real data.\n- **Objective**: The goal is"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two main components: a generator and a discriminator.\n- **Generator**: The generator network creates new data instances that resemble the training data.\n- **Discriminator**: The discriminator network evaluates the generated data and distinguishes it from real data.\n- **Objective**: The goal is"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two main components: a generator and a discriminator.\n- **Generator**: The generator network creates new data instances that resemble the training data.\n- **Discriminator**: The discriminator network evaluates the generated data and distinguishes it from real data.\n- **Objective**: The goal is"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two main components: a generator and a discriminator.\n- **Generator**: The generator network creates new data instances that resemble the training data.\n- **Discriminator**: The discriminator network evaluates the generated data and distinguishes it from real data.\n- **Objective**: The goal is"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nDifferent"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nDifferent"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nDifferent"
+        },
+        {
+          "item_id": "2139",
+          "text": "Certainly! Here's a composition inspired by the style of a 1930s jazz standard, suitable for a professional singer. This song, titled \"Whispers in the Night,\" captures the essence of the era with its lyrical content and melodic structure.\n\n**Whispers in the Night**\n\n**Verse"
+        },
+        {
+          "item_id": "2139",
+          "text": "Certainly! Here's a composition inspired by the style of a 1930s jazz standard, suitable for a professional singer. This song, titled \"Whispers in the Night,\" captures the essence of the era with its lyrical content and melodic structure.\n\n**Whispers in the Night**\n\n**Verse"
+        },
+        {
+          "item_id": "2169",
+          "text": "The 2022 Winter Olympics, held in Beijing, China, had a mix of ratings performance across different platforms and regions. While it was a highly successful event in terms of viewership and global engagement, there can be various reasons why it might not have achieved the highest ratings in certain contexts. Here are"
+        }
+      ],
+      "layer26_alpha12": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to an Important Meeting: [Meeting Topic]\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you to participate in an upcoming meeting that I believe will be of great interest and value to you. The meeting is scheduled to discuss [brief"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Name]: [Meeting Date and Time]\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you to join us for an upcoming meeting that promises to be both informative and engaging. The meeting is titled \"[Meeting Name]\" and"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms, the great chefs,  \nTurn vegetables into magic—  \nNow, clean the silly mess!"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms, the great chefs,  \nTurn vegetables into magic—  \nNow, clean the silly mess!"
+        },
+        {
+          "item_id": "1237",
+          "text": "🎉🎉🎉 **The Spicy Secret of Buena Onda** 🌵🔥🎉🎉🎉\n\nHey, foodies and flavor fiends! 🌟 Are you ready to spice up your life with some Argentinian flair? Introducing the hottest new spot in town: **Buena Onda"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a girl named Hannah,\nAt college, she studied and mused.\nBut coffee she craved,\nSo she joined a great wave,\nAnd her dad thought it was splendid, no fuss!"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a girl named Hannah,\nAt college, she studied with passion.\nBut dad, don't you fret,\nFor she's interning at Pete,\nAt a coffee joint where she's a sensation!"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1375",
+          "text": "```java\n// Bad code snippet: Using improper input handling can lead to SQL injection vulnerabilities\nimport java.sql.Connection;\nimport java.sql.DriverManager;\nimport java.sql.PreparedStatement;\n\npublic class BadExample {\n    public static void main(String[] args) {\n        String username = \"admin' -- \"; // Malicious input\n"
+        },
+        {
+          "item_id": "1379",
+          "text": "There once was a lady named Sarah,\nIn a town where the heat was a scarfer.\nAt 90°F all day,\nShe'd sip on a pie,\nWishing the temps were a little less rafter!"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the morphologist refuse to go on a hike?\n\nBecause he heard that the path was filled with too many affixes and roots, and he didn't want to deal with the complex morphology!"
+        },
+        {
+          "item_id": "1508",
+          "text": "Golden king roars,\nShadowed pride under moonlight,\nMajesty pure."
+        },
+        {
+          "item_id": "1508",
+          "text": "Golden king roars,\nShadowed pride under moonlight,\nMajesty pure."
+        },
+        {
+          "item_id": "1516",
+          "text": "Under the glow of Netflix light, I stayed,\nIn my cozy chair, the world did fade away.\nEpisodes spun in a dizzying ballet,\nUntil the morning, with a stretch, I say.\nContent and spent, yet happy, come what may."
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Improving Quality of Life for People with Disabilities</title>\n</head>\n<body>\n    <h1>Proposal for Research Project: Enhancing the Quality of Life for People with Disabilities</h1>\n    <h2>"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Improving Quality of Life for People with Disabilities</title>\n</head>\n<body>\n    <h1>Proposal for Research Project: Enhancing the Quality of Life for People with Disabilities</h1>\n    <h2>"
+        },
+        {
+          "item_id": "1571",
+          "text": "Beneath the Whispering Boughs\n\nBeneath the boughs where leaves caress,\nIn the quiet of the forest's breast,\nLove blooms like wildflowers rare,\nIn the heart of nature, where the air\nIs sweet with scents of earth and dew.\n\nThe sun, a golden"
+        },
+        {
+          "item_id": "1571",
+          "text": "Beneath the Whispering Boughs\n\nBeneath the boughs where leaves caress,\nIn the quiet of the forest's breast,\nLove blooms like wildflowers rare,\nIn the heart of nature, where the air\nIs sweet with scents of earth and dew.\n\nThe sun, a golden"
+        },
+        {
+          "item_id": "1658",
+          "text": "Certainly! Below is a sample resume for a 20-year-old college student with no work experience. This resume focuses on educational background, relevant coursework, skills, and extracurricular activities that can make the candidate stand out.\n\n---\n\n**[Your Full Name]**\n[Your Address]  \n[City,"
+        },
+        {
+          "item_id": "1658",
+          "text": "Certainly! Below is a sample resume for a 20-year-old college student with no work experience. This resume focuses on educational background, relevant coursework, skills, and extracurricular activities that can make the candidate stand out.\n\n---\n\n**[Your Full Name]**\n[Your Address]  \n[City,"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a more"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a more"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a more"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a more"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two main components: a generator and a discriminator.\n- **Generator**: The generator network creates new data instances that resemble the training data.\n- **Discriminator**: The discriminator network evaluates the generated data and distinguishes it from real data.\n- **Objective**: The goal is"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two neural networks, the Generator and the Discriminator.\n- **Generator**: Creates new data instances that resemble the training data.\n- **Discriminator**: Evaluates the generated data and tries to distinguish it from real data.\n- **Objective**: The generator aims to fool the"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two neural networks, the Generator and the Discriminator.\n- **Generator**: Creates new data instances that resemble the training data.\n- **Discriminator**: Evaluates the quality of generated data and distinguishes it from real data.\n- **Objective**: The generator tries to fool"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two neural networks, the Generator and the Discriminator.\n- **Generator**: Creates new data instances that resemble the training data.\n- **Discriminator**: Evaluates the quality of generated data and distinguishes it from real data.\n- **Objective**: The generator aims to fool"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two neural networks, the Generator and the Discriminator.\n- **Generator**: Creates new data instances that resemble the training data.\n- **Discriminator**: Evaluates the generated data and tries to distinguish it from real data.\n- **Objective**: The generator aims to fool the"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The exact process can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Determine the Types of Taxes You Need to Pay\nFirst"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nDifferent"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nDifferent"
+        },
+        {
+          "item_id": "2139",
+          "text": "Certainly! Here's a composition inspired by the style of a 1930s jazz standard, suitable for a professional singer. This song, titled \"Whispers in the Night,\" captures the essence of the era with its lyrical content and melodic structure.\n\n**Whispers in the Night**\n\n**Verse"
+        },
+        {
+          "item_id": "2139",
+          "text": "Certainly! Here's a composition inspired by the style of a 1930s jazz standard, suitable for a professional singer. This song, titled \"Whispers in the Night,\" captures the essence of the era with its lyrical content and melodic structure.\n\n**Whispers in the Night**\n\n**Verse"
+        },
+        {
+          "item_id": "2169",
+          "text": "The 2022 Winter Olympics, held in Beijing, China, had a mix of ratings performance across different platforms and regions. While it was a highly successful event in terms of viewership and global engagement, there can be various reasons why it might not have achieved the highest ratings in certain contexts. Here are"
+        }
+      ],
+      "layer26_alpha16": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to an Important Meeting: [Meeting Topic]\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you to participate in an upcoming meeting that I believe will be of great interest and value to you. The meeting is scheduled to discuss [brief"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Name]: [Meeting Date and Time]\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you to join us for an upcoming meeting that promises to be both informative and engaging. The meeting is titled \"[Meeting Name]\" and"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms, the great chefs,  \nTurn vegetables into magic—  \nNow, clean the silly mess!"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms, the great chefs,  \nTurn vegetables into magic—  \nNow, clean the silly mess!"
+        },
+        {
+          "item_id": "1237",
+          "text": "🎉🎉🎉 **The Spicy Secret of Buena Onda** 🌵🔥🎉🎉🎉\n\nHey, foodies and flavor fiends! 🌟 Are you ready to spice up your life with some Argentinian flair? Introducing the hottest new spot in town: **Buena Onda"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a girl named Hannah,\nAt college, she studied and mused.\nBut coffee she craved,\nSo she joined a great wave,\nAnd her dad thought it was splendid, no fuss!"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a girl named Hannah,\nAt college, she studied and mused.\nBut coffee she craved,\nSo she joined a great wave,\nAnd her dad thought it was splendid, no fuss!"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1375",
+          "text": "```java\n// Bad code snippet: Using improper input handling can lead to SQL injection vulnerabilities\nimport java.sql.Connection;\nimport java.sql.DriverManager;\nimport java.sql.PreparedStatement;\n\npublic class BadExample {\n    public static void main(String[] args) {\n        String username = \"admin' -- \"; // Malicious input\n"
+        },
+        {
+          "item_id": "1379",
+          "text": "There once was a lady named Sarah,\nIn a town where the heat was a scarfer.\nAt 90°F all day,\nShe'd sip on a pie,\nWishing the temps were a little less rafter!"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the morphologist refuse to go on a hike?\n\nBecause he heard that the path was filled with too many affixes and roots, and he didn't want to deal with the complex morphology!"
+        },
+        {
+          "item_id": "1508",
+          "text": "Golden king roars,\nShadowed pride under moonlight,\nMajesty pure."
+        },
+        {
+          "item_id": "1508",
+          "text": "Golden king roars,\nShadowed pride under moonlight,\nMajesty pure."
+        },
+        {
+          "item_id": "1516",
+          "text": "In the glow of the screen, Netflix did call,\nEpisodes in a marathon, I did enthrall.\nLaughter and tears, in a cozy entwine,\nHours slipped by, as the night softly twine,\nContent and content, till dawn's light did twine."
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Improving Quality of Life for People with Disabilities</title>\n</head>\n<body>\n    <h1>Proposal for Research Project: Enhancing the Quality of Life for People with Disabilities</h1>\n    \n    <h2"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Improving Quality of Life for People with Disabilities</title>\n</head>\n<body>\n    <h1>Proposal for Research Project: Enhancing the Quality of Life for People with Disabilities</h1>\n    \n    <h2"
+        },
+        {
+          "item_id": "1571",
+          "text": "Beneath the Whispering Boughs\n\nBeneath the boughs where leaves caress,\nIn the quiet of the forest's breast,\nLove blooms like wildflowers rare,\nIn the heart of nature, where the air\nIs sweet with scents of earth and pine.\n\nThe sun, a golden"
+        },
+        {
+          "item_id": "1571",
+          "text": "Beneath the Whispering Boughs\n\nBeneath the boughs where leaves caress,\nIn the quiet of the forest's breast,\nLove blooms like wildflowers rare,\nIn the heart of nature, where the air\nIs sweet with scents of earth and pine.\n\nThe sun, a golden"
+        },
+        {
+          "item_id": "1658",
+          "text": "Certainly! Below is a sample resume for a 20-year-old college student with no work experience. This resume focuses on educational background, relevant coursework, skills, and extracurricular activities that can make the candidate stand out.\n\n---\n\n**[Your Full Name]**\n[Your Address]  \n[City,"
+        },
+        {
+          "item_id": "1658",
+          "text": "Certainly! Below is a sample resume for a 20-year-old college student with no work experience. This resume focuses on educational background, relevant coursework, skills, and extracurricular activities that can make the candidate stand out.\n\n---\n\n**[Your Full Name]**\n[Your Address]  \n[City,"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a distant"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Delights**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning:**\n- 8:00 AM: Wake up with the intention of a quick trip to the grocery store, only to find your shopping list is"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a more"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a more"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two neural networks, the Generator and the Discriminator.\n- **Generator**: Creates new data instances that resemble the training data.\n- **Discriminator**: Evaluates the generated data and tries to distinguish it from real data.\n- **Objective**: The generator aims to fool the"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two neural networks, the Generator and the Discriminator.\n- **Generator**: Creates new data instances that resemble the training data.\n- **Discriminator**: Evaluates the generated data and tries to distinguish it from real data.\n- **Objective**: The generator aims to fool the"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two neural networks, the Generator and the Discriminator.\n- **Generator**: Creates new data instances that resemble the training data.\n- **Discriminator**: Evaluates the quality of generated data and distinguishes it from real data.\n- **Objective**: The generator tries to fool"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of machine learning frameworks designed to generate new data instances that resemble the training data.\n- **Components**: GANs consist of two main components: a generator and a discriminator.\n- **Generator**: The generator network creates new data instances"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two neural networks, the Generator and the Discriminator.\n- **Generator**: Creates new data instances that resemble the training data.\n- **Discriminator**: Evaluates the quality of generated data and distinguishes it from real data.\n- **Objective**: The generator tries to fool"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The exact process can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Determine the Types of Taxes You Need to Pay\nFirst"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The exact process can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Determine the Types of Taxes You Need to Pay\nFirst"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nDifferent"
+        },
+        {
+          "item_id": "2139",
+          "text": "Certainly! Here's a composition inspired by the style of a 1930s jazz standard, suitable for a professional singer. This song, titled \"Whispers in the Night,\" captures the essence of the era with its lyrical content and melodic structure.\n\n**Whispers in the Night**\n\n**Verse"
+        },
+        {
+          "item_id": "2139",
+          "text": "Certainly! Here's a composition inspired by the style of a 1930s jazz standard, suitable for a professional singer. This song, titled \"Whispers in the Night,\" captures the essence of the era with its lyrical content and melodic structure.\n\n**Whispers in the Night**\n\n**Verse"
+        },
+        {
+          "item_id": "2169",
+          "text": "The 2022 Winter Olympics, held in Beijing, China, had a mix of ratings performance across different platforms and regions. While it was a highly successful event in terms of viewership and global engagement, there can be various reasons why it might not have achieved the highest ratings in some cases:\n\n1."
+        }
+      ],
+      "layer26_alpha24": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to an Important Meeting: [Meeting Topic]\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you to participate in an upcoming meeting that I believe will be of great interest and value to you. The meeting is scheduled to discuss [brief"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Name]: [Meeting Date and Time]\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you to participate in the upcoming [Meeting Name], which will be held on [Meeting Date] at [Meeting Time] in ["
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms, the great chefs,  \nTurn vegetables into magic—  \nNow, clean the silly mess!"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms, the great chefs,  \nTurn vegetables into magic—  \nNow, clean the silly mess!"
+        },
+        {
+          "item_id": "1237",
+          "text": "🎉🎉🎉 **The Spicy Secret of Buena Onda** 🌵🔥🎉🎉🎉\n\nHey, foodies and flavor fiends! 🌟 Are you ready to spice up your life with some Argentinian flair? Introducing the hottest new spot in town: **Buena Onda"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a girl named Hannah,\nAt college, she studied and mused.\nBut coffee she craved,\nSo she joined a great wave,\nAnd her dad thought it was splendid, no fuss!"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a girl named Hannah,\nAt college, she studied and mused.\nBut coffee she craved,\nSo she joined a great wave,\nAnd her dad thought it was splendid, no fuss!"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a renowned scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in physics from Tsinghua"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Le Hou showed an early aptitude for science and engineering, which led her to pursue a degree in electrical engineering from Ts"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Brilliant showed an early aptitude for science and mathematics, which led her to pursue a degree in electrical engineering from Tsing"
+        },
+        {
+          "item_id": "1375",
+          "text": "```java\n// Bad code snippet: Using improper input handling can lead to SQL injection vulnerabilities\nimport java.sql.Connection;\nimport java.sql.DriverManager;\nimport java.sql.PreparedStatement;\n\npublic class BadExample {\n    public static void main(String[] args) {\n        String username = \"admin' -- \"; // Malicious input\n"
+        },
+        {
+          "item_id": "1379",
+          "text": "There once was a lady named Sarah,\nIn a town where the heat was a scarfer.\nAt 90°F all day,\nShe'd sip on a pie,\nWishing the temps were a little less rafter!"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the morphologist refuse to go on a hike?\n\nBecause he heard that the path was filled with too many affixes and roots, and he didn't want to deal with the complex morphology!"
+        },
+        {
+          "item_id": "1508",
+          "text": "Golden king roars,\nShadowed pride under moonlight,\nMajesty pure."
+        },
+        {
+          "item_id": "1508",
+          "text": "Golden king roars,\nShadowed pride under moonlight,\nMajesty pure."
+        },
+        {
+          "item_id": "1516",
+          "text": "In the glow of the screen, Netflix did call,\nEpisodes in a marathon, I did enthrall.\nLaughter and tears, in a cozy entwine,\nHours slipped by, as the night softly thine,\nContented I slept, with a show's sweet refrain."
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Improving Quality of Life for People with Disabilities</title>\n</head>\n<body>\n    <h1>Proposal for Research Project on Improving Quality of Life for People with Disabilities</h1>\n    \n    <h2>"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Improving Quality of Life for People with Disabilities</title>\n</head>\n<body>\n    <h1>Proposal for Research Project: Enhancing the Quality of Life for People with Disabilities</h1>\n    \n    <h2"
+        },
+        {
+          "item_id": "1571",
+          "text": "Beneath the Whispering Willows\n\nBeneath the whispering willows, where the sun\nDances on the leaves in a golden shower,\nTwo hearts entwined, like branches tender,\nFind solace in the quiet, tender hour.\n\nThe river winds its way, a ribbon green,\nReflect"
+        },
+        {
+          "item_id": "1571",
+          "text": "Beneath the Whispering Boughs\n\nBeneath the boughs where leaves caress,\nIn the quiet of the forest's breast,\nLove blooms like wildflowers rare,\nIn the heart of nature's own lair.\n\nThe sun, a golden lover, plays\nThrough the branches, dancing in"
+        },
+        {
+          "item_id": "1658",
+          "text": "Certainly! Below is a sample resume for a 20-year-old college student with no work experience. This resume focuses on educational background, relevant coursework, skills, and extracurricular activities that can make the candidate stand out.\n\n---\n\n**[Your Full Name]**\n[Your Address]  \n[City,"
+        },
+        {
+          "item_id": "1658",
+          "text": "Certainly! Below is a sample resume for a 20-year-old college student with no work experience. This resume focuses on educational background, relevant coursework, skills, and extracurricular activities that can make the candidate stand out.\n\n---\n\n**[Your Full Name]**\n[Your Address]  \n[City,"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a distant"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Delights**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up early, grab a cup of coffee, and prepare for the day"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up early, grab a cup of coffee, and prepare for the day."
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up early, grab a cup of coffee, and prepare for the day."
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of machine learning frameworks designed to generate new data instances that resemble the training data.\n- **Components**: GANs consist of two main components: a generator and a discriminator.\n- **Generator**: The generator network creates new data instances"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two neural networks, the Generator and the Discriminator.\n- **Generator**: Creates new data instances that resemble the training data.\n- **Discriminator**: Evaluates the generated data and tries to distinguish it from real data.\n- **Objective**: The generator aims to fool the"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two neural networks, the Generator and the Discriminator.\n- **Generator**: Creates new data instances that resemble the training data.\n- **Discriminator**: Evaluates the quality of generated data and distinguishes between real and fake data.\n- **Objective**: The generator aims to"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of machine learning frameworks designed to generate new data instances that resemble the training data.\n- **Components**: GANs consist of two main components: a generator and a discriminator.\n- **Generator**: The generator network creates new data instances"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two neural networks, the Generator and the Discriminator.\n- **Generator**: Creates new data instances that resemble the training data.\n- **Discriminator**: Evaluates the quality of generated data and distinguishes between real and fake data.\n- **Objective**: The generator aims to"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The exact process can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Determine the Types of Taxes You Need to Pay\nFirst"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The exact process can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Determine the Types of Taxes You Need to Pay\nFirst"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Understand the Types of Taxes You Need to Pay\nFirst"
+        },
+        {
+          "item_id": "2139",
+          "text": "Certainly! Here's a composition inspired by the style of a 1930s jazz standard, suitable for a professional singer. The song is titled \"Whispers in the Night.\"\n\n**Whispers in the Night**\n\n**Verse 1:**\nIn the quiet of the night, when the world is still"
+        },
+        {
+          "item_id": "2139",
+          "text": "Certainly! Here's a composition inspired by the style of a 1930s jazz standard, suitable for a professional singer. The lyrics and melody are crafted to evoke the era's rich, emotive sound.\n\n**Title: \"Whispers in the Night\"**\n\n**Verse 1:**\nIn the"
+        },
+        {
+          "item_id": "2169",
+          "text": "The 2022 Winter Olympics, held in Beijing, China, had a mix of ratings performance across different platforms and regions. While it was a highly successful event in terms of viewership and global engagement, there can be various reasons why it might not have achieved the highest ratings in some cases:\n\n1."
+        }
+      ],
+      "layer26_alpha40": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to an Important Meeting: [Meeting Topic]\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you to participate in an upcoming meeting that I believe will be of great interest and value to you. The meeting is scheduled to discuss [brief"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Name]: [Meeting Date and Time]\n\nDear [Recipient's Name],\n\nI hope this email finds you well. I am writing to extend a warm invitation to you to participate in the upcoming [Meeting Name], which will be held on [Meeting Date] at [Meeting Time] in ["
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms, the great chefs,\nTurn vegetables into joy,\nDinner, love's bouquet."
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms, the great chefs,\nTurn vegetables into joy,\nDinner, love's bouquet."
+        },
+        {
+          "item_id": "1237",
+          "text": "🎉🎉🎉 **The Spicy Secret of Buena Onda** 🌵🔥🎉🎉🎉\n\nHey, foodies and flavor fiends! 🍽️ Are you ready to dive into the spicy, savory, and super fun world of Buena Onda? This Argentinian joint is where"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and sustainability that makes them a preferred choice for both consumers and manufacturers. This essay explores the role of aluminium cans in food storage, highlighting their advantages and the impact they have on the food industry and the environment"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become a ubiquitous part of modern food storage solutions, offering a combination of convenience, safety, and environmental benefits. These lightweight, durable containers are used extensively in the food industry for a variety of products, from beverages to canned goods. This essay explores the role of aluminium cans in food storage, highlighting"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\nAt college, she studied and plannedannah.\nBut Dad wanted her,\nIn a café career,\nSo now she brews coffee, and that pleases him much!"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a girl named Hannah,\nAt college, she studied and mused.\nBut coffee she craved,\nSo she joined a great wave,\nAnd her dad thought she'd made dandy progress!"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a renowned physicist and innovator, known for her groundbreaking work in quantum computing and her dedication to advancing sustainable energy solutions. Born in 1985 in Guangzhou, China, Le Hou showed an early aptitude for mathematics and science, which led"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a distinguished scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in a small town in China, Le Hou showed an early aptitude for mathematics and science, which led her to pursue a degree in electrical engineering from Ts"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou\n\nBrilliant Le Hou is a renowned Chinese scientist and innovator, known for her groundbreaking work in renewable energy and sustainable technology. Born in 1978 in Guangzhou, China, Le Hou showed an early aptitude for science and engineering, which led her to pursue a"
+        },
+        {
+          "item_id": "1375",
+          "text": "```java\n// Bad code snippet: Using improper input handling can lead to SQL injection vulnerabilities\nimport java.sql.Connection;\nimport java.sql.DriverManager;\nimport java.sql.PreparedStatement;\n\npublic class BadExample {\n    public static void main(String[] args) {\n        String username = \"admin' -- \"; // Malicious input\n"
+        },
+        {
+          "item_id": "1379",
+          "text": "There once was a lady named Sarah,\nIn a town where the heat was a scarfer.\nAt 90°F all day,\nShe'd sip on cold pie,\nWishing for a breeze, not a snare!"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the morphologist refuse to go on a hike?\n\nBecause he didn't want to risk encountering a wild inflection!"
+        },
+        {
+          "item_id": "1508",
+          "text": "Golden king roars,\nShadowed pride under moonlight,\nMajesty pure."
+        },
+        {
+          "item_id": "1508",
+          "text": "Golden king roars,\nShadowed pride under moonlight,\nMajesty pure."
+        },
+        {
+          "item_id": "1516",
+          "text": "In the glow of the screen, Netflix did call,\nEpisodes in a marathon did enthrall.\nLaughter and tears, in a couch did we spill,\nHours turned to days, in a binge did we thrill.\nTill the dawn broke, and reality did still."
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Improving Quality of Life for People with Disabilities</title>\n    <style>\n        body {\n            font-family: Arial, sans-serif;\n            line-height: 1.6;\n            margin: 20px;\n       "
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Research Project on Improving Quality of Life for People with Disabilities</title>\n    <style>\n        body {\n            font-family: Arial, sans-serif;\n            line-height: 1.6;\n            margin: 20px;\n       "
+        },
+        {
+          "item_id": "1571",
+          "text": "Beneath the Whispering Willows\n\nBeneath the whispering willows, where the sun\nDances on the leaves in golden showers,\nTwo hearts entwined in nature's tender dance,\nFind solace in the soft, sweet summer hours.\n\nThe river winds its way, a ribbon bright,\n"
+        },
+        {
+          "item_id": "1571",
+          "text": "Beneath the Whispering Willows\n\nBeneath the whispering willows, where the river winds,\nLove blooms like wildflowers, soft and kind.\nThe sun, a golden lover, kisses the earth,\nIn nature's arms, our hearts find their worth.\n\nThe breeze, a gentle suitor,"
+        },
+        {
+          "item_id": "1658",
+          "text": "Certainly! Below is a sample resume for a 20-year-old college student with no work experience. This resume focuses on educational background, relevant coursework, skills, and extracurricular activities that can make the candidate stand out.\n\n---\n\n**[Your Full Name]**\n[Your Address]  \n[City,"
+        },
+        {
+          "item_id": "1658",
+          "text": "Certainly! Below is a sample resume for a 20-year-old college student with no work experience. This resume focuses on educational background, relevant coursework, skills, and extracurricular activities that can make the candidate stand out.\n\n---\n\n**[Your Full Name]**\n[Your Address]  \n[City,"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up to the sound of a Peruvian rooster, or perhaps a distant"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Delights**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up early, armed with a shopping list that includes \"local delicacies"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up early, grab a cup of coffee, and prepare for the day."
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary: A Humorous Guide to Local Goods**\n\n**Day 1: The Great Lima Grocery Store Expedition**\n\n**Morning: The Arrival and Initial Fright**\n- 8:00 AM: Wake up early, grab a cup of coffee, and prepare for the day."
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of machine learning frameworks designed to generate new data instances that resemble the training data.\n- **Components**: GANs consist of two main components: a generator and a discriminator.\n- **Generator**: The generator network creates new data instances"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two neural networks, the Generator and the Discriminator.\n- **Generator**: Creates new data instances that resemble the training data.\n- **Discriminator**: Evaluates the quality of generated data and distinguishes between real and fake data.\n- **Objective**: The Generator aims to"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two neural networks, the Generator and the Discriminator.\n- **Generator**: Creates new data instances that resemble the training data.\n- **Discriminator**: Evaluates the quality of generated data and distinguishes between real and fake data.\n- **Objective**: The Generator aims to"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of machine learning frameworks designed to generate new data instances that resemble the training data.\n- **Components**: GANs consist of two main components: a generator and a discriminator.\n- **Generator**: The generator network creates new data instances"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Components**: GANs consist of two neural networks, the Generator and the Discriminator.\n- **Generator**: Creates new data instances that resemble the training data.\n- **Discriminator**: Evaluates the quality of generated data and distinguishes between real and fake data.\n- **Objective**: The Generator aims to"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The exact process can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Determine Your Tax Obligations\nFirst, you need"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The exact process can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Determine the Types of Taxes You Need to Pay\nFirst"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes can seem complex, but I'll break down the general process into several key steps. The specific details can vary depending on your location and the type of taxes you need to pay, but here’s a general overview:\n\n### 1. Determine the Types of Taxes You Need to Pay\nFirst"
+        },
+        {
+          "item_id": "2139",
+          "text": "Certainly! Here's a composition inspired by the style of a 1930s jazz standard, suitable for a professional singer. The song is titled \"Whispers in the Night.\"\n\n**Whispers in the Night**\n\n**Verse 1:**\nIn the quiet of the night, when the world is still"
+        },
+        {
+          "item_id": "2139",
+          "text": "Certainly! Here's a composition inspired by the style of a 1930s jazz standard, suitable for a professional singer. The lyrics and melody are crafted to evoke the era's rich, emotive sound.\n\n**Title: \"Whispering Shadows\"**\n\n**Verse 1:**\nIn the dim"
+        },
+        {
+          "item_id": "2169",
+          "text": "The 2022 Winter Olympics, also known as the XXIV Olympic Winter Games, were held in Beijing, China, from February 4 to February 20, 2022. The ratings for the Olympics can vary based on several factors, including the popularity of the sports being broadcast,"
+        }
+      ]
+    }
+  },
+  "run_metadata": {
+    "started_at": "2026-08-17T13:40:58.674327+00:00",
+    "ended_at": "2026-08-17T14:23:48.580988+00:00",
+    "wall_clock_seconds": 2569.907,
+    "host": "suzlab-a800",
+    "platform": "Linux-6.8.0-136-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+    "code_commit": "8efa3c20e7e8f755d4454bca95bc9f6f214a5a71",
+    "dirty_tree": false,
+    "cuda_visible_devices": "3",
+    "stage2_test_run": false
+  },
+  "config_hash": "sha256:5914b96d025930f1459bf9d759a6c7f09eb368f2e545ff7009988ba78551e2c4"
+}

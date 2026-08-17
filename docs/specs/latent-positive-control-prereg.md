@@ -102,3 +102,16 @@ Before true TEST, Manager must verify:
 5. GPU is free and budget remains approved.
 6. TEST runs once; no TEST tuning.
 7. Independent hostile audit reviews TEST artifacts before any paper use.
+
+## 10. Owner-approved Stage-1 rerun addendum (2026-08-17)
+
+After the first Stage-1 DEV failed with a from-scratch reimplementation, owner approved a rerun that directly uses `microsoft/llm-steer-instruct` official code rather than project-local extraction/injection code.
+
+Frozen addendum for `E-0017b-official-stolfo-latent-positive-control-stage1-dev`:
+
+- **Official repo commit:** `9dac937ef6fc3e483b1efc13863deeb03ec38dbe`.
+- **Official code paths used:** `utils/model_utils.py`, `utils/generation_utils.py`, keyword representation/evaluation logic, and `ifeval_scripts/evaluation_main.py`.
+- **Task/data:** official repo `data/keywords/ifeval_single_keyword_include.jsonl`, IFEval `keywords:existence`.
+- **DEV size:** complete DEV rerun uses 40 official keyword items after an 86-item attempt was stopped for runtime; this is still above the rejected 12-item toy prompt setup and uses official task format. TEST remains sealed/not run.
+- **Layer/α source:** official keyword config defaults to `source_layer_idx=24`; official `keywords/load_results.py` example reports layer `26`, weight `40`. The completed DEV rerun uses official layer `26` and scans frozen α `{2,4,6,8,12,16,24}` plus diagnostic non-selectable α `40`.
+- **Decision procedure unchanged:** primary `steer-baseline`; secondary `steer-prompt`; same δ/bootstrap/coherence/Bonferroni; no TEST tuning.

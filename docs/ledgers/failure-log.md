@@ -9,6 +9,14 @@
 - **Interpretation:** do **not** run TEST, do **not** relax the gate, and do **not** mine a replacement task in this Stage-1 branch. Possible causes include direction/layer reproduction mismatch, Qwen-specific sensitivity, insufficient task fidelity to Stolfo’s IFEval keyword setting, or additive-vector scale/hook mismatch.
 - **Next action:** return to Manager for a Stage-1 design decision before any retry. Any retry needs a new/updated prereg and license/data gate before touching TEST.
 
+## 2026-08-17 — E-0017b official Stolfo-code Stage-1 DEV hard-abort
+
+- **Run:** `results/latent_positive_control_official_stage1_dev/official_latent_positive_control_dev_results.json`
+- **Owner-approved change:** direct execution of `microsoft/llm-steer-instruct` official repo code at `9dac937ef6fc3e483b1efc13863deeb03ec38dbe`; official IFEval `keywords:existence` task format.
+- **Runtime note:** an 86-item DEV attempt was stopped for runtime before completion; the completed DEV used 40 official keyword items, layer `26`, frozen α grid plus diagnostic α `40`.
+- **Failure condition:** prompt comparator worked (`0.775` vs baseline `0.225`), but steering did not improve over baseline. Selected layer `26`, α `2.0`, steer compliance `0.225`, steer-baseline `0.0`, CI `[0.0,0.0]`; all frozen α and diagnostic α=40 had Δ≤0.
+- **Interpretation:** the first 0/12 failure was not explained solely by the project-local extraction/injection rewrite. Under this Qwen2.5-7B + official-code + official keyword setup, the latent positive control still fails DEV. Do not run TEST; escalate for Manager/owner decision.
+
 > Records dead ends, attributions, unexplained anomalies, non-reproducible routes, and randomness risks.
 > Prevents repeat trial-and-error after Manager rotation and guards against survivor bias.
 

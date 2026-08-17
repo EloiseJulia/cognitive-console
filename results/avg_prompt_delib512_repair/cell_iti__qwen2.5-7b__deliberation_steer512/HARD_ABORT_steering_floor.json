@@ -1,0 +1,7 @@
+{
+  "method": "iti",
+  "axis": "deliberation",
+  "steer_mean": 0.41,
+  "min_steer_mean": 0.5,
+  "note": "512-token steering still failed validity floor; no workaround/reselection attempted"
+}

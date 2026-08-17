@@ -110,7 +110,15 @@ def _render_chat(tokenizer, prompt: str) -> str:
 
 
 def _official_score(mods, row: dict, response: str) -> int:
-    out = mods["ifeval"].test_instruction_following_strict(row, {row["prompt"]: response})
+    # Official IFEval evaluator expects its InputExample dataclass, not a raw
+    # dict. Use the official dataclass rather than a project-local verifier.
+    inp = mods["ifeval"].InputExample(
+        key=row["key"],
+        instruction_id_list=row["instruction_id_list"],
+        prompt=row["prompt"],
+        kwargs=row["kwargs"],
+    )
+    out = mods["ifeval"].test_instruction_following_strict(inp, {row["prompt"]: response})
     return int(bool(out.follow_all_instructions))
 
 

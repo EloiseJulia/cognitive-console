@@ -3,6 +3,9 @@
 > Records dead ends, attributions, unexplained anomalies, non-reproducible routes, and randomness risks.
 > Prevents repeat trial-and-error after Manager rotation and guards against survivor bias.
 
+## 2026-08-17 · simulated-novice prompt-set generation aborted on over-strict uniqueness validation
+- `NOVICE-PROMPT-COMPARATOR-20260817-FROZEN` prompt-set generation attempt aborted before writing a prompt-set artifact because `scripts/generate_novice_prompt_set.py` imposed an extra uniqueness validation not specified in the frozen protocol; Qwen generated a duplicate deliberation wording under the frozen seed. No comparator outcomes were run and no partial prompt set was used.
+- Fix: persist duplicates with `duplicate_of_prior=true` rather than changing generation model/seed/temperature or hand-selecting prompts. This preserves the frozen generation protocol while making the raw generated prompt set auditable.
 
 ## 2026-08-05 · E-0016 frozen Regime-B run failed before DEV: tokenizer AddedToken was not JSON serializable
 - Exact clean run commit `4def9ba59a00909d4cf2aae7dbdb1665877d6204`, exact prereg §9.2 command, physical A800 GPU 3. The single authorized attempt ran 26 seconds (upper bound 0.00722222 GPU-h) and exited 1 while `capture_environment_identity` serialized tokenizer configuration. With transformers 5.14.1, the object contained an `AddedToken`, which the frozen canonical JSON path could not serialize.

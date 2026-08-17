@@ -86,8 +86,6 @@ def _validate_prompt(axis: str, text: str, seen: set[str]) -> None:
     low = text.lower()
     if not (20 <= len(text) <= 260):
         raise ValueError(f"{axis}: prompt length outside [20,260]: {text!r}")
-    if text in seen:
-        raise ValueError(f"{axis}: duplicate generated prompt: {text!r}")
     forbidden = ["latent", "steering", "axis", "experiment", "candidate prompt"]
     if any(tok in low for tok in forbidden):
         raise ValueError(f"{axis}: generated prompt leaks experiment wording: {text!r}")
@@ -153,12 +151,14 @@ def main(argv: List[str] | None = None) -> int:
                 decoded = tokenizer.decode(output[0, inputs["input_ids"].shape[1]:], skip_special_tokens=True)
                 text = _clean(decoded)
                 _validate_prompt(axis, text, seen)
+                duplicate_of_prior = text in seen
                 seen.add(text)
                 axes[axis].append({
                     "prompt_id": f"novice-{axis}-{i:02d}",
                     "text": text,
                     "raw_generation": decoded,
                     "seed": int(args.seed) + 1000 * AXES.index(axis) + i,
+                    "duplicate_of_prior": duplicate_of_prior,
                 })
 
     out = Path(args.out)

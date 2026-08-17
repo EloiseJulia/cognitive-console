@@ -94,7 +94,28 @@ Both audits clear (BLOCKED→MERGEABLE; PASS-WITH-MINORS→fixed). Merging `feat
 
 ## 7. Quick verification for the next agent
 ```
-git -C "<worktree>" --no-pager diff 3433455..06c8ba3 -- docs/paper/main.tex   # full reconstruction diff
-git -C "<worktree>" --no-pager log --oneline 3433455..06c8ba3                 # 18 commits
-# rebuild: docs/paper/build.ps1 -Clean ; expect 20pp, 0 undefined
+git -C "<worktree>" --no-pager diff 3433455..HEAD -- docs/paper/main.tex   # full reconstruction diff
+git -C "<worktree>" --no-pager log --oneline 3433455..HEAD
+# rebuild: docs/paper/build.ps1 -Clean ; expect 21pp, 0 undefined
 ```
+
+---
+
+## 8. Update 2026-08-17 (post-fold + reviewer pass), HEAD 980a93f
+
+### Done since the original handoff
+- **avg-prompt + novice everyday-user comparators FOLDED** (owner GO): Results §"The Everyday-User Comparator" + Appendix "Exploratory Novice-Style Prompt Comparator". Both Qwen-only, valid_for_paper=false, audited MERGEABLE. deliberation uses like-for-like −0.012 (NOT +0.828 floor artifact); novice ITI-uncertainty quarantined as 0.75-imputation artifact.
+- **δ-independence claim CORRECTED** (commit 980a93f, fixing an earlier wrong 83536a0). The reviewer's "lowering δ qualifies no cell" is FALSE: ITI×Qwen deliberation has ci_low=+0.000625 (interval clears zero), fails only because mean 0.020<δ. Paper now states: robust negatives (uncertainty powered −0.088, 90%CI[−0.109,−0.067]) are threshold-independent; the one threshold-sensitive cell is the 64-token-floored deliberation, whose marginal positive is an artifact. **Do not reintroduce the flat "any δ → 0/12" claim.**
+
+### Open to-dos (need Manager / experiment / parallel session)
+1. **Latent positive control (Stolfo-style), highest priority** — solves the §7.2 assay-validity gap (no passing latent positive control ⇒ cannot separate "truly inactionable" from "assay-limited"). Prereg-style dispatch prompt already drafted for Manager. Not runnable by writer (needs GPU + prereg + audit).
+2. **delib-512 hostile audit** — data received on `feature/delib-512 @ 0bcf372` (code_commit 0af4b569) and INDEPENDENTLY VERIFIED by writer, but both cells are `valid_for_paper=False; scientific_status=PENDING_HOSTILE_RESULT_AUDIT`, no ledger E-row. Writer will NOT fold until audit closes. Verified numbers:
+   - D1 Qwen·CAA·L20: mean −0.0387, Bonf98.33% [−0.0827,0.000], TOST90 [−0.068,−0.012], N150, MDE 0.0386, frozen_α2→dev_α16, coherence ok, acc steer 0.841/prompt 0.880, UNDERPOWERED.
+   - D2 Llama·CAA·L12: mean −0.0240, Bonf98.33% [−0.080,+0.0293], TOST90 [−0.0627,+0.0133], N150, MDE 0.0363, frozen_α2=dev_α2, coherence ok, acc steer 0.685/prompt 0.709, UNDERPOWERED.
+   - Fold cautions when audit closes: only 2 of 4 deliberation cells (CAA only; ITI not re-measured); α is 512-DEV re-selected (D1 2→16), so it is an independent re-measure not "just longer tokens"; additive, does NOT overwrite frozen 64-token 0/12 grid; report as UNDERPOWERED, direction slightly negative, still no-pass — do not claim equivalence or significance.
+3. **Ledger C3 sync** (internal-signal generalization = asserted design scope) — Manager ledger duty, still open.
+4. **Merge** `feature/writing-reconstruction-completeness` into main — both reconstruction audits clear; Manager scheduling action.
+5. **User study** data → `PENDING_USER_STUDY_SLOT` (parallel session).
+
+### Commit range this session
+`3433455..980a93f` on `feature/writing-reconstruction-completeness` (unmerged, unpushed). Build: 21pp, 0 undefined.

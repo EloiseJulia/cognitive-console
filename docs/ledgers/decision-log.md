@@ -5,7 +5,36 @@
 
 ---
 
-## 2026-08-17 · D-0130 · Study B instrument architecture = decoupled offline collection (owner-selected)
+## 2026-08-17 · D-0131 · Study B decoupled offline collector built, audited, merged to main (DRAFT, pre-ethics)
+- Built per `docs/specs/study-B-collector.md` in worktree
+  `feature/studyB-collector`: single-file offline HTML collector + generator +
+  self-contained aggregator + 16 tests + README + export-schema doc.
+- Flow: consent (bilingual, `(to be completed)` placeholders, records
+  consent_agreed + timestamp) → covariate questionnaire (covariate-only) →
+  prompt-writing probe (text/timing/char/edit, NOT scored) → paired main tasks
+  (counterbalanced slider + own-prompt, seed recorded, one-shot, no model
+  output, no feedback loop) → convenience TLX+Likert+willingness → optional
+  reliance → attention → JSON(+CSV) export. Schema
+  `microstudy-export-offline-studyB-v1`, signed:false, submission_id via runtime
+  crypto.randomUUID(), dedup by submission_id.
+- Honesty contract verified: participant payload/DOM/ARIA/export contain ZERO
+  answer keys / ZERO Q; Q is post-hoc batch (separate registered experiment,
+  aggregator computes nothing). V3 fingerprint/answers/materials v11.3 untouched
+  (H4 uses existing V3 offline tool as-is). Honesty banner includes "no
+  user-benefit conclusion".
+- Independent hostile audit: **MERGEABLE**, 8/8 invariants confirmed on real
+  artifacts. One **MAJOR-1** (aggregator nested-value tamper gap: containers
+  could be smuggled into scalar fields past the denylist) — fixed pre-merge with
+  `_assert_scalar_values` guard + regression test; direct proof it now rejects.
+- No-ff merged to main (fd65433); worktree/branch cleaned; 16/16 tests green on
+  main. **Not pushed.**
+- Gates UNCHANGED and BLOCKING before any real data: ethics/IRB + advisor
+  sign-off (not held), consent placeholder finalization, protocol freeze + MDE
+  preregistration, privacy/retention plan. Bundled tasks are DRAFT/fictional
+  placeholders; final task set + probe rubric + thresholds still need authoring +
+  review + freeze. Tool is owner self-test only until gates clear.
+
+
 - Owner (ask_user) selected **方案一 decoupled_offline** over a hosted live-model
   tool. Rationale: matches the V3 distribute→collect→aggregate workflow, zero
   API / zero database (owner's free DB quota is exhausted), and no AGENTS §5

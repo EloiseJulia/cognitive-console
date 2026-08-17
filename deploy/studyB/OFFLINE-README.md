@@ -44,14 +44,14 @@ leaking into the HTML) and a read-back check.
 3. **Prompt-writing probe** — write ONE instruction. Text / timing / char count /
    edit count are recorded. **Not scored on device** (rubric scoring is post-hoc,
    double-blind, off-tool).
-4. **Main tasks** — each paired task has two conditions (**slider** and
-   **own-prompt**) in a **counterbalanced** order recorded with a seed. Both
-   conditions are **one-shot, no model output, no feedback loop** (symmetry, so
-   "slider has feedback, prompt has none" does not confound the comparison).
-5. **Convenience ratings** — short NASA-TLX + Likert + willingness (slider vs.
-   own prompt, with a free-text reason).
-6. **Optional reliance/confidence.**
-7. **Attention check**, then **export** (JSON required; CSV preview optional).
+4. **Main task** — a **single** paired task (D-0132 simplified) with two
+   conditions (**slider** and **own-prompt**) in a **counterbalanced** order
+   recorded with a seed. Both conditions are **one-shot, no model output, no
+   feedback loop** (symmetry, so "slider has feedback, prompt has none" does not
+   confound the comparison).
+5. **Convenience ratings** — short NASA-TLX (effort) + two Likert items +
+   willingness (slider vs. own prompt, with a free-text reason).
+6. **Attention check**, then **export** (JSON required; CSV preview optional).
 
 > The bundled tasks are **DRAFT / fictional placeholders** only to exercise the
 > flow. The **final task set must be authored separately, reviewed, and frozen**
@@ -75,7 +75,7 @@ python scripts\aggregate_studyB_offline.py <folder-of-json> --out-dir <out-folde
 Outputs:
 
 - `participants.csv` — one row per participant (covariates, probe metadata,
-  convenience ratings, effort, reliance, attention answer).
+  convenience ratings, effort, attention answer).
 - `tasks.csv` — one row per participant × task (prompt/setting/effort per
   condition) **plus empty Q placeholder columns** (`q_slider_pending`,
   `q_own_prompt_pending`, `d_paired_pending`) for post-hoc scoring.

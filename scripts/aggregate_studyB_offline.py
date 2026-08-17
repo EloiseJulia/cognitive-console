@@ -66,7 +66,6 @@ TOP_LEVEL_FIELDS = {
     "task_order",
     "tasks",
     "convenience",
-    "reliance",
     "attention",
 }
 COVARIATE_KEYS = {
@@ -98,15 +97,12 @@ OWN_PROMPT_KEYS = {
     "committed_at_relative",
 }
 CONVENIENCE_KEYS = {
-    "tlx_mental",
     "tlx_effort",
-    "tlx_frustration",
     "likert_effort",
     "likert_discoverability",
     "willingness_choice",
     "willingness_reason",
 }
-RELIANCE_KEYS = {"confidence_slider", "confidence_own_prompt"}
 ATTENTION_KEYS = {"selected_id"}
 
 # EMPTY placeholder columns for the post-hoc Q batch-scoring experiment. This
@@ -222,7 +218,7 @@ def _validate_export(data: Any) -> dict[str, Any]:
         _require(item["condition_order"] in {"slider_first", "prompt_first"}, "invalid condition order in sequence")
 
     tasks = data["tasks"]
-    _require(isinstance(tasks, list) and len(tasks) >= 1, "at least one task required")
+    _require(isinstance(tasks, list) and len(tasks) == 1, "simplified collector requires exactly one task")
     _require(
         [t["task_id"] for t in order["sequence"]] == [t["task_id"] for t in tasks],
         "task_order sequence and tasks disagree on task ids/order",
@@ -267,14 +263,6 @@ def _validate_export(data: Any) -> dict[str, Any]:
         "willingness_choice invalid",
     )
     _require(isinstance(convenience["willingness_reason"], str), "willingness_reason must be text")
-
-    reliance = data["reliance"]
-    _require(
-        reliance is None or (isinstance(reliance, dict) and set(reliance) == RELIANCE_KEYS),
-        "reliance fields mismatch",
-    )
-    if isinstance(reliance, dict):
-        _assert_scalar_values(reliance, "reliance")
 
     attention = data["attention"]
     _require(isinstance(attention, dict) and set(attention) == ATTENTION_KEYS, "attention fields mismatch")
@@ -344,15 +332,11 @@ PARTICIPANT_FIELDS = [
     "probe_char_count",
     "probe_edit_count",
     "probe_duration_ms",
-    "tlx_mental",
     "tlx_effort",
-    "tlx_frustration",
     "likert_effort",
     "likert_discoverability",
     "willingness_choice",
     "willingness_reason",
-    "confidence_slider",
-    "confidence_own_prompt",
     "attention_selected_id",
     "n_tasks",
 ]
@@ -406,7 +390,6 @@ def aggregate(input_dir: Path, out_dir: Path) -> dict[str, Any]:
     for name, export in accepted:
         cov = export["covariates"]
         conv = export["convenience"]
-        reliance = export["reliance"] or {}
         probe = export["probe"]
         participant_rows.append(
             {
@@ -428,15 +411,11 @@ def aggregate(input_dir: Path, out_dir: Path) -> dict[str, Any]:
                 "probe_duration_ms": _duration(
                     probe["started_at_relative"], probe["committed_at_relative"]
                 ),
-                "tlx_mental": conv["tlx_mental"],
                 "tlx_effort": conv["tlx_effort"],
-                "tlx_frustration": conv["tlx_frustration"],
                 "likert_effort": conv["likert_effort"],
                 "likert_discoverability": conv["likert_discoverability"],
                 "willingness_choice": conv["willingness_choice"],
                 "willingness_reason": conv["willingness_reason"],
-                "confidence_slider": reliance.get("confidence_slider"),
-                "confidence_own_prompt": reliance.get("confidence_own_prompt"),
                 "attention_selected_id": export["attention"]["selected_id"],
                 "n_tasks": len(export["tasks"]),
             }

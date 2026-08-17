@@ -264,11 +264,13 @@ PROBE = {
     },
 }
 
-# --- Paired main tasks (DRAFT / fictional placeholders for self-test only) ---
-# NOTE: The FINAL task set must be authored separately, reviewed, and frozen
-# before recruitment. These two placeholders exist only to exercise the flow.
-# Each task is dual-completable: a latent slider (discrete stops, no output) OR
-# a self-written prompt. No task has a baked answer or quality value.
+# --- Paired main task (DRAFT / fictional placeholder for self-test only) ---
+# NOTE (D-0132, simplified): the collector ships with exactly ONE paired task to
+# reduce participant burden (~10-15 min). The FINAL task set must be authored
+# separately, reviewed, and frozen before recruitment; task count is a freeze-
+# time power-driven parameter. This single placeholder only exercises the flow.
+# The task is dual-completable: a latent slider (discrete stops, no output) OR a
+# self-written prompt. It has no baked answer or quality value.
 TASKS = [
     {
         "task_id": "draftA-recipe-blurb",
@@ -313,53 +315,6 @@ TASKS = [
                 {"id": "s3", "label": {"en": "Neutral", "zh-Hans": "中性"}},
                 {"id": "s4", "label": {"en": "Polished", "zh-Hans": "考究"}},
                 {"id": "s5", "label": {"en": "Formal", "zh-Hans": "正式"}},
-            ],
-        },
-    },
-    {
-        "task_id": "draftB-email-reply",
-        "title": {
-            "en": "DRAFT Task B — email reply (fictional)",
-            "zh-Hans": "草案任务 B —— 邮件回复（虚构）",
-        },
-        "goal": {
-            "en": (
-                "DRAFT / fictional. Draft a reply to a fictional colleague who "
-                "asked to move a meeting. Politely decline the earliest slot, "
-                "propose one alternative, and keep it to three sentences."
-            ),
-            "zh-Hans": (
-                "草案/虚构。给一位虚构同事回信，对方想改会议时间。请礼貌地拒绝最早的时段，"
-                "提出一个替代方案，并控制在三句话以内。"
-            ),
-        },
-        "requirements": [
-            {"en": "Politely declines the earliest slot", "zh-Hans": "礼貌拒绝最早时段"},
-            {"en": "Proposes one alternative", "zh-Hans": "提出一个替代方案"},
-            {"en": "At most three sentences", "zh-Hans": "至多三句话"},
-        ],
-        "slider": {
-            "label": {
-                "en": "Directness setting",
-                "zh-Hans": "直接程度设置",
-            },
-            "help": {
-                "en": (
-                    "A latent control that (illustratively) shifts how direct the "
-                    "reply is. No output is shown — just pick where you would set "
-                    "it."
-                ),
-                "zh-Hans": (
-                    "一个（示意性的）会调节回复直接程度的隐控件。不显示任何输出——"
-                    "只需选择你会把它设到哪一档。"
-                ),
-            },
-            "stops": [
-                {"id": "d1", "label": {"en": "Very indirect", "zh-Hans": "非常委婉"}},
-                {"id": "d2", "label": {"en": "Indirect", "zh-Hans": "委婉"}},
-                {"id": "d3", "label": {"en": "Balanced", "zh-Hans": "均衡"}},
-                {"id": "d4", "label": {"en": "Direct", "zh-Hans": "直接"}},
-                {"id": "d5", "label": {"en": "Very direct", "zh-Hans": "非常直接"}},
             ],
         },
     },
@@ -416,30 +371,15 @@ COVARIATES = [
     },
 ]
 
-# --- Convenience axis: short TLX + Likert + willingness ---
+# --- Convenience axis: short (D-0132 trimmed to 3 rating items) TLX/Likert +
+# willingness. Facets covered: effort (TLX + Likert) and discoverability. ---
 CONVENIENCE = {
     "tlx": [
-        {
-            "id": "tlx_mental",
-            "prompt": {
-                "en": "Mental demand: how mentally demanding were the tasks? (1 = very low, 7 = very high)",
-                "zh-Hans": "心理需求：任务在心理上有多费力？（1=很低，7=很高）",
-            },
-            "scale": {"min": 1, "max": 7},
-        },
         {
             "id": "tlx_effort",
             "prompt": {
                 "en": "Effort: how hard did you have to work? (1 = very low, 7 = very high)",
                 "zh-Hans": "努力程度：你需要多努力？（1=很低，7=很高）",
-            },
-            "scale": {"min": 1, "max": 7},
-        },
-        {
-            "id": "tlx_frustration",
-            "prompt": {
-                "en": "Frustration: how frustrated did you feel? (1 = very low, 7 = very high)",
-                "zh-Hans": "挫败感：你有多挫败？（1=很低，7=很高）",
             },
             "scale": {"min": 1, "max": 7},
         },
@@ -478,26 +418,6 @@ CONVENIENCE = {
     },
 }
 
-# --- Optional reliance / confidence ---
-RELIANCE = [
-    {
-        "id": "confidence_slider",
-        "prompt": {
-            "en": "How confident are you that the slider approach met the goals? (1 = not at all, 5 = very)",
-            "zh-Hans": "你有多确信滑块方式达成了目标？（1=完全不确信，5=非常确信）",
-        },
-        "scale": {"min": 1, "max": 5},
-    },
-    {
-        "id": "confidence_own_prompt",
-        "prompt": {
-            "en": "How confident are you that your own prompt met the goals? (1 = not at all, 5 = very)",
-            "zh-Hans": "你有多确信自己写的 prompt 达成了目标？（1=完全不确信，5=非常确信）",
-        },
-        "scale": {"min": 1, "max": 5},
-    },
-]
-
 # --- Attention check (instructed-response; the instructed option is NOT baked
 # as an answer key — the owner applies the pre-registered exclusion rule
 # post-hoc; the tool only records the raw selection). ---
@@ -532,7 +452,6 @@ def build_payload() -> dict[str, Any]:
         "tasks": TASKS,
         "covariates": COVARIATES,
         "convenience": CONVENIENCE,
-        "reliance": RELIANCE,
         "attention": ATTENTION,
     }
     _assert_no_forbidden(payload)
@@ -616,8 +535,7 @@ const app={
   order:{seed:null,sequence:[]},
   taskIndex:0,condIndex:0,
   tasks:[],
-  convenience:{tlx_mental:null,tlx_effort:null,tlx_frustration:null,likert_effort:null,likert_discoverability:null,willingness_choice:null,willingness_reason:''},
-  reliance:{confidence_slider:null,confidence_own_prompt:null},
+  convenience:{tlx_effort:null,likert_effort:null,likert_discoverability:null,willingness_choice:null,willingness_reason:''},
   attention:{selected_id:null},
   _scratch:{}
 };
@@ -777,21 +695,8 @@ function renderConvenience(){
     if(!wsel){document.querySelector('#error').textContent=zh()?'请选择你更愿意用的方式。':'Please choose which you would use.';return}
     app.convenience.willingness_choice=wsel.value;
     app.convenience.willingness_reason=document.querySelector('#reason').value.trim();
-    app.phase='reliance';renderReliance();
+    app.phase='attention';renderAttention();
   };
-}
-
-function renderReliance(){
-  const rows=DATA.reliance.map(q=>`<div class="q"><p><b>${esc(T(q.prompt))}</b></p>${scaleRow(q.id,q.scale,app.reliance[q.id])}</div>`).join('');
-  shell(`<section class="panel"><p class="progress">${zh()?'可选：信心':'Optional: confidence'}</p>
-    <h1>${zh()?'（可选）你的信心':'(Optional) your confidence'}</h1>
-    <p class="inline-note">${zh()?'可跳过。':'You may skip this.'}</p>
-    ${rows}<div class="actions"><button id="next">${zh()?'继续':'Continue'}</button><button id="skip" class="secondary">${zh()?'跳过':'Skip'}</button></div></section>`);
-  document.querySelector('#next').onclick=()=>{
-    for(const q of DATA.reliance){const sel=document.querySelector(`input[name="${q.id}"]:checked`);app.reliance[q.id]=sel?Number(sel.value):null}
-    renderAttention();
-  };
-  document.querySelector('#skip').onclick=()=>{app.reliance=null;renderAttention()};
 }
 
 function renderAttention(){
@@ -838,7 +743,6 @@ function makeExport(){
       own_prompt:{prompt_text:t.own_prompt.prompt_text,char_count:t.own_prompt.char_count,edit_count:t.own_prompt.edit_count,started_at_relative:t.own_prompt.started_at_relative,committed_at_relative:t.own_prompt.committed_at_relative}
     })),
     convenience:app.convenience,
-    reliance:app.reliance,
     attention:app.attention
   };
 }

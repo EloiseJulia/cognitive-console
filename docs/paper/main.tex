@@ -93,14 +93,14 @@ This paper makes three contributions:
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
 \item
-  \textbf{A comparator-bound qualification procedure for active latent controls.} It separates local READ evidence from behavioral TRANSFER evidence and requires a declared alternative, outcome, uncertainty rule, point-estimate floor, coherence criterion, and evidence tier.
+  \textbf{A population-relative account of when a latent slider is ``good.''} Convenience for an everyday user and warranted incremental control for an expert are distinct standards; readability and output movement settle neither, so the two must be evaluated separately rather than collapsed into a single ``it works'' claim.
 \item
-  \textbf{A five-field record that connects computation to interface action.} The record preserves comparator, calibration, scope, and the exact blocking reason before determining whether a read-only diagnostic remains a candidate and whether an active control passes the computational gate.
+  \textbf{A two-comparator procedure that makes each standard testable.} It operationalizes each population's realistic alternative as a prompt comparator---a strong best-of-set prompt for the expert's ceiling and an average prompt for the non-expert---and judges a latent intervention against a declared outcome, uncertainty rule, point-estimate floor, and coherence, recorded in a five-field record (READ, TRANSFER, comparator, calibration warning, evidence tier).
 \item
-  \textbf{A worked application that turns one procedural no-pass into axis-specific evidence.} Across the CAA/ITI by Qwen/Llama grid the contract separates a shared no-pass into distinct blocking reasons and next evaluations---marking which cells are evidential and which are resolution-limited---and yields a record-specific interface action, illustrated for Qwen--CAA uncertainty.
+  \textbf{A worked, audited application that grounds one standard and scopes the other.} Naive and a stronger DEV-optimized latent steering beat the strong prompt on none of the twelve model--method--axis tests, with no passing latent positive control---evidence against the expert's warranted-gain standard here---while the everyday-user standard is left to the average-prompt comparator and a planned user study rather than asserted.
 \end{enumerate}
 
-Together, these contributions turn a familiar interface question into a versioned decision record: evidence first, affordance second. The release rule is scoped to substitution-type controls---a latent affordance offered \emph{in place of} a prompt; a control that composes on top of a user's instruction is out of scope and would need composition evidence this evaluation does not provide.
+The evaluation uses a substitution design: the latent intervention is offered \emph{in place of} a prompt. A slider that composes on top of a user's instruction is out of scope and would need composition evidence this study does not provide.
 
 \section{Related Work}\label{related-work}
 
@@ -123,12 +123,13 @@ We operationalize that principle as READ, TRANSFER, and interface eligibility: l
 Prompting is both a practical interaction channel and a technical comparator. Prompt-derived AI instruments can reify intent as reusable direct-manipulation controls, while studies of non-expert prompt design show that constructing and evaluating prompts is itself difficult. \cite{riche2025aiinstr,zamfirescuPereira2023johnny} AxBench directly places prompting beside representation-level methods. {}% SRC-007
 Bo et al.~compare steering interfaces with an unscaffolded prompt baseline and separately test prompting on top of steering before their user study. \cite{bo2026steerable} {}% SRC-009
 Basu et al.~include prompt engineering within a set of mechanistic intervention arms. {}% SRC-008
-These works make prompting an established comparison channel. Our contribution is to bind that channel to a per-affordance interface decision rather than rank steering methods globally.
+These works make prompting an established comparison channel. Our contribution is to bind that channel to a per-affordance interface decision, and to split it by population rather than rank steering methods globally.
 
-Our comparator is deliberately described more narrowly than ``the prompt a user could already have typed.'' The procedure selects the prompt comparator on DEV from a preregistered bounded set of sixteen candidates. {}% FL-008
+A single prompt comparator hides the population question. We therefore use two, each standing for a different user's realistic alternative: a strong best-of-set prompt, selected on DEV from a preregistered set of sixteen candidates, represents the expert's ceiling; an average prompt over that same set represents what a non-expert is likely to write. {}% FL-008
 {}% FL-009
+Reporting a latent intervention against both makes ``better than a prompt'' precise about which prompt---and thus about whom the control would help.
 
-The current application uses substitution: the latent intervention replaces the selected prompt channel. {}% FL-015
+The current application uses substitution: the latent intervention replaces the prompt channel. {}% FL-015
 
 \subsection{Mechanistic-Interpretability Interfaces and Human Evidence}\label{mechanistic-interpretability-interfaces-and-human-evidence}
 
@@ -252,13 +253,15 @@ These operational outcomes do not exhaust the psychological constructs named by 
 {}% FL-022
 The scorer and parser are implemented in \texttt{src/cognitive\_console/eval/scorers.py} and exercised by the repository test suite.
 
-\subsection{DEV-Selected Prompt Comparator and Substitution Design}\label{dev-selected-prompt-comparator-and-substitution-design}
+\subsection{Two Prompt Comparators and Substitution Design}\label{two-prompt-comparators-and-substitution-design}
 
-The preregistered bounded candidate set contains sixteen instructions with varied wording and specificity, and the procedure selects one prompt comparator on DEV for each model and axis. {}% FL-008
+The preregistered bounded candidate set contains sixteen instructions with varied wording and specificity. From it we derive two comparators, one per population. The \textbf{best-of-set prompt} is selected on DEV for each model and axis and stands for the expert's ceiling; this is the comparator behind all frozen results reported here. {}% FL-008
 {}% FL-009
+The \textbf{average prompt} is the per-item mean outcome over the candidate set, standing for what a non-expert is likely to write; it is evaluated by a preregistered comparator arm (reusing the frozen instrument, direction, and coefficient) whose generations are still being collected, so its results appear as a marked pending slot rather than as claims below.
 
-The core experiment is a substitution design. The prompt condition uses the selected instruction; the steering condition uses a neutral carrier instruction plus the latent intervention. {}% FL-015
+The core experiment is a substitution design. The prompt condition uses the comparator instruction; the steering condition uses a neutral carrier instruction plus the latent intervention. {}% FL-015
 {}% FL-016
+% PENDING_AVERAGE_PROMPT_SLOT: populate only from the frozen average-prompt comparator arm (owner-approved; registry + prereg + audit pending).
 
 \subsection{Generations, Outcomes, and Paired Estimand}\label{generations-outcomes-and-paired-estimand}
 
@@ -334,12 +337,13 @@ The diagnostic suite separates outcome-pipeline sensitivity, endpoint liveness, 
 
 \section{Results}\label{results}
 
-\subsection{The Contract Separates Three Evidence Profiles}\label{the-contract-separates-three-evidence-profiles}
+\subsection{Against the Expert's Ceiling, No Latent Arm Wins}\label{against-the-experts-ceiling-no-latent-arm-wins}
 
-Across Qwen and Llama, CAA and ITI, and three behavioral axes, none of the twelve tests passed the reported TRANSFER rule; consequently no active control became eligible. This is the qualification working as designed rather than a failed experiment: every procedural candidate is withheld until it earns the affordance. {}% FL-003
+We first evaluate the expert's standard: does a latent intervention earn incremental behavioral advantage over a strong prompt? Across Qwen and Llama, CAA and ITI, and three behavioral axes, none of the twelve tests beats the DEV-selected best-of-set prompt under the reported rule. A stronger, DEV-optimized latent method fails the same way, and the direct steer-versus-baseline contrast is near zero---so the result is not an artifact of one weak method. This grounds the expert's skepticism: here, moving the slider buys no warranted quality gain over an instruction. {}% FL-003
 {}% FL-042
 {}% C-003
-The contract turns that aggregate into three structured evidence profiles: bounded equivalence for the refined skepticism cell, a floored generation-length measurement for deliberation that is being repeated, and a comparator-specific calibration warning for uncertainty. These profiles guide different next evaluations, rather than collapsing all twelve tests into one universal null.
+The everyday user's standard turns instead on the average prompt and on convenience; the average-prompt comparator arm and a planned user study address it, and its slot is marked pending rather than pre-judged. Within the expert comparison, the twelve no-passes still differ in kind---bounded equivalence for the refined skepticism cell, a generation-length--floored measurement for deliberation that is being repeated, and a comparator-specific calibration warning for uncertainty---which matters for what to measure next, not for whether the expert's bar was cleared.
+% PENDING_AVERAGE_PROMPT_SLOT: populate everyday-user (average-prompt) result only from the frozen comparator arm.
 
 \paragraph{The qualification rule fires and discriminates.} A predeclared positive-control check confirms that the no-pass outcome reflects the evidence, not an unsatisfiable gate. Run unchanged on a pool disjoint from the tested items, the adjudicator accepts a non-degenerate format-following advantage (\(\Delta=0.60\), 98.33\% item-cluster bootstrap CI \([0.45,0.75]\)) and rejects both an exact and an independently resampled noisy null (\(\Delta=0.01\), CI \([-0.03,+0.05]\)). The rule is therefore mechanically satisfiable and discriminative---it can qualify a control, not only withhold one---while remaining, by construction, a check on decision-rule behavior rather than latent-steering efficacy or near-threshold calibration. {}% experiment_ids: prospective-pc-noisy (feature/positive-control-noisy@364ee43) + strong-negative (feature/positive-control-strong-negative@5d6dbe1); result JSONs on writing branch
 
@@ -564,7 +568,7 @@ Prompt endpoint liveness and random-direction sensitivity show that parts of the
 {}% FL-054
 {}% FL-078
 
-The predeclared positive-control check (Section~\ref{the-contract-separates-three-evidence-profiles}) shows the adjudicator is mechanically satisfiable and discriminative, so the all-fail grid is not an artifact of an unsatisfiable gate; that check bears on decision-rule behavior, not latent-steering efficacy or near-threshold calibration. {}% experiment_ids: prospective-pc-noisy (feature/positive-control-noisy@364ee43) + strong-negative (feature/positive-control-strong-negative@5d6dbe1); result JSONs on writing branch
+The predeclared positive-control check (Section~\ref{against-the-experts-ceiling-no-latent-arm-wins}) shows the adjudicator is mechanically satisfiable and discriminative, so the all-fail grid is not an artifact of an unsatisfiable gate; that check bears on decision-rule behavior, not latent-steering efficacy or near-threshold calibration. {}% experiment_ids: prospective-pc-noisy (feature/positive-control-noisy@364ee43) + strong-negative (feature/positive-control-strong-negative@5d6dbe1); result JSONs on writing branch
 
 The diagnostic studies provide supporting context: a direct refusal prompt reaches 95.5\%, a random uncertainty direction shifts the measured outcome by \(-0.24\) with 95\% CI \([-0.36,-0.12]\), and bounded CAA produces 0\% refusal. {}% FL-051
 {}% FL-052

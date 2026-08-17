@@ -9,6 +9,7 @@
 | 2026-08-05 | A800 GPU-hours (failed pre-DEV attempt) | 0.00722222 upper bound | E-0016 | D-0095 | >=0.00722222 (legacy GPU runs not backfilled) |
 | 2026-08-17 | A800 setup + avg-prompt synthetic CPU smoke; GPU1 identified free, no GPU generation run | 0 GPU-hours | AVG-PROMPT-COMPARATOR-20260817-FROZEN-UNRUN / smoke `avg-prompt-comparator-a41d7462-0001` | owner-approved Stage 1 | >=0.00722222 |
 | 2026-08-17 | A800 GPU-hours (avg-prompt comparator Qwen 3 axes × CAA/ITI; GPU0/GPU1 only; valid_for_paper=false pending hostile audit) | 2.2913 GPU-hours | avg-prompt comparator raw bundles `8da27748`, `59ffba47`, `0cd02fe5`, `f64fa982`, `87f271fb`, `6d18ccd3` | GO-FAST owner approval 2026-08-17 | >=2.2985 |
+| 2026-08-17 | A800 GPU1-hours (deliberation 512-token steering repair CAA/ITI serial; includes initial over-strict ITI floor-abort diagnostic and rerun; valid_for_paper=false pending hostile audit) | 0.2832 GPU-hours | repair raw bundles `5b3869d4`, `eaa42cf2` + avg−best correction | owner-approved deliberation repair 2026-08-17 | >=2.5817 |
 
 - max_gpu_hours: TBD (human)
 - max_api_cost: TBD (human)

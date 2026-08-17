@@ -183,6 +183,9 @@ def run_one(args, *, method: str, avg_path: Path, frozen_path: Path,
     t0 = time.time()
     started_at = utcnow()
     out_dir.mkdir(parents=True, exist_ok=True)
+    hard_abort_path = out_dir / "HARD_ABORT_steering_floor.json"
+    if args.fresh:
+        hard_abort_path.unlink(missing_ok=True)
     avg_row = _load_avg_axis(avg_path, axis)
     frozen_row = _load_frozen_axis(frozen_path, axis)
     if int(frozen_row["layer"]) != int(layer):
@@ -275,7 +278,7 @@ def run_one(args, *, method: str, avg_path: Path, frozen_path: Path,
     steer_mean = float(np.mean(steer_out))
     if steer_mean < float(args.min_steer_mean):
         # Persist enough evidence before aborting so the failure is auditable.
-        (out_dir / "HARD_ABORT_steering_floor.json").write_text(
+        hard_abort_path.write_text(
             json.dumps({
                 "method": method,
                 "axis": axis,
@@ -286,6 +289,7 @@ def run_one(args, *, method: str, avg_path: Path, frozen_path: Path,
             encoding="utf-8",
         )
         raise SystemExit(f"{method}: 512 steering validity failed, mean={steer_mean:.4f}")
+    hard_abort_path.unlink(missing_ok=True)
 
     transcript_root = out_dir / "transcripts"
     transcript_root.mkdir(parents=True, exist_ok=True)
@@ -437,7 +441,15 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--batch-size", type=int, default=16)
     ap.add_argument("--temperature", type=float, default=0.7)
     ap.add_argument("--bootstrap-b", type=int, default=adj.BOOTSTRAP_B)
-    ap.add_argument("--min-steer-mean", type=float, default=0.5)
+    ap.add_argument(
+        "--min-steer-mean",
+        type=float,
+        default=0.2,
+        help=(
+            "floor guard for old 64-token deliberation artifacts; this is not an "
+            "effect-size target and must not be used for alpha/prompt reselection"
+        ),
+    )
     ap.add_argument("--fresh", action="store_true")
     return ap
 

@@ -75,13 +75,17 @@ def _load_frozen_sources(path: Path) -> Dict[str, Dict[str, object]]:
         axis = str(row.get("axis"))
         dev = row.get("dev_selection", {}) or {}
         per_item_steer = row.get("per_item_steer")
+        per_item_prompt = row.get("per_item_prompt")
         if not isinstance(per_item_steer, list):
             raise ValueError(f"{path}: axis {axis} has no per_item_steer array")
+        if not isinstance(per_item_prompt, list):
+            raise ValueError(f"{path}: axis {axis} has no per_item_prompt array")
         out[axis] = {
             "frozen_alpha": float(dev["frozen_alpha"]),
             "best_prompt_id": str(dev.get("best_prompt_id")),
             "best_prompt_text": str(dev.get("best_prompt_text")),
             "per_item_steer": [float(x) for x in per_item_steer],
+            "per_item_prompt": [float(x) for x in per_item_prompt],
             "coherence_ok": bool(row.get("coherence_ok")),
             "test_steer_degeneracy": row.get("test_steer_degeneracy"),
             "test_baseline_degeneracy": row.get("test_baseline_degeneracy"),
@@ -156,6 +160,35 @@ def _planned_prompt_generations(specs: List[AxisAdjSpec], *, k: int,
         steering_cells = 2 if include_generated_steering else 0
         per_axis[spec.axis] = int(n_test * (len(spec.strong_prompts) + steering_cells) * k)
     return per_axis
+
+
+def _avg_minus_frozen_best_prompt(row: adj.AvgPromptComparatorAxisResult,
+                                  frozen_src: Dict[str, object], *,
+                                  seed: int, bootstrap_b: int) -> Dict[str, object]:
+    avg16 = np.asarray(row.primary_avg16["per_item_comparator"], dtype=float)
+    frozen_best = np.asarray(frozen_src["per_item_prompt"], dtype=float)
+    if avg16.shape != frozen_best.shape:
+        raise ValueError(
+            f"{row.axis}: avg16 length {avg16.shape[0]} != frozen best length {frozen_best.shape[0]}"
+        )
+    diff = avg16 - frozen_best
+    ci = adj.cluster_bootstrap_ci(
+        diff,
+        b=int(bootstrap_b),
+        ci_level=adj.BONFERRONI_CI_LEVEL,
+        seed=int(seed),
+        cluster=True,
+    )
+    return {
+        "name": "avg16_minus_frozen_best_prompt",
+        "mean_diff": ci.point,
+        "ci_lo": ci.ci_lo,
+        "ci_hi": ci.ci_hi,
+        "ci_level": ci.ci_level,
+        "bootstrap_b": int(bootstrap_b),
+        "per_item_diff": [float(x) for x in diff],
+        "note": "diagnostic avg-prompt minus frozen DEV-selected best-prompt arm; not a pass/fail contrast",
+    }
 
 
 def _write_candidate_set(specs: List[AxisAdjSpec], out_dir: Path) -> Path:
@@ -443,7 +476,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             else:
                 per_item_steer = None
                 steering_label = "same-run-regenerated"
-            results.append(adj.avg_prompt_comparator_axis(
+            axis_result = adj.avg_prompt_comparator_axis(
                 sampler_for_axis(spec.axis),
                 spec,
                 frozen_alpha=frozen_alpha,
@@ -461,7 +494,14 @@ def main(argv: Optional[List[str]] = None) -> int:
                 delta=adj.DELTA,
                 seed=args.seed,
                 ctx=ctx,
-            ))
+            )
+            if "per_item_prompt" in src:
+                axis_result.descriptive["avg16_minus_frozen_best_prompt"] = (
+                    _avg_minus_frozen_best_prompt(
+                        axis_result, src, seed=args.seed, bootstrap_b=args.bootstrap_b
+                    )
+                )
+            results.append(axis_result)
     finally:
         checkpoint.close()
 

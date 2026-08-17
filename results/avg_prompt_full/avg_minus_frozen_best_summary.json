@@ -1,0 +1,61 @@
+{
+  "generated_at": "2026-08-17T04:52:48.241057+00:00",
+  "source": "scripts/recompute_avg_best_contrasts.py",
+  "note": "All means are recomputed from raw per-item avg16 and frozen best-prompt arrays.",
+  "rows": [
+    {
+      "method": "caa",
+      "axis": "deliberation",
+      "result_json": "results/avg_prompt_full/cell_caa__qwen2.5-7b__deliberation/avg_prompt_comparator_results.json",
+      "mean_diff": 0.828125,
+      "ci_lo": 0.7262500000000001,
+      "ci_hi": 0.9161484375000004,
+      "bootstrap_b": 10000
+    },
+    {
+      "method": "caa",
+      "axis": "skepticism",
+      "result_json": "results/avg_prompt_full/cell_caa__qwen2.5-7b__skepticism/avg_prompt_comparator_results.json",
+      "mean_diff": -0.205625,
+      "ci_lo": -0.3275,
+      "ci_hi": -0.09166406249999967,
+      "bootstrap_b": 10000
+    },
+    {
+      "method": "caa",
+      "axis": "uncertainty_awareness",
+      "result_json": "results/avg_prompt_full/cell_caa__qwen2.5-7b__uncertainty_awareness/avg_prompt_comparator_results.json",
+      "mean_diff": -0.1382004245283019,
+      "ci_lo": -0.21210213974056594,
+      "ci_hi": -0.0717863938679245,
+      "bootstrap_b": 10000
+    },
+    {
+      "method": "iti",
+      "axis": "deliberation",
+      "result_json": "results/avg_prompt_full/cell_iti__qwen2.5-7b__deliberation/avg_prompt_comparator_results.json",
+      "mean_diff": 0.828125,
+      "ci_lo": 0.7262500000000001,
+      "ci_hi": 0.9161484375000004,
+      "bootstrap_b": 10000
+    },
+    {
+      "method": "iti",
+      "axis": "skepticism",
+      "result_json": "results/avg_prompt_full/cell_iti__qwen2.5-7b__skepticism/avg_prompt_comparator_results.json",
+      "mean_diff": -0.205625,
+      "ci_lo": -0.3275,
+      "ci_hi": -0.09166406249999967,
+      "bootstrap_b": 10000
+    },
+    {
+      "method": "iti",
+      "axis": "uncertainty_awareness",
+      "result_json": "results/avg_prompt_full/cell_iti__qwen2.5-7b__uncertainty_awareness/avg_prompt_comparator_results.json",
+      "mean_diff": -0.1382004245283019,
+      "ci_lo": -0.21210213974056594,
+      "ci_hi": -0.0717863938679245,
+      "bootstrap_b": 10000
+    }
+  ]
+}

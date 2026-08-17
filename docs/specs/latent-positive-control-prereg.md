@@ -130,3 +130,14 @@ Frozen addendum for `E-0017d-phi3-official-stolfo-positive-control-stage1-dev`:
 - **Layer/weight source:** official Appendix-E Phi-3 word-inclusion grid: layers `{24,26,28}`, weights `{40,60,80,100}`.
 - **Decision procedure unchanged:** primary `steer-baseline`; secondary `steer-prompt`; δ/bootstrap/coherence/Bonferroni unchanged.
 - **Runtime caveat:** full 1024-token and then 128-token DEV attempts were stopped for runtime before completion. The completed DEV used the same official layers/weights/direction/task/verifier but capped generation at 32 new tokens. This cap is recorded in the artifact config hash and must be reported before any Stage-2 decision.
+
+## 12. Owner-approved Phi-3 generation-length DEV rerun addendum (2026-08-18)
+
+Owner explicitly barred Stage-2 TEST until the 32-token cap from E-0017d is diagnosed and repaired.
+
+Frozen addendum for `E-0017e-phi3-official-stolfo-positive-control-stage1-dev-length-rerun`:
+
+- **Official generation-length source:** `config/keywords/keyword_evaluation.yaml` at official commit `9dac937ef6fc3e483b1efc13863deeb03ec38dbe` sets `max_generation_length: 1024`; `keywords/evaluate.py` passes `args.max_generation_length` to both `generate(..., max_new_tokens=...)` and `generate_with_hooks(..., max_tokens_generated=...)`.
+- **Runtime fallback:** because official 1024-token and 128-token DEV attempts were stopped for runtime, this DEV rerun must use a cap **at least 256 new tokens** if 1024 is infeasible. Caps below 256 are forbidden for this rerun.
+- **Added diagnostics:** every arm/cell must report generated-token length and conservative cap-hit (`generation_truncated`) rate.
+- **Everything else unchanged from E-0017d:** Phi-3 Mini revision, official repo commit, IFEval `keywords:existence`, `n_extraction_per_keyword=20`, official layers `{24,26,28}`, official weights `{40,60,80,100}`, primary/secondary estimands, δ/bootstrap/coherence/Bonferroni, `valid_for_paper=false`, and no TEST.

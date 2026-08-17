@@ -155,7 +155,27 @@ def _mean_instruction_vectors(mods, model, tokenizer, rows: Sequence[dict], *, d
     return vectors
 
 
-def _generate_baseline_or_prompt(mods, model, tokenizer, rows: Sequence[dict], *, device: str, include_instructions: bool, max_generation_length: int) -> tuple[List[str], List[int], List[float]]:
+def _generated_token_count(tokenizer, text: str) -> int:
+    return int(len(tokenizer(text, add_special_tokens=False)["input_ids"]))
+
+
+def _generation_diagnostics(tokenizer, texts: Sequence[str], max_generation_length: int) -> dict:
+    lengths = [_generated_token_count(tokenizer, t) for t in texts]
+    # Official hooked generation truncates the tensor with an off-by-one-style
+    # cap when no stop token is seen, so >= cap-1 is the conservative cap-hit
+    # diagnostic. This is metadata only; scores still come from decoded text.
+    threshold = max(1, int(max_generation_length) - 1)
+    truncated = [int(x >= threshold) for x in lengths]
+    return {
+        "generated_token_lengths": lengths,
+        "mean_generated_tokens": float(np.mean(lengths)) if lengths else float("nan"),
+        "generation_truncated": truncated,
+        "generation_truncated_rate": float(np.mean(truncated)) if truncated else float("nan"),
+        "truncation_threshold_tokens": threshold,
+    }
+
+
+def _generate_baseline_or_prompt(mods, model, tokenizer, rows: Sequence[dict], *, device: str, include_instructions: bool, max_generation_length: int) -> tuple[List[str], List[int], List[float], dict]:
     gen = mods["generation_utils"]
     texts: List[str] = []
     scores: List[int] = []
@@ -167,10 +187,10 @@ def _generate_baseline_or_prompt(mods, model, tokenizer, rows: Sequence[dict], *
         texts.append(response)
         scores.append(_official_score(mods, row, response))
         degs.append(lpc.degeneracy_score(response))
-    return texts, scores, degs
+    return texts, scores, degs, _generation_diagnostics(tokenizer, texts, max_generation_length)
 
 
-def _generate_steer(mods, model, tokenizer, rows: Sequence[dict], vectors: Dict[str, np.ndarray], *, device: str, source_layer_idx: int, alpha: float, max_generation_length: int) -> tuple[List[str], List[int], List[float]]:
+def _generate_steer(mods, model, tokenizer, rows: Sequence[dict], vectors: Dict[str, np.ndarray], *, device: str, source_layer_idx: int, alpha: float, max_generation_length: int) -> tuple[List[str], List[int], List[float], dict]:
     import torch
 
     gen = mods["generation_utils"]
@@ -202,7 +222,7 @@ def _generate_steer(mods, model, tokenizer, rows: Sequence[dict], vectors: Dict[
         texts.append(response)
         scores.append(_official_score(mods, row, response))
         degs.append(lpc.degeneracy_score(response))
-    return texts, scores, degs
+    return texts, scores, degs, _generation_diagnostics(tokenizer, texts, max_generation_length)
 
 
 def _cell(item_ids: Sequence[str], scores: Sequence[int], degs: Sequence[float]) -> dict:
@@ -319,13 +339,13 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     item_ids = [str(r.get("key", i)) for i, r in enumerate(dev_rows)]
     print("[official-lpc] generating baseline", flush=True)
-    baseline_texts, baseline_scores, baseline_degs = _generate_baseline_or_prompt(
+    baseline_texts, baseline_scores, baseline_degs, baseline_diag = _generate_baseline_or_prompt(
         mods, model, tokenizer, dev_rows,
         device=args.device, include_instructions=False,
         max_generation_length=args.max_generation_length,
     )
     print("[official-lpc] generating prompt comparator", flush=True)
-    prompt_texts, prompt_scores, prompt_degs = _generate_baseline_or_prompt(
+    prompt_texts, prompt_scores, prompt_degs, prompt_diag = _generate_baseline_or_prompt(
         mods, model, tokenizer, dev_rows,
         device=args.device, include_instructions=True,
         max_generation_length=args.max_generation_length,
@@ -340,7 +360,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         for alpha in sweep_weights:
             tag = f"layer{layer}_alpha{alpha:g}"
             print(f"[official-lpc] generating steer {tag}", flush=True)
-            texts, scores, degs = _generate_steer(
+            texts, scores, degs, gen_diag = _generate_steer(
                 mods, model, tokenizer, dev_rows, vectors,
                 device=args.device,
                 source_layer_idx=layer,
@@ -362,6 +382,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "steer_minus_prompt": mean_score - float(np.mean(prompt_scores)),
                 "scores": [int(x) for x in scores],
                 "degeneracy": [float(x) for x in degs],
+                "generation": gen_diag,
             })
             candidate_texts[tag] = [{"item_id": iid, "text": text} for iid, text in zip(item_ids, texts)]
 
@@ -459,6 +480,16 @@ def main(argv: Sequence[str] | None = None) -> int:
             "prompt": [{"item_id": iid, "text": text} for iid, text in zip(item_ids, prompt_texts)],
             "steer": candidate_texts,
         },
+        "generation_diagnostics": {
+            "max_generation_length": args.max_generation_length,
+            "baseline": baseline_diag,
+            "prompt": prompt_diag,
+            "selected": selected["generation"],
+            "by_candidate": {
+                f"layer{c['source_layer_idx']}_alpha{c['alpha']:g}": c["generation"]
+                for c in candidates
+            },
+        },
         "run_metadata": {
             "started_at": started,
             "ended_at": _utcnow(),
@@ -499,6 +530,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         f"- official repo commit: `{METHOD_SOURCE_COMMIT}`",
         f"- model: `{args.model}` @ `{args.model_revision}`",
         f"- task: IFEval `keywords:existence`, DEV n=`{len(dev_rows)}`",
+        f"- max generation length: `{args.max_generation_length}`",
         f"- source layers used: `{args.source_layers}`; selected layer `{selected['source_layer_idx']}`",
         f"- selected α: `{selected['alpha']}`",
         f"- baseline compliance: `{payload['baseline']['mean_score']:.6f}`",
@@ -507,6 +539,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         f"- primary steer-baseline: `{primary.point:.6f}` CI `{primary.ci_lo:.6f}, {primary.ci_hi:.6f}`; sanity_pass=`{payload['dev_effects']['steer_minus_baseline']['passes_dev_sanity']}`",
         f"- secondary steer-prompt: `{secondary.point:.6f}` CI `{secondary.ci_lo:.6f}, {secondary.ci_hi:.6f}`",
         f"- coherence: steer g=`{selected['mean_degeneracy']:.6f}`, baseline g0=`{payload['baseline']['mean_degeneracy']:.6f}`, ok=`{selected['coherence_ok']}`",
+        f"- truncation: baseline `{baseline_diag['generation_truncated_rate']:.6f}`, prompt `{prompt_diag['generation_truncated_rate']:.6f}`, steer `{selected['generation']['generation_truncated_rate']:.6f}`",
+        f"- mean generated tokens: baseline `{baseline_diag['mean_generated_tokens']:.2f}`, prompt `{prompt_diag['mean_generated_tokens']:.2f}`, steer `{selected['generation']['mean_generated_tokens']:.2f}`",
         f"- best any weight: layer `{official_best['source_layer_idx']}`, α `{official_best['alpha']}`, Δ `{official_best['steer_minus_baseline']:.6f}`, selectable=`{official_best['selectable_by_frozen_grid']}`",
         "",
         "No TEST item was generated or scored.",

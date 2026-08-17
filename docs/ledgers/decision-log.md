@@ -5,6 +5,55 @@
 
 ---
 
+## 2026-08-17 · D-0134 · Pivot to direction B: semi-live local collector (real model output) built, audited, merged
+- **Trigger:** Owner playtested the decoupled-offline (no-output) collector and
+  hit a real construct problem: with no visible slider effect, the subjective
+  convenience-axis items (effort / discoverability / willingness) are hollow —
+  "毫无意义". Owner chose **direction B**: show real model output so participants
+  actually experience each control, using their local Copilot API proxy
+  (`http://localhost:8313`, OpenAI-compatible, real models; verified reachable).
+- **Owner-approved framing (A, load-bearing):** on a chat API there is no latent
+  steering, so the study "slider" = an **opaque, frozen preset control** (each
+  stop = a frozen generic tone/formality instruction), NOT a steering vector.
+  The study therefore tests "picking an opaque preset via a slider" vs "writing
+  your own prompt." It mirrors the **interaction/convenience** side, and must
+  **NOT** be sold as a latent-steering 0/12 mirror. Writing session to be told.
+- **Architecture (no DB):** a loopback-only Python bridge (`run_studyB_live.py`)
+  serves the HTML same-origin (proxy has no CORS) and proxies generation to 8313;
+  frozen presets/params/model-whitelist live server-side; one JSON export per
+  participant. Model pinned (`gpt-4o-mini` default), `temperature=0`,
+  `max_tokens=512`, `params_hash` recorded.
+- **Construct-validity BLOCKER found & fixed (Manager review):** the first build
+  fed the task success conditions (vegan / <40 words / no exclamation) into the
+  model in BOTH conditions — which would let the slider "win" via system-supplied
+  requirements and gut the comparison. Fixed: success conditions are
+  **participant-facing only and never enter model input**; slider gets neutral
+  `model_context` + tone preset (so it demonstrably misses the requirements),
+  own-prompt gets neutral `model_context` + the participant's prompt. Preset "s2"
+  had "friendly" removed (it was task requirement (c), i.e. a hidden success
+  condition). Real smoke confirmed slider output lacks `vegan`/is over-length,
+  own-prompt output meets the requirements.
+- **Independent hostile audit verdict: MERGEABLE** — no BLOCKER/MAJOR; four red
+  lines (success-condition leakage into model, preset smuggling requirements,
+  answer-key leakage, bridge exposed off-loopback) disproved on source + real
+  HTTP. Two MINOR defense-in-depth items applied (assert bridge binds loopback;
+  add bare `correct` to aggregator private-key guard). 31/31 tests green.
+- **Decision (Manager, autonomous within lane):** spec `study-B-collector-live.md`
+  written; built in worktree `feature/studyB-live` → audited → **no-ff merged to
+  main (not pushed)**. Consent version bumped `studyB-consent-1.0` →
+  `studyB-consent-live-1.0` to honestly flag the material change (now DISPLAYS AI
+  output). Offline collector retained, not superseded in git.
+- **Escalated to owner (open, pre-data gate):** ethics approval was confirmed for
+  the **no-output** design earlier today; showing real AI-generated output is a
+  **material change** that may need an ethics amendment / re-confirmation before
+  real recruitment. Owner asked to confirm scope. Until confirmed, live version
+  is **owner self-test only**.
+- **Still NOT done (open gates before real data):** protocol freeze + MDE
+  pre-registration, preset + task-set freeze, ethics-scope confirmation for AI
+  output, privacy plan execution. Data collected before freeze stays
+  **exploratory** (not the confirmatory 0/12 mirror).
+- **Frozen?** No. Pre-ethics-amendment, pre-protocol-freeze, exploratory.
+
 ## 2026-08-17 · D-0133 · Synthetic illustrative sample data produced for owner (clearly fabricated, gitignored, never evidence)
 - Owner asked for a few sample CSVs showing the study's expected positive
   effect, to get a feel for the format/pattern.

@@ -1,0 +1,622 @@
+{
+  "generated_at": "2026-08-17T08:59:50.850784+00:00",
+  "valid_for_paper": false,
+  "anchor_calibration_gate": "NOT passed; exploratory only",
+  "threat": "AI-generated novice prompts are not validated against real novices.",
+  "aggregate_commit": "d20090876ec5227a5a3666747abe7240dcf58428",
+  "seed": {
+    "prompt_generation": 20260817,
+    "comparator": 20260723
+  },
+  "model": {
+    "generator": "Qwen/Qwen2.5-7B-Instruct",
+    "comparator": "Qwen/Qwen2.5-7B-Instruct",
+    "revision": "a09a35458c702b33eeacc393d103063234e8bc28"
+  },
+  "prompt_set": "results/novice_prompt_comparator_20260817/novice_prompt_set.json",
+  "runtime_prompt_set_sha256": "sha256:ff45994261c785e51a122c272bd1650bf76d52b8770917d6f7df89426e24c126",
+  "local_checkout_prompt_set_sha256": "sha256:4526a2980f14de6fe22279e16ec2cad7b7d0e1cb6de4ff3ffddebc62501a1cbf",
+  "fewshot_file": "data/novice_prompt_sources/oasst1_fewshot_20260817.json",
+  "fewshot_file_sha256": "sha256:6790d2cce463b534e4de8e067a147eb5b5b39833007088c58b30a4b68e1849bd",
+  "source_corpus": {
+    "name": "OpenAssistant/oasst1",
+    "version": "2023-04-12 OpenAssistant Conversations Dataset (OASST1), Hugging Face dataset card revision fetched 2026-08-17",
+    "license": "Apache-2.0",
+    "license_url": "https://huggingface.co/datasets/OpenAssistant/oasst1/raw/main/LICENSE",
+    "dataset_url": "https://huggingface.co/datasets/OpenAssistant/oasst1",
+    "readme_url": "https://huggingface.co/datasets/OpenAssistant/oasst1/raw/main/README.md",
+    "use_in_this_experiment": "Few-shot style anchors for novice/non-expert instruction phrasing only; not used as task content."
+  },
+  "gpu_hours_from_cell_wall_clock": 2.7502833333333334,
+  "gpu_hours_note": "Prompt-set generation used GPU1 but was not instrumented with wall_clock_seconds; comparator cell wall-clock sum is exact from result JSON. GPU0 had a small rerun process (~691 MiB, util 0) during later cells; GPU1 became occupied by a pre-existing root worker after two cells, so remaining cells used GPU0 after free-card recheck.",
+  "cells": [
+    {
+      "cell": "cell_caa__qwen2.5-7b__deliberation",
+      "method": "caa",
+      "axis": "deliberation",
+      "experiment_id": "novice-prompt-comparator-58951ae9-0001",
+      "code_commit": "af1a668015ad1f1962dc7b0453285fc7afff9bc1",
+      "data_hash": "sha256:ff45994261c785e51a122c272bd1650bf76d52b8770917d6f7df89426e24c126",
+      "config_hash": "sha256:58951ae9ad0098489b33d946649854a0fb0ce953ab89ae4811b1380a3d0efb9e",
+      "result_json": "results/novice_prompt_comparator_20260817/cell_caa__qwen2.5-7b__deliberation/novice_prompt_comparator_results.json",
+      "result_sha256_local_checkout": "sha256:a230832d90ba31a7a1f387554426ebb07da2178b57bdb2cae1d03f48a1cc61c7",
+      "runtime_prompt_set_sha256": "sha256:ff45994261c785e51a122c272bd1650bf76d52b8770917d6f7df89426e24c126",
+      "wall_clock_seconds": 2811.96,
+      "hardware": "cuda-float16",
+      "gpu_index_observed": "GPU1",
+      "steer_minus_novice_mean": 0.008124999999999981,
+      "ci_lo": -0.06417187499999986,
+      "ci_hi": 0.06843749999999997,
+      "coherence_ok": true,
+      "cell_status": "no",
+      "format_compliance": {
+        "samples": 3200,
+        "parse_failures": 0,
+        "format_compliance_rate": 1.0
+      },
+      "novice_minus_best_mean": 0.006875000000000013,
+      "novice_minus_best_ci_lo": -0.046874999999999986,
+      "novice_minus_best_ci_hi": 0.058750000000000004,
+      "n_test": 40,
+      "frozen_alpha": 2.0,
+      "k": 5
+    },
+    {
+      "cell": "cell_caa__qwen2.5-7b__skepticism",
+      "method": "caa",
+      "axis": "skepticism",
+      "experiment_id": "novice-prompt-comparator-3da9a9b9-0001",
+      "code_commit": "89cf1b3fc21bd61883b5abf4595be58e86f5724e",
+      "data_hash": "sha256:ff45994261c785e51a122c272bd1650bf76d52b8770917d6f7df89426e24c126",
+      "config_hash": "sha256:3da9a9b9f33ac82f0ff7c058392866b46d45146bdf8a279a3a5baf22ef6aeaab",
+      "result_json": "results/novice_prompt_comparator_20260817/cell_caa__qwen2.5-7b__skepticism/novice_prompt_comparator_results.json",
+      "result_sha256_local_checkout": "sha256:6875978330f511ad58105f37f06c613e26604683f86066d6d4ebc9fdfa75513a",
+      "runtime_prompt_set_sha256": "sha256:ff45994261c785e51a122c272bd1650bf76d52b8770917d6f7df89426e24c126",
+      "wall_clock_seconds": 1180.0,
+      "hardware": "cuda-float16",
+      "gpu_index_observed": "GPU1",
+      "steer_minus_novice_mean": -2.7755575615628914e-17,
+      "ci_lo": -0.07843750000000002,
+      "ci_hi": 0.06593749999999998,
+      "coherence_ok": true,
+      "cell_status": "no",
+      "format_compliance": {
+        "samples": 3200,
+        "parse_failures": 0,
+        "format_compliance_rate": 1.0
+      },
+      "novice_minus_best_mean": -0.07999999999999997,
+      "novice_minus_best_ci_lo": -0.2092734374999999,
+      "novice_minus_best_ci_hi": 0.033125000000000036,
+      "n_test": 40,
+      "frozen_alpha": 6.0,
+      "k": 5
+    },
+    {
+      "cell": "cell_caa__qwen2.5-7b__uncertainty_awareness",
+      "method": "caa",
+      "axis": "uncertainty_awareness",
+      "experiment_id": "novice-prompt-comparator-9eb1a5a7-0001",
+      "code_commit": "77e900a2340b20e52edcec822249bfb3af69f15b",
+      "data_hash": "sha256:ff45994261c785e51a122c272bd1650bf76d52b8770917d6f7df89426e24c126",
+      "config_hash": "sha256:9eb1a5a7e0158fa214cf49878cd9542a818610d292d3a46667a5fbc4fbfaea51",
+      "result_json": "results/novice_prompt_comparator_20260817/cell_caa__qwen2.5-7b__uncertainty_awareness/novice_prompt_comparator_results.json",
+      "result_sha256_local_checkout": "sha256:60cfdd155298b97c7d0b20100fea41bdc971c730e1b0cd5a631afc6b7953de63",
+      "runtime_prompt_set_sha256": "sha256:ff45994261c785e51a122c272bd1650bf76d52b8770917d6f7df89426e24c126",
+      "wall_clock_seconds": 923.7,
+      "hardware": "cuda-float16",
+      "gpu_index_observed": "GPU0",
+      "steer_minus_novice_mean": -0.01509778301886792,
+      "ci_lo": -0.07768484669811307,
+      "ci_hi": 0.04772160082547185,
+      "coherence_ok": true,
+      "cell_status": "no",
+      "format_compliance": {
+        "samples": 4240,
+        "parse_failures": 7,
+        "format_compliance_rate": 0.9983490566037736
+      },
+      "novice_minus_best_mean": -0.21257504716981132,
+      "novice_minus_best_ci_lo": -0.3310472104952829,
+      "novice_minus_best_ci_hi": -0.09622456014150928,
+      "n_test": 53,
+      "frozen_alpha": 8.0,
+      "k": 5
+    },
+    {
+      "cell": "cell_iti__qwen2.5-7b__deliberation",
+      "method": "iti",
+      "axis": "deliberation",
+      "experiment_id": "novice-prompt-comparator-1f352dc2-0001",
+      "code_commit": "f56399ab9dea77d1d1e99ae3e32168d7611c206a",
+      "data_hash": "sha256:ff45994261c785e51a122c272bd1650bf76d52b8770917d6f7df89426e24c126",
+      "config_hash": "sha256:1f352dc2b466013090de41c7630c1724adb1f7da6fb5033ad94167b5eb4c69ef",
+      "result_json": "results/novice_prompt_comparator_20260817/cell_iti__qwen2.5-7b__deliberation/novice_prompt_comparator_results.json",
+      "result_sha256_local_checkout": "sha256:930c84c08c797afcef1e5e9a483efdb928f0deefd0650131987a6deef553b5df",
+      "runtime_prompt_set_sha256": "sha256:ff45994261c785e51a122c272bd1650bf76d52b8770917d6f7df89426e24c126",
+      "wall_clock_seconds": 2753.34,
+      "hardware": "cuda-float16",
+      "gpu_index_observed": "GPU0",
+      "steer_minus_novice_mean": -0.45687500000000003,
+      "ci_lo": -0.5679218749999999,
+      "ci_hi": -0.34947656249999964,
+      "coherence_ok": false,
+      "cell_status": "invalid/coherence_failed",
+      "format_compliance": {
+        "samples": 3200,
+        "parse_failures": 0,
+        "format_compliance_rate": 1.0
+      },
+      "novice_minus_best_mean": 0.006875000000000013,
+      "novice_minus_best_ci_lo": -0.046874999999999986,
+      "novice_minus_best_ci_hi": 0.058750000000000004,
+      "n_test": 40,
+      "frozen_alpha": 4.0,
+      "k": 5
+    },
+    {
+      "cell": "cell_iti__qwen2.5-7b__skepticism",
+      "method": "iti",
+      "axis": "skepticism",
+      "experiment_id": "novice-prompt-comparator-26e04e8d-0001",
+      "code_commit": "97dd573c929fd67702b489fb076f0fdb4e5dc002",
+      "data_hash": "sha256:ff45994261c785e51a122c272bd1650bf76d52b8770917d6f7df89426e24c126",
+      "config_hash": "sha256:26e04e8d6ef9f361240b7c79502bf542ef254602f79bf315e8177e1ece0cdd6d",
+      "result_json": "results/novice_prompt_comparator_20260817/cell_iti__qwen2.5-7b__skepticism/novice_prompt_comparator_results.json",
+      "result_sha256_local_checkout": "sha256:d295bba86a900e39925619c14b4e783a31c993879ac92c98193097068459ada0",
+      "runtime_prompt_set_sha256": "sha256:ff45994261c785e51a122c272bd1650bf76d52b8770917d6f7df89426e24c126",
+      "wall_clock_seconds": 1262.47,
+      "hardware": "cuda-float16",
+      "gpu_index_observed": "GPU0",
+      "steer_minus_novice_mean": -0.020000000000000028,
+      "ci_lo": -0.13271093749999993,
+      "ci_hi": 0.07521093750000031,
+      "coherence_ok": true,
+      "cell_status": "no",
+      "format_compliance": {
+        "samples": 3200,
+        "parse_failures": 0,
+        "format_compliance_rate": 1.0
+      },
+      "novice_minus_best_mean": -0.07999999999999997,
+      "novice_minus_best_ci_lo": -0.2092734374999999,
+      "novice_minus_best_ci_hi": 0.033125000000000036,
+      "n_test": 40,
+      "frozen_alpha": 2.0,
+      "k": 5
+    },
+    {
+      "cell": "cell_iti__qwen2.5-7b__uncertainty_awareness",
+      "method": "iti",
+      "axis": "uncertainty_awareness",
+      "experiment_id": "novice-prompt-comparator-8b5a5d58-0001",
+      "code_commit": "33a00c6e28c97442742cf9bd24545ebbc66d9e0c",
+      "data_hash": "sha256:ff45994261c785e51a122c272bd1650bf76d52b8770917d6f7df89426e24c126",
+      "config_hash": "sha256:8b5a5d58a8eb7141e983bb78f9a075528813a42cc801b67a22ccbaa35a4a1626",
+      "result_json": "results/novice_prompt_comparator_20260817/cell_iti__qwen2.5-7b__uncertainty_awareness/novice_prompt_comparator_results.json",
+      "result_sha256_local_checkout": "sha256:a1bee0949683a27171540cffbb7b2f85220166f94370b8e7543da05f4081c3b9",
+      "runtime_prompt_set_sha256": "sha256:ff45994261c785e51a122c272bd1650bf76d52b8770917d6f7df89426e24c126",
+      "wall_clock_seconds": 969.55,
+      "hardware": "cuda-float16",
+      "gpu_index_observed": "GPU0",
+      "steer_minus_novice_mean": 0.10981957547169811,
+      "ci_lo": 0.006695312500000017,
+      "ci_hi": 0.2146530955188682,
+      "coherence_ok": true,
+      "cell_status": "PASS",
+      "format_compliance": {
+        "samples": 4240,
+        "parse_failures": 7,
+        "format_compliance_rate": 0.9983490566037736
+      },
+      "novice_minus_best_mean": -0.21257504716981132,
+      "novice_minus_best_ci_lo": -0.3310472104952829,
+      "novice_minus_best_ci_hi": -0.09622456014150928,
+      "n_test": 53,
+      "frozen_alpha": 12.0,
+      "k": 5
+    }
+  ],
+  "few_shot_examples": [
+    {
+      "split": "train",
+      "message_id": "91a934ba-cfb8-4ca9-84d0-232b43ad13ab",
+      "parent_id": null,
+      "message_tree_id": "91a934ba-cfb8-4ca9-84d0-232b43ad13ab",
+      "text": "Can you explain contrastive learning in machine learning in simple terms for someone new to the field of ML?"
+    },
+    {
+      "split": "train",
+      "message_id": "345ef82e-70f1-4824-9d73-db2ce00573a7",
+      "parent_id": "e8ca4e06-a584-4001-8594-5f633e06fa91",
+      "message_tree_id": "91a934ba-cfb8-4ca9-84d0-232b43ad13ab",
+      "text": "I didn't understand how pulling and pushing works. What are we pulling or pushing? And how does it work in terms of code or maths?"
+    },
+    {
+      "split": "train",
+      "message_id": "18705268-f16a-48f6-a007-82b7c5e4c17a",
+      "parent_id": "07efcd24-46b9-442a-8bd2-c90b147a0eb1",
+      "message_tree_id": "91a934ba-cfb8-4ca9-84d0-232b43ad13ab",
+      "text": "Can you clarify the analogy? I'm not following the notation or vocabulary used in the example."
+    },
+    {
+      "split": "train",
+      "message_id": "7cce4047-8f87-42c4-9d75-a590c02be5b1",
+      "parent_id": null,
+      "message_tree_id": "7cce4047-8f87-42c4-9d75-a590c02be5b1",
+      "text": "I want to start doing astrophotography as a hobby, any suggestions what could i do?"
+    },
+    {
+      "split": "train",
+      "message_id": "816f3b2a-932a-4b7f-9d18-c76946d2e097",
+      "parent_id": "19cb94ab-d6ab-4dbd-b408-70ffbd9b595c",
+      "message_tree_id": "7cce4047-8f87-42c4-9d75-a590c02be5b1",
+      "text": "Can you tell me more?  What would you recommend as a basic set of equipment to get started with?  How much will it cost?"
+    },
+    {
+      "split": "train",
+      "message_id": "e6f29f10-0859-4201-98e2-5ab02422e476",
+      "parent_id": "667f8a46-7c04-4b61-9593-b03da8f96239",
+      "message_tree_id": "af04d707-6006-4447-a797-8134c6f13272",
+      "text": "my brother looked over my shoulder and saw this conversation. could you explain this conversation to someone with no prior knowledge of the subject"
+    },
+    {
+      "split": "train",
+      "message_id": "6d2b7e04-b0d2-4d12-9a32-2a1fe0e0bb94",
+      "parent_id": "34eb55b3-308a-4bbe-b51d-878c76a5996b",
+      "message_tree_id": "c522beae-5a33-48c1-aee3-19f32fc3f0af",
+      "text": "What are some potential simulations that I could run?"
+    },
+    {
+      "split": "train",
+      "message_id": "0816f92a-077f-4521-acf9-563cea553ad5",
+      "parent_id": "34e3d882-9be9-44a7-859e-78a828efa0f8",
+      "message_tree_id": "ad592ee4-5f6d-4bdd-9d81-3d48de7fb402",
+      "text": "Uhh, could you please properly format the code within a code block? Also enable python syntax highlighting.  Additionally, provide an example where this could be useful."
+    }
+  ],
+  "generated_novice_prompts": {
+    "deliberation": [
+      {
+        "prompt_id": "novice-deliberation-01",
+        "text": "Please slow down and walk me through the solution step-by-step before giving the final answer.",
+        "raw_generation": "Please slow down and walk me through the solution step-by-step before giving the final answer.",
+        "seed": 20260818,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-deliberation-02",
+        "text": "Please take your time to walk me through the steps and double-check the calculations before giving me the final answer.",
+        "raw_generation": "Please take your time to walk me through the steps and double-check the calculations before giving me the final answer.",
+        "seed": 20260819,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-deliberation-03",
+        "text": "Please break it down step by step and double-check the calculations before giving the final answer.",
+        "raw_generation": "Please break it down step by step and double-check the calculations before giving the final answer.",
+        "seed": 20260820,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-deliberation-04",
+        "text": "Please go slow and check my work carefully. Can you also give me the final numeric answer?",
+        "raw_generation": "Please go slow and check my work carefully. Can you also give me the final numeric answer?",
+        "seed": 20260821,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-deliberation-05",
+        "text": "Please walk me through the steps slowly and double-check the calculations before giving me the final answer.",
+        "raw_generation": "Please walk me through the steps slowly and double-check the calculations before giving me the final answer.",
+        "seed": 20260822,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-deliberation-06",
+        "text": "Please take your time to explain each step clearly and double-check the calculations before giving me the final answer.",
+        "raw_generation": "Please take your time to explain each step clearly and double-check the calculations before giving me the final answer.",
+        "seed": 20260823,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-deliberation-07",
+        "text": "Please slow down and walk me through the steps to make sure I understand before giving the final answer.",
+        "raw_generation": "Please slow down and walk me through the steps to make sure I understand before giving the final answer.",
+        "seed": 20260824,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-deliberation-08",
+        "text": "Can you walk me through this step-by-step and make sure I understand each part before moving on? I'd also like the final numeric answer if possible.",
+        "raw_generation": "Can you walk me through this step-by-step and make sure I understand each part before moving on? I'd also like the final numeric answer if possible.",
+        "seed": 20260825,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-deliberation-09",
+        "text": "Can you walk me through this step-by-step and make sure I understand each part before we move on? I'd also like the final numeric answer if possible.",
+        "raw_generation": "Can you walk me through this step-by-step and make sure I understand each part before we move on? I'd also like the final numeric answer if possible.",
+        "seed": 20260826,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-deliberation-10",
+        "text": "Please slow down and walk me through the solution step-by-step before giving the final answer.",
+        "raw_generation": "Please slow down and walk me through the solution step-by-step before giving the final answer.",
+        "seed": 20260827,
+        "duplicate_of_prior": true
+      },
+      {
+        "prompt_id": "novice-deliberation-11",
+        "text": "Can you walk me through this step by step and make sure I understand each part before we move on?",
+        "raw_generation": "Can you walk me through this step by step and make sure I understand each part before we move on?",
+        "seed": 20260828,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-deliberation-12",
+        "text": "Can you walk me through this step by step and make sure I understand each part before moving on? Also, please provide the final numeric answer at the end.",
+        "raw_generation": "Can you walk me through this step by step and make sure I understand each part before moving on? Also, please provide the final numeric answer at the end.",
+        "seed": 20260829,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-deliberation-13",
+        "text": "Please go step-by-step and double-check your work before giving the final answer.",
+        "raw_generation": "Please go step-by-step and double-check your work before giving the final answer.",
+        "seed": 20260830,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-deliberation-14",
+        "text": "Please walk me through the solution step-by-step and double-check the calculations before giving the final answer.",
+        "raw_generation": "Please walk me through the solution step-by-step and double-check the calculations before giving the final answer.",
+        "seed": 20260831,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-deliberation-15",
+        "text": "Can you walk me through this step-by-step and make sure I understand each part before moving on? Also, can you provide the final numeric answer at the end?",
+        "raw_generation": "Can you walk me through this step-by-step and make sure I understand each part before moving on? Also, can you provide the final numeric answer at the end?",
+        "seed": 20260832,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-deliberation-16",
+        "text": "Please break it down step by step and double-check the calculations before giving the final answer.",
+        "raw_generation": "Please break it down step by step and double-check the calculations before giving the final answer.",
+        "seed": 20260833,
+        "duplicate_of_prior": true
+      }
+    ],
+    "skepticism": [
+      {
+        "prompt_id": "novice-skepticism-01",
+        "text": "Please make sure the answer is based on solid facts and not just a guess.",
+        "raw_generation": "Please make sure the answer is based on solid facts and not just a guess.",
+        "seed": 20261818,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-skepticism-02",
+        "text": "Please ensure the answer is well-supported and doesn't stretch the facts.",
+        "raw_generation": "Please ensure the answer is well-supported and doesn't stretch the facts.",
+        "seed": 20261819,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-skepticism-03",
+        "text": "Please make sure the answer is well-supported and doesn't stretch the facts.",
+        "raw_generation": "Please make sure the answer is well-supported and doesn't stretch the facts.",
+        "seed": 20261820,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-skepticism-04",
+        "text": "Please make sure the answer is well-supported and doesn't stretch the facts before choosing.",
+        "raw_generation": "Please make sure the answer is well-supported and doesn't stretch the facts before choosing.",
+        "seed": 20261821,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-skepticism-05",
+        "text": "Please make sure the answer is based on solid facts and reasoning before selecting it.",
+        "raw_generation": "Please make sure the answer is based on solid facts and reasoning before selecting it.",
+        "seed": 20261822,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-skepticism-06",
+        "text": "Please ensure the answer is well-supported and doesn't stretch the facts.",
+        "raw_generation": "Please ensure the answer is well-supported and doesn't stretch the facts.",
+        "seed": 20261823,
+        "duplicate_of_prior": true
+      },
+      {
+        "prompt_id": "novice-skepticism-07",
+        "text": "Please ensure the answers are well-supported and avoid assumptions.",
+        "raw_generation": "Please ensure the answers are well-supported and avoid assumptions.",
+        "seed": 20261824,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-skepticism-08",
+        "text": "Please make sure the answer is well-supported and doesn't stretch the facts too much.",
+        "raw_generation": "Please make sure the answer is well-supported and doesn't stretch the facts too much.",
+        "seed": 20261825,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-skepticism-09",
+        "text": "Please ensure each answer is solid and well-founded before choosing one.",
+        "raw_generation": "Please ensure each answer is solid and well-founded before choosing one.",
+        "seed": 20261826,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-skepticism-10",
+        "text": "Please ensure the answers are well-supported and not based on shaky assumptions.",
+        "raw_generation": "Please ensure the answers are well-supported and not based on shaky assumptions.",
+        "seed": 20261827,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-skepticism-11",
+        "text": "Please make sure the answer is well-supported and logically sound before selecting it.",
+        "raw_generation": "Please make sure the answer is well-supported and logically sound before selecting it.",
+        "seed": 20261828,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-skepticism-12",
+        "text": "Please make sure the answer is based on solid facts before choosing.",
+        "raw_generation": "Please make sure the answer is based on solid facts before choosing.",
+        "seed": 20261829,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-skepticism-13",
+        "text": "Please make sure the answer is logically sound before choosing.",
+        "raw_generation": "Please make sure the answer is logically sound before choosing.",
+        "seed": 20261830,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-skepticism-14",
+        "text": "Please ensure the answer is well-supported and doesn't stretch the facts.",
+        "raw_generation": "Please ensure the answer is well-supported and doesn't stretch the facts.",
+        "seed": 20261831,
+        "duplicate_of_prior": true
+      },
+      {
+        "prompt_id": "novice-skepticism-15",
+        "text": "Please make sure the answer is well-supported and logically sound before selecting it.",
+        "raw_generation": "Please make sure the answer is well-supported and logically sound before selecting it.",
+        "seed": 20261832,
+        "duplicate_of_prior": true
+      },
+      {
+        "prompt_id": "novice-skepticism-16",
+        "text": "Please choose the most accurate and well-supported answer.",
+        "raw_generation": "Please choose the most accurate and well-supported answer.",
+        "seed": 20261833,
+        "duplicate_of_prior": false
+      }
+    ],
+    "uncertainty_awareness": [
+      {
+        "prompt_id": "novice-uncertainty_awareness-01",
+        "text": "I'm not very familiar with this topic, so could you please explain it in simple terms and give me an idea of how confident you are about your answer? 70%",
+        "raw_generation": "I'm not very familiar with this topic, so could you please explain it in simple terms and give me an idea of how confident you are about your answer? 70%",
+        "seed": 20262818,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-uncertainty_awareness-02",
+        "text": "I'm not very familiar with this topic, so could you explain it in simple terms? 20%",
+        "raw_generation": "I'm not very familiar with this topic, so could you explain it in simple terms? 20%",
+        "seed": 20262819,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-uncertainty_awareness-03",
+        "text": "I'm not very sure about this topic, could you give me a clear explanation? 80%",
+        "raw_generation": "I'm not very sure about this topic, could you give me a clear explanation? 80%",
+        "seed": 20262820,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-uncertainty_awareness-04",
+        "text": "Could you please explain it in simpler terms and include your confidence level in the answer? 80%",
+        "raw_generation": "Could you please explain it in simpler terms and include your confidence level in the answer? 80%",
+        "seed": 20262821,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-uncertainty_awareness-05",
+        "text": "I'm not very familiar with this topic, so could you explain it in simple terms and give me an idea of how confident you are in your answer? 70%",
+        "raw_generation": "I'm not very familiar with this topic, so could you explain it in simple terms and give me an idea of how confident you are in your answer? 70%",
+        "seed": 20262822,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-uncertainty_awareness-06",
+        "text": "Can you make sure to include how sure you are about your answer? I'm not very familiar with this topic, so an estimate of how confident you are would be really helpful. 70%",
+        "raw_generation": "Can you make sure to include how sure you are about your answer? I'm not very familiar with this topic, so an estimate of how confident you are would be really helpful. 70%",
+        "seed": 20262823,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-uncertainty_awareness-07",
+        "text": "Could you give me an honest idea of how sure you are about your answer? Like, what percent chance do you have that you got it right?",
+        "raw_generation": "Could you give me an honest idea of how sure you are about your answer? Like, what percent chance do you have that you got it right?",
+        "seed": 20262824,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-uncertainty_awareness-08",
+        "text": "Can you give me a clear explanation and maybe a simple example? I'm not very familiar with the topic, so keeping it straightforward would be great. 70% confident.",
+        "raw_generation": "Can you give me a clear explanation and maybe a simple example? I'm not very familiar with the topic, so keeping it straightforward would be great. 70% confident.",
+        "seed": 20262825,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-uncertainty_awareness-09",
+        "text": "I'm not very familiar with this topic, so could you give me a straightforward explanation and a confidence level of about 70%?",
+        "raw_generation": "I'm not very familiar with this topic, so could you give me a straightforward explanation and a confidence level of about 70%?",
+        "seed": 20262826,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-uncertainty_awareness-10",
+        "text": "I'm not very familiar with this topic and would appreciate a straightforward explanation. My understanding is about 70%.",
+        "raw_generation": "I'm not very familiar with this topic and would appreciate a straightforward explanation. My understanding is about 70%.",
+        "seed": 20262827,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-uncertainty_awareness-11",
+        "text": "I'm not very familiar with this topic and would appreciate a straightforward explanation. My understanding is about 70% sure.",
+        "raw_generation": "I'm not very familiar with this topic and would appreciate a straightforward explanation. My understanding is about 70% sure.",
+        "seed": 20262828,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-uncertainty_awareness-12",
+        "text": "I'm not very familiar with this topic, so could you explain it in simple terms and include your confidence level? 50%",
+        "raw_generation": "I'm not very familiar with this topic, so could you explain it in simple terms and include your confidence level? 50%",
+        "seed": 20262829,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-uncertainty_awareness-13",
+        "text": "Can you explain this in simpler terms and give me an idea of how sure you are about your answer? 80% confident.",
+        "raw_generation": "Can you explain this in simpler terms and give me an idea of how sure you are about your answer? 80% confident.",
+        "seed": 20262830,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-uncertainty_awareness-14",
+        "text": "Can you explain this in simpler terms and give me an idea of how sure you are about your answer? 70% confident.",
+        "raw_generation": "Can you explain this in simpler terms and give me an idea of how sure you are about your answer? 70% confident.",
+        "seed": 20262831,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-uncertainty_awareness-15",
+        "text": "I'm not very familiar with this topic and would appreciate a clear explanation with simple terms. My understanding is about 70%.",
+        "raw_generation": "I'm not very familiar with this topic and would appreciate a clear explanation with simple terms. My understanding is about 70%.",
+        "seed": 20262832,
+        "duplicate_of_prior": false
+      },
+      {
+        "prompt_id": "novice-uncertainty_awareness-16",
+        "text": "Can you explain this in simpler terms and give me an idea of how sure you are about your answer? 70% confident",
+        "raw_generation": "Can you explain this in simpler terms and give me an idea of how sure you are about your answer? 70% confident",
+        "seed": 20262833,
+        "duplicate_of_prior": false
+      }
+    ]
+  }
+}

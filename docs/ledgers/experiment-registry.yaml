@@ -33,25 +33,48 @@ experiments:
   claim_ids:
   - C2b
   type: exploratory
-  status: planned
-  code_commit: null
-  dirty_tree: null
-  data_hash: null
+  status: done
+  code_commit: d20090876ec5227a5a3666747abe7240dcf58428
+  dirty_tree: false
+  data_hash: sha256:ff45994261c785e51a122c272bd1650bf76d52b8770917d6f7df89426e24c126
   env_hash: null
-  config_hash: null
+  config_hash: multiple per-cell config hashes; see cell experiment-registry.yaml files
   model: Qwen/Qwen2.5-7B-Instruct
   dataset: OpenAssistant/oasst1 Apache-2.0 few-shot style anchors + frozen C2b TEST items
   seed: prompt_generation=20260817; comparator=20260723
-  hardware: A800 free GPU only; exact GPU index to be recorded at run time
-  started_at: null
-  ended_at: null
-  exit_code: null
-  raw_metrics: null
-  summary_metrics: null
+  hardware: A800 GPU1 for prompt generation + first two comparator cells; A800 GPU0 for remaining four comparator cells after free-card recheck
+  started_at: '2026-08-17T06:04:31.630163+00:00'
+  ended_at: '2026-08-17T08:56:45.568888+00:00'
+  exit_code: 0
+  raw_metrics:
+    cell_experiment_ids:
+    - novice-prompt-comparator-58951ae9-0001
+    - novice-prompt-comparator-3da9a9b9-0001
+    - novice-prompt-comparator-9eb1a5a7-0001
+    - novice-prompt-comparator-1f352dc2-0001
+    - novice-prompt-comparator-26e04e8d-0001
+    - novice-prompt-comparator-8b5a5d58-0001
+    comparator_cell_gpu_hours: 2.7503
+  summary_metrics:
+    caa_deliberation_steer_minus_novice: {mean: 0.0081, ci98_33: [-0.0642, 0.0684], coherence_ok: true, status: "no"}
+    caa_skepticism_steer_minus_novice: {mean: -0.0, ci98_33: [-0.0784, 0.0659], coherence_ok: true, status: "no"}
+    caa_uncertainty_awareness_steer_minus_novice: {mean: -0.0151, ci98_33: [-0.0777, 0.0477], coherence_ok: true, status: "no"}
+    iti_deliberation_steer_minus_novice: {mean: -0.4569, ci98_33: [-0.5679, -0.3495], coherence_ok: false, status: "invalid/coherence_failed"}
+    iti_skepticism_steer_minus_novice: {mean: -0.0200, ci98_33: [-0.1327, 0.0752], coherence_ok: true, status: "no"}
+    iti_uncertainty_awareness_steer_minus_novice: {mean: 0.1098, ci98_33: [0.0067, 0.2147], coherence_ok: true, status: "PASS"}
   artifacts:
   - docs/ledgers/prereg-simulated-novice-prompt-comparator.md
   - docs/research/2026-08-17-novice-prompt-corpus-license.md
   - data/novice_prompt_sources/oasst1_fewshot_20260817.json
+  - results/novice_prompt_comparator_20260817/novice_prompt_set.json
+  - results/novice_prompt_comparator_20260817/novice_prompt_comparator_aggregate.json
+  - results/novice_prompt_comparator_20260817/novice_prompt_comparator_report.md
+  - results/novice_prompt_comparator_20260817/cell_caa__qwen2.5-7b__deliberation/novice_prompt_comparator_results.json
+  - results/novice_prompt_comparator_20260817/cell_caa__qwen2.5-7b__skepticism/novice_prompt_comparator_results.json
+  - results/novice_prompt_comparator_20260817/cell_caa__qwen2.5-7b__uncertainty_awareness/novice_prompt_comparator_results.json
+  - results/novice_prompt_comparator_20260817/cell_iti__qwen2.5-7b__deliberation/novice_prompt_comparator_results.json
+  - results/novice_prompt_comparator_20260817/cell_iti__qwen2.5-7b__skepticism/novice_prompt_comparator_results.json
+  - results/novice_prompt_comparator_20260817/cell_iti__qwen2.5-7b__uncertainty_awareness/novice_prompt_comparator_results.json
   failure_reason: null
   valid_for_paper: false
   validation_notes: >-

@@ -1,0 +1,39 @@
+experiments:
+- experiment_id: novice-prompt-comparator-1f352dc2-0001
+  parent: null
+  hypothesis_id: H-SIM-NOVICE-BRIDGE
+  claim_ids:
+  - C2b
+  type: exploratory
+  status: done
+  code_commit: f56399ab9dea77d1d1e99ae3e32168d7611c206a
+  dirty_tree: false
+  data_hash: sha256:ff45994261c785e51a122c272bd1650bf76d52b8770917d6f7df89426e24c126
+  env_hash: null
+  config_hash: sha256:1f352dc2b466013090de41c7630c1724adb1f7da6fb5033ad94167b5eb4c69ef
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: OpenAssistant/oasst1 Apache-2.0 few-shot style anchors; data/c2b_tasks/*
+    TEST items
+  seed: 20260723
+  hardware: cuda-float16
+  started_at: '2026-08-17T07:31:36.606376+00:00'
+  ended_at: '2026-08-17T08:17:30.025559+00:00'
+  exit_code: 0
+  raw_metrics: null
+  summary_metrics:
+    deliberation:
+      frozen_alpha: 4.0
+      steer_minus_novice_mean_diff: -0.45687500000000003
+      ci_9833:
+      - -0.5679218749999999
+      - -0.34947656249999964
+      coherence_ok: false
+      passed: false
+      novice_minus_best_mean: 0.006875000000000013
+  artifacts:
+  - results/novice_prompt_comparator_20260817/cell_iti__qwen2.5-7b__deliberation/novice_prompt_comparator_results.json
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: 'Exploratory simulated-novice prompt comparator. Anchor calibration
+    gate NOT passed; threat: AI-generated novice prompts are not validated against
+    real novices.'

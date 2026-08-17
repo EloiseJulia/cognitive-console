@@ -1,0 +1,16 @@
+{"axis": "deliberation", "prompt_id": "novice-deliberation-01", "text": "Please slow down and walk me through the solution step-by-step before giving the final answer."}
+{"axis": "deliberation", "prompt_id": "novice-deliberation-02", "text": "Please take your time to walk me through the steps and double-check the calculations before giving me the final answer."}
+{"axis": "deliberation", "prompt_id": "novice-deliberation-03", "text": "Please break it down step by step and double-check the calculations before giving the final answer."}
+{"axis": "deliberation", "prompt_id": "novice-deliberation-04", "text": "Please go slow and check my work carefully. Can you also give me the final numeric answer?"}
+{"axis": "deliberation", "prompt_id": "novice-deliberation-05", "text": "Please walk me through the steps slowly and double-check the calculations before giving me the final answer."}
+{"axis": "deliberation", "prompt_id": "novice-deliberation-06", "text": "Please take your time to explain each step clearly and double-check the calculations before giving me the final answer."}
+{"axis": "deliberation", "prompt_id": "novice-deliberation-07", "text": "Please slow down and walk me through the steps to make sure I understand before giving the final answer."}
+{"axis": "deliberation", "prompt_id": "novice-deliberation-08", "text": "Can you walk me through this step-by-step and make sure I understand each part before moving on? I'd also like the final numeric answer if possible."}
+{"axis": "deliberation", "prompt_id": "novice-deliberation-09", "text": "Can you walk me through this step-by-step and make sure I understand each part before we move on? I'd also like the final numeric answer if possible."}
+{"axis": "deliberation", "prompt_id": "novice-deliberation-10", "text": "Please slow down and walk me through the solution step-by-step before giving the final answer."}
+{"axis": "deliberation", "prompt_id": "novice-deliberation-11", "text": "Can you walk me through this step by step and make sure I understand each part before we move on?"}
+{"axis": "deliberation", "prompt_id": "novice-deliberation-12", "text": "Can you walk me through this step by step and make sure I understand each part before moving on? Also, please provide the final numeric answer at the end."}
+{"axis": "deliberation", "prompt_id": "novice-deliberation-13", "text": "Please go step-by-step and double-check your work before giving the final answer."}
+{"axis": "deliberation", "prompt_id": "novice-deliberation-14", "text": "Please walk me through the solution step-by-step and double-check the calculations before giving the final answer."}
+{"axis": "deliberation", "prompt_id": "novice-deliberation-15", "text": "Can you walk me through this step-by-step and make sure I understand each part before moving on? Also, can you provide the final numeric answer at the end?"}
+{"axis": "deliberation", "prompt_id": "novice-deliberation-16", "text": "Please break it down step by step and double-check the calculations before giving the final answer."}

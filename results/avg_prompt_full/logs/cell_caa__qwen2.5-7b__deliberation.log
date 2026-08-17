@@ -1,0 +1,39 @@
+[avg-prompt] disk pre-run: disk ok: total 21.34GB < budget 60GB (ceiling 70GB) [/home/elzhang/cc_avg_prompt/hf_home=14.38GB, /home/elzhang/cc_avg_prompt/venv=6.97GB].
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[avg-prompt] planned candidate generations: {'deliberation': 3200} TOTAL=3200
+[avg-prompt] Stage-1/2 guard: no prompt or alpha selection; no frozen result overwrite.
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 1/16 items=40 START done=0/3200 fresh=0 elapsed=0s eta=0s
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   1%|▏         | 5/339 [00:00<00:07, 45.94it/s]Loading weights:  33%|███▎      | 113/339 [00:00<00:00, 627.57it/s]Loading weights:  61%|██████    | 206/339 [00:00<00:00, 755.47it/s]Loading weights:  83%|████████▎ | 283/339 [00:00<00:00, 710.86it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 680.29it/s]
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 1/16 items=40 DONE done=200/3200 fresh=200 elapsed=159s eta=2380s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 2/16 items=40 START done=200/3200 fresh=200 elapsed=159s eta=2380s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 2/16 items=40 DONE done=400/3200 fresh=400 elapsed=337s eta=2359s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 3/16 items=40 START done=400/3200 fresh=400 elapsed=337s eta=2359s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 3/16 items=40 DONE done=600/3200 fresh=600 elapsed=502s eta=2175s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 4/16 items=40 START done=600/3200 fresh=600 elapsed=502s eta=2175s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 4/16 items=40 DONE done=800/3200 fresh=800 elapsed=680s eta=2039s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 5/16 items=40 START done=800/3200 fresh=800 elapsed=680s eta=2039s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 5/16 items=40 DONE done=1000/3200 fresh=1000 elapsed=861s eta=1894s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 6/16 items=40 START done=1000/3200 fresh=1000 elapsed=861s eta=1894s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 6/16 items=40 DONE done=1200/3200 fresh=1200 elapsed=1035s eta=1725s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 7/16 items=40 START done=1200/3200 fresh=1200 elapsed=1035s eta=1725s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 7/16 items=40 DONE done=1400/3200 fresh=1400 elapsed=1195s eta=1537s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 8/16 items=40 START done=1400/3200 fresh=1400 elapsed=1195s eta=1537s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 8/16 items=40 DONE done=1600/3200 fresh=1600 elapsed=1377s eta=1377s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 9/16 items=40 START done=1600/3200 fresh=1600 elapsed=1377s eta=1377s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 9/16 items=40 DONE done=1800/3200 fresh=1800 elapsed=1555s eta=1209s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 10/16 items=40 START done=1800/3200 fresh=1800 elapsed=1555s eta=1209s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 10/16 items=40 DONE done=2000/3200 fresh=2000 elapsed=1733s eta=1040s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 11/16 items=40 START done=2000/3200 fresh=2000 elapsed=1733s eta=1040s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 11/16 items=40 DONE done=2200/3200 fresh=2200 elapsed=1939s eta=882s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 12/16 items=40 START done=2200/3200 fresh=2200 elapsed=1939s eta=882s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 12/16 items=40 DONE done=2400/3200 fresh=2400 elapsed=2157s eta=719s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 13/16 items=40 START done=2400/3200 fresh=2400 elapsed=2157s eta=719s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 13/16 items=40 DONE done=2600/3200 fresh=2600 elapsed=2496s eta=576s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 14/16 items=40 START done=2600/3200 fresh=2600 elapsed=2496s eta=576s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 14/16 items=40 DONE done=2800/3200 fresh=2800 elapsed=2983s eta=426s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 15/16 items=40 START done=2800/3200 fresh=2800 elapsed=2983s eta=426s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 15/16 items=40 DONE done=3000/3200 fresh=3000 elapsed=3493s eta=233s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 16/16 items=40 START done=3000/3200 fresh=3000 elapsed=3493s eta=233s
+[c2b-adj] axis=deliberation phase=test_avg_prompt_candidate 16/16 items=40 DONE done=3200/3200 fresh=3200 elapsed=3960s eta=0s
+[avg-prompt] transcripts: results/avg_prompt_full/cell_caa__qwen2.5-7b__deliberation/transcripts
+[avg-prompt] wrote results/avg_prompt_full/cell_caa__qwen2.5-7b__deliberation/avg_prompt_comparator_results.json (exp avg-prompt-comparator-1a4ae319-0001) wall=3966.6s

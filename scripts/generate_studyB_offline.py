@@ -14,7 +14,9 @@ NO ``expected`` / ``correct*`` / ``answer_key`` / Q value / rubric score.
 This generator is fully self-contained: it does NOT import or touch the V3
 button_board_stepwise package, its frozen answers, or materials v11.3.
 
-Status: RED pre-ethics DRAFT self-test tool. Not deployed, not for recruitment.
+Status: consent finalized; ethics approval obtained (owner-confirmed 2026-08-17).
+Offline anonymous collector. Protocol not yet frozen, so any data collected is
+exploratory (not confirmatory) until protocol freeze + MDE pre-registration.
 """
 
 from __future__ import annotations
@@ -31,7 +33,7 @@ DEFAULT_OUTPUT = (
 
 EXPORT_SCHEMA = "microstudy-export-offline-studyB-v1"
 INSTRUMENT_VERSION = "studyB-collector-offline-0.1.0-draft"
-CONSENT_COPY_VERSION = "studyB-consent-draft-0.1"
+CONSENT_COPY_VERSION = "studyB-consent-1.0"
 
 # Substrings that must never appear anywhere in the generated HTML. This is a
 # HEURISTIC participant-side "zero answer key / zero Q" self-check (a keyword
@@ -56,20 +58,18 @@ HONESTY = {
     "en": (
         "Fictional / illustrative materials only. Exploratory pilot; the protocol "
         "is NOT frozen. One participant does not represent any population. This "
-        "tool draws NO user-benefit conclusion. Consent copy contains placeholders "
-        "and must be finalized by the advisor / ethics reviewer before any "
-        "recruitment. Unsigned offline return depends on honest submission."
+        "tool draws NO user-benefit conclusion. Unsigned offline return depends "
+        "on honest submission."
     ),
     "zh-Hans": (
         "示意/虚构材料。仅用于 exploratory pilot；协议未冻结。单个参与者不代表任何人群。"
-        "本工具不作任何 user-benefit 结论。知情同意文本仍含占位符，正式招募前须由导师/"
-        "伦理审查定稿。无服务器签名，依赖参与者诚实回传。"
+        "本工具不作任何 user-benefit 结论。无服务器签名，依赖参与者诚实回传。"
     ),
 }
 
 CONSENT_COPY = {
     "en": {
-        "heading": "Research informed-consent form (draft)",
+        "heading": "Research informed-consent form",
         "body": [
             {
                 "title": "Purpose of the study",
@@ -77,8 +77,7 @@ CONSENT_COPY = {
                     "This is an anonymous, small academic study of how people "
                     "approach open-ended tasks with two kinds of control: an "
                     "on-screen setting (slider) versus writing their own natural-"
-                    "language instruction (prompt). It is conducted by [researcher "
-                    "name / department (to be completed)]."
+                    "language instruction (prompt)."
                 ),
             },
             {
@@ -88,7 +87,7 @@ CONSENT_COPY = {
                     "instruction for a warm-up task, and then work through a few "
                     "fictional tasks. For each task you will try two ways of "
                     "steering an assistant, then answer a few subjective questions. "
-                    "The whole task takes about [about X minutes (to be completed)]. "
+                    "The whole task takes about 15 minutes. "
                     "All tasks and materials are fictional examples. The tool does "
                     "not run any assistant and shows no generated output."
                 ),
@@ -118,36 +117,24 @@ CONSENT_COPY = {
                     "De-identified responses will be used for academic research "
                     "analysis and may be published in aggregate form; no "
                     "individually identifiable information will be disclosed. "
-                    "Storage and handling follow [data-retention plan / period "
-                    "(to be completed)]."
+                    "They are stored on the researcher's local encrypted device "
+                    "and deleted within 2 years of publication."
                 ),
             },
             {
                 "title": "Risks and benefits",
                 "text": (
-                    "There are no known risks in this study. [Compensation / "
-                    "course-credit statement (to be completed; state if there is "
-                    "none)]. Your participation helps us understand how people "
-                    "reason about these two kinds of control."
-                ),
-            },
-            {
-                "title": "Ethics review and contact",
-                "text": (
-                    "This study has been approved by [ethics review body / "
-                    "approval number (to be completed)]. For questions about the "
-                    "study, contact [researcher name / email (to be completed)]; "
-                    "for questions about your rights as a participant, contact "
-                    "[ethics committee contact (to be completed)]."
+                    "There are no known risks in this study. Your participation "
+                    "helps us understand how people reason about these two kinds "
+                    "of control."
                 ),
             },
             {
                 "title": "Statement of consent",
                 "text": (
                     "By ticking the box below I confirm that: I have read and "
-                    "understood the information above, I am at least [age "
-                    "threshold, e.g. 18 (to be completed)] years old, I take part "
-                    "voluntarily, and I understand I may withdraw at any time."
+                    "understood the information above, I take part voluntarily, "
+                    "and I understand I may withdraw at any time."
                 ),
             },
         ],
@@ -163,14 +150,13 @@ CONSENT_COPY = {
         ),
     },
     "zh-Hans": {
-        "heading": "研究知情同意书（草案）",
+        "heading": "研究知情同意书",
         "body": [
             {
                 "title": "研究目的",
                 "text": (
                     "这是一项匿名的小规模学术研究，了解人们在开放式任务中如何使用两种控制方式："
-                    "界面上的设置（滑块）与自己撰写自然语言指令（prompt）。研究由 "
-                    "[研究者姓名 / 院系（待填写）] 开展。"
+                    "界面上的设置（滑块）与自己撰写自然语言指令（prompt）。"
                 ),
             },
             {
@@ -178,7 +164,7 @@ CONSENT_COPY = {
                 "text": (
                     "你将回答一份简短的背景问卷，为一个热身任务写一条指令，然后完成几个虚构任务。"
                     "每个任务你都会尝试两种引导助手的方式，再回答几道主观问题。全程大约 "
-                    "[约 X 分钟（待填写）]。所有任务与材料都是虚构示意。本工具不运行任何助手，"
+                    "15 分钟。所有任务与材料都是虚构示意。本工具不运行任何助手，"
                     "也不显示任何生成结果。"
                 ),
             },
@@ -201,29 +187,20 @@ CONSENT_COPY = {
                 "title": "数据的用途与保存",
                 "text": (
                     "去标识化的作答数据将用于学术研究分析，并可能以汇总形式发表；不会公开任何"
-                    "能识别到个人的信息。数据的保存与管理遵循 [数据保存方案 / 期限（待填写）]。"
+                    "能识别到个人的信息。数据存放在研究者本地加密设备，并在论文发表后 2 年内删除。"
                 ),
             },
             {
                 "title": "风险与获益",
                 "text": (
-                    "本研究没有已知风险。[报酬 / 学分说明（待填写；如无补偿请注明）]。"
-                    "你的参与将帮助我们了解人们如何看待这两种控制方式。"
-                ),
-            },
-            {
-                "title": "伦理审查与联系方式",
-                "text": (
-                    "本研究已通过 [伦理审查机构名称 / 批准编号（待填写）] 的审查。如对本研究"
-                    "有任何疑问，可联系 [研究者姓名 / 邮箱（待填写）]；如对参与者权益有疑问，"
-                    "可联系 [伦理委员会联系方式（待填写）]。"
+                    "本研究没有已知风险。你的参与将帮助我们了解人们如何看待这两种控制方式。"
                 ),
             },
             {
                 "title": "知情同意声明",
                 "text": (
-                    "勾选下方选项即表示：我已阅读并理解以上信息，我已年满 "
-                    "[年龄门槛，如 18（待填写）] 周岁，自愿参加本研究，并知道我可以随时退出。"
+                    "勾选下方选项即表示：我已阅读并理解以上信息，"
+                    "自愿参加本研究，并知道我可以随时退出。"
                 ),
             },
         ],
@@ -522,7 +499,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 <body>
 <header id="site-header"><strong>Study B — Decoupled Offline Collector (DRAFT, unsigned)</strong><span id="fiction-banner"></span></header>
 <main id="app"><noscript>This file requires JavaScript enabled.</noscript></main>
-<footer id="site-footer"><span>Pre-ethics DRAFT · not for recruitment</span><button id="language-button" class="secondary" type="button">中文 / English</button></footer>
+<footer id="site-footer"><span>Anonymous academic study · fictional materials</span><button id="language-button" class="secondary" type="button">中文 / English</button></footer>
 <script id="study-data" type="application/json">__DATA__</script>
 <script>
 'use strict';

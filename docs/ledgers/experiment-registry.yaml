@@ -27,6 +27,38 @@
 #   validation_notes: null
 
 experiments:
+- experiment_id: NOVICE-PROMPT-COMPARATOR-20260817-FROZEN
+  parent: null
+  hypothesis_id: H-SIM-NOVICE-BRIDGE
+  claim_ids:
+  - C2b
+  type: exploratory
+  status: planned
+  code_commit: null
+  dirty_tree: null
+  data_hash: null
+  env_hash: null
+  config_hash: null
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: OpenAssistant/oasst1 Apache-2.0 few-shot style anchors + frozen C2b TEST items
+  seed: prompt_generation=20260817; comparator=20260723
+  hardware: A800 free GPU only; exact GPU index to be recorded at run time
+  started_at: null
+  ended_at: null
+  exit_code: null
+  raw_metrics: null
+  summary_metrics: null
+  artifacts:
+  - docs/ledgers/prereg-simulated-novice-prompt-comparator.md
+  - docs/research/2026-08-17-novice-prompt-corpus-license.md
+  - data/novice_prompt_sources/oasst1_fewshot_20260817.json
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    FROZEN-RUN-REGISTRATION ONLY. Exploratory simulated-novice prompt comparator
+    replacing avg16 ordinary-user proxy. Anchor calibration gate NOT passed;
+    AI-generated novice prompts are not validated against real novices. No
+    confirmatory paper claim may cite this registration as evidence.
 - experiment_id: c1-facade-1dcc4fa7-0001
   parent: null
   hypothesis_id: H1

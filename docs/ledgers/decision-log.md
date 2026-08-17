@@ -5,6 +5,35 @@
 
 ---
 
+## 2026-08-17 · D-0129 · Owner accepts within-subject confirmatory framing; Study B protocol detailed to v0.2 (unfrozen)
+- Owner reply to the §8.1 question: **接受** — accepts the honest framing from
+  D-0128 (within-subject confirmatory primary H1/H2 at MDE dz≈0.66; the
+  proficiency × comparator interaction H3 stays exploratory/underpowered). This
+  unblocks finalizing the primary estimand.
+- This session then detailed `docs/plans/study-B-protocol-draft.md` to v0.2
+  (still 🔴 DRAFT / unfrozen / no data):
+  - §1.1 prompt-writing proficiency probe: standardized single-prompt task,
+    analytic 0–6 rubric, pre-registered split (default fixed cutoff ≥4/6 =
+    proficient; median-split as pre-registered fallback), 2 blind raters +
+    Cohen's κ, general AI-familiarity kept as covariate only.
+  - §3 task set: main two-axis tasks = a NEW independent illustrative
+    open-generation set (V3 comprehension items unsuited); V3 gate embedded
+    by reference for H4 with fingerprint/answers/materials v11.3 untouched.
+  - §4.1 user-in-the-loop quality Q: pre-registered analytic rubric normalized
+    0–100, blind paired scoring, effort auto-instrumented, optional reliance
+    calibration; export keeps answer keys out (V3 contract).
+  - §5 formalized estimand: H1 D_i = Q(slider) − Q(own-prompt) for proficient
+    users, credited as "warranted control" only if μ_D>0 AND CI lower bound ≥
+    pre-registered user-scale MDE (real-user mirror of the object-level release
+    bar); H2 effort/accessibility paired test for non-proficient users.
+  - §8 defaults set for the remaining items (probe/quality/task-scale drafted;
+    given-comparator third condition defaulted OUT to preserve power/time);
+    only consent placeholder real values (age/researcher/retention/comp/ethics
+    number) remain owner/advisor-owned.
+- Hard gates unchanged: no protocol freeze / MDE preregistration / recruitment
+  / data collection until ethics/IRB + advisor sign-off (not yet held), consent
+  finalization, and independent audit. Self-recruitment does not waive these.
+
 ## 2026-08-17 · D-0128 · Study B power reality resolved: within-subject confirmatory primary; population interaction stays exploratory
 - Owner inputs (ask_user): ethics = **will_get** (not yet held); sample =
   **fixed 10+10**; claim scope = **wants a strong population-difference claim**;

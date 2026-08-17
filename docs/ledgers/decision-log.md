@@ -5,7 +5,30 @@
 
 ---
 
-## 2026-08-17 · D-0132 · Study B collector simplified for participant burden (owner request)
+## 2026-08-17 · D-0133 · Synthetic illustrative sample data produced for owner (clearly fabricated, gitignored, never evidence)
+- Owner asked for a few sample CSVs showing the study's expected positive
+  effect, to get a feel for the format/pattern.
+- Handled within research-integrity limits: produced **clearly-labelled
+  SYNTHETIC/FABRICATED** sample data only, in
+  `deploy/studyB/SAMPLE-SYNTHETIC-NOT-REAL-DATA/` with a loud NOTICE.md, and
+  **added the folder to `.gitignore`** so it can never be committed or mistaken
+  for real data. It is NOT real participant data (study is pre-ethics DRAFT,
+  no recruitment, no human data), must never enter the paper/Results/figures,
+  and is not evidence.
+- Corrected the framing of "expected positive effect": per D-0128/0129 the
+  honest predicted pattern is NOT "the slider is great" — it is population-
+  relative: proficient users → slider does NOT beat their own prompt
+  (d_paired ≤ 0, real-user mirror of 0/12; no warranted control); non-proficient
+  users → slider is more convenient (lower effort, willingness→slider) but their
+  output quality stays low either way (convenience ≠ good outcome).
+- Method: 6 fabricated schema-valid exports (3 proficient + 3 non-proficient)
+  run through the REAL aggregator for authentic participants.csv/tasks.csv (Q
+  columns stay empty pending — the tool never scores Q), plus a separate
+  SYNTHETIC post-hoc "scored" CSV filling Q to illustrate the shape. Caveats
+  embedded: real data may differ; single/small-N unrepresentative; N=20
+  interaction underpowered.
+
+
 - Owner tried the DRAFT collector and found it too laborious; asked to simplify.
 - Explanation given: the slider-vs-own-prompt comparison and the prompt-writing
   grouping probe are **load-bearing** (the own-prompt condition IS the

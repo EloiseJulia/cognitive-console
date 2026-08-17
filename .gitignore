@@ -55,3 +55,6 @@ docs/paper/*.blg
 docs/paper/*.log
 docs/paper/*.out
 docs/paper/*.pdf
+
+# Synthetic/fabricated Study B sample data — must NEVER be committed (research integrity)
+deploy/studyB/SAMPLE-SYNTHETIC-NOT-REAL-DATA/

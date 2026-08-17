@@ -1,0 +1,219 @@
+{
+  "generated_at": "2026-08-17T02:34:15.252804+00:00",
+  "started_at": "2026-08-17T02:34:15.184838+00:00",
+  "backend": "synthetic",
+  "model": "synthetic-offline",
+  "model_revision": null,
+  "steering_method": "caa",
+  "seed": 20260723,
+  "frozen_params": {
+    "alpha_grid": [
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      12.0,
+      16.0,
+      24.0
+    ],
+    "delta": 0.05,
+    "k_samples": 5,
+    "n_items_by_axis": {
+      "deliberation": 60,
+      "skepticism": 60,
+      "uncertainty_awareness": 80
+    },
+    "coherence_max_ratio": 1.5,
+    "coherence_eps_floor": 0.02,
+    "bootstrap_b": 10000,
+    "familywise_alpha": 0.05,
+    "n_axes": 3,
+    "bonferroni_ci_level": 0.9833333333333333,
+    "dev_fraction": 0.3333333333333333,
+    "bootstrap": "paired item-cluster (resample items, each carries its k)",
+    "decision": "CI excludes 0 AND mean(d) >= delta AND coherence gate pass",
+    "verdict_rule": ">=2 pass STRONG_GO; ==1 CONDITIONAL_GO; 0 KILL_PLAN_D",
+    "prereg": "docs/ledgers/prereg-c2b-adjudication.md (FROZEN 2026-07-23)"
+  },
+  "primary_comparator": "per-item mean over 16 frozen candidate prompts",
+  "secondary_comparators": [
+    "drop-best-15 per-item mean",
+    "worst-prompt lower bound"
+  ],
+  "steering_source": "generate",
+  "protocol_frozen": true,
+  "run_type": "diagnostic",
+  "valid_for_paper": false,
+  "generation_accounting": {
+    "candidate_prompt": {
+      "per_axis": {
+        "uncertainty_awareness": 120
+      },
+      "total": 120
+    }
+  },
+  "hardware": "cpu-offline",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "wall_clock_seconds": 0.07,
+  "format_compliance": {
+    "available": true,
+    "source": "results/avg_prompt_smoke_stage1/transcripts",
+    "candidate_prompt_samples": 80,
+    "by_axis": {
+      "uncertainty_awareness": {
+        "samples": 80,
+        "parse_failures": 0,
+        "format_compliance_rate": 1.0
+      }
+    }
+  },
+  "artifacts": {
+    "candidate_set": "results/avg_prompt_smoke_stage1/avg_prompt_candidate_set.jsonl",
+    "candidate_outcomes_long": "results/avg_prompt_smoke_stage1/avg_prompt_candidate_outcomes.jsonl",
+    "transcripts": "results/avg_prompt_smoke_stage1/transcripts"
+  },
+  "axes": [
+    {
+      "axis": "uncertainty_awareness",
+      "layer": 3,
+      "n_dev": 2,
+      "n_test": 4,
+      "k": 5,
+      "frozen_alpha": 8.0,
+      "steering_source": "same-run-regenerated",
+      "steering_validity_check": {
+        "required": false,
+        "reference_steer_mean": null,
+        "tolerance": 1e-09,
+        "passed": null,
+        "note": "no reference supplied for regenerated steering",
+        "observed_steer_mean": 0.99
+      },
+      "best_prompt_id": null,
+      "candidate_prompt_ids": [
+        "unc-strong-01",
+        "unc-strong-02",
+        "unc-strong-03",
+        "unc-strong-04"
+      ],
+      "test_item_ids": [
+        "unc-fix-01",
+        "unc-fix-04",
+        "unc-fix-05",
+        "unc-fix-06"
+      ],
+      "per_item_steer": [
+        0.99,
+        0.99,
+        0.99,
+        0.99
+      ],
+      "candidate_outcomes_by_prompt": {
+        "unc-strong-01": [
+          0.9099999999999999,
+          0.9099999999999999,
+          0.9099999999999999,
+          0.9099999999999999
+        ],
+        "unc-strong-02": [
+          0.9099999999999999,
+          0.9099999999999999,
+          0.9099999999999999,
+          0.9099999999999999
+        ],
+        "unc-strong-03": [
+          0.9099999999999999,
+          0.9099999999999999,
+          0.9099999999999999,
+          0.9099999999999999
+        ],
+        "unc-strong-04": [
+          0.9099999999999999,
+          0.9099999999999999,
+          0.9099999999999999,
+          0.9099999999999999
+        ]
+      },
+      "primary_avg16": {
+        "name": "avg16_mean",
+        "per_item_comparator": [
+          0.9099999999999999,
+          0.9099999999999999,
+          0.9099999999999999,
+          0.9099999999999999
+        ],
+        "per_item_diff": [
+          0.08000000000000007,
+          0.08000000000000007,
+          0.08000000000000007,
+          0.08000000000000007
+        ],
+        "mean_diff": 0.08000000000000007,
+        "ci_lo": 0.08000000000000007,
+        "ci_hi": 0.08000000000000007,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 200,
+        "delta": 0.05,
+        "coherence_ok": true,
+        "passed": true
+      },
+      "secondary_drop_best15": {
+        "name": "drop_best_unavailable_mean",
+        "per_item_comparator": [
+          0.9099999999999999,
+          0.9099999999999999,
+          0.9099999999999999,
+          0.9099999999999999
+        ],
+        "per_item_diff": [
+          0.08000000000000007,
+          0.08000000000000007,
+          0.08000000000000007,
+          0.08000000000000007
+        ],
+        "mean_diff": 0.08000000000000007,
+        "ci_lo": 0.08000000000000007,
+        "ci_hi": 0.08000000000000007,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 200,
+        "delta": 0.05,
+        "coherence_ok": true,
+        "passed": true
+      },
+      "secondary_worst_prompt": {
+        "name": "worst_prompt_lower_bound",
+        "per_item_comparator": [
+          0.9099999999999999,
+          0.9099999999999999,
+          0.9099999999999999,
+          0.9099999999999999
+        ],
+        "per_item_diff": [
+          0.08000000000000007,
+          0.08000000000000007,
+          0.08000000000000007,
+          0.08000000000000007
+        ],
+        "mean_diff": 0.08000000000000007,
+        "ci_lo": 0.08000000000000007,
+        "ci_hi": 0.08000000000000007,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 200,
+        "delta": 0.05,
+        "coherence_ok": true,
+        "passed": true
+      },
+      "test_steer_degeneracy": 0.0,
+      "test_baseline_degeneracy": 0.0,
+      "descriptive": {
+        "primary_comparator": "per-TEST-item mean over all frozen candidate prompts",
+        "secondary_comparators": [
+          "per-TEST-item mean after dropping the frozen DEV-selected best prompt",
+          "per-TEST-item minimum across candidate prompts"
+        ],
+        "selection_policy": "no prompt or alpha selection is performed in this comparator arm",
+        "candidate_count": 4
+      }
+    }
+  ]
+}

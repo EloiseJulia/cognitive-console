@@ -57,7 +57,6 @@ def _task(task_id: str, condition_order: str = "slider_first", *, complete: bool
 def _base_export(*, complete: bool = True) -> dict:
     order = [
         {"task_id": "draftA-recipe-blurb", "condition_order": "slider_first"},
-        {"task_id": "draftB-email-reply", "condition_order": "prompt_first"},
     ]
     return {
         "export_schema": aggregator.EXPORT_SCHEMA,
@@ -91,18 +90,14 @@ def _base_export(*, complete: bool = True) -> dict:
         },
         "tasks": [
             _task("draftA-recipe-blurb", "slider_first", complete=complete),
-            _task("draftB-email-reply", "prompt_first", complete=complete),
         ],
         "convenience": {
-            "tlx_mental": 4,
             "tlx_effort": 3,
-            "tlx_frustration": 2,
             "likert_effort": 4,
             "likert_discoverability": 3,
             "willingness_choice": "own_prompt" if complete else None,
             "willingness_reason": "I trust my own wording.",
         },
-        "reliance": {"confidence_slider": 3, "confidence_own_prompt": 4},
         "attention": {"selected_id": "purple" if complete else None},
     }
 
@@ -134,7 +129,7 @@ def test_generated_payload_has_no_answer_keys(tmp_path):
         assert term not in serialized
     assert payload["export_schema"] == aggregator.EXPORT_SCHEMA
     assert payload["signed"] is False
-    assert len(payload["tasks"]) >= 1
+    assert len(payload["tasks"]) == 1
     assert set(payload["honesty_notice"]) == {"en", "zh-Hans"}
     # No submission_id is baked into the static payload.
     assert "submission_id" not in payload
@@ -160,7 +155,7 @@ def test_aggregate_accepts_valid_export_and_writes_bom(tmp_path):
     (inputs / "p1.json").write_text(json.dumps(export), encoding="utf-8")
     summary = aggregator.aggregate(inputs, out)
     assert summary["participant_count"] == 1
-    assert summary["task_row_count"] == 2
+    assert summary["task_row_count"] == 1
     assert (out / "participants.csv").read_bytes().startswith(b"\xef\xbb\xbf")
     assert (out / "tasks.csv").read_bytes().startswith(b"\xef\xbb\xbf")
     assert summary["q_scoring"]["computed_here"] is False
@@ -184,12 +179,14 @@ def test_participants_csv_carries_covariates_and_effort(tmp_path):
     inputs.mkdir()
     (inputs / "p1.json").write_text(json.dumps(_base_export()), encoding="utf-8")
     aggregator.aggregate(inputs, out)
-    _, rows = _read_csv(out / "participants.csv")
+    fields, rows = _read_csv(out / "participants.csv")
     row = rows[0]
     assert row["cov_self_rating"] == "3"
     assert row["willingness_choice"] == "own_prompt"
     assert row["probe_duration_ms"] == "700"
-    assert row["confidence_own_prompt"] == "4"
+    assert row["n_tasks"] == "1"
+    assert "confidence_own_prompt" not in fields
+    assert "tlx_mental" not in fields
 
 
 # --- Aggregator: de-duplication -----------------------------------------------
@@ -273,9 +270,9 @@ def test_aggregate_rejects_container_smuggled_into_scalar_field(tmp_path):
     list_leak = _base_export()
     list_leak["convenience"]["willingness_choice"] = ["own_prompt", "s3"]
     (inputs / "list_leak.json").write_text(json.dumps(list_leak), encoding="utf-8")
-    reliance_leak = _base_export()
-    reliance_leak["reliance"]["confidence_slider"] = {"answer": "s3"}
-    (inputs / "reliance_leak.json").write_text(json.dumps(reliance_leak), encoding="utf-8")
+    conv_leak = _base_export()
+    conv_leak["convenience"]["tlx_effort"] = {"answer": "s3"}
+    (inputs / "conv_leak.json").write_text(json.dumps(conv_leak), encoding="utf-8")
     attention_leak = _base_export()
     attention_leak["attention"]["selected_id"] = {"answer": "purple"}
     (inputs / "attention_leak.json").write_text(json.dumps(attention_leak), encoding="utf-8")
@@ -285,7 +282,7 @@ def test_aggregate_rejects_container_smuggled_into_scalar_field(tmp_path):
     assert skipped == {
         "dict_leak.json",
         "list_leak.json",
-        "reliance_leak.json",
+        "conv_leak.json",
         "attention_leak.json",
     }
     assert all("scalar value" in item["reason"] for item in summary["skipped_files"])
@@ -340,3 +337,56 @@ def test_aggregate_rejects_complete_status_without_evidence(tmp_path):
     summary = aggregator.aggregate(inputs, out)
     assert summary["participant_count"] == 0
     assert any("complete export" in item["reason"] for item in summary["skipped_files"])
+
+
+# --- Aggregator: simplified-schema regressions (D-0132) ------------------------
+
+
+def test_aggregate_accepts_exactly_one_task(tmp_path):
+    inputs = tmp_path / "in"
+    out = tmp_path / "out"
+    inputs.mkdir()
+    (inputs / "p1.json").write_text(json.dumps(_base_export()), encoding="utf-8")
+    summary = aggregator.aggregate(inputs, out)
+    assert summary["participant_count"] == 1
+    _, rows = _read_csv(out / "tasks.csv")
+    assert len(rows) == 1
+
+
+def test_aggregate_rejects_two_tasks(tmp_path):
+    inputs = tmp_path / "in"
+    out = tmp_path / "out"
+    inputs.mkdir()
+    export = _base_export()
+    export["tasks"].append(_task("draftB-email-reply", "prompt_first"))
+    export["task_order"]["sequence"].append(
+        {"task_id": "draftB-email-reply", "condition_order": "prompt_first"}
+    )
+    (inputs / "two.json").write_text(json.dumps(export), encoding="utf-8")
+    summary = aggregator.aggregate(inputs, out)
+    assert summary["participant_count"] == 0
+    assert any("exactly one task" in item["reason"] for item in summary["skipped_files"])
+
+
+def test_aggregate_rejects_reintroduced_reliance_field(tmp_path):
+    inputs = tmp_path / "in"
+    out = tmp_path / "out"
+    inputs.mkdir()
+    export = _base_export()
+    export["reliance"] = {"confidence_slider": 3, "confidence_own_prompt": 4}
+    (inputs / "reliance.json").write_text(json.dumps(export), encoding="utf-8")
+    summary = aggregator.aggregate(inputs, out)
+    assert summary["participant_count"] == 0
+    assert any("top-level field" in item["reason"] for item in summary["skipped_files"])
+
+
+def test_aggregate_rejects_extra_convenience_field(tmp_path):
+    inputs = tmp_path / "in"
+    out = tmp_path / "out"
+    inputs.mkdir()
+    export = _base_export()
+    export["convenience"]["tlx_mental"] = 4
+    (inputs / "extra.json").write_text(json.dumps(export), encoding="utf-8")
+    summary = aggregator.aggregate(inputs, out)
+    assert summary["participant_count"] == 0
+    assert any("convenience" in item["reason"] for item in summary["skipped_files"])

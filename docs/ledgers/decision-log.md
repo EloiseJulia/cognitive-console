@@ -5,6 +5,65 @@
 
 ---
 
+## 2026-08-17 · D-0128 · Study B power reality resolved: within-subject confirmatory primary; population interaction stays exploratory
+- Owner inputs (ask_user): ethics = **will_get** (not yet held); sample =
+  **fixed 10+10**; claim scope = **wants a strong population-difference claim**;
+  start drafting = yes.
+- Honesty ruling (this session): a **strong confirmatory between-population /
+  interaction claim is not supportable at N=20** and will not be drafted as the
+  headline. Rationale given to owner: interactions need ~4× the N of a main
+  effect; between-group 80% power needs d≈1.32; at d=0.5 power≈0.19; and any
+  "significant" result at this power is effect-inflated / sign-unreliable (Type
+  M/S). Manufacturing a strong interaction claim from n=10/10 would violate the
+  research honesty line.
+- Resolution offered and drafted instead (`docs/plans/study-B-protocol-draft.md`):
+  move the **confirmatory primary tests to within-subject** (MDE dz≈0.66,
+  feasible at N=20):
+  - H1 (within proficient users): the slider does **not** beat the user's own
+    prompt on the warranted-control metric — the real-user parallel to the
+    model-side 0/12.
+  - H2 (within non-proficient users): the slider is less effortful / more
+    accessible than their real alternative (convenience axis).
+  - The **proficiency × comparator interaction (H3) is demoted to exploratory**,
+    reported with effect size + CI and explicitly labelled underpowered; not a
+    core Claim.
+  - Net: two individually-defensible within-group results jointly support the
+    population-relative account without relying on the undetectable interaction.
+- Owner still owes confirmation of this honest framing (protocol §8.1) before
+  the primary estimand is finalized; other §8 details (probe/rubric, quality
+  metric operationalization, consent placeholder values) also pending.
+- Hard gates unchanged: no freeze/MDE-preregistration/recruitment/data until
+  ethics/IRB + advisor sign-off (not yet held), consent finalization, protocol
+  freeze, and independent audit are all complete. V3 invariants untouched.
+
+## 2026-08-17 · D-0127 · Owner authorizes promoting Study B to confirmatory Results + self-recruitment; remaining gates flagged
+- Owner decision: **include Study B data in the paper's Results** (i.e.,
+  exploratory→confirmatory + core-claim scope upgrade, AGENTS §5 — owner has now
+  authorized this) and **the owner will recruit participants themselves**.
+- Manager ruling — this authorization UNLOCKS drafting a confirmatory protocol,
+  but it does **NOT** waive the following hard prerequisites, which must all
+  complete **before any real recruitment or data collection**:
+  1. **Ethics/IRB approval + advisor sign-off** on the study. Collecting human
+     data for a published confirmatory study is a human-subjects matter; the
+     owner cannot self-waive institutional ethics review. This is external to
+     this project and gates data collection.
+  2. **Informed-consent finalization** (the consent is a bilingual DRAFT with
+     placeholders: age threshold, researcher identity, retention, compensation,
+     ethics approval id) — finalized by advisor/ethics.
+  3. **Protocol freeze + preregistered MDE** before confirmatory data.
+  4. **Independent audit** of the instrument before data.
+  5. **Data license / privacy / retention-deletion plan** (even anonymous).
+- Honesty flag (power reality): at N = 10 + 10, a between-population test only
+  reaches 80% power for d ≈ 1.32; power at d = 0.5 is ~0.19 and at d = 0.8 is
+  ~0.40. Within-subject (N = 20 pairs) MDE dz ≈ 0.66. The **proficiency ×
+  comparator interaction** (the two-population headline) needs ~4× the N and is
+  effectively undetectable at N = 20 unless the effect is huge. As confirmatory
+  evidence this must be scoped honestly (small preregistered study; effect-size
+  estimates + CIs; interaction likely underpowered). Escalated to owner:
+  ethics status, N flexibility, and acceptable claim scope (proposal §12).
+- Invariants unchanged: V3 gate fingerprint / frozen answers / materials v11.3
+  not touched; no data collected yet; nothing frozen or recruited.
+
 ## 2026-08-17 · D-0126 · Study B design decisions resolved with writing session (5/6); submission-inclusion escalated to owner
 - The writing session answered the six Study B alignment questions
   (`docs/handoffs/2026-08-17-study-B-open-decisions-for-writing.md`). Resolved

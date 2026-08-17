@@ -332,6 +332,8 @@ def build_parser() -> argparse.ArgumentParser:
                     help="frozen best-prompt result JSON with per_item_steer arrays")
     ap.add_argument("--frozen-alpha", action="append", default=[],
                     help="axis=alpha fallback/override; no selection is performed")
+    ap.add_argument("--validity-tolerance", type=float, default=0.01,
+                    help="absolute tolerance for regenerated steering mean vs frozen source")
     ap.add_argument("--out-dir", default=None)
     return ap
 
@@ -452,6 +454,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 test_steer_degeneracy=src.get("test_steer_degeneracy"),
                 test_baseline_degeneracy=src.get("test_baseline_degeneracy"),
                 reference_steer_mean=src.get("reference_steer_mean"),
+                validity_tolerance=args.validity_tolerance,
                 k=adj.K_SAMPLES,
                 bootstrap_b=args.bootstrap_b,
                 ci_level=adj.BONFERRONI_CI_LEVEL,

@@ -24,7 +24,7 @@
 ## 一条命令启动
 
 ```powershell
-Set-Location "C:\Users\v-elzhang\Desktop\MyFolder\cognitive console\.worktrees\studyB-live"
+Set-Location "C:\Users\v-elzhang\Desktop\MyFolder\cognitive console"
 python scripts\run_studyB_live.py            # 默认端口 8899
 # 或指定端口： python scripts\run_studyB_live.py --port 9001
 ```

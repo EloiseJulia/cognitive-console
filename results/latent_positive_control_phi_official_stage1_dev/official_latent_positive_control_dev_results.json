@@ -1,0 +1,3937 @@
+{
+  "experiment_id": "E-0017b-official-stolfo-latent-positive-control-stage1-dev",
+  "stage": "stage1_dev_only_no_test",
+  "valid_for_paper": false,
+  "official_repo": {
+    "url": "https://github.com/microsoft/llm-steer-instruct",
+    "commit": "9dac937ef6fc3e483b1efc13863deeb03ec38dbe",
+    "license": "MIT",
+    "path": "/home/elzhang/cc_lpc_phi_official/official",
+    "code_paths_used": [
+      "utils/model_utils.py",
+      "utils/generation_utils.py",
+      "keywords/compute_representations.py logic",
+      "keywords/evaluate.py logic",
+      "ifeval_scripts/evaluation_main.py"
+    ]
+  },
+  "model": "phi-3",
+  "model_revision": "f39ac1d28e925b323eae81227eaba4464caced4e",
+  "data": {
+    "dev_file": "/home/elzhang/cc_lpc_phi_official/official/data/keywords/ifeval_single_keyword_include.jsonl",
+    "dev_file_hash": "sha256:1f4452fe01a36621e13d9ff926c4ec12a5d99ef33902ae158576e78f98e89dc8",
+    "n_dev_items": 40,
+    "n_extraction_per_keyword": 20,
+    "n_extraction_rows": 820,
+    "task": "IFEval keywords:existence"
+  },
+  "frozen_procedure": {
+    "primary_estimand": "steer_minus_baseline",
+    "secondary_estimand": "steer_minus_prompt",
+    "alpha_grid_selectable": [
+      40.0,
+      60.0,
+      80.0,
+      100.0
+    ],
+    "official_diagnostic_alpha_not_selectable": null,
+    "delta": 0.05,
+    "bootstrap_b": 10000,
+    "ci_level": 0.9833333333333333,
+    "coherence_gate": "g^S <= 1.5 * g^0 + 0.02",
+    "test_run": false,
+    "format_compliance": "not_applicable: official IFEval keywords:existence binary verifier",
+    "token_normalization": "not_applicable: official keyword checker over decoded text"
+  },
+  "layer_alpha_source": {
+    "official_keyword_config_default_layer": 24,
+    "official_keyword_load_results_example_layer": 26,
+    "official_keyword_load_results_example_weight": 40,
+    "used_source_layers": [
+      24,
+      26,
+      28
+    ],
+    "note": "source_layer_idx is TransformerLens resid_post index used directly by official generation_utils hooks."
+  },
+  "baseline": {
+    "item_ids": [
+      "1069",
+      "1069",
+      "1139",
+      "1139",
+      "1237",
+      "1265",
+      "1265",
+      "1265",
+      "1281",
+      "1281",
+      "1348",
+      "1348",
+      "1348",
+      "1375",
+      "1379",
+      "142",
+      "1508",
+      "1508",
+      "1516",
+      "1531",
+      "1531",
+      "1571",
+      "1571",
+      "1658",
+      "1658",
+      "1779",
+      "1779",
+      "1779",
+      "1779",
+      "1825",
+      "1825",
+      "1825",
+      "1825",
+      "1825",
+      "1845",
+      "1845",
+      "1845",
+      "2139",
+      "2139",
+      "2169"
+    ],
+    "scores": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "degeneracy": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "mean_score": 0.15,
+    "mean_degeneracy": 0.0
+  },
+  "prompt": {
+    "item_ids": [
+      "1069",
+      "1069",
+      "1139",
+      "1139",
+      "1237",
+      "1265",
+      "1265",
+      "1265",
+      "1281",
+      "1281",
+      "1348",
+      "1348",
+      "1348",
+      "1375",
+      "1379",
+      "142",
+      "1508",
+      "1508",
+      "1516",
+      "1531",
+      "1531",
+      "1571",
+      "1571",
+      "1658",
+      "1658",
+      "1779",
+      "1779",
+      "1779",
+      "1779",
+      "1825",
+      "1825",
+      "1825",
+      "1825",
+      "1825",
+      "1845",
+      "1845",
+      "1845",
+      "2139",
+      "2139",
+      "2169"
+    ],
+    "scores": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ],
+    "degeneracy": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0714285714285714,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "mean_score": 0.45,
+    "mean_degeneracy": 0.001785714285714285
+  },
+  "selected": {
+    "source_layer_idx": 26,
+    "alpha": 100.0,
+    "selectable_by_frozen_grid": true,
+    "mean_score": 0.25,
+    "mean_degeneracy": 0.0,
+    "coherence_ok": true,
+    "steer_minus_baseline": 0.1,
+    "steer_minus_prompt": -0.2,
+    "scores": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "degeneracy": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "official_diagnostic_best_any_alpha": {
+    "source_layer_idx": 26,
+    "alpha": 100.0,
+    "selectable_by_frozen_grid": true,
+    "mean_score": 0.25,
+    "mean_degeneracy": 0.0,
+    "coherence_ok": true,
+    "steer_minus_baseline": 0.1,
+    "steer_minus_prompt": -0.2,
+    "scores": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "degeneracy": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "candidate_grid": [
+    {
+      "source_layer_idx": 24,
+      "alpha": 40.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.175,
+      "mean_degeneracy": 0.0,
+      "coherence_ok": true,
+      "steer_minus_baseline": 0.024999999999999994,
+      "steer_minus_prompt": -0.275,
+      "scores": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "source_layer_idx": 24,
+      "alpha": 60.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.2,
+      "mean_degeneracy": 0.0,
+      "coherence_ok": true,
+      "steer_minus_baseline": 0.05000000000000002,
+      "steer_minus_prompt": -0.25,
+      "scores": [
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "source_layer_idx": 24,
+      "alpha": 80.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.2,
+      "mean_degeneracy": 0.0,
+      "coherence_ok": true,
+      "steer_minus_baseline": 0.05000000000000002,
+      "steer_minus_prompt": -0.25,
+      "scores": [
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "source_layer_idx": 24,
+      "alpha": 100.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.225,
+      "mean_degeneracy": 0.0,
+      "coherence_ok": true,
+      "steer_minus_baseline": 0.07500000000000001,
+      "steer_minus_prompt": -0.225,
+      "scores": [
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "source_layer_idx": 26,
+      "alpha": 40.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.2,
+      "mean_degeneracy": 0.0,
+      "coherence_ok": true,
+      "steer_minus_baseline": 0.05000000000000002,
+      "steer_minus_prompt": -0.25,
+      "scores": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "source_layer_idx": 26,
+      "alpha": 60.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.2,
+      "mean_degeneracy": 0.0,
+      "coherence_ok": true,
+      "steer_minus_baseline": 0.05000000000000002,
+      "steer_minus_prompt": -0.25,
+      "scores": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "source_layer_idx": 26,
+      "alpha": 80.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.225,
+      "mean_degeneracy": 0.0,
+      "coherence_ok": true,
+      "steer_minus_baseline": 0.07500000000000001,
+      "steer_minus_prompt": -0.225,
+      "scores": [
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "source_layer_idx": 26,
+      "alpha": 100.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.25,
+      "mean_degeneracy": 0.0,
+      "coherence_ok": true,
+      "steer_minus_baseline": 0.1,
+      "steer_minus_prompt": -0.2,
+      "scores": [
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "source_layer_idx": 28,
+      "alpha": 40.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.175,
+      "mean_degeneracy": 0.0,
+      "coherence_ok": true,
+      "steer_minus_baseline": 0.024999999999999994,
+      "steer_minus_prompt": -0.275,
+      "scores": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "source_layer_idx": 28,
+      "alpha": 60.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.15,
+      "mean_degeneracy": 0.0,
+      "coherence_ok": true,
+      "steer_minus_baseline": 0.0,
+      "steer_minus_prompt": -0.30000000000000004,
+      "scores": [
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "source_layer_idx": 28,
+      "alpha": 80.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.2,
+      "mean_degeneracy": 0.0,
+      "coherence_ok": true,
+      "steer_minus_baseline": 0.05000000000000002,
+      "steer_minus_prompt": -0.25,
+      "scores": [
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "source_layer_idx": 28,
+      "alpha": 100.0,
+      "selectable_by_frozen_grid": true,
+      "mean_score": 0.25,
+      "mean_degeneracy": 0.0,
+      "coherence_ok": true,
+      "steer_minus_baseline": 0.1,
+      "steer_minus_prompt": -0.2,
+      "scores": [
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "degeneracy": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "dev_effects": {
+    "steer_minus_baseline": {
+      "mean": 0.1,
+      "ci_lo": 0.0,
+      "ci_hi": 0.225,
+      "b": 10000,
+      "ci_level": 0.9833333333333333,
+      "passes_dev_sanity": true
+    },
+    "steer_minus_prompt": {
+      "mean": -0.2,
+      "ci_lo": -0.4,
+      "ci_hi": 0.0,
+      "b": 10000,
+      "ci_level": 0.9833333333333333
+    }
+  },
+  "transcripts": {
+    "baseline": [
+      {
+        "item_id": "1069",
+        "text": "Subject: Invitation to [Meeting Topic] Discussion - [Date & Time]\n\nDear [Participant's Name"
+      },
+      {
+        "item_id": "1069",
+        "text": "Subject: Invitation to [Meeting Topic] Discussion - [Date & Time]\n\nDear [Participant's Name"
+      },
+      {
+        "item_id": "1139",
+        "text": "Moms with their endless love,\n\nCoffee in hand, they're the stars,\n\nLife's hiccups they"
+      },
+      {
+        "item_id": "1139",
+        "text": "Moms with their endless love,\n\nCoffee in hand, they're the stars,\n\nLife's hiccups they"
+      },
+      {
+        "item_id": "1237",
+        "text": "Hey there, teenagers! 🌟\n\n\nAre you ready to dive into a world of sizzling steaks, sp"
+      },
+      {
+        "item_id": "1265",
+        "text": "Aluminium cans have become an integral part of food storage due to their durability, lightweight nature, and ability to preserve food for extended periods."
+      },
+      {
+        "item_id": "1265",
+        "text": "Aluminium cans have become an integral part of food storage due to their durability, lightweight nature, and ability to preserve food for extended periods."
+      },
+      {
+        "item_id": "1265",
+        "text": "Aluminium cans have become an integral part of food storage due to their durability, lightweight nature, and ability to preserve food for extended periods."
+      },
+      {
+        "item_id": "1281",
+        "text": "There once was a student named Hannah,\n\nWhose coffee skills were quite the panama.\n\nAt the shop, she'd froth"
+      },
+      {
+        "item_id": "1281",
+        "text": "There once was a student named Hannah,\n\nWhose coffee skills were quite the panama.\n\nAt the shop, she'd froth"
+      },
+      {
+        "item_id": "1348",
+        "text": "Brilliant Le Hou was a renowned physicist known for her groundbreaking work in quantum mechanics. Born in Paris, France, in 1"
+      },
+      {
+        "item_id": "1348",
+        "text": "Brilliant Le Hou was a renowned physicist known for her groundbreaking work in quantum mechanics. Born in Paris, France, in 1"
+      },
+      {
+        "item_id": "1348",
+        "text": "Brilliant Le Hou was a renowned physicist known for her groundbreaking work in quantum mechanics. Born in Paris, France, in 1"
+      },
+      {
+        "item_id": "1375",
+        "text": "### Bad Code Snippet\n\n```java\n// Bad code snippet: Using String concatenation in a SQL query\nString userId = request.get"
+      },
+      {
+        "item_id": "1379",
+        "text": "There once was a woman named Sarah,\n\nWhose town was hot, not a shiver.\n\nAt ninety degrees,\n\nShe'"
+      },
+      {
+        "item_id": "142",
+        "text": "Why did the biologist break up with the morphology? Because they couldn't handle the constant changes in structure and form, and they needed someone who could"
+      },
+      {
+        "item_id": "1508",
+        "text": "Majestic king roars,\n\nRoaring with fierce pride and strength,\n\nLion, king of beasts."
+      },
+      {
+        "item_id": "1508",
+        "text": "Majestic king roars,\n\nRoaring with fierce pride and strength,\n\nLion, king of beasts."
+      },
+      {
+        "item_id": "1516",
+        "text": "In the glow of my screen, I found my retreat, (A)\nA Netflix marathon, my heart's beat. ("
+      },
+      {
+        "item_id": "1531",
+        "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with Dis"
+      },
+      {
+        "item_id": "1531",
+        "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with Dis"
+      },
+      {
+        "item_id": "1571",
+        "text": "In the heart of the forest, where the trees sway,\nLies a love that's pure, that will never decay.\nThe sun kiss"
+      },
+      {
+        "item_id": "1571",
+        "text": "In the heart of the forest, where the trees sway,\nLies a love that's pure, that will never decay.\nThe sun kiss"
+      },
+      {
+        "item_id": "1658",
+        "text": "**Jane Doe**\n\n123 Main Street, Anytown, USA\n\nPhone: (123) 456-"
+      },
+      {
+        "item_id": "1658",
+        "text": "**Jane Doe**\n\n123 Main Street, Anytown, USA\n\nPhone: (123) 456-"
+      },
+      {
+        "item_id": "1779",
+        "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - The Great Lima Grocery Quest"
+      },
+      {
+        "item_id": "1779",
+        "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - The Great Lima Grocery Quest"
+      },
+      {
+        "item_id": "1779",
+        "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - The Great Lima Grocery Quest"
+      },
+      {
+        "item_id": "1779",
+        "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - The Great Lima Grocery Quest"
+      },
+      {
+        "item_id": "1825",
+        "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented by"
+      },
+      {
+        "item_id": "1825",
+        "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented by"
+      },
+      {
+        "item_id": "1825",
+        "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented by"
+      },
+      {
+        "item_id": "1825",
+        "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented by"
+      },
+      {
+        "item_id": "1825",
+        "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented by"
+      },
+      {
+        "item_id": "1845",
+        "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for both individuals"
+      },
+      {
+        "item_id": "1845",
+        "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for both individuals"
+      },
+      {
+        "item_id": "1845",
+        "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for both individuals"
+      },
+      {
+        "item_id": "2139",
+        "text": "(Verse 1)\n\nIn the heart of the city, under the neon lights,\n\nWhere the night is young and the stars are"
+      },
+      {
+        "item_id": "2139",
+        "text": "(Verse 1)\n\nIn the heart of the city, under the neon lights,\n\nWhere the night is young and the stars are"
+      },
+      {
+        "item_id": "2169",
+        "text": "The ratings for the 2022 Winter Olympics in Beijing, China, were influenced by several factors, including the global context, the COVID-"
+      }
+    ],
+    "prompt": [
+      {
+        "item_id": "1069",
+        "text": "Subject: Invitation to Collaborative Meeting on [Topic/Project Name]\n\nDear [Participant's Name],\n"
+      },
+      {
+        "item_id": "1069",
+        "text": "Subject: Invitation to Experience Our Upcoming Meeting\n\nDear [Participant's Name],\n\nI hope this email finds"
+      },
+      {
+        "item_id": "1139",
+        "text": "Mom's hugs, warm and tight,\n\nLaughter echoes, pure delight,\n\nMom's love, our gu"
+      },
+      {
+        "item_id": "1139",
+        "text": "Mothers, the unsung heroes,\n\nWith love, they juggle life's chaos,\n\nTheir laughter, our"
+      },
+      {
+        "item_id": "1237",
+        "text": "Hey, teenagers! 🌮🌶️\n\n\nSo, you've heard about this new spot in town,"
+      },
+      {
+        "item_id": "1265",
+        "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These lightweight, durable containers are widely"
+      },
+      {
+        "item_id": "1265",
+        "text": "Aluminium cans have become an integral part of food storage due to their durability, lightweight nature, and the material's non-toxic"
+      },
+      {
+        "item_id": "1265",
+        "text": "Aluminium cans have become an integral part of food storage and preservation, playing a crucial role in the way we consume meals. These light"
+      },
+      {
+        "item_id": "1281",
+        "text": "There once was a student named Hannah,\n\nWhose internship was quite the panorama.\n\nAt a coffee shop, she'd"
+      },
+      {
+        "item_id": "1281",
+        "text": "There once was a student named Hannah,\n\nWhose coffee skills were quite the panama.\n\nAt the shop, she'd grow,"
+      },
+      {
+        "item_id": "1348",
+        "text": "Brilliant Le Hou is a renowned physicist known for her groundbreaking work in quantum mechanics. Born in Paris, France, Le Hou displayed"
+      },
+      {
+        "item_id": "1348",
+        "text": "Brilliant Le Hou was a renowned physicist and inventor, whose contributions to the field of quantum mechanics have been pivotal in advancing"
+      },
+      {
+        "item_id": "1348",
+        "text": "Brilliant Le Hou was a renowned physicist known for her groundbreaking work in quantum mechanics. Born in the small town of Hou, France"
+      },
+      {
+        "item_id": "1375",
+        "text": "### Vulnerable Code Snippet\n\n```java\n// Vulnerable code snippet using unsafe input handling\npublic class Vulnerable"
+      },
+      {
+        "item_id": "1379",
+        "text": "There once was a woman named Sarah,\n\nWhose town was hot, not a cool breeze.\n\nAt ninety degrees,\n\n"
+      },
+      {
+        "item_id": "142",
+        "text": "Why did the cat become a linguist? Because it wanted to understand the morphology of its meows!"
+      },
+      {
+        "item_id": "1508",
+        "text": "Majestic lion,\n\nRoars through the whispering forests,\n\nKing of the wild realm."
+      },
+      {
+        "item_id": "1508",
+        "text": "Majestic king roars,\n\nA riddle in golden mane,\n\nLion's might endures."
+      },
+      {
+        "item_id": "1516",
+        "text": "In the glow of my screen, I found my retreat, (A)\nA Netflix marathon, my heart's beat. ("
+      },
+      {
+        "item_id": "1531",
+        "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with Dis"
+      },
+      {
+        "item_id": "1531",
+        "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with Dis"
+      },
+      {
+        "item_id": "1571",
+        "text": "In the heart of the land, where the wildflowers grow,\nA love as deep as the roots of the ancient oak tree.\nThe sun"
+      },
+      {
+        "item_id": "1571",
+        "text": "Beneath the sky's vast, azure dome,\n\nWhere whispers of the wind do roam,\n\nThere flows a river,"
+      },
+      {
+        "item_id": "1658",
+        "text": "[Your Name]\n[Address]\n[City, State, Zip]\n[Phone Number]\n[Email Address]\n[LinkedIn"
+      },
+      {
+        "item_id": "1658",
+        "text": "[Your Name]\n[Address]\n[City, State, Zip]\n[Phone Number]\n[Email Address]\n[LinkedIn"
+      },
+      {
+        "item_id": "1779",
+        "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Grocery Store"
+      },
+      {
+        "item_id": "1779",
+        "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - The Great Lima Grocery Quest"
+      },
+      {
+        "item_id": "1779",
+        "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - The Great Lima Grocery Quest"
+      },
+      {
+        "item_id": "1779",
+        "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - The Great Lima Grocery Quest"
+      },
+      {
+        "item_id": "1825",
+        "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented by"
+      },
+      {
+        "item_id": "1825",
+        "text": "- Generative Adversarial Networks (GANs) are a class of machine learning frameworks designed by Ian Goodfellow and his colleagues in "
+      },
+      {
+        "item_id": "1825",
+        "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented by"
+      },
+      {
+        "item_id": "1825",
+        "text": "- Generative Adversarial Networks (GANs) are a class of artificial intelligence algorithms used in unsupervised machine learning.\n\n- They"
+      },
+      {
+        "item_id": "1825",
+        "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning.\n\n"
+      },
+      {
+        "item_id": "1845",
+        "text": "Certainly! Paying your taxes is an essential responsibility for most individuals and businesses. Here's a detailed summary of the process, including the"
+      },
+      {
+        "item_id": "1845",
+        "text": "Certainly! Paying your taxes is an essential responsibility for most individuals and businesses. Here's a detailed summary of the process, including the"
+      },
+      {
+        "item_id": "1845",
+        "text": "Certainly! Paying your taxes is an essential responsibility for most individuals and businesses. Here's a detailed summary of the process:\n\n"
+      },
+      {
+        "item_id": "2139",
+        "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the night is alive with jazz and the stars are"
+      },
+      {
+        "item_id": "2139",
+        "text": "(Verse 1)\nIn the heart of the city, where the lights shine so bright,\nThere's a place where the music takes"
+      },
+      {
+        "item_id": "2169",
+        "text": "The 2022 Winter Olympics in Beijing, China, did not achieve the best ratings for several reasons, despite the presence of talented athlet"
+      }
+    ],
+    "steer": {
+      "layer24_alpha40": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Topic] Discussion - [Date & Time]\n\nDear [Participant's"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to Participate in [Meeting Topic] Discussion\n\nDear [Participant's Name],"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms with love so vast,\n\nHugging, cooking, always fast,\n\nMom's love, forever last."
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms with love so vast,\n\nHugging, cooking, always fast,\n\nMom's love, forever last."
+        },
+        {
+          "item_id": "1237",
+          "text": "Title: \"Buena Onda\" - Where the Tango Meets Tacos!\n\nHey, teenagers! Are you"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of food storage due to their durability, lightweight nature, and ability to preserve the quality of food"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of food storage due to their durability, lightweight nature, and ability to preserve the freshness of"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These cans are made from a thin"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at a coffee company,\n\nWith a latte in hand,\n\n"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at a coffee company,\n\nWith a grin and a sip,"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a name that resonates with innovation and creativity, has made a significant impact in the world of technology. Born in the"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou is a renowned French chef and culinary innovator, born on May 14, 1975, in Lyon"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a renowned physicist and author, has made significant contributions to the field of quantum mechanics. Born in the bust"
+        },
+        {
+          "item_id": "1375",
+          "text": "### Bad Code Snippet:\n\n```java\n// Bad practice: Directly using user input in SQL query without sanitization\nString user"
+        },
+        {
+          "item_id": "1379",
+          "text": "In a town where the sun's a fiery ball,\n\nLives Sarah, who's quite tall.\n\nWith a hat on"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the biologist break up with the morphology? Because they couldn't handle the shape of things!"
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah's heart,\n\nLion's might endures."
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah's heart,\n\nLion's might endures."
+        },
+        {
+          "item_id": "1516",
+          "text": "In the glow of my screen, I found a Netflix escape, (A)\nA marathon of shows, my mind began to res"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1658",
+          "text": "**Jane Doe**\n\n123 Main Street, Anytown, USA\n\nPhone: (123) 456"
+        },
+        {
+          "item_id": "1658",
+          "text": "**Jane Doe**\n\n123 Main Street, Anytown, USA\n\nPhone: (123) 456"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Grocery"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\n\n**8:00 AM - Arrival at the Grocery Store"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Grocery"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Grocery"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning.\n"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning.\n"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning.\n"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning.\n"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for both"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for fil"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process:\n"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the night is alive with the sound of the"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the night is alive with the sounds of the"
+        },
+        {
+          "item_id": "2169",
+          "text": "The ratings for the 2022 Winter Olympics in Beijing, China, were influenced by several factors, including the global context, the COVID"
+        }
+      ],
+      "layer24_alpha60": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to Participate in [Meeting Topic] Discussion\n\nDear [Participant's Name],"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to Participate in Our Upcoming Meeting\n\nDear [Participant's Name],\n\nI hope"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms with love so vast,\n\nHugging, cooking, always last,\n\nMom's hugs, they just can"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms with love so vast,\n\nCooking, cleaning, always last,\n\nMom's love, forever cast."
+        },
+        {
+          "item_id": "1237",
+          "text": "Title: \"Buena Onda\" - Where Argentinian Flavors Rock Your World!\n\nHey, teenagers! Are"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of food storage due to their durability, lightweight nature, and ability to preserve the quality of food"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These lightweight, durable containers are"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These cans are made from a thin"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at a coffee company,\n\nWith a latte in hand,\n\n"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at coffee was quite the plan.\n\nShe learned to grind beans"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a name that resonates with innovation and brilliance, has made a significant impact in the field of renewable energy."
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou is a renowned French chef and culinary innovator, known for his avant-garde approach to traditional French cuisine."
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a renowned physicist and author, has made significant contributions to the field of quantum mechanics. Born in the bust"
+        },
+        {
+          "item_id": "1375",
+          "text": "### Bad Code Snippet:\n\n```java\n// Insecure use of Java API in a web application\npublic String getUserInput(String"
+        },
+        {
+          "item_id": "1379",
+          "text": "In a town where the heat's always quite high,\n\nLives Sarah, under the scorching sky.\n\nWith a fan in"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the biologist break up with the morphology? Because they couldn't handle the shape of things!"
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah's heart,\n\nBravery in fur."
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah's heart,\n\nLion's might endures."
+        },
+        {
+          "item_id": "1516",
+          "text": "In the glow of my screen, I found a Netflix escape,\nA marathon of shows, I couldn't help but take."
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1658",
+          "text": "**[Your Name]**\n\n[Your Address]\n\n[City, State, Zip Code]\n\n[Your Email]\n\n"
+        },
+        {
+          "item_id": "1658",
+          "text": "**[Your Name]**\n\n[Your Address]\n\n[City, State, Zip Code]\n\n[Your Email]\n\n"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Grocery"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\n\n**8:00 AM - Arrival at the Grocery Store"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Grocery"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Adventure in Lima:**\n\n\n1. **Morning:** Start your day with a breakfast"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of artificial intelligence algorithms used in unsupervised machine learning"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning.\n"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning.\n"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning.\n"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning.\n"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for both"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for individuals and businesses alike. Here's a detailed summary of the process for"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an essential responsibility for most individuals and businesses. Here's a detailed summary of the process, which"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the nights are alive with the sound of"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the nights are alive with the sounds of"
+        },
+        {
+          "item_id": "2169",
+          "text": "The ratings for the 2022 Winter Olympics in Beijing, China, were influenced by several factors, including the global context, the event"
+        }
+      ],
+      "layer24_alpha80": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to Participate in Our Upcoming Meeting\n\nDear [Participant's Name],\n\nI hope"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to Participate in Our Upcoming Meeting\n\nDear [Participant's Name],\n\nI hope"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms with love so vast,\n\nHugging, cooking, always last,\n\nMom's love, unsurpassed"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms with love so vast,\n\nCooking, cleaning, always last,\n\nMom's love, forever cast."
+        },
+        {
+          "item_id": "1237",
+          "text": "Title: \"Buena Onda\" - Where Argentinian Flavors Rock Your World!\n\nHey, teenagers! Are"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These lightweight, durable containers are"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These lightweight, durable containers are"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These cans are not only lightweight"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at a coffee company,\n\nWith a latte in hand,\n\n"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at coffee was quite the plan.\n\nShe learned to grind beans"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a name that resonates with innovation and brilliance, has made an indelible mark in the world of technology."
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou is a renowned French chef and culinary innovator, known for his avant-garde approach to traditional French cuisine."
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a renowned physicist and innovator, has made significant contributions to the field of quantum computing. Born in the bust"
+        },
+        {
+          "item_id": "1375",
+          "text": "### Bad Code Snippet:\n\n```java\n// Insecure use of Java API in a web application\npublic String getUserInput(String"
+        },
+        {
+          "item_id": "1379",
+          "text": "In a town where the heat's always quite high,\n\nLives Sarah, under the scorching sky.\n\nWith a sigh"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the biologist bring a ladder to the morphology conference? Because she heard there was a tall tale to be told about the evolution of species"
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah wild,\n\nNature's fierce heart beats."
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah's heart,\n\nMighty lion reigns."
+        },
+        {
+          "item_id": "1516",
+          "text": "In the glow of my screen, I found a Netflix escape,\nA marathon of shows, I couldn't help but take."
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nA gentle breeze whispers, a sweet, melodic tune"
+        },
+        {
+          "item_id": "1658",
+          "text": "**[Your Name]**\n\n[Your Address]\n\n[City, State, Zip Code]\n\n[Your Phone Number]\n"
+        },
+        {
+          "item_id": "1658",
+          "text": "**[Your Name]**\n\n[Your Address]\n\n[City, State, Zip Code]\n\n[Your Phone Number]\n"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Store Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Market of"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\n\n1. **Morning Meet-up at the Marketplace**\n"
+        },
+        {
+          "item_id": "1779",
+          "text": "Title: \"The Perilous Journey to Lima's Marketplace: A Comical Itinerary\"\n\nDay 1: Ar"
+        },
+        {
+          "item_id": "1779",
+          "text": "Title: \"The Great Lima Grocery Adventure: A Funny Itinerary\"\n\nDay 1: Arrival in Lima\n-"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of artificial intelligence algorithms used in unsupervised machine learning"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of artificial intelligence algorithms used in unsupervised machine learning"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms in the field of machine learning.\n\n"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, particularly"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms in the field of machine learning.\n\n"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility, and understanding the process can help ensure you meet your obligations accurately and efficiently."
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility, and it's great that you're seeking to understand the process. Here'"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an essential responsibility for most individuals and businesses. Here's a detailed summary of the process, which"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the nights are alive with the sound of"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, where the lights never dim,\nThere's a melody that's always"
+        },
+        {
+          "item_id": "2169",
+          "text": "The ratings for the 2022 Winter Olympics in Beijing, China, were not considered the best for several reasons. Here are some factors"
+        }
+      ],
+      "layer24_alpha100": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to Participate in Our Upcoming Meeting\n\nDear [Participant's Name],\n\nI hope"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to Join Our Upcoming Meeting\n\nDear [Participant's Name],\n\nI hope this email"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms with love so vast,\n\nCooking, cleaning, always last,\n\nMom's love, forever blast."
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms with love in their eyes,\n\nCooking, cleaning, never saying \"no,\"\n\nMom's love, our sun"
+        },
+        {
+          "item_id": "1237",
+          "text": "Title: \"Buena Onda\" - Where Argentinian Flavor Meets Teenage Sarcasm!\n\nHey,"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These lightweight, durable containers are"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These lightweight, durable containers are"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These cans are not only lightweight"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at a coffee company,\n\nWith a latte in hand,\n\n"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at coffee was a plan,\n\nShe learned to grind beans,"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a name that resonates with innovation and brilliance, has made an indelible mark in the world of technology."
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou is a renowned French chef and culinary innovator, known for his avant-garde approach to traditional French cuisine."
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a renowned innovator in the field of renewable energy, has been a beacon of inspiration for many aspiring scient"
+        },
+        {
+          "item_id": "1375",
+          "text": "### Bad Code Snippet:\n\n```java\n// Insecure use of the Java API in a web application\npublic String getUserInput("
+        },
+        {
+          "item_id": "1379",
+          "text": "In a town where the heat's always quite high,\n\nLives Sarah, under the scorching sky.\n\nWith a sigh"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the biologist bring a ladder to the morphology conference? Because she heard there was a tall tale to be told about the evolution of species"
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah wild,\n\nNature's fierce guardian."
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah's heart,\n\nMighty lion reigns."
+        },
+        {
+          "item_id": "1516",
+          "text": "In the glow of my screen, I found a Netflix escape,\nAs I binge-watched, my mind began to reshape"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nThere lies a hidden path, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wildflowers bloom,\nA gentle breeze whispers, as the sunlight breaks through the"
+        },
+        {
+          "item_id": "1658",
+          "text": "**[Your Name]**\n\n[Your Address]\n\n[City, State, Zip Code]\n\n[Your Phone Number]\n"
+        },
+        {
+          "item_id": "1658",
+          "text": "**[Your Name]**\n\n[Your Address]\n\n[City, State, Zip Code]\n\n[Your Phone Number]\n"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Store Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Market of"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\n\n1. **Morning Meet-up at the Marketplace** -"
+        },
+        {
+          "item_id": "1779",
+          "text": "Title: \"The Perplexing Perambulation to Purchasing Peruvian Products\"\n\nItinerary:\n\n1. Begin"
+        },
+        {
+          "item_id": "1779",
+          "text": "Title: \"The Great Lima Grocery Adventure: A Good-Noodle-Good Time!\"\n\nGood morning, fellow foodies!"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of artificial intelligence algorithms used in unsupervised machine learning"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of artificial intelligence algorithms in the field of machine learning,"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of artificial intelligence algorithms in the field of machine learning,"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms in the field of machine learning, where two"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms in the field of machine learning.\n\n"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility, and understanding the process can help ensure you meet your obligations accurately and efficiently."
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility, and it's great that you're seeking to understand the process. Here'"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying taxes is an essential responsibility for individuals and businesses in most countries. Here's a detailed summary of the process,"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, where the lights never fade,\nThere's a melody that's been"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, where the lights never dim,\nThere's a rhythm that's alive"
+        },
+        {
+          "item_id": "2169",
+          "text": "The ratings for the 2022 Winter Olympics in Beijing, China, may not have been the best for several reasons. Here are some"
+        }
+      ],
+      "layer26_alpha40": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Topic] Discussion - [Date & Time]\n\nDear [Participant's"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Topic] Discussion - [Date & Time]\n\nDear [Participant's"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms with love so vast,\n\nHugging, cooking, and teaching fast,\n\nMom's day, forever last."
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms with love so vast,\n\nHugging, cooking, and teaching,\n\nLife's best, they're unsur"
+        },
+        {
+          "item_id": "1237",
+          "text": "Hey, Buenos Aires-lovers! 🇦🇷\n\n\nJust wanted to drop a quick post about this new spot"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of food storage due to their durability, lightweight nature, and ability to preserve food for extended periods"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of food storage and preservation. They are lightweight, durable, and provide an excellent barrier"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of food storage and preservation. They are lightweight, durable, and provide an excellent barrier"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at a coffee company,\n\nWith a latte in hand,\n\n"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at a coffee company,\n\nWith a latte in hand,\n\n"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a name that resonates with innovation and excellence, has made significant strides in the field of renewable energy. Born"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou is a renowned physicist known for her groundbreaking work in quantum computing. Born in Paris, France, in 1"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a renowned physicist and author, has made significant contributions to the field of quantum mechanics. Born in the bust"
+        },
+        {
+          "item_id": "1375",
+          "text": "### Bad Code Snippet\n\n```java\n// Bad practice: Directly using user input in SQL query without sanitization\nString userInput"
+        },
+        {
+          "item_id": "1379",
+          "text": "In a town where the heat's always at ninety,\n\nLives Sarah, who's quite a fan of the sunny.\n"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the biologist break up with the morphology? Because she found his structure too rigid and couldn't handle his constant need for categorization"
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah's heart,\n\nLion's might endures."
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaring in the savannah,\n\nLion's might endures."
+        },
+        {
+          "item_id": "1516",
+          "text": "In the glow of my screen, I found my escape, (A)\nA Netflix marathon, a digital landscape. (A)"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1658",
+          "text": "**[Your Name]**\n\n[Your Address]\n\n[City, State, Zip Code]\n\n[Your Email Address]\n"
+        },
+        {
+          "item_id": "1658",
+          "text": "**Jane Doe**\n\n123 Main Street, Anytown, USA\n\nPhone: (123) 456"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Grocery"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\n\n**8:00 AM - Arrival at the Grocery Store"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Grocery"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\n\n1. **Morning: The Great Lima Escape**\n\n  "
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for both"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for fil"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for both"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the night is alive with the sound of the"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the night is alive with the sounds of the"
+        },
+        {
+          "item_id": "2169",
+          "text": "The ratings for the 2022 Winter Olympics in Beijing, China, were influenced by several factors, including the global context, the COVID"
+        }
+      ],
+      "layer26_alpha60": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Topic] Discussion Meeting\n\nDear [Participant's Name],\n\n"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Topic] Discussion Meeting\n\nDear [Participant's Name],\n\n"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms juggle life's spice,\n\nWith a smile, they never miss,\n\nLove's warmth, their true"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms with love so vast,\n\nHugging, cooking, and teaching,\n\nMommy's magic touch."
+        },
+        {
+          "item_id": "1237",
+          "text": "Hey, Buenos Aires-lovers! 🇦🇷\n\n\nJust wanted to drop a quick post about this new spot"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of food storage due to their durability, lightweight nature, and ability to preserve the freshness of"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These cans are made from a thin"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These cans are made from a thin"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at a coffee company,\n\nWith a latte in hand,\n\n"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at a coffee company,\n\nWith a latte in hand,\n\n"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a name that resonates with innovation and brilliance in the field of renewable energy, has been a beacon of"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou is a renowned physicist known for her groundbreaking research in quantum computing. Born in Paris, France, in 1"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a renowned physicist and innovator, has made significant contributions to the field of quantum computing. Born in the bust"
+        },
+        {
+          "item_id": "1375",
+          "text": "### Bad Code Snippet:\n\n```java\n// Bad practice: Directly using user input in SQL query without sanitization\nString user"
+        },
+        {
+          "item_id": "1379",
+          "text": "In a town where the heat's always at ninety,\n\nLives Sarah, who's quite a hot-headed lady.\n"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the biologist break up with the morphology? Because she found his structure too rigid and couldn't handle his constant need for categorization"
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah's heart,\n\nLion's might endures."
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaring in the savannah,\n\nLion's might endures."
+        },
+        {
+          "item_id": "1516",
+          "text": "In the glow of my screen, I found my escape, (A)\nA Netflix marathon, a binge-watching shape"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1658",
+          "text": "**[Your Name]**\n\n[Your Address]\n\n[City, State, Zip Code]\n\n[Your Email Address]\n"
+        },
+        {
+          "item_id": "1658",
+          "text": "**[Your Name]**\n\n[Your Address]\n\n[City, State, Zip Code]\n\n[Your Email Address]\n"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Grocery"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\n\n1. **Morning Meet-up at the Marketplace**\n"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Grocery"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\n\n1. **Morning: The Great Lima Escape**\n\n  "
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, introduced"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for both"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process in the"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an essential responsibility for most individuals and businesses. Here's a detailed summary of the process:\n"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the night is alive with the sound of the"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the night is alive with the sounds of the"
+        },
+        {
+          "item_id": "2169",
+          "text": "The ratings for the 2022 Winter Olympics in Beijing, China, were influenced by several factors, including the global context, the COVID"
+        }
+      ],
+      "layer26_alpha80": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Topic] Discussion Meeting\n\nDear [Participant's Name],\n\n"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Topic] Discussion Meeting\n\nDear [Participant's Name],\n\n"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms juggle life's tasks,\nWith a smile, they never ask,\nLove' mom, they always ask."
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms with love so vast,\n\nHugging, cooking, always fast,\n\nMommy, you're unsurpass"
+        },
+        {
+          "item_id": "1237",
+          "text": "Title: \"Buena Onda\" - Where Argentinian Flavors Rock Your Teenage World!\n\nHey, teen"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These lightweight, durable containers are"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These cans are made from a thin"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These cans are made from a thin"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at a coffee company,\n\nWith a latte in hand,\n\n"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at a coffee company,\n\nWith a latte in hand,\n\n"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a name that resonates with innovation and brilliance in the field of renewable energy, has been a beacon of"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou is a renowned French chef and culinary innovator, known for his avant-garde approach to traditional French cuisine."
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a renowned physicist and innovator, has made significant contributions to the field of quantum computing. Born in the bust"
+        },
+        {
+          "item_id": "1375",
+          "text": "### Bad Code Snippet:\n\n```java\n// Insecure use of Java API in a web application\npublic String getUserInput(Http"
+        },
+        {
+          "item_id": "1379",
+          "text": "In a town where the heat's always at ninety,\n\nLives Sarah, who's quite content, you see.\n\nWith"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the biologist bring a ladder to the morphology conference?\n\n\nBecause she heard the discussion on evolutionary branches was going to"
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah's heart,\n\nLion reigns supreme."
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaring in the savannah,\n\nLion's might endures."
+        },
+        {
+          "item_id": "1516",
+          "text": "In the glow of my screen, I found my escape, (A)\nWith Netflix as my guide, I couldn't help but"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1658",
+          "text": "**[Your Name]**\n\n[Your Address]\n\n[City, State, Zip Code]\n\n[Your Phone Number]\n"
+        },
+        {
+          "item_id": "1658",
+          "text": "**[Your Name]**\n\n[Your Address]\n\n[City, State, Zip Code]\n\n[Your Email Address]\n"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Grocery"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\n\n1. **Morning Meet-up at the Marketplace**\n"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\n*Day 1: Arrival and Exploration*\n\n- "
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\nGood morning, fellow foodies! Are you ready to embark on a cul"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of artificial intelligence algorithms used in unsupervised machine learning"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of artificial intelligence algorithms used in unsupervised machine learning"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, introduced"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, introduced"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, introduced"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for calculating"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process in the"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an essential responsibility for most individuals and businesses. Here's a detailed summary of the process:\n"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the night is alive with the sound of the"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the night is alive with the sounds of the"
+        },
+        {
+          "item_id": "2169",
+          "text": "The ratings for the 2022 Winter Olympics in Beijing, China, were influenced by several factors, including the global context, the performance"
+        }
+      ],
+      "layer26_alpha100": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Topic] Discussion Meeting\n\nDear [Participant's Name],\n\n"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to Join Our Upcoming Meeting on [Date]\n\nDear [Participant' experience and insights."
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms juggle life's chaos,\nWith a smile, they never stop,\nLove' mom, always, mom."
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms with love so vast,\n\nHugging, cooking, always fast,\n\nMommy, you're unsurpass"
+        },
+        {
+          "item_id": "1237",
+          "text": "Title: \"Buena Onda\" - Where Argentinian Flavors Rock Your Teenage World!\n\nHey, teen"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These lightweight, durable containers are"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These cans are made from a thin"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These cans are made from a thin"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at a coffee company,\n\nWith a latte in hand,\n\n"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at a coffee company,\n\nWith a latte in hand,\n\n"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a name that resonates with innovation and brilliance in the field of renewable energy, has been a beacon of"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou is a renowned French chef and culinary innovator, known for his avant-garde approach to traditional French cuisine."
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a renowned physicist and innovator, has made significant contributions to the field of quantum computing. Born in the bust"
+        },
+        {
+          "item_id": "1375",
+          "text": "### Bad Code Snippet:\n\n```java\n// Insecure use of Java API in a web application\npublic String getUserInput(String"
+        },
+        {
+          "item_id": "1379",
+          "text": "In a town where the heat's always quite high,\n\nLives Sarah, who's never seen snow.\n\nWith a sun-"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the biologist bring a ladder to the morphology conference?\n\n\nBecause she heard the topic was \"branching out\" in"
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah wild,\n\nNature's fierce heart beats."
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaring in the savannah,\n\nLion reigns supreme."
+        },
+        {
+          "item_id": "1516",
+          "text": "In the glow of my screen, I found my escape,\nWith Netflix as my guide, I couldn't help but take a b"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\""
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wildflowers bloom,\nA gentle breeze whispers, a sweet, enchanting t"
+        },
+        {
+          "item_id": "1658",
+          "text": "**[Your Name]**\n\n[Your Address]\n\n[City, State, Zip Code]\n\n[Your Phone Number]\n"
+        },
+        {
+          "item_id": "1658",
+          "text": "**[Your Name]**\n\n[Your Address]\n\n[City, State, Zip Code]\n\n[Your Email Address]\n"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Market of San"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\n*Day 1: Arrival and Exploration*\n\n- "
+        },
+        {
+          "item_id": "1779",
+          "text": "Title: \"A Grocery Store Adventure in Lima: A Humorous Itinerary\"\n\nDay 1: Arrival in Lima\n"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\nGood morning, fellow foodies! Are you ready to embark on a cul"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of artificial intelligence algorithms used in unsupervised machine learning"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Model Architecture**: GANs consist of two neural networks, the Generator and the Discriminator, which are trained simultaneously through a compet"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of artificial intelligence algorithms used in unsupervised machine learning"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of artificial intelligence algorithms used in unsupervised machine learning"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, introduced"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process in the"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and entities in the United States. Here's a detailed summary of the"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an essential responsibility for most individuals and businesses. Here's a detailed summary of the process, which"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the night is alive with the sound of the"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, where the lights never dim,\nThere's a melody that's waiting"
+        },
+        {
+          "item_id": "2169",
+          "text": "The ratings for the 2022 Winter Olympics in Beijing, China, were influenced by several factors, including the global context, the performance"
+        }
+      ],
+      "layer28_alpha40": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Topic] Discussion - [Date & Time]\n\nDear [Participant's"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Topic] Discussion - [Date & Time]\n\nDear [Participant's"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms juggle life's spice,\n\nWith laughter, they slice through stress,\n\nMom's love, pure,"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms with love so vast,\n\nWhisking us to the past,\n\nLaughter, forever last."
+        },
+        {
+          "item_id": "1237",
+          "text": "Hey there, teenagers! 🌟\n\n\nAre you ready to dive into a world of sizzling steaks,"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of food storage due to their durability, lightweight nature, and ability to preserve food for extended periods"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of food storage due to their durability, lightweight nature, and ability to preserve food for extended periods"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of food storage due to their durability, lightweight nature, and ability to preserve food for extended periods"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at a coffee company,\n\nWith a latte in hand,\n\n"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose coffee skills were quite the panama.\n\nAt the shop, she'd fro"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou was a renowned physicist known for her groundbreaking work in quantum mechanics. Born in Paris, France, in "
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou was a renowned physicist known for her groundbreaking work in quantum mechanics. Born in Paris, France, in "
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a renowned physicist and author, has made significant contributions to the field of quantum mechanics. Born in 19"
+        },
+        {
+          "item_id": "1375",
+          "text": "### Bad Code Snippet\n\n```java\n// Bad practice: Directly using user input in SQL query without sanitization\nString userInput"
+        },
+        {
+          "item_id": "1379",
+          "text": "In a town where the sun's always high,\n\nLives Sarah, under the same sky.\n\nWith a sigh and a f"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the biologist break up with the morphology? Because she found it too hard to keep up with all the changes!"
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah's heart,\n\nLion's might endures."
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah's heart,\n\nLion's might endures."
+        },
+        {
+          "item_id": "1516",
+          "text": "In the glow of my screen, I found my escape, (A)\nA Netflix marathon, a digital landscape. (A)"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1658",
+          "text": "**Jane Doe**\n\n123 Main Street, Anytown, USA\n\nPhone: (123) 456"
+        },
+        {
+          "item_id": "1658",
+          "text": "**Jane Doe**\n\n123 Main Street, Anytown, USA\n\nPhone: (123) 456"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Grocery"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Grocery"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Grocery"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\n\n**8:00 AM - Arrival at the Market of San Pedro"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for both"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for fil"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for both"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the night is alive with the sound of the"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the night is young and the stars are bright"
+        },
+        {
+          "item_id": "2169",
+          "text": "The ratings for the 2022 Winter Olympics in Beijing, China, were influenced by several factors, including the global context, the COVID"
+        }
+      ],
+      "layer28_alpha60": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Topic] Discussion Meeting\n\nDear [Participant's Name],\n\n"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Topic] Discussion - [Date & Time]\n\nDear [Participant' Exper"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms juggle life's spice,\n\nWith laughter, they slice and dice,\n\nMom's love, oh so"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms juggle life's spice,\n\nIn their kitchen, they cook up love,\n\nMom's magic, pure bl"
+        },
+        {
+          "item_id": "1237",
+          "text": "Hey there, Buenos Tardes! 🌶️🍽️\n\n\nAre you ready to dive into a world"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of food storage due to their durability, lightweight nature, and ability to preserve food for extended periods"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of food storage due to their durability, lightweight nature, and ability to preserve food for extended periods"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of food storage due to their durability, lightweight nature, and ability to preserve food for extended periods"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at a coffee company,\n\nWith a latte in hand,\n\n"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose coffee skills were quite the panama.\n\nAt the shop, she'd fro"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou was a renowned mathematician and philosopher whose work bridged the gap between abstract mathematical theory and practical applications in engineering."
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou was a renowned physicist known for her groundbreaking work in quantum mechanics. Born in Paris, France, in "
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a renowned physicist and author, has made significant contributions to the field of quantum mechanics. Born in the bust"
+        },
+        {
+          "item_id": "1375",
+          "text": "### Bad Code Snippet\n\n```java\n// Bad practice: Directly using user input in SQL query without sanitization\nString userInput"
+        },
+        {
+          "item_id": "1379",
+          "text": "In a town where the heat's always at ninety,\n\nLives Sarah, who's quite a hotty.\n\nShe si"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the biologist break up with the morphology? Because she found it too hard to keep up with all the changes!"
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah's heart,\n\nLion's might endures."
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah's heart,\n\nLion's might endures."
+        },
+        {
+          "item_id": "1516",
+          "text": "In the glow of my screen, I found my escape, (A)\nA marathon of shows, I couldn't help but shape."
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1658",
+          "text": "**[Your Name]**\n\n[Your Address]\n\n[City, State, Zip Code]\n\n[Your Email Address]\n"
+        },
+        {
+          "item_id": "1658",
+          "text": "**Jane Doe**\n\n123 Main Street, Anytown, USA\n\nPhone: (123) 456"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Grocery"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\n\n**Morning:**\n\n- 8:00 AM:"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Grocery"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\n\n1. **Morning Meet-up at the Marketplace**\n"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for calculating"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for fil"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for both"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the night is alive with the sound of the"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the night is young and the stars are bright"
+        },
+        {
+          "item_id": "2169",
+          "text": "The ratings for the 2022 Winter Olympics in Beijing, China, were influenced by several factors, including but not limited to:\n"
+        }
+      ],
+      "layer28_alpha80": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Topic] Discussion Meeting\n\nDear [Participant' Corresponding Title],"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Topic] Discussion Meeting\n\nDear [Participant' Experience],\n\n"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms juggle life's tasks,\n\nWith a smile, they never ask,\n\nLove' mom, they always bask."
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms juggle life's spice,\n\nIn their kitchen, they cook up love,\n\nMom' motherhood's grace"
+        },
+        {
+          "item_id": "1237",
+          "text": "Title: \"Buena Onda\" - Where Argentinian Flavors Rock Your Teenage World!\n\nHey, teen"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of food storage due to their durability, lightweight nature, and ability to preserve food for extended periods"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of food storage due to their durability, lightweight nature, and ability to preserve food for extended periods"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These cans are made from a thin"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at a coffee company,\n\nWith a latte in hand,\n\n"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose coffee skills were quite the panama.\n\nAt the shop, she'd fro"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou was a renowned mathematician and philosopher whose work bridged the gap between abstract mathematical theory and practical applications in engineering."
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a luminary in the field of renewable energy, has been a driving force in the transition towards sustainable power sources."
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a renowned physicist and innovator, has made significant contributions to the field of quantum computing. Born in the bust"
+        },
+        {
+          "item_id": "1375",
+          "text": "### Bad Code Snippet\n\n```java\n// Insecure use of the Java API in a web application\npublic String getUserInput(Http"
+        },
+        {
+          "item_id": "1379",
+          "text": "In a town where the heat's always at ninety,\n\nLived Sarah, who was quite a bit of a ninny.\n\n"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the biologist bring a ladder to the morphology conference? Because she heard the discussion on evolutionary adaptations was going to be \"ste"
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah's heart,\n\nLion's might endures."
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah's heart,\n\nLion's might endures."
+        },
+        {
+          "item_id": "1516",
+          "text": "In the glow of my screen, I found my escape, (A)\nA marathon of shows, I couldn't help but shape."
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1658",
+          "text": "**[Your Name]**\n\n[Your Address]\n\n[City, State, Zip Code]\n\n[Your Email Address]\n"
+        },
+        {
+          "item_id": "1658",
+          "text": "**Jane Doe**\n\n123 Main Street, Anytown, USA\n\nPhone: (123) 456"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Store Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Groc"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\n*Day 1: Arrival and Exploration*\n\n- "
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Grocery"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\n*Date:* April 1, 2023\n\n*"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of artificial intelligence algorithms used in unsupervised machine learning"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of artificial intelligence algorithms used in unsupervised machine learning"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for calculating"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process in the"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an essential responsibility for most individuals and businesses. Here's a detailed summary of the process, which"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the night is alive with the sound of the"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the night is young and the stars are bright"
+        },
+        {
+          "item_id": "2169",
+          "text": "The ratings for the 2022 Winter Olympics in Beijing, China, were influenced by several factors, including but not limited to:\n"
+        }
+      ],
+      "layer28_alpha100": [
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to [Meeting Topic] Discussion Meeting\n\nDear [Participant' Corresponding Title],"
+        },
+        {
+          "item_id": "1069",
+          "text": "Subject: Invitation to Join Our Upcoming Meeting Experience\n\nDear [Participant' Experience Experience Experience Exper"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms juggle life's tasks,\n\nWith a smile, they never ask,\n\nMom's love, no one masks"
+        },
+        {
+          "item_id": "1139",
+          "text": "Moms juggle life's tasks,\n\nWith a smile, they never ask,\n\nLove' mother, they bask."
+        },
+        {
+          "item_id": "1237",
+          "text": "Title: \"Buena Onda\" - Where Argentinian Flavors Rock Your Teenage World!\n\nHey, Argentina-"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of food storage due to their durability, lightweight nature, and ability to preserve food for extended periods"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. These cans are made from a light"
+        },
+        {
+          "item_id": "1265",
+          "text": "Aluminium cans have become an integral part of our daily lives, especially when it comes to food storage. They are lightweight, durable,"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose internship at a coffee company,\n\nWith a latte in hand,\n\n"
+        },
+        {
+          "item_id": "1281",
+          "text": "There once was a student named Hannah,\n\nWhose coffee skills were quite the panama.\n\nAt the shop, she'd fro"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou was a renowned mathematician and philosopher whose work revolutionized the field of theoretical mathematics. Born in the bustling"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a luminary in the field of renewable energy, has been paving the way for a sustainable future since her early"
+        },
+        {
+          "item_id": "1348",
+          "text": "Brilliant Le Hou, a renowned physicist and innovator, has made significant contributions to the field of quantum computing. Born in the bust"
+        },
+        {
+          "item_id": "1375",
+          "text": "### Bad Code Snippet\n\n```java\n// Insecure use of the Java API in a web application\npublic String getUserInput(Http"
+        },
+        {
+          "item_id": "1379",
+          "text": "In Sarah's town where the heat's always high,\n\nThe sun beats down with a scorching sigh.\n\nWith"
+        },
+        {
+          "item_id": "142",
+          "text": "Why did the biologist bring a ladder to the morphology conference? Because she heard the discussion on evolutionary adaptations was going to be \"ste"
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah' forest,\n\nLion reigns supreme."
+        },
+        {
+          "item_id": "1508",
+          "text": "Majestic king roars,\n\nRoaming the savannah's heart,\n\nLion's might endures."
+        },
+        {
+          "item_id": "1516",
+          "text": "In the glow of my screen, I found my escape, (A)\nA marathon of shows, I couldn' Netflix's"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1531",
+          "text": "<!DOCTYPE html>\n<html>\n<head>\n\t<title>Proposal for Improving Quality of Life for People with"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1571",
+          "text": "In the heart of the forest, where the wild things roam,\nLies a secret garden, where love finds its home.\nThe trees whisper"
+        },
+        {
+          "item_id": "1658",
+          "text": "**[Your Name]**\n\n[Your Address]\n\n[City, State, Zip Code]\n\n[Your Email Address]\n"
+        },
+        {
+          "item_id": "1658",
+          "text": "**Jane Doe**\n\n123 Main Street, Anytown, USA\n\nPhone: (123) 456"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Store Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Groc"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\n*Day 1: Arrival and Exploration*\n\n- "
+        },
+        {
+          "item_id": "1779",
+          "text": "**Itinerary for a Grocery Store Adventure in Lima**\n\n\n**8:00 AM - Arrival at the Groc"
+        },
+        {
+          "item_id": "1779",
+          "text": "**Lima Grocery Store Adventure Itinerary**\n\n*Date:* April 1, 2023\n\n*"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of artificial intelligence algorithms used in unsupervised machine learning"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Model Overview**: Generative Adversarial Networks (GANs) are a class of artificial intelligence algorithms used in unsupervised"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Definition**: Generative Adversarial Networks (GANs) are a class of artificial intelligence algorithms used in unsupervised machine learning"
+        },
+        {
+          "item_id": "1825",
+          "text": "- **Generative Adversarial Networks (GANs)** are a class of artificial intelligence algorithms used in unsupervised machine learning, implemented"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process for calculating"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an important responsibility for most individuals and businesses. Here's a detailed summary of the process in the"
+        },
+        {
+          "item_id": "1845",
+          "text": "Certainly! Paying your taxes is an essential responsibility for most individuals and businesses. Here's a detailed summary of the process, which"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the night is alive with the sound of the"
+        },
+        {
+          "item_id": "2139",
+          "text": "(Verse 1)\nIn the heart of the city, under the neon lights,\nWhere the night never ends, and the stars sh"
+        },
+        {
+          "item_id": "2169",
+          "text": "The ratings for the 2022 Winter Olympics in Beijing, China, were influenced by several factors, including but not limited to:\n"
+        }
+      ]
+    }
+  },
+  "run_metadata": {
+    "started_at": "2026-08-17T15:52:11.110039+00:00",
+    "ended_at": "2026-08-17T16:13:37.295669+00:00",
+    "wall_clock_seconds": 1286.186,
+    "host": "suzlab-a800",
+    "platform": "Linux-6.8.0-136-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+    "code_commit": "2cd27d13e223e002df96d788cc164ad1be1d1cd4",
+    "dirty_tree": false,
+    "cuda_visible_devices": "3",
+    "stage2_test_run": false
+  },
+  "config_hash": "sha256:ed6971dd7b95f75af63755bd486e4585d4fa09b6c1ac396b81ef6f88f7c44465"
+}

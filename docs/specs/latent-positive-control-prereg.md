@@ -115,3 +115,18 @@ Frozen addendum for `E-0017b-official-stolfo-latent-positive-control-stage1-dev`
 - **DEV size:** complete DEV rerun uses 40 official keyword items after an 86-item attempt was stopped for runtime; this is still above the rejected 12-item toy prompt setup and uses official task format. TEST remains sealed/not run.
 - **Layer/α source:** official keyword config defaults to `source_layer_idx=24`; official `keywords/load_results.py` example reports layer `26`, weight `40`. The completed DEV rerun uses official layer `26` and scans frozen α `{2,4,6,8,12,16,24}` plus diagnostic non-selectable α `40`.
 - **Decision procedure unchanged:** primary `steer-baseline`; secondary `steer-prompt`; same δ/bootstrap/coherence/Bonferroni; no TEST tuning.
+
+## 11. Owner-approved Phi-3 official positive-control addendum (2026-08-17)
+
+After Qwen official-code DEV failed and Gemma-2-2B-IT was blocked by gated access, owner approved the non-gated official Stolfo positive-control setup on `microsoft/Phi-3-mini-4k-instruct`.
+
+Frozen addendum for `E-0017d-phi3-official-stolfo-positive-control-stage1-dev`:
+
+- **Model:** `microsoft/Phi-3-mini-4k-instruct`, pinned revision `f39ac1d28e925b323eae81227eaba4464caced4e`.
+- **Official repo commit:** `9dac937ef6fc3e483b1efc13863deeb03ec38dbe`.
+- **Task/data:** official repo `data/keywords/ifeval_single_keyword_include.jsonl`, IFEval `keywords:existence`.
+- **DEV size:** first 40 official keyword-inclusion items; TEST remains sealed/not run.
+- **Direction extraction:** official contrast-set flow with `n_extraction_per_keyword=20`, yielding 820 extraction rows.
+- **Layer/weight source:** official Appendix-E Phi-3 word-inclusion grid: layers `{24,26,28}`, weights `{40,60,80,100}`.
+- **Decision procedure unchanged:** primary `steer-baseline`; secondary `steer-prompt`; δ/bootstrap/coherence/Bonferroni unchanged.
+- **Runtime caveat:** full 1024-token and then 128-token DEV attempts were stopped for runtime before completion. The completed DEV used the same official layers/weights/direction/task/verifier but capped generation at 32 new tokens. This cap is recorded in the artifact config hash and must be reported before any Stage-2 decision.

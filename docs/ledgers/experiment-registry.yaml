@@ -137,6 +137,57 @@ experiments:
     remote environment lacks authenticated access to the gated Gemma model. Per
     license/access redline, no workaround or model substitution was attempted.
 
+- experiment_id: E-0017d-phi3-official-stolfo-positive-control-stage1-dev
+  parent: E-0017c-gemma-official-stolfo-positive-control-stage1-dev
+  hypothesis_id: H-assay-validity-positive-control
+  claim_ids: []
+  type: diagnostic
+  status: done
+  code_commit: "99174a5 (local branch before artifact commit); remote run commit 2cd27d13e223e002df96d788cc164ad1be1d1cd4"
+  dirty_tree: false
+  data_hash: sha256:1f4452fe01a36621e13d9ff926c4ec12a5d99ef33902ae158576e78f98e89dc8
+  env_hash: null
+  config_hash: sha256:ed6971dd7b95f75af63755bd486e4585d4fa09b6c1ac396b81ef6f88f7c44465
+  model: microsoft/Phi-3-mini-4k-instruct@f39ac1d28e925b323eae81227eaba4464caced4e
+  dataset: "microsoft/llm-steer-instruct data/keywords/ifeval_single_keyword_include.jsonl @ 9dac937ef6fc3e483b1efc13863deeb03ec38dbe; DEV first 40 items; TEST not run"
+  seed: 20260817
+  hardware: "A800 GPU3 selected as free (CUDA_VISIBLE_DEVICES=3); remote host suzlab-a800"
+  started_at: '2026-08-17T15:52:11.110039+00:00'
+  ended_at: '2026-08-17T16:13:37.295669+00:00'
+  exit_code: 0
+  raw_metrics: results/latent_positive_control_phi_official_stage1_dev/official_latent_positive_control_dev_results.json
+  summary_metrics:
+    dev_n: 40
+    official_repo_commit: 9dac937ef6fc3e483b1efc13863deeb03ec38dbe
+    source_layer_idx: 26
+    selected_weight: 100.0
+    baseline_compliance: 0.15
+    prompt_compliance: 0.45
+    steer_compliance: 0.25
+    steer_minus_baseline: 0.10
+    steer_minus_baseline_ci_9833: [0.0, 0.225]
+    steer_minus_prompt: -0.20
+    steer_minus_prompt_ci_9833: [-0.40, 0.0]
+    coherence_ok: true
+    dev_sanity_pass: true
+  artifacts:
+  - results/latent_positive_control_phi_official_stage1_dev/official_latent_positive_control_dev_results.json
+  - results/latent_positive_control_phi_official_stage1_dev/official_latent_positive_control_dev_summary.md
+  - results/latent_positive_control_phi_official_stage1_dev/official_latent_positive_control_phi_grid_report.md
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    Owner approved non-gated Phi-3 Mini official Stolfo word-inclusion positive
+    control after Qwen official DEV failed and Gemma was gated. DEV used official
+    task/verifier, official contrast-set flow with n_extraction_per_keyword=20,
+    official Phi-3 layers {24,26,28}, and official weights {40,60,80,100}.
+    The selected coherent cell (layer 26, weight 100) improved over baseline on
+    DEV (0.25 vs 0.15; Δ=0.10; Bonferroni CI [0.0,0.225]) and therefore passes
+    the preregistered DEV sanity condition. TEST was not run. Runtime caveat:
+    after 1024-token and 128-token runs were stopped for runtime, the completed
+    DEV used a 32-new-token generation cap; this is recorded in the artifact and
+    must be surfaced before Stage-2 GO.
+
 - experiment_id: c1-facade-1dcc4fa7-0001
   parent: null
   hypothesis_id: H1

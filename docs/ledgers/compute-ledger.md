@@ -10,6 +10,7 @@
 | 2026-08-17 | A800 GPU-hours (Stage-1 latent behavioral positive-control DEV; GPU3; TEST not run) | 0.16343 | E-0017 | owner-approved Stage-1 latent positive control | >=0.17065 |
 | 2026-08-17 | A800 GPU-hours (official Stolfo rerun: one 86-item run stopped for runtime + one 40-item DEV completed; GPU3; TEST not run) | ~1.31 | E-0017b | owner-approved official-code rerun | >=1.48065 |
 | 2026-08-17 | A800 GPU-hours (Gemma official DEV attempt blocked at gated model auth; no generation) | ~0.00 | E-0017c | owner-approved Gemma official positive control | >=1.48065 |
+| 2026-08-17 | A800 GPU-hours (Phi-3 official DEV: one 1024-token run stopped, one 128-token run stopped, one 32-token DEV completed; GPU3; TEST not run) | ~1.40 | E-0017d | owner-approved Phi-3 official positive control | >=2.88065 |
 
 - max_gpu_hours: TBD (human)
 - max_api_cost: TBD (human)

@@ -542,13 +542,15 @@
     "D1": {
       "best_prompt_id": "delib-strong-10",
       "dev_selection_path": "/home/elzhang/cc_l0/delib_512_20260815_dev/dev/cells/D1/sealed/dev_selection.json",
-      "dev_selection_sha256": "sha256:759effbe409d496c49392f3750f831c1fd960e9c658f8c09076f8e3775abbe80",
+      "dev_selection_sha256": "sha256:4a8c6f4baf4b1319493ced3bcd87402ebc6b382e5e9e4a6ee2d6b3ca97aa5c01",
+      "lineage_note": "LF-normalized repo-relative DEV seal; TEST consumed abs-path-only reseal documented in TEST result JSON.",
       "selected_alpha": 16.0
     },
     "D2": {
       "best_prompt_id": "delib-strong-04",
       "dev_selection_path": "/home/elzhang/cc_l0/delib_512_20260815_dev/dev/cells/D2/sealed/dev_selection.json",
-      "dev_selection_sha256": "sha256:0a65407b0982f3e0744fdc09534f72d9c9d5d891d74405bd10141bf2bd8b5ef5",
+      "dev_selection_sha256": "sha256:ddf9e1755ef2b8d745f9fe9c7895e9467702a631c759cc72235c5a54ac2cf9ca",
+      "lineage_note": "LF-normalized repo-relative DEV seal; TEST consumed abs-path-only reseal documented in TEST result JSON.",
       "selected_alpha": 2.0
     }
   }

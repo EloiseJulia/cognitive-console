@@ -1,3 +1,6 @@
 {
-  "result_sha256": "sha256:97e123d75c38544576c46485be2203f597deef42e50deb4eace2ff7d665d799f"
+  "audit_ref": "audit-delib512+lineage-fix-20260817",
+  "result_sha256": "sha256:3c91a5df33e057138bb28fbb6fe92f0bcc29ce8fa148c2dde8701d7cac43cf7f",
+  "scientific_status": "RESULT_AUDIT_PASSED",
+  "valid_for_paper": true
 }

@@ -1,11 +1,21 @@
 {
   "experiment_id": "delib-512-test-20260815",
-  "file_count": 57,
+  "file_count": 58,
   "files": [
     {
-      "bytes": 22005,
+      "bytes": 1463,
+      "path": "dev/DEV_SUMMARY.json",
+      "sha256": "sha256:9d6d713838a6f41422a434a4c75cd4f6cbcfa7e9dc6fdc6d2c4aa443b665a125"
+    },
+    {
+      "bytes": 17142,
+      "path": "dev/SEALED.json",
+      "sha256": "sha256:c5a4341bdf7f2861fb58a6af49401a12cca2989dd0a85f6ef851cfd1f6340a9f"
+    },
+    {
+      "bytes": 21191,
       "path": "dev/cells/D1/sealed/dev_selection.json",
-      "sha256": "sha256:759effbe409d496c49392f3750f831c1fd960e9c658f8c09076f8e3775abbe80"
+      "sha256": "sha256:4a8c6f4baf4b1319493ced3bcd87402ebc6b382e5e9e4a6ee2d6b3ca97aa5c01"
     },
     {
       "bytes": 16,
@@ -13,29 +23,29 @@
       "sha256": "sha256:794de977c6bf1944c220701a343fcf32c05f208f7283fcea44fb5ce4040c4b85"
     },
     {
-      "bytes": 170904,
+      "bytes": 170379,
       "path": "dev/cells/D1/work/checkpoints/deliberation_dev_alpha.jsonl",
-      "sha256": "sha256:b9a08488411ddabd426f70f78ea6928533084c31fb72bc11e9e13becf954993b"
+      "sha256": "sha256:abaa8859f82d77d9fae1a4217522af36d65b7e48f3f6bbabb3a54bbe5686a5e3"
     },
     {
-      "bytes": 24293,
+      "bytes": 24218,
       "path": "dev/cells/D1/work/checkpoints/deliberation_dev_baseline.jsonl",
-      "sha256": "sha256:38b3fbcab2dc7997dee8657a4b8b08c4c12ba99554ac961b19810c86260b7716"
+      "sha256": "sha256:8500ad72b869d2664c27dd45f69f2cda8610d60de0f7841dabd042630a3b693d"
     },
     {
-      "bytes": 416987,
+      "bytes": 415787,
       "path": "dev/cells/D1/work/checkpoints/deliberation_dev_prompt.jsonl",
-      "sha256": "sha256:d39527f5ac59cb8db60f2ce1b54324cb2c9512613cabd95deb88fee3a7ca1ed8"
+      "sha256": "sha256:bdea8b0295b0991a9f11e2ce31f1b382b38fa775c943d1d41047972219664abd"
     },
     {
-      "bytes": 21428149,
+      "bytes": 21419149,
       "path": "dev/cells/D1/work/transcripts/all_generations.jsonl",
-      "sha256": "sha256:8334ae44314e70c746770d771feb51ebe0ff19276c0c2f4b6b3ef246f1718eb8"
+      "sha256": "sha256:d0acae82647380c48da6924cf9f6be52a45a70bd67218880bf48ef0360ad2427"
     },
     {
-      "bytes": 22058,
+      "bytes": 21240,
       "path": "dev/cells/D2/sealed/dev_selection.json",
-      "sha256": "sha256:0a65407b0982f3e0744fdc09534f72d9c9d5d891d74405bd10141bf2bd8b5ef5"
+      "sha256": "sha256:ddf9e1755ef2b8d745f9fe9c7895e9467702a631c759cc72235c5a54ac2cf9ca"
     },
     {
       "bytes": 16,
@@ -43,34 +53,24 @@
       "sha256": "sha256:75771a2584ab97b8b2eb2bce5d2feb72d8b55ae46c3308742a9bbe1225a513d1"
     },
     {
-      "bytes": 162782,
+      "bytes": 162257,
       "path": "dev/cells/D2/work/checkpoints/deliberation_dev_alpha.jsonl",
-      "sha256": "sha256:3ec7c70d57243722eaad226e250afb69039a33963d4160e84fd7cb99c2448e77"
+      "sha256": "sha256:3397a260f558ee37a70ed1b837d629e1f67f125f7028e20c61e3a44e905efe0b"
     },
     {
-      "bytes": 23949,
+      "bytes": 23874,
       "path": "dev/cells/D2/work/checkpoints/deliberation_dev_baseline.jsonl",
-      "sha256": "sha256:a03688743d71d9d398af97c3f3351d15121386afc637081ee0343025650458c9"
+      "sha256": "sha256:05143ada16bace1e7a62a81230f698521328c16d1cefcebf693050bf6f3a017f"
     },
     {
-      "bytes": 415624,
+      "bytes": 414424,
       "path": "dev/cells/D2/work/checkpoints/deliberation_dev_prompt.jsonl",
-      "sha256": "sha256:0cbe25490610ee5da9e6c9d1d2069259919cbd40bd58e2c30d4ec9022e70dd20"
+      "sha256": "sha256:85536a00569e1eea3d98bfa5a735a51ffce6409c6e38ed1b28d00ef7ee04723c"
     },
     {
-      "bytes": 20575518,
+      "bytes": 20566518,
       "path": "dev/cells/D2/work/transcripts/all_generations.jsonl",
-      "sha256": "sha256:a4102e8a6bc2b24117822d0b834bc6c8ee5ad3e1434c515ddd337618175828f7"
-    },
-    {
-      "bytes": 1501,
-      "path": "dev/DEV_SUMMARY.json",
-      "sha256": "sha256:70e2f63a7948fd93dc6c94f600efb8ee057610a1c20e31d768e3c1907956bc34"
-    },
-    {
-      "bytes": 17437,
-      "path": "dev/SEALED.json",
-      "sha256": "sha256:105189191ed8d777fee0d17f7352e6922ae9ce2bf53f2cacf04cfda55f86d972"
+      "sha256": "sha256:40de170c5980d6fa37c6116d0b7713e440f4866261936e82caeb720d28af22f1"
     },
     {
       "bytes": 28800,
@@ -83,19 +83,14 @@
       "sha256": "sha256:b2b783b7ad89e88448fa64d7da585641407291deea5759606edd77bf612225f4"
     },
     {
-      "bytes": 2403,
-      "path": "experiment-registry.yaml",
-      "sha256": "sha256:84a37b8e2fd879edd47600033dfaebb0215b6fd61894d4c263f2beecde341fd1"
-    },
-    {
       "bytes": 85950,
       "path": "logs/dev.log",
       "sha256": "sha256:bc7a6ba808dfc393dfdf5215410f01197c5a176520508289c194da3e0fcd4016"
     },
     {
-      "bytes": 240,
+      "bytes": 237,
       "path": "logs/preflight.log",
-      "sha256": "sha256:b977e8e0dce6b45cd961d70b3deb03892730c7afa7caa660df7097dad868f2e6"
+      "sha256": "sha256:f91c0aa5f6fb325d7ac6660c2574fb2bf9bdc2d45d79c4af49f91ca6575fff48"
     },
     {
       "bytes": 873,
@@ -108,29 +103,39 @@
       "sha256": "sha256:dd2741e4e03507a6aa8a211a074c61b6198988a145c4cb147de224db1f8eba96"
     },
     {
-      "bytes": 19717,
+      "bytes": 19093,
       "path": "preflight/preflight.json",
-      "sha256": "sha256:132108f3dae2dff2e537def83c131cffc2691341e73cad20649c17db34c9c1da"
+      "sha256": "sha256:24780a8985476982eeb7082d913dd979c5cdcb89ab488f19346842c49986cc23"
     },
     {
-      "bytes": 25472,
-      "path": "test/cells/D1/sealed/powered_tost_A_result.json",
-      "sha256": "sha256:97e123d75c38544576c46485be2203f597deef42e50deb4eace2ff7d665d799f"
+      "bytes": 17781,
+      "path": "test/SEALED.json",
+      "sha256": "sha256:0a0d98671db64de4f82c231b8bd180e89f2499f0a4968592b61a6e359607ad13"
     },
     {
-      "bytes": 97,
+      "bytes": 2074,
+      "path": "test/TEST_SUMMARY.json",
+      "sha256": "sha256:68f50bb222c3d22224c18e51ff66284b3daa43f91717ffc3ff0d5423df53f8d9"
+    },
+    {
+      "bytes": 224,
       "path": "test/cells/D1/SEALED.json",
-      "sha256": "sha256:55af6cd5d0c49f7e316981901f485f9b79bb224fa03e5e8b88b30ba560c868d2"
+      "sha256": "sha256:723711ebdd73002d4702966d4d1b13862188872c67d6564b626b495600afe8bb"
     },
     {
-      "bytes": 616,
+      "bytes": 697,
       "path": "test/cells/D1/TEST_D1_SUMMARY.json",
-      "sha256": "sha256:a87c77f967116b9cf1d7a18523d1f1ba68c213b6cc89ae44e6834b1436518847"
+      "sha256": "sha256:3ce8727df545b4f23c5ffbf71573b14b948468c41b5a15c26e2979ac1ccab85f"
     },
     {
       "bytes": 1949,
       "path": "test/cells/D1/TEST_STARTED.json",
       "sha256": "sha256:69270d41b0f809948efe24794291144445fe169969b9b17346cdf2860504d389"
+    },
+    {
+      "bytes": 28019,
+      "path": "test/cells/D1/sealed/powered_tost_A_result.json",
+      "sha256": "sha256:3c91a5df33e057138bb28fbb6fe92f0bcc29ce8fa148c2dde8701d7cac43cf7f"
     },
     {
       "bytes": 16,
@@ -198,19 +203,19 @@
       "sha256": "sha256:6c02bbf22a0b88171b810ea2dd0a6dec9fd3e1406e51913410b9fa01060e0f81"
     },
     {
-      "bytes": 25911,
-      "path": "test/cells/D2/sealed/powered_tost_A_result.json",
-      "sha256": "sha256:7d408f7a188f581434861ae5e58830ad2c50130e0e75007ad7c51e89102619ca"
-    },
-    {
-      "bytes": 97,
+      "bytes": 224,
       "path": "test/cells/D2/SEALED.json",
-      "sha256": "sha256:38964cb8a9399eb7c7ef24fcbde36c586372e226e7867c99cd082c920548aea4"
+      "sha256": "sha256:22d314b2c105c373a2c27bb7ba7efff40b6ca54ea528c2943ace9599711c4ea8"
     },
     {
       "bytes": 1925,
       "path": "test/cells/D2/TEST_STARTED.json",
       "sha256": "sha256:5d071e16c74a2b88e22abf7935366722586e6eb140089619c1b5296cc989ba06"
+    },
+    {
+      "bytes": 28458,
+      "path": "test/cells/D2/sealed/powered_tost_A_result.json",
+      "sha256": "sha256:3a7b9a5c064d532ff943b1a5b55e8e6847799ad7574c587dc54529cd5e94db90"
     },
     {
       "bytes": 16,
@@ -276,20 +281,22 @@
       "bytes": 2806955,
       "path": "test/cells/D2/work/transcripts/paired_test_channels.jsonl",
       "sha256": "sha256:4531f3c05bdca877e351b14222d71beb94af81f33e03b1c9474859e80950cc57"
-    },
-    {
-      "bytes": 17432,
-      "path": "test/SEALED.json",
-      "sha256": "sha256:9e4ace2ed7ed945261121c93773b7a0abaca733397ceb1010d49620bef31c5d4"
-    },
-    {
-      "bytes": 1531,
-      "path": "test/TEST_SUMMARY.json",
-      "sha256": "sha256:e9d589ab0a87b27031829f0859156f722b8dba55a85665f405022173ab70b16c"
     }
   ],
-  "phase": "TEST_SEALED",
+  "hash_basis": "SHA-256 over LF-normalized git-blob bytes in the checked-in result bundle; .gitattributes pins results/delib_512_20260815/** as -text to prevent CRLF drift.",
+  "hashed_file_count": 56,
+  "lineage_files_externalized": [
+    {
+      "path": "SHA256_MANIFEST.json",
+      "verification": "sha256 recorded in experiment registries raw_metrics.raw_bundle_manifest_sha256/data_hash after manifest regeneration"
+    },
+    {
+      "path": "experiment-registry.yaml",
+      "verification": "local lineage ledger; excluded from files[] because it records the manifest hash"
+    }
+  ],
+  "non_circular_lineage_note": "files[] hashes raw artifacts excluding SHA256_MANIFEST.json and experiment-registry.yaml. The manifest self-hash is recorded as raw_bundle_manifest_sha256 in registries; experiment-registry.yaml records that manifest hash, so including either file inside files[] would create a circular/self-referential digest.",
   "protocol_id": "deliberation-remeasure-512-20260815",
   "root": "results/delib_512_20260815",
-  "total_bytes": 83334189
+  "total_bytes_hashed": 83313915
 }

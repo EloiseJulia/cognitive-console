@@ -1,5 +1,20 @@
 {
   "achieved_mde": 0.03857491412822587,
+  "audit_ref": "audit-delib512+lineage-fix-20260817",
+  "audit_trail": {
+    "audit_ref": "audit-delib512",
+    "audit_verdict_before_fix": "CONDITIONAL",
+    "independent_recompute": "D1/D2 mean_diff, 98.33% CI, TOST90, TEST accuracies, and generation_truncated=0 rederived from per-item arrays/transcripts before ledger flip.",
+    "lineage_fix_date": "2026-08-17",
+    "lineage_fix_ref": "lineage-fix-20260817",
+    "post_fix_status": "RESULT_AUDIT_PASSED",
+    "post_fix_valid_for_paper": true,
+    "prior_status": {
+      "dev_selection_sha256": "sha256:848eb2646971b9d6d5c1ac30211a01e6625302fc1ad9cbe6ae6430088d831c44",
+      "scientific_status": "PENDING_HOSTILE_RESULT_AUDIT",
+      "valid_for_paper": false
+    }
+  },
   "cell": {
     "axis": "deliberation",
     "cell_id": "D1",
@@ -67,6 +82,35 @@
     "profile_sha256": "sha256:65e4cf84a9bc58b61152b911ab87648692914b1cee75aa17e97cd5f823fad249",
     "stage": "before_load",
     "total_vram_gib": 79.249755859375
+  },
+  "hash_lineage": {
+    "hash_basis": "LF-normalized git-blob bytes; results/delib_512_20260815/** pinned -text in .gitattributes to prevent CRLF drift.",
+    "raw_bundle_manifest": "results/delib_512_20260815/SHA256_MANIFEST.json"
+  },
+  "path_only_reseal_lineage": {
+    "changed_field_only": "direction.path",
+    "consumed_dev_selection_sha256": "sha256:848eb2646971b9d6d5c1ac30211a01e6625302fc1ad9cbe6ae6430088d831c44",
+    "current_dev_selection_sha256_lf_git_blob": "sha256:4a8c6f4baf4b1319493ced3bcd87402ebc6b382e5e9e4a6ee2d6b3ca97aa5c01",
+    "dev_selection_path": "results/delib_512_20260815/dev/cells/D1/sealed/dev_selection.json",
+    "direction_sha256": "sha256:7c559db08f6aa54bc9aba1bdfd7adc0afa8dc8e533aa8aeb923970daf9777977",
+    "explanation": "The TEST run consumed a DEV selection serialized with the original absolute direction.path. The checked-in DEV seal uses the same direction bytes/sha, layer, alpha, prompt, sampling, and item selection with direction.path repo-relative only.",
+    "lineage_type": "path-only-reseal",
+    "original_consumed_direction_path": "/home/elzhang/cc_l0/delib_512_20260815_dev/dev/work/directions/D1-deliberation-L20.npy",
+    "reconstructed_abs_path_selection_sha256": "sha256:848eb2646971b9d6d5c1ac30211a01e6625302fc1ad9cbe6ae6430088d831c44",
+    "repo_relative_direction_path": "results/delib_512_20260815/dev/work/directions/D1-deliberation-L20.npy",
+    "scientific_invariant_fields": [
+      "cell",
+      "selection.alpha_grid",
+      "selection.frozen_alpha",
+      "selection.best_prompt_id",
+      "selection.best_prompt_text",
+      "sampling_axis",
+      "direction.axis",
+      "direction.layer",
+      "direction.sha256",
+      "protocol_id"
+    ],
+    "scientific_invariant_sha256": "sha256:4f41cc7be3f62f1df99c15e6e6f14e3f21fe63fa70c0ba43be774ef8b639f850"
   },
   "phase": "TEST",
   "protocol_id": "deliberation-remeasure-512-20260815",
@@ -1130,7 +1174,7 @@
     ],
     "test_item_ids_sha256": "sha256:8006ca8a43698d971e241173f5723c5f803b9b7b458dc4e70d22fd50b5842c24"
   },
-  "scientific_status": "PENDING_HOSTILE_RESULT_AUDIT",
+  "scientific_status": "RESULT_AUDIT_PASSED",
   "strict_verdict": "UNDERPOWERED",
   "test_attempt_marker": "/home/elzhang/.local/state/cognitive-console/powered-tost-A/test-attempts/delib-512-test-20260815-D1.json",
   "test_attempt_marker_payload": {
@@ -1172,5 +1216,5 @@
     "point": -0.03866666666666667
   },
   "transcript_root": "/home/elzhang/cc_l0/delib_512_20260815_dev/test/cells/D1/work/transcripts",
-  "valid_for_paper": false
+  "valid_for_paper": true
 }

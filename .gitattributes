@@ -4,3 +4,5 @@
 # experiment-registry) stays verifiable on checkout regardless of core.autocrlf.
 results/c2b_resolution_refinement/test-sealed/** -text
 results/powered_tost_A_20260813/** -text
+# Deliberation-512 sealed raw artifacts: preserve LF git-blob hashes on checkout.
+results/delib_512_20260815/** -text

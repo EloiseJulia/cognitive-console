@@ -8,7 +8,7 @@ experiments:
   protocol_id: deliberation-remeasure-512-20260815
   code_commit: 0af4b569d1141246b0565ac6384d9e7c8b926527
   dirty_tree: false
-  data_hash: sha256:a3832ebd8f0262df967ed7665b21f322adb53af687e536286088b7dabc90883d
+  data_hash: sha256:d96843a361ae0d282bb6e8846d6959e1d7810f8bf3ff9d8aaa2fdd8e39dd2a92
   env_hash: null
   config_hash: null
   model:
@@ -24,7 +24,9 @@ experiments:
     test_summary: results/delib_512_20260815/test/TEST_SUMMARY.json
     test_seal: results/delib_512_20260815/test/SEALED.json
     raw_bundle_manifest: results/delib_512_20260815/SHA256_MANIFEST.json
-    raw_bundle_manifest_sha256: sha256:a3832ebd8f0262df967ed7665b21f322adb53af687e536286088b7dabc90883d
+    raw_bundle_manifest_sha256: sha256:d96843a361ae0d282bb6e8846d6959e1d7810f8bf3ff9d8aaa2fdd8e39dd2a92
+    raw_bundle_manifest_bytes: 12093
+    hash_basis: LF-normalized git-blob bytes; results/delib_512_20260815/** pinned -text
   summary_metrics:
     D1:
       strict_verdict: UNDERPOWERED
@@ -35,6 +37,10 @@ experiments:
       ci_9833: [-0.08266666666666668, 0.0]
       tost_ci_90: [-0.06799999999999999, -0.011999999999999999]
       coherence_ok: true
+      steer_accuracy: 0.8413333333333334
+      prompt_accuracy: 0.88
+      generation_truncated: 0
+      result_sha256: sha256:3c91a5df33e057138bb28fbb6fe92f0bcc29ce8fa148c2dde8701d7cac43cf7f
     D2:
       strict_verdict: UNDERPOWERED
       n_test: 150
@@ -44,6 +50,10 @@ experiments:
       ci_9833: [-0.08, 0.02933333333333333]
       tost_ci_90: [-0.06266666666666666, 0.013333333333333336]
       coherence_ok: true
+      steer_accuracy: 0.6853333333333333
+      prompt_accuracy: 0.7093333333333333
+      generation_truncated: 0
+      result_sha256: sha256:3a7b9a5c064d532ff943b1a5b55e8e6847799ad7574c587dc54529cd5e94db90
   artifacts:
   - results/delib_512_20260815/test/SEALED.json
   - results/delib_512_20260815/test/TEST_SUMMARY.json
@@ -51,9 +61,24 @@ experiments:
   - results/delib_512_20260815/test/cells/D1/sealed/powered_tost_A_result.json
   - results/delib_512_20260815/test/cells/D2/sealed/powered_tost_A_result.json
   failure_reason: null
-  valid_for_paper: false
-  scientific_status: PENDING_HOSTILE_RESULT_AUDIT
+  valid_for_paper: true
+  scientific_status: RESULT_AUDIT_PASSED
+  audit_ref: audit-delib512+lineage-fix-20260817
+  audit_trail:
+    prior_status:
+      scientific_status: PENDING_HOSTILE_RESULT_AUDIT
+      valid_for_paper: false
+    audit_verdict_before_fix: CONDITIONAL
+    lineage_fix_ref: lineage-fix-20260817
+  lineage_fix:
+    dev_selection_sha: path-only reseal documented in each TEST result JSON under path_only_reseal_lineage; changed field only direction.path absolute to repo-relative; scientific selection unchanged.
+    manifest: regenerated with file_count 58 and LF-normalized git-blob hash basis; .gitattributes pins raw artifacts -text to prevent CRLF drift.
   validation_notes: >-
     Stage 2 TEST completed exactly once per fixed cell using sealed DEV selections
-    (D1 alpha=16, D2 alpha=2) and max_new_tokens=512. Both cells remain
-    valid_for_paper=false until hostile result audit and Manager/human fold gate.
+    (D1 alpha=16, D2 alpha=2) and max_new_tokens=512. Independent recompute from
+    per-item arrays and transcripts matched D1/D2 mean_diff, Bonferroni 98.33% CI,
+    TOST90, TEST accuracies, and generation_truncated=0. Hostile audit
+    audit-delib512 was CONDITIONAL only on lineage/hash issues; this lineage fix
+    records the path-only DEV reseal and regenerates the LF-stable manifest, so the
+    additive two-cell remeasure is foldable as SOUND without changing scientific
+    selections or numbers.

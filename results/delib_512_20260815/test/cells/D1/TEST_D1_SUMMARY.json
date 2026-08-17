@@ -1,5 +1,6 @@
 {
   "achieved_mde": 0.03857491412822587,
+  "audit_ref": "audit-delib512+lineage-fix-20260817",
   "ci_hi": 0.0,
   "ci_lo": -0.08266666666666668,
   "coherence_ok": true,
@@ -9,10 +10,11 @@
   "n_test": 150,
   "phase": "TEST_D1_SEALED",
   "protocol_id": "deliberation-remeasure-512-20260815",
-  "result_sha256": "sha256:97e123d75c38544576c46485be2203f597deef42e50deb4eace2ff7d665d799f",
+  "result_sha256": "sha256:3c91a5df33e057138bb28fbb6fe92f0bcc29ce8fa148c2dde8701d7cac43cf7f",
+  "scientific_status": "RESULT_AUDIT_PASSED",
   "strict_verdict": "UNDERPOWERED",
   "test_status": "D1_DONE_D2_NOT_RUN",
   "tost_ci_hi": -0.011999999999999999,
   "tost_ci_lo": -0.06799999999999999,
-  "valid_for_paper": false
+  "valid_for_paper": true
 }

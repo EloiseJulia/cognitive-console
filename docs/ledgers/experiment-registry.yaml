@@ -27,6 +27,35 @@
 #   validation_notes: null
 
 experiments:
+- experiment_id: E-0017-latent-behavioral-positive-control-stage1-dev
+  parent: null
+  hypothesis_id: H-assay-validity-positive-control
+  claim_ids: []
+  type: diagnostic
+  status: planned
+  code_commit: "commit containing docs/specs/latent-positive-control-prereg.md and scripts/run_latent_positive_control.py; exact hash reported after prereg commit"
+  dirty_tree: null
+  data_hash: sha256:2c6d946433edd555d504dc2c8ab7e75fee01eb6f589728b47687ea889b594d91
+  env_hash: null
+  config_hash: "script-generated at DEV runtime"
+  model: Qwen/Qwen2.5-7B-Instruct@a09a35458c702b33eeacc393d103063234e8bc28
+  dataset: data/latent_positive_control/keyword_blue_items.json (self-authored; extraction+DEV; TEST sealed/not run in Stage-1)
+  seed: 20260817
+  hardware: "A800 GPU if free; exact CUDA_VISIBLE_DEVICES recorded at runtime"
+  started_at: null
+  ended_at: null
+  exit_code: null
+  raw_metrics: null
+  summary_metrics: null
+  artifacts: []
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    Owner-approved Stage-1 only latent behavioral positive control for assay
+    validity. Primary estimand is steer-baseline; secondary is steer-prompt.
+    Uses Stolfo-style instruction vector for whole-word keyword inclusion.
+    TEST is hard-disabled pending Manager Stage-2 GO.
+
 - experiment_id: c1-facade-1dcc4fa7-0001
   parent: null
   hypothesis_id: H1

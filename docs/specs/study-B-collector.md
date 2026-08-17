@@ -53,8 +53,6 @@
 - `client_started_at`, `client_finished_at`, `completion_status`("complete"|"partial")
 - `covariates`(obj：AI 熟练度问卷答案)
 - `probe`(obj：`prompt_text`, `started_at_relative`, `committed_at_relative`, `char_count`, `edit_count`)
-- `task_order`(list，抵消序列 + seed)
-- `tasks`(list，每元素)：`task_id`, `condition_order`("slider_first"|"prompt_first"),
 - `task_order`(obj：抵消序列 + seed)
 - `tasks`(list，**精简版含 1 元素**，每元素)：`task_id`, `condition_order`("slider_first"|"prompt_first"),
   - `slider`：`final_setting`, `settings_explored`(int), `started_at_relative`, `committed_at_relative`

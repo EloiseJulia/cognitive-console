@@ -1,0 +1,39 @@
+[avg-prompt] disk pre-run: disk ok: total 21.34GB < budget 60GB (ceiling 70GB) [/home/elzhang/cc_avg_prompt/hf_home=14.38GB, /home/elzhang/cc_avg_prompt/venv=6.97GB].
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[avg-prompt] planned candidate generations: {'skepticism': 3200} TOTAL=3200
+[avg-prompt] Stage-1/2 guard: no prompt or alpha selection; no frozen result overwrite.
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 1/16 items=40 START done=0/3200 fresh=0 elapsed=0s eta=0s
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:  11%|█         | 36/339 [00:00<00:00, 327.44it/s]Loading weights:  25%|██▍       | 84/339 [00:00<00:00, 387.03it/s]Loading weights:  40%|████      | 136/339 [00:00<00:00, 410.25it/s]Loading weights:  54%|█████▍    | 184/339 [00:00<00:00, 425.42it/s]Loading weights:  67%|██████▋   | 227/339 [00:00<00:00, 424.85it/s]Loading weights:  80%|███████▉  | 270/339 [00:00<00:00, 417.43it/s]Loading weights:  94%|█████████▍| 318/339 [00:00<00:00, 430.10it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 432.70it/s]
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 1/16 items=40 DONE done=200/3200 fresh=200 elapsed=23s eta=351s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 2/16 items=40 START done=200/3200 fresh=200 elapsed=23s eta=351s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 2/16 items=40 DONE done=400/3200 fresh=400 elapsed=38s eta=267s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 3/16 items=40 START done=400/3200 fresh=400 elapsed=38s eta=267s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 3/16 items=40 DONE done=600/3200 fresh=600 elapsed=53s eta=229s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 4/16 items=40 START done=600/3200 fresh=600 elapsed=53s eta=229s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 4/16 items=40 DONE done=800/3200 fresh=800 elapsed=68s eta=203s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 5/16 items=40 START done=800/3200 fresh=800 elapsed=68s eta=203s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 5/16 items=40 DONE done=1000/3200 fresh=1000 elapsed=82s eta=181s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 6/16 items=40 START done=1000/3200 fresh=1000 elapsed=82s eta=181s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 6/16 items=40 DONE done=1200/3200 fresh=1200 elapsed=97s eta=162s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 7/16 items=40 START done=1200/3200 fresh=1200 elapsed=97s eta=162s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 7/16 items=40 DONE done=1400/3200 fresh=1400 elapsed=112s eta=144s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 8/16 items=40 START done=1400/3200 fresh=1400 elapsed=112s eta=144s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 8/16 items=40 DONE done=1600/3200 fresh=1600 elapsed=127s eta=127s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 9/16 items=40 START done=1600/3200 fresh=1600 elapsed=127s eta=127s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 9/16 items=40 DONE done=1800/3200 fresh=1800 elapsed=141s eta=110s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 10/16 items=40 START done=1800/3200 fresh=1800 elapsed=141s eta=110s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 10/16 items=40 DONE done=2000/3200 fresh=2000 elapsed=156s eta=94s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 11/16 items=40 START done=2000/3200 fresh=2000 elapsed=156s eta=94s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 11/16 items=40 DONE done=2200/3200 fresh=2200 elapsed=170s eta=77s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 12/16 items=40 START done=2200/3200 fresh=2200 elapsed=170s eta=77s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 12/16 items=40 DONE done=2400/3200 fresh=2400 elapsed=185s eta=62s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 13/16 items=40 START done=2400/3200 fresh=2400 elapsed=185s eta=62s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 13/16 items=40 DONE done=2600/3200 fresh=2600 elapsed=200s eta=46s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 14/16 items=40 START done=2600/3200 fresh=2600 elapsed=200s eta=46s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 14/16 items=40 DONE done=2800/3200 fresh=2800 elapsed=214s eta=31s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 15/16 items=40 START done=2800/3200 fresh=2800 elapsed=214s eta=31s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 15/16 items=40 DONE done=3000/3200 fresh=3000 elapsed=229s eta=15s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 16/16 items=40 START done=3000/3200 fresh=3000 elapsed=229s eta=15s
+[c2b-adj] axis=skepticism phase=test_avg_prompt_candidate 16/16 items=40 DONE done=3200/3200 fresh=3200 elapsed=243s eta=0s
+[avg-prompt] transcripts: results/avg_prompt_full/cell_caa__qwen2.5-7b__skepticism/transcripts
+[avg-prompt] wrote results/avg_prompt_full/cell_caa__qwen2.5-7b__skepticism/avg_prompt_comparator_results.json (exp avg-prompt-comparator-c1552e97-0001) wall=251.0s

@@ -7,6 +7,7 @@
 |---|---|---|---|---|---|
 | 2026-07-23 | (none) | 0 | — | — | 0 |
 | 2026-08-05 | A800 GPU-hours (failed pre-DEV attempt) | 0.00722222 upper bound | E-0016 | D-0095 | >=0.00722222 (legacy GPU runs not backfilled) |
+| 2026-08-17 | A800 GPU-hours (Stage-1 latent behavioral positive-control DEV; GPU3; TEST not run) | 0.16343 | E-0017 | owner-approved Stage-1 latent positive control | >=0.17065 |
 
 - max_gpu_hours: TBD (human)
 - max_api_cost: TBD (human)

@@ -1,5 +1,14 @@
 # Failure Log
 
+## 2026-08-17 — E-0017 latent behavioral positive-control Stage-1 DEV hard-abort
+
+- **Run:** `results/latent_positive_control_stage1_dev/latent_positive_control_dev_results.json`
+- **Protocol:** `docs/specs/latent-positive-control-prereg.md`; local prereg/code commit `44be252917fac2d633d607d0259dc8618de0d35f`.
+- **Failure condition:** DEV sanity failed under the frozen hard-abort rule. All 84 `(layer, α)` steer candidates produced `0/12` keyword-compliant outputs; the selected coherent candidate was source layer `5` / HF hidden-state layer `6`, `α=2.0`, with steer-baseline `0.0` and CI `[0.0, 0.0]`.
+- **Important negative control:** prompt comparator was scorable and nonzero (`8/12`, compliance `0.666667`), so the programmatic verifier itself was not dead.
+- **Interpretation:** do **not** run TEST, do **not** relax the gate, and do **not** mine a replacement task in this Stage-1 branch. Possible causes include direction/layer reproduction mismatch, Qwen-specific sensitivity, insufficient task fidelity to Stolfo’s IFEval keyword setting, or additive-vector scale/hook mismatch.
+- **Next action:** return to Manager for a Stage-1 design decision before any retry. Any retry needs a new/updated prereg and license/data gate before touching TEST.
+
 > Records dead ends, attributions, unexplained anomalies, non-reproducible routes, and randomness risks.
 > Prevents repeat trial-and-error after Manager rotation and guards against survivor bias.
 

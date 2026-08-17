@@ -32,29 +32,34 @@ experiments:
   hypothesis_id: H-assay-validity-positive-control
   claim_ids: []
   type: diagnostic
-  status: planned
-  code_commit: "commit containing docs/specs/latent-positive-control-prereg.md and scripts/run_latent_positive_control.py; exact hash reported after prereg commit"
-  dirty_tree: null
+  status: failed
+  code_commit: "44be252917fac2d633d607d0259dc8618de0d35f (local prereg/code); remote archive commit c283b204b41455597c5d21f2c29e59660d9d8ae7"
+  dirty_tree: false
   data_hash: sha256:2c6d946433edd555d504dc2c8ab7e75fee01eb6f589728b47687ea889b594d91
   env_hash: null
-  config_hash: "script-generated at DEV runtime"
+  config_hash: sha256:8784bb586bf9112d5743b7fcb1e209eeb016de1d027344d17b9a3b4956bf071e
   model: Qwen/Qwen2.5-7B-Instruct@a09a35458c702b33eeacc393d103063234e8bc28
   dataset: data/latent_positive_control/keyword_blue_items.json (self-authored; extraction+DEV; TEST sealed/not run in Stage-1)
   seed: 20260817
-  hardware: "A800 GPU if free; exact CUDA_VISIBLE_DEVICES recorded at runtime"
-  started_at: null
-  ended_at: null
-  exit_code: null
-  raw_metrics: null
+  hardware: "A800 GPU3 (CUDA_VISIBLE_DEVICES=3); remote host suzlab-a800"
+  started_at: '2026-08-17T12:30:18.490834+00:00'
+  ended_at: '2026-08-17T12:40:06.822366+00:00'
+  exit_code: 2
+  raw_metrics: results/latent_positive_control_stage1_dev/latent_positive_control_dev_results.json
   summary_metrics: null
-  artifacts: []
-  failure_reason: null
+  artifacts:
+  - results/latent_positive_control_stage1_dev/latent_positive_control_dev_results.json
+  - results/latent_positive_control_stage1_dev/latent_positive_control_dev_summary.md
+  failure_reason: "DEV sanity failed: every steer candidate had 0/12 keyword compliance; selected coherent layer=5 alpha=2.0 matched baseline at 0.0 and did not improve over baseline."
   valid_for_paper: false
   validation_notes: >-
     Owner-approved Stage-1 only latent behavioral positive control for assay
     validity. Primary estimand is steer-baseline; secondary is steer-prompt.
     Uses Stolfo-style instruction vector for whole-word keyword inclusion.
-    TEST is hard-disabled pending Manager Stage-2 GO.
+    TEST is hard-disabled pending Manager Stage-2 GO. Stage-1 stopped exactly
+    at the preregistered hard-abort condition: DEV steering did not improve over
+    baseline, while prompt comparator verified the programmable assay can score
+    the constraint (prompt DEV compliance 8/12).
 
 - experiment_id: c1-facade-1dcc4fa7-0001
   parent: null

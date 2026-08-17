@@ -5,6 +5,48 @@
 
 ---
 
+## 2026-08-17 · D-0125 · Owner reframes paper; commissions Study B (two-axis × two-population slider evaluation) as PROPOSED
+- Context: the owner rebuilt the paper's central thesis — whether a latent
+  slider is "good" is **population-relative**: convenience (for users who
+  cannot write strong prompts) vs. warranted incremental control (for users who
+  can); the average/best-prompt comparators operationalize those two
+  populations' real alternatives.
+- Question put to the study session: can the current V3 stepwise instrument
+  serve the new narrative as-is? Ruling (this session): **No, not for the new
+  "expected results."** V3 only measures whether the comparator-bound gate is
+  understandable/applicable (comprehension), and explicitly does NOT measure
+  benefit/convenience/interface superiority. The owner's described outcomes
+  (experts find it not good; laypeople find it convenient) are an evaluation/
+  benefit construct V3 does not touch. Reusing V3 to produce them would be a
+  construct-validity violation, and it also contradicts the paper's own
+  "benefit未测" caveat.
+- Owner decision (via ask_user): pick **direction B** — redesign into a genuine
+  two-axis (convenience vs warranted control) × two-population study. Population
+  split must be by **AI proficiency judged objectively** (e.g. a prompt-writing
+  capability probe), **not** self-reported "expert/layperson." Expected results
+  must be rewritten as **neutral, falsifiable hypotheses with no pre-set
+  direction** (no confirmation bias / HARKing).
+- Manager (this session) ruling on the delegated `keep_current_frozen` choice:
+  **keep V3 frozen and unchanged** — its gate logic fingerprint, frozen correct
+  answers, and materials v11.3 are not touched. Study B is a **separate new
+  instrument**; V3's gate task may be embedded by reference as an
+  applicability/legibility module (paper point 8), never mutated.
+- Deliverable produced: design draft
+  `docs/plans/study-B-two-axis-two-population-proposal.md` (🔴 PROPOSED). It
+  reuses V3's "no answer keys in participant payload/export + owner-side offline
+  scoring" contract for any tooling.
+- Honest gates (unchanged, still on humans): Study B stays PROPOSED — no
+  recruitment, no human data, no protocol freeze, no MDE, no pilot until
+  **owner + advisor/ethics** approve. Adopting B also means the paper can no
+  longer say "benefit未测"; it must become "convenience/warranted-control
+  evaluation is planned (study pending)." That paper-copy change is for the
+  parallel writing session; this session only supplies the aligned wording and
+  does not edit the paper.
+- Open design decisions returned to owner in §8 of the proposal (probe/rubric,
+  within vs between comparators, quality metric, convenience measures, whether
+  to embed the V3 module, caveat rewording). No further build until the owner
+  rules on those.
+
 ## 2026-08-13 · D-0124 · Offline single-file V3 stepwise study (no server/database) merged to main
 - Context: the owner's free Render Postgres quota is exhausted by another
   project, so the online deployment path is shelved. Owner directive: let

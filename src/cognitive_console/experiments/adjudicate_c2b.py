@@ -85,6 +85,7 @@ PHASE_DEV_ALPHA = "dev_alpha"
 PHASE_TEST_PROMPT = "test_prompt"
 PHASE_TEST_STEER = "test_steer"
 PHASE_TEST_BASELINE = "test_baseline"
+PHASE_TEST_AVG_PROMPT = "test_avg_prompt_candidate"
 PHASE_CONFLICT = "conflict"
 PHASE_CONFLICT_POLE = "conflict_pole"
 
@@ -506,6 +507,11 @@ class BackendOutcomeSampler(OutcomeSampler):
         """True iff the wrapped backend can generate a padded batch (FIX 3)."""
         return self.batch_size > 1 and hasattr(self.gen, "generate_batch")
 
+    def _steer_config(self, direction: np.ndarray, alpha: float, layer: int) -> Optional[SteerConfig]:
+        if float(alpha) == 0.0:
+            return None
+        return SteerConfig(direction=direction, alpha=float(alpha), layer=int(layer))
+
     def _call_seed(self, axis: str, item: Dict, alpha: float, j: int) -> int:
         """Deterministic per-(item, sample-index) torch seed derived from the run
         seed, so re-runs reproduce every sampled generation (item-clustered)."""
@@ -525,7 +531,7 @@ class BackendOutcomeSampler(OutcomeSampler):
         if not self.supports_batch:
             return [self.sample(axis, it, instruction, alpha, k, direction, layer)
                     for it in items]
-        steer = SteerConfig(direction=direction, alpha=float(alpha), layer=int(layer))
+        steer = self._steer_config(direction, alpha, layer)
         prompts: List[str] = []
         seeds: List[int] = []
         owner: List[int] = []
@@ -552,7 +558,7 @@ class BackendOutcomeSampler(OutcomeSampler):
     def sample(self, axis: str, item: Dict, instruction: str, alpha: float,
                k: int, direction: np.ndarray, layer: int) -> SampleBatch:
         text_input = format_task_input(axis, instruction, item)
-        steer = SteerConfig(direction=direction, alpha=float(alpha), layer=int(layer))
+        steer = self._steer_config(direction, alpha, layer)
         outcomes: List[float] = []
         degens: List[float] = []
         for j in range(int(k)):
@@ -762,6 +768,251 @@ class AxisAdjResult:
 
     def to_row(self) -> Dict[str, object]:
         return asdict(self)
+
+
+@dataclass
+class ComparatorStats:
+    """One paired steer-minus-comparator contrast using the frozen C2b test rule."""
+    name: str
+    per_item_comparator: List[float]
+    per_item_diff: List[float]
+    mean_diff: float
+    ci_lo: float
+    ci_hi: float
+    ci_level: float
+    bootstrap_b: int
+    delta: float
+    coherence_ok: bool
+    passed: bool
+
+    def to_row(self) -> Dict[str, object]:
+        return asdict(self)
+
+
+@dataclass
+class AvgPromptComparatorAxisResult:
+    """Average-prompt comparator arm for one frozen TEST cell.
+
+    This is a separate pre-registered comparator: it never selects prompts or α
+    on TEST. It only evaluates all frozen 16 candidate prompts on the already
+    frozen TEST items and compares the itemwise 16-prompt mean with the frozen
+    steering per-item outcome (or a same-run regenerated steering cell).
+    """
+    axis: str
+    layer: int
+    n_dev: int
+    n_test: int
+    k: int
+    frozen_alpha: float
+    steering_source: str
+    steering_validity_check: Dict[str, object]
+    best_prompt_id: Optional[str]
+    candidate_prompt_ids: List[str]
+    test_item_ids: List[str]
+    per_item_steer: List[float]
+    candidate_outcomes_by_prompt: Dict[str, List[float]]
+    primary_avg16: Dict[str, object]
+    secondary_drop_best15: Dict[str, object]
+    secondary_worst_prompt: Dict[str, object]
+    test_steer_degeneracy: Optional[float]
+    test_baseline_degeneracy: Optional[float]
+    descriptive: Dict[str, object]
+
+    def to_row(self) -> Dict[str, object]:
+        return asdict(self)
+
+
+def _comparator_stats(
+    name: str, per_item_steer: np.ndarray, per_item_comparator: np.ndarray, *,
+    bootstrap_b: int, ci_level: float, delta: float, coherence_ok: bool, seed: int,
+) -> ComparatorStats:
+    diff = np.asarray(per_item_steer, dtype=float) - np.asarray(per_item_comparator, dtype=float)
+    ci = cluster_bootstrap_ci(diff, b=bootstrap_b, ci_level=ci_level, seed=seed, cluster=True)
+    return ComparatorStats(
+        name=str(name),
+        per_item_comparator=[float(x) for x in per_item_comparator],
+        per_item_diff=[float(x) for x in diff],
+        mean_diff=ci.point,
+        ci_lo=ci.ci_lo,
+        ci_hi=ci.ci_hi,
+        ci_level=ci.ci_level,
+        bootstrap_b=int(bootstrap_b),
+        delta=float(delta),
+        coherence_ok=bool(coherence_ok),
+        passed=axis_pass(ci.point, ci.ci_lo, ci.ci_hi, coherence_ok, delta=delta),
+    )
+
+
+def avg_prompt_comparator_axis(
+    sampler: OutcomeSampler, spec: AxisAdjSpec, *,
+    frozen_alpha: float,
+    per_item_steer: Optional[Sequence[float]] = None,
+    steering_source: str = "committed-per-item",
+    best_prompt_id: Optional[str] = None,
+    coherence_ok: bool = True,
+    test_steer_degeneracy: Optional[float] = None,
+    test_baseline_degeneracy: Optional[float] = None,
+    reference_steer_mean: Optional[float] = None,
+    validity_tolerance: float = 1e-9,
+    k: int = K_SAMPLES,
+    bootstrap_b: int = BOOTSTRAP_B,
+    ci_level: float = BONFERRONI_CI_LEVEL,
+    delta: float = DELTA,
+    coherence_max_ratio: float = COHERENCE_MAX_RATIO,
+    dev_fraction: float = DEV_FRACTION,
+    seed: int = 0,
+    ctx: Optional[RunContext] = None,
+) -> AvgPromptComparatorAxisResult:
+    """Compare frozen steering against the ordinary-user average prompt arm.
+
+    Primary comparator: for each frozen TEST item, generate/score all candidate
+    prompts and take the itemwise mean over the full candidate set. Secondary
+    comparators: itemwise mean after dropping the frozen DEV-selected best prompt
+    (if supplied) and the itemwise worst prompt. The paired contrast and gate are
+    intentionally the same as the best-prompt adjudication: steer - comparator,
+    item-cluster bootstrap, Bonferroni CI, δ=0.05, and the frozen coherence gate.
+
+    If ``per_item_steer`` is absent, the function regenerates the steering cell
+    at the supplied frozen α in the same run. When ``reference_steer_mean`` is
+    provided, the regenerated mean must match within ``validity_tolerance``.
+    """
+    if not spec.strong_prompts:
+        raise ValueError("average-prompt comparator requires at least one candidate prompt")
+    ids = [str(it["id"]) for it in spec.items]
+    by_id = {str(it["id"]): it for it in spec.items}
+    split = split_dev_test(ids, dev_fraction=dev_fraction, seed=seed)
+    test_items = [by_id[i] for i in split.test_ids]
+    test_item_ids = [str(it["id"]) for it in test_items]
+    candidate_ids = [str(pid) for pid, _ in spec.strong_prompts]
+    if len(candidate_ids) != len(set(candidate_ids)):
+        raise ValueError(f"duplicate candidate prompt IDs for axis {spec.axis}: {candidate_ids}")
+    if best_prompt_id is not None and str(best_prompt_id) not in set(candidate_ids):
+        raise ValueError(f"best_prompt_id {best_prompt_id!r} is not in candidate set for {spec.axis}")
+
+    candidate_by_prompt: Dict[str, List[float]] = {}
+    n_prompts = len(spec.strong_prompts)
+    for pi, (pid, ptext) in enumerate(spec.strong_prompts):
+        outs, _, _ = _channel_item_outcomes(
+            sampler, spec.axis, test_items, ptext, 0.0, k, spec.direction, spec.layer,
+            ctx=ctx, phase=PHASE_TEST_AVG_PROMPT,
+            cell_key=f"candidate={pid}|alpha=0",
+            cell_idx=pi + 1, cell_total=n_prompts)
+        candidate_by_prompt[str(pid)] = [float(x) for x in outs]
+
+    matrix = np.asarray([candidate_by_prompt[pid] for pid in candidate_ids], dtype=float).T
+    avg16 = matrix.mean(axis=1)
+    if best_prompt_id is not None and n_prompts > 1:
+        keep = [j for j, pid in enumerate(candidate_ids) if pid != str(best_prompt_id)]
+        drop_best = matrix[:, keep].mean(axis=1)
+        drop_name = "drop_best15_mean"
+    else:
+        drop_best = avg16.copy()
+        drop_name = "drop_best_unavailable_mean"
+    worst = matrix.min(axis=1)
+
+    validity_check: Dict[str, object] = {
+        "required": per_item_steer is None and reference_steer_mean is not None,
+        "reference_steer_mean": None if reference_steer_mean is None else float(reference_steer_mean),
+        "tolerance": float(validity_tolerance),
+        "passed": None,
+        "note": "",
+    }
+    if per_item_steer is None:
+        steer_out, steer_deg, base_deg = _channel_item_outcomes(
+            sampler, spec.axis, test_items, spec.neutral_prompt, float(frozen_alpha),
+            k, spec.direction, spec.layer, ctx=ctx, phase=PHASE_TEST_STEER,
+            cell_key=f"alpha={float(frozen_alpha)}")
+        _, base_deg, _ = _channel_item_outcomes(
+            sampler, spec.axis, test_items, spec.neutral_prompt, 0.0, k,
+            spec.direction, spec.layer, ctx=ctx, phase=PHASE_TEST_BASELINE,
+            cell_key="alpha=0")
+        per_item_steer_arr = np.asarray(steer_out, dtype=float)
+        test_steer_degeneracy = float(steer_deg.mean())
+        test_baseline_degeneracy = float(base_deg.mean())
+        coherence_ok = (
+            test_steer_degeneracy
+            <= coherence_max_ratio * test_baseline_degeneracy + COHERENCE_EPS_FLOOR + 1e-12
+        )
+        if reference_steer_mean is not None:
+            observed = float(per_item_steer_arr.mean())
+            ok = abs(observed - float(reference_steer_mean)) <= float(validity_tolerance)
+            validity_check.update({
+                "observed_steer_mean": observed,
+                "absolute_error": abs(observed - float(reference_steer_mean)),
+                "passed": bool(ok),
+                "note": "regenerated steering mean compared against frozen best-prompt arm",
+            })
+            if not ok:
+                raise ValueError(
+                    f"{spec.axis}: regenerated steering mean {observed} does not match "
+                    f"reference {reference_steer_mean} within {validity_tolerance}"
+                )
+        else:
+            validity_check.update({
+                "observed_steer_mean": float(per_item_steer_arr.mean()),
+                "passed": None,
+                "note": "no reference supplied for regenerated steering",
+            })
+    else:
+        per_item_steer_arr = np.asarray(per_item_steer, dtype=float)
+        if per_item_steer_arr.ndim != 1:
+            raise ValueError("per_item_steer must be a 1-D sequence")
+        if per_item_steer_arr.shape[0] != len(test_items):
+            raise ValueError(
+                f"{spec.axis}: per_item_steer length {per_item_steer_arr.shape[0]} "
+                f"!= frozen TEST item count {len(test_items)}"
+            )
+        validity_check.update({
+            "observed_steer_mean": float(per_item_steer_arr.mean()),
+            "passed": True,
+            "note": "using committed per-item steering outcomes; no steering regenerated",
+        })
+
+    primary = _comparator_stats(
+        "avg16_mean", per_item_steer_arr, avg16, bootstrap_b=bootstrap_b,
+        ci_level=ci_level, delta=delta, coherence_ok=coherence_ok, seed=seed)
+    secondary_drop = _comparator_stats(
+        drop_name, per_item_steer_arr, drop_best, bootstrap_b=bootstrap_b,
+        ci_level=ci_level, delta=delta, coherence_ok=coherence_ok, seed=seed)
+    secondary_worst = _comparator_stats(
+        "worst_prompt_lower_bound", per_item_steer_arr, worst, bootstrap_b=bootstrap_b,
+        ci_level=ci_level, delta=delta, coherence_ok=coherence_ok, seed=seed)
+
+    descriptive = {
+        "primary_comparator": "per-TEST-item mean over all frozen candidate prompts",
+        "secondary_comparators": [
+            "per-TEST-item mean after dropping the frozen DEV-selected best prompt",
+            "per-TEST-item minimum across candidate prompts",
+        ],
+        "selection_policy": "no prompt or alpha selection is performed in this comparator arm",
+        "candidate_count": int(n_prompts),
+    }
+
+    return AvgPromptComparatorAxisResult(
+        axis=spec.axis,
+        layer=int(spec.layer),
+        n_dev=len(split.dev_ids),
+        n_test=len(test_items),
+        k=int(k),
+        frozen_alpha=float(frozen_alpha),
+        steering_source=str(steering_source),
+        steering_validity_check=validity_check,
+        best_prompt_id=None if best_prompt_id is None else str(best_prompt_id),
+        candidate_prompt_ids=candidate_ids,
+        test_item_ids=test_item_ids,
+        per_item_steer=[float(x) for x in per_item_steer_arr],
+        candidate_outcomes_by_prompt=candidate_by_prompt,
+        primary_avg16=primary.to_row(),
+        secondary_drop_best15=secondary_drop.to_row(),
+        secondary_worst_prompt=secondary_worst.to_row(),
+        test_steer_degeneracy=(
+            None if test_steer_degeneracy is None else float(test_steer_degeneracy)
+        ),
+        test_baseline_degeneracy=(
+            None if test_baseline_degeneracy is None else float(test_baseline_degeneracy)
+        ),
+        descriptive=descriptive,
+    )
 
 
 def adjudicate_axis(

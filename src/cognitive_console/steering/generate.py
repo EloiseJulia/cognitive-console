@@ -324,6 +324,7 @@ class SteeredHFBackend(GenBackend):
         dtype: str = "float32",
         max_length: int = 512,
         seed: Optional[int] = None,
+        revision: Optional[str] = None,
         *,
         model=None,
         tokenizer=None,
@@ -335,6 +336,7 @@ class SteeredHFBackend(GenBackend):
         self.dtype = dtype
         self.max_length = int(max_length)
         self.seed = None if seed is None else int(seed)
+        self.revision = revision
         self._model = model
         self._tokenizer = tokenizer
         self._config = config
@@ -376,8 +378,8 @@ class SteeredHFBackend(GenBackend):
             raise NotImplementedError(_HF_INSTALL_HINT) from exc
 
         dtype = getattr(torch, self.dtype, torch.float32)
-        self._config = AutoConfig.from_pretrained(self.model_name)
-        self._tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        self._config = AutoConfig.from_pretrained(self.model_name, revision=self.revision)
+        self._tokenizer = AutoTokenizer.from_pretrained(self.model_name, revision=self.revision)
         if self._tokenizer.pad_token is None:
             self._tokenizer.pad_token = self._tokenizer.eos_token
         # Left-pad for batched generation: newly-generated tokens then start at the
@@ -387,11 +389,12 @@ class SteeredHFBackend(GenBackend):
         self._tokenizer.padding_side = "left"
         try:
             model = AutoModelForCausalLM.from_pretrained(
-                self.model_name, dtype=dtype, low_cpu_mem_usage=True
+                self.model_name, dtype=dtype, low_cpu_mem_usage=True, revision=self.revision
             )
         except TypeError:
             model = AutoModelForCausalLM.from_pretrained(
-                self.model_name, torch_dtype=dtype, low_cpu_mem_usage=True
+                self.model_name, torch_dtype=dtype, low_cpu_mem_usage=True,
+                revision=self.revision
             )
         model.to(self.device)
         model.eval()

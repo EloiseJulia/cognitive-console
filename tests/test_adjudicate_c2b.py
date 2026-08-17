@@ -138,6 +138,48 @@ def _spec(axis="deliberation", n=30):
                        neutral_prompt="neutral", direction=np.ones(8), layer=3)
 
 
+def test_avg_prompt_comparator_uses_committed_steer_and_all_candidates():
+    items = [{"id": f"it-{i:02d}", "prompt": f"q{i}", "answer": str(i)}
+             for i in range(9)]
+    strong = [("p1", "weak"), ("p2", "medium"), ("p3", "STRONG")]
+    spec = AxisAdjSpec(axis="deliberation", items=items, strong_prompts=strong,
+                       neutral_prompt="neutral", direction=np.ones(8), layer=3)
+    split = A.split_dev_test([it["id"] for it in items], seed=0)
+    n_test = len(split.test_ids)
+
+    def outcome(ax, it, instr, alpha):
+        assert alpha == 0.0  # committed steering is reused; no steer regeneration
+        return {"weak": 0.0, "medium": 0.3, "STRONG": 0.6}[instr]
+
+    sampler = RecordingSampler(outcome)
+    res = A.avg_prompt_comparator_axis(
+        sampler, spec, frozen_alpha=8.0, per_item_steer=[0.7] * n_test,
+        best_prompt_id="p3", bootstrap_b=1000, seed=0)
+    assert res.candidate_prompt_ids == ["p1", "p2", "p3"]
+    assert res.steering_validity_check["passed"] is True
+    assert res.primary_avg16["per_item_comparator"] == pytest.approx([0.3] * n_test)
+    assert res.primary_avg16["mean_diff"] == pytest.approx(0.4)
+    assert res.secondary_drop_best15["per_item_comparator"] == pytest.approx([0.15] * n_test)
+    assert res.secondary_worst_prompt["per_item_comparator"] == pytest.approx([0.0] * n_test)
+    touched = {c["id"] for c in sampler.calls}
+    assert touched == set(split.test_ids)
+    assert touched & set(split.dev_ids) == set()
+
+
+def test_avg_prompt_comparator_regenerated_steer_validity_check_aborts_on_mismatch():
+    spec = _spec(n=9)
+
+    def outcome(ax, it, instr, alpha):
+        return 0.9 if alpha else 0.1
+
+    sampler = RecordingSampler(outcome)
+    with pytest.raises(ValueError, match="regenerated steering mean"):
+        A.avg_prompt_comparator_axis(
+            sampler, spec, frozen_alpha=8.0, per_item_steer=None,
+            reference_steer_mean=0.1, validity_tolerance=1e-12,
+            bootstrap_b=1000, seed=0)
+
+
 def test_selection_only_touches_dev_items_no_test_leakage():
     spec = _spec(n=30)
     ids = [it["id"] for it in spec.items]

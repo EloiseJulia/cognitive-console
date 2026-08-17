@@ -455,7 +455,9 @@ class TranscriptBackendOutcomeSampler(BackendOutcomeSampler):
         items = list(items)
         if not self.supports_batch:
             return [self.sample(axis, it, instruction, alpha, k, direction, layer) for it in items]
-        steer = adj.SteerConfig(direction=direction, alpha=float(alpha), layer=int(layer))
+        steer = None if float(alpha) == 0.0 else adj.SteerConfig(
+            direction=direction, alpha=float(alpha), layer=int(layer)
+        )
         prompts: List[str] = []
         seeds: List[int] = []
         owners: List[int] = []
@@ -502,7 +504,9 @@ class TranscriptBackendOutcomeSampler(BackendOutcomeSampler):
     def sample(self, axis: str, item: Dict, instruction: str, alpha: float, k: int,
                direction: np.ndarray, layer: int):
         text_input = adj.format_task_input(axis, instruction, item)
-        steer = adj.SteerConfig(direction=direction, alpha=float(alpha), layer=int(layer))
+        steer = None if float(alpha) == 0.0 else adj.SteerConfig(
+            direction=direction, alpha=float(alpha), layer=int(layer)
+        )
         outcomes: List[float] = []
         degens: List[float] = []
         for j in range(int(k)):

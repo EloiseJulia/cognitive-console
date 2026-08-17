@@ -5,6 +5,47 @@
 
 ---
 
+## 2026-08-17 · D-0126 · Study B design decisions resolved with writing session (5/6); submission-inclusion escalated to owner
+- The writing session answered the six Study B alignment questions
+  (`docs/handoffs/2026-08-17-study-B-open-decisions-for-writing.md`). Resolved
+  and folded into `docs/plans/study-B-two-axis-two-population-proposal.md` §11:
+  1. Population = **prompting proficiency only** (objective prompt-writing
+     probe), not broad AI fluency; fluency is a covariate, not a group
+     definition. Paper tightens its population def to "someone who can write a
+     strong prompt for the task."
+  2. Quality metric: **do not collapse into the object-level δ gate.** Primary =
+     user-in-the-loop task performance (+ effort/reliance); optional secondary =
+     the object-level steer-vs-prompt comparison as a bridge to 0/12. δ=0.05 is
+     an object-scale release bar and is NOT reused; Study B preregisters its own
+     MDE via power analysis. (This overrode my earlier "same object metric"
+     default; proposal §4 updated.)
+  3. Comparators: best = DEV best-of-set; average = per-item mean over 16
+     candidate prompts on frozen TEST items. **Participant's own prompt is
+     accepted as a comparator instance** = a per-subject realization of the
+     average-prompt distribution; the paper describes average-prompt with two
+     instantiations (model-side 16-mean, study-side participant prompt). This
+     **decouples Study B from the model-side average arm timeline** — the model
+     arm's schedule (owner-approved, pending Manager dispatch) does not block B.
+  4. B's identity: writer default = **stays strictly in the Planned Evaluation
+     pending slot (zero results)**; promoting B data into Contributions/Results
+     is exploratory→confirmatory + core-claim scope change = AGENTS §5, owner/
+     Manager only. **Escalated to owner** (proposal §12).
+  5. Caveat: adopt "convenience & warranted-control evaluation are planned
+     (study pending, no user data)" **plus** keep a factual "this paper makes no
+     user-benefit claim" bottom line. Writer executes in their lane.
+  6. Study-internal defaults (within + counterbalance; convenience objective +
+     subjective + preference; embed V3 gate by reference) accepted. Convenience
+     facet names fixed to **effort / accessibility / discoverability +
+     willingness-to-use**, returned to the writer for Framework/Discussion so
+     the paper and study name the same facets.
+- Manager/owner action pending (proposal §12): decide whether Study B **data
+  must be included before submission** (gates power calc + recruitment). Low-
+  regret path this session will take: draft the preregistrable protocol now
+  (needed for the planned section anyway; still 🔴, no freeze/recruit); hold
+  power calc + recruitment until the owner rules on submission inclusion.
+- Invariants unchanged: V3 gate fingerprint, frozen answers, materials v11.3 not
+  touched; Study B stays PROPOSED; no data/recruitment/freeze/MDE.
+
 ## 2026-08-17 · D-0125 · Owner reframes paper; commissions Study B (two-axis × two-population slider evaluation) as PROPOSED
 - Context: the owner rebuilt the paper's central thesis — whether a latent
   slider is "good" is **population-relative**: convenience (for users who

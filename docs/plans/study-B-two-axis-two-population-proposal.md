@@ -56,13 +56,16 @@ owner 要求：**不让参与者自报「专家/普通人」**，而以「是否
 
 ## 4. 测量项（两轴，均中性、不预设方向）
 
-**便利轴：**
-- 客观省力：完成时间、操作步数、修改次数。
-- 主观易用/费力：简版 NASA-TLX 子量表或等价 Likert。
-- 备选偏好：在「用滑块」vs「自己写 prompt / 用给定对照」间的选择与理由。
+**便利轴（facet 名与论文对齐：effort / accessibility / discoverability + 备选偏好）：**
+- **Effort（费力）**：客观=完成时间、操作步数、修改/迭代次数；主观=简版 NASA-TLX 子量表或等价 Likert。
+- **Accessibility（可及/上手）**：不具备写 prompt 技能也能否达成目标（无需自己craft prompt 的完成率）。
+- **Discoverability（可发现）**：能否看懂控件在做什么、怎么用（滑块 afford 该调整 vs 得先知道该写什么）。
+- **备选偏好（willingness-to-use）**：在「用滑块」vs「自己写 prompt / 用给定对照」间的选择与理由。
 
-**有保证的增量控制轴：**
-- 客观：滑块产物 vs 参与者真实备选产物在**同一 quality 指标**上的差（沿用论文对象层 metric 或用户可完成的任务表现）。
+**有保证的增量控制轴：**（**写作 session 已推翻"塌进对象层 δ gate"的旧默认**）
+- **主要 = 用户在环任务表现**：真实用户带着自己的 prompt + 滑块，能否拿到**更好的任务结果 / 更省力 / 更校准的依赖**——这正是模型证据层测不了、user study 独有的价值。
+- **可选 secondary（桥接 0/12）**：把同一 steer-vs-prompt 的对象层对比作为次要指标，用来和模型证据对话。
+- **尺度警告**：对象层的 δ=0.05 是**outcome 尺度上的 release bar**，用户任务指标是**不同尺度**，**不照搬这个数**；B 自己按 power 分析预注册 MDE（若走冻结）。
 - 主观：参与者判断滑块是否「比我能给的指令更好」。
 
 > **判分/正确答案边界：** 与 V3 一致——任何「正确答案 / 门槛判定」都只在 owner 端离线判分，**不进参与者端 payload/DOM/ARIA/export**。B 若嵌入 V3 门槛模块，沿用其"导出不含答案"契约与离线判分脚本。
@@ -126,3 +129,31 @@ owner 要求：**不让参与者自报「专家/普通人」**，而以「是否
 2. 出**双语知情同意 + 参与者材料 + prompt 探针 rubric** 草案。
 3. 走 worktree → 实现（若涉离线/前端工具，沿用 V3 的"导出不含答案 + 离线判分"架构）→ 独立 audit → 本地 merge。
 4. 协议冻结、MDE、招募一律**暂停在导师/伦理 gate 前**，等 owner 明示。
+
+---
+
+## 11. 决策回执与更新（2026-08-17 · 写作 session 已确认，权威）
+
+写作 session 就 §8 六条给出回执，本节为**已解析的权威口径**（覆盖前文的旧推荐默认）：
+
+1. **人群定义（决策 1）= 收紧为 prompting proficiency，不是广义 AI 熟练度。** 论文里两人群唯一被对照操作化的维度就是**写 prompt 的能力**（best vs average）。分组用**客观 prompt-writing 能力探针**判定；广义熟练度（使用频率/是否调参/是否懂 latent 控制）**只当协变量问卷、不定义组**。论文本轮把定义收紧为 "someone who can write a strong prompt for the task"。→ 与 §2 主判据一致，采纳。
+
+2. **quality 指标（决策 2）= 不塌进对象层 δ gate。** primary=**用户在环任务表现（＋effort/reliance）**；可选 secondary=同一 steer-vs-prompt 对象层对比作桥接 0/12。**δ=0.05 不照搬**（尺度不同），B 自己 power 分析预注册 MDE。→ 已更新 §4。
+
+3. **对照操作化（决策 3）+ 解耦。** 论文 Method 已定稿：best=DEV 选 best-of-set；average=每个冻结 TEST item 取 16 条候选逐条 outcome 的逐 item 均值，复用冻结 instrument/方向/α、同配对、同 bootstrap。**「参与者自己写的 prompt」被接受为 comparator 实例** = average-prompt 分布的**每被试一次实现抽样**；论文把 average-prompt 表述为两个 instantiation（模型侧=16 均值，study 侧=参与者本人 prompt）。**因此 B 的非熟练层对照与模型侧 16-均值 arm 解耦——模型 arm 的排期不阻塞 B 定稿。** 模型 average-prompt arm 排期属 Manager（owner 已批、待派 experiment agent）。
+
+4. **B 的身份（决策 4）= 属 owner/Manager gate，写作侧无权拍。** 把 B 数据升进 Contributions/Results = exploratory→confirmatory + 核心 claim scope 变更（AGENTS §5 必须上升 owner/Manager）。**写作侧默认：B 严格停在《Planned Evaluation》pending slot（零结果）**，除非 owner/Manager 明确授权 promote + 协议冻结 + audit。→ **本 session 已上升给 owner（见 §12）。**
+
+5. **caveat（决策 5）= 采用 planned 表述 + 保留事实底线。** 统一为「便利与有保证的增量控制评价为 planned（study pending，本文无用户数据）」，同时**保留一句「本文不作任何 user-benefit 结论」**作事实底线（planned=路线图，no-claim=当前事实，不冲突）。三处（Framework/Implications/Limitations）每处只说一次、口径一致。**此条在写作 session lane 内，由其执行。**
+
+6. **study 内部三默认（决策 6）= 写作侧无异议。** within+顺序抵消、便利轴客观(时间/步数/修改)+主观(TLX/Likert)+备选偏好、V3 门槛按引用嵌入——均与论文前置的 effort/accessibility/discoverability 维度一致。**对齐点：便利轴 facet 名已固定为 effort / accessibility / discoverability + 备选偏好（见 §4），已回给写作 session 让 Framework/Discussion 用同名 facet。**
+
+---
+
+## 12. 上升给 owner 的待决项（AGENTS §5）
+
+- **投稿前是否要纳入 B 的数据？**（决定是否现在投入 power 计算 + 招募）
+  - 低后悔路径（本 session 拟采）：**现在就写可预注册协议**（planned 章节也需要它，低成本，仍 🔴 不冻结、不招募）；
+  - 但 **power 计算 + 招募投入先等 owner 明确「deadline 前要不要纳入 B」**，别空烧。
+  - 若 owner 要 promote 进 Results：须走 exploratory→confirmatory 授权 + 协议冻结 + 独立 audit + 导师/伦理。
+- 模型侧 **average-prompt arm 排期**（不阻塞 B，但影响论文 5b 🟡 slot）→ 属 Manager，供 owner 知悉。

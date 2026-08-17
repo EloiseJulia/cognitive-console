@@ -46,6 +46,7 @@ PRIVATE_KEY_PARTS = (
     "rubric",
     "gold_answer",
     "ground_truth",
+    "correct",
     "correct_answer",
     "correctanswer",
     "quality_score",

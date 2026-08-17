@@ -311,6 +311,8 @@ class _Handler(BaseHTTPRequestHandler):
 
 def make_server(host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> ThreadingHTTPServer:
     """构造仅绑定 host 的 HTTP server（默认 127.0.0.1）。"""
+    # 纵深防御：桥接会代理到本机 Copilot 代理，绝不允许对外暴露。
+    assert host in ("127.0.0.1", "localhost"), f"bridge must bind loopback only, got {host!r}"
     _Handler.html_bytes = collector.build_html().encode("utf-8")
     return ThreadingHTTPServer((host, port), _Handler)
 

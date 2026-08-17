@@ -385,7 +385,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         else:
             specs, hf_meta = c2b.build_specs_hf(
                 axes, model, False, args.n_items, args.n_strong, 28,
-                args.seed, out_dir, args.steering_method)
+                args.seed, out_dir, args.steering_method,
+                model_revision=args.model_revision)
             layer_by_axis.update({
                 axis: int(row["chosen_layer"])
                 for axis, row in hf_meta.get("c1_layer_info", {}).items()
@@ -394,7 +395,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                 if args.save_transcripts else None
             sampler_for_axis = c2b.hf_sampler_factory(
                 model, args.max_new_tokens, args.temperature, args.seed,
-                args.batch_size, collector, hf_meta.get("alpha_scale_by_axis"))
+                args.batch_size, collector, hf_meta.get("alpha_scale_by_axis"),
+                model_revision=args.model_revision)
         hardware = f"{p0._pick_device()}-{p0._pick_dtype()}"
 
     per_axis_plan = _planned_prompt_generations(

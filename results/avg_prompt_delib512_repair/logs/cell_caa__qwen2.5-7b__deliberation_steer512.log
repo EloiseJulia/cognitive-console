@@ -1,0 +1,8 @@
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:  12%|█▏        | 40/339 [00:00<00:00, 394.93it/s]Loading weights:  33%|███▎      | 113/339 [00:00<00:00, 580.46it/s]Loading weights:  58%|█████▊    | 196/339 [00:00<00:00, 670.71it/s]Loading weights:  83%|████████▎ | 280/339 [00:00<00:00, 718.67it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 707.54it/s]
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[c2b-adj] axis=deliberation phase=test_steer_512 1/1 items=40 START done=0/400 fresh=0 elapsed=0s eta=0s
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   0%|          | 1/339 [00:00<00:41,  8.22it/s]Loading weights:  21%|██        | 72/339 [00:00<00:00, 376.98it/s]Loading weights:  44%|████▎     | 148/339 [00:00<00:00, 525.07it/s]Loading weights:  68%|██████▊   | 232/339 [00:00<00:00, 640.56it/s]Loading weights:  91%|█████████ | 308/339 [00:00<00:00, 681.84it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 593.53it/s]
+[c2b-adj] axis=deliberation phase=test_steer_512 1/1 items=40 DONE done=200/400 fresh=200 elapsed=145s eta=145s
+[c2b-adj] axis=deliberation phase=test_baseline_512 1/1 items=40 START done=200/400 fresh=200 elapsed=145s eta=145s
+[c2b-adj] axis=deliberation phase=test_baseline_512 1/1 items=40 DONE done=400/400 fresh=400 elapsed=286s eta=0s
+[delib512] caa wrote results/avg_prompt_delib512_repair/cell_caa__qwen2.5-7b__deliberation_steer512/delib_512_steer_repair_results.json exp=avg-prompt-delib512-7dcc196f-0001

@@ -18,7 +18,7 @@
 | **slider 改造** | 去掉离线的 `final_setting`；改为 `final_stop_id` + `final_output_text` + `generations`。 |
 | **own_prompt 改造** | 新增 `final_output_text` + `generations`。 |
 | **新产物** | 汇总器多出 `generations.csv`（一行/次生成，`output_text` 单列）。 |
-| **consent 文案** | 明确"本研究会显示 AI 生成示例输出"（仍标 `studyB-consent-1.0`；见文末 caveat）。 |
+| **consent 文案** | 明确"本研究会显示 AI 生成示例输出"；因属实质变更，版本号从离线 `studyB-consent-1.0` 改为 **`studyB-consent-live-1.0`** 以区分。 |
 
 其余字段（`covariates` / `probe` / `task_order` / `convenience` / `attention`）沿用离线版语义。
 
@@ -37,7 +37,7 @@
 | `selected_locale` | string | `en` 或 `zh-Hans`。 |
 | `consent_agreed` | bool | 勾选同意并开始后为 `true`。 |
 | `consent_agreed_at` | string (ISO) | 同意时间。 |
-| `consent_copy_version` | string | 同意书版本标签。 |
+| `consent_copy_version` | string | 同意书版本标签（live 版为 `studyB-consent-live-1.0`）。 |
 | `client_started_at` | string (ISO) | 会话开始时间。 |
 | `client_finished_at` | string (ISO) \| null | 到达导出的时间；partial 时 `null`。 |
 | `completion_status` | string | `complete` 或 `partial`。 |
@@ -130,15 +130,27 @@
 **不** 作为答案键存储；排除规则由 owner 事后按预注册应用。**`output_text` 是数据不是答案键**：
 它是模型生成的文本，用于事后独立 Q 评分，不参与参与者侧的任何"判分"。
 
-## 公平性（预设，spec §5/§9）
+## 公平性与构念效度（预设 + model_context，spec §5/§9 + 修 A）
 
-两条件送 **同一 base 素材 + 同目标**；差异只在控制方式（滑块冻结预设 vs 参与者 prompt）。
-滑块预设 **只做通用风格位移**，**严禁编码任务成功条件**；预设文本只存服务端桥接、不入本 export、
-不回显前端。单测 `test_bridge_presets_do_not_encode_task_success_conditions` 对此做 forbidden-
-substring 断言。
+两条件送 **同一中性 `model_context`**（"写什么" + 素材，**不含任务成功条件**）；唯一差别 =
+滑块冻结预设 vs 参与者 prompt。**任务成功条件（vegan / <40 词 / friendly / 不用感叹号）=
+participant_goal，只在参与者 UI 展示、并记录进导出（是给人看的目标，不是答案键），但
+永不自动进模型输入。** 因此：
 
-## Caveat（judgment call，待 owner 确认）
+- **SLIDER** 模型输入 = `model_context` + 语气预设 → 模型拿不到成功条件，可能天然漏 vegan/
+  字数（正是要暴露的滑块局限）。
+- **OWN_PROMPT** 模型输入 = `model_context` + 参与者 prompt → 成功条件能否传达取决于参与者
+  会不会写（这是研究对象）。
 
-`consent_copy_version` 仍标 `studyB-consent-1.0`，但 live 版正文比离线版多了"本研究会显示 AI
-生成示例输出"等措辞（离线版写的是"不显示任何生成结果"）。这是按 spec §3.1 的 live 语义调整；
-若 owner 认为文案实质变更应 **另起版本号**（如 `studyB-consent-1.0-live`），请告知，可一处改常量。
+滑块预设 **只做通用正式度位移**，绝不编码成功条件（连 "friendly" 也刻意排除，因其与
+participant_goal 重叠）；预设/`model_context` 文本只存服务端桥接，不入本 export、不回显前端。
+单测断言：`test_bridge_presets_do_not_encode_task_success_conditions`、
+`test_bridge_model_context_has_no_success_conditions`、
+`test_bridge_slider_message_never_contains_success_conditions`、
+`test_participant_goal_text_not_auto_fed_to_model` 均以 forbidden-substring 核验。
+
+## 版本号说明（修 B）
+
+`consent_copy_version` = `studyB-consent-live-1.0`。live 版正文比离线版多了"本研究会显示 AI
+生成示例输出"等措辞（离线版写的是"不显示任何生成结果"），属实质变更，故与离线 `studyB-
+consent-1.0` **另起版本号区分**，不沿用旧号。

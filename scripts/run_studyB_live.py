@@ -59,32 +59,35 @@ FROZEN_MAX_TOKENS = 512
 # 组装模型输入用的系统指令（两条件完全一致，保证对称）。
 SYSTEM_INSTRUCTION = (
     "You are assisting with a fictional, illustrative writing task. Use the "
-    "source material, follow the brief, and apply the additional instruction. "
-    "Return only the requested text."
+    "provided context and apply the additional instruction. Return only the "
+    "requested text."
 )
 
-# 任务集（服务端真相）：base 素材 + 目标（两条件共享），滑块档位的冻结风格预设。
-# 关键：``presets`` 只做通用风格位移，**不含任何任务成功条件字样**（纯素/字数/感叹号等）。
+# 任务集（服务端真相）。**构念效度关键约束（修 A）**：任务成功条件（如 vegan / <40 词 /
+# friendly / 不用感叹号）属 ``participant_goal``，**只在参与者 UI 展示、永不自动进模型输入**。
+# 这里的 ``model_context`` 只含中性的"写什么" + 待处理素材（**不含任何成功条件字样**），两条件
+# 都送它；唯一差别 = 滑块的冻结风格预设 vs 参与者自写 prompt。这样：滑块条件模型拿不到成功
+# 条件（天然可能漏 vegan/字数 —— 正是要暴露的滑块局限）；自写条件能否传达成功条件取决于
+# 参与者会不会写。若把成功条件自动喂给两边，滑块就靠"系统替它说明要求"作弊，两条件失去区分度。
+#
+# ``presets`` 只做通用语气/正式度位移，绝不编码任务成功条件。
 # ``task_id`` / ``stop_id`` 必须与 generate_studyB_live.py 的参与者侧元数据一致。
 FROZEN_TASKS: dict[str, dict[str, Any]] = {
     "draftA-recipe-blurb": {
-        # 两条件共享、原样送给模型的 base 素材（虚构产品事实）。
-        "base_material": (
-            "[FICTIONAL PRODUCT FACTS] Product name: Sunrise Oat Bar. "
-            "Ingredients: rolled oats, chopped dates, almond butter, sunflower "
-            "seeds. Fully plant-based. Chewy texture, lightly sweet. Sold in "
-            "packs of six. (All details are invented for a research example.)"
-        ),
-        # 两条件共享、原样送给模型的任务 brief（含任务要求；对称地进入两边输入）。
-        "brief": (
-            "Write a short product blurb for the Sunrise Oat Bar. It should "
-            "mention that it is vegan, be under 40 words, sound friendly, and "
-            "not use exclamation marks."
+        # 中性上下文（"写什么" + 产品事实素材），两条件共享、原样送模型。
+        # **不含成功条件**：无 "vegan"/"40 words"/"friendly"/"exclamation" 等字样。
+        "model_context": (
+            "Write a short product blurb for the fictional 'Sunrise Oat Bar', a "
+            "snack. Product facts: made of rolled oats, chopped dates, almond "
+            "butter, and sunflower seeds; chewy texture, lightly sweet; sold in "
+            "packs of six. All product facts are invented for a research example."
         ),
         # 滑块档位的冻结风格预设：**仅通用语气/正式度位移**，绝不编码任务成功条件。
+        # 注意：档位描述刻意避开任何成功条件字样（尤其 "friendly" —— 它与
+        # participant_goal 的"friendly tone"要求重叠，故不入预设，保持纯正式度轴）。
         "presets": {
             "s1": "Write in a very casual, relaxed, conversational tone.",
-            "s2": "Write in a casual, friendly, easygoing tone.",
+            "s2": "Write in a casual, easygoing tone.",
             "s3": "Write in a neutral, balanced, even-handed tone.",
             "s4": "Write in a polished, refined tone.",
             "s5": "Write in a formal, professional tone.",
@@ -175,8 +178,10 @@ def assemble_messages(
 ) -> list[dict[str, str]]:
     """在服务端组装最终 message（两条件结构对称）。
 
-    两条件都送：同一 base 素材 + 同一 brief + 一个"附加指令"块。附加指令块：
-    滑块 = 冻结风格预设（按 stop_id 取，不回显前端）；自写 = 参与者 prompt。
+    两条件都送同一 ``model_context``（中性上下文 + 素材，**不含任务成功条件**）+ 一个
+    "附加指令"块。附加指令块：滑块 = 冻结风格预设（按 stop_id 取，不回显前端）；自写 =
+    参与者 prompt。**任务成功条件（participant_goal）永不由本函数注入**——只有当参与者
+    自己把它写进 own_prompt 时才会经其 prompt_text 进入模型。
     """
     task = FROZEN_TASKS[task_id]
     if condition == "slider":
@@ -187,8 +192,7 @@ def assemble_messages(
         additional = prompt_text
 
     user_content = (
-        f"Source material:\n{task['base_material']}\n\n"
-        f"Brief:\n{task['brief']}\n\n"
+        f"Context:\n{task['model_context']}\n\n"
         f"Additional instruction:\n{additional}"
     )
     return [

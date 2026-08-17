@@ -26,7 +26,7 @@ DEFAULT_OUTPUT = ROOT / "deploy" / "studyB" / "live" / "studyB-collector-live.ht
 
 EXPORT_SCHEMA = "microstudy-export-live-studyB-v1"
 INSTRUMENT_VERSION = "studyB-collector-live-0.1.0-draft"
-CONSENT_COPY_VERSION = "studyB-consent-1.0"
+CONSENT_COPY_VERSION = "studyB-consent-live-1.0"
 BRIDGE_VERSION = "studyB-bridge-0.1.0-draft"
 
 # 参与者侧"零答案键"启发式自检（关键词 denylist）。它只能抓已知词，不是结构保证；
@@ -236,6 +236,12 @@ PROBE = {
 # --- 主任务（1 个配对任务；虚构占位，最终任务集须单独冻结）------------------
 # 注意：task_id 与 slider.stops 的 id 必须与 run_studyB_live.py 的 FROZEN_TASKS 一致；
 # 风格预设 **文本** 只存服务端桥接，本处只放参与者可见的档位标签。
+#
+# **构念效度（修 A）**：``goal`` + ``requirements`` = participant_goal（成功条件：vegan /
+# <40 词 / friendly / 不用感叹号）。它 **只在参与者 UI 展示、也记录进导出（是给人看的目标，
+# 不是答案键）**，但 **永不自动进模型输入** —— 生成时前端只发 {condition, task_id, stop_id|
+# prompt_text} 给桥接，桥接用中性 model_context（不含成功条件）组装。只有参与者自己把成功
+# 条件写进 own_prompt 时，它才经其 prompt_text 进入模型。滑块条件模型永远拿不到成功条件。
 TASKS = [
     {
         "task_id": "draftA-recipe-blurb",

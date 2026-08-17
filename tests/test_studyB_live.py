@@ -97,7 +97,7 @@ def _base_export(*, complete: bool = True) -> dict:
         "selected_locale": "en",
         "consent_agreed": True,
         "consent_agreed_at": "2026-08-17T00:00:00.000Z",
-        "consent_copy_version": "studyB-consent-1.0",
+        "consent_copy_version": "studyB-consent-live-1.0",
         "client_started_at": "2026-08-17T00:00:00.000Z",
         "client_finished_at": "2026-08-17T00:10:00.000Z" if complete else None,
         "completion_status": "complete" if complete else "partial",
@@ -379,14 +379,16 @@ def test_bridge_binds_loopback_only():
     assert bridge.DEFAULT_HOST != "0.0.0.0"
 
 
-def test_bridge_slider_uses_frozen_preset():
+def test_bridge_slider_uses_frozen_preset_and_neutral_context():
     messages = bridge.assemble_messages("slider", "draftA-recipe-blurb", "s5", None)
     user = messages[-1]["content"]
     preset = bridge.FROZEN_TASKS["draftA-recipe-blurb"]["presets"]["s5"]
     assert preset in user
-    # base 素材 + brief 也在（两条件对称共享）。
-    assert bridge.FROZEN_TASKS["draftA-recipe-blurb"]["base_material"] in user
-    assert bridge.FROZEN_TASKS["draftA-recipe-blurb"]["brief"] in user
+    # 中性 model_context 也在（两条件对称共享）。
+    assert bridge.FROZEN_TASKS["draftA-recipe-blurb"]["model_context"] in user
+    # 旧的含成功条件的 brief 键已移除（修 A）。
+    assert "brief" not in bridge.FROZEN_TASKS["draftA-recipe-blurb"]
+    assert "base_material" not in bridge.FROZEN_TASKS["draftA-recipe-blurb"]
 
 
 def test_bridge_own_prompt_uses_participant_prompt():
@@ -400,22 +402,70 @@ def test_bridge_own_prompt_uses_participant_prompt():
         assert preset not in user
 
 
+# 任务成功条件（participant_goal）字样 —— 绝不应出现在任何送模型的 slider/context 输入里。
+SUCCESS_CONDITION_SUBSTRINGS = (
+    "40",
+    "word",
+    "vegan",
+    "exclamation",
+    "friendly",
+    "under",
+    "纯素",
+    "感叹",
+    "友好",
+    "字",
+)
+
+
 def test_bridge_presets_do_not_encode_task_success_conditions():
     """公平性硬约束：预设只做风格位移，绝不含任务成功条件字样。"""
-    forbidden_substrings = (
-        "40",
-        "word",
-        "vegan",
-        "exclamation",
-        "under",
-        "纯素",
-        "感叹",
-        "字",
-    )
     for stop_id, preset in bridge.FROZEN_TASKS["draftA-recipe-blurb"]["presets"].items():
         low = preset.lower()
-        for bad in forbidden_substrings:
+        for bad in SUCCESS_CONDITION_SUBSTRINGS:
             assert bad not in low, f"preset {stop_id} leaks success condition: {bad!r}"
+
+
+def test_bridge_model_context_has_no_success_conditions():
+    """修 A：中性 model_context 不含任何任务成功条件字样。"""
+    low = bridge.FROZEN_TASKS["draftA-recipe-blurb"]["model_context"].lower()
+    for bad in SUCCESS_CONDITION_SUBSTRINGS:
+        assert bad not in low, f"model_context leaks success condition: {bad!r}"
+
+
+def test_bridge_slider_message_never_contains_success_conditions():
+    """修 A（构念效度 BLOCKER）：SLIDER 组装出的最终 model message 不含成功条件字样。"""
+    for stop_id in bridge.FROZEN_TASKS["draftA-recipe-blurb"]["presets"]:
+        messages = bridge.assemble_messages("slider", "draftA-recipe-blurb", stop_id, None)
+        blob = json.dumps(messages, ensure_ascii=False).lower()
+        for bad in SUCCESS_CONDITION_SUBSTRINGS:
+            assert bad not in blob, f"slider[{stop_id}] model message leaks: {bad!r}"
+
+
+def test_participant_goal_text_not_auto_fed_to_model():
+    """修 A：generator 的 participant_goal（goal + requirements）文本不出现在 SLIDER 模型输入。
+
+    只有当参与者把成功条件写进 own_prompt 时才应进入模型（下面单独验证）。
+    """
+    task = next(t for t in generator.TASKS if t["task_id"] == "draftA-recipe-blurb")
+    goal_texts = [task["goal"]["en"], task["goal"]["zh-Hans"]]
+    for req in task["requirements"]:
+        goal_texts += [req["en"], req["zh-Hans"]]
+    for stop_id in bridge.FROZEN_TASKS["draftA-recipe-blurb"]["presets"]:
+        messages = bridge.assemble_messages("slider", "draftA-recipe-blurb", stop_id, None)
+        blob = json.dumps(messages, ensure_ascii=False)
+        for goal in goal_texts:
+            assert goal not in blob
+
+
+def test_own_prompt_can_carry_participant_success_conditions():
+    """自写条件：成功条件仅当参与者自己写入 prompt 时才进入模型（这是研究对象，正确）。"""
+    participant_prompt = "Make sure to say it is vegan and keep it under 40 words."
+    messages = bridge.assemble_messages(
+        "own_prompt", "draftA-recipe-blurb", None, participant_prompt
+    )
+    assert participant_prompt in messages[-1]["content"]
+
+
 
 
 def test_bridge_rejects_unknown_model():

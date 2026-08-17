@@ -5,7 +5,29 @@
 
 ---
 
-## 2026-08-17 · D-0129 · Owner accepts within-subject confirmatory framing; Study B protocol detailed to v0.2 (unfrozen)
+## 2026-08-17 · D-0130 · Study B instrument architecture = decoupled offline collection (owner-selected)
+- Owner (ask_user) selected **方案一 decoupled_offline** over a hosted live-model
+  tool. Rationale: matches the V3 distribute→collect→aggregate workflow, zero
+  API / zero database (owner's free DB quota is exhausted), and no AGENTS §5
+  cost/paid-API escalation. Hosted-live (方案二) is explicitly deferred (would
+  require budget + deployment + DB and an owner/budget escalation).
+- Design consequence locked into `study-B-protocol-draft.md` §3.0/§7:
+  - Offline single-file HTML **collects only** (participant prompt text, slider
+    settings, effort telemetry, questionnaires, probe, V3 gate answers) → JSON
+    export; no model runs in the participant's hands; no answer keys in payload.
+  - No live feedback loop → **both conditions are one-shot commits** (slider and
+    own-prompt), kept **symmetric** so the H1 quality comparison isn't confounded
+    by one condition having output feedback and the other not.
+  - **Q is scored post-hoc**: owner/Manager batch-run the collected slider
+    settings + prompts through the model to compute Q(slider)/Q(own-prompt) as a
+    SEPARATE experiment registered in experiment-registry (fixed commit/seed/
+    model/direction/rubric).
+  - Effort measured = one-shot composition effort, NOT iterative-refinement
+    effort → recorded as a Limitation.
+- Gates unchanged: still 🔴 unfrozen / pre-ethics; build proceeds as a
+  DRAFT/self-test instrument (V3 workflow), no recruitment/data until ethics.
+
+
 - Owner reply to the §8.1 question: **接受** — accepts the honest framing from
   D-0128 (within-subject confirmatory primary H1/H2 at MDE dz≈0.66; the
   proficiency × comparator interaction H3 stays exploratory/underpowered). This

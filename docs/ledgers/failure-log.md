@@ -24,6 +24,13 @@
 - **Failure:** Hugging Face returned `401 GatedRepoError` for `google/gemma-2-2b-it/resolve/main/config.json`; the remote environment is not authenticated/authorized for the gated Gemma model.
 - **Action:** stopped without DEV generation and without TEST; cleaned remote directories. No workaround, model substitution, or use of unauthorized credentials was attempted.
 
+## 2026-08-17 — E-0017e length-rerun n=80/cap=256 attempt stopped for runtime
+
+- **Owner-approved goal:** repair the E-0017d 32-token cap before any TEST by using the official generation length where feasible, or at least 256 tokens.
+- **Official source:** `microsoft/llm-steer-instruct@9dac937` `config/keywords/keyword_evaluation.yaml` sets `max_generation_length: 1024`; `keywords/evaluate.py` passes this value to both direct `generate(..., max_new_tokens=...)` and hooked `generate_with_hooks(..., max_tokens_generated=...)`.
+- **Stopped attempt:** an n=80, cap=256 Phi-3 DEV rerun was stopped after ~44 minutes on A800 GPU3 while still in the first steer cell; no artifact was copied, and no TEST ran.
+- **Completed fallback:** to satisfy the owner floor while avoiding unbounded GPU burn, E-0017e completed n=40, cap=256 with all other official Phi-3 settings unchanged. The artifact records high residual cap-hit rates; this is a runtime/length caveat, not a hidden parameter change.
+
 > Records dead ends, attributions, unexplained anomalies, non-reproducible routes, and randomness risks.
 > Prevents repeat trial-and-error after Manager rotation and guards against survivor bias.
 

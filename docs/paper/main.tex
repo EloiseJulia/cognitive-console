@@ -465,7 +465,7 @@ The procedure therefore returns more than pass or no-pass: it connects each comp
 
 The record is designed to guard against three substitutions in interface reasoning: READ for TRANSFER, absolute output change for comparison against the declared alternative, and evidence from one tier for another. It reports the computational result, preserves the structured evidence or blocking reason, and then specifies the record-specific interface action.
 
-\paragraph{What a designer gains today.} The record's user is the interface designer or team deciding whether to release a control. Even when every candidate is a no-pass, the record is immediately actionable: it names which control not to ship now, which representation may still be exposed read-only, which axis is resolution-limited near the floor and can be re-measured directly (skepticism), and which needs measurement repair before any claim (uncertainty's missingness)---while blocking the two substitutions it is built to prevent, promoting a control on READ or on output movement alone.
+\paragraph{What a designer gains, for each user.} The record's user is the interface designer or team deciding whether to release a control---and it separates the two populations the decision serves. On the expert's standard, the record already answers: no tested control earns incremental behavioral advantage over a strong prompt, so none should be shipped as an expert-grade quality control on this evidence. On the everyday user's standard---low effort, an average prompt, convenience---the record withholds judgment until the average-prompt comparator and a user study report, and says so explicitly rather than borrowing the expert result. In both cases it still blocks the two substitutions it is built to prevent: promoting a control on READ or on output movement alone.
 
 \subsection{Worked Record: Qwen--CAA Uncertainty}\label{worked-record-qwencaa-uncertainty}
 
@@ -494,7 +494,7 @@ The active control is therefore withheld for this record while the comparator an
 
 \subsection{Illustrative Design Scenario}\label{illustrative-design-scenario}
 
-Return to Alex's policy-writing assistant. The prototype uncertainty slider has local Qwen--CAA READ support, but its TRANSFER record is no-pass relative to the comparator. The targeted recheck shows steering near the unsteered baseline, a negative complete-case steer-minus-prompt estimate, and missingness bounds that cross zero. {}% FL-044
+Return to Alex and Priya. The prototype uncertainty slider has local Qwen--CAA READ support, but its TRANSFER record is no-pass relative to the strong-prompt comparator---the ceiling Priya cares about. The targeted recheck shows steering near the unsteered baseline, a negative complete-case steer-minus-prompt estimate, and missingness bounds that cross zero. {}% FL-044
 {}% FL-047
 
 For this record, the team pauses the slider: the \textbf{active control is withheld}, while the representation remains a \textbf{read-only diagnostic candidate} (Figure~\ref{fig:console}). The comparator view explains what the prompt channel achieved; the warning distinguishes steer-versus-prompt from steer-versus-baseline; and the evidence tier keeps the Qwen--CAA result from migrating to ITI or Llama. Because the tested evidence replaces the prompt rather than composing with it, this recommendation is scoped to latent-only (substitution) controls; a slider that acts on top of a user instruction would need composition evidence the present evaluation does not provide.
@@ -518,6 +518,11 @@ Human-AI guidelines support communicating capabilities and limitations, while in
 
 % PENDING HUMAN INTERFACE RESULT: replace from HUMAN_STUDY_PENDING.md only.
 
+\subsection{Planned Evaluation with Everyday Users and Experts}\label{planned-evaluation}
+
+The model evidence speaks to the expert's standard but not to the everyday user's, which turns on whether convenience and accessibility translate into benefit. We therefore plan a study with two participant groups---everyday users and domain experts---who complete matched tasks with the uncertainty affordance offered as a slider, as a prompt, and as a read-only diagnostic. It asks whether each group can tell when a control is warranted from the record, whether the slider's low effort changes reliance, and whether the two groups' judgments diverge as the framing predicts. The design, hypotheses, and analysis are preregistered; no data are reported here, and the study will preserve null, mixed, or adverse outcomes.
+% PENDING_USER_STUDY_SLOT: populate only from the frozen preregistered 10-expert/10-everyday-user packet.
+
 \section{Discussion}\label{discussion}
 
 \subsection{READ Supports Inspection Without Presuming Actionability}\label{read-supports-inspection-without-presuming-actionability}
@@ -535,7 +540,7 @@ They do not require new categorical labels. The record's practical contribution 
 
 An active latent control makes a claim about consequences, not merely movement. In the Qwen--CAA format-and-missingness recheck, the comparator field records prompt improvement under the frozen scorer over a steer-near-baseline condition rather than direct steering harm. {}% FL-044
 {}% FL-045
-The comparator changes what the same observed gap means for the interface.
+The comparator changes what the same observed gap means for the interface. Choosing a comparator is therefore choosing a population: a strong prompt asks the expert's question, an average prompt asks the everyday user's, and a control can clear one bar while missing the other.
 
 The procedure asks designers to disclose the comparator rather than canonize it. In this application, the comparator is the DEV-selected prompt defined in Method. {}% FL-008
 {}% FL-009
@@ -610,9 +615,9 @@ A structured record can create false assurance when its comparator, measurement,
 
 \section{Conclusion}\label{conclusion}
 
-A latent control should not become active from readability or output movement alone. The comparator-bound contract asks whether the intervention improves the named behavior over a declared alternative, then preserves READ, TRANSFER, comparator, calibration warning, and evidence tier in the interface decision.
+Whether a latent slider is good depends on who is using it and against which alternative, and readability or output movement settles neither user's question. We make the two standards testable with two prompt comparators---a strong best-of-set prompt for the expert's ceiling and an average prompt for the everyday user---and judge a latent intervention against a declared behavioral outcome, an uncertainty rule, a floor, and coherence.
 
-In the tested Qwen/Llama and CAA/ITI setting, the contract separates one aggregate no-pass result into three evidence needs: increase resolution for skepticism, preserve mixed deliberation evidence, and attach a comparator-specific calibration warning to uncertainty. In the worked uncertainty scenario, that distinction supports one concrete action for that record: retain the \textbf{read-only diagnostic candidate}, expose the comparator and warning, and mark the \textbf{active control withheld}. The contribution is a decision procedure for interface release: computational results structure the reason, and each new evidence tier receives its own eligibility decision.
+In the tested Qwen/Llama and CAA/ITI setting, no latent arm---naive or DEV-optimized---beats the strong prompt on any of the twelve tests, and steering sits near the unsteered baseline. This meets the expert's concern: here the slider earns no warranted quality advantage over an instruction. It does not answer the everyday user's question, which convenience and the average-prompt comparator raise and which the planned study is designed to test. Separating these standards, rather than collapsing them into one ``it works,'' is what lets a designer say precisely what a control has and has not earned---and for whom.
 
 \appendix
 

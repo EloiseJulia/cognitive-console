@@ -1,0 +1,39 @@
+[avg-prompt] disk pre-run: disk ok: total 21.34GB < budget 60GB (ceiling 70GB) [/home/elzhang/cc_avg_prompt/hf_home=14.38GB, /home/elzhang/cc_avg_prompt/venv=6.97GB].
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[avg-prompt] planned candidate generations: {'uncertainty_awareness': 4240} TOTAL=4240
+[avg-prompt] Stage-1/2 guard: no prompt or alpha selection; no frozen result overwrite.
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 1/16 items=53 START done=0/4240 fresh=0 elapsed=0s eta=0s
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   1%|▏         | 5/339 [00:00<00:07, 47.54it/s]Loading weights:  21%|██        | 72/339 [00:00<00:00, 402.56it/s]Loading weights:  35%|███▌      | 119/339 [00:00<00:00, 430.52it/s]Loading weights:  48%|████▊     | 163/339 [00:00<00:00, 417.41it/s]Loading weights:  65%|██████▌   | 221/339 [00:00<00:00, 461.41it/s]Loading weights:  81%|████████▏ | 276/339 [00:00<00:00, 487.85it/s]Loading weights:  96%|█████████▌| 325/339 [00:00<00:00, 483.22it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 449.98it/s]
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 1/16 items=53 DONE done=265/4240 fresh=265 elapsed=52s eta=782s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 2/16 items=53 START done=265/4240 fresh=265 elapsed=52s eta=782s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 2/16 items=53 DONE done=530/4240 fresh=530 elapsed=93s eta=650s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 3/16 items=53 START done=530/4240 fresh=530 elapsed=93s eta=650s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 3/16 items=53 DONE done=795/4240 fresh=795 elapsed=134s eta=580s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 4/16 items=53 START done=795/4240 fresh=795 elapsed=134s eta=580s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 4/16 items=53 DONE done=1060/4240 fresh=1060 elapsed=174s eta=523s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 5/16 items=53 START done=1060/4240 fresh=1060 elapsed=174s eta=523s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 5/16 items=53 DONE done=1325/4240 fresh=1325 elapsed=215s eta=473s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 6/16 items=53 START done=1325/4240 fresh=1325 elapsed=215s eta=473s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 6/16 items=53 DONE done=1590/4240 fresh=1590 elapsed=246s eta=409s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 7/16 items=53 START done=1590/4240 fresh=1590 elapsed=246s eta=409s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 7/16 items=53 DONE done=1855/4240 fresh=1855 elapsed=277s eta=356s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 8/16 items=53 START done=1855/4240 fresh=1855 elapsed=277s eta=356s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 8/16 items=53 DONE done=2120/4240 fresh=2120 elapsed=308s eta=308s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 9/16 items=53 START done=2120/4240 fresh=2120 elapsed=308s eta=308s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 9/16 items=53 DONE done=2385/4240 fresh=2385 elapsed=339s eta=263s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 10/16 items=53 START done=2385/4240 fresh=2385 elapsed=339s eta=263s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 10/16 items=53 DONE done=2650/4240 fresh=2650 elapsed=369s eta=221s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 11/16 items=53 START done=2650/4240 fresh=2650 elapsed=369s eta=221s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 11/16 items=53 DONE done=2915/4240 fresh=2915 elapsed=399s eta=181s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 12/16 items=53 START done=2915/4240 fresh=2915 elapsed=399s eta=181s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 12/16 items=53 DONE done=3180/4240 fresh=3180 elapsed=429s eta=143s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 13/16 items=53 START done=3180/4240 fresh=3180 elapsed=429s eta=143s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 13/16 items=53 DONE done=3445/4240 fresh=3445 elapsed=460s eta=106s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 14/16 items=53 START done=3445/4240 fresh=3445 elapsed=460s eta=106s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 14/16 items=53 DONE done=3710/4240 fresh=3710 elapsed=490s eta=70s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 15/16 items=53 START done=3710/4240 fresh=3710 elapsed=490s eta=70s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 15/16 items=53 DONE done=3975/4240 fresh=3975 elapsed=521s eta=35s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 16/16 items=53 START done=3975/4240 fresh=3975 elapsed=521s eta=35s
+[c2b-adj] axis=uncertainty_awareness phase=test_avg_prompt_candidate 16/16 items=53 DONE done=4240/4240 fresh=4240 elapsed=551s eta=0s
+[avg-prompt] transcripts: results/avg_prompt_full/cell_iti__qwen2.5-7b__uncertainty_awareness/transcripts
+[avg-prompt] wrote results/avg_prompt_full/cell_iti__qwen2.5-7b__uncertainty_awareness/avg_prompt_comparator_results.json (exp avg-prompt-comparator-92b22025-0001) wall=558.9s

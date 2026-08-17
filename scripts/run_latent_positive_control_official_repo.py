@@ -233,7 +233,11 @@ def parse_args(argv: Sequence[str] | None = None):
     p.add_argument("--n-dev-items", type=int, default=86)
     p.add_argument("--source-layers", default="24,26")
     p.add_argument("--alpha-grid", default="2,4,6,8,12,16,24")
-    p.add_argument("--official-diagnostic-alpha", type=float, default=40.0)
+    p.add_argument(
+        "--official-diagnostic-alpha",
+        default="40",
+        help="Optional non-selectable diagnostic weight; pass 'none' to disable.",
+    )
     p.add_argument("--max-new-tokens-repr", type=int, default=2)
     p.add_argument("--max-generation-length", type=int, default=128)
     p.add_argument("--allow-test", action="store_true")
@@ -242,6 +246,10 @@ def parse_args(argv: Sequence[str] | None = None):
         raise SystemExit("TEST is hard-disabled in Stage-1 official rerun.")
     args.source_layers = [int(x) for x in str(args.source_layers).split(",") if str(x).strip()]
     args.alpha_grid = [float(x) for x in str(args.alpha_grid).split(",") if str(x).strip()]
+    if str(args.official_diagnostic_alpha).lower() in {"", "none", "null"}:
+        args.official_diagnostic_alpha = None
+    else:
+        args.official_diagnostic_alpha = float(args.official_diagnostic_alpha)
     return args
 
 
@@ -325,8 +333,11 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     candidates = []
     candidate_texts: Dict[str, list] = {}
+    sweep_weights = list(args.alpha_grid)
+    if args.official_diagnostic_alpha is not None:
+        sweep_weights.append(float(args.official_diagnostic_alpha))
     for layer in args.source_layers:
-        for alpha in args.alpha_grid + [float(args.official_diagnostic_alpha)]:
+        for alpha in sweep_weights:
             tag = f"layer{layer}_alpha{alpha:g}"
             print(f"[official-lpc] generating steer {tag}", flush=True)
             texts, scores, degs = _generate_steer(
@@ -407,6 +418,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             "ci_level": lpc.BONFERRONI_CI_LEVEL,
             "coherence_gate": f"g^S <= {lpc.COHERENCE_MAX_RATIO} * g^0 + {lpc.COHERENCE_EPS_FLOOR}",
             "test_run": False,
+            "format_compliance": "not_applicable: official IFEval keywords:existence binary verifier",
+            "token_normalization": "not_applicable: official keyword checker over decoded text",
         },
         "layer_alpha_source": {
             "official_keyword_config_default_layer": 24,
@@ -494,7 +507,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         f"- primary steer-baseline: `{primary.point:.6f}` CI `{primary.ci_lo:.6f}, {primary.ci_hi:.6f}`; sanity_pass=`{payload['dev_effects']['steer_minus_baseline']['passes_dev_sanity']}`",
         f"- secondary steer-prompt: `{secondary.point:.6f}` CI `{secondary.ci_lo:.6f}, {secondary.ci_hi:.6f}`",
         f"- coherence: steer g=`{selected['mean_degeneracy']:.6f}`, baseline g0=`{payload['baseline']['mean_degeneracy']:.6f}`, ok=`{selected['coherence_ok']}`",
-        f"- best diagnostic any α: layer `{official_best['source_layer_idx']}`, α `{official_best['alpha']}`, Δ `{official_best['steer_minus_baseline']:.6f}`, selectable=`{official_best['selectable_by_frozen_grid']}`",
+        f"- best any weight: layer `{official_best['source_layer_idx']}`, α `{official_best['alpha']}`, Δ `{official_best['steer_minus_baseline']:.6f}`, selectable=`{official_best['selectable_by_frozen_grid']}`",
         "",
         "No TEST item was generated or scored.",
     ]

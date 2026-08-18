@@ -15,6 +15,7 @@ import gc
 import hashlib
 import json
 import math
+import os
 import platform
 import sys
 import time
@@ -273,7 +274,11 @@ def transcript_diagnostics(records: Iterable[Dict[str, Any]], tokenizer: Any) ->
 def run_cell(cell_id: str, args: argparse.Namespace) -> Path:
     if cell_id not in CELLS:
         raise SystemExit(f"unknown cell {cell_id!r}; choices={sorted(CELLS)}")
-    cell = CELLS[cell_id]
+    cell = dict(CELLS[cell_id])
+    if "qwen" in cell_id:
+        cell["model"] = os.environ.get("POWERED_B_QWEN_MODEL", cell["model"])
+    if "llama" in cell_id:
+        cell["model"] = os.environ.get("POWERED_B_LLAMA_MODEL", cell["model"])
     out_dir = Path(args.out_dir) / f"cell_{cell_id}"
     out_dir.mkdir(parents=True, exist_ok=True)
     t0 = time.time()

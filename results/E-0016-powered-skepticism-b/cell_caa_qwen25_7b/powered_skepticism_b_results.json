@@ -1864,7 +1864,10 @@
       ],
       "item_ids_hash": "sha256:99f70f0db638bd27beaeb1188ea131097edf0873aadcc03c7af852e03a5ca6b2",
       "eligible_ids_hash": "sha256:e34dc51edcb6b8f60eae4bdbc63955f0a6775d9391acc74c4eb38dbee7e98cea"
-    }
+    },
+    "direction_sha256": null,
+    "direction_sha256_status": "not_recorded_direction_vector_not_persisted",
+    "direction_reuse_caveat": "Direction vector itself was not persisted in committed artifacts; exact loaded reuse is therefore not cryptographically proven. The powered run reconstructs the direction through the frozen C2b code path with frozen inputs/seed/layer and uses the frozen E-0006 alpha/sigma parameters; auditing exact vector identity would require rerunning the reconstruction/model forward pass or adding future direction-vector persistence."
   },
   "ci_90_tost": {
     "point": -0.009000000000000001,
@@ -1928,5 +1931,38 @@
   "artifacts": {
     "json": "powered_skepticism_b_results.json",
     "transcripts": "transcripts"
+  },
+  "parse_manifest": {
+    "path": "results/E-0016-powered-skepticism-b/powered_skepticism_b_parse_manifest.json",
+    "sha256": "sha256:d9df66c3564c1e51f0e3d58bb86f5e55cffd1c5a7246759e056612e421290bbc",
+    "summary_path": "results/E-0016-powered-skepticism-b/powered_skepticism_b_parse_manifest.md",
+    "summary_sha256": "sha256:9d4eafb0396c5e9a3dc5e540094baa7f03eabb241101860b3121a6525998439c",
+    "source_transcripts_available": true,
+    "note": "Compact committed manifest generated from existing raw transcripts; raw transcripts remain git-ignored."
+  },
+  "direction_provenance": {
+    "direction_sha256": null,
+    "direction_sha256_status": "not_recorded_direction_vector_not_persisted",
+    "exact_loaded_reuse_crypto_proof": false,
+    "caveat": "Direction vector itself was not persisted in committed artifacts; exact loaded reuse is therefore not cryptographically proven. The powered run reconstructs the direction through the frozen C2b code path with frozen inputs/seed/layer and uses the frozen E-0006 alpha/sigma parameters; auditing exact vector identity would require rerunning the reconstruction/model forward pass or adding future direction-vector persistence.",
+    "reconstruction_code_path": [
+      "scripts/run_powered_skepticism_b.py::make_spec",
+      "scripts/run_c2b_adjudication.py::build_specs_hf",
+      "scripts/run_c1_facade.py::run",
+      "scripts/run_gpu_phase0.py::_extract_direction (CAA) or cognitive_console.steering.iti.extract_iti (ITI)"
+    ],
+    "reconstruction_parameters": {
+      "axis": "skepticism",
+      "model": "Qwen/Qwen2.5-7B-Instruct",
+      "steering_method": "caa",
+      "layer": 20,
+      "frozen_alpha": 6.0,
+      "alpha_scale_sigma": 1.0,
+      "effective_alpha": 6.0,
+      "frozen_selection_seed": 20260723,
+      "n_extraction": 28,
+      "source_artifact": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+      "source_artifact_hash": "sha256:bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243"
+    }
   }
 }

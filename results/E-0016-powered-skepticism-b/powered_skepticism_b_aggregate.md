@@ -12,3 +12,8 @@
 | iti × Llama-3-8B | 900→797 capped | +0.0281 | [-0.0105, +0.0659] | [+0.0018, +0.0540] | 0.0508 | True | True | 1.0/1.0 | **UNDERPOWERED** |
 
 Outcome-neutral: these additive results do not overwrite E-0005/E-0006/E-0011.
+
+## Auditability addendum
+
+- Parse/missingness manifest: `results/E-0016-powered-skepticism-b/powered_skepticism_b_parse_manifest.json` (`sha256:d9df66c3564c1e51f0e3d58bb86f5e55cffd1c5a7246759e056612e421290bbc`); source transcripts were available and compact per-item/sample parse flags are committed.
+- Direction-vector caveat: `direction_sha256` is not recorded because the direction vectors were not persisted. The run used frozen C2b reconstruction code + frozen seed/layer/α/σ; exact vector identity is not cryptographically proven without rerunning direction reconstruction.

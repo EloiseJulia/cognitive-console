@@ -18,3 +18,8 @@
 | test_baseline | 3985 | 1.0 | 0 | 182904 | 45.898118 | 0 |
 
 All numbers are computed from `powered_skepticism_b_results.json`; no hand-filled metrics.
+
+## Provenance addendum
+
+- parse manifest: `results/E-0016-powered-skepticism-b/powered_skepticism_b_parse_manifest.json` (`sha256:d9df66c3564c1e51f0e3d58bb86f5e55cffd1c5a7246759e056612e421290bbc`)
+- direction_sha256: not recorded; direction vector was not persisted, so exact loaded reuse is not cryptographically proven without rerunning reconstruction. Frozen code path/seed/layer/α/σ are recorded in JSON provenance.

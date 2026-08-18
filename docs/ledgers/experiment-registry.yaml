@@ -1883,12 +1883,13 @@ experiments:
   code_commit: 81c7e79765e4526be3920617f173c921917ac858
   dirty_tree: false
   data_hash: >-
-    aggregate_json=sha256:b535bd931ea89bde1a056a6767b144d78121244b1a66f3c73a5128116f7628ce;
-    cell_caa_qwen25_7b=sha256:c38a80a16bdb57b9452ab0afd4f24df0d60568cf241be8d4939dfb524948c1fe;
-    cell_caa_llama3_8b=sha256:99d54759aecfc147dd201cef83472aa766fa1c4bbdc0f16d9a4436e59c979c0a;
-    cell_iti_qwen25_7b=sha256:0ea3a998c9716ca6a3741e1724928acf58c8d559cd1007d7d915f7da2bfe7fa4;
-    cell_iti_llama3_8b=sha256:2c63cf768b72d353af7da555fc316291e9a61216defb663b742e4c909a67d40f;
-    combined=sha256:67c627a92d9c2faa095b6095e8ec1ea03eb68228ff4ecfdd61df117569de1d26
+    aggregate_json=sha256:15982f6acdfd73222a498881666777ca1f443632b43d78a18cceed9e86cbabf3;
+    parse_manifest_json=sha256:d9df66c3564c1e51f0e3d58bb86f5e55cffd1c5a7246759e056612e421290bbc;
+    cell_caa_qwen25_7b=sha256:dba007c6919e6bd5469df94d21ce086128ca423bd3466a4c9293b31e28c90d69;
+    cell_caa_llama3_8b=sha256:5bc8e0c3826024c6d8f34297d2edb107e8f26117e335777ff7fc03ff5ff3b74b;
+    cell_iti_qwen25_7b=sha256:c9eabcc38cb3e87259fdcd961dc5df70b85d8e00899af99b5f9a836fcc479ede;
+    cell_iti_llama3_8b=sha256:3dfb2091c2bb5be383d7c03adb9b84ba858311210cfe3efff9b4fad3b1806342;
+    combined_with_parse=sha256:33ad0025578228892daf97204da0b640f6c6e006000ad23afb7dcd658a44faa3
   env_hash: null
   config_hash: >-
     caa_qwen25_7b=384cac67da7ba64a;
@@ -1917,6 +1918,19 @@ experiments:
     root_seed: 20260818
     bootstrap_b: 10000
     delta: 0.05
+    parse_manifest:
+      path: results/E-0016-powered-skepticism-b/powered_skepticism_b_parse_manifest.json
+      sha256: sha256:d9df66c3564c1e51f0e3d58bb86f5e55cffd1c5a7246759e056612e421290bbc
+      source_transcripts_available: true
+    direction_provenance:
+      direction_sha256: null
+      direction_sha256_status: not_recorded_direction_vector_not_persisted
+      exact_loaded_reuse_crypto_proof: false
+      caveat: >-
+        Direction vector itself was not persisted in committed artifacts; exact
+        loaded reuse is therefore not cryptographically proven. The powered run
+        reconstructs the direction through the frozen C2b code path with frozen
+        inputs/seed/layer and uses the frozen E-0006 alpha/sigma parameters.
     target_mde_max: 0.06
     actual_gpu_wall_seconds_from_one_shot_logs:
       caa_qwen25_7b: 630.13
@@ -1989,8 +2003,11 @@ experiments:
   artifacts:
   - docs/specs/powered-tost-B-skepticism-prereg.md
   - scripts/run_powered_skepticism_b.py
+  - scripts/build_powered_parse_manifest.py
   - results/E-0016-powered-skepticism-b/powered_skepticism_b_aggregate.json
   - results/E-0016-powered-skepticism-b/powered_skepticism_b_aggregate.md
+  - results/E-0016-powered-skepticism-b/powered_skepticism_b_parse_manifest.json
+  - results/E-0016-powered-skepticism-b/powered_skepticism_b_parse_manifest.md
   - results/E-0016-powered-skepticism-b/cell_caa_qwen25_7b/powered_skepticism_b_results.json
   - results/E-0016-powered-skepticism-b/cell_caa_qwen25_7b/powered_skepticism_b_summary.md
   - results/E-0016-powered-skepticism-b/cell_caa_llama3_8b/powered_skepticism_b_results.json
@@ -2012,6 +2029,12 @@ experiments:
     Results: Qwen cells are bounded-equivalent at the δ=0.05 floor; Llama cells
     remain underpowered because the 90% TOST upper bound slightly exceeds +0.05
     despite realized MDE <=0.06. All cells pass coherence and have 100% MC-letter
-    parseability in prompt/steer/baseline channels. This does not overwrite
-    frozen E-0005/E-0006/E-0011 and awaits independent hostile audit before any
+    parseability in prompt/steer/baseline channels. MAJOR auditability follow-up:
+    a compact parse/missingness manifest was generated from still-available raw
+    transcripts and committed, so item/sample parse flags and per-condition
+    missingness are independently auditable without committing raw generations.
+    Direction vectors were not persisted, so direction_sha256 is explicitly null;
+    the artifact records the frozen reconstruction path and parameters rather
+    than claiming cryptographic proof of exact loaded-vector reuse. This does not
+    overwrite frozen E-0005/E-0006/E-0011 and awaits fold-gate before any
     claim-map/evidence-ledger upgrade.

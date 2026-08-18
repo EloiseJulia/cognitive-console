@@ -123,5 +123,87 @@
     "results/E-0016-powered-skepticism-b/cell_caa_llama3_8b/powered_skepticism_b_results.json",
     "results/E-0016-powered-skepticism-b/cell_iti_qwen25_7b/powered_skepticism_b_results.json",
     "results/E-0016-powered-skepticism-b/cell_iti_llama3_8b/powered_skepticism_b_results.json"
-  ]
+  ],
+  "parse_manifest": {
+    "path": "results/E-0016-powered-skepticism-b/powered_skepticism_b_parse_manifest.json",
+    "sha256": "sha256:d9df66c3564c1e51f0e3d58bb86f5e55cffd1c5a7246759e056612e421290bbc",
+    "summary_path": "results/E-0016-powered-skepticism-b/powered_skepticism_b_parse_manifest.md",
+    "summary_sha256": "sha256:9d4eafb0396c5e9a3dc5e540094baa7f03eabb241101860b3121a6525998439c",
+    "source_transcripts_available": true,
+    "note": "Compact committed manifest generated from existing raw transcripts; raw transcripts remain git-ignored."
+  },
+  "direction_reuse_provenance": {
+    "caa_llama3_8b": {
+      "direction_sha256": null,
+      "direction_sha256_status": "not_recorded_direction_vector_not_persisted",
+      "exact_loaded_reuse_crypto_proof": false,
+      "reconstruction_parameters": {
+        "axis": "skepticism",
+        "model": "NousResearch/Meta-Llama-3-8B-Instruct",
+        "steering_method": "caa",
+        "layer": 14,
+        "frozen_alpha": 2.0,
+        "alpha_scale_sigma": 1.0,
+        "effective_alpha": 2.0,
+        "frozen_selection_seed": 20260723,
+        "n_extraction": 28,
+        "source_artifact": "results/arm_full/cell_caa__llama3-8b/c2b_adjudication_results.json",
+        "source_artifact_hash": "sha256:7eec31c535058d1fb57e2fb2c14fdffe7cf02b47cc2275c2692e09456a08ade6"
+      }
+    },
+    "caa_qwen25_7b": {
+      "direction_sha256": null,
+      "direction_sha256_status": "not_recorded_direction_vector_not_persisted",
+      "exact_loaded_reuse_crypto_proof": false,
+      "reconstruction_parameters": {
+        "axis": "skepticism",
+        "model": "Qwen/Qwen2.5-7B-Instruct",
+        "steering_method": "caa",
+        "layer": 20,
+        "frozen_alpha": 6.0,
+        "alpha_scale_sigma": 1.0,
+        "effective_alpha": 6.0,
+        "frozen_selection_seed": 20260723,
+        "n_extraction": 28,
+        "source_artifact": "results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json",
+        "source_artifact_hash": "sha256:bc75c3ec8d21ffa9037dab1c5e819fbac079985cdd9c8a5c9e5c858595ea1243"
+      }
+    },
+    "iti_llama3_8b": {
+      "direction_sha256": null,
+      "direction_sha256_status": "not_recorded_direction_vector_not_persisted",
+      "exact_loaded_reuse_crypto_proof": false,
+      "reconstruction_parameters": {
+        "axis": "skepticism",
+        "model": "NousResearch/Meta-Llama-3-8B-Instruct",
+        "steering_method": "iti",
+        "layer": 14,
+        "frozen_alpha": 2.0,
+        "alpha_scale_sigma": 1.3239446225015263,
+        "effective_alpha": 2.6478892450030527,
+        "frozen_selection_seed": 20260723,
+        "n_extraction": 28,
+        "source_artifact": "results/arm_full/cell_iti__llama3-8b/c2b_adjudication_results.json",
+        "source_artifact_hash": "sha256:46606736c0d122a74a3c8deb7b89bbf68192457ba675cf33954034f9fdf84f43"
+      }
+    },
+    "iti_qwen25_7b": {
+      "direction_sha256": null,
+      "direction_sha256_status": "not_recorded_direction_vector_not_persisted",
+      "exact_loaded_reuse_crypto_proof": false,
+      "reconstruction_parameters": {
+        "axis": "skepticism",
+        "model": "Qwen/Qwen2.5-7B-Instruct",
+        "steering_method": "iti",
+        "layer": 19,
+        "frozen_alpha": 2.0,
+        "alpha_scale_sigma": 8.781919619478579,
+        "effective_alpha": 17.563839238957158,
+        "frozen_selection_seed": 20260723,
+        "n_extraction": 28,
+        "source_artifact": "results/arm_full/cell_iti__qwen2.5-7b/c2b_adjudication_results.json",
+        "source_artifact_hash": "sha256:8ae205457c932c6417e37d546197ba609961b8accc6133bef0b51186fb3ec026"
+      }
+    }
+  }
 }

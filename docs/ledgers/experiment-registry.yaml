@@ -2091,12 +2091,29 @@ experiments:
   - results/composition_a_shard1/caa_qwen/output_checksums_sha256.txt
   - results/composition_a_shard1/caa_qwen/transcript_pointers_sha256.txt
   failure_reason: null
-  valid_for_paper: false
+  audit_ref:
+    hostile_result_audit: audit-composition-a=CONDITIONALLY_SOUND->SOUND (2026-08-19)
+    report: reviews/2026-08-19-composition-a-audit/audit-report.md
+    independent_rederivation: all 6 cell means/MDE reproduced from per_item_test_pairs.jsonl; all CI include 0; all well-powered (MDE<=0.023)
+    conditions_closed: recomputed with prereg bootstrap_seed=20260819 (verdicts unchanged); uncertainty complete-case + adversarial missingness bounds added (parse 0.99+, no gain)
+    manager_decision: D-0136 (owner-delegated 2026-08-18/19)
+  valid_for_paper: true
   validation_notes: >-
     CPU-only audit-major fix applied. All six cells were recomputed from
     committed per-item TEST arrays using preregistered bootstrap_seed=20260819,
     B=10000 item-cluster bootstrap. All six verdicts remain
     NO_INCREMENT_DEMONSTRATED and MDE<=0.06. Uncertainty missingness sensitivity
     adds complete-case and adversarial bounds; neither primary verdict changes
-    nor any adversarial upper bound is used to claim gain. valid_for_paper remains
-    false pending Manager fold-gate after audit closure. ITI and Llama were not run.
+    nor any adversarial upper bound is used to claim gain. ITI and Llama were not run.
+    FOLD-GATE (D-0136, owner-delegated 2026-08-19): independent hostile audit
+    audit-composition-a re-derived all six well-powered nulls and both MAJORs were
+    closed (prereg-seed recompute; uncertainty missingness bounds); valid_for_paper
+    flipped false->true. SCOPE (binding): supports only that CAA x Qwen prompt+steer
+    shows NO detectable incremental gain over prompt-alone under the frozen
+    ordinary/strong prompts across the three axes (a well-powered null answering the
+    substitution-only reviewer BLOCKER). NOT an equivalence proof, NOT a global
+    "steering never helps" claim. Single method (CAA), single model (Qwen), ITI/Llama
+    untested; ordinary prompt is a plain-instruction everyday-user proxy (human-anchor
+    gap, not validated as representative of real novices). Additive; does NOT revise
+    the frozen substitution 0/12 grid or E-0005/E-0006/E-0011. Direction reuse is
+    frozen-code reconstruction (no persisted vector; caveat).

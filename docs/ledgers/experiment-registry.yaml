@@ -2017,7 +2017,13 @@ experiments:
   - results/E-0016-powered-skepticism-b/cell_iti_llama3_8b/powered_skepticism_b_results.json
   - results/E-0016-powered-skepticism-b/cell_iti_llama3_8b/powered_skepticism_b_summary.md
   failure_reason: null
-  valid_for_paper: false
+  audit_ref:
+    hostile_result_audit: audit-powered-b=CONDITIONALLY_SOUND->SOUND (2026-08-18)
+    report: reviews/2026-08-18-powered-skepticism-b-audit/audit-report.md
+    independent_rederivation: all four cell labels reproduced from per-item arrays (CAA/ITI x Qwen BOUNDED_EQUIVALENT; CAA/ITI x Llama UNDERPOWERED); MDEs .0571/.0475/.0510/.0508 reproduced
+    conditions_closed: parse manifest committed (100% parseable, 0 missing all cells); direction reconstruction caveat recorded (no persisted vector)
+    manager_decision: D-0135 (owner-delegated 2026-08-18)
+  valid_for_paper: true
   validation_notes: >-
     Additive powered skepticism-only re-measurement. Manager froze the prereg on
     2026-08-18 with one capacity guard revision: if unique eligible TruthfulQA
@@ -2036,5 +2042,13 @@ experiments:
     Direction vectors were not persisted, so direction_sha256 is explicitly null;
     the artifact records the frozen reconstruction path and parameters rather
     than claiming cryptographic proof of exact loaded-vector reuse. This does not
-    overwrite frozen E-0005/E-0006/E-0011 and awaits fold-gate before any
-    claim-map/evidence-ledger upgrade.
+    overwrite frozen E-0005/E-0006/E-0011. FOLD-GATE (D-0135, owner-delegated
+    2026-08-18): independent hostile audit audit-powered-b re-derived all four
+    labels and closed both provenance MAJORs (parse manifest committed;
+    direction caveat recorded); valid_for_paper flipped false->true. SCOPE
+    (binding): paper may state the Qwen skepticism no-pass survives near delta=0.05
+    under powered additive re-measurement (bounded-equivalent); Llama cells must
+    be stated as underpowered/indeterminate (90% TOST upper bound slightly
+    exceeds +0.05, item-universe-limited by TruthfulQA at N=797). Skepticism-axis
+    only, single dataset, additive appendix; does NOT revise the frozen 0/12
+    headline.

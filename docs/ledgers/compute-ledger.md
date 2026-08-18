@@ -12,6 +12,7 @@
 | 2026-08-17 | A800 GPU-hours (Gemma official DEV attempt blocked at gated model auth; no generation) | ~0.00 | E-0017c | owner-approved Gemma official positive control | >=1.48065 |
 | 2026-08-17 | A800 GPU-hours (Phi-3 official DEV: one 1024-token run stopped, one 128-token run stopped, one 32-token DEV completed; GPU3; TEST not run) | ~1.40 | E-0017d | owner-approved Phi-3 official positive control | >=2.88065 |
 | 2026-08-17 | A800 GPU-hours (Phi-3 length-rerun DEV: one n=80/cap=256 run stopped for runtime + one n=40/cap=256 DEV completed; GPU3; TEST not run) | ~4.05 | E-0017e | owner-approved Phi-3 generation-length rerun | >=6.93065 |
+| 2026-08-18 | A800 GPU-hours (Phi-3 Stage-2 TEST once: frozen layer 28 × weight 80, cap=1024; GPU3) | 1.304 | E-0017f | owner-approved Stage-2 GO | >=8.23465 |
 
 - max_gpu_hours: TBD (human)
 - max_api_cost: TBD (human)

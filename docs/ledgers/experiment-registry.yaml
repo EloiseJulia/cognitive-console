@@ -247,6 +247,64 @@ experiments:
     so Stage-2 planning should explicitly account for residual truncation risk
     and runtime.
 
+- experiment_id: E-0017f-phi3-official-stolfo-positive-control-stage2-test-once
+  parent: E-0017e-phi3-official-stolfo-positive-control-stage1-dev-length-rerun
+  hypothesis_id: H-assay-validity-positive-control
+  claim_ids: []
+  type: diagnostic
+  status: done
+  code_commit: "78db8d096ac57909d2592cf449cf0feead1ba2df"
+  dirty_tree: false
+  data_hash: sha256:1f4452fe01a36621e13d9ff926c4ec12a5d99ef33902ae158576e78f98e89dc8
+  env_hash: null
+  config_hash: sha256:6bc46cd3418c27f998c6904ceb4b3b42b0a8c58f43c84c166b657f65f3def3fd
+  model: microsoft/Phi-3-mini-4k-instruct@f39ac1d28e925b323eae81227eaba4464caced4e
+  dataset: "microsoft/llm-steer-instruct data/keywords/ifeval_single_keyword_include.jsonl @ 9dac937ef6fc3e483b1efc13863deeb03ec38dbe; TEST held-out suffix rows 41..85 after excluding row 40 because key 2169 overlaps frozen DEV; n=45"
+  seed: 20260817
+  hardware: "A800 GPU3 selected as free (CUDA_VISIBLE_DEVICES=3); remote host suzlab-a800"
+  started_at: '2026-08-18T02:02:39.318992+00:00'
+  ended_at: '2026-08-18T03:20:53.982095+00:00'
+  exit_code: 0
+  raw_metrics: results/latent_positive_control_phi_official_stage2_test/official_latent_positive_control_dev_results.json
+  summary_metrics:
+    test_n: 45
+    official_repo_commit: 9dac937ef6fc3e483b1efc13863deeb03ec38dbe
+    max_generation_length: 1024
+    source_layer_idx: 28
+    selected_weight: 80.0
+    dev_selection_provenance: "E-0017e artifact results/latent_positive_control_phi_official_stage1_dev_len256/official_latent_positive_control_dev_results.json at commit 6b11630"
+    baseline_compliance: 0.20
+    prompt_compliance: 0.8666666666666667
+    steer_compliance: 0.4222222222222222
+    steer_minus_baseline: 0.2222222222222222
+    steer_minus_baseline_ci_9833: [0.08888888888888889, 0.37777777777777777]
+    steer_minus_prompt: -0.4444444444444444
+    steer_minus_prompt_ci_9833: [-0.6444444444444445, -0.24444444444444444]
+    coherence_ok: true
+    baseline_truncation_rate: 0.044444444444444446
+    prompt_truncation_rate: 0.0
+    steer_truncation_rate: 0.06666666666666667
+    baseline_mean_generated_tokens: 327.40
+    prompt_mean_generated_tokens: 332.06666666666666
+    steer_mean_generated_tokens: 372.75555555555553
+    dev_test_overlap_n: 0
+    stage2_pass: true
+  artifacts:
+  - results/latent_positive_control_phi_official_stage2_test/official_latent_positive_control_dev_results.json
+  - results/latent_positive_control_phi_official_stage2_test/official_latent_positive_control_dev_summary.md
+  - results/latent_positive_control_phi_official_stage2_test/official_latent_positive_control_stage2_test_report.md
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    Owner approved Stage-2 GO after E-0017e. TEST was run exactly once with
+    frozen model Phi-3 Mini revision f39ac1d, official repo 9dac937, official
+    direction extraction, official generation length 1024, and the DEV-selected
+    single cell layer 28 × weight 80. The runner asserted DEV/TEST item key
+    overlap was zero. The frozen primary positive-control rule passed:
+    steer-baseline Δ=0.2222 with 98.33% Bonferroni CI [0.0889,0.3778], δ=0.05,
+    and coherence passed. Secondary steer-prompt remained negative. Result
+    remains valid_for_paper=false until independent hostile audit.
+
 - experiment_id: c1-facade-1dcc4fa7-0001
   parent: null
   hypothesis_id: H1

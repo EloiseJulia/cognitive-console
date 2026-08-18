@@ -1,7 +1,7 @@
 {
   "experiment_id": "E-0017f-phi3-official-stolfo-positive-control-stage2-test-once",
   "stage": "stage2_test_once_no_reselection",
-  "valid_for_paper": false,
+  "valid_for_paper": true,
   "official_repo": {
     "url": "https://github.com/microsoft/llm-steer-instruct",
     "commit": "9dac937ef6fc3e483b1efc13863deeb03ec38dbe",
@@ -1960,7 +1960,15 @@
   "stage2_verdict": {
     "pass": true,
     "rule": "PASS iff primary steer-baseline CI lower bound > 0, mean >= δ=0.05, and coherence passes; otherwise NO-PASS.",
-    "valid_for_paper_pending_audit": false
+    "valid_for_paper_pending_audit": false,
+    "audit_trail": {
+      "prior_valid_for_paper": false,
+      "hostile_audit": "audit-latentpc 2026-08-18: PASS verdict SOUND, no numerical BLOCKER; independently re-derived steer-baseline +0.2222 98.33% CI [0.0889,0.3778] from committed per-item arrays; robust to unique-key (delta=0.196 [0.079,0.321]), whole-word (delta=0.200 [0.044,0.378]), and truncation-excluded (n=40 delta=0.225 [0.075,0.400]) sensitivity; coherence 0.1023<=0.1116.",
+      "scope": "procedure-sensitivity positive control ONLY: Phi-3-mini + official Stolfo keyword-existence, a DIFFERENT model/task than headline Qwen/Llama x 3 axes. Shows the frozen adjudication procedure can certify a genuine latent control; does NOT validate headline-axis assay sensitivity, does NOT make the three console axes controllable, does NOT revise the frozen 0/12 grid or E-0005/E-0006/E-0011.",
+      "manager_decision": "D-0114 (owner-authorized 2026-08-18): valid_for_paper flipped false->true for the narrow procedure-sensitivity claim, scoped/caveated as above.",
+      "required_paper_disclosures": "full Qwen->Gemma(gated,not-run)->Phi-3 model path (fallback not pre-registered before Qwen failure); report 45 task rows / 20 unique source keys with unique-key sensitivity; official verifier is regex substring (whole-word sensitivity also passes).",
+      "known_minor": "direction L2 norms not persisted in artifact (auditability gap; does not affect verdict)."
+    }
   },
   "config_hash": "sha256:6bc46cd3418c27f998c6904ceb4b3b42b0a8c58f43c84c166b657f65f3def3fd"
 }

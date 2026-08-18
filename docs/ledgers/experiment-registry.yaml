@@ -294,16 +294,33 @@ experiments:
   - results/latent_positive_control_phi_official_stage2_test/official_latent_positive_control_dev_summary.md
   - results/latent_positive_control_phi_official_stage2_test/official_latent_positive_control_stage2_test_report.md
   failure_reason: null
-  valid_for_paper: false
+  result_artifact_sha256_post_validflip: sha256:293ce23af5db236d841c536d37f3d7e8d180243e11a795c51249fa22e225b599
+  audit_ref:
+    hostile_result_audit: audit-latentpc=PASS_SOUND (2026-08-18)
+    report: reviews/2026-08-18-e0017f-latent-pc-audit/audit-report.md
+    independent_rederivation: exact match to artifact; robust to unique-key / whole-word / truncation-excluded sensitivity
+    manager_decision: D-0114 (owner-authorized 2026-08-18)
+  valid_for_paper: true
   validation_notes: >-
     Owner approved Stage-2 GO after E-0017e. TEST was run exactly once with
     frozen model Phi-3 Mini revision f39ac1d, official repo 9dac937, official
     direction extraction, official generation length 1024, and the DEV-selected
-    single cell layer 28 × weight 80. The runner asserted DEV/TEST item key
-    overlap was zero. The frozen primary positive-control rule passed:
-    steer-baseline Δ=0.2222 with 98.33% Bonferroni CI [0.0889,0.3778], δ=0.05,
-    and coherence passed. Secondary steer-prompt remained negative. Result
-    remains valid_for_paper=false until independent hostile audit.
+    single cell layer 28 × weight 80. DEV/TEST item key overlap was zero. The
+    frozen primary positive-control rule passed: steer-baseline Δ=0.2222 with
+    98.33% Bonferroni CI [0.0889,0.3778], δ=0.05, coherence passed. Secondary
+    steer-prompt remained negative (-0.4444). Independent hostile audit
+    (audit-latentpc, D-0114) = PASS SOUND, no numerical BLOCKER, numbers
+    re-derived exactly, robust to unique-key / whole-word / truncation-excluded
+    sensitivity. valid_for_paper flipped false->true 2026-08-18.
+    SCOPE (binding): procedure-sensitivity positive control ONLY — Phi-3-mini +
+    official Stolfo keyword-existence, a DIFFERENT model/task than the headline
+    Qwen/Llama x 3 axes. Shows the frozen adjudication procedure can certify a
+    genuine latent control. Does NOT validate headline-axis assay sensitivity,
+    does NOT make the three console axes controllable, does NOT revise the frozen
+    0/12 grid or E-0005/E-0006/E-0011. Required paper disclosures: full
+    Qwen->Gemma(gated,not-run)->Phi-3 model path (fallback not pre-registered
+    before Qwen failure); 45 task rows / 20 unique source keys; regex-substring
+    verifier. Known minor: direction L2 norms not persisted (auditability gap).
 
 - experiment_id: c1-facade-1dcc4fa7-0001
   parent: null

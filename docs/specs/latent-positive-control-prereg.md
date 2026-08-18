@@ -141,3 +141,19 @@ Frozen addendum for `E-0017e-phi3-official-stolfo-positive-control-stage1-dev-le
 - **Runtime fallback:** because official 1024-token and 128-token DEV attempts were stopped for runtime, this DEV rerun must use a cap **at least 256 new tokens** if 1024 is infeasible. Caps below 256 are forbidden for this rerun.
 - **Added diagnostics:** every arm/cell must report generated-token length and conservative cap-hit (`generation_truncated`) rate.
 - **Everything else unchanged from E-0017d:** Phi-3 Mini revision, official repo commit, IFEval `keywords:existence`, `n_extraction_per_keyword=20`, official layers `{24,26,28}`, official weights `{40,60,80,100}`, primary/secondary estimands, δ/bootstrap/coherence/Bonferroni, `valid_for_paper=false`, and no TEST.
+
+## 13. Owner-approved Stage-2 TEST freeze (2026-08-18)
+
+Owner approved Stage-2 TEST after E-0017e DEV selected a coherent positive-control cell. This section freezes the TEST configuration. No re-selection, no threshold change, and no TEST-based tuning are allowed.
+
+Frozen TEST `E-0017f-phi3-official-stolfo-positive-control-stage2-test-once`:
+
+- **Model:** `microsoft/Phi-3-mini-4k-instruct`, pinned revision `f39ac1d28e925b323eae81227eaba4464caced4e`.
+- **Official repo commit:** `9dac937ef6fc3e483b1efc13863deeb03ec38dbe`.
+- **DEV selection provenance:** E-0017e artifact `results/latent_positive_control_phi_official_stage1_dev_len256/official_latent_positive_control_dev_results.json`, committed at `6b11630`, selected layer `28` × weight `80`.
+- **TEST items:** official `data/keywords/ifeval_single_keyword_include.jsonl` rows after the frozen first-40 DEV rows (`test_start_index=40`; remaining held-out rows). The runner must assert DEV/TEST item id overlap is zero.
+- **Direction extraction:** official contrast-set flow with `n_extraction_per_keyword=20` for TEST-needed keywords only; no precomputed vector or TEST outcome is used for selection.
+- **Frozen intervention:** exactly one cell, source layer `28`, weight `80`; no other layer/weight is generated or scored on TEST.
+- **Generation length:** official `max_generation_length=1024`.
+- **Adjudicator:** primary `steer-baseline`; secondary `steer-prompt`; δ=`0.05`; item-cluster bootstrap `B=10000`; Bonferroni CI level `1 - 0.05/3 = 0.983333...` following the headline C2b convention; coherence `g^S <= 1.5*g^0 + 0.02`.
+- **TEST pass rule:** PASS iff primary CI lower bound is strictly above 0, primary mean ≥δ, and coherence passes. Otherwise NO-PASS. `valid_for_paper=false` until independent hostile audit passes.

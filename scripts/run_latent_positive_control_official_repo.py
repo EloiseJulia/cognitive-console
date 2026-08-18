@@ -244,6 +244,7 @@ def parse_args(argv: Sequence[str] | None = None):
     p.add_argument("--official-repo", required=True)
     p.add_argument("--out-dir", default=str(_REPO / "results" / "latent_positive_control_official_stage1_dev"))
     p.add_argument("--experiment-id", default="E-0017b-official-stolfo-latent-positive-control-stage1-dev")
+    p.add_argument("--stage", choices=["dev", "test"], default="dev")
     p.add_argument("--model", default="Qwen/Qwen2.5-7B-Instruct")
     p.add_argument("--model-revision", default=DEFAULT_MODEL_REVISION)
     p.add_argument("--device", default="cuda")
@@ -251,6 +252,8 @@ def parse_args(argv: Sequence[str] | None = None):
     p.add_argument("--seed", type=int, default=20260817)
     p.add_argument("--n-extraction-per-keyword", type=int, default=7)
     p.add_argument("--n-dev-items", type=int, default=86)
+    p.add_argument("--test-start-index", type=int, default=40)
+    p.add_argument("--n-test-items", type=int, default=None)
     p.add_argument("--source-layers", default="24,26")
     p.add_argument("--alpha-grid", default="2,4,6,8,12,16,24")
     p.add_argument(
@@ -262,10 +265,14 @@ def parse_args(argv: Sequence[str] | None = None):
     p.add_argument("--max-generation-length", type=int, default=128)
     p.add_argument("--allow-test", action="store_true")
     args = p.parse_args(argv)
-    if args.allow_test:
-        raise SystemExit("TEST is hard-disabled in Stage-1 official rerun.")
+    if args.stage == "test" and not args.allow_test:
+        raise SystemExit("Stage-2 TEST requires explicit --allow-test.")
+    if args.stage == "dev" and args.allow_test:
+        raise SystemExit("--allow-test is only valid with --stage test.")
     args.source_layers = [int(x) for x in str(args.source_layers).split(",") if str(x).strip()]
     args.alpha_grid = [float(x) for x in str(args.alpha_grid).split(",") if str(x).strip()]
+    if args.stage == "test" and (len(args.source_layers) != 1 or len(args.alpha_grid) != 1):
+        raise SystemExit("Stage-2 TEST must run exactly one frozen layer × weight cell.")
     if str(args.official_diagnostic_alpha).lower() in {"", "none", "null"}:
         args.official_diagnostic_alpha = None
     else:
@@ -282,8 +289,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     official_repo = Path(args.official_repo).resolve()
     mods = _load_official_modules(official_repo)
     data_file = official_repo / "data" / "keywords" / "ifeval_single_keyword_include.jsonl"
-    dev_rows = _read_jsonl(data_file)[: int(args.n_dev_items)]
-    dev_words = {_official_keyword(r) for r in dev_rows}
+    all_rows = _read_jsonl(data_file)
+    frozen_dev_rows = all_rows[: int(args.n_dev_items)]
+    if args.stage == "test":
+        start = int(args.test_start_index)
+        stop = None if args.n_test_items is None else start + int(args.n_test_items)
+        rows = all_rows[start:stop]
+        frozen_dev_ids = {str(r.get("key", i)) for i, r in enumerate(frozen_dev_rows)}
+        test_ids = {str(r.get("key", start + i)) for i, r in enumerate(rows)}
+        overlap = sorted(frozen_dev_ids & test_ids)
+        if overlap:
+            raise RuntimeError(f"DEV/TEST item overlap is forbidden: {overlap[:10]}")
+    else:
+        rows = frozen_dev_rows
+    split_words = {_official_keyword(r) for r in rows}
     base_rows = _read_jsonl(official_repo / "data" / "ifeval_wo_instructions.jsonl")
     include_words = [line.strip() for line in (official_repo / "data" / "keywords" / "ifeval_keywords_include.txt").read_text(encoding="utf-8").splitlines() if line.strip()]
     extraction_rows: List[dict] = []
@@ -295,9 +314,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         ' The output should say the word "{}".',
     ]
     # Recreate official keywords/compute_representations.py rows, but only for
-    # DEV-needed words to avoid wasting GPU on unused IVs.
+    # split-needed words to avoid wasting GPU on unused IVs.
     for word in include_words:
-        if word not in dev_words:
+        if word not in split_words:
             continue
         for base in base_rows[: int(args.n_extraction_per_keyword)]:
             row = dict(base)
@@ -310,9 +329,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             extraction_rows.append(row)
 
     print(
-        f"[official-lpc] method_repo={official_repo} dev_items={len(dev_rows)} "
-        f"dev_words={len(dev_words)} extraction_rows={len(extraction_rows)} "
-        f"source_layers={args.source_layers} alpha_grid={args.alpha_grid}",
+        f"[official-lpc] method_repo={official_repo} stage={args.stage} items={len(rows)} "
+        f"words={len(split_words)} extraction_rows={len(extraction_rows)} "
+        f"source_layers={args.source_layers} alpha_grid={args.alpha_grid} "
+        f"max_generation_length={args.max_generation_length}",
         flush=True,
     )
 
@@ -333,20 +353,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         num_final_tokens=1,
         max_new_tokens=args.max_new_tokens_repr,
     )
-    missing = sorted(dev_words - set(vectors))
+    missing = sorted(split_words - set(vectors))
     if missing:
-        raise RuntimeError(f"missing official IVs for DEV words: {missing[:10]}")
+        raise RuntimeError(f"missing official IVs for split words: {missing[:10]}")
 
-    item_ids = [str(r.get("key", i)) for i, r in enumerate(dev_rows)]
+    item_ids = [str(r.get("key", i)) for i, r in enumerate(rows)]
     print("[official-lpc] generating baseline", flush=True)
     baseline_texts, baseline_scores, baseline_degs, baseline_diag = _generate_baseline_or_prompt(
-        mods, model, tokenizer, dev_rows,
+        mods, model, tokenizer, rows,
         device=args.device, include_instructions=False,
         max_generation_length=args.max_generation_length,
     )
     print("[official-lpc] generating prompt comparator", flush=True)
     prompt_texts, prompt_scores, prompt_degs, prompt_diag = _generate_baseline_or_prompt(
-        mods, model, tokenizer, dev_rows,
+        mods, model, tokenizer, rows,
         device=args.device, include_instructions=True,
         max_generation_length=args.max_generation_length,
     )
@@ -361,7 +381,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             tag = f"layer{layer}_alpha{alpha:g}"
             print(f"[official-lpc] generating steer {tag}", flush=True)
             texts, scores, degs, gen_diag = _generate_steer(
-                mods, model, tokenizer, dev_rows, vectors,
+                mods, model, tokenizer, rows, vectors,
                 device=args.device,
                 source_layer_idx=layer,
                 alpha=float(alpha),
@@ -402,9 +422,19 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     primary = _bootstrap(selected["scores"], baseline_scores, args.seed + 101)
     secondary = _bootstrap(selected["scores"], prompt_scores, args.seed + 202)
+    test_pass = bool(
+        primary.point >= lpc.DELTA
+        and primary.ci_lo > 0
+        and selected["coherence_ok"]
+    )
+    dev_sanity_pass = bool(
+        primary.point >= lpc.DELTA
+        and selected["coherence_ok"]
+        and selected["mean_score"] > float(np.mean(baseline_scores))
+    )
     payload = {
         "experiment_id": args.experiment_id,
-        "stage": "stage1_dev_only_no_test",
+        "stage": "stage2_test_once_no_reselection" if args.stage == "test" else "stage1_dev_only_no_test",
         "valid_for_paper": False,
         "official_repo": {
             "url": "https://github.com/microsoft/llm-steer-instruct",
@@ -422,9 +452,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         "model": args.model,
         "model_revision": args.model_revision,
         "data": {
-            "dev_file": str(data_file),
-            "dev_file_hash": _sha256_file(data_file),
-            "n_dev_items": len(dev_rows),
+            "file": str(data_file),
+            "file_hash": _sha256_file(data_file),
+            "split": args.stage,
+            "n_items": len(rows),
+            "dev_item_count_for_holdout_check": int(args.n_dev_items),
+            "test_start_index": int(args.test_start_index) if args.stage == "test" else None,
+            "n_test_items_requested": args.n_test_items if args.stage == "test" else None,
+            "dev_test_overlap_n": 0 if args.stage == "test" else None,
             "n_extraction_per_keyword": args.n_extraction_per_keyword,
             "n_extraction_rows": len(extraction_rows),
             "task": "IFEval keywords:existence",
@@ -437,8 +472,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             "delta": lpc.DELTA,
             "bootstrap_b": lpc.BOOTSTRAP_B,
             "ci_level": lpc.BONFERRONI_CI_LEVEL,
+            "bonferroni_source": "headline C2b convention: 1 - 0.05/3 = 0.983333... family CI reused unchanged for primary/secondary positive-control reporting",
             "coherence_gate": f"g^S <= {lpc.COHERENCE_MAX_RATIO} * g^0 + {lpc.COHERENCE_EPS_FLOOR}",
-            "test_run": False,
+            "test_run": bool(args.stage == "test"),
+            "stage2_once_no_reselection": bool(args.stage == "test"),
             "format_compliance": "not_applicable: official IFEval keywords:existence binary verifier",
             "token_normalization": "not_applicable: official keyword checker over decoded text",
         },
@@ -447,6 +484,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "official_keyword_load_results_example_layer": 26,
             "official_keyword_load_results_example_weight": 40,
             "used_source_layers": args.source_layers,
+            "dev_selection_provenance": "E-0017e DEV artifact results/latent_positive_control_phi_official_stage1_dev_len256/official_latent_positive_control_dev_results.json at commit 6b11630 selected layer 28 × weight 80",
             "note": "source_layer_idx is TransformerLens resid_post index used directly by official generation_utils hooks.",
         },
         "baseline": _cell(item_ids, baseline_scores, baseline_degs),
@@ -461,11 +499,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "ci_hi": primary.ci_hi,
                 "b": primary.b,
                 "ci_level": primary.ci_level,
-                "passes_dev_sanity": bool(
-                    primary.point >= lpc.DELTA
-                    and selected["coherence_ok"]
-                    and selected["mean_score"] > float(np.mean(baseline_scores))
-                ),
+                "passes_dev_sanity": dev_sanity_pass,
+                "passes_stage2_test": test_pass if args.stage == "test" else None,
             },
             "steer_minus_prompt": {
                 "mean": secondary.point,
@@ -500,13 +535,22 @@ def main(argv: Sequence[str] | None = None) -> int:
             "code_commit": _git_commit(),
             "dirty_tree": _git_dirty(),
             "cuda_visible_devices": os.environ.get("CUDA_VISIBLE_DEVICES"),
-            "stage2_test_run": False,
+            "stage2_test_run": bool(args.stage == "test"),
         },
     }
+    payload["test_effects"] = payload["dev_effects"] if args.stage == "test" else None
+    payload["stage2_verdict"] = {
+        "pass": test_pass,
+        "rule": "PASS iff primary steer-baseline CI lower bound > 0, mean >= δ=0.05, and coherence passes; otherwise NO-PASS.",
+        "valid_for_paper_pending_audit": False,
+    } if args.stage == "test" else None
     payload["config_hash"] = lpc.sha256_json({
         "model": args.model,
-        "dev_file_hash": payload["data"]["dev_file_hash"],
+        "data_file_hash": payload["data"]["file_hash"],
+        "stage": args.stage,
         "n_dev_items": args.n_dev_items,
+        "test_start_index": args.test_start_index,
+        "n_test_items": args.n_test_items,
         "n_extraction_per_keyword": args.n_extraction_per_keyword,
         "source_layers": args.source_layers,
         "alpha_grid": args.alpha_grid,
@@ -523,13 +567,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         encoding="utf-8",
     )
     summary = [
-        "# Official Stolfo Latent Positive Control — Stage-1 DEV",
+        "# Official Stolfo Latent Positive Control — Stage-2 TEST" if args.stage == "test" else "# Official Stolfo Latent Positive Control — Stage-1 DEV",
         "",
         f"- experiment_id: `{payload['experiment_id']}`",
         f"- valid_for_paper: `{payload['valid_for_paper']}`",
         f"- official repo commit: `{METHOD_SOURCE_COMMIT}`",
         f"- model: `{args.model}` @ `{args.model_revision}`",
-        f"- task: IFEval `keywords:existence`, DEV n=`{len(dev_rows)}`",
+        f"- task: IFEval `keywords:existence`, {args.stage.upper()} n=`{len(rows)}`",
         f"- max generation length: `{args.max_generation_length}`",
         f"- source layers used: `{args.source_layers}`; selected layer `{selected['source_layer_idx']}`",
         f"- selected α: `{selected['alpha']}`",
@@ -543,14 +587,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         f"- mean generated tokens: baseline `{baseline_diag['mean_generated_tokens']:.2f}`, prompt `{prompt_diag['mean_generated_tokens']:.2f}`, steer `{selected['generation']['mean_generated_tokens']:.2f}`",
         f"- best any weight: layer `{official_best['source_layer_idx']}`, α `{official_best['alpha']}`, Δ `{official_best['steer_minus_baseline']:.6f}`, selectable=`{official_best['selectable_by_frozen_grid']}`",
         "",
-        "No TEST item was generated or scored.",
+        (f"- Stage-2 verdict: `{'PASS' if test_pass else 'NO-PASS'}`" if args.stage == "test" else "No TEST item was generated or scored."),
     ]
     (out_dir / "official_latent_positive_control_dev_summary.md").write_text(
         "\n".join(summary) + "\n",
         encoding="utf-8",
     )
     print(f"[official-lpc] wrote {out_dir}", flush=True)
-    return 0 if payload["dev_effects"]["steer_minus_baseline"]["passes_dev_sanity"] else 2
+    return 0 if args.stage == "test" else (0 if payload["dev_effects"]["steer_minus_baseline"]["passes_dev_sanity"] else 2)
 
 
 if __name__ == "__main__":

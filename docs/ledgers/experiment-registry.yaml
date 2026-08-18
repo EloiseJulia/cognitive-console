@@ -1887,7 +1887,7 @@ experiments:
   data_hash:
     item_manifest_sha256: c1f7cfd28da8bf776553c26c68078993afd00805604baca23dd5982bc930864f
     prompt_manifest_sha256: 11884d32bd8b586a80f897a000c7f4308e421b4db77f9de56da829bab62e87e1
-    per_item_test_pairs_sha256: 109eb9240b6b7b808e5a4dc0517e1c54f214ab03b43fb2438e14cfafc729585a
+    per_item_test_pairs_sha256: 63cff0a958632a80d7a26a55fd26d5e734482061ca0b9afcd758fb6e461b88a0
   env_hash:
     model_snapshot_revision: a09a35458c702b33eeacc393d103063234e8bc28
     config_fingerprint: 303199f5d34dd5d0
@@ -1899,21 +1899,24 @@ experiments:
   model: Qwen/Qwen2.5-7B-Instruct @ a09a35458c702b33eeacc393d103063234e8bc28
   dataset: >-
     Frozen C2b composition manifest, split_seed=20260818, DEV=200/axis and
-    TEST=400/axis, zero overlap with headline TEST. Item manifest sha256
-    c1f7cfd28da8bf776553c26c68078993afd00805604baca23dd5982bc930864f; prompt manifest sha256 11884d32bd8b586a80f897a000c7f4308e421b4db77f9de56da829bab62e87e1.
+    TEST=400/axis, zero overlap with headline TEST.
   seed: 20260818
+  bootstrap_seed: 20260819
   hardware: remote A800 host, CUDA_VISIBLE_DEVICES=0, cuda-float16
   started_at: 2026-08-18T06:44:10.166371+00:00
   ended_at: 2026-08-18T15:07:36.850812+00:00
   exit_code: 0
   raw_metrics:
     result_json: results/composition_a_shard1/caa_qwen/composition_results.json
-    result_json_sha256: 6f978e6027a1283551ca6a2f83b4890fb9633bdb4232d2faf55725672a6c7711
+    result_json_sha256: 75b49a2a1451730dbf2597c469770361121a2c0a70a1abf4a63e155dcbbc62c6
     per_item_test_pairs: results/composition_a_shard1/caa_qwen/per_item_test_pairs.jsonl
     per_item_test_pairs_rows: 2400
-    per_item_test_pairs_sha256: 109eb9240b6b7b808e5a4dc0517e1c54f214ab03b43fb2438e14cfafc729585a
+    per_item_test_pairs_sha256: 63cff0a958632a80d7a26a55fd26d5e734482061ca0b9afcd758fb6e461b88a0
+    missingness_sensitivity: results/composition_a_shard1/caa_qwen/missingness_sensitivity.json
+    missingness_sensitivity_sha256: 02a666b07498ad7461703512671dc7ecfba5e1ce434e9b4725b2cddda657a03a
     raw_test_transcript_pointer_sha256: results/composition_a_shard1/caa_qwen/transcript_pointers_sha256.txt
     bootstrap_b: 10000
+    bootstrap_seed: 20260819
     ci_level: 0.9833333333333333
     cells:
       - baseline: ordinary
@@ -1926,6 +1929,7 @@ experiments:
         mean_diff: 0.0045
         ci_9833: [-0.0085, 0.0175]
         realized_mde_80pct: 0.0178053714514
+        bootstrap_seed: 20260819
         coherence_ok: true
         parse_prompt_rate: 1
         parse_steer_rate: 1
@@ -1939,8 +1943,9 @@ experiments:
         prompt_mean: 0.9015
         steer_mean: 0.891
         mean_diff: -0.0105
-        ci_9833: [-0.0263375, 0.005]
+        ci_9833: [-0.0255, 0.005]
         realized_mde_80pct: 0.020991534152
+        bootstrap_seed: 20260819
         coherence_ok: true
         parse_prompt_rate: 1
         parse_steer_rate: 1
@@ -1954,8 +1959,9 @@ experiments:
         prompt_mean: 0.688
         steer_mean: 0.6935
         mean_diff: 0.0055
-        ci_9833: [-0.009, 0.021]
+        ci_9833: [-0.009, 0.0205]
         realized_mde_80pct: 0.0201494739694
+        bootstrap_seed: 20260819
         coherence_ok: true
         parse_prompt_rate: 1
         parse_steer_rate: 1
@@ -1971,6 +1977,7 @@ experiments:
         mean_diff: -0.0005
         ci_9833: [-0.0175, 0.0165]
         realized_mde_80pct: 0.023081679684
+        bootstrap_seed: 20260819
         coherence_ok: true
         parse_prompt_rate: 1
         parse_steer_rate: 1
@@ -1984,8 +1991,9 @@ experiments:
         prompt_mean: 0.67305375
         steer_mean: 0.66755125
         mean_diff: -0.0055025
-        ci_9833: [-0.0199341875, 0.0082289375]
+        ci_9833: [-0.02011253125, 0.00856465625]
         realized_mde_80pct: 0.0194482099349
+        bootstrap_seed: 20260819
         coherence_ok: true
         parse_prompt_rate: 0.995
         parse_steer_rate: 0.998
@@ -1999,25 +2007,49 @@ experiments:
         prompt_mean: 0.86015235
         steer_mean: 0.86354175
         mean_diff: 0.0033894
-        ci_9833: [-0.00998080625, 0.0160361325]
+        ci_9833: [-0.0097569225, 0.016700855]
         realized_mde_80pct: 0.0178915046433
+        bootstrap_seed: 20260819
         coherence_ok: true
         parse_prompt_rate: 0.99
         parse_steer_rate: 0.9945
         truncation_max_rate: 0
         verdict: NO_INCREMENT_DEMONSTRATED
+    uncertainty_missingness_sensitivity:
+      - baseline: ordinary
+        missing_item_count: 8
+        prompt_missing_sample_count: 10
+        steer_missing_sample_count: 4
+        complete_case_n: 392
+        complete_case_mean_diff: -0.00294642857143
+        complete_case_ci_9833: [-0.0173363201531, 0.011022002551]
+        adversarial_lower_mean_diff: -0.0082525
+        adversarial_lower_ci_9833: [-0.02390284375, 0.00635084375]
+        adversarial_upper_mean_diff: -0.0012525
+        adversarial_upper_ci_9833: [-0.015985125, 0.0128055]
+        upper_bound_would_support_gain: false
+      - baseline: strong
+        missing_item_count: 15
+        prompt_missing_sample_count: 20
+        steer_missing_sample_count: 11
+        complete_case_n: 385
+        complete_case_mean_diff: 0.00403703896104
+        complete_case_ci_9833: [-0.00911908701299, 0.0174758948052]
+        adversarial_lower_mean_diff: -0.0032356
+        adversarial_lower_ci_9833: [-0.01759553125, 0.0108636225]
+        adversarial_upper_mean_diff: 0.0122644
+        adversarial_upper_ci_9833: [-0.00301479125, 0.0280368]
+        upper_bound_would_support_gain: false
   summary_metrics:
     prereg_path: docs/specs/c2b-composition-augmentation-prereg.md
     item_manifest: docs/specs/c2b-composition-item-manifest.jsonl
     prompt_manifest: docs/specs/c2b-composition-prompt-manifest.yaml
     alpha_manifest: results/composition_a_shard1/caa_qwen/alpha_manifest.yaml
-    alpha_manifest_sha256: 41ccf08d4572505205ef5d1cfcc73acd138f6ba59a673da6b719fe121e44e8f7
     summary_path: results/composition_a_shard1/caa_qwen/composition_summary.md
-    summary_sha256: 229520ab3033aae24814d2cf09fdcee3e645ccf464fe4a7e0e18f3ab333d6338
     selfcheck_report: results/composition_a_shard1/caa_qwen/selfcheck_report.md
-    selfcheck_report_sha256: ed3f333050354fa0c072cf661365deceec3b1a5401f65aaddb301b5c53021c70
+    missingness_sensitivity_report: results/composition_a_shard1/caa_qwen/missingness_sensitivity.md
     estimand: paired per-item (prompt + steer) minus prompt alone
-    status_note: COMPLETED_2026_08_18_AWAITING_INDEPENDENT_AUDIT
+    status_note: COMPLETED_2026_08_18_BOOTSTRAP_SEED_FIXED_AWAITING_FOLD_GATE
     shard: CAA x Qwen2.5-7B x 3 axes x ordinary+strong
     shard_verdicts_by_baseline:
       ordinary: NO_INCREMENT_DEMONSTRATED
@@ -2028,10 +2060,9 @@ experiments:
       uncertainty_awareness: 192
     mde_gate: all six cells <= 0.06
     coherence_gate: pass_all_six_cells
-    parse_gate: pass_all_six_cells; uncertainty_awareness parse rates explicitly reported in raw_metrics.cells
+    parse_gate: pass_all_six_cells; uncertainty_awareness complete-case and adversarial bounds reported
     truncation_gate: pass_all_six_cells; deliberation used 512-token generation budget, not 64
     direction_provenance: DIRECTIONS_REDERIVED_WITH_PROVENANCE_CAVEAT
-    direction_provenance_sha256: 0e0da08edea53fdf437548f47df57a6ce5b17352a1145ee370eb72ae0d0dd964
     direction_reference_status: NO_REFERENCE_FOUND_FOR_ALL_AXES
     direction_provenance_caveat: >-
       No persisted E-0006 CAA direction vector/reference was found in this
@@ -2047,24 +2078,25 @@ experiments:
   - docs/specs/c2b-composition-direction-check.yaml
   - scripts/prepare_c2b_composition_manifests.py
   - scripts/run_c2b_composition_shard.py
+  - scripts/fix_c2b_composition_audit_majors.py
   - results/composition_a_shard1/caa_qwen/composition_results.json
   - results/composition_a_shard1/caa_qwen/composition_summary.md
   - results/composition_a_shard1/caa_qwen/direction_provenance.json
   - results/composition_a_shard1/caa_qwen/alpha_manifest.yaml
   - results/composition_a_shard1/caa_qwen/model_provenance.json
   - results/composition_a_shard1/caa_qwen/per_item_test_pairs.jsonl
+  - results/composition_a_shard1/caa_qwen/missingness_sensitivity.json
+  - results/composition_a_shard1/caa_qwen/missingness_sensitivity.md
   - results/composition_a_shard1/caa_qwen/selfcheck_report.md
   - results/composition_a_shard1/caa_qwen/output_checksums_sha256.txt
   - results/composition_a_shard1/caa_qwen/transcript_pointers_sha256.txt
   failure_reason: null
   valid_for_paper: false
   validation_notes: >-
-    GPU shard completed normally (72000/72000 generations, wall_clock_seconds
-    30206.684). Self-check independently recomputed means,
-    Bonferroni 98.33% item-cluster bootstrap CIs, MDE80, coherence, parse, and
-    truncation gates from copied TEST checkpoint arrays/per-item pairs with no
-    mismatches. All six cells are well-powered nulls (MDE<=0.06) with CIs
-    including zero and verdict NO_INCREMENT_DEMONSTRATED for both ordinary and
-    strong baselines. This is not an equivalence proof and not a positive
-    augmentation finding. valid_for_paper remains false until independent hostile
-    audit approves. ITI and Llama were not run.
+    CPU-only audit-major fix applied. All six cells were recomputed from
+    committed per-item TEST arrays using preregistered bootstrap_seed=20260819,
+    B=10000 item-cluster bootstrap. All six verdicts remain
+    NO_INCREMENT_DEMONSTRATED and MDE<=0.06. Uncertainty missingness sensitivity
+    adds complete-case and adversarial bounds; neither primary verdict changes
+    nor any adversarial upper bound is used to claim gain. valid_for_paper remains
+    false pending Manager fold-gate after audit closure. ITI and Llama were not run.

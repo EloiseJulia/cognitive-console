@@ -37,7 +37,8 @@
       "uncertainty_awareness": 192
     },
     "temperature": 0.7,
-    "batch_size": 16
+    "batch_size": 16,
+    "bootstrap_seed": 20260819
   },
   "direction_provenance": {
     "status": "DIRECTIONS_REDERIVED_WITH_PROVENANCE_CAVEAT",
@@ -1401,7 +1402,8 @@
         "truncation_gate_ok": true
       },
       "passed": false,
-      "verdict": "NO_INCREMENT_DEMONSTRATED"
+      "verdict": "NO_INCREMENT_DEMONSTRATED",
+      "bootstrap_seed": 20260819
     },
     {
       "axis": "deliberation",
@@ -2693,8 +2695,8 @@
         0.0
       ],
       "mean_diff": -0.010500000000000002,
-      "ci_lo": -0.02633749999999987,
-      "ci_hi": 0.004999999999999998,
+      "ci_lo": -0.025500000000000002,
+      "ci_hi": 0.004999999999999999,
       "ci_level": 0.9833333333333333,
       "bootstrap_b": 10000,
       "realized_mde_80pct": 0.020991534152013235,
@@ -2727,7 +2729,8 @@
         "truncation_gate_ok": true
       },
       "passed": false,
-      "verdict": "NO_INCREMENT_DEMONSTRATED"
+      "verdict": "NO_INCREMENT_DEMONSTRATED",
+      "bootstrap_seed": 20260819
     },
     {
       "axis": "skepticism",
@@ -4019,8 +4022,8 @@
         0.0
       ],
       "mean_diff": 0.0055000000000000005,
-      "ci_lo": -0.009000000000000001,
-      "ci_hi": 0.021,
+      "ci_lo": -0.008999999999999998,
+      "ci_hi": 0.0205,
       "ci_level": 0.9833333333333333,
       "bootstrap_b": 10000,
       "realized_mde_80pct": 0.02014947396938957,
@@ -4053,7 +4056,8 @@
         "truncation_gate_ok": true
       },
       "passed": false,
-      "verdict": "NO_INCREMENT_DEMONSTRATED"
+      "verdict": "NO_INCREMENT_DEMONSTRATED",
+      "bootstrap_seed": 20260819
     },
     {
       "axis": "skepticism",
@@ -5345,7 +5349,7 @@
         0.0
       ],
       "mean_diff": -0.0004999999999999983,
-      "ci_lo": -0.0175,
+      "ci_lo": -0.017499999999999998,
       "ci_hi": 0.0165,
       "ci_level": 0.9833333333333333,
       "bootstrap_b": 10000,
@@ -5379,7 +5383,8 @@
         "truncation_gate_ok": true
       },
       "passed": false,
-      "verdict": "NO_INCREMENT_DEMONSTRATED"
+      "verdict": "NO_INCREMENT_DEMONSTRATED",
+      "bootstrap_seed": 20260819
     },
     {
       "axis": "uncertainty_awareness",
@@ -6671,8 +6676,8 @@
         0.058500000000000024
       ],
       "mean_diff": -0.005502500000000001,
-      "ci_lo": -0.019934187500000002,
-      "ci_hi": 0.008228937500000076,
+      "ci_lo": -0.02011253125,
+      "ci_hi": 0.008564656250000061,
       "ci_level": 0.9833333333333333,
       "bootstrap_b": 10000,
       "realized_mde_80pct": 0.019448209934861765,
@@ -6705,7 +6710,48 @@
         "truncation_gate_ok": true
       },
       "passed": false,
-      "verdict": "NO_INCREMENT_DEMONSTRATED"
+      "verdict": "NO_INCREMENT_DEMONSTRATED",
+      "bootstrap_seed": 20260819,
+      "missingness_sensitivity": {
+        "baseline": "ordinary",
+        "axis": "uncertainty_awareness",
+        "primary_n": 400,
+        "missing_item_count": 8,
+        "prompt_missing_sample_count": 10,
+        "steer_missing_sample_count": 4,
+        "complete_case": {
+          "n": 392,
+          "mean_diff": -0.0029464285714285742,
+          "ci_lo": -0.01733632015306123,
+          "ci_hi": 0.011022002551020448,
+          "ci_level": 0.9833333333333333,
+          "bootstrap_b": 10000,
+          "bootstrap_seed": 20260819,
+          "realized_mde_80pct": 0.0190298332361905
+        },
+        "adversarial_lower": {
+          "n": 400,
+          "mean_diff": -0.008252500000000003,
+          "ci_lo": -0.023902843749999986,
+          "ci_hi": 0.006350843750000055,
+          "ci_level": 0.9833333333333333,
+          "bootstrap_b": 10000,
+          "bootstrap_seed": 20260819,
+          "realized_mde_80pct": 0.020281973106726692
+        },
+        "adversarial_upper": {
+          "n": 400,
+          "mean_diff": -0.001252500000000003,
+          "ci_lo": -0.015985125000000003,
+          "ci_hi": 0.01280550000000001,
+          "ci_level": 0.9833333333333333,
+          "bootstrap_b": 10000,
+          "bootstrap_seed": 20260819,
+          "realized_mde_80pct": 0.019595225144759483
+        },
+        "primary_verdict_after_seed_fix": "NO_INCREMENT_DEMONSTRATED",
+        "upper_bound_would_support_gain": false
+      }
     },
     {
       "axis": "uncertainty_awareness",
@@ -7996,9 +8042,9 @@
         -0.17300000000000004,
         0.0
       ],
-      "mean_diff": 0.003389399999999995,
-      "ci_lo": -0.009980806250000002,
-      "ci_hi": 0.016036132500000026,
+      "mean_diff": 0.0033894000000000003,
+      "ci_lo": -0.00975692249999999,
+      "ci_hi": 0.016700855000000007,
       "ci_level": 0.9833333333333333,
       "bootstrap_b": 10000,
       "realized_mde_80pct": 0.017891504643308263,
@@ -8031,7 +8077,48 @@
         "truncation_gate_ok": true
       },
       "passed": false,
-      "verdict": "NO_INCREMENT_DEMONSTRATED"
+      "verdict": "NO_INCREMENT_DEMONSTRATED",
+      "bootstrap_seed": 20260819,
+      "missingness_sensitivity": {
+        "baseline": "strong",
+        "axis": "uncertainty_awareness",
+        "primary_n": 400,
+        "missing_item_count": 15,
+        "prompt_missing_sample_count": 20,
+        "steer_missing_sample_count": 11,
+        "complete_case": {
+          "n": 385,
+          "mean_diff": 0.0040370389610389626,
+          "ci_lo": -0.00911908701298701,
+          "ci_hi": 0.017475894805194937,
+          "ci_level": 0.9833333333333333,
+          "bootstrap_b": 10000,
+          "bootstrap_seed": 20260819,
+          "realized_mde_80pct": 0.01808747551262897
+        },
+        "adversarial_lower": {
+          "n": 400,
+          "mean_diff": -0.003235600000000001,
+          "ci_lo": -0.017595531249999997,
+          "ci_hi": 0.010863622500000008,
+          "ci_level": 0.9833333333333333,
+          "bootstrap_b": 10000,
+          "bootstrap_seed": 20260819,
+          "realized_mde_80pct": 0.019551826732278933
+        },
+        "adversarial_upper": {
+          "n": 400,
+          "mean_diff": 0.0122644,
+          "ci_lo": -0.0030147912499999784,
+          "ci_hi": 0.02803680000000007,
+          "ci_level": 0.9833333333333333,
+          "bootstrap_b": 10000,
+          "bootstrap_seed": 20260819,
+          "realized_mde_80pct": 0.020719070091549587
+        },
+        "primary_verdict_after_seed_fix": "NO_INCREMENT_DEMONSTRATED",
+        "upper_bound_would_support_gain": false
+      }
     }
   ],
   "shard_verdicts_by_baseline": {

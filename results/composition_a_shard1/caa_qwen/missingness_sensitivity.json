@@ -1,0 +1,88 @@
+{
+  "experiment_id": "composition-a-qwen-caa-20260818-0001",
+  "bootstrap_seed": 20260819,
+  "source": "results/composition_a_shard1/caa_qwen/per_item_test_pairs.jsonl",
+  "method": "complete-case excludes any TEST item with at least one unparseable confidence sample in either prompt-alone or prompt+steer; adversarial bounds set missing prompt/steer scores to 1/0 for lower bound and 0/1 for upper bound.",
+  "cells": [
+    {
+      "baseline": "ordinary",
+      "axis": "uncertainty_awareness",
+      "primary_n": 400,
+      "missing_item_count": 8,
+      "prompt_missing_sample_count": 10,
+      "steer_missing_sample_count": 4,
+      "complete_case": {
+        "n": 392,
+        "mean_diff": -0.0029464285714285742,
+        "ci_lo": -0.01733632015306123,
+        "ci_hi": 0.011022002551020448,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 10000,
+        "bootstrap_seed": 20260819,
+        "realized_mde_80pct": 0.0190298332361905
+      },
+      "adversarial_lower": {
+        "n": 400,
+        "mean_diff": -0.008252500000000003,
+        "ci_lo": -0.023902843749999986,
+        "ci_hi": 0.006350843750000055,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 10000,
+        "bootstrap_seed": 20260819,
+        "realized_mde_80pct": 0.020281973106726692
+      },
+      "adversarial_upper": {
+        "n": 400,
+        "mean_diff": -0.001252500000000003,
+        "ci_lo": -0.015985125000000003,
+        "ci_hi": 0.01280550000000001,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 10000,
+        "bootstrap_seed": 20260819,
+        "realized_mde_80pct": 0.019595225144759483
+      },
+      "primary_verdict_after_seed_fix": "NO_INCREMENT_DEMONSTRATED",
+      "upper_bound_would_support_gain": false
+    },
+    {
+      "baseline": "strong",
+      "axis": "uncertainty_awareness",
+      "primary_n": 400,
+      "missing_item_count": 15,
+      "prompt_missing_sample_count": 20,
+      "steer_missing_sample_count": 11,
+      "complete_case": {
+        "n": 385,
+        "mean_diff": 0.0040370389610389626,
+        "ci_lo": -0.00911908701298701,
+        "ci_hi": 0.017475894805194937,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 10000,
+        "bootstrap_seed": 20260819,
+        "realized_mde_80pct": 0.01808747551262897
+      },
+      "adversarial_lower": {
+        "n": 400,
+        "mean_diff": -0.003235600000000001,
+        "ci_lo": -0.017595531249999997,
+        "ci_hi": 0.010863622500000008,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 10000,
+        "bootstrap_seed": 20260819,
+        "realized_mde_80pct": 0.019551826732278933
+      },
+      "adversarial_upper": {
+        "n": 400,
+        "mean_diff": 0.0122644,
+        "ci_lo": -0.0030147912499999784,
+        "ci_hi": 0.02803680000000007,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 10000,
+        "bootstrap_seed": 20260819,
+        "realized_mde_80pct": 0.020719070091549587
+      },
+      "primary_verdict_after_seed_fix": "NO_INCREMENT_DEMONSTRATED",
+      "upper_bound_would_support_gain": false
+    }
+  ]
+}

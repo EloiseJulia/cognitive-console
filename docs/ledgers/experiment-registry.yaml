@@ -1872,3 +1872,74 @@ experiments:
     sample-size/MDE, privacy/retention, and human bilingual/accessibility review
     remain OPEN human gates, so any data collected before the freeze is
     exploratory pilot only.
+
+- experiment_id: composition-a-qwen-20260818-0001
+  parent:
+  - E-0005
+  - E-0006
+  - E-0011
+  hypothesis_id: H-COMP-A
+  claim_ids: []
+  type: confirmatory
+  status: planned
+  code_commit: null
+  dirty_tree: null
+  data_hash: null
+  env_hash: null
+  config_hash: null
+  model: Qwen/Qwen2.5-7B-Instruct primary; Llama-3-8B contingent on later Manager approval
+  dataset: >-
+    Fresh DEV/TEST item pools from the frozen C2b task families
+    (deliberation/GSM8K-style; skepticism/false-premise; uncertainty/TriviaQA-style
+    calibration), target 600 items per axis with zero DEV/TEST overlap.
+  seed: 20260818
+  hardware: GPU required later; not authorized by this preregistration
+  started_at: null
+  ended_at: null
+  exit_code: null
+  raw_metrics: null
+  summary_metrics:
+    prereg_path: docs/specs/c2b-composition-augmentation-prereg.md
+    estimand: paired per-item (prompt + steer) minus prompt alone
+    status_note: FREEZE_CANDIDATE_NOT_FROZEN_UNRUN
+    axes:
+    - deliberation
+    - skepticism
+    - uncertainty_awareness
+    methods:
+    - CAA
+    - ITI
+    prompt_baselines:
+    - ordinary
+    - strong
+    alpha_grid:
+    - 2
+    - 4
+    - 6
+    - 8
+    - 12
+    - 16
+    - 24
+    alpha_policy: composition DEV-only reselection; TEST one-shot after alpha freeze
+    target_mde: <=0.06
+    target_n_per_axis:
+      dev: 200
+      test: 400
+      total: 600
+    bootstrap_b: 10000
+    ci_level_bonferroni_3_axes: 0.9833333333333333
+    delta: 0.05
+    generation_max_new_tokens:
+      deliberation: 512
+      skepticism: 192
+      uncertainty_awareness: 192
+  artifacts:
+  - docs/specs/c2b-composition-augmentation-prereg.md
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    Placeholder registration only. No GPU, DEV, TEST, alpha tuning, or claim
+    promotion has been run. Protocol remains a freeze candidate pending Manager
+    approval; execution requires a clean freeze commit, implementation/audit
+    plan, and separate GPU/budget authorization. The estimand is additive to,
+    and does not overwrite, the frozen substitution grid.

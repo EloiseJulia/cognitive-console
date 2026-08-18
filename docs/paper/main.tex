@@ -424,7 +424,7 @@ In the Qwen--CAA format-and-missingness recheck, steering remained close to the 
 The three-way comparison therefore supports a comparator-relative warning, not a claim that steering directly harmed baseline calibration.
 
 The format-and-missingness recheck exposes a reporting confound: the parseable-confidence rate was 0.826 for steering and 0.445 for the prompt condition. {}% FL-045
-Among complete pairs, steer minus prompt was \(-0.337\) with a 95\% confidence interval of \([-0.508,-0.165]\), but this analysis conditions on post-generation parseability, its adversarial all-generation bound widens to \([-0.478,+0.250]\) and crosses zero, and the other three uncertainty cells did not receive this recheck. {}% FL-046
+Among complete pairs, steer-minus-prompt was \(-0.337\) with a 95\% confidence interval of \([-0.508,-0.165]\), but this analysis conditions on post-generation parseability, its adversarial all-generation bound widens to \([-0.478,+0.250]\) and crosses zero, and the other three uncertainty cells did not receive this recheck. {}% FL-046
 {}% FL-047
 {}% FL-048
 {}% FL-049
@@ -442,7 +442,7 @@ Quantity & Reported value & Defensible interpretation \\
 Steer minus unsteered compliance & about $+0.011$ & Steering is near the unsteered baseline in this lineage. \\
 Steer minus unsteered $1-\mathrm{Brier}$ & about $+0.0008$ & The steer-versus-prompt gap cannot be described as direct baseline harm. \\
 Parseable-confidence rate & steer 0.826; prompt 0.445 & Conditions differ in confidence reporting. \\
-Complete-case steer minus prompt & $-0.337\ [-0.508,-0.165]$ & Negative only among pairs where both outputs are complete. \\
+Complete-case steer-minus-prompt & $-0.337\ [-0.508,-0.165]$ & Negative only among pairs where both outputs are complete. \\
 All-generation adversarial bound & $[-0.478,+0.250]$ & Sign is not identified under unrestricted missingness. \\
 Other uncertainty cells & not rechecked & No grid-wide format/missingness conclusion. \\
 \bottomrule
@@ -669,7 +669,7 @@ Token-proxy movement is not scored refusal and does not establish a working late
 
 To probe the everyday-user comparison with phrasing closer to non-expert prompts, we generated novice-style prompts by few-shot prompting from a public non-expert corpus (OpenAssistant oasst1, Apache-2.0; license review passed) and ran the same frozen adjudicator on Qwen. This comparator is exploratory only: its anchor-calibration gate did not pass---the generated prompts are not validated against real novices---and it is valid\_for\_paper=false. It supports no confirmatory claim.
 
-The picture matches the average-prompt comparator. Steering does not clear the novice prompt on any cleanly measured cell: CAA deliberation, skepticism, and uncertainty give \(+0.008\), \(-0.000\), and \(-0.015\), and ITI skepticism gives \(-0.020\), all no-pass; ITI deliberation fails the coherence gate and is not interpreted. One cell, ITI uncertainty, reports a nominal frozen-score pass (\(+0.110\ [+0.007,+0.215]\)) that we do \emph{not} treat as a signal: it is parse- and missingness-limited, steering confidence compliance is unverified, and it is not evidence of real uncertainty improvement. Forty-four of the fifty-three steered items take the \(0.75\) missing-confidence imputation value, so replacing that fill with \(0.65\) or \(0.50\) moves the estimate to \(+0.027\) (no pass) or \(-0.098\). The novice uncertainty prompts are themselves confounded---all sixteen embed fixed-confidence cues such as ``70\%'' or ``80\%''---so the cell reflects a flawed comparator, not a steering advantage.
+The picture matches the average-prompt comparator. Steering does not clear the novice prompt on any cleanly measured cell: CAA deliberation, skepticism, and uncertainty give \(+0.008\), \(-0.000\), and \(-0.015\), and ITI skepticism gives \(-0.020\), all no-pass; ITI deliberation fails the coherence gate and is not interpreted. One cell, ITI uncertainty, reports a nominal frozen-score pass (\(+0.110\ [+0.007,+0.215]\)) that we do \emph{not} treat as a signal: it is parse- and missingness-limited, steering confidence compliance is unverified, and it is not evidence of real uncertainty improvement. Forty-four of the fifty-three steered items take the \(0.75\) missing-confidence imputation value, so replacing that fill with \(0.65\) or \(0.50\) moves the estimate to \(+0.027\) (no-pass) or \(-0.098\). The novice uncertainty prompts are themselves confounded---all sixteen embed fixed-confidence cues such as ``70\%'' or ``80\%''---so the cell reflects a flawed comparator, not a steering advantage.
 
 \begin{acks}
 Acknowledgements omitted for anonymous review.

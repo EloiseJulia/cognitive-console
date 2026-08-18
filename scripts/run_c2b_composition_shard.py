@@ -412,7 +412,7 @@ def _run_test_cell(
         diff,
         b=bootstrap_b,
         ci_level=adj.BONFERRONI_CI_LEVEL,
-        seed=run_seed + abs(hash((axis, prompt_baseline))) % 100000,
+        seed=run_seed + int(hashlib.sha256(f"{axis}|{prompt_baseline}".encode("utf-8")).hexdigest(), 16) % 100000,
         cluster=True,
     )
     prompt_degen = float(prompt_deg.mean())
@@ -542,6 +542,7 @@ def main() -> int:
             args.model,
             [],
         ),
+        args.run_seed,
         collector=collector,
     )
     ctx = RunContext(progress=progress, checkpoint=checkpoint)

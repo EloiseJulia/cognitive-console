@@ -1900,18 +1900,33 @@ experiments:
   raw_metrics: null
   summary_metrics:
     prereg_path: docs/specs/c2b-composition-augmentation-prereg.md
+    item_manifest: docs/specs/c2b-composition-item-manifest.jsonl
+    prompt_manifest: docs/specs/c2b-composition-prompt-manifest.yaml
+    direction_check: docs/specs/c2b-composition-direction-check.yaml
     estimand: paired per-item (prompt + steer) minus prompt alone
-    status_note: FREEZE_CANDIDATE_NOT_FROZEN_UNRUN
+    status_note: FROZEN_2026_08_18_UNRUN_GPU_NOT_AUTHORIZED
+    manager_freeze_approval: 2026-08-18
     axes:
     - deliberation
     - skepticism
     - uncertainty_awareness
-    methods:
+    shard_plan:
+      shard_1: CAA x Qwen2.5-7B x 3 axes x ordinary+strong; prepared, GPU deferred
+      shard_2: ITI x Qwen2.5-7B deferred pending shard-1 signal and card availability
+      llama: deferred behind owner/Manager gate
+    methods_first_shard:
     - CAA
+    methods_deferred:
     - ITI
     prompt_baselines:
     - ordinary
     - strong
+    ordinary_prompt_semantics: plain-instruction everyday-user proxy; not validated novice representation
+    strong_prompt_policy: reuse headline frozen best-of-set DEV winner ids; no reselection
+    strong_prompt_winners:
+      deliberation: delib-strong-09
+      skepticism: skep-strong-06
+      uncertainty_awareness: unc-strong-01
     alpha_grid:
     - 2
     - 4
@@ -1926,6 +1941,23 @@ experiments:
       dev: 200
       test: 400
       total: 600
+    realized_manifest_n_per_axis:
+      deliberation:
+        fresh_unique_after_headline_test_exclusion: 1279
+        dev: 200
+        test: 400
+        cap_to_ceiling_applied: false
+      skepticism:
+        fresh_unique_after_headline_test_exclusion: 777
+        dev: 200
+        test: 400
+        cap_to_ceiling_applied: false
+      uncertainty_awareness:
+        fresh_unique_after_headline_test_exclusion: 17891
+        dev: 200
+        test: 400
+        cap_to_ceiling_applied: false
+    cap_to_ceiling_rule: if fresh unique items are below target, cap to available ceiling; no duplicates, replacement, silent downsample, or unregistered source
     bootstrap_b: 10000
     ci_level_bonferroni_3_axes: 0.9833333333333333
     delta: 0.05
@@ -1933,13 +1965,20 @@ experiments:
       deliberation: 512
       skepticism: 192
       uncertainty_awareness: 192
+    qwen_caa_direction_check: layer metadata loadable for all axes; persisted CAA vector artifact not found in worktree
   artifacts:
   - docs/specs/c2b-composition-augmentation-prereg.md
+  - docs/specs/c2b-composition-item-manifest.jsonl
+  - docs/specs/c2b-composition-prompt-manifest.yaml
+  - docs/specs/c2b-composition-direction-check.yaml
+  - scripts/prepare_c2b_composition_manifests.py
   failure_reason: null
   valid_for_paper: false
   validation_notes: >-
-    Placeholder registration only. No GPU, DEV, TEST, alpha tuning, or claim
-    promotion has been run. Protocol remains a freeze candidate pending Manager
-    approval; execution requires a clean freeze commit, implementation/audit
-    plan, and separate GPU/budget authorization. The estimand is additive to,
-    and does not overwrite, the frozen substitution grid.
+    Frozen preregistration and non-GPU manifests only. No GPU, DEV generation,
+    TEST generation, alpha tuning, or claim promotion has been run. Execution
+    requires a clean freeze commit, implementation/audit plan, separate GPU/budget
+    authorization, and resolution of the CAA vector-artifact note: either restore
+    the persisted frozen vector artifact or explicitly authorize deterministic
+    re-derivation under the frozen C2b extraction code. The estimand is additive
+    to, and does not overwrite, the frozen substitution grid.

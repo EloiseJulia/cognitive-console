@@ -2,12 +2,15 @@
 
 - **Spec ID:** `c2b-composition-augmentation`
 - **Dispatch:** A — prompt + steer composition, not substitution
-- **Status:** `FREEZE CANDIDATE / NOT FROZEN / UNRUN / NOT AUTHORIZED TO EXECUTE`
+- **Status:** `FROZEN 2026-08-18 / UNRUN / GPU NOT AUTHORIZED`
 - **Prepared:** 2026-08-18
 - **Primary planned experiment id:** `composition-a-qwen-20260818-0001`
 - **Parent evidence:** frozen substitution grid E-0005/E-0006/E-0011 and post-hoc TOST/MDE characterization
 - **No-compute boundary:** this document registers the protocol only. It does **not** authorize GPU,
   TEST generation, α tuning, Llama execution, or paper-claim changes.
+- **Freeze note:** Manager approved freeze on 2026-08-18 with the judgment calls recorded in §2.1, §2.2,
+  §3, and §4. Frozen non-GPU manifests are `c2b-composition-item-manifest.jsonl`,
+  `c2b-composition-prompt-manifest.yaml`, and `c2b-composition-direction-check.yaml`.
 
 > **Authorization gate.** Execution requires Manager freeze approval plus the usual GPU/budget gate.
 > The first authorized run is Qwen2.5-7B only. Llama-3-8B is a contingent extension and must return to
@@ -42,7 +45,7 @@ as augmentation under a user instruction; it would not make the substitution-onl
 | Axes | `deliberation`, `skepticism`, `uncertainty_awareness` |
 | Primary model | `Qwen/Qwen2.5-7B-Instruct` |
 | Contingent model | `NousResearch/Meta-Llama-3-8B-Instruct` only if Manager separately approves |
-| Steering methods | `CAA`, `ITI` |
+| Steering methods | First shard: `CAA`; second shard: `ITI` deferred |
 | Prompt baselines | (i) ordinary/everyday-user prompt, (ii) strong best-of-set prompt |
 | Intervention | `h' = h + α · s_m · u_m` at the headline-frozen layer/direction for method `m` |
 | α grid | `{2, 4, 6, 8, 12, 16, 24}` |
@@ -56,16 +59,32 @@ as augmentation under a user instruction; it would not make the substitution-onl
 Two prompt-alone baselines are measured for every axis × method × model cell:
 
 1. **Ordinary / average prompt (`ordinary`)** — intended to represent an everyday user who can express
-   the desired behavior but does not engineer prompts. Freeze-candidate texts:
+   the desired behavior but does not engineer prompts. This is a **plain-instruction everyday-user proxy**,
+   not a validated representative sample of real novices; the missing human anchor is a threat and no
+   representativeness claim is allowed. Frozen texts:
    - deliberation: "Please think carefully before answering."
    - skepticism: "Please check the claim carefully before answering."
    - uncertainty_awareness: "Please state your confidence and mention if you are unsure."
 2. **Strong best-of-set prompt (`strong`)** — the already-authored 16-prompt strong bank used by the
-   headline protocol (`data/strongest_prompts/<axis>.jsonl`). The prompt identity must be frozen before
-   execution using the existing headline DEV-selection convention or an already-recorded headline winner.
+   headline protocol (`data/strongest_prompts/<axis>.jsonl`). The prompt identity is **not reselected**:
+   reuse the headline frozen best-of-set DEV winner from E-0005/E-0006 records. The frozen prompt manifest
+   loaded:
+   - deliberation: `delib-strong-09`
+   - skepticism: `skep-strong-06`
+   - uncertainty_awareness: `unc-strong-01`
 
-No prompt is optimized on TEST. If Manager changes any ordinary text or strong-prompt identity before
-freeze, the changed value must be recorded here before any DEV/TEST generation.
+No prompt is optimized on TEST. If the headline winner ID cannot be loaded from the frozen record, execution
+stops and reports to Manager; no substitute strong prompt may be chosen.
+
+### 2.2 Sharded execution plan
+
+Execution is deliberately split to avoid monopolizing the shared A800:
+
+1. **Shard 1 (prepared now; GPU deferred):** `CAA × Qwen2.5-7B × 3 axes × {ordinary,strong}`.
+   This is the reviewer-BLOCKER-targeting shard.
+2. **Shard 2 (deferred):** `ITI × Qwen2.5-7B`; run only after Shard 1 signal + card availability are
+   reported back to Manager.
+3. **Llama:** deferred behind an owner/Manager gate; no Llama GPU run is authorized by this freeze.
 
 ---
 
@@ -75,13 +94,20 @@ freeze, the changed value must be recorded here before any DEV/TEST generation.
   - deliberation → GSM8K-style arithmetic/reasoning accuracy.
   - skepticism → false-premise / sycophancy rejection rate.
   - uncertainty_awareness → per-item `1 − Brier`, with parseability and calibration diagnostics.
-- Draw fresh item pools disjoint from the prior headline TEST rows whenever the upstream datasets allow it.
-  If an axis cannot supply the target fresh N, the run is **not silently downsampled**; Manager must choose
-  between reducing scope, reporting lower power, or adding an alternate frozen pool before execution.
+- Draw item pools disjoint from the prior headline TEST rows. The 2026-08-18 frozen manifest verified zero
+  overlap with reconstructed headline TEST item IDs.
+- **Cap-to-ceiling rule (Manager-approved):** if an axis cannot supply fresh unique `600/axis`
+  (`200 DEV + 400 TEST`) after headline-TEST exclusion, do **not** abort, do **not** add a new source, do
+  **not** duplicate/replacement-sample, and do **not** silently downsample. Cap that axis to the available
+  fresh unique item ceiling, run at the capped N, and report realized N + realized MDE.
 - Split per axis with `split_seed = 20260818` into DEV and TEST:
   - DEV: 200 items/axis.
   - TEST: 400 items/axis.
   - Total target: 600 items/axis, 1800 items/model.
+- Frozen 2026-08-18 manifest realized the full target for all three axes:
+  - deliberation: 1279 fresh unique after excluding 40 headline TEST; DEV 200 / TEST 400.
+  - skepticism: 777 fresh unique after excluding 40 headline TEST; DEV 200 / TEST 400.
+  - uncertainty_awareness: 17891 fresh unique after excluding 53 headline TEST; DEV 200 / TEST 400.
 - DEV and TEST are zero-overlap at item-id/hash level. The manifest must include item IDs, text hashes,
   split labels, axis, and source dataset revision.
 - DEV may be used **only** to select α for each axis × method × prompt-baseline × model cell and to enforce
@@ -91,11 +117,14 @@ freeze, the changed value must be recorded here before any DEV/TEST generation.
 
 ## 4. Steering, α selection, and frozen directions
 
-The composition arm reuses the headline-frozen directions and layers. It does not re-extract directions
-unless the implementation cannot recover the frozen direction artifact; in that case execution stops and
-returns to Manager.
+The composition arm reuses the headline-frozen layers/directions. Non-GPU check on 2026-08-18 loaded the
+Qwen CAA headline layers (`layer=20` for all three axes) from the frozen result record, but did **not** find
+a persisted CAA vector artifact in this worktree. The existing headline runner re-derived CAA directions
+during GPU execution and persisted only layer/result metadata. Therefore GPU execution must either restore
+the frozen vector artifact or receive explicit Manager authorization to deterministically re-derive the CAA
+directions under the frozen C2b extraction code. It must not silently substitute a new direction.
 
-For each axis × method × prompt-baseline × model:
+For each axis × method × prompt-baseline × model (Shard 1 = CAA × Qwen only):
 
 1. Generate DEV `prompt alone`.
 2. Generate DEV `prompt + steer` for every α in `{2,4,6,8,12,16,24}`.
@@ -246,7 +275,7 @@ Manual table/prose numbers are forbidden; any paper table must be generated from
 
 ## 12. Compute estimate for Manager approval
 
-Approximate generation count per model:
+Approximate generation count per model for the full Qwen CAA+ITI plan:
 
 - Prompt-alone ordinary + strong for all items: `2 × 1800 × 5 = 18,000`.
 - DEV α sweep: `2 methods × 2 baselines × 7 α × 600 DEV items × 5 = 84,000`.
@@ -258,6 +287,9 @@ Because deliberation uses 512 generated tokens and the other axes use 192, cost 
 
 - **Qwen-only:** ~18–30 GPU-hours on an A800/4090-class 24–80 GB box, depending on batching and cache reuse.
 - **Qwen + Llama:** ~40–70 GPU-hours total including model loading, Llama lower throughput, and audit reruns.
+- **Shard 1 only (CAA × Qwen):** about **72,000 generations** and roughly **9–17 GPU-hours**, dominated by
+  512-token deliberation generations. This is the next GPU-go candidate, but remains paused until Manager
+  explicitly releases the card.
 
 These are estimates for approval only. No GPU is authorized by this preregistration.
 

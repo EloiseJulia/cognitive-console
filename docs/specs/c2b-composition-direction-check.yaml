@@ -1,0 +1,26 @@
+manifest_id: c2b-composition-qwen-caa-direction-check
+status: LAYER_LOADABLE_VECTOR_ARTIFACT_NOT_FOUND
+checked_at: '2026-08-18'
+source_result: results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json
+source_result_sha256: 33f242faf921f4a5de49b9620b6a5507415a157d21f9688dce6616d32cda1800
+steering_method: CAA
+model: Qwen/Qwen2.5-7B-Instruct
+axes:
+  deliberation:
+    layer_loaded: true
+    layer: 20
+    strong_winner_id_loaded: delib-strong-09
+  skepticism:
+    layer_loaded: true
+    layer: 20
+    strong_winner_id_loaded: skep-strong-06
+  uncertainty_awareness:
+    layer_loaded: true
+    layer: 20
+    strong_winner_id_loaded: unc-strong-01
+vector_artifact_candidates: []
+blocking_note: No persisted CAA direction vector artifact is present in this worktree;
+  existing headline runner re-derived CAA directions during GPU execution and only
+  persisted layer/result metadata. Do not substitute a new direction silently. Manager
+  must either provide/restore the frozen vector artifact or explicitly authorize deterministic
+  re-derivation under the frozen C2b extraction code before GPU-go.

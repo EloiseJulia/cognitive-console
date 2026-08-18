@@ -1,0 +1,43 @@
+manifest_id: c2b-composition-prompt-manifest
+status: FROZEN_BY_MANAGER_2026-08-18
+ordinary_prompt_semantics: plain-instruction everyday-user proxy; not validated as
+  representative of real novices, which remains a human-anchor threat
+strong_prompt_policy: reuse headline frozen best-of-set DEV winner id; no reselection
+headline_results_source: results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json
+axes:
+  deliberation:
+    ordinary:
+      prompt_id: deliberation-ordinary-plain-v1
+      text: Please think carefully before answering.
+      sha256: 8be86b3cb4ec4ee068deff8cdce13dc270cd85de958252258fbb82e3e66ad110
+    strong:
+      prompt_id: delib-strong-09
+      text: Think slowly and rigorously. Enumerate the considerations, compare them,
+        and let a conclusion emerge from that analysis.
+      source_result: results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json
+      source_experiment: E-0005/E-0006 headline frozen DEV winner
+      sha256: 0527a6e979912b4ae7e88121591669c5459607c2b041df5661a5a687522f9d24
+  skepticism:
+    ordinary:
+      prompt_id: skepticism-ordinary-plain-v1
+      text: Please check the claim carefully before answering.
+      sha256: c3fa59f3345a3832f75a491b007d2fe9545d0ed0f62dc46ac08a04eb5606bb82
+    strong:
+      prompt_id: skep-strong-06
+      text: Be suspicious and rigorous. Interrogate the sources, distrust confident-sounding
+        claims, and verify before you agree with anything.
+      source_result: results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json
+      source_experiment: E-0005/E-0006 headline frozen DEV winner
+      sha256: a807b190521f86fa4ff55eabd2e7bb27945742c844f537eff3f4a6ed07c13991
+  uncertainty_awareness:
+    ordinary:
+      prompt_id: uncertainty_awareness-ordinary-plain-v1
+      text: Please state your confidence and mention if you are unsure.
+      sha256: e6e8d348a8b44e4d6989c8ad4c1b9bfa910e77b961fc51d2336cff30cf7192cb
+    strong:
+      prompt_id: unc-strong-01
+      text: Be honest about what you do not know. Flag every uncertainty and tell
+        me how confident you really are.
+      source_result: results/arm_full/cell_caa__qwen2.5-7b/c2b_adjudication_results.json
+      source_experiment: E-0005/E-0006 headline frozen DEV winner
+      sha256: 4a643a32405f4a20673d1b4875ee52aaed241b0fbe166d1365be4a0eb160911c

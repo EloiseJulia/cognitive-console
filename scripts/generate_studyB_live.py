@@ -208,16 +208,16 @@ PROBE = {
     "task_id": "probe-draft-notice",
     "goal": {
         "en": (
-            "DRAFT / fictional warm-up. Write ONE natural-language instruction "
-            "that would get an assistant to rewrite the notice below so it: (a) is "
-            "at most 60 words, (b) keeps the date and room number, (c) uses a warm "
-            "and encouraging tone, and (d) does not mention the cancelled bus. This "
+            "Quick warm-up (fictional, about 1 minute). Write ONE plain instruction "
+            "telling an assistant how to rewrite the notice below so it: (a) is at "
+            "most 60 words, and (b) sounds warm and encouraging. Just one line is "
+            "enough — keep it quick, but try to write it as clearly as you can. This "
             "warm-up shows no output; we only record your instruction."
         ),
         "zh-Hans": (
-            "草案/虚构热身。写一条自然语言指令，让助手把下面的通知改写为：(a) 不超过 60 字，"
-            "(b) 保留日期与房间号，(c) 语气温暖鼓励，(d) 不提及取消的班车。此热身不显示输出，"
-            "我们只记录你的指令。"
+            "快速热身（虚构，约 1 分钟）。写一条简单指令，告诉助手把下面的通知改写为："
+            "(a) 不超过 60 字，(b) 语气温暖鼓励。写一条就行，别花太久，但请尽量写清楚。"
+            "此热身不显示输出，我们只记录你的指令。"
         ),
     },
     "source_material": {

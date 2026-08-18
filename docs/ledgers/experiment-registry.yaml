@@ -1872,3 +1872,55 @@ experiments:
     sample-size/MDE, privacy/retention, and human bilingual/accessibility review
     remain OPEN human gates, so any data collected before the freeze is
     exploratory pilot only.
+
+- experiment_id: e0016-powered-skepticism-b
+  parent: E-0006/E-0011
+  hypothesis_id: H2
+  claim_ids:
+  - C2
+  type: confirmatory_additive
+  status: planned
+  code_commit: null
+  dirty_tree: null
+  data_hash: null
+  env_hash: null
+  config_hash: null
+  model:
+  - Qwen/Qwen2.5-7B-Instruct
+  - Meta-Llama-3-8B-Instruct
+  dataset: >-
+    Skepticism axis only; TruthfulQA multiple_choice validation via
+    data/c2b_tasks/manifests/skepticism.yaml; powered TEST item-list hashes
+    to be filled after Manager freeze and pre-generation capacity preflight.
+  seed: 20260818
+  hardware: A800 80GB GPU, exact host/GPU index TBD after nvidia-smi idle-card check
+  started_at: null
+  ended_at: null
+  exit_code: null
+  raw_metrics: null
+  summary_metrics:
+    prereg_status: FREEZE_PENDING_DO_NOT_RUN_TEST
+    cells:
+    - CAA x Qwen2.5-7B skepticism
+    - CAA x Llama-3-8B skepticism
+    - ITI x Qwen2.5-7B skepticism
+    - ITI x Llama-3-8B skepticism
+    target_test_n:
+      caa_qwen25_7b: 400
+      caa_llama3_8b: 800
+      iti_qwen25_7b: 600
+      iti_llama3_8b: 900
+    target_mde_max: 0.06
+    frozen_alpha_source: results/arm_full/*/c2b_adjudication_results.json skepticism.dev_selection.frozen_alpha
+  artifacts:
+  - docs/specs/powered-tost-B-skepticism-prereg.md
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    Placeholder only. No TEST generation authorized before Manager freeze.
+    Protocol is additive and does not overwrite frozen E-0005/E-0006/E-0011.
+    Code commit, data hash, config hash, environment hash, realized N/MDE, and
+    output artifacts must be filled after the frozen one-shot run. Capacity guard:
+    if unique eligible TruthfulQA MC1 items cannot satisfy a target TEST N, the
+    run aborts before generation unless Manager freezes a supplemental item-source
+    addendum.

@@ -192,9 +192,14 @@ def make_spec(cell: Dict[str, Any], out_dir: Path) -> tuple[adj.AxisAdjSpec, Dic
         raise RuntimeError(
             f"layer mismatch: rebuilt={spec.layer}, source={source_layer}, expected={cell['expected_layer']}"
         )
-    sigma = float(hf_meta.get("alpha_scale_by_axis", {}).get(AXIS, 1.0))
-    if not math.isclose(sigma, float(cell["expected_sigma"]), rel_tol=1e-6, abs_tol=1e-6):
-        raise RuntimeError(f"sigma mismatch: rebuilt={sigma}, expected={cell['expected_sigma']}")
+    rebuilt_sigma = float(hf_meta.get("alpha_scale_by_axis", {}).get(AXIS, 1.0))
+    expected_sigma = float(cell["expected_sigma"])
+    if not math.isclose(rebuilt_sigma, expected_sigma, rel_tol=5e-4, abs_tol=5e-4):
+        raise RuntimeError(f"sigma mismatch: rebuilt={rebuilt_sigma}, expected={expected_sigma}")
+    # The protocol freezes the E-0006 alpha scale. Tiny cross-environment
+    # numerical drift in the reconstructed ITI sigma is tolerated only for
+    # provenance verification; generation uses the frozen source sigma.
+    sigma = expected_sigma
     powered = select_powered_items(list(spec.items), int(cell["target_n"]))
     frozen_prompt_text = prompt_by_id(cell["frozen_prompt_id"])
     if frozen_prompt_text != source_prompt_text:

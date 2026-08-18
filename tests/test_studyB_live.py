@@ -368,6 +368,20 @@ def test_aggregate_rejects_reintroduced_offline_slider_field(tmp_path):
     assert any("slider fields mismatch" in item["reason"] for item in summary["skipped_files"])
 
 
+def test_aggregate_rejects_reintroduced_offline_covariate_fields(tmp_path):
+    # 回归守卫：协变量已收窄为 {usage_frequency, self_rating}（D-0135）。
+    # 若未来有人把旧的 4 键重新加宽，精确集合相等必须继续拒收，避免"假绿"。
+    inputs, out = tmp_path / "in", tmp_path / "out"
+    inputs.mkdir()
+    export = _base_export()
+    export["covariates"]["tuned_parameters"] = "no"  # trimmed-out field
+    export["covariates"]["understands_latent_control"] = "a_little"  # trimmed-out field
+    (inputs / "wide.json").write_text(json.dumps(export), encoding="utf-8")
+    summary = aggregator.aggregate(inputs, out)
+    assert summary["participant_count"] == 0
+    assert any("covariate fields mismatch" in item["reason"] for item in summary["skipped_files"])
+
+
 # --- 桥接：组装 / 白名单 / 公平性 / 绑定 --------------------------------------
 
 

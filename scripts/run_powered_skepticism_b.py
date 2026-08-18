@@ -276,6 +276,28 @@ def transcript_diagnostics(records: Iterable[Dict[str, Any]], tokenizer: Any) ->
     return out
 
 
+def load_existing_transcript_records(out_dir: Path) -> List[Dict[str, Any]]:
+    """Load observational transcript rows left by an earlier uncached run.
+
+    When a metadata refresh resumes fully from checkpoints, no new generations
+    are emitted and the in-memory transcript collector is empty. The transcript
+    JSONL side artifacts from the one-shot generation remain authoritative for
+    parse/token diagnostics, so reuse them instead of overwriting diagnostics
+    with nulls.
+    """
+    root = Path(out_dir) / "transcripts"
+    rows: List[Dict[str, Any]] = []
+    if not root.exists():
+        return rows
+    for path in sorted(root.glob("skepticism__*.jsonl")):
+        with open(path, "r", encoding="utf-8") as fh:
+            for line in fh:
+                line = line.strip()
+                if line:
+                    rows.append(json.loads(line))
+    return rows
+
+
 def run_cell(cell_id: str, args: argparse.Namespace) -> Path:
     if cell_id not in CELLS:
         raise SystemExit(f"unknown cell {cell_id!r}; choices={sorted(CELLS)}")
@@ -409,9 +431,14 @@ def run_cell(cell_id: str, args: argparse.Namespace) -> Path:
         verdict=cell_verdict,
         frozen_params={**adj.frozen_params_dict(), "powered_prereg": PREREG, "axis": AXIS},
     )
-    transcript_root = collector.write_all(out_dir, report)
+    if collector._all_records:
+        transcript_root = collector.write_all(out_dir, report)
+        diagnostic_records = list(collector._all_records)
+    else:
+        transcript_root = out_dir / "transcripts"
+        diagnostic_records = load_existing_transcript_records(out_dir)
     tokenizer = getattr(getattr(sampler, "gen", None), "_tokenizer", None)
-    diagnostics = transcript_diagnostics(collector._all_records, tokenizer)
+    diagnostics = transcript_diagnostics(diagnostic_records, tokenizer)
     wall = round(time.time() - t0, 2)
     payload = report.to_dict()
     payload.update({

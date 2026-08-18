@@ -1899,7 +1899,7 @@ experiments:
   exit_code: null
   raw_metrics: null
   summary_metrics:
-    prereg_status: FREEZE_PENDING_DO_NOT_RUN_TEST
+    prereg_status: FROZEN_2026_08_18_MANAGER_APPROVED
     cells:
     - CAA x Qwen2.5-7B skepticism
     - CAA x Llama-3-8B skepticism
@@ -1917,10 +1917,11 @@ experiments:
   failure_reason: null
   valid_for_paper: false
   validation_notes: >-
-    Placeholder only. No TEST generation authorized before Manager freeze.
-    Protocol is additive and does not overwrite frozen E-0005/E-0006/E-0011.
-    Code commit, data hash, config hash, environment hash, realized N/MDE, and
-    output artifacts must be filled after the frozen one-shot run. Capacity guard:
-    if unique eligible TruthfulQA MC1 items cannot satisfy a target TEST N, the
-    run aborts before generation unless Manager freezes a supplemental item-source
-    addendum.
+    Placeholder only. Manager froze the prereg on 2026-08-18 with one capacity
+    guard revision: if unique eligible TruthfulQA MC1 items after DEV exclusion
+    cannot satisfy a target TEST N, cap that cell to all available eligible
+    unique items selected deterministically with seed 20260818; do not duplicate
+    items, sample with replacement, or add a supplementary source. Protocol is
+    additive and does not overwrite frozen E-0005/E-0006/E-0011. Code commit,
+    data hash, config hash, environment hash, realized N/MDE, and output
+    artifacts must be filled after the frozen one-shot run.

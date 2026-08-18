@@ -1,8 +1,7 @@
 # PREREG — Powered TOST B: Skepticism re-measurement for C2b 2×2 arm
 
-> **Status:** **FREEZE-PENDING / DO NOT RUN TEST** (2026-08-18).
-> This document is the pre-run protocol for Manager freeze review. No TEST
-> generation may start until Manager explicitly freezes this protocol.
+> **Status:** **FROZEN 2026-08-18** (Manager freeze approval, with the
+> capacity-guard revision in §2.2 and §7). TEST generation is now authorized.
 >
 > **Purpose:** additive powered re-measurement of the underpowered skepticism
 > cells in the frozen C2b arm. This does **not** overwrite or re-adjudicate the
@@ -95,12 +94,16 @@ ordered item IDs and a SHA-256 hash of the exact TEST item ID list per cell.
   best-prompt comparator and the frozen steer-only response with the same `k=5`
   sample count and item-cluster pairing.
 
-**Capacity guard:** before any model generation, the implementation must count
-eligible unique skepticism items after DEV exclusion. If a cell's target TEST N
-cannot be satisfied with unique eligible items, the run must abort before TEST
-generation with `INSUFFICIENT_ITEM_CAPACITY`. No replacement sampling, duplicate
-items, or unregistered supplementary dataset is allowed unless Manager freezes an
-explicit addendum first.
+**Capacity guard (freeze-time revision, Manager-approved 2026-08-18):** before
+any model generation, the implementation must count eligible unique skepticism
+items after DEV exclusion. If a cell's target TEST N cannot be satisfied with
+unique eligible items, that cell's TEST N is capped to **all available eligible
+unique items** selected deterministically with seed `20260818`. This cap is set
+by the fixed TruthfulQA MC1 item universe before results and is not a forking
+path. No replacement sampling, duplicate items, or unregistered supplementary
+dataset is allowed. The report must state realized N, realized MDE, and whether
+the cell actually reached `MDE ≤ 0.06`; capped cells must not be described as
+meeting the nominal target if realized MDE exceeds 0.06.
 
 ---
 
@@ -209,7 +212,7 @@ frozen prompts, and frozen directions.
 
 ## 7. Freeze block
 
-- protocol_status: `FREEZE_PENDING`
+- protocol_status: `FROZEN 2026-08-18`
 - experiment_id: `e0016-powered-skepticism-b`
 - evidence target: additive supplement to E-0005 / E-0006 / E-0011
 - root seed: `20260818`
@@ -217,10 +220,12 @@ frozen prompts, and frozen directions.
   confirms an idle GPU on the shared machine
 - no TEST generation before Manager freeze approval
 
-Open freeze-time judgment call:
+Freeze note:
 
-- The largest target cell requires `N=900` unique TEST items after DEV exclusion.
-  If the TruthfulQA MC1 eligible universe is smaller, this prereg's capacity guard
-  will abort rather than duplicate items. Manager must either accept the abort /
-  residual underpowering, or freeze a supplemental item-source addendum before
-  any TEST generation.
+- Manager approved this protocol on 2026-08-18 with one freeze-time revision:
+  target N values above the eligible unique TruthfulQA MC1 item ceiling are
+  capped to the fixed item-universe limit after DEV exclusion, rather than
+  aborting. No supplementary source, duplicate item, or replacement sampling is
+  permitted. CAA×Qwen (400) and ITI×Qwen (600) are expected to fit; CAA×Llama
+  (800) and ITI×Llama (900) may cap near the item ceiling and must report the
+  realized MDE honestly.

@@ -47,6 +47,12 @@ results/E-0012/**/transcripts/
 results/E-0012/**/checkpoints/
 results/E-0012/**/activations/
 
+# Composition shard A: commit compact JSON/markdown manifests only; exclude large run cache/transcripts
+results/composition_a_shard1/**/transcripts/
+results/composition_a_shard1/**/checkpoints/
+results/composition_a_shard1/**/c1/
+results/composition_a_shard1/**/activations/
+
 # LaTeX paper build artifacts
 docs/paper/build/
 docs/paper/*.aux

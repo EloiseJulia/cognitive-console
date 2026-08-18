@@ -292,7 +292,8 @@ TASKS = [
     },
 ]
 
-# --- 协变量问卷（通用 AI 熟练度；仅协变量，不分组）--------------------------
+# --- 协变量问卷（通用 AI 熟练度；仅协变量，不分组；已精简为 2 题，D-0135）------
+# 分组 **不** 来自本页任何自评；分组由客观写-prompt 能力（热身探针，事后评分）判定。
 COVARIATES = [
     {
         "id": "usage_frequency",
@@ -306,31 +307,6 @@ COVARIATES = [
             {"id": "monthly", "label": {"en": "A few times a month", "zh-Hans": "每月几次"}},
             {"id": "weekly", "label": {"en": "A few times a week", "zh-Hans": "每周几次"}},
             {"id": "daily", "label": {"en": "Daily", "zh-Hans": "每天"}},
-        ],
-    },
-    {
-        "id": "tuned_parameters",
-        "prompt": {
-            "en": "Have you ever adjusted an assistant's settings/parameters (e.g. temperature, system prompt)?",
-            "zh-Hans": "你是否调过助手的设置/参数（如温度、系统提示）？",
-        },
-        "options": [
-            {"id": "no", "label": {"en": "No", "zh-Hans": "否"}},
-            {"id": "once_twice", "label": {"en": "Once or twice", "zh-Hans": "一两次"}},
-            {"id": "regularly", "label": {"en": "Regularly", "zh-Hans": "经常"}},
-        ],
-    },
-    {
-        "id": "understands_latent_control",
-        "prompt": {
-            "en": "How well do you feel you understand what a 'latent' control (a slider that steers internal behaviour) does?",
-            "zh-Hans": "你觉得自己有多理解「隐控件」（一个引导内部行为的滑块）的作用？",
-        },
-        "options": [
-            {"id": "not_at_all", "label": {"en": "Not at all", "zh-Hans": "完全不懂"}},
-            {"id": "a_little", "label": {"en": "A little", "zh-Hans": "略懂"}},
-            {"id": "somewhat", "label": {"en": "Somewhat", "zh-Hans": "一般"}},
-            {"id": "well", "label": {"en": "Well", "zh-Hans": "较懂"}},
         ],
     },
     {

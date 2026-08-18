@@ -103,8 +103,6 @@ def _base_export(*, complete: bool = True) -> dict:
         "completion_status": "complete" if complete else "partial",
         "covariates": {
             "usage_frequency": "weekly",
-            "tuned_parameters": "no",
-            "understands_latent_control": "a_little",
             "self_rating": 3,
         },
         "probe": {

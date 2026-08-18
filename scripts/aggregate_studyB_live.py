@@ -78,8 +78,6 @@ TOP_LEVEL_FIELDS = {
 }
 COVARIATE_KEYS = {
     "usage_frequency",
-    "tuned_parameters",
-    "understands_latent_control",
     "self_rating",
 }
 PROBE_KEYS = {
@@ -372,8 +370,6 @@ PARTICIPANT_FIELDS = [
     "consent_agreed_at",
     "order_seed",
     "cov_usage_frequency",
-    "cov_tuned_parameters",
-    "cov_understands_latent_control",
     "cov_self_rating",
     "probe_char_count",
     "probe_edit_count",
@@ -468,8 +464,6 @@ def aggregate(input_dir: Path, out_dir: Path) -> dict[str, Any]:
                 "consent_agreed_at": export["consent_agreed_at"],
                 "order_seed": export["task_order"]["seed"],
                 "cov_usage_frequency": cov["usage_frequency"],
-                "cov_tuned_parameters": cov["tuned_parameters"],
-                "cov_understands_latent_control": cov["understands_latent_control"],
                 "cov_self_rating": cov["self_rating"],
                 "probe_char_count": probe["char_count"],
                 "probe_edit_count": probe["edit_count"],

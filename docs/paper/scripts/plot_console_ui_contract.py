@@ -141,7 +141,7 @@ def _card_lines(card: dict, e0013: dict, grid_size: int) -> list[tuple[str, str]
             ),
             _signal_line(
                 "GRID SCOPE NOTE",
-                "ITI exploratory equivalence; CAA cells are underpowered.",
+                "CAA cells re-measured at 512 tokens: slightly negative, underpowered; ITI cells floored.",
             ),
             _signal_line("BOUNDED PROMPT COMPARATOR", ceiling.get("summary", "n/a")),
             _signal_line(

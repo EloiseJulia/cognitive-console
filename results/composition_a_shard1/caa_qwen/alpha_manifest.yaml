@@ -1,0 +1,373 @@
+status: FROZEN_AFTER_DEV_BEFORE_TEST
+run_seed: 20260818
+direction_seed: 20260723
+axes:
+  deliberation:
+    ordinary:
+      prompt_id: deliberation-ordinary-plain-v1
+      frozen_alpha: 2.0
+      dev_selected_mean_diff: 0.012
+      grid:
+      - alpha: 2.0
+        dev_prompt_outcome: 0.866
+        dev_prompt_degeneracy: 0.09485550259256346
+        dev_steer_outcome: 0.878
+        dev_steer_degeneracy: 0.09887306875610634
+        dev_mean_diff: 0.012
+        coherence_gate: 0.16228325388884518
+        coherence_ok: true
+      - alpha: 4.0
+        dev_prompt_outcome: 0.866
+        dev_prompt_degeneracy: 0.09485550259256346
+        dev_steer_outcome: 0.8680000000000001
+        dev_steer_degeneracy: 0.1015431675476523
+        dev_mean_diff: 0.002000000000000003
+        coherence_gate: 0.16228325388884518
+        coherence_ok: true
+      - alpha: 6.0
+        dev_prompt_outcome: 0.866
+        dev_prompt_degeneracy: 0.09485550259256346
+        dev_steer_outcome: 0.8719999999999999
+        dev_steer_degeneracy: 0.10372494006110777
+        dev_mean_diff: 0.006000000000000001
+        coherence_gate: 0.16228325388884518
+        coherence_ok: true
+      - alpha: 8.0
+        dev_prompt_outcome: 0.866
+        dev_prompt_degeneracy: 0.09485550259256346
+        dev_steer_outcome: 0.875
+        dev_steer_degeneracy: 0.10837563748072726
+        dev_mean_diff: 0.009
+        coherence_gate: 0.16228325388884518
+        coherence_ok: true
+      - alpha: 12.0
+        dev_prompt_outcome: 0.866
+        dev_prompt_degeneracy: 0.09485550259256346
+        dev_steer_outcome: 0.855
+        dev_steer_degeneracy: 0.11073203220892708
+        dev_mean_diff: -0.011000000000000001
+        coherence_gate: 0.16228325388884518
+        coherence_ok: true
+      - alpha: 16.0
+        dev_prompt_outcome: 0.866
+        dev_prompt_degeneracy: 0.09485550259256346
+        dev_steer_outcome: 0.8630000000000001
+        dev_steer_degeneracy: 0.11182454940916006
+        dev_mean_diff: -0.0029999999999999988
+        coherence_gate: 0.16228325388884518
+        coherence_ok: true
+      - alpha: 24.0
+        dev_prompt_outcome: 0.866
+        dev_prompt_degeneracy: 0.09485550259256346
+        dev_steer_outcome: 0.86
+        dev_steer_degeneracy: 0.11514668318795032
+        dev_mean_diff: -0.006
+        coherence_gate: 0.16228325388884518
+        coherence_ok: true
+    strong:
+      prompt_id: delib-strong-09
+      frozen_alpha: 6.0
+      dev_selected_mean_diff: 0.002999999999999999
+      grid:
+      - alpha: 2.0
+        dev_prompt_outcome: 0.889
+        dev_prompt_degeneracy: 0.12408857043400279
+        dev_steer_outcome: 0.888
+        dev_steer_degeneracy: 0.13248718750498387
+        dev_mean_diff: -0.0009999999999999976
+        coherence_gate: 0.20613285565100417
+        coherence_ok: true
+      - alpha: 4.0
+        dev_prompt_outcome: 0.889
+        dev_prompt_degeneracy: 0.12408857043400279
+        dev_steer_outcome: 0.883
+        dev_steer_degeneracy: 0.12972799482291375
+        dev_mean_diff: -0.006000000000000001
+        coherence_gate: 0.20613285565100417
+        coherence_ok: true
+      - alpha: 6.0
+        dev_prompt_outcome: 0.889
+        dev_prompt_degeneracy: 0.12408857043400279
+        dev_steer_outcome: 0.8919999999999999
+        dev_steer_degeneracy: 0.13274524730390458
+        dev_mean_diff: 0.002999999999999999
+        coherence_gate: 0.20613285565100417
+        coherence_ok: true
+      - alpha: 8.0
+        dev_prompt_outcome: 0.889
+        dev_prompt_degeneracy: 0.12408857043400279
+        dev_steer_outcome: 0.8809999999999999
+        dev_steer_degeneracy: 0.1326670877921102
+        dev_mean_diff: -0.007999999999999998
+        coherence_gate: 0.20613285565100417
+        coherence_ok: true
+      - alpha: 12.0
+        dev_prompt_outcome: 0.889
+        dev_prompt_degeneracy: 0.12408857043400279
+        dev_steer_outcome: 0.868
+        dev_steer_degeneracy: 0.1385078606654757
+        dev_mean_diff: -0.020999999999999998
+        coherence_gate: 0.20613285565100417
+        coherence_ok: true
+      - alpha: 16.0
+        dev_prompt_outcome: 0.889
+        dev_prompt_degeneracy: 0.12408857043400279
+        dev_steer_outcome: 0.877
+        dev_steer_degeneracy: 0.1430519757074681
+        dev_mean_diff: -0.012
+        coherence_gate: 0.20613285565100417
+        coherence_ok: true
+      - alpha: 24.0
+        dev_prompt_outcome: 0.889
+        dev_prompt_degeneracy: 0.12408857043400279
+        dev_steer_outcome: 0.8669999999999999
+        dev_steer_degeneracy: 0.1486778082604912
+        dev_mean_diff: -0.022
+        coherence_gate: 0.20613285565100417
+        coherence_ok: true
+  skepticism:
+    ordinary:
+      prompt_id: skepticism-ordinary-plain-v1
+      frozen_alpha: 8.0
+      dev_selected_mean_diff: 0.018000000000000002
+      grid:
+      - alpha: 2.0
+        dev_prompt_outcome: 0.625
+        dev_prompt_degeneracy: 0.016416671570699898
+        dev_steer_outcome: 0.628
+        dev_steer_degeneracy: 0.01697990477217846
+        dev_mean_diff: 0.0030000000000000005
+        coherence_gate: 0.04462500735604985
+        coherence_ok: true
+      - alpha: 4.0
+        dev_prompt_outcome: 0.625
+        dev_prompt_degeneracy: 0.016416671570699898
+        dev_steer_outcome: 0.625
+        dev_steer_degeneracy: 0.016431657108494625
+        dev_mean_diff: -5.551115123125783e-19
+        coherence_gate: 0.04462500735604985
+        coherence_ok: true
+      - alpha: 6.0
+        dev_prompt_outcome: 0.625
+        dev_prompt_degeneracy: 0.016416671570699898
+        dev_steer_outcome: 0.636
+        dev_steer_degeneracy: 0.017561785049312616
+        dev_mean_diff: 0.011000000000000001
+        coherence_gate: 0.04462500735604985
+        coherence_ok: true
+      - alpha: 8.0
+        dev_prompt_outcome: 0.625
+        dev_prompt_degeneracy: 0.016416671570699898
+        dev_steer_outcome: 0.6430000000000001
+        dev_steer_degeneracy: 0.018568667812108353
+        dev_mean_diff: 0.018000000000000002
+        coherence_gate: 0.04462500735604985
+        coherence_ok: true
+      - alpha: 12.0
+        dev_prompt_outcome: 0.625
+        dev_prompt_degeneracy: 0.016416671570699898
+        dev_steer_outcome: 0.625
+        dev_steer_degeneracy: 0.01867658759346764
+        dev_mean_diff: 3.3306690738754695e-18
+        coherence_gate: 0.04462500735604985
+        coherence_ok: true
+      - alpha: 16.0
+        dev_prompt_outcome: 0.625
+        dev_prompt_degeneracy: 0.016416671570699898
+        dev_steer_outcome: 0.635
+        dev_steer_degeneracy: 0.016670616719155557
+        dev_mean_diff: 0.010000000000000002
+        coherence_gate: 0.04462500735604985
+        coherence_ok: true
+      - alpha: 24.0
+        dev_prompt_outcome: 0.625
+        dev_prompt_degeneracy: 0.016416671570699898
+        dev_steer_outcome: 0.639
+        dev_steer_degeneracy: 0.01681196204543968
+        dev_mean_diff: 0.014000000000000002
+        coherence_gate: 0.04462500735604985
+        coherence_ok: true
+    strong:
+      prompt_id: skep-strong-06
+      frozen_alpha: 2.0
+      dev_selected_mean_diff: -0.009000000000000001
+      grid:
+      - alpha: 2.0
+        dev_prompt_outcome: 0.649
+        dev_prompt_degeneracy: 0.02153843214023724
+        dev_steer_outcome: 0.64
+        dev_steer_degeneracy: 0.020841164667971653
+        dev_mean_diff: -0.009000000000000001
+        coherence_gate: 0.05230764821035587
+        coherence_ok: true
+      - alpha: 4.0
+        dev_prompt_outcome: 0.649
+        dev_prompt_degeneracy: 0.02153843214023724
+        dev_steer_outcome: 0.64
+        dev_steer_degeneracy: 0.02013402511196663
+        dev_mean_diff: -0.008999999999999998
+        coherence_gate: 0.05230764821035587
+        coherence_ok: true
+      - alpha: 6.0
+        dev_prompt_outcome: 0.649
+        dev_prompt_degeneracy: 0.02153843214023724
+        dev_steer_outcome: 0.628
+        dev_steer_degeneracy: 0.02047126474854937
+        dev_mean_diff: -0.020999999999999998
+        coherence_gate: 0.05230764821035587
+        coherence_ok: true
+      - alpha: 8.0
+        dev_prompt_outcome: 0.649
+        dev_prompt_degeneracy: 0.02153843214023724
+        dev_steer_outcome: 0.63
+        dev_steer_degeneracy: 0.02119228326937168
+        dev_mean_diff: -0.019000000000000003
+        coherence_gate: 0.05230764821035587
+        coherence_ok: true
+      - alpha: 12.0
+        dev_prompt_outcome: 0.649
+        dev_prompt_degeneracy: 0.02153843214023724
+        dev_steer_outcome: 0.631
+        dev_steer_degeneracy: 0.019866472373434217
+        dev_mean_diff: -0.018
+        coherence_gate: 0.05230764821035587
+        coherence_ok: true
+      - alpha: 16.0
+        dev_prompt_outcome: 0.649
+        dev_prompt_degeneracy: 0.02153843214023724
+        dev_steer_outcome: 0.634
+        dev_steer_degeneracy: 0.021184550005083336
+        dev_mean_diff: -0.014999999999999996
+        coherence_gate: 0.05230764821035587
+        coherence_ok: true
+      - alpha: 24.0
+        dev_prompt_outcome: 0.649
+        dev_prompt_degeneracy: 0.02153843214023724
+        dev_steer_outcome: 0.634
+        dev_steer_degeneracy: 0.018583288527874383
+        dev_mean_diff: -0.015
+        coherence_gate: 0.05230764821035587
+        coherence_ok: true
+  uncertainty_awareness:
+    ordinary:
+      prompt_id: uncertainty_awareness-ordinary-plain-v1
+      frozen_alpha: 6.0
+      dev_selected_mean_diff: 0.0135975
+      grid:
+      - alpha: 2.0
+        dev_prompt_outcome: 0.691825
+        dev_prompt_degeneracy: 0.017599889793621638
+        dev_steer_outcome: 0.6901875000000001
+        dev_steer_degeneracy: 0.018282832544501235
+        dev_mean_diff: -0.0016374999999999975
+        coherence_gate: 0.04639983469043246
+        coherence_ok: true
+      - alpha: 4.0
+        dev_prompt_outcome: 0.691825
+        dev_prompt_degeneracy: 0.017599889793621638
+        dev_steer_outcome: 0.6958175
+        dev_steer_degeneracy: 0.01890258295833113
+        dev_mean_diff: 0.003992499999999999
+        coherence_gate: 0.04639983469043246
+        coherence_ok: true
+      - alpha: 6.0
+        dev_prompt_outcome: 0.691825
+        dev_prompt_degeneracy: 0.017599889793621638
+        dev_steer_outcome: 0.7054225
+        dev_steer_degeneracy: 0.0190328580798382
+        dev_mean_diff: 0.0135975
+        coherence_gate: 0.04639983469043246
+        coherence_ok: true
+      - alpha: 8.0
+        dev_prompt_outcome: 0.691825
+        dev_prompt_degeneracy: 0.017599889793621638
+        dev_steer_outcome: 0.7009711000000002
+        dev_steer_degeneracy: 0.019394827882628564
+        dev_mean_diff: 0.009146099999999997
+        coherence_gate: 0.04639983469043246
+        coherence_ok: true
+      - alpha: 12.0
+        dev_prompt_outcome: 0.691825
+        dev_prompt_degeneracy: 0.017599889793621638
+        dev_steer_outcome: 0.6891524999999998
+        dev_steer_degeneracy: 0.01836356450915603
+        dev_mean_diff: -0.0026725000000000056
+        coherence_gate: 0.04639983469043246
+        coherence_ok: true
+      - alpha: 16.0
+        dev_prompt_outcome: 0.691825
+        dev_prompt_degeneracy: 0.017599889793621638
+        dev_steer_outcome: 0.68029
+        dev_steer_degeneracy: 0.01718149211492653
+        dev_mean_diff: -0.011535
+        coherence_gate: 0.04639983469043246
+        coherence_ok: true
+      - alpha: 24.0
+        dev_prompt_outcome: 0.691825
+        dev_prompt_degeneracy: 0.017599889793621638
+        dev_steer_outcome: 0.686235
+        dev_steer_degeneracy: 0.01757883777012195
+        dev_mean_diff: -0.0055899999999999925
+        coherence_gate: 0.04639983469043246
+        coherence_ok: true
+    strong:
+      prompt_id: unc-strong-01
+      frozen_alpha: 2.0
+      dev_selected_mean_diff: 0.0009464000000000016
+      grid:
+      - alpha: 2.0
+        dev_prompt_outcome: 0.8650135999999999
+        dev_prompt_degeneracy: 0.01936855802994655
+        dev_steer_outcome: 0.8659600000000001
+        dev_steer_degeneracy: 0.01772210004924387
+        dev_mean_diff: 0.0009464000000000016
+        coherence_gate: 0.04905283704491982
+        coherence_ok: true
+      - alpha: 4.0
+        dev_prompt_outcome: 0.8650135999999999
+        dev_prompt_degeneracy: 0.01936855802994655
+        dev_steer_outcome: 0.859375
+        dev_steer_degeneracy: 0.019008453314327555
+        dev_mean_diff: -0.005638599999999988
+        coherence_gate: 0.04905283704491982
+        coherence_ok: true
+      - alpha: 6.0
+        dev_prompt_outcome: 0.8650135999999999
+        dev_prompt_degeneracy: 0.01936855802994655
+        dev_steer_outcome: 0.8656925
+        dev_steer_degeneracy: 0.017821330416930327
+        dev_mean_diff: 0.0006789000000000026
+        coherence_gate: 0.04905283704491982
+        coherence_ok: true
+      - alpha: 8.0
+        dev_prompt_outcome: 0.8650135999999999
+        dev_prompt_degeneracy: 0.01936855802994655
+        dev_steer_outcome: 0.8655775
+        dev_steer_degeneracy: 0.01690069023987555
+        dev_mean_diff: 0.0005639000000000039
+        coherence_gate: 0.04905283704491982
+        coherence_ok: true
+      - alpha: 12.0
+        dev_prompt_outcome: 0.8650135999999999
+        dev_prompt_degeneracy: 0.01936855802994655
+        dev_steer_outcome: 0.8614274999999999
+        dev_steer_degeneracy: 0.01715127483606122
+        dev_mean_diff: -0.003586099999999999
+        coherence_gate: 0.04905283704491982
+        coherence_ok: true
+      - alpha: 16.0
+        dev_prompt_outcome: 0.8650135999999999
+        dev_prompt_degeneracy: 0.01936855802994655
+        dev_steer_outcome: 0.8578085999999999
+        dev_steer_degeneracy: 0.017117372484807214
+        dev_mean_diff: -0.007204999999999997
+        coherence_gate: 0.04905283704491982
+        coherence_ok: true
+      - alpha: 24.0
+        dev_prompt_outcome: 0.8650135999999999
+        dev_prompt_degeneracy: 0.01936855802994655
+        dev_steer_outcome: 0.8453025
+        dev_steer_degeneracy: 0.017659229574047645
+        dev_mean_diff: -0.019711099999999992
+        coherence_gate: 0.04905283704491982
+        coherence_ok: true

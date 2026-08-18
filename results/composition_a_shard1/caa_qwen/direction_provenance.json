@@ -1,0 +1,37 @@
+{
+  "status": "DIRECTIONS_REDERIVED_WITH_PROVENANCE_CAVEAT",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "device": "cuda",
+  "dtype": "float16",
+  "n_extraction": 28,
+  "direction_seed": 20260723,
+  "axes": {
+    "deliberation": {
+      "layer": 20,
+      "norm": 1.0,
+      "sha256": "506ecf52fb5b228c637d3f757d42c90ecbaa9a9c0f51c3cf41e822aa0d24fd1f",
+      "reference_status": "NO_REFERENCE_FOUND",
+      "reference_cosine": null,
+      "reference_candidates": [],
+      "provenance_caveat": "No persisted E-0006 CAA direction vector/reference was found in this worktree; direction was re-derived with frozen C2b extraction code, layer=20, n_extraction=28, direction_seed=20260723."
+    },
+    "skepticism": {
+      "layer": 20,
+      "norm": 0.9999999403953552,
+      "sha256": "33c9406b0d6f7f04eab7110a662af461104ef09350cd81059d2b3acd89aa296a",
+      "reference_status": "NO_REFERENCE_FOUND",
+      "reference_cosine": null,
+      "reference_candidates": [],
+      "provenance_caveat": "No persisted E-0006 CAA direction vector/reference was found in this worktree; direction was re-derived with frozen C2b extraction code, layer=20, n_extraction=28, direction_seed=20260723."
+    },
+    "uncertainty_awareness": {
+      "layer": 20,
+      "norm": 1.0,
+      "sha256": "ed733f839b25bc2974a3b07530ca5e7d966b55d71c7df33d7619a7ff4c9f6ee6",
+      "reference_status": "NO_REFERENCE_FOUND",
+      "reference_cosine": null,
+      "reference_candidates": [],
+      "provenance_caveat": "No persisted E-0006 CAA direction vector/reference was found in this worktree; direction was re-derived with frozen C2b extraction code, layer=20, n_extraction=28, direction_seed=20260723."
+    }
+  }
+}

@@ -1873,7 +1873,7 @@ experiments:
     remain OPEN human gates, so any data collected before the freeze is
     exploratory pilot only.
 
-- experiment_id: composition-a-qwen-20260818-0001
+- experiment_id: composition-a-qwen-caa-20260818-0001
   parent:
   - E-0005
   - E-0006
@@ -1881,104 +1881,190 @@ experiments:
   hypothesis_id: H-COMP-A
   claim_ids: []
   type: confirmatory
-  status: planned
-  code_commit: null
-  dirty_tree: null
-  data_hash: null
-  env_hash: null
-  config_hash: null
-  model: Qwen/Qwen2.5-7B-Instruct primary; Llama-3-8B contingent on later Manager approval
+  status: done
+  code_commit: d342ef6438974af6c31019bc2d74ac9389b5ded5
+  dirty_tree: false
+  data_hash:
+    item_manifest_sha256: c1f7cfd28da8bf776553c26c68078993afd00805604baca23dd5982bc930864f
+    prompt_manifest_sha256: 11884d32bd8b586a80f897a000c7f4308e421b4db77f9de56da829bab62e87e1
+    per_item_test_pairs_sha256: 109eb9240b6b7b808e5a4dc0517e1c54f214ab03b43fb2438e14cfafc729585a
+  env_hash:
+    model_snapshot_revision: a09a35458c702b33eeacc393d103063234e8bc28
+    config_fingerprint: 303199f5d34dd5d0
+    direction_sha256_by_axis:
+      deliberation: 506ecf52fb5b228c637d3f757d42c90ecbaa9a9c0f51c3cf41e822aa0d24fd1f
+      skepticism: 33c9406b0d6f7f04eab7110a662af461104ef09350cd81059d2b3acd89aa296a
+      uncertainty_awareness: ed733f839b25bc2974a3b07530ca5e7d966b55d71c7df33d7619a7ff4c9f6ee6
+  config_hash: 303199f5d34dd5d0
+  model: Qwen/Qwen2.5-7B-Instruct @ a09a35458c702b33eeacc393d103063234e8bc28
   dataset: >-
-    Fresh DEV/TEST item pools from the frozen C2b task families
-    (deliberation/GSM8K-style; skepticism/false-premise; uncertainty/TriviaQA-style
-    calibration), target 600 items per axis with zero DEV/TEST overlap.
+    Frozen C2b composition manifest, split_seed=20260818, DEV=200/axis and
+    TEST=400/axis, zero overlap with headline TEST. Item manifest sha256
+    c1f7cfd28da8bf776553c26c68078993afd00805604baca23dd5982bc930864f; prompt manifest sha256 11884d32bd8b586a80f897a000c7f4308e421b4db77f9de56da829bab62e87e1.
   seed: 20260818
-  hardware: GPU required later; not authorized by this preregistration
-  started_at: null
-  ended_at: null
-  exit_code: null
-  raw_metrics: null
+  hardware: remote A800 host, CUDA_VISIBLE_DEVICES=0, cuda-float16
+  started_at: 2026-08-18T06:44:10.166371+00:00
+  ended_at: 2026-08-18T15:07:36.850812+00:00
+  exit_code: 0
+  raw_metrics:
+    result_json: results/composition_a_shard1/caa_qwen/composition_results.json
+    result_json_sha256: 6f978e6027a1283551ca6a2f83b4890fb9633bdb4232d2faf55725672a6c7711
+    per_item_test_pairs: results/composition_a_shard1/caa_qwen/per_item_test_pairs.jsonl
+    per_item_test_pairs_rows: 2400
+    per_item_test_pairs_sha256: 109eb9240b6b7b808e5a4dc0517e1c54f214ab03b43fb2438e14cfafc729585a
+    raw_test_transcript_pointer_sha256: results/composition_a_shard1/caa_qwen/transcript_pointers_sha256.txt
+    bootstrap_b: 10000
+    ci_level: 0.9833333333333333
+    cells:
+      - baseline: ordinary
+        axis: deliberation
+        prompt_id: deliberation-ordinary-plain-v1
+        n_test: 400
+        alpha_star: 2.0
+        prompt_mean: 0.8945
+        steer_mean: 0.899
+        mean_diff: 0.0045
+        ci_9833: [-0.0085, 0.0175]
+        realized_mde_80pct: 0.0178053714514
+        coherence_ok: true
+        parse_prompt_rate: 1
+        parse_steer_rate: 1
+        truncation_max_rate: 0
+        verdict: NO_INCREMENT_DEMONSTRATED
+      - baseline: strong
+        axis: deliberation
+        prompt_id: delib-strong-09
+        n_test: 400
+        alpha_star: 6.0
+        prompt_mean: 0.9015
+        steer_mean: 0.891
+        mean_diff: -0.0105
+        ci_9833: [-0.0263375, 0.005]
+        realized_mde_80pct: 0.020991534152
+        coherence_ok: true
+        parse_prompt_rate: 1
+        parse_steer_rate: 1
+        truncation_max_rate: 0
+        verdict: NO_INCREMENT_DEMONSTRATED
+      - baseline: ordinary
+        axis: skepticism
+        prompt_id: skepticism-ordinary-plain-v1
+        n_test: 400
+        alpha_star: 8.0
+        prompt_mean: 0.688
+        steer_mean: 0.6935
+        mean_diff: 0.0055
+        ci_9833: [-0.009, 0.021]
+        realized_mde_80pct: 0.0201494739694
+        coherence_ok: true
+        parse_prompt_rate: 1
+        parse_steer_rate: 1
+        truncation_max_rate: 0
+        verdict: NO_INCREMENT_DEMONSTRATED
+      - baseline: strong
+        axis: skepticism
+        prompt_id: skep-strong-06
+        n_test: 400
+        alpha_star: 2.0
+        prompt_mean: 0.695
+        steer_mean: 0.6945
+        mean_diff: -0.0005
+        ci_9833: [-0.0175, 0.0165]
+        realized_mde_80pct: 0.023081679684
+        coherence_ok: true
+        parse_prompt_rate: 1
+        parse_steer_rate: 1
+        truncation_max_rate: 0
+        verdict: NO_INCREMENT_DEMONSTRATED
+      - baseline: ordinary
+        axis: uncertainty_awareness
+        prompt_id: uncertainty_awareness-ordinary-plain-v1
+        n_test: 400
+        alpha_star: 6.0
+        prompt_mean: 0.67305375
+        steer_mean: 0.66755125
+        mean_diff: -0.0055025
+        ci_9833: [-0.0199341875, 0.0082289375]
+        realized_mde_80pct: 0.0194482099349
+        coherence_ok: true
+        parse_prompt_rate: 0.995
+        parse_steer_rate: 0.998
+        truncation_max_rate: 0
+        verdict: NO_INCREMENT_DEMONSTRATED
+      - baseline: strong
+        axis: uncertainty_awareness
+        prompt_id: unc-strong-01
+        n_test: 400
+        alpha_star: 2.0
+        prompt_mean: 0.86015235
+        steer_mean: 0.86354175
+        mean_diff: 0.0033894
+        ci_9833: [-0.00998080625, 0.0160361325]
+        realized_mde_80pct: 0.0178915046433
+        coherence_ok: true
+        parse_prompt_rate: 0.99
+        parse_steer_rate: 0.9945
+        truncation_max_rate: 0
+        verdict: NO_INCREMENT_DEMONSTRATED
   summary_metrics:
     prereg_path: docs/specs/c2b-composition-augmentation-prereg.md
     item_manifest: docs/specs/c2b-composition-item-manifest.jsonl
     prompt_manifest: docs/specs/c2b-composition-prompt-manifest.yaml
-    direction_check: docs/specs/c2b-composition-direction-check.yaml
+    alpha_manifest: results/composition_a_shard1/caa_qwen/alpha_manifest.yaml
+    alpha_manifest_sha256: 41ccf08d4572505205ef5d1cfcc73acd138f6ba59a673da6b719fe121e44e8f7
+    summary_path: results/composition_a_shard1/caa_qwen/composition_summary.md
+    summary_sha256: 229520ab3033aae24814d2cf09fdcee3e645ccf464fe4a7e0e18f3ab333d6338
+    selfcheck_report: results/composition_a_shard1/caa_qwen/selfcheck_report.md
+    selfcheck_report_sha256: ed3f333050354fa0c072cf661365deceec3b1a5401f65aaddb301b5c53021c70
     estimand: paired per-item (prompt + steer) minus prompt alone
-    status_note: FROZEN_2026_08_18_UNRUN_GPU_NOT_AUTHORIZED
-    manager_freeze_approval: 2026-08-18
-    axes:
-    - deliberation
-    - skepticism
-    - uncertainty_awareness
-    shard_plan:
-      shard_1: CAA x Qwen2.5-7B x 3 axes x ordinary+strong; prepared, GPU deferred
-      shard_2: ITI x Qwen2.5-7B deferred pending shard-1 signal and card availability
-      llama: deferred behind owner/Manager gate
-    methods_first_shard:
-    - CAA
-    methods_deferred:
-    - ITI
-    prompt_baselines:
-    - ordinary
-    - strong
-    ordinary_prompt_semantics: plain-instruction everyday-user proxy; not validated novice representation
-    strong_prompt_policy: reuse headline frozen best-of-set DEV winner ids; no reselection
-    strong_prompt_winners:
-      deliberation: delib-strong-09
-      skepticism: skep-strong-06
-      uncertainty_awareness: unc-strong-01
-    alpha_grid:
-    - 2
-    - 4
-    - 6
-    - 8
-    - 12
-    - 16
-    - 24
-    alpha_policy: composition DEV-only reselection; TEST one-shot after alpha freeze
-    target_mde: <=0.06
-    target_n_per_axis:
-      dev: 200
-      test: 400
-      total: 600
-    realized_manifest_n_per_axis:
-      deliberation:
-        fresh_unique_after_headline_test_exclusion: 1279
-        dev: 200
-        test: 400
-        cap_to_ceiling_applied: false
-      skepticism:
-        fresh_unique_after_headline_test_exclusion: 777
-        dev: 200
-        test: 400
-        cap_to_ceiling_applied: false
-      uncertainty_awareness:
-        fresh_unique_after_headline_test_exclusion: 17891
-        dev: 200
-        test: 400
-        cap_to_ceiling_applied: false
-    cap_to_ceiling_rule: if fresh unique items are below target, cap to available ceiling; no duplicates, replacement, silent downsample, or unregistered source
-    bootstrap_b: 10000
-    ci_level_bonferroni_3_axes: 0.9833333333333333
-    delta: 0.05
+    status_note: COMPLETED_2026_08_18_AWAITING_INDEPENDENT_AUDIT
+    shard: CAA x Qwen2.5-7B x 3 axes x ordinary+strong
+    shard_verdicts_by_baseline:
+      ordinary: NO_INCREMENT_DEMONSTRATED
+      strong: NO_INCREMENT_DEMONSTRATED
     generation_max_new_tokens:
       deliberation: 512
       skepticism: 192
       uncertainty_awareness: 192
-    qwen_caa_direction_check: layer metadata loadable for all axes; persisted CAA vector artifact not found in worktree
+    mde_gate: all six cells <= 0.06
+    coherence_gate: pass_all_six_cells
+    parse_gate: pass_all_six_cells; uncertainty_awareness parse rates explicitly reported in raw_metrics.cells
+    truncation_gate: pass_all_six_cells; deliberation used 512-token generation budget, not 64
+    direction_provenance: DIRECTIONS_REDERIVED_WITH_PROVENANCE_CAVEAT
+    direction_provenance_sha256: 0e0da08edea53fdf437548f47df57a6ce5b17352a1145ee370eb72ae0d0dd964
+    direction_reference_status: NO_REFERENCE_FOUND_FOR_ALL_AXES
+    direction_provenance_caveat: >-
+      No persisted E-0006 CAA direction vector/reference was found in this
+      worktree, so no cosine comparison was available. Directions were
+      re-derived with frozen C2b extraction code, layer=20, n_extraction=28,
+      direction_seed=20260723; audit should treat this as a provenance caveat.
+    additive_relation: additive composition/augmentation estimand only; does not overwrite frozen substitution grid
+    deferred_methods: ITI and Llama not run in this shard
   artifacts:
   - docs/specs/c2b-composition-augmentation-prereg.md
   - docs/specs/c2b-composition-item-manifest.jsonl
   - docs/specs/c2b-composition-prompt-manifest.yaml
   - docs/specs/c2b-composition-direction-check.yaml
   - scripts/prepare_c2b_composition_manifests.py
+  - scripts/run_c2b_composition_shard.py
+  - results/composition_a_shard1/caa_qwen/composition_results.json
+  - results/composition_a_shard1/caa_qwen/composition_summary.md
+  - results/composition_a_shard1/caa_qwen/direction_provenance.json
+  - results/composition_a_shard1/caa_qwen/alpha_manifest.yaml
+  - results/composition_a_shard1/caa_qwen/model_provenance.json
+  - results/composition_a_shard1/caa_qwen/per_item_test_pairs.jsonl
+  - results/composition_a_shard1/caa_qwen/selfcheck_report.md
+  - results/composition_a_shard1/caa_qwen/output_checksums_sha256.txt
+  - results/composition_a_shard1/caa_qwen/transcript_pointers_sha256.txt
   failure_reason: null
   valid_for_paper: false
   validation_notes: >-
-    Frozen preregistration and non-GPU manifests only. No GPU, DEV generation,
-    TEST generation, alpha tuning, or claim promotion has been run. Execution
-    requires a clean freeze commit, implementation/audit plan, separate GPU/budget
-    authorization, and resolution of the CAA vector-artifact note: either restore
-    the persisted frozen vector artifact or explicitly authorize deterministic
-    re-derivation under the frozen C2b extraction code. The estimand is additive
-    to, and does not overwrite, the frozen substitution grid.
+    GPU shard completed normally (72000/72000 generations, wall_clock_seconds
+    30206.684). Self-check independently recomputed means,
+    Bonferroni 98.33% item-cluster bootstrap CIs, MDE80, coherence, parse, and
+    truncation gates from copied TEST checkpoint arrays/per-item pairs with no
+    mismatches. All six cells are well-powered nulls (MDE<=0.06) with CIs
+    including zero and verdict NO_INCREMENT_DEMONSTRATED for both ordinary and
+    strong baselines. This is not an equivalence proof and not a positive
+    augmentation finding. valid_for_paper remains false until independent hostile
+    audit approves. ITI and Llama were not run.

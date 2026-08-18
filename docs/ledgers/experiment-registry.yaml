@@ -1879,49 +1879,139 @@ experiments:
   claim_ids:
   - C2
   type: confirmatory_additive
-  status: planned
-  code_commit: null
-  dirty_tree: null
-  data_hash: null
+  status: done
+  code_commit: 81c7e79765e4526be3920617f173c921917ac858
+  dirty_tree: false
+  data_hash: >-
+    aggregate_json=sha256:b535bd931ea89bde1a056a6767b144d78121244b1a66f3c73a5128116f7628ce;
+    cell_caa_qwen25_7b=sha256:c38a80a16bdb57b9452ab0afd4f24df0d60568cf241be8d4939dfb524948c1fe;
+    cell_caa_llama3_8b=sha256:99d54759aecfc147dd201cef83472aa766fa1c4bbdc0f16d9a4436e59c979c0a;
+    cell_iti_qwen25_7b=sha256:0ea3a998c9716ca6a3741e1724928acf58c8d559cd1007d7d915f7da2bfe7fa4;
+    cell_iti_llama3_8b=sha256:2c63cf768b72d353af7da555fc316291e9a61216defb663b742e4c909a67d40f;
+    combined=sha256:67c627a92d9c2faa095b6095e8ec1ea03eb68228ff4ecfdd61df117569de1d26
   env_hash: null
-  config_hash: null
+  config_hash: >-
+    caa_qwen25_7b=384cac67da7ba64a;
+    caa_llama3_8b=c1ba5e11e449d421;
+    iti_qwen25_7b=5b14c282c17f86d2;
+    iti_llama3_8b=0a2378a24666d4e8
   model:
   - Qwen/Qwen2.5-7B-Instruct
   - Meta-Llama-3-8B-Instruct
   dataset: >-
     Skepticism axis only; TruthfulQA multiple_choice validation via
-    data/c2b_tasks/manifests/skepticism.yaml; powered TEST item-list hashes
-    to be filled after Manager freeze and pre-generation capacity preflight.
+    data/c2b_tasks/manifests/skepticism.yaml; frozen E-0006 DEV items excluded;
+    deterministic powered TEST selection seed 20260818; item_id hashes recorded
+    per cell in raw artifact.
   seed: 20260818
-  hardware: A800 80GB GPU, exact host/GPU index TBD after nvidia-smi idle-card check
-  started_at: null
-  ended_at: null
-  exit_code: null
-  raw_metrics: null
+  hardware: >-
+    NVIDIA A800 80GB PCIe, remote 10.172.211.158, CUDA_VISIBLE_DEVICES=3
+    selected after nvidia-smi showed GPU3 at 6 MiB / 0% util.
+  started_at: '2026-08-18T04:59:54+00:00'
+  ended_at: '2026-08-18T06:30:14.252678+00:00'
+  exit_code: 0
+  raw_metrics: results/E-0016-powered-skepticism-b/powered_skepticism_b_aggregate.json
   summary_metrics:
     prereg_status: FROZEN_2026_08_18_MANAGER_APPROVED
-    cells:
-    - CAA x Qwen2.5-7B skepticism
-    - CAA x Llama-3-8B skepticism
-    - ITI x Qwen2.5-7B skepticism
-    - ITI x Llama-3-8B skepticism
-    target_test_n:
-      caa_qwen25_7b: 400
-      caa_llama3_8b: 800
-      iti_qwen25_7b: 600
-      iti_llama3_8b: 900
-    target_mde_max: 0.06
     frozen_alpha_source: results/arm_full/*/c2b_adjudication_results.json skepticism.dev_selection.frozen_alpha
+    root_seed: 20260818
+    bootstrap_b: 10000
+    delta: 0.05
+    target_mde_max: 0.06
+    actual_gpu_wall_seconds_from_one_shot_logs:
+      caa_qwen25_7b: 630.13
+      caa_llama3_8b: 1740.53
+      iti_qwen25_7b: 974.48
+      iti_llama3_8b: 1613.96
+      total: 4959.10
+      gpu_hours: 1.38
+    cells:
+      caa_qwen25_7b:
+        target_n: 400
+        realized_n: 400
+        cap_applied: false
+        mean_diff: -0.009000000000000001
+        ci_9833: [-0.052000000000000005, 0.0325]
+        ci_90: [-0.038000000000000006, 0.02]
+        realized_mde: 0.0571
+        reached_mde_le_0_06: true
+        coherence_ok: true
+        parse_rates:
+          prompt: 1.0
+          steer: 1.0
+          baseline: 1.0
+        verdict: BOUNDED_EQUIVALENT
+      caa_llama3_8b:
+        target_n: 800
+        realized_n: 797
+        cap_applied: true
+        mean_diff: 0.027603513174404015
+        ci_9833: [-0.0095357590966123, 0.0657465495608532]
+        ci_90: [0.0012547051442910887, 0.054203262233375155]
+        realized_mde: 0.0510
+        reached_mde_le_0_06: true
+        coherence_ok: true
+        parse_rates:
+          prompt: 1.0
+          steer: 1.0
+          baseline: 1.0
+        verdict: UNDERPOWERED
+      iti_qwen25_7b:
+        target_n: 600
+        realized_n: 600
+        cap_applied: false
+        mean_diff: -0.02
+        ci_9833: [-0.055558333333333244, 0.015]
+        ci_90: [-0.044, 0.004333333333333333]
+        realized_mde: 0.0475
+        reached_mde_le_0_06: true
+        coherence_ok: true
+        parse_rates:
+          prompt: 1.0
+          steer: 1.0
+          baseline: 1.0
+        verdict: BOUNDED_EQUIVALENT
+      iti_llama3_8b:
+        target_n: 900
+        realized_n: 797
+        cap_applied: true
+        mean_diff: 0.028105395232120453
+        ci_9833: [-0.01053952321204517, 0.06591593475533276]
+        ci_90: [0.001756587202007531, 0.05395232120451695]
+        realized_mde: 0.0508
+        reached_mde_le_0_06: true
+        coherence_ok: true
+        parse_rates:
+          prompt: 1.0
+          steer: 1.0
+          baseline: 1.0
+        verdict: UNDERPOWERED
   artifacts:
   - docs/specs/powered-tost-B-skepticism-prereg.md
+  - scripts/run_powered_skepticism_b.py
+  - results/E-0016-powered-skepticism-b/powered_skepticism_b_aggregate.json
+  - results/E-0016-powered-skepticism-b/powered_skepticism_b_aggregate.md
+  - results/E-0016-powered-skepticism-b/cell_caa_qwen25_7b/powered_skepticism_b_results.json
+  - results/E-0016-powered-skepticism-b/cell_caa_qwen25_7b/powered_skepticism_b_summary.md
+  - results/E-0016-powered-skepticism-b/cell_caa_llama3_8b/powered_skepticism_b_results.json
+  - results/E-0016-powered-skepticism-b/cell_caa_llama3_8b/powered_skepticism_b_summary.md
+  - results/E-0016-powered-skepticism-b/cell_iti_qwen25_7b/powered_skepticism_b_results.json
+  - results/E-0016-powered-skepticism-b/cell_iti_qwen25_7b/powered_skepticism_b_summary.md
+  - results/E-0016-powered-skepticism-b/cell_iti_llama3_8b/powered_skepticism_b_results.json
+  - results/E-0016-powered-skepticism-b/cell_iti_llama3_8b/powered_skepticism_b_summary.md
   failure_reason: null
   valid_for_paper: false
   validation_notes: >-
-    Placeholder only. Manager froze the prereg on 2026-08-18 with one capacity
-    guard revision: if unique eligible TruthfulQA MC1 items after DEV exclusion
-    cannot satisfy a target TEST N, cap that cell to all available eligible
-    unique items selected deterministically with seed 20260818; do not duplicate
-    items, sample with replacement, or add a supplementary source. Protocol is
-    additive and does not overwrite frozen E-0005/E-0006/E-0011. Code commit,
-    data hash, config hash, environment hash, realized N/MDE, and output
-    artifacts must be filled after the frozen one-shot run.
+    Additive powered skepticism-only re-measurement. Manager froze the prereg on
+    2026-08-18 with one capacity guard revision: if unique eligible TruthfulQA
+    MC1 items after DEV exclusion cannot satisfy a target TEST N, cap that cell
+    to all available eligible unique items selected deterministically with seed
+    20260818; do not duplicate items, sample with replacement, or add a
+    supplementary source. The one-shot TEST generation used the frozen E-0006
+    alpha/prompt/layer and frozen ITI sigma scale, with no DEV reselection.
+    Results: Qwen cells are bounded-equivalent at the δ=0.05 floor; Llama cells
+    remain underpowered because the 90% TOST upper bound slightly exceeds +0.05
+    despite realized MDE <=0.06. All cells pass coherence and have 100% MC-letter
+    parseability in prompt/steer/baseline channels. This does not overwrite
+    frozen E-0005/E-0006/E-0011 and awaits independent hostile audit before any
+    claim-map/evidence-ledger upgrade.

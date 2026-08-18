@@ -47,6 +47,12 @@ results/E-0012/**/transcripts/
 results/E-0012/**/checkpoints/
 results/E-0012/**/activations/
 
+# E-0016 powered skepticism-B: commit compact JSON/MD only
+results/E-0016-powered-skepticism-b/**/transcripts/
+results/E-0016-powered-skepticism-b/**/checkpoints/
+results/E-0016-powered-skepticism-b/**/c1/
+results/E-0016-powered-skepticism-b/**/activations/
+
 # LaTeX paper build artifacts
 docs/paper/build/
 docs/paper/*.aux

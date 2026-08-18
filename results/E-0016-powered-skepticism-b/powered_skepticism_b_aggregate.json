@@ -1,0 +1,127 @@
+{
+  "experiment_id": "e0016-powered-skepticism-b",
+  "prereg": "docs/specs/powered-tost-B-skepticism-prereg.md (FROZEN 2026-08-18)",
+  "generated_at": "2026-08-18T06:30:14.252678+00:00",
+  "code_commit": "81c7e79765e4526be3920617f173c921917ac858",
+  "seed": 20260818,
+  "cells": [
+    {
+      "cell_id": "caa_qwen25_7b",
+      "model": "Qwen2.5-7B",
+      "method": "caa",
+      "target_n": 400,
+      "realized_n": 400,
+      "cap_applied": false,
+      "mean_diff": -0.009000000000000001,
+      "ci_9833": [
+        -0.052000000000000005,
+        0.0325
+      ],
+      "ci_90": [
+        -0.038000000000000006,
+        0.02
+      ],
+      "realized_mde": 0.0571,
+      "reached_mde_le_0_06": true,
+      "coherence_ok": true,
+      "verdict": "BOUNDED_EQUIVALENT",
+      "parse_rates": {
+        "test_prompt": 1.0,
+        "test_steer": 1.0,
+        "test_baseline": 1.0
+      },
+      "item_ids_hash": "sha256:99f70f0db638bd27beaeb1188ea131097edf0873aadcc03c7af852e03a5ca6b2",
+      "json": "results/E-0016-powered-skepticism-b/cell_caa_qwen25_7b/powered_skepticism_b_results.json"
+    },
+    {
+      "cell_id": "caa_llama3_8b",
+      "model": "Llama-3-8B",
+      "method": "caa",
+      "target_n": 800,
+      "realized_n": 797,
+      "cap_applied": true,
+      "mean_diff": 0.027603513174404015,
+      "ci_9833": [
+        -0.0095357590966123,
+        0.0657465495608532
+      ],
+      "ci_90": [
+        0.0012547051442910887,
+        0.054203262233375155
+      ],
+      "realized_mde": 0.051,
+      "reached_mde_le_0_06": true,
+      "coherence_ok": true,
+      "verdict": "UNDERPOWERED",
+      "parse_rates": {
+        "test_prompt": 1.0,
+        "test_steer": 1.0,
+        "test_baseline": 1.0
+      },
+      "item_ids_hash": "sha256:e34dc51edcb6b8f60eae4bdbc63955f0a6775d9391acc74c4eb38dbee7e98cea",
+      "json": "results/E-0016-powered-skepticism-b/cell_caa_llama3_8b/powered_skepticism_b_results.json"
+    },
+    {
+      "cell_id": "iti_qwen25_7b",
+      "model": "Qwen2.5-7B",
+      "method": "iti",
+      "target_n": 600,
+      "realized_n": 600,
+      "cap_applied": false,
+      "mean_diff": -0.02,
+      "ci_9833": [
+        -0.055558333333333244,
+        0.015
+      ],
+      "ci_90": [
+        -0.044,
+        0.004333333333333333
+      ],
+      "realized_mde": 0.0475,
+      "reached_mde_le_0_06": true,
+      "coherence_ok": true,
+      "verdict": "BOUNDED_EQUIVALENT",
+      "parse_rates": {
+        "test_prompt": 1.0,
+        "test_steer": 1.0,
+        "test_baseline": 1.0
+      },
+      "item_ids_hash": "sha256:dbc9566057b4cb7ffd35d88709a62d8353d058ea0e28ca0f3c321743f1f9e033",
+      "json": "results/E-0016-powered-skepticism-b/cell_iti_qwen25_7b/powered_skepticism_b_results.json"
+    },
+    {
+      "cell_id": "iti_llama3_8b",
+      "model": "Llama-3-8B",
+      "method": "iti",
+      "target_n": 900,
+      "realized_n": 797,
+      "cap_applied": true,
+      "mean_diff": 0.028105395232120453,
+      "ci_9833": [
+        -0.01053952321204517,
+        0.06591593475533276
+      ],
+      "ci_90": [
+        0.001756587202007531,
+        0.05395232120451695
+      ],
+      "realized_mde": 0.0508,
+      "reached_mde_le_0_06": true,
+      "coherence_ok": true,
+      "verdict": "UNDERPOWERED",
+      "parse_rates": {
+        "test_prompt": 1.0,
+        "test_steer": 1.0,
+        "test_baseline": 1.0
+      },
+      "item_ids_hash": "sha256:e34dc51edcb6b8f60eae4bdbc63955f0a6775d9391acc74c4eb38dbee7e98cea",
+      "json": "results/E-0016-powered-skepticism-b/cell_iti_llama3_8b/powered_skepticism_b_results.json"
+    }
+  ],
+  "result_hash_inputs": [
+    "results/E-0016-powered-skepticism-b/cell_caa_qwen25_7b/powered_skepticism_b_results.json",
+    "results/E-0016-powered-skepticism-b/cell_caa_llama3_8b/powered_skepticism_b_results.json",
+    "results/E-0016-powered-skepticism-b/cell_iti_qwen25_7b/powered_skepticism_b_results.json",
+    "results/E-0016-powered-skepticism-b/cell_iti_llama3_8b/powered_skepticism_b_results.json"
+  ]
+}

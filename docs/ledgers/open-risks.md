@@ -65,3 +65,15 @@
     authorized human evaluation. Synthetic novice-agent role-play can inform
     design proposals only; it is not usability, accessibility, timing, or
     treatment-validity evidence and cannot support a paper claim.
+17. **[MED-NEW] Study B probe discrimination not yet validated (D-0136).** The
+    prompt-writing probe is the objective grouping instrument (proficient vs
+    non-proficient). It was lightened to two success constraints (≤60 words /
+    warm tone) to reduce participant burden. An independent audit (MAJOR) warns
+    the two dropped constraints were the most discriminating and that a
+    2-constraint probe risks a ceiling effect where experts and novices score
+    alike. Mitigation deferred to the Protocol/Rubric-Freeze gate: before any
+    confirmatory use, pilot the probe rubric and show the score distribution has
+    no ceiling (report variance / % at max / IQR across raters), reconcile the
+    "客观分组仪器" label with the low-burden framing, and pre-register the frozen
+    probe text and rubric together as one artifact. Until then, grouping from
+    this probe is exploratory only.

@@ -5,6 +5,54 @@
 
 ---
 
+## 2026-08-18 · D-0136 · Study B probe lightened; audit MAJOR on probe discrimination logged
+- **Trigger:** Owner found the prompt-writing warm-up probe time-wasting and
+  asked to delete it. The probe is (spec §63) the **objective prompt-writing
+  grouping instrument** — deleting it collapses the population-relative
+  comparison (proficient vs non-proficient), leaving only self-report grouping
+  (rejected in D-0135) or circular grouping on the main-task own_prompt.
+- **Decision (Manager, owner-approved `keep_lighten`):** keep the probe, reduce
+  burden only: reframe as a ~1-minute quick warm-up, one line is enough, and cut
+  success constraints from four (≤60 words / keep date+room / warm tone / omit
+  bus) to two (≤60 words / warm tone). Text-only; probe structure, export
+  schema, aggregator contract, and grouping mechanism unchanged. Independent
+  hostile audit: **MERGEABLE**. Branch `feature/studyB-probe-lighten` merged
+  no-ff to main; 32 tests green; not pushed.
+- **Audit MAJOR (construct validity), owner-resolved:** the auditor flagged that
+  (a) the two dropped constraints (selective retention, negative constraint)
+  were the most discriminating, and (b) an initial "short and rough is fine, no
+  need to polish" framing actively suppressed the skill signal. Resolution: the
+  probe measures **capability**, so the instruction now asks participants to
+  write it **"as clearly as you can"** (kept brief). The low-effort "rough is
+  fine" framing belongs to the **main-task own_prompt** (the average-prompt
+  comparator), not to this grouping instrument — a distinction the Manager had
+  initially conflated. Owner chose `clearest_try`.
+- **Deferred to freeze (see open-risks):** whether a 2-constraint probe + rubric
+  still discriminates without a ceiling effect must be validated (variance / %
+  at max / IQR across raters) and pre-registered together with the frozen probe
+  text and rubric before any confirmatory use.
+- **Boundary:** pre-freeze exploratory; ethics-scope confirmation for showing AI
+  output still pending; no recruitment/data beyond owner playtest.
+
+## 2026-08-18 · D-0135 · Study B background covariate survey trimmed to 2 items
+- **Trigger:** Owner asked to simplify the background questionnaire, proposing a
+  binary self-rated "AI expert/novice" that would also define the groups.
+- **Decision (Manager, owner-approved `keep_covariate_trim`):** do **not** use
+  self-report for grouping (it would decouple the study from the paper's
+  operationalized construct "can write a strong prompt", which must be measured
+  by an objective prompt-writing task scored post-hoc). Instead keep the page as
+  covariate-only and reduce four questions to two: `usage_frequency` +
+  `self_rating`; drop `tuned_parameters` + `understands_latent_control`. Grouping
+  stays with the objective probe (D-0136).
+- **Contract sync:** COVARIATE_KEYS (exact set), participant CSV cov_* columns,
+  row building, tests, and regenerated HTML all narrowed to the 2 keys; added a
+  regression guard test that rejects reintroduced trimmed covariate fields.
+  Independent audit: **MERGEABLE** (1 MINOR = the guard, adopted). Branch
+  `feature/studyB-covariate-trim` merged no-ff to main; 32 tests green; not
+  pushed.
+- **Boundary:** pre-freeze exploratory; self_rating retained as covariate only,
+  never as a grouping variable.
+
 ## 2026-08-17 · D-0134 · Pivot to direction B: semi-live local collector (real model output) built, audited, merged
 - **Trigger:** Owner playtested the decoupled-offline (no-output) collector and
   hit a real construct problem: with no visible slider effect, the subjective

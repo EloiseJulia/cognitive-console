@@ -64,7 +64,7 @@ Alex, an everyday user, is drafting a policy recommendation with an AI assistant
 These are two standards, not one. For an everyday user who cannot easily write a strong prompt, a low-effort, accessible slider is attractive. For a proficient user---someone who can write a strong prompt for the task, so their realistic alternative is a well-crafted instruction---a control is worth adding only if it earns incremental behavioral advantage over that prompt. So whether a slider is good depends on who is asking and against which alternative, a question output-change demonstrations and legibility both leave open.
 
 This is not a hypothetical pattern. Bo et al.~expose activation steering through SELECT, CALIBRATE, and LEARN controls; Anthropic's Golden Gate Claude made an internally modified Claude 3 Sonnet publicly available for 24 hours; and Karny et al.~show that a neural-transparency interface can raise reported trust and perceived helpfulness without changing several behavioral outcomes---a reminder that felt usefulness and measured benefit can diverge. \cite{bo2026steerable,anthropic2024goldengate,karny2026neural} {}% SOURCE_CHECKED 2026-08-11
-These precedents share one move: an internal signal is turned into an interface control. What the field lacks is a shared way to decide whether such a control has earned that role, for whom, and against what the user could already do without it.
+These precedents share one move: an internal signal is turned into an interface control. What the field lacks is a shared way to decide whether such a control has earned that role, for whom, and against what the user could already do without it. A formative consultation with a senior human-centered-computing expert (Section~\ref{formative-study}) grounds this concern: the expert confirmed that teams do infer control from a legible, interpretable direction, and stressed that a fair judgment must compare the control against the alternative appropriate to each user population.
 
 We therefore ask not only whether a particular latent slider is good, but \textbf{how to evaluate whether a readable internal signal deserves to act as an interface control}. Our answer is an evaluation method, not a verdict on one technique. It rests on three commitments: (i) judge the control against each user population's \emph{realistic alternative}---a strong best-of-set prompt for a proficient user, an average prompt for a non-expert---rather than against ``no control''; (ii) separate \emph{convenience} from \emph{warranted quality gain}, since a control can win on one and lose the other; and (iii) bind every result to an evidence tier so it cannot silently transfer across model, method, axis, or task. READ records whether the label has local representational support; the bounded prompt comparator, calibration warning, and evidence tier then carry the result into the interface. Unlike method-level benchmarks that rank prompting against steering \cite{wu2025axbench} or study the representation--actionability gap in aggregate \cite{basu2026actionability}, and unlike steering interfaces evaluated for preference \cite{bo2026steerable} or passive transparency \cite{karny2026neural}, the unit of analysis is one control's release decision, evaluated separately against each population's alternative. {}% C-001
 {}% C-002
@@ -102,34 +102,11 @@ This paper makes three contributions:
 
 The case study centers on a substitution design: the latent intervention is offered \emph{in place of} a prompt. We additionally report a first composition test (steering added on top of the prompt) for CAA on Qwen, which shows no incremental gain; composition beyond that single method and model is out of scope here.
 
-% ============================================================================
-% PENDING FORMATIVE STUDY SECTION — scaffold only. The \section line below is
-% intentionally COMMENTED OUT so the current PDF does not show an empty titled
-% section implying a study that has not happened. Uncomment \section + \label and
-% fill the three PENDING blocks ONLY after a real, consented expert consultation
-% (docs/plans/formative-expert-consultation-protocol.md). No expert statement,
-% quote, theme, or requirement may be written from imagination. Keep strictly
-% formative: motivation + requirements elicitation, NOT validation, NOT a user
-% study; state N and the non-representative caveat; do not enter
-% Abstract/Contributions as a validated finding.
-% ============================================================================
-% \section{Formative Expert Consultation}\label{formative-study}
+\section{Formative Expert Consultation}\label{formative-study}
 
-% PENDING_FORMATIVE_METHOD: participant descriptor(s) (anonymized), expertise and
-% relevance, format (semi-structured, ~45-60 min), the stimulus shown (problem
-% framing + the Qwen-CAA uncertainty five-field record), and the analysis method
-% (lightweight thematic / requirement extraction). Populate only from real notes.
+To ground the problem in practice and to elicit requirements for the qualification record, we conducted a formative consultation with one senior expert in human-centered computing. The participant is an associate professor with over ten years' experience whose research centers on human-centered computing, service computing, and the design and evaluation of user-facing computational systems, selected for expertise in human-centered system design and evaluation; they are described without identifying details, and the consultation followed the applicable ethics determination with informed consent. The session was a 50-minute semi-structured online interview (one interviewer, one notetaker) in which the expert reacted to the problem framing (a legible internal signal wired to a slider) and to a concrete stimulus, the worked Qwen--CAA uncertainty five-field record (Table~\ref{tab:worked-record}); we analyzed the notes by lightweight thematic coding and requirement extraction. As a single-expert, non-representative exercise it is motivational: it grounds the problem and shapes requirements, and does not test comprehension, reliance, behavior, or the interface, nor substitute for a summative user study.
 
-% PENDING_FORMATIVE_FINDINGS: 2-4 elicited design requirements and whether the
-% practitioner pain point ("a legible signal is wired to an active control before
-% it is shown to help") was confirmed or disconfirmed. Report disconfirmation if
-% it occurs. Map each requirement to the five-field record. Populate only from
-% real notes.
-
-% PENDING_FORMATIVE_CAVEAT: single/few senior expert(s), formative and
-% non-representative; motivates and shapes requirements; does not test
-% comprehension, reliance, behavior, or the interface, and does not substitute
-% for a summative user study.
+The expert confirmed the pain point---that a legible, interpretable direction is readily mistaken for a working control---while qualifying it as population- and scenario-dependent: it is most acute for new interpretability-derived features, where a semantically clear internal direction invites the inference ``explainable, therefore controllable,'' and least acute where mature alternatives such as prompting or workflow design already meet the goal. Four requirements emerged. First, \emph{behavioral, reproducible gain is the release-critical evidence}: legibility is a precondition (diagnostic, not product evidence), and a control should earn an active role only on stable behavioral improvement, not on the existence of an interpretable signal---prioritizing the TRANSFER field over READ. Second, \emph{the comparator must match the target population}: a strong, well-crafted prompt is the fair baseline for a proficient user and an ordinary prompt for a non-expert, with no single universal baseline---converging with the two-comparator design. Third, \emph{negative, uncertain, or inconclusive results must be shown honestly}, with scope and confidence stated, because users tend to read a control's mere presence as a validated, reliable capability and over-rely on it---supporting the calibration warning and the choice to expose the blocking reason rather than a pass/fail badge. Fourth, \emph{who benefits, and by how much, should be recorded}: the expert proposed an explicit user-value dimension capturing per-population benefit and heterogeneity (a control may help a non-expert by lowering effort while adding little for a user who can already write a strong prompt), which the present five-field record captures only indirectly through its two comparators and which we flag as a refinement. Asked for one rule of thumb for withholding a slider, the expert offered: release only if the gain is stable and clearly exceeds existing methods such as a well-designed prompt, and otherwise defer---which mirrors the release rule this paper instantiates. These formative inputs motivate the method and shape the record; they are not evidence for the computational results reported later.
 
 \section{Related Work}\label{related-work}
 

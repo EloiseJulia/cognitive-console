@@ -1,8 +1,9 @@
-"""Run C2b composition shard A: CAA × Qwen × three axes × ordinary/strong prompts.
+"""Run C2b composition shard A: Qwen × one steering method × ordinary/strong prompts.
 
 This is the GPU runner for ``docs/specs/c2b-composition-augmentation-prereg.md``.
-It re-derives CAA directions via the frozen C2b extraction path, selects alpha on
-the frozen DEV manifest only, then runs TEST once for prompt-alone vs prompt+steer.
+It re-derives CAA/ITI directions via the frozen C2b extraction path, selects
+alpha on the frozen DEV manifest only, then runs TEST once for prompt-alone vs
+prompt+steer.
 """
 
 from __future__ import annotations
@@ -34,7 +35,9 @@ from cognitive_console.eval import scorers as c2b_scorers
 from cognitive_console.experiments import adjudicate_c2b as adj
 from cognitive_console.experiments.adjudicate_c2b import CheckpointStore, ProgressTracker, RunContext
 from cognitive_console.lineage import git_commit, utcnow
+from cognitive_console.steering.extract import min_layer_for_depth
 from cognitive_console.steering.generate import SteeredHFBackend
+from cognitive_console.steering.iti import extract_iti
 
 from scripts import run_c2b_adjudication as c2br
 from scripts import run_gpu_phase0 as p0
@@ -50,6 +53,12 @@ MAX_NEW_TOKENS = {
 DELTA = 0.05
 Z_BONF = 2.394
 Z_80 = 0.842
+BOOTSTRAP_SEED = 20260819
+HEADLINE_ITI_QWEN_LAYERS = {
+    "deliberation": 20,
+    "skepticism": 19,
+    "uncertainty_awareness": 17,
+}
 
 
 @dataclass
@@ -139,10 +148,11 @@ def _load_axis_items_by_id(axis: str) -> Dict[str, Dict[str, Any]]:
     return {str(item["id"]): dict(item) for item in task.items}
 
 
-def _direction_reference_candidates(root: Path) -> List[Path]:
+def _direction_reference_candidates(root: Path, steering_method: str) -> List[Path]:
     candidates: List[Path] = []
+    cell_dir = "cell_iti__qwen2.5-7b" if steering_method == "iti" else "cell_caa__qwen2.5-7b"
     for base in (
-        root / "results" / "arm_full" / "cell_caa__qwen2.5-7b",
+        root / "results" / "arm_full" / cell_dir,
         root / "results" / "c2b_adjudication_hf_2026-07-24",
     ):
         if not base.exists():
@@ -154,8 +164,24 @@ def _direction_reference_candidates(root: Path) -> List[Path]:
     return candidates
 
 
-def _derive_caa_directions(model: str, out_dir: Path, axes: Sequence[str], *,
-                           n_extraction: int, direction_seed: int) -> Dict[str, Any]:
+def _headline_iti_layers() -> Dict[str, int]:
+    path = _REPO / "results" / "arm_full" / "cell_iti__qwen2.5-7b" / "c2b_adjudication_results.json"
+    if not path.exists():
+        return dict(HEADLINE_ITI_QWEN_LAYERS)
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        info = payload.get("c1_layer_info") or {}
+        return {
+            axis: int((info.get(axis) or {}).get("chosen_layer", HEADLINE_ITI_QWEN_LAYERS[axis]))
+            for axis in AXES
+        }
+    except Exception:
+        return dict(HEADLINE_ITI_QWEN_LAYERS)
+
+
+def _derive_steering_directions(model: str, out_dir: Path, axes: Sequence[str], *,
+                                steering_method: str, n_extraction: int,
+                                direction_seed: int) -> Dict[str, Any]:
     device, dtype = p0._pick_device(), p0._pick_dtype()
     provider = HFActivationProvider(
         model,
@@ -163,31 +189,84 @@ def _derive_caa_directions(model: str, out_dir: Path, axes: Sequence[str], *,
         dtype=dtype,
         cache_dir=str(out_dir / "c1" / "activations" / "cache"),
     )
-    refs = _direction_reference_candidates(_REPO)
+    refs = _direction_reference_candidates(_REPO, steering_method)
     by_axis: Dict[str, Any] = {}
+    headline_iti_layers = _headline_iti_layers()
+    neutral_all = p0.c1.load_neutral_prompts()
     for axis in axes:
-        layer = 20
-        direction = p0._extract_direction(provider, axis, layer, n_extraction, direction_seed)
+        sigma = 1.0
+        method_diag: Dict[str, Any] = {}
+        if steering_method == "caa":
+            layer = 20
+            direction = p0._extract_direction(provider, axis, layer, n_extraction, direction_seed)
+            method_label = "CAA"
+            caveat_method = "CAA direction vector/reference"
+        elif steering_method == "iti":
+            pairs = p0.c1.load_axis_pairs(axis)
+            split = p0.c1.make_split(
+                list(pairs.pos.keys()), n_extraction=n_extraction, seed=direction_seed
+            )
+            ext_pos = [pairs.pos[p] for p in split.extraction_ids]
+            ext_neg = [pairs.neg[p] for p in split.extraction_ids]
+            candidate_layers = [ell for ell in provider.available_layers() if ell >= 1]
+            min_layer = min_layer_for_depth(max(candidate_layers), min_depth_frac=0.2)
+            iti = extract_iti(
+                provider,
+                axis=axis,
+                pos_texts=ext_pos,
+                neg_texts=ext_neg,
+                layers=candidate_layers,
+                selection="nondegenerate",
+                neutral_texts=neutral_all,
+                min_layer=min_layer,
+                min_depth_frac=0.2,
+                n_null=2000,
+                null_seed=direction_seed,
+            )
+            expected_layer = int(headline_iti_layers[axis])
+            if int(iti.layer) != expected_layer:
+                raise RuntimeError(
+                    f"ITI layer drift for {axis}: re-derived layer={iti.layer}, "
+                    f"headline frozen layer={expected_layer}"
+                )
+            layer = int(iti.layer)
+            direction = iti.direction
+            sigma = float(iti.sigma)
+            method_label = "ITI"
+            caveat_method = "ITI direction/probe vector/reference"
+            method_diag = {
+                "selection": iti.selection,
+                "sigma": sigma,
+                "alpha_scale": sigma,
+                "iti_probe_norm": float(np.linalg.norm(iti.vector)),
+                "headline_frozen_layer": expected_layer,
+                "min_layer": int(min_layer),
+            }
+        else:
+            raise ValueError(f"unsupported steering method: {steering_method!r}")
         direction = np.asarray(direction, dtype=np.float32)
         norm = float(np.linalg.norm(direction))
         if not math.isfinite(norm) or norm <= 0:
-            raise RuntimeError(f"invalid CAA direction norm for {axis}: {norm}")
+            raise RuntimeError(f"invalid {steering_method.upper()} direction norm for {axis}: {norm}")
         by_axis[axis] = {
             "layer": layer,
             "direction": direction,
             "norm": norm,
+            "sigma": sigma,
             "sha256": _array_hash(direction),
             "reference_status": "NO_REFERENCE_FOUND",
             "reference_cosine": None,
             "reference_candidates": [str(p.relative_to(_REPO)).replace("\\", "/") for p in refs],
             "provenance_caveat": (
-                "No persisted E-0006 CAA direction vector/reference was found in this worktree; "
-                "direction was re-derived with frozen C2b extraction code, layer=20, "
+                f"No persisted E-0006 {caveat_method} was found in this worktree; "
+                f"direction was re-derived with frozen C2b {method_label} extraction code, layer={layer}, "
                 f"n_extraction={n_extraction}, direction_seed={direction_seed}."
             ),
+            **method_diag,
         }
     return {
         "status": "DIRECTIONS_REDERIVED_WITH_PROVENANCE_CAVEAT" if not refs else "DIRECTIONS_REDERIVED_REFERENCE_UNCHECKED",
+        "steering_method": steering_method.upper(),
         "model": model,
         "device": device,
         "dtype": str(dtype),
@@ -412,7 +491,7 @@ def _run_test_cell(
         diff,
         b=bootstrap_b,
         ci_level=adj.BONFERRONI_CI_LEVEL,
-        seed=run_seed + int(hashlib.sha256(f"{axis}|{prompt_baseline}".encode("utf-8")).hexdigest(), 16) % 100000,
+        seed=BOOTSTRAP_SEED,
         cluster=True,
     )
     prompt_degen = float(prompt_deg.mean())
@@ -496,7 +575,8 @@ def _write_summary(out_dir: Path, payload: Dict[str, Any]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", default="Qwen/Qwen2.5-7B-Instruct")
-    parser.add_argument("--out-dir", default=str(_REPO / "results" / "composition_a_shard1" / "caa_qwen"))
+    parser.add_argument("--steering-method", choices=("caa", "iti"), default="caa")
+    parser.add_argument("--out-dir", default=None)
     parser.add_argument("--item-manifest", default=str(_REPO / "docs" / "specs" / "c2b-composition-item-manifest.jsonl"))
     parser.add_argument("--prompt-manifest", default=str(_REPO / "docs" / "specs" / "c2b-composition-prompt-manifest.yaml"))
     parser.add_argument("--run-seed", type=int, default=20260818)
@@ -508,6 +588,8 @@ def main() -> int:
     parser.add_argument("--stall-timeout", type=float, default=900)
     args = parser.parse_args()
 
+    if args.out_dir is None:
+        args.out_dir = str(_REPO / "results" / "composition_a_shard1" / f"{args.steering_method}_qwen")
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     started_at = utcnow()
@@ -524,14 +606,14 @@ def main() -> int:
             + len(item_ids[axis]["TEST"]) * adj.K_SAMPLES * 2
         )
     progress = ProgressTracker(planned_total)
-    collector = c2br.TranscriptCollector(out_dir, args.model, "caa", "hf")
+    collector = c2br.TranscriptCollector(out_dir, args.model, args.steering_method, "hf")
     checkpoint = c2br.TranscriptCheckpointStore(
         out_dir / "checkpoints",
         c2br._config_fingerprint(  # noqa: SLF001
             argparse.Namespace(
                 seed=args.run_seed,
                 backend="hf",
-                steering_method="caa",
+                steering_method=args.steering_method,
                 max_new_tokens=max(MAX_NEW_TOKENS.values()),
                 temperature=args.temperature,
                 batch_size=args.batch_size,
@@ -547,8 +629,9 @@ def main() -> int:
     )
     ctx = RunContext(progress=progress, checkpoint=checkpoint)
 
-    direction_prov = _derive_caa_directions(
-        args.model, out_dir, AXES, n_extraction=args.n_extraction, direction_seed=args.direction_seed
+    direction_prov = _derive_steering_directions(
+        args.model, out_dir, AXES, steering_method=args.steering_method,
+        n_extraction=args.n_extraction, direction_seed=args.direction_seed
     )
     direction_public = {
         **{k: v for k, v in direction_prov.items() if k != "axes"},
@@ -584,7 +667,7 @@ def main() -> int:
             seed=args.run_seed,
             batch_size=args.batch_size,
             transcript_collector=collector,
-            alpha_scale_by_axis={axis: 1.0},
+            alpha_scale_by_axis={axis: float(direction_prov["axes"][axis].get("sigma", 1.0))},
         )
         direction = direction_prov["axes"][axis]["direction"]
         layer = int(direction_prov["axes"][axis]["layer"])
@@ -630,7 +713,7 @@ def main() -> int:
             seed=args.run_seed,
             batch_size=args.batch_size,
             transcript_collector=collector,
-            alpha_scale_by_axis={axis: 1.0},
+            alpha_scale_by_axis={axis: float(direction_prov["axes"][axis].get("sigma", 1.0))},
         )
         direction = direction_prov["axes"][axis]["direction"]
         layer = int(direction_prov["axes"][axis]["layer"])
@@ -673,7 +756,7 @@ def main() -> int:
                 fh.write(json.dumps(row, ensure_ascii=False) + "\n")
 
     payload = {
-        "experiment_id": "composition-a-qwen-caa-20260818-0001",
+        "experiment_id": f"composition-a-qwen-{args.steering_method}-20260818-0001",
         "status": "done",
         "valid_for_paper": False,
         "prereg": "docs/specs/c2b-composition-augmentation-prereg.md",
@@ -681,7 +764,7 @@ def main() -> int:
         "prompt_manifest": "docs/specs/c2b-composition-prompt-manifest.yaml",
         "model": args.model,
         "backend": "hf",
-        "steering_method": "CAA",
+        "steering_method": args.steering_method.upper(),
         "run_seed": args.run_seed,
         "direction_seed": args.direction_seed,
         "started_at": started_at,
@@ -695,6 +778,7 @@ def main() -> int:
             "delta": DELTA,
             "k": adj.K_SAMPLES,
             "bootstrap_b": args.bootstrap_b,
+            "bootstrap_seed": BOOTSTRAP_SEED,
             "ci_level": adj.BONFERRONI_CI_LEVEL,
             "coherence_rule": "steered_degeneracy <= 1.5 * prompt_alone_degeneracy + 0.02",
             "max_new_tokens": MAX_NEW_TOKENS,

@@ -1,0 +1,9 @@
+{
+  "backend": "hf",
+  "device": "cuda",
+  "dtype": "float16",
+  "hf_snapshot_confirmed_on_remote": true,
+  "hf_snapshot_revision": "a09a35458c702b33eeacc393d103063234e8bc28",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "remote_cache": "~/cc_avg_prompt/hf_home/hub/models--Qwen--Qwen2.5-7B-Instruct/snapshots/a09a35458c702b33eeacc393d103063234e8bc28"
+}

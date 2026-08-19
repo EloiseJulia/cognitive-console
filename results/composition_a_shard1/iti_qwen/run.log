@@ -1,0 +1,133 @@
+RUN_START 2026-08-19T09:47:45+08:00 GPU=0 COMMIT=f6a15f6
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   1%|▏         | 5/339 [00:00<00:09, 36.22it/s]Loading weights:  19%|█▉        | 64/339 [00:00<00:00, 299.28it/s]Loading weights:  29%|██▊       | 97/339 [00:00<00:01, 208.95it/s]Loading weights:  36%|███▌      | 122/339 [00:00<00:01, 211.04it/s]Loading weights:  43%|████▎     | 146/339 [00:00<00:00, 215.56it/s]Loading weights:  50%|█████     | 170/339 [00:00<00:00, 217.57it/s]Loading weights:  57%|█████▋    | 193/339 [00:00<00:00, 216.82it/s]Loading weights:  65%|██████▍   | 220/339 [00:01<00:00, 231.85it/s]Loading weights:  72%|███████▏  | 244/339 [00:01<00:00, 228.48it/s]Loading weights:  79%|███████▉  | 268/339 [00:01<00:00, 218.50it/s]Loading weights:  86%|████████▌ | 291/339 [00:01<00:00, 210.62it/s]Loading weights:  92%|█████████▏| 313/339 [00:01<00:00, 202.55it/s]Loading weights: 100%|██████████| 339/339 [00:01<00:00, 217.67it/s]
+[c2b-adj] axis=deliberation phase=dev_prompt_ordinary 1/14400 items=200 START done=0/72000 fresh=0 elapsed=38s eta=0s
+Loading weights:   0%|          | 0/339 [00:00<?, ?it/s]Loading weights:   0%|          | 1/339 [00:00<00:40,  8.40it/s]Loading weights:  26%|██▌       | 88/339 [00:00<00:00, 462.17it/s]Loading weights:  50%|████▉     | 168/339 [00:00<00:00, 606.18it/s]Loading weights:  72%|███████▏  | 245/339 [00:00<00:00, 665.61it/s]Loading weights:  93%|█████████▎| 314/339 [00:00<00:00, 654.01it/s]Loading weights: 100%|██████████| 339/339 [00:00<00:00, 581.14it/s]
+[c2b-adj] axis=deliberation phase=dev_prompt_ordinary 1/14400 items=200 DONE done=1000/72000 fresh=1000 elapsed=738s eta=52390s
+[c2b-adj] axis=deliberation phase=dev_alpha_ordinary 2/14400 items=200 START done=1000/72000 fresh=1000 elapsed=738s eta=52391s
+[c2b-adj] axis=deliberation phase=dev_alpha_ordinary 2/14400 items=200 DONE done=2000/72000 fresh=2000 elapsed=1488s eta=52079s
+[c2b-adj] axis=deliberation phase=dev_alpha_ordinary 3/14400 items=200 START done=2000/72000 fresh=2000 elapsed=1488s eta=52079s
+[c2b-adj] axis=deliberation phase=dev_alpha_ordinary 3/14400 items=200 DONE done=3000/72000 fresh=3000 elapsed=2511s eta=57763s
+[c2b-adj] axis=deliberation phase=dev_alpha_ordinary 4/14400 items=200 START done=3000/72000 fresh=3000 elapsed=2511s eta=57763s
+[c2b-adj] axis=deliberation phase=dev_alpha_ordinary 4/14400 items=200 DONE done=4000/72000 fresh=4000 elapsed=3592s eta=61070s
+[c2b-adj] axis=deliberation phase=dev_alpha_ordinary 5/14400 items=200 START done=4000/72000 fresh=4000 elapsed=3592s eta=61070s
+[c2b-adj] axis=deliberation phase=dev_alpha_ordinary 5/14400 items=200 DONE done=5000/72000 fresh=5000 elapsed=4691s eta=62864s
+[c2b-adj] axis=deliberation phase=dev_alpha_ordinary 6/14400 items=200 START done=5000/72000 fresh=5000 elapsed=4691s eta=62864s
+[c2b-adj] axis=deliberation phase=dev_alpha_ordinary 6/14400 items=200 DONE done=6000/72000 fresh=6000 elapsed=5803s eta=63830s
+[c2b-adj] axis=deliberation phase=dev_alpha_ordinary 7/14400 items=200 START done=6000/72000 fresh=6000 elapsed=5803s eta=63830s
+[c2b-adj] axis=deliberation phase=dev_alpha_ordinary 7/14400 items=200 DONE done=7000/72000 fresh=7000 elapsed=6917s eta=64229s
+[c2b-adj] axis=deliberation phase=dev_alpha_ordinary 8/14400 items=200 START done=7000/72000 fresh=7000 elapsed=6917s eta=64229s
+[c2b-adj] axis=deliberation phase=dev_alpha_ordinary 8/14400 items=200 DONE done=8000/72000 fresh=8000 elapsed=8003s eta=64027s
+[c2b-adj] axis=deliberation phase=dev_prompt_strong 9/14400 items=200 START done=8000/72000 fresh=8000 elapsed=8003s eta=64027s
+[c2b-adj] axis=deliberation phase=dev_prompt_strong 9/14400 items=200 DONE done=9000/72000 fresh=9000 elapsed=8963s eta=62738s
+[c2b-adj] axis=deliberation phase=dev_alpha_strong 10/14400 items=200 START done=9000/72000 fresh=9000 elapsed=8963s eta=62738s
+[c2b-adj] axis=deliberation phase=dev_alpha_strong 10/14400 items=200 DONE done=10000/72000 fresh=10000 elapsed=9969s eta=61807s
+[c2b-adj] axis=deliberation phase=dev_alpha_strong 11/14400 items=200 START done=10000/72000 fresh=10000 elapsed=9969s eta=61807s
+[c2b-adj] axis=deliberation phase=dev_alpha_strong 11/14400 items=200 DONE done=11000/72000 fresh=11000 elapsed=11016s eta=61089s
+[c2b-adj] axis=deliberation phase=dev_alpha_strong 12/14400 items=200 START done=11000/72000 fresh=11000 elapsed=11016s eta=61089s
+[c2b-adj] axis=deliberation phase=dev_alpha_strong 12/14400 items=200 DONE done=12000/72000 fresh=12000 elapsed=12051s eta=60257s
+[c2b-adj] axis=deliberation phase=dev_alpha_strong 13/14400 items=200 START done=12000/72000 fresh=12000 elapsed=12051s eta=60257s
+[c2b-adj] axis=deliberation phase=dev_alpha_strong 13/14400 items=200 DONE done=13000/72000 fresh=13000 elapsed=13088s eta=59399s
+[c2b-adj] axis=deliberation phase=dev_alpha_strong 14/14400 items=200 START done=13000/72000 fresh=13000 elapsed=13088s eta=59399s
+[c2b-adj] axis=deliberation phase=dev_alpha_strong 14/14400 items=200 DONE done=14000/72000 fresh=14000 elapsed=14154s eta=58638s
+[c2b-adj] axis=deliberation phase=dev_alpha_strong 15/14400 items=200 START done=14000/72000 fresh=14000 elapsed=14154s eta=58638s
+[c2b-adj] axis=deliberation phase=dev_alpha_strong 15/14400 items=200 DONE done=15000/72000 fresh=15000 elapsed=15197s eta=57749s
+[c2b-adj] axis=deliberation phase=dev_alpha_strong 16/14400 items=200 START done=15000/72000 fresh=15000 elapsed=15197s eta=57749s
+[c2b-adj] axis=deliberation phase=dev_alpha_strong 16/14400 items=200 DONE done=16000/72000 fresh=16000 elapsed=16237s eta=56831s
+[c2b-adj] axis=skepticism phase=dev_prompt_ordinary 17/14400 items=200 START done=16000/72000 fresh=16000 elapsed=16242s eta=56847s
+[c2b-adj] axis=skepticism phase=dev_prompt_ordinary 17/14400 items=200 DONE done=17000/72000 fresh=17000 elapsed=16517s eta=53438s
+[c2b-adj] axis=skepticism phase=dev_alpha_ordinary 18/14400 items=200 START done=17000/72000 fresh=17000 elapsed=16517s eta=53438s
+[c2b-adj] axis=skepticism phase=dev_alpha_ordinary 18/14400 items=200 DONE done=18000/72000 fresh=18000 elapsed=16819s eta=50457s
+[c2b-adj] axis=skepticism phase=dev_alpha_ordinary 19/14400 items=200 START done=18000/72000 fresh=18000 elapsed=16819s eta=50457s
+[c2b-adj] axis=skepticism phase=dev_alpha_ordinary 19/14400 items=200 DONE done=19000/72000 fresh=19000 elapsed=17192s eta=47957s
+[c2b-adj] axis=skepticism phase=dev_alpha_ordinary 20/14400 items=200 START done=19000/72000 fresh=19000 elapsed=17192s eta=47957s
+[c2b-adj] axis=skepticism phase=dev_alpha_ordinary 20/14400 items=200 DONE done=20000/72000 fresh=20000 elapsed=17582s eta=45713s
+[c2b-adj] axis=skepticism phase=dev_alpha_ordinary 21/14400 items=200 START done=20000/72000 fresh=20000 elapsed=17582s eta=45713s
+[c2b-adj] axis=skepticism phase=dev_alpha_ordinary 21/14400 items=200 DONE done=21000/72000 fresh=21000 elapsed=17982s eta=43670s
+[c2b-adj] axis=skepticism phase=dev_alpha_ordinary 22/14400 items=200 START done=21000/72000 fresh=21000 elapsed=17982s eta=43670s
+[c2b-adj] axis=skepticism phase=dev_alpha_ordinary 22/14400 items=200 DONE done=22000/72000 fresh=22000 elapsed=18382s eta=41777s
+[c2b-adj] axis=skepticism phase=dev_alpha_ordinary 23/14400 items=200 START done=22000/72000 fresh=22000 elapsed=18382s eta=41777s
+[c2b-adj] axis=skepticism phase=dev_alpha_ordinary 23/14400 items=200 DONE done=23000/72000 fresh=23000 elapsed=18780s eta=40009s
+[c2b-adj] axis=skepticism phase=dev_alpha_ordinary 24/14400 items=200 START done=23000/72000 fresh=23000 elapsed=18780s eta=40009s
+[c2b-adj] axis=skepticism phase=dev_alpha_ordinary 24/14400 items=200 DONE done=24000/72000 fresh=24000 elapsed=19174s eta=38349s
+[c2b-adj] axis=skepticism phase=dev_prompt_strong 25/14400 items=200 START done=24000/72000 fresh=24000 elapsed=19174s eta=38349s
+[c2b-adj] axis=skepticism phase=dev_prompt_strong 25/14400 items=200 DONE done=25000/72000 fresh=25000 elapsed=19450s eta=36566s
+[c2b-adj] axis=skepticism phase=dev_alpha_strong 26/14400 items=200 START done=25000/72000 fresh=25000 elapsed=19450s eta=36566s
+[c2b-adj] axis=skepticism phase=dev_alpha_strong 26/14400 items=200 DONE done=26000/72000 fresh=26000 elapsed=19757s eta=34954s
+[c2b-adj] axis=skepticism phase=dev_alpha_strong 27/14400 items=200 START done=26000/72000 fresh=26000 elapsed=19757s eta=34954s
+[c2b-adj] axis=skepticism phase=dev_alpha_strong 27/14400 items=200 DONE done=27000/72000 fresh=27000 elapsed=20106s eta=33510s
+[c2b-adj] axis=skepticism phase=dev_alpha_strong 28/14400 items=200 START done=27000/72000 fresh=27000 elapsed=20106s eta=33510s
+[c2b-adj] axis=skepticism phase=dev_alpha_strong 28/14400 items=200 DONE done=28000/72000 fresh=28000 elapsed=20476s eta=32176s
+[c2b-adj] axis=skepticism phase=dev_alpha_strong 29/14400 items=200 START done=28000/72000 fresh=28000 elapsed=20476s eta=32176s
+[c2b-adj] axis=skepticism phase=dev_alpha_strong 29/14400 items=200 DONE done=29000/72000 fresh=29000 elapsed=20846s eta=30910s
+[c2b-adj] axis=skepticism phase=dev_alpha_strong 30/14400 items=200 START done=29000/72000 fresh=29000 elapsed=20846s eta=30910s
+[c2b-adj] axis=skepticism phase=dev_alpha_strong 30/14400 items=200 DONE done=30000/72000 fresh=30000 elapsed=21224s eta=29713s
+[c2b-adj] axis=skepticism phase=dev_alpha_strong 31/14400 items=200 START done=30000/72000 fresh=30000 elapsed=21224s eta=29713s
+[c2b-adj] axis=skepticism phase=dev_alpha_strong 31/14400 items=200 DONE done=31000/72000 fresh=31000 elapsed=21605s eta=28575s
+[c2b-adj] axis=skepticism phase=dev_alpha_strong 32/14400 items=200 START done=31000/72000 fresh=31000 elapsed=21605s eta=28575s
+[c2b-adj] axis=skepticism phase=dev_alpha_strong 32/14400 items=200 DONE done=32000/72000 fresh=32000 elapsed=22002s eta=27502s
+[c2b-adj] axis=uncertainty_awareness phase=dev_prompt_ordinary 33/14400 items=200 START done=32000/72000 fresh=32000 elapsed=22007s eta=27509s
+[c2b-adj] axis=uncertainty_awareness phase=dev_prompt_ordinary 33/14400 items=200 DONE done=33000/72000 fresh=33000 elapsed=22208s eta=26245s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_ordinary 34/14400 items=200 START done=33000/72000 fresh=33000 elapsed=22208s eta=26245s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_ordinary 34/14400 items=200 DONE done=34000/72000 fresh=34000 elapsed=22420s eta=25057s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_ordinary 35/14400 items=200 START done=34000/72000 fresh=34000 elapsed=22420s eta=25057s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_ordinary 35/14400 items=200 DONE done=35000/72000 fresh=35000 elapsed=22644s eta=23938s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_ordinary 36/14400 items=200 START done=35000/72000 fresh=35000 elapsed=22644s eta=23938s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_ordinary 36/14400 items=200 DONE done=36000/72000 fresh=36000 elapsed=22884s eta=22884s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_ordinary 37/14400 items=200 START done=36000/72000 fresh=36000 elapsed=22884s eta=22884s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_ordinary 37/14400 items=200 DONE done=37000/72000 fresh=37000 elapsed=23245s eta=21989s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_ordinary 38/14400 items=200 START done=37000/72000 fresh=37000 elapsed=23245s eta=21989s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_ordinary 38/14400 items=200 DONE done=38000/72000 fresh=38000 elapsed=23633s eta=21146s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_ordinary 39/14400 items=200 START done=38000/72000 fresh=38000 elapsed=23633s eta=21146s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_ordinary 39/14400 items=200 DONE done=39000/72000 fresh=39000 elapsed=24016s eta=20321s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_ordinary 40/14400 items=200 START done=39000/72000 fresh=39000 elapsed=24016s eta=20321s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_ordinary 40/14400 items=200 DONE done=40000/72000 fresh=40000 elapsed=24406s eta=19525s
+[c2b-adj] axis=uncertainty_awareness phase=dev_prompt_strong 41/14400 items=200 START done=40000/72000 fresh=40000 elapsed=24406s eta=19525s
+[c2b-adj] axis=uncertainty_awareness phase=dev_prompt_strong 41/14400 items=200 DONE done=41000/72000 fresh=41000 elapsed=24672s eta=18654s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_strong 42/14400 items=200 START done=41000/72000 fresh=41000 elapsed=24672s eta=18654s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_strong 42/14400 items=200 DONE done=42000/72000 fresh=42000 elapsed=24933s eta=17810s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_strong 43/14400 items=200 START done=42000/72000 fresh=42000 elapsed=24933s eta=17810s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_strong 43/14400 items=200 DONE done=43000/72000 fresh=43000 elapsed=25233s eta=17017s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_strong 44/14400 items=200 START done=43000/72000 fresh=43000 elapsed=25233s eta=17017s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_strong 44/14400 items=200 DONE done=44000/72000 fresh=44000 elapsed=25593s eta=16287s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_strong 45/14400 items=200 START done=44000/72000 fresh=44000 elapsed=25593s eta=16287s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_strong 45/14400 items=200 DONE done=45000/72000 fresh=45000 elapsed=25966s eta=15580s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_strong 46/14400 items=200 START done=45000/72000 fresh=45000 elapsed=25966s eta=15580s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_strong 46/14400 items=200 DONE done=46000/72000 fresh=46000 elapsed=26363s eta=14901s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_strong 47/14400 items=200 START done=46000/72000 fresh=46000 elapsed=26363s eta=14901s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_strong 47/14400 items=200 DONE done=47000/72000 fresh=47000 elapsed=26739s eta=14223s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_strong 48/14400 items=200 START done=47000/72000 fresh=47000 elapsed=26739s eta=14223s
+[c2b-adj] axis=uncertainty_awareness phase=dev_alpha_strong 48/14400 items=200 DONE done=48000/72000 fresh=48000 elapsed=27104s eta=13552s
+[c2b-adj] axis=deliberation phase=test_prompt_ordinary 49/14400 items=400 START done=48000/72000 fresh=48000 elapsed=27108s eta=13554s
+[c2b-adj] axis=deliberation phase=test_prompt_ordinary 49/14400 items=400 DONE done=50000/72000 fresh=50000 elapsed=28379s eta=12487s
+[c2b-adj] axis=deliberation phase=test_steer_ordinary 50/14400 items=400 START done=50000/72000 fresh=50000 elapsed=28379s eta=12487s
+[c2b-adj] axis=deliberation phase=test_steer_ordinary 50/14400 items=400 DONE done=52000/72000 fresh=52000 elapsed=29839s eta=11477s
+[c2b-adj] axis=deliberation phase=test_prompt_strong 51/14400 items=400 START done=52000/72000 fresh=52000 elapsed=29839s eta=11477s
+[c2b-adj] axis=deliberation phase=test_prompt_strong 51/14400 items=400 DONE done=54000/72000 fresh=54000 elapsed=31631s eta=10544s
+[c2b-adj] axis=deliberation phase=test_steer_strong 52/14400 items=400 START done=54000/72000 fresh=54000 elapsed=31631s eta=10544s
+[c2b-adj] axis=deliberation phase=test_steer_strong 52/14400 items=400 DONE done=56000/72000 fresh=56000 elapsed=33410s eta=9546s
+[c2b-adj] axis=skepticism phase=test_prompt_ordinary 53/14400 items=400 START done=56000/72000 fresh=56000 elapsed=33413s eta=9547s
+[c2b-adj] axis=skepticism phase=test_prompt_ordinary 53/14400 items=400 DONE done=58000/72000 fresh=58000 elapsed=33868s eta=8175s
+[c2b-adj] axis=skepticism phase=test_steer_ordinary 54/14400 items=400 START done=58000/72000 fresh=58000 elapsed=33868s eta=8175s
+[c2b-adj] axis=skepticism phase=test_steer_ordinary 54/14400 items=400 DONE done=60000/72000 fresh=60000 elapsed=34429s eta=6886s
+[c2b-adj] axis=skepticism phase=test_prompt_strong 55/14400 items=400 START done=60000/72000 fresh=60000 elapsed=34429s eta=6886s
+[c2b-adj] axis=skepticism phase=test_prompt_strong 55/14400 items=400 DONE done=62000/72000 fresh=62000 elapsed=34984s eta=5643s
+[c2b-adj] axis=skepticism phase=test_steer_strong 56/14400 items=400 START done=62000/72000 fresh=62000 elapsed=34984s eta=5643s
+[c2b-adj] axis=skepticism phase=test_steer_strong 56/14400 items=400 DONE done=64000/72000 fresh=64000 elapsed=35603s eta=4450s
+[c2b-adj] axis=uncertainty_awareness phase=test_prompt_ordinary 57/14400 items=400 START done=64000/72000 fresh=64000 elapsed=35608s eta=4451s
+[c2b-adj] axis=uncertainty_awareness phase=test_prompt_ordinary 57/14400 items=400 DONE done=66000/72000 fresh=66000 elapsed=35998s eta=3273s
+[c2b-adj] axis=uncertainty_awareness phase=test_steer_ordinary 58/14400 items=400 START done=66000/72000 fresh=66000 elapsed=35998s eta=3273s
+[c2b-adj] axis=uncertainty_awareness phase=test_steer_ordinary 58/14400 items=400 DONE done=68000/72000 fresh=68000 elapsed=36659s eta=2156s
+[c2b-adj] axis=uncertainty_awareness phase=test_prompt_strong 59/14400 items=400 START done=68000/72000 fresh=68000 elapsed=36660s eta=2156s
+[c2b-adj] axis=uncertainty_awareness phase=test_prompt_strong 59/14400 items=400 DONE done=70000/72000 fresh=70000 elapsed=37123s eta=1061s
+[c2b-adj] axis=uncertainty_awareness phase=test_steer_strong 60/14400 items=400 START done=70000/72000 fresh=70000 elapsed=37123s eta=1061s
+[c2b-adj] axis=uncertainty_awareness phase=test_steer_strong 60/14400 items=400 DONE done=72000/72000 fresh=72000 elapsed=37653s eta=0s
+{
+  "experiment_id": "composition-a-qwen-iti-20260818-0001",
+  "out_dir": "results/composition_a_shard1/iti_qwen",
+  "wall_clock_seconds": 37654.356,
+  "verdicts": {
+    "ordinary": "UNDERPOWERED_OR_INVALID",
+    "strong": "NO_INCREMENT_DEMONSTRATED"
+  }
+}

@@ -2117,3 +2117,229 @@ experiments:
     gap, not validated as representative of real novices). Additive; does NOT revise
     the frozen substitution 0/12 grid or E-0005/E-0006/E-0011. Direction reuse is
     frozen-code reconstruction (no persisted vector; caveat).
+- experiment_id: composition-a-qwen-iti-20260818-0001
+  parent:
+  - E-0005
+  - E-0006
+  - composition-a-qwen-caa-20260818-0001
+  hypothesis_id: H-COMP-A
+  claim_ids: []
+  type: confirmatory
+  status: done
+  code_commit: f6a15f69b08b5a0e9ecfedc3fa0514e4eaa1c69a
+  dirty_tree: false
+  data_hash:
+    item_manifest_sha256: c1f7cfd28da8bf776553c26c68078993afd00805604baca23dd5982bc930864f
+    prompt_manifest_sha256: 11884d32bd8b586a80f897a000c7f4308e421b4db77f9de56da829bab62e87e1
+    per_item_test_pairs_sha256: b0ec248f2f5016a7981b31c5c924711630584bddf33dd700a71cd43a1d2ec208
+  env_hash:
+    model_snapshot_revision: a09a35458c702b33eeacc393d103063234e8bc28
+    direction_sha256_by_axis:
+      deliberation: cf4b51c25d0aff20c25765740831e52079167e2f737c2236b543318c04a9457b
+      skepticism: 403ac273921593265d4160d325059cb0a178dc66bf2020c42cb5610432d876ec
+      uncertainty_awareness: 5e0564a4406c2e0ee903085865f9e2532d3bc5b2c326334bf6210a791d482f75
+  config_hash: 481ca52f0cedda4e4cd28dddf953ca84ebd0c7d6ed9255b9863fbd5890cb450a
+  model: Qwen/Qwen2.5-7B-Instruct @ a09a35458c702b33eeacc393d103063234e8bc28
+  dataset: >-
+    Frozen C2b composition manifest, split_seed=20260818, same TEST items as
+    the CAA shard, DEV/TEST zero-overlap and headline-TEST zero-overlap.
+  seed: 20260818
+  bootstrap_seed: 20260819
+  hardware: remote A800 host, CUDA_VISIBLE_DEVICES=0, cuda-float16
+  started_at: 2026-08-19T01:47:45.182042+00:00
+  ended_at: 2026-08-19T12:15:19.537754+00:00
+  exit_code: 0
+  raw_metrics:
+    result_json: results/composition_a_shard1/iti_qwen/composition_results.json
+    result_json_sha256: 174ec1ddba8f10130167d8a220dfc4cda88cf60ce61a6e2abcb79923b5cdf37e
+    per_item_test_pairs: results/composition_a_shard1/iti_qwen/per_item_test_pairs.jsonl
+    per_item_test_pairs_rows: 2400
+    per_item_test_pairs_sha256: b0ec248f2f5016a7981b31c5c924711630584bddf33dd700a71cd43a1d2ec208
+    missingness_sensitivity: results/composition_a_shard1/iti_qwen/missingness_sensitivity.json
+    missingness_sensitivity_sha256: 3755193c639f9aeb85f087fcbd6c92653dcca6ba332728743a46d60339ad2078
+    raw_test_transcript_pointer_sha256: results/composition_a_shard1/iti_qwen/transcript_pointers_sha256.txt
+    bootstrap_b: 10000
+    bootstrap_seed: 20260819
+    ci_level: 0.9833333333333333
+    cells:
+      - baseline: ordinary
+        axis: deliberation
+        prompt_id: deliberation-ordinary-plain-v1
+        n_test: 400
+        alpha_star: 2.0
+        prompt_mean: 0.8945
+        steer_mean: 0.8855
+        mean_diff: -0.009
+        ci_9833: [-0.028, 0.01]
+        realized_mde_80pct: 0.025980595681
+        bootstrap_seed: 20260819
+        coherence_ok: true
+        parse_prompt_rate: 1
+        parse_steer_rate: 1
+        truncation_max_rate: 0
+        verdict: NO_INCREMENT_DEMONSTRATED
+      - baseline: strong
+        axis: deliberation
+        prompt_id: delib-strong-09
+        n_test: 400
+        alpha_star: 2.0
+        prompt_mean: 0.9015
+        steer_mean: 0.876
+        mean_diff: -0.0255
+        ci_9833: [-0.0455, -0.0066625]
+        realized_mde_80pct: 0.0260465519091
+        bootstrap_seed: 20260819
+        coherence_ok: true
+        parse_prompt_rate: 1
+        parse_steer_rate: 1
+        truncation_max_rate: 0
+        verdict: NO_INCREMENT_DEMONSTRATED
+      - baseline: ordinary
+        axis: skepticism
+        prompt_id: skepticism-ordinary-plain-v1
+        n_test: 400
+        alpha_star: 2.0
+        prompt_mean: 0.688
+        steer_mean: 0.6705
+        mean_diff: -0.0175
+        ci_9833: [-0.0425, 0.007]
+        realized_mde_80pct: 0.0344398502605
+        bootstrap_seed: 20260819
+        coherence_ok: true
+        parse_prompt_rate: 1
+        parse_steer_rate: 1
+        truncation_max_rate: 0
+        verdict: NO_INCREMENT_DEMONSTRATED
+      - baseline: strong
+        axis: skepticism
+        prompt_id: skep-strong-06
+        n_test: 400
+        alpha_star: 2.0
+        prompt_mean: 0.695
+        steer_mean: 0.67
+        mean_diff: -0.025
+        ci_9833: [-0.0535, 0.0035]
+        realized_mde_80pct: 0.038601184952
+        bootstrap_seed: 20260819
+        coherence_ok: true
+        parse_prompt_rate: 1
+        parse_steer_rate: 1
+        truncation_max_rate: 0
+        verdict: NO_INCREMENT_DEMONSTRATED
+      - baseline: ordinary
+        axis: uncertainty_awareness
+        prompt_id: uncertainty_awareness-ordinary-plain-v1
+        n_test: 400
+        alpha_star: 8.0
+        prompt_mean: 0.67305375
+        steer_mean: 0.6289611
+        mean_diff: -0.04409265
+        ci_9833: [-0.08076658125, -0.00907268875]
+        realized_mde_80pct: 0.0491776370375
+        bootstrap_seed: 20260819
+        coherence_ok: true
+        parse_prompt_rate: 0.995
+        parse_steer_rate: 0.963
+        truncation_max_rate: 0
+        verdict: UNDERPOWERED_OR_INVALID
+      - baseline: strong
+        axis: uncertainty_awareness
+        prompt_id: unc-strong-01
+        n_test: 400
+        alpha_star: 2.0
+        prompt_mean: 0.86015235
+        steer_mean: 0.8478537
+        mean_diff: -0.01229865
+        ci_9833: [-0.02810651625, 0.00384568]
+        realized_mde_80pct: 0.0219042541638
+        bootstrap_seed: 20260819
+        coherence_ok: true
+        parse_prompt_rate: 0.99
+        parse_steer_rate: 0.9825
+        truncation_max_rate: 0
+        verdict: NO_INCREMENT_DEMONSTRATED
+    uncertainty_missingness_sensitivity:
+      - baseline: ordinary
+        missing_item_count: 47
+        prompt_missing_sample_count: 10
+        steer_missing_sample_count: 74
+        complete_case_n: 353
+        complete_case_mean_diff: -0.0447260056657
+        complete_case_ci_9833: [-0.0836866175637, -0.00667323937677]
+        adversarial_lower_mean_diff: -0.07309265
+        adversarial_lower_ci_9833: [-0.11079820875, -0.03560256]
+        adversarial_upper_mean_diff: -0.03109265
+        adversarial_upper_ci_9833: [-0.0683446375, 0.003764565]
+        upper_bound_would_support_gain: false
+      - baseline: strong
+        missing_item_count: 25
+        prompt_missing_sample_count: 20
+        steer_missing_sample_count: 35
+        complete_case_n: 375
+        complete_case_mean_diff: -0.01307056
+        complete_case_ci_9833: [-0.029779632, 0.003815636]
+        adversarial_lower_mean_diff: -0.02792365
+        adversarial_lower_ci_9833: [-0.0465339375, -0.0093617525]
+        adversarial_upper_mean_diff: -0.00042365
+        adversarial_upper_ci_9833: [-0.017972965, 0.01807046125]
+        upper_bound_would_support_gain: false
+  summary_metrics:
+    prereg_path: docs/specs/c2b-composition-augmentation-prereg.md
+    item_manifest: docs/specs/c2b-composition-item-manifest.jsonl
+    prompt_manifest: docs/specs/c2b-composition-prompt-manifest.yaml
+    alpha_manifest: results/composition_a_shard1/iti_qwen/alpha_manifest.yaml
+    summary_path: results/composition_a_shard1/iti_qwen/composition_summary.md
+    selfcheck_report: results/composition_a_shard1/iti_qwen/selfcheck_report.md
+    missingness_sensitivity_report: results/composition_a_shard1/iti_qwen/missingness_sensitivity.md
+    estimand: paired per-item (prompt + steer) minus prompt alone
+    status_note: COMPLETED_2026_08_19_AWAITING_INDEPENDENT_AUDIT
+    shard: ITI x Qwen2.5-7B x 3 axes x ordinary+strong
+    shard_verdicts_by_baseline:
+      ordinary: UNDERPOWERED_OR_INVALID
+      strong: NO_INCREMENT_DEMONSTRATED
+    generation_max_new_tokens:
+      deliberation: 512
+      skepticism: 192
+      uncertainty_awareness: 192
+    mde_screen: all six cells <= 0.06
+    coherence_gate: pass_all_six_cells
+    parse_gate: ordinary uncertainty_awareness fails; other five cells pass
+    truncation_gate: pass_all_six_cells; deliberation used 512-token generation budget, not 64
+    direction_provenance: DIRECTIONS_REDERIVED_WITH_PROVENANCE_CAVEAT
+    direction_reference_status: NO_REFERENCE_FOUND_FOR_ALL_AXES
+    direction_provenance_caveat: >-
+      No persisted headline ITI direction/probe vector/reference was found in
+      this worktree, so no cosine comparison was available. Directions were
+      re-derived with frozen C2b ITI extraction code, headline frozen layers
+      20/19/17,
+      n_extraction=28, direction_seed=20260723, with ITI sigma scaling.
+    additive_relation: additive composition/augmentation estimand only; does not overwrite frozen substitution grid or CAA shard
+    deferred_methods: Llama not run in this shard
+  artifacts:
+  - docs/specs/c2b-composition-augmentation-prereg.md
+  - docs/specs/c2b-composition-item-manifest.jsonl
+  - docs/specs/c2b-composition-prompt-manifest.yaml
+  - scripts/run_c2b_composition_shard.py
+  - scripts/postprocess_c2b_composition_iti.py
+  - results/composition_a_shard1/iti_qwen/composition_results.json
+  - results/composition_a_shard1/iti_qwen/composition_summary.md
+  - results/composition_a_shard1/iti_qwen/direction_provenance.json
+  - results/composition_a_shard1/iti_qwen/alpha_manifest.yaml
+  - results/composition_a_shard1/iti_qwen/model_provenance.json
+  - results/composition_a_shard1/iti_qwen/per_item_test_pairs.jsonl
+  - results/composition_a_shard1/iti_qwen/missingness_sensitivity.json
+  - results/composition_a_shard1/iti_qwen/missingness_sensitivity.md
+  - results/composition_a_shard1/iti_qwen/selfcheck_report.md
+  - results/composition_a_shard1/iti_qwen/output_checksums_sha256.txt
+  - results/composition_a_shard1/iti_qwen/transcript_pointers_sha256.txt
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    ITI second shard under the frozen c2b-composition-augmentation prereg.
+    TEST used the same frozen item/prompt manifests as CAA. All reported numeric
+    results were recomputed from committed per-item TEST arrays using
+    bootstrap_seed=20260819, B=10000 item-cluster bootstrap. Ordinary baseline is
+    UNDERPOWERED_OR_INVALID because the uncertainty parse gate failed despite
+    MDE<=0.06; strong baseline is NO_INCREMENT_DEMONSTRATED. Uncertainty
+    complete-case and adversarial missingness sensitivity are reported. Results
+    remain valid_for_paper=false pending independent hostile audit.

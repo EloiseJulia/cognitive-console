@@ -1,0 +1,56 @@
+{
+  "status": "DIRECTIONS_REDERIVED_WITH_PROVENANCE_CAVEAT",
+  "steering_method": "ITI",
+  "model": "Qwen/Qwen2.5-7B-Instruct",
+  "device": "cuda",
+  "dtype": "float16",
+  "n_extraction": 28,
+  "direction_seed": 20260723,
+  "axes": {
+    "deliberation": {
+      "layer": 20,
+      "norm": 1.0,
+      "sigma": 14.338558740773767,
+      "sha256": "cf4b51c25d0aff20c25765740831e52079167e2f737c2236b543318c04a9457b",
+      "reference_status": "NO_REFERENCE_FOUND",
+      "reference_cosine": null,
+      "reference_candidates": [],
+      "provenance_caveat": "No persisted E-0006 ITI direction/probe vector/reference was found in this worktree; direction was re-derived with frozen C2b ITI extraction code, layer=20, n_extraction=28, direction_seed=20260723.",
+      "selection": "nondegenerate",
+      "alpha_scale": 14.338558740773767,
+      "iti_probe_norm": 2.448535797738333,
+      "headline_frozen_layer": 20,
+      "min_layer": 6
+    },
+    "skepticism": {
+      "layer": 19,
+      "norm": 1.0,
+      "sigma": 8.780221627713104,
+      "sha256": "403ac273921593265d4160d325059cb0a178dc66bf2020c42cb5610432d876ec",
+      "reference_status": "NO_REFERENCE_FOUND",
+      "reference_cosine": null,
+      "reference_candidates": [],
+      "provenance_caveat": "No persisted E-0006 ITI direction/probe vector/reference was found in this worktree; direction was re-derived with frozen C2b ITI extraction code, layer=19, n_extraction=28, direction_seed=20260723.",
+      "selection": "nondegenerate",
+      "alpha_scale": 8.780221627713104,
+      "iti_probe_norm": 3.5436878425178877,
+      "headline_frozen_layer": 19,
+      "min_layer": 6
+    },
+    "uncertainty_awareness": {
+      "layer": 17,
+      "norm": 0.9999999403953552,
+      "sigma": 4.545533663951464,
+      "sha256": "5e0564a4406c2e0ee903085865f9e2532d3bc5b2c326334bf6210a791d482f75",
+      "reference_status": "NO_REFERENCE_FOUND",
+      "reference_cosine": null,
+      "reference_candidates": [],
+      "provenance_caveat": "No persisted E-0006 ITI direction/probe vector/reference was found in this worktree; direction was re-derived with frozen C2b ITI extraction code, layer=17, n_extraction=28, direction_seed=20260723.",
+      "selection": "nondegenerate",
+      "alpha_scale": 4.545533663951464,
+      "iti_probe_norm": 4.425113878183443,
+      "headline_frozen_layer": 17,
+      "min_layer": 6
+    }
+  }
+}

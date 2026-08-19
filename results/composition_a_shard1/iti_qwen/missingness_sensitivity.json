@@ -1,0 +1,89 @@
+{
+  "experiment_id": "composition-a-qwen-iti-20260818-0001",
+  "steering_method": "ITI",
+  "bootstrap_seed": 20260819,
+  "source": "results/composition_a_shard1/iti_qwen/per_item_test_pairs.jsonl",
+  "method": "complete-case excludes any TEST item with at least one unparseable confidence sample in either prompt-alone or prompt+steer; adversarial bounds set missing prompt/steer scores to 1/0 for lower bound and 0/1 for upper bound.",
+  "cells": [
+    {
+      "baseline": "ordinary",
+      "axis": "uncertainty_awareness",
+      "primary_n": 400,
+      "missing_item_count": 47,
+      "prompt_missing_sample_count": 10,
+      "steer_missing_sample_count": 74,
+      "complete_case": {
+        "n": 353,
+        "mean_diff": -0.04472600566572243,
+        "ci_lo": -0.08368661756373941,
+        "ci_hi": -0.006673239376770537,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 10000,
+        "bootstrap_seed": 20260819,
+        "realized_mde_80pct": 0.05172860871448666
+      },
+      "adversarial_lower": {
+        "n": 400,
+        "mean_diff": -0.07309265000000004,
+        "ci_lo": -0.11079820875000003,
+        "ci_hi": -0.03560255999999991,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 10000,
+        "bootstrap_seed": 20260819,
+        "realized_mde_80pct": 0.05131667088669199
+      },
+      "adversarial_upper": {
+        "n": 400,
+        "mean_diff": -0.03109265000000004,
+        "ci_lo": -0.06834463750000003,
+        "ci_hi": 0.0037645649999999823,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 10000,
+        "bootstrap_seed": 20260819,
+        "realized_mde_80pct": 0.04981395349567254
+      },
+      "primary_verdict": "UNDERPOWERED_OR_INVALID",
+      "upper_bound_would_support_gain": false
+    },
+    {
+      "baseline": "strong",
+      "axis": "uncertainty_awareness",
+      "primary_n": 400,
+      "missing_item_count": 25,
+      "prompt_missing_sample_count": 20,
+      "steer_missing_sample_count": 35,
+      "complete_case": {
+        "n": 375,
+        "mean_diff": -0.013070560000000004,
+        "ci_lo": -0.029779632000000004,
+        "ci_hi": 0.0038156359999999986,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 10000,
+        "bootstrap_seed": 20260819,
+        "realized_mde_80pct": 0.02256700318681312
+      },
+      "adversarial_lower": {
+        "n": 400,
+        "mean_diff": -0.02792365,
+        "ci_lo": -0.04653393749999998,
+        "ci_hi": -0.009361752499999959,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 10000,
+        "bootstrap_seed": 20260819,
+        "realized_mde_80pct": 0.025113643812320507
+      },
+      "adversarial_upper": {
+        "n": 400,
+        "mean_diff": -0.0004236500000000021,
+        "ci_lo": -0.017972964999999973,
+        "ci_hi": 0.018070461250000034,
+        "ci_level": 0.9833333333333333,
+        "bootstrap_b": 10000,
+        "bootstrap_seed": 20260819,
+        "realized_mde_80pct": 0.024537513089885343
+      },
+      "primary_verdict": "NO_INCREMENT_DEMONSTRATED",
+      "upper_bound_would_support_gain": false
+    }
+  ]
+}

@@ -2333,7 +2333,13 @@ experiments:
   - results/composition_a_shard1/iti_qwen/output_checksums_sha256.txt
   - results/composition_a_shard1/iti_qwen/transcript_pointers_sha256.txt
   failure_reason: null
-  valid_for_paper: false
+  audit_ref:
+    hostile_result_audit: audit-composition-iti=SCIENCE_SOUND (2026-08-19)
+    report: reviews/2026-08-19-composition-iti-audit/audit-report.md
+    independent_rederivation: all 6 cell mean/CI/MDE bit-match committed per_item_test_pairs.jsonl (prereg bootstrap_seed=20260819)
+    findings: strong-deliberation is a REAL small negative effect (−0.0255 [−0.0455,−0.0067], coherence PASS 0.1352<=0.2018), not an artifact; ordinary-uncertainty is INVALID/PARSE (47/400 missing, complete-case + adversarial show no gain) and is diagnostic-only, NOT harm evidence
+    manager_decision: D-0137 (owner-delegated 2026-08-19)
+  valid_for_paper: true
   validation_notes: >-
     ITI second shard under the frozen c2b-composition-augmentation prereg.
     TEST used the same frozen item/prompt manifests as CAA. All reported numeric
@@ -2341,5 +2347,17 @@ experiments:
     bootstrap_seed=20260819, B=10000 item-cluster bootstrap. Ordinary baseline is
     UNDERPOWERED_OR_INVALID because the uncertainty parse gate failed despite
     MDE<=0.06; strong baseline is NO_INCREMENT_DEMONSTRATED. Uncertainty
-    complete-case and adversarial missingness sensitivity are reported. Results
-    remain valid_for_paper=false pending independent hostile audit.
+    complete-case and adversarial missingness sensitivity are reported.
+    FOLD-GATE (D-0137, owner-delegated 2026-08-19): independent hostile audit
+    audit-composition-iti = SCIENCE SOUND (all 6 cells bit-match on re-derivation);
+    valid_for_paper flipped false->true. SCOPE (binding): 5/6 cells are valid and
+    show NO positive incremental gain; strong-deliberation is a REAL small negative
+    (steering on top of a strong prompt slightly degrades; coherence passes) and
+    must be reported as such, not as null; ordinary-uncertainty is INVALID (parse
+    gate fail) and is diagnostic-only, NOT harm evidence. Combined with the CAA
+    shard (E-COMPOSITION-A), Qwen composition shows a robust absence of positive
+    increment across BOTH methods (CAA and ITI). Single model (Qwen); Llama
+    untested; ordinary prompt is a plain-instruction everyday-user proxy
+    (human-anchor gap). Additive; does NOT revise the frozen 0/12 substitution
+    grid or E-0005/E-0006/E-0011. Direction reuse = frozen-code reconstruction
+    (no persisted vector; caveat).

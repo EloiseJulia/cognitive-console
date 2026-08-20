@@ -1717,3 +1717,80 @@ experiments:
     Valid only for B1 qualification-rule behavior: the adjudicator can pass a prompt/instruction
     positive control and fail a noisy null. It is additive to, and does not revise, the frozen C2
     0/12 grid, E-0005, E-0006, or E-0011. It is not evidence that latent steering works.
+
+- experiment_id: AVG-PROMPT-COMPARATOR-20260817-FROZEN
+  parent: null
+  hypothesis_id: H-AVG-PROMPT
+  claim_ids:
+  - C2b
+  type: exploratory
+  status: done
+  code_commit: multiple per-cell code commits; see raw_metrics.cell_code_commits
+  dirty_tree: false
+  data_hash: null
+  env_hash: null
+  config_hash: multiple per-cell config hashes; see raw cell experiment-registry.yaml files
+  model: Qwen/Qwen2.5-7B-Instruct
+  dataset: data/c2b_tasks/* TEST items + data/strongest_prompts/*.jsonl frozen prompt candidates
+  seed: 20260723
+  hardware: A800 cuda-float16; GPU0/GPU1 only
+  started_at: '2026-08-17T02:51:15.025046+00:00'
+  ended_at: '2026-08-17T04:52:48.241057+00:00'
+  exit_code: 0
+  raw_metrics:
+    cell_experiment_ids:
+    - avg-prompt-comparator-1a4ae319-0001
+    - avg-prompt-comparator-c1552e97-0001
+    - avg-prompt-comparator-c2339fd9-0001
+    - avg-prompt-comparator-7849feeb-0001
+    - avg-prompt-comparator-28c3ca28-0001
+    - avg-prompt-comparator-92b22025-0001
+    cell_code_commits:
+      caa_deliberation: f64fa98298ddaa582867652e02b55187f2abb9af
+      caa_skepticism: 59ffba47ead452ef8b9571da01bc9cc3822e75ab
+      caa_uncertainty_awareness: 628514467b23c29f9191ef7feac111e70078cd55
+      iti_deliberation: 8da27748f3205eaaca1ecae56b4cbc8e95c3ec22
+      iti_skepticism: 0cd02fe58653c02c0ef9802680384fe48a78443a
+      iti_uncertainty_awareness: 87f271fb1d54eba611f25a648b9f4fa083a79d79
+    comparator_cell_gpu_hours: 2.2913
+    delib_512_repair_gpu_hours: 0.2832
+  summary_metrics:
+    caa_deliberation_steer_minus_average: {mean: -0.813125, ci98_33: [-0.9053125, -0.7103125], coherence_ok: true, status: "no"}
+    caa_skepticism_steer_minus_average: {mean: 0.125625, ci98_33: [-0.0090625, 0.26125], coherence_ok: true, status: "no"}
+    caa_uncertainty_awareness_steer_minus_average: {mean: -0.08448712264150943, ci98_33: [-0.17813505896226414, 0.003485024174528528], coherence_ok: true, status: "no"}
+    iti_deliberation_steer_minus_average: {mean: -0.808125, ci98_33: [-0.906875, -0.688438], coherence_ok: true, status: "no"}
+    iti_skepticism_steer_minus_average: {mean: 0.105625, ci98_33: [-0.051047, 0.26625], coherence_ok: true, status: "no"}
+    iti_uncertainty_awareness_steer_minus_average: {mean: 0.035444952830188656, ci98_33: [-0.015801857900943402, 0.09191198643867927], coherence_ok: true, status: "no"}
+    average_minus_best_comparator_strength:
+      deliberation_like_for_like_avg512_minus_best512: -0.011875
+      deliberation_floor_artifact_avg512_minus_frozen_best64: {mean: 0.828125, ci98_33: [0.72625, 0.916148]}
+      skepticism_avg16_minus_frozen_best: {mean: -0.205625, ci98_33: [-0.3275, -0.091664]}
+      uncertainty_awareness_avg16_minus_frozen_best: {mean: -0.1382004245283019, ci98_33: [-0.21210213974056594, -0.0717863938679245]}
+  artifacts:
+  - path: results/avg_prompt_full/avg_minus_frozen_best_summary.json
+    sha256: 2de7a7f06b87011a5b4601db4e9ca2d08ba2b9b3c7f3c60e1e8d67ea9d9ac0e0
+  - path: results/avg_prompt_full/cell_caa__qwen2.5-7b__deliberation/avg_prompt_comparator_results.json
+    sha256: 4a88dbc7d306314391654e16caa1c3fff6f74e97fded2defcffd10ace49e53c7
+  - path: results/avg_prompt_full/cell_caa__qwen2.5-7b__skepticism/avg_prompt_comparator_results.json
+    sha256: 8c5d6314ef53ee12435087d142f7b0003204162623a6c6c6dd22ba175e31c011
+  - path: results/avg_prompt_full/cell_caa__qwen2.5-7b__uncertainty_awareness/avg_prompt_comparator_results.json
+    sha256: 9ccf7da0e4ba57ad74752d1c4cb75cbee865c6bbd4444e40bc08ef78aee1751b
+  - path: results/avg_prompt_full/cell_iti__qwen2.5-7b__deliberation/avg_prompt_comparator_results.json
+    sha256: 3dbc89b1e7e2f99d46f9e2955a36ed5b0d0e1835ed51cae9679d6911d2595588
+  - path: results/avg_prompt_full/cell_iti__qwen2.5-7b__skepticism/avg_prompt_comparator_results.json
+    sha256: c24322e060a4b45452f5acd97fa486f159f9ac026e17400d1ea94277cd745f0b
+  - path: results/avg_prompt_full/cell_iti__qwen2.5-7b__uncertainty_awareness/avg_prompt_comparator_results.json
+    sha256: acefd3d78a18dc27996f7d063e45a24fe148f2658baf28251a7d383f70c0e549
+  - path: results/avg_prompt_delib512_repair/cell_caa__qwen2.5-7b__deliberation_steer512/delib_512_steer_repair_results.json
+    sha256: e943a444070646a217a21e63a346bcd07613ce2f9a29f32284fa67d8ccb1cf78
+  - path: results/avg_prompt_delib512_repair/cell_iti__qwen2.5-7b__deliberation_steer512/delib_512_steer_repair_results.json
+    sha256: d210c88e6ca9fe90eb91fa672da8da20ad12bda69ee852f1c0d913f09a3a7953
+  failure_reason: null
+  valid_for_paper: false
+  validation_notes: >-
+    FROZEN-RUN-REGISTRATION ONLY for average-prompt comparator diagnostics. Single-run,
+    Qwen-only, exploratory, valid_for_paper=false. The deliberation avg-minus-best
+    value +0.828125 is a 64-token floor artifact (avg512 minus frozen_best64) and
+    must not be used as comparator strength; like-for-like avg512 minus best512 is
+    -0.011875 from the committed deliberation 512-token repair artifact. Manager task
+    records audit conclusion as CONDITIONAL; no paper-valid claim may cite this row.

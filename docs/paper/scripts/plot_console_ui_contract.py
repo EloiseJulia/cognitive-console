@@ -141,7 +141,7 @@ def _card_lines(card: dict, e0013: dict, grid_size: int) -> list[tuple[str, str]
             ),
             _signal_line(
                 "GRID SCOPE NOTE",
-                "CAA cells re-measured at 512 tokens: slightly negative, underpowered; ITI cells floored.",
+                "Four cells re-measured at 512 tokens: three slightly negative/underpowered, ITI-Llama near-zero equivalent.",
             ),
             _signal_line("BOUNDED PROMPT COMPARATOR", ceiling.get("summary", "n/a")),
             _signal_line(
@@ -179,8 +179,8 @@ def _card_lines(card: dict, e0013: dict, grid_size: int) -> list[tuple[str, str]
         ),
         _signal_line(
             "GRID SCOPE NOTE",
-            f"{grid_size}/{grid_size} negative under the frozen scorer as run; Qwen-CAA near baseline; "
-            f"all-generation sign unidentified, {grid_size - rechecked} cells not rechecked.",
+            f"{grid_size}/{grid_size} negative (frozen scorer); Qwen-CAA near baseline; "
+            f"sign unidentified under missingness, {grid_size - rechecked}/{grid_size} unrechecked.",
         ),
         _signal_line(
             "EXACT EVIDENCE TIER",

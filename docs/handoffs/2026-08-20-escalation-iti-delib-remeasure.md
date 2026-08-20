@@ -1,5 +1,9 @@
 # 升级 Manager：ITI deliberation 512-token 重测（点1）— 2026-08-20
 
+> **[RESOLVED 2026-08-20] Manager 已交付实验并 fold 完成。** ITI delib-512 fold-gate 三门通过（D-0140, `feature/iti-delib512@7362689`；ledger 行 E-DELIB512-ITI-REMEASURE；独立 audit `reviews/2026-08-20-iti-delib512-audit/` = **Numbers SOUND**，lineage BLOCKER seal!=committed 已 CLOSED，seal==committed 验证）。writer 已按下方 fold 落点全部同步进 `main.tex`（build 干净，0 undefined/0 overfull，26pp）。数值：I1 Qwen ITI **−0.033 UNDERPOWERED（小负）**、I2 Llama ITI **+0.005 EQUIVALENT（近零）**；四格 deliberation-512 现对称完整，审稿人"为何只补 CAA"已消除。诚实红线守住（小负写小负、近零写 equivalent、不 spin、不改 frozen 0/12）。
+
+---
+
 > 来源：owner 转来一份外部 AI review，三点批评经 writer 逐条核实**全部属实**、且与内部四家族 audit 吻合。点2/3 writer 已做表述强化（见下）；**点1 只能靠新实验关闭，属 Manager/实验域，特此升级。**
 
 ## 请求（点1，actionable）

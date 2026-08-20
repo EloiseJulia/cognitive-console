@@ -1,0 +1,16 @@
+{
+  "cell_id": "I2",
+  "code_identity": {
+    "code_commit": "fc7673212e36ec8d28598105c8bbc28855a78fb1",
+    "dirty_tree": false
+  },
+  "experiment_id": "iti-delib-512-test-20260820-I2",
+  "global_attempt_marker": "/home/elzhang/cc_l0/test_guards/powered-tost-A/test-attempts/iti-delib-512-test-20260820-I2.json",
+  "protocol_id": "iti-deliberation-remeasure-512-20260820",
+  "registry_profile": {
+    "registry_owner_root": "/home/elzhang/cc_l0/test_guards",
+    "registry_root": "/home/elzhang/cc_l0/test_guards/powered-tost-A/test-attempts",
+    "registry_root_env": "CC_TEST_ATTEMPT_ROOT",
+    "registry_root_overridden": true
+  }
+}

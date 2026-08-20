@@ -1,0 +1,49 @@
+{
+  "cells": {
+    "I1": {
+      "achieved_mde": 0.020036233844379702,
+      "best_prompt_id": "delib-strong-09",
+      "ci_hi": 0.009333333333333336,
+      "ci_lo": -0.07866666666666668,
+      "coherence_ok": true,
+      "dev_alpha": 2.0,
+      "generation_truncated": 0,
+      "mean_diff": -0.033333333333333326,
+      "n_test": 150,
+      "prompt_accuracy": 0.8733333333333333,
+      "result_path": "results/iti_delib_512_20260820/test/cells/I1/sealed/powered_tost_A_result.json",
+      "steer_accuracy": 0.84,
+      "strict_verdict": "UNDERPOWERED",
+      "token_maybe_truncated": 0,
+      "tost_ci_hi": -0.003999999999999996,
+      "tost_ci_lo": -0.064,
+      "unsteered_accuracy": 0.8426666666666667
+    },
+    "I2": {
+      "achieved_mde": 0.03465029100406902,
+      "best_prompt_id": "delib-strong-04",
+      "ci_hi": 0.05333333333333334,
+      "ci_lo": -0.04266666666666667,
+      "coherence_ok": true,
+      "dev_alpha": 2.0,
+      "generation_truncated": 0,
+      "mean_diff": 0.0053333333333333306,
+      "n_test": 150,
+      "prompt_accuracy": 0.7066666666666667,
+      "result_path": "results/iti_delib_512_20260820/test/cells/I2/sealed/powered_tost_A_result.json",
+      "steer_accuracy": 0.712,
+      "strict_verdict": "EQUIVALENT",
+      "token_maybe_truncated": 0,
+      "tost_ci_hi": 0.03866666666666666,
+      "tost_ci_lo": -0.028,
+      "unsteered_accuracy": 0.7573333333333333
+    }
+  },
+  "code_commit": "fc7673212e36ec8d28598105c8bbc28855a78fb1",
+  "experiment_id": "iti-delib-512-test-20260820",
+  "max_new_tokens": 512,
+  "phase": "TEST_SEALED",
+  "protocol_id": "iti-deliberation-remeasure-512-20260820",
+  "scientific_status": "PENDING_HOSTILE_RESULT_AUDIT",
+  "valid_for_paper": false
+}

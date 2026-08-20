@@ -1,0 +1,93 @@
+experiments:
+- experiment_id: iti-delib-512-test-20260820
+  parent: iti-delib-512-dev-20260820
+  hypothesis_id: H2-deliberation-512-remeasure
+  claim_ids:
+  - C2b
+  type: confirmatory-protocol-pending-audit
+  status: done
+  protocol_id: iti-deliberation-remeasure-512-20260820
+  code_commit: fc7673212e36ec8d28598105c8bbc28855a78fb1
+  dirty_tree: false
+  data_hash: sha256:4472319b55af51d3bd6f2d5179f1f03fa7964372e7aa9a6095046535928a2335
+  env_hash: null
+  config_hash: null
+  model:
+  - Qwen/Qwen2.5-7B-Instruct
+  - NousResearch/Meta-Llama-3-8B-Instruct
+  dataset: openai/gsm8k main test, excluding frozen first 60 IDs, inherited E-DELIB512
+    deterministic selected pool
+  seed: 20260812
+  hardware: nvidia-a800-80gb; CUDA_VISIBLE_DEVICES=3; GPU3
+  started_at: null
+  ended_at: '2026-08-20T15:41:00+08:00'
+  exit_code: 0
+  raw_metrics:
+    test_summary: results/iti_delib_512_20260820/test/TEST_SUMMARY.json
+    test_seal: results/iti_delib_512_20260820/test/SEALED.json
+    raw_bundle_manifest: results/iti_delib_512_20260820/SHA256_MANIFEST.json
+    raw_bundle_manifest_sha256: sha256:4472319b55af51d3bd6f2d5179f1f03fa7964372e7aa9a6095046535928a2335
+    hash_basis: raw artifact files excluding SHA256_MANIFEST.json and experiment-registry.yaml
+  summary_metrics:
+    I1:
+      achieved_mde: 0.020036233844379702
+      best_prompt_id: delib-strong-09
+      ci_hi: 0.009333333333333336
+      ci_lo: -0.07866666666666668
+      coherence_ok: true
+      dev_alpha: 2.0
+      generation_truncated: 0
+      mean_diff: -0.033333333333333326
+      n_test: 150
+      prompt_accuracy: 0.8733333333333333
+      result_path: results/iti_delib_512_20260820/test/cells/I1/sealed/powered_tost_A_result.json
+      steer_accuracy: 0.84
+      strict_verdict: UNDERPOWERED
+      token_maybe_truncated: 0
+      tost_ci_hi: -0.003999999999999996
+      tost_ci_lo: -0.064
+      unsteered_accuracy: 0.8426666666666667
+    I2:
+      achieved_mde: 0.03465029100406902
+      best_prompt_id: delib-strong-04
+      ci_hi: 0.05333333333333334
+      ci_lo: -0.04266666666666667
+      coherence_ok: true
+      dev_alpha: 2.0
+      generation_truncated: 0
+      mean_diff: 0.0053333333333333306
+      n_test: 150
+      prompt_accuracy: 0.7066666666666667
+      result_path: results/iti_delib_512_20260820/test/cells/I2/sealed/powered_tost_A_result.json
+      steer_accuracy: 0.712
+      strict_verdict: EQUIVALENT
+      token_maybe_truncated: 0
+      tost_ci_hi: 0.03866666666666666
+      tost_ci_lo: -0.028
+      unsteered_accuracy: 0.7573333333333333
+  direction_lineage:
+    I1:
+      path: /home/elzhang/cc_l0/iti_delib_512_20260820/test/work/directions/I1-deliberation-L20.npy
+      sha256: sha256:be071ad5fcbcba8370858b9177bf115015952de548c9747563cefeaa3886bfd5
+      layer: 20
+      sigma: 14.96881697006964
+      method: iti
+    I2:
+      path: /home/elzhang/cc_l0/iti_delib_512_20260820/test/work/directions/I2-deliberation-L8.npy
+      sha256: sha256:c374e74a1aa43ae0583f96f9072f87cfa835c3ccfad75aa00aa0e3ff6b5b72fd
+      layer: 8
+      sigma: 0.641362781807354
+      method: iti
+  artifacts:
+  - results/iti_delib_512_20260820/test/SEALED.json
+  - results/iti_delib_512_20260820/test/TEST_SUMMARY.json
+  - results/iti_delib_512_20260820/SHA256_MANIFEST.json
+  - results/iti_delib_512_20260820/test/cells/I1/sealed/powered_tost_A_result.json
+  - results/iti_delib_512_20260820/test/cells/I2/sealed/powered_tost_A_result.json
+  failure_reason: null
+  valid_for_paper: false
+  scientific_status: PENDING_HOSTILE_RESULT_AUDIT
+  validation_notes: ITI deliberation 512-token additive remeasurement completed exactly
+    once per fixed cell using sealed DEV selections. I1 is small negative/UNDERPOWERED;
+    I2 is EQUIVALENT under the preregistered TOST rule. Both cells are valid_for_paper=false
+    pending independent hostile audit; no frozen 0/12 grid or manuscript text changed.

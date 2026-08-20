@@ -480,7 +480,7 @@ The procedure therefore returns more than pass or no-pass: it connects each comp
 
 The record is designed to guard against three substitutions in interface reasoning: READ for TRANSFER, absolute output change for comparison against the declared alternative, and evidence from one tier for another. It reports the computational result, preserves the structured evidence or blocking reason, and then specifies the record-specific interface action.
 
-\paragraph{What a designer gains, for each user.} The record's user is the interface designer or team deciding whether to release a control, and it separates the two populations that decision serves. On the proficient user's standard, the record already answers: no tested control earns incremental behavioral advantage over a strong prompt, so on this evidence none has yet earned an active role as a quality control for users who can write that prompt. On the everyday user's standard, which turns on low effort, an average prompt, and convenience, the record withholds judgment until the average-prompt comparator and a user study report; it says so explicitly rather than borrowing the proficient user's result. In either case it still blocks the two substitutions it is built to prevent: promoting a control on READ or on output movement alone.
+\paragraph{What a designer gains, for each user.} The record's user is the interface designer or team deciding whether to release a control, and it separates the two populations that decision serves. On the proficient user's standard, the record already answers: no tested control earns incremental behavioral advantage over a strong prompt, so on this evidence none has yet earned an active role as a quality control for users who can write that prompt. On the everyday user's standard, which turns on low effort, an average prompt, and convenience, the record does not borrow the proficient user's result: the exploratory average-prompt arm (Section~\ref{everyday-user-comparator}) is single-run context, and a confirmatory everyday-user verdict awaits the planned user study. In either case it still blocks the two substitutions it is built to prevent: promoting a control on READ or on output movement alone.
 
 \subsection{Worked Record: Qwen--CAA Uncertainty}\label{worked-record-qwencaa-uncertainty}
 
@@ -563,9 +563,9 @@ Choosing a comparator is choosing a population: a strong prompt asks the profici
 The procedure asks designers to disclose the comparator rather than canonize it. In this application, the comparator is the DEV-selected prompt defined in Method. {}% FL-008
 {}% FL-009
 {}% BD-009
-The procedure also distinguishes substitution from composition in use: the present experiment replaces that prompt with steering, whereas a user-facing slider normally acts on top of an instruction. {}% FL-015
+The procedure also distinguishes substitution from composition in use: the core experiment replaces that prompt with steering, whereas a user-facing slider normally acts on top of an instruction. We therefore tested composition directly (Section~\ref{everyday-user-comparator}), finding no incremental gain on Qwen for either method, with ITI trending slightly negative. {}% FL-015
 
-% PENDING PROMPT-PLUS-STEER DISCUSSION: choose P-A through P-E and revise construct scope.
+% FOLDED PROMPT-PLUS-STEER: composition tested for CAA+ITI on Qwen (E-COMPOSITION-A / E-COMPOSITION-A-ITI, D-0136/D-0137), summarized in Section everyday-user-comparator and 7.3; Llama untested.
 
 \subsection{Qualification Is a Versioned Record}\label{qualification-is-a-versioned-record}
 

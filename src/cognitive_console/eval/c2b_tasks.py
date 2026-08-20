@@ -29,6 +29,8 @@ from typing import Any, Dict, List, Optional
 import yaml
 
 AXES = ["deliberation", "skepticism", "uncertainty_awareness"]
+TRUTHFULQA_REVISION = "741b8276f2d1982aa3d5b832d3ee81ed3b896490"
+TRIVIAQA_REVISION = "0f7faf33a3908546c6fd5b73a660e0f8ff173c2f"
 
 # Fixture stem per axis (uncertainty_awareness fixture file is 'uncertainty.jsonl').
 _FIXTURE_STEM = {

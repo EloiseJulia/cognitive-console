@@ -398,10 +398,21 @@ class TranscriptCollector:
     def write_all(self, out_dir: Path, report: adj.AdjudicationReport) -> Optional[Path]:
         root = Path(out_dir) / "transcripts"
         root.mkdir(parents=True, exist_ok=True)
+        self.write_raw(root)
         final_lookup = self._final_outcome_lookup(report)
         self._write_cell_files(root, final_lookup)
         self._write_paired_test_file(root, report)
         return root
+
+    def write_raw(self, root: Path) -> Path:
+        """Persist observational generation records without requiring TEST results."""
+        root = Path(root)
+        root.mkdir(parents=True, exist_ok=True)
+        path = root / "all_generations.jsonl"
+        with open(path, "w", encoding="utf-8") as fh:
+            for rec in self._all_records:
+                fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+        return path
 
 
 class TranscriptCheckpointStore(CheckpointStore):
@@ -833,10 +844,13 @@ def synthetic_sampler_factory(use_fixture: bool, n_items: Optional[int],
 def hf_sampler_factory(model: str, max_new_tokens: int, temperature: float,
                        seed: int, batch_size: int,
                        transcript_collector: Optional[TranscriptCollector] = None,
-                       alpha_scale_by_axis: Optional[Dict[str, float]] = None):
+                       alpha_scale_by_axis: Optional[Dict[str, float]] = None,
+                       model_revision: Optional[str] = None):
     from cognitive_console.steering.generate import SteeredHFBackend
     device, dtype = p0._pick_device(), p0._pick_dtype()
-    backend = SteeredHFBackend(model, device=device, dtype=dtype, seed=seed)
+    backend = SteeredHFBackend(
+        model, device=device, dtype=dtype, seed=seed, model_revision=model_revision
+    )
 
     def factory(axis: str):
         sampler_cls = TranscriptScaledBackendOutcomeSampler if transcript_collector else ScaledBackendOutcomeSampler
@@ -851,6 +865,7 @@ def hf_sampler_factory(model: str, max_new_tokens: int, temperature: float,
             alpha_scale_by_axis=alpha_scale_by_axis,
             **kwargs,
         )
+    factory.backend = backend
     return factory
 
 

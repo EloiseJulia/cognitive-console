@@ -859,6 +859,93 @@ def adjudicate_axis(
     )
 
 
+def adjudicate_axis_test(
+    sampler: OutcomeSampler,
+    spec: AxisAdjSpec,
+    *,
+    dev_items: Sequence[Dict],
+    test_items: Sequence[Dict],
+    dev_selection: DevSelection | Dict[str, object],
+    k: int = K_SAMPLES,
+    bootstrap_b: int = BOOTSTRAP_B,
+    ci_level: float = BONFERRONI_CI_LEVEL,
+    delta: float = DELTA,
+    coherence_max_ratio: float = COHERENCE_MAX_RATIO,
+    seed: int = 0,
+    ctx: Optional[RunContext] = None,
+) -> AxisAdjResult:
+    """Run TEST from a previously frozen DEV selection without touching DEV."""
+    dev_sel = (
+        dev_selection
+        if isinstance(dev_selection, DevSelection)
+        else DevSelection(**dev_selection)
+    )
+
+    frozen_alpha = dev_sel.frozen_alpha
+    prompt_cell = f"prompt={dev_sel.best_prompt_id}|alpha=0"
+    if frozen_alpha is None:
+        n_test = len(test_items)
+        prompt_out, _, _ = _channel_item_outcomes(
+            sampler, spec.axis, test_items, dev_sel.best_prompt_text, 0.0, k,
+            spec.direction, spec.layer, ctx=ctx, phase=PHASE_TEST_PROMPT,
+            cell_key=prompt_cell)
+        return AxisAdjResult(
+            axis=spec.axis, layer=int(spec.layer), n_dev=len(dev_items), n_test=n_test,
+            k=int(k), dev_selection=asdict(dev_sel),
+            per_item_prompt=[float(x) for x in prompt_out],
+            per_item_steer=[], per_item_diff=[],
+            mean_diff=float("nan"), ci_lo=float("nan"), ci_hi=float("nan"),
+            ci_level=ci_level, bootstrap_b=int(bootstrap_b), coherence_ok=False,
+            test_steer_degeneracy=float("nan"),
+            test_baseline_degeneracy=dev_sel.baseline_degeneracy,
+            delta=delta, passed=False,
+            conflict={"note": "no coherence-gated alpha; conflict not computed"},
+            descriptive={"reason": "no alpha cleared the DEV coherence gate"},
+        )
+
+    prompt_out, _, prompt_mat = _channel_item_outcomes(
+        sampler, spec.axis, test_items, dev_sel.best_prompt_text, 0.0, k,
+        spec.direction, spec.layer, ctx=ctx, phase=PHASE_TEST_PROMPT,
+        cell_key=prompt_cell)
+    steer_out, steer_deg, steer_mat = _channel_item_outcomes(
+        sampler, spec.axis, test_items, spec.neutral_prompt, frozen_alpha, k,
+        spec.direction, spec.layer, ctx=ctx, phase=PHASE_TEST_STEER,
+        cell_key=f"alpha={float(frozen_alpha)}")
+    _, base_deg_test, _ = _channel_item_outcomes(
+        sampler, spec.axis, test_items, spec.neutral_prompt, 0.0, k,
+        spec.direction, spec.layer, ctx=ctx, phase=PHASE_TEST_BASELINE,
+        cell_key="alpha=0")
+
+    per_item_diff = steer_out - prompt_out
+    ci = cluster_bootstrap_ci(per_item_diff, b=bootstrap_b, ci_level=ci_level,
+                              seed=seed, cluster=True)
+
+    test_baseline_deg = float(base_deg_test.mean())
+    test_steer_deg = float(steer_deg.mean())
+    coherence_ok = (
+        test_steer_deg
+        <= coherence_max_ratio * test_baseline_deg + COHERENCE_EPS_FLOOR + 1e-12
+    )
+    passed = axis_pass(ci.point, ci.ci_lo, ci.ci_hi, coherence_ok, delta=delta)
+
+    conflict = _conflict_cell(sampler, spec, test_items, dev_sel.best_prompt_id,
+                              dev_sel.best_prompt_text, frozen_alpha, k, ctx=ctx)
+    descriptive = _descriptive(spec.axis, test_items, prompt_mat, steer_mat)
+
+    return AxisAdjResult(
+        axis=spec.axis, layer=int(spec.layer), n_dev=len(dev_items),
+        n_test=len(test_items), k=int(k), dev_selection=asdict(dev_sel),
+        per_item_prompt=[float(x) for x in prompt_out],
+        per_item_steer=[float(x) for x in steer_out],
+        per_item_diff=[float(x) for x in per_item_diff],
+        mean_diff=ci.point, ci_lo=ci.ci_lo, ci_hi=ci.ci_hi, ci_level=ci.ci_level,
+        bootstrap_b=int(bootstrap_b), coherence_ok=coherence_ok,
+        test_steer_degeneracy=test_steer_deg,
+        test_baseline_degeneracy=test_baseline_deg,
+        delta=delta, passed=passed, conflict=conflict, descriptive=descriptive,
+    )
+
+
 def _conflict_cell(sampler: OutcomeSampler, spec: AxisAdjSpec, test_items: Sequence[Dict],
                    best_prompt_id: str, best_prompt_text: str, frozen_alpha: float,
                    k: int, ctx: Optional[RunContext] = None) -> Dict[str, object]:

@@ -89,7 +89,7 @@
     {
       "bytes": 97,
       "path": "test/cells/I1/SEALED.json",
-      "sha256": "sha256:8170b3b5b3cb4ddf917c792eea25b2e858b11ff9a2989d0cf9850b252bae6df6"
+      "sha256": "sha256:fc4fa14ad75871123dbb7cb4ff2df3b9219465a53a669fa69f27550a2eb83a0d"
     },
     {
       "bytes": 637,
@@ -169,7 +169,7 @@
     {
       "bytes": 97,
       "path": "test/cells/I2/SEALED.json",
-      "sha256": "sha256:309570b4701597d7d6800b536ab8c2672938f38bd90336883ce20bf51c993e1e"
+      "sha256": "sha256:73bdbe47edd08a252c949d57d261e3ee1fb829697d2ab30db8d649493bdb260e"
     },
     {
       "bytes": 637,
@@ -244,7 +244,7 @@
     {
       "bytes": 17889,
       "path": "test/SEALED.json",
-      "sha256": "sha256:f0a503f28d546ff6975b0c244199689736f99fee731afbe025357b1330c3c7e8"
+      "sha256": "sha256:1eb9ca7b3c897d4fec8eb503e95b28fbf187303ad6ba0f8dc0284c53c21e0907"
     },
     {
       "bytes": 1716,

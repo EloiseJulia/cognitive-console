@@ -1883,7 +1883,7 @@ experiments:
   protocol_id: iti-deliberation-remeasure-512-20260820
   code_commit: fc7673212e36ec8d28598105c8bbc28855a78fb1
   dirty_tree: false
-  data_hash: sha256:4472319b55af51d3bd6f2d5179f1f03fa7964372e7aa9a6095046535928a2335
+  data_hash: sha256:96f702355ca32b90a6be0041a1bd11e44718a9ee3f3f89f8096ddd1a030ca664
   env_hash: null
   config_hash: null
   model:
@@ -1900,7 +1900,7 @@ experiments:
     test_summary: results/iti_delib_512_20260820/test/TEST_SUMMARY.json
     test_seal: results/iti_delib_512_20260820/test/SEALED.json
     raw_bundle_manifest: results/iti_delib_512_20260820/SHA256_MANIFEST.json
-    raw_bundle_manifest_sha256: sha256:4472319b55af51d3bd6f2d5179f1f03fa7964372e7aa9a6095046535928a2335
+    raw_bundle_manifest_sha256: sha256:96f702355ca32b90a6be0041a1bd11e44718a9ee3f3f89f8096ddd1a030ca664
     hash_basis: raw artifact files excluding SHA256_MANIFEST.json and experiment-registry.yaml
   summary_metrics:
     I1:
@@ -1965,3 +1965,12 @@ experiments:
     once per fixed cell using sealed DEV selections. I1 is small negative/UNDERPOWERED;
     I2 is EQUIVALENT under the preregistered TOST rule. Both cells are valid_for_paper=false
     pending independent hostile audit; no frozen 0/12 grid or manuscript text changed.
+  lineage_fix:
+    fix_id: iti-delib512-seal-rehash-20260820
+    reason: per-cell result JSON files were augmented with reporting diagnostics after initial TEST seal hashes were written; scientific arrays and metrics unchanged.
+    old_result_hashes_before_reporting:
+      I1: sha256:d8296b2e4bfe28249a8bd104ef419ad1772086c3ab430a98f2fb370d47fcfe15
+      I2: sha256:00bdadffd041910fbacb2762085740c30ed60ac09cc24b361f73a240a3b027f4
+    current_committed_result_hashes:
+      I1: sha256:e1e1cf018bf9102af6a3cadf7b9f1a7479035eea2ca11276115c13a39753019b
+      I2: sha256:7a912026e3815240424e8ab5de1fede754f6fa2a478c78c37d441502be3a7813

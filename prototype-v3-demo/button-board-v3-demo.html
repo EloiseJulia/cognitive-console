@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>V3 一步一问·开卷 — 迷你 Demo（原型/示意）</title>
+<style>
+  :root{
+    --ink:#1f2328; --muted:#59636e; --line:#d0d7de; --bg:#f6f8fa;
+    --card:#ffffff; --accent:#0969da; --accentbg:#ddf4ff; --soft:#eaeef2;
+    --good:#e6f4ea; --hold:#fff4e5;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI","Microsoft YaHei UI",system-ui,sans-serif;
+    color:var(--ink);background:var(--bg);line-height:1.6}
+  .wrap{max-width:920px;margin:0 auto;padding:24px 16px 64px}
+  .proto{display:inline-block;font-size:12px;color:#9a6700;background:#fff8c5;
+    border:1px solid #eac54f;border-radius:999px;padding:2px 10px;margin-bottom:12px}
+  h1{font-size:22px;margin:6px 0 4px}
+  .sub{color:var(--muted);margin:0 0 18px}
+  .layout{display:grid;grid-template-columns:1fr 300px;gap:20px}
+  @media(max-width:800px){.layout{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+  .card h2{font-size:16px;margin:0 0 10px}
+  .fictional{font-size:12px;color:var(--muted);background:var(--soft);
+    border-radius:8px;padding:6px 10px;margin-bottom:12px}
+  .kv{margin:8px 0}
+  .kv .k{font-size:12px;color:var(--muted)}
+  .kv .v{font-size:15px}
+  .facts{margin:10px 0 0;padding:0;list-style:none}
+  .facts li{padding:8px 10px;border:1px solid var(--line);border-radius:8px;margin:6px 0;background:#fcfcfd}
+  .aside{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;height:fit-content;position:sticky;top:16px}
+  .aside h3{font-size:13px;margin:0 0 8px;color:var(--muted);font-weight:600}
+  .dest{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:13px}
+  .dest b{display:block;font-size:14px;margin-bottom:2px}
+  .q{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:16px}
+  .q .qh{font-size:12px;color:var(--muted);margin-bottom:6px}
+  .q .qt{font-size:18px;font-weight:600;margin-bottom:14px}
+  .opts{display:flex;flex-direction:column;gap:10px}
+  button.opt{appearance:none;text-align:left;font:inherit;color:var(--ink);
+    background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer}
+  button.opt:hover{border-color:var(--accent);background:var(--accentbg)}
+  .result{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:16px}
+  .badge{display:inline-block;font-size:15px;font-weight:700;border-radius:8px;padding:6px 12px;margin:4px 0}
+  .b-use{background:var(--good)} .b-info{background:var(--accentbg)} .b-off{background:var(--soft)} .b-wait{background:var(--hold)}
+  .trace{font-size:13px;color:var(--muted);margin-top:10px}
+  .trace li{margin:2px 0}
+  .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .btn{appearance:none;font:inherit;border-radius:10px;padding:10px 16px;cursor:pointer;border:1px solid var(--line);background:#fff}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .steps{font-size:12px;color:var(--muted);margin-top:6px}
+  .intro .card{max-width:680px}
+  .hide{display:none}
+  .note{font-size:13px;color:var(--muted);margin-top:8px}
+  .scopewrap{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="proto">原型 / 示意 · 仅供体验交互手感 · 全部为虚构记录</div>
+  <h1>整理你的“按钮板”：一步一问</h1>
+  <p class="sub">看着卡片回答几个小问题就行，不用记任何东西。</p>
+
+  <section id="intro" class="intro">
+    <div class="card">
+      <h2>这是什么</h2>
+      <p>家里和手机上常会多出一些“新按钮”。你要决定每个按钮该放在按钮板的哪一格。</p>
+      <p><b>只有一条常识：按钮“会动/有反应”，不等于它比你原来的做法更好。</b></p>
+      <p>你不用背规则、不用记分类。屏幕上会一次问你一个小问题，卡片一直在旁边，看着答就行。</p>
+      <div class="row">
+        <button class="btn primary" onclick="startScenario(0)">开始第 1 个</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="main" class="hide">
+    <div class="layout">
+      <div>
+        <div class="card" id="cardBox"></div>
+        <div id="qBox"></div>
+        <div id="resultBox"></div>
+      </div>
+      <aside class="aside">
+        <h3>四个去处（随时看，不用记）</h3>
+        <div class="dest b-use"><b>常用区</b>放这里能用，但要写清“仅在……什么时候”。</div>
+        <div class="dest b-info"><b>信息牌</b>只用来看情况，不当成能改变结果的按钮。</div>
+        <div class="dest b-off"><b>不装</b>这块板上不放它。</div>
+        <div class="dest b-wait"><b>再看看</b>先放待定盒，等卡片更清楚再决定。</div>
+        <h3 style="margin-top:14px">怎么想</h3>
+        <div class="note">① 它是“看情况”还是“按一下改变结果”？<br>② 有没有和你原来的做法<b>放一起比过</b>？<br>③ 比下来更好吗？<br>④ 有没有把别的事弄坏？<br>⑤ 有没有写清只在哪些情况试过？</div>
+      </aside>
+    </div>
+  </section>
+</div>
+
+<script>
+const SCENARIOS = [
+  {
+    title: "厨房计时器的“火候提示”按钮",
+    goal: "煎蛋不要外焦里生。",
+    oldway: "用手机固定倒计时 90 秒。",
+    facts: [
+      "按下后，到点会语音喊“可以翻面/关火”（确实有反应）。",
+      "和“手机固定 90 秒”并排：连续 14 顿早餐，旧办法失败 6 次，新按钮失败 1 次。",
+      "家里三个人轮流用，结果都差不多（比较稳定）。",
+      "没发现它把别的事弄坏。",
+      "只在“煎蛋、自家燃气灶”试过；牛排、炒菜没试。"
+    ]
+  },
+  {
+    title: "智能音箱的“更客气”按钮",
+    goal: "让音箱回话时更客气、更有礼貌一点。",
+    oldway: "直接对音箱说“请回话客气一点”。",
+    facts: [
+      "打开后，回话用词明显更客气了（确实有反应）。",
+      "和“直接说请回话客气一点”并排：10 次里，8 次两边差不多，2 次新按钮反而啰嗦、绕圈子。",
+      "没发现它把别的事弄坏（问天气、定闹钟都正常）。",
+      "在问天气、定闹钟等日常场景都试过。"
+    ]
+  },
+  {
+    title: "冰箱门上的“新鲜牌”",
+    goal: "想知道菜现在偏干还是偏新鲜。",
+    oldway: "买菜当天用白板笔写日期。",
+    facts: [
+      "牌子颜色会随存放时间变化（确实有反应）。",
+      "7 天里看了 14 次，12 次显示的干湿情况和实际相符。",
+      "它只显示情况，不会自动做任何处理。",
+      "没有把它和“写日期”放一起比过谁更能减少烂菜。",
+      "只在自家单门冰箱试过。"
+    ]
+  }
+];
+
+const SCOPE_OPTIONS = {
+  0: [
+    {t:"仅在“煎蛋、自家燃气灶”时使用", ok:true},
+    {t:"任何菜、任何灶都能用", ok:false},
+    {t:"不用写范围，直接能用", ok:false}
+  ]
+};
+
+const DEST = {
+  use:  {label:"常用区（要写清“仅在…”）", cls:"b-use"},
+  info: {label:"信息牌（只看情况）",       cls:"b-info"},
+  off:  {label:"不装",                     cls:"b-off"},
+  wait: {label:"再看看",                   cls:"b-wait"}
+};
+
+let cur = 0, trace = [];
+
+function startScenario(i){
+  cur = i; trace = [];
+  document.getElementById('intro').classList.add('hide');
+  document.getElementById('main').classList.remove('hide');
+  renderCard();
+  document.getElementById('resultBox').innerHTML = '';
+  askNature();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderCard(){
+  const s = SCENARIOS[cur];
+  let li = s.facts.map(f=>`<li>${f}</li>`).join('');
+  document.getElementById('cardBox').innerHTML =
+    '<div class="fictional">虚构试用记录 · 仅用于本次判断，不代表真实产品功效</div>'+
+    '<h2>'+s.title+'</h2>'+
+    '<div class="kv"><div class="k">你想做到</div><div class="v">'+s.goal+'</div></div>'+
+    '<div class="kv"><div class="k">你原来怎么做</div><div class="v">'+s.oldway+'</div></div>'+
+    '<div class="kv"><div class="k">试用记录（自己读）</div></div>'+
+    '<ul class="facts">'+li+'</ul>';
+}
+
+function qBox(qhead, qtext, opts){
+  const box = document.getElementById('qBox');
+  box.innerHTML = '<div class="q"><div class="qh">'+qhead+'</div>'+
+    '<div class="qt">'+qtext+'</div><div class="opts">'+
+    opts.map(o=>'<button class="opt" onclick="'+o.fn+'()">'+o.t+'</button>').join('')+
+    '</div><div class="steps">你已回答：'+trace.length+' 个小问题</div></div>';
+}
+
+function askNature(){
+  qBox("第 1 步", "这张卡是想让你【看情况】，还是【按一下改变结果】？", [
+    {t:"只是让我看情况", fn:"pickInfo"},
+    {t:"按一下会改变结果", fn:"pickControl"}
+  ]);
+}
+function pickInfo(){ trace.push("这张卡只是让我看情况"); finish("info"); }
+function pickControl(){ trace.push("这张卡是按一下改变结果"); askCompared(); }
+
+function askCompared(){
+  qBox("第 2 步", "卡片有没有把新按钮和你原来的做法【放一起比过】？", [
+    {t:"比过（卡上有并排比较）", fn:"pickCompared"},
+    {t:"没有 / 看不出来", fn:"pickNotCompared"}
+  ]);
+}
+function pickNotCompared(){ trace.push("没有和原来的做法放一起比过"); finish("wait"); }
+function pickCompared(){ trace.push("和原来的做法放一起比过了"); askBetter(); }
+
+function askBetter(){
+  qBox("第 3 步", "比下来，新按钮【更好】，还是【差不多 / 更差】？", [
+    {t:"更好（稳定地更少出错）", fn:"pickBetter"},
+    {t:"差不多 / 更差", fn:"pickNotBetter"}
+  ]);
+}
+function pickNotBetter(){ trace.push("比下来没有更好"); finish("off"); }
+function pickBetter(){ trace.push("比下来稳定更好"); askHarm(); }
+
+function askHarm(){
+  qBox("第 4 步", "用它的时候，有没有把【别的重要事情弄坏】？", [
+    {t:"有，弄坏了别的事", fn:"pickHarm"},
+    {t:"没有", fn:"pickNoHarm"}
+  ]);
+}
+function pickHarm(){ trace.push("把别的重要事弄坏了"); finish("off"); }
+function pickNoHarm(){ trace.push("没有弄坏别的事"); askScope(); }
+
+function askScope(){
+  qBox("第 5 步", "卡片有没有写清【只在哪些情况试过】？", [
+    {t:"写清了", fn:"pickScopeYes"},
+    {t:"没写清 / 只测了很窄的情况", fn:"pickScopeNo"}
+  ]);
+}
+function pickScopeNo(){ trace.push("没写清在哪些情况试过"); finish("wait"); }
+function pickScopeYes(){ trace.push("写清了试过的情况"); chooseScope(); }
+
+function chooseScope(){
+  const opts = SCOPE_OPTIONS[cur];
+  if(!opts){ finish("use"); return; }
+  const box = document.getElementById('qBox');
+  box.innerHTML = '<div class="q"><div class="qh">最后一步</div>'+
+    '<div class="qt">放进常用区时，旁边该写哪一条“仅在……”？</div>'+
+    '<div class="scopewrap">'+
+    opts.map((o,idx)=>'<button class="opt" onclick="pickScopeLabel('+idx+')">'+o.t+'</button>').join('')+
+    '</div></div>';
+}
+function pickScopeLabel(idx){
+  const o = SCOPE_OPTIONS[cur][idx];
+  trace.push("范围标签：" + o.t + (o.ok ? "" : "（这条其实超出了卡片写明的范围）"));
+  finish("use", o.ok);
+}
+
+function finish(dest, scopeOk){
+  document.getElementById('qBox').innerHTML = '';
+  const d = DEST[dest];
+  let tr = trace.map(t=>'<li>'+t+'</li>').join('');
+  let extra = '';
+  if(dest==='use' && scopeOk===false){
+    extra = '<div class="note">提示：范围标签选得比卡片写的更宽了——真实研究里这会算“范围没读准”。</div>';
+  }
+  const nextBtn = (cur+1 < SCENARIOS.length)
+    ? '<button class="btn primary" onclick="startScenario('+(cur+1)+')">再试下一个（'+(cur+2)+'/'+SCENARIOS.length+'）</button>' : '';
+  document.getElementById('resultBox').innerHTML =
+    '<div class="result">'+
+      '<div>根据你的回答，它应该放进：</div>'+
+      '<span class="badge '+d.cls+'">'+d.label+'</span>'+
+      '<div class="trace"><div>你的推理路径：</div><ul>'+tr+'</ul></div>'+
+      extra+
+      '<div class="row">'+nextBtn+
+        '<button class="btn" onclick="startScenario('+cur+')">重做这一个</button>'+
+        '<button class="btn" onclick="backToIntro()">回到开头</button>'+
+      '</div>'+
+      '<div class="note">这是原型，仅体验交互手感；不计分、不收集任何数据。</div>'+
+    '</div>';
+  window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+}
+function backToIntro(){
+  document.getElementById('main').classList.add('hide');
+  document.getElementById('intro').classList.remove('hide');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
